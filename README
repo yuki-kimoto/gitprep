@@ -6,7 +6,7 @@ Operation
 
   Start
   
-      ./githublite
+      ./gitpub
   
     Application start in back ground. Port is 10020.
     You can access the following URL.
@@ -17,6 +17,6 @@ Operation
   
   Stop
   
-      ./githublite --stop
+      ./gitpub --stop
     
     You can stop application by --stop option.
