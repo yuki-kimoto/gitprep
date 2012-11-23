@@ -808,6 +808,13 @@ sub search_bin {
       last;
     }
   }
+  
+  my $local_bin = '/usr/local/bin/git';
+  return $local_bin if -f $local_bin;
+  
+  my $bin = '/usr/bin/git';
+  return $bin if -f $bin;
+  
   return;
 }
 
