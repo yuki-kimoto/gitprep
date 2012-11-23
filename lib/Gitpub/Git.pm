@@ -132,27 +132,6 @@ sub fill_from_file_info {
   return $diff;
 }
 
-sub fill_projects {
-  my ($self, $home, $ps) = @_;
-  
-  # Fill project info
-  my @projects;
-  for my $project (@$ps) {
-    my (@activity) = $self->last_activity("$home/$project->{path}");
-    next unless @activity;
-    ($project->{age}, $project->{age_string}) = @activity;
-    if (!defined $project->{descr}) {
-      my $descr = $self->project_description("$home/$project->{path}") || '';
-      $project->{descr_long} = $descr;
-      $project->{descr} = $self->_chop_str($descr, 25, 5);
-    }
-
-    push @projects, $project;
-  }
-
-  return \@projects;
-}
-
 sub difftree {
   my ($self, $project, $cid, $parent, $parents) = @_;
   
@@ -330,6 +309,16 @@ sub project_description {
   return $description;
 }
 
+sub repository_description {
+  my ($self, $rep) = @_;
+  
+  # Description
+  my $file = "$rep/description";
+  my $description = $self->_slurp($file) || '';
+  
+  return $description;
+}
+
 sub last_activity {
   my ($self, $project) = @_;
   
@@ -387,25 +376,6 @@ sub project_urls {
   return \@urls;
 }
 
-sub projects {
-  my ($self, $home, %opt) = @_;
-  
-  my $filter = $opt{filter};
-  
-  # Projects
-  opendir my $dh, $self->enc($home)
-    or croak qq/Can't open directory $home: $!/;
-  my @projects;
-  while (my $project = readdir $dh) {
-    next unless $project =~ /\.git$/;
-    next unless $self->check_head_link("$home/$project");
-    next if defined $filter && $project !~ /\Q$filter\E/;
-    push @projects, { path => $project };
-  }
-
-  return \@projects;
-}
-
 sub references {
   my ($self, $project, $type) = @_;
   
@@ -428,6 +398,60 @@ sub references {
   close $fh or return;
   
   return \%refs;
+}
+
+sub fill_repositories {
+  my ($self, $home, $ps) = @_;
+  
+  # Fill rep info
+  my @resp;
+  for my $rep (@$ps) {
+    my (@activity) = $self->last_activity("$home/$rep->{path}");
+    next unless @activity;
+    ($rep->{age}, $rep->{age_string}) = @activity;
+    if (!defined $rep->{descr}) {
+      my $descr = $self->repository_description("$home/$rep->{path}") || '';
+      $rep->{descr_long} = $descr;
+      $rep->{descr} = $self->_chop_str($descr, 25, 5);
+    }
+
+    push @resp, $rep;
+  }
+
+  return \@resp;
+}
+
+sub repositories {
+  my ($self, $dir, %opt) = @_;
+  
+  my $filter = $opt{filter};
+  
+  # Repositories
+  opendir my $dh, $self->enc($dir)
+    or croak qq/Can't open directory $dir: $!/;
+  my @reps;
+  while (my $rep = readdir $dh) {
+    next unless $rep =~ /\.git$/;
+    next unless $self->check_head_link("$dir/$rep");
+    next if defined $filter && $rep !~ /\Q$filter\E/;
+    my $rep_name = $rep;
+    $rep_name =~ s/\.git$//;
+    push @reps, { name => $rep_name, path => $rep };
+  }
+
+  # Fill repositroies information
+  for my $rep (@reps) {
+    my (@activity) = $self->last_activity("$dir/$rep->{path}");
+    next unless @activity;
+    ($rep->{age}, $rep->{age_string}) = @activity;
+    if (!defined $rep->{descr}) {
+      my $descr = $self->repository_description("$dir/$rep->{path}") || '';
+      $rep->{descr_long} = $descr;
+      $rep->{descr} = $self->_chop_str($descr, 25, 5);
+    }
+  }
+
+  return \@reps;
 }
 
 sub short_id {

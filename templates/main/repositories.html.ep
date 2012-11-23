@@ -10,19 +10,18 @@
       <th></th>
     </tr>
     % my $toggle = 0;
-    % for my $project (@$projects) {
-      % my $pname = $project->{path};
-      % my $pname_ns = $project->{path_abs_ns};
+    % for my $rep (@$reps) {
+      % my $pname = $rep->{name};
       <tr class="<%= $toggle++ ? 'light' : 'dark' %>">
         <td>
-          <a class="list" href="<%= url_for('tree',  project => $pname_ns) %>">
-            <%= $project->{path} %>
+          <a class="list" href="<%= url_for("/$user/$pname") %>">
+            <%= $rep->{name} %>
           </a>
         </td>
         <td>
-          <%= $project->{descr} %>
+          <%= $rep->{descr} %>
         </td>
-        <td class="age2"><%= $project->{age_string} %></td>
+        <td class="age2"><%= $rep->{age_string} %></td>
       </tr>
     % }
   </table>
