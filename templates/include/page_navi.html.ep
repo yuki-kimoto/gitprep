@@ -1,0 +1,40 @@
+<div class="page_nav">
+  % my $id = stash('id') || gitweblite_get_head_id($project);
+  % if ($current eq 'summary') {
+    Summary
+  % } else {
+    <a href="<%= url_for('summary',project => $project_ns) %>">Summary</a>
+  % }
+  |
+  % if ($current eq 'shortlog') {
+    Shortlog
+  % } else {
+    <a href="<%= url_for('shortlog', project => $project_ns, id => $id) %>">Shortlog</a>
+  % }
+  |
+  % if ($current eq 'log') {
+    Log
+  % } else {
+    <a href="<%= url_for('log', project => $project_ns, id => $id) %>">Log</a>
+  % }
+  |
+  % if ($current eq 'commit') {
+    Commit
+  % } else {
+    <a href="<%= url_for('commit', project => $project_ns, id => $id) %>">
+      Commit
+    </a>
+  % }
+  |
+  % if ($current eq 'commitdiff') {
+    Commitdiff
+  % } else {
+    <a href="<%= url_for('commitdiff', project => $project_ns, diff => $id) %>">Commitdiff</a>
+  % }
+  |
+  % if ($current eq 'tree') {
+    Tree
+  % } else {
+    <a href="<%= url_for('tree', project => $project_ns, id_dir => $id) %>">Tree</a>
+  % }
+</div>

@@ -1,0 +1,40 @@
+% layout 'common';
+  %= include '/include/header', title => 'Blob', project => $project;
+  %= include '/include/current_directory', home_ns => $home_ns, home => $home;
+  %= include '/include/page_navi', current => 'blob', head_id => $id, project_ns => $project_ns;
+  <div class="page_nav">
+    <a href="<%= url_for('blob_plain', project => $project_ns, id_file => "$id/$file") %>">
+      Raw
+    </a>
+    |
+    % my $head_id = gitweblite_get_head_id($project);
+    <a href="<%= url_for('blob', project => $project_ns, id_file => "HEAD/$file") %>">
+      HEAD
+    </a>
+    <br/>
+  </div>
+  <div class="header">
+  <a class="title" href= "<%= url_for('commit', project => $project_ns, id => $id) %>">
+    <%= $commit->{title} %>
+  </a>
+  </div>
+
+  %= include '/include/page_path', project_ns => $project_ns, id => $id, Path => $file, type => 'blob';
+
+  <div class="page_body">
+    % if ($mimetype =~ m#^image/#) {
+      <img type="<%= $mimetype %>
+        % if (defined $file) {
+          alt="<%= $file %>" title="<%= $file %>"
+        % }
+        src="<%= url_for('blob_plain', project => $project_ns, id_file => "$id/$file") %>"
+      />
+    % } else {
+      % my $nr = 1;
+      % for my $line (@$lines) {
+        % my $nr4 = sprintf("%4i", $nr);
+        <div class="pre"><a id="l<%= $nr %>" href="<%#l<%= $nr %>" class="linenr"><%= $nr4 %></a> <%= $line %></div>
+        % $nr++;
+      % }
+    % }
+  </div>

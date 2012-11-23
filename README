@@ -1,0 +1,157 @@
+Gitweb Lite
+
+  gitweb.cgi clone. Serve git repository.
+  Example: http://perlcodesample.com/gitweblite
+
+Features
+
+  This is gitweb.cgi clone, and has the following features.
+
+  - gitweb.cgi default features.
+  - Written by Perl and Mojolicious web framework.
+  - Prerequisite is Perl 5.8.7+.
+  - Having HTTP server. You can run gitweblite,
+    even if "apache" is not installed.
+  - Multiple project homes.
+  - Zero configuration.
+  - Default encoding is UTF-8, you can change this.
+  - don't work on Windows.
+
+Operation
+
+  Start
+  
+      ./gitweblite
+  
+    Application start in back ground. Port is 10010.
+    You can access the following URL.
+      
+      http://localhost:10010
+    
+    If you change port, edit gitweblite.conf.
+  
+  Stop
+  
+      ./gitweblite --stop
+    
+    You can stop application by --stop option.
+
+Description
+
+  by default, /home and /git/pub directory is searched recursively.
+  if xxx.git directory is found and it is git repository,
+  the repository display on top page.
+
+Config
+
+  You can set config in gitweblite.conf.
+  Config is written by JSON (// is comment line).
+  Create your config file copied from gitweblite.conf.example
+  
+    cp gitweblite.conf.example gitweblite.conf
+
+  These is available options.
+  
+    encoding
+    
+      Text encoding.
+      
+      Default:
+      
+        "encoding" : "UTF-8"
+
+    git_bin
+    
+      git command (/usr/local/bin/git etc)
+      
+      Default:
+      
+        git command is automatically detected by PATH environment variable
+
+    hypnotoad
+    
+      Server configuration.
+    
+      Default:
+      
+        "hypnotoad" : {
+          "listen" : ["http://*:10010"]
+        }
+    
+    logo_link
+    
+      Logo link URL
+      
+      Default:
+      
+      "logo_link" : "https://github.com/yuki-kimoto/gitweblite"
+    
+    prevent_xss
+    
+      Prevent XSS atack.
+      
+      Default:
+      
+        "prevent_xss" : 0
+    
+    search_dirs
+        
+      Git repository searching directories.
+      
+      Default:
+      
+        "search_dirs" : ["/git/pub", "/home"]
+    
+    search_max_depth
+    
+      Searching directory max depth.
+      
+      Default:
+      
+        "search_max_depth" : 10
+    
+    text_ext
+    
+      Text file extention. If "encoding" is not "UTF-8", generally text file
+      is assumed as binary file. If "text_ext" is set, the file having the extention
+      assumed as text file.
+    
+      Default:
+      
+        "text_exts" : ["txt"]
+
+Logo and favicon
+
+  You can use your logo and favicon.
+  Set logo or favicon image file into the following name.
+  
+    user/public/git-logo.png
+    user/public/git-favicon.png
+
+Reverse proxy
+
+  You can use gitweblite with reverse proxy such as apache/mod_proxy.
+
+  Apache/mod_proxy
+
+    <VirtualHost *:80>
+      ServerName perlcodesample.com
+      <Proxy *>
+        Order deny,allow
+        Allow from all
+      </Proxy>
+      ProxyRequests Off
+      ProxyPreserveHost On
+
+      ProxyPass /gitweblite http://localhost:10010/gitweblite keepalive=On
+      ProxyPassReverse /gitweblite http://localhost:10010/gitweblite
+
+      RequestHeader set X-Forwarded-HTTPS "0"
+    </VirtualHost>
+
+COPYRIGHT & LICENSE
+
+  Copyright 2009-2012 Yuki Kimoto, all rights reserved.
+
+  This program is free software; you can redistribute it and/or modify it
+  under the same terms as Perl itself.

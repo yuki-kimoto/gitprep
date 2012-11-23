@@ -1,0 +1,27 @@
+% use File::Basename 'basename';
+
+<div class="page_path">
+  [<a href="<%= url_for('tree', project => $project_ns, id_dir => $id) %>"><%= basename $project %></a>]
+  % my @parts = split('/', $Path);
+  % my $path;
+  % for (my $i = 0; $i < @parts; $i++) {
+    % my $part = $parts[$i];
+    % $path .= "$part";
+    
+    % if ($type eq 'blob' && $i eq @parts - 1) {
+      <a title="tree home" href=
+          "<%= url_for('blob', project => $project_ns, id_file => "$id/$path") %>">
+        <%= $part %>
+      </a>
+    % } else {
+      <a title="tree home" href=
+          "<%= url_for('tree', project => $project_ns, id_dir => "$id/$path") %>">
+        <%= $part %>
+      </a>
+      % $path .= '/';
+    % }
+    % unless ($i == @parts - 1) {
+      /
+    % }
+  % }
+</div>

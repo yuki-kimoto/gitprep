@@ -1,0 +1,86 @@
+% layout 'common';
+  %= include '/include/header', title => 'Summary', project => $project;
+  %= include '/include/current_directory', home_ns => $home_ns, home => $home;
+  %= include '/include/page_navi', current => 'summary', project_ns => $project_ns;
+  <table class="projects_list">
+    <tr id="metadata_desc"><td><b>Description:</b></td><td><%= $project_description %></td></tr>
+    <tr id="metadata_owner"><td><b>Owner:</b></td><td><%= $project_owner %></td></tr>
+    <tr id="metadata_lchange"><td><b>Last change:</b></td><td><%= $last_change %></td></tr>
+    <tr class="metadata_url">
+      <td><b>URL:</b></td>
+      <td>
+        % for my $url (@$urls) {
+          <%= $url %>
+          <br />
+        % }
+      </td>
+    </tr>
+  </table>
+  
+  <!-- Shortlog -->
+  <div class="header">
+    <a class="title" href="<%= url_for('shortlog', project => $project_ns) %>">
+      Shortlog
+    </a>
+  </div>
+  <table class="shortlog">
+    
+    % for (my $i = 0; $i < @$commits; $i++) {
+      % my $commit = $commits->[$i];
+      % my $id = $commit->{id};
+      <tr class="<%= $i % 2 ? 'light' : 'dark' %>">
+        <td title="<%= $commit->{age_string_date} %>"><i><%= $commit->{age_string} %></i></td>
+        <td class="author"><%= $commit->{author_name} %></td>
+        <td>
+          <a class="list subject"
+              href="<%= url_for('commit', project => $project_ns, id => $id) %>">
+            %= $commit->{title_short};
+          </a>
+          %= include 'include/refs', project_ns => $project_ns, commit => $commit, refs => $refs;
+        </td>
+        <td class="link">
+          <a href="<%= url_for('commit', project => $project_ns, id => $id) %>">
+            commit
+          </a>
+          |
+          <a href="<%= url_for('commitdiff', project => $project_ns, diff => $id) %>">
+            commitdiff
+          </a>
+          |
+          <a href="<%= url_for('tree', project => $project_ns, id_dir => $id) %>">
+            tree
+          </a>
+          |
+          <a title="in format: tar.gz" rel="nofollow" href=
+              "<%= url_for('snapshot', project => $project_ns, id => $id) %>">
+            snapshot
+          </a>
+        </td>
+      </tr>
+    % }
+    % if (@$commits == $commit_count) {
+      <tr>
+        <td>
+          <a href="<%= url_for('shortlog', project => $project_ns) %>">
+            ...
+          </a>
+        </td>
+      </tr>
+    % }
+  </table>
+  
+  <!-- Tags -->
+  <div class="header">
+    <a class="title" href="<%= url_for('tags', project => $project_ns) %>">Tags</a>
+  </div>
+  <%= include '/include/tags', project_ns => $project_ns,
+    tags => $tags, tag_count => $tag_count, summary => 1; %>
+  
+  <!-- Heads -->
+  <div class="header">
+    <a class="title" href="<%= url_for('heads', project => $project_ns) %>">
+      Heads
+    </a>
+  </div>
+  <%= include '/include/heads', project_ns => $project_ns,
+    tags => $tags, head_count => $head_count, summary => 1; %>

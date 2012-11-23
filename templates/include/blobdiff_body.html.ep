@@ -1,0 +1,19 @@
+<div class="page_body">
+  % for my $line (@$lines) {
+    % my $class = $line->{class};
+    % my $status = stash('status') || '';
+    % if ($class eq 'diff header') {
+      <div class="<%= $class %>">diff --git
+      % if ($status eq 'A') {
+        a/<%= $file %>
+      % } else {
+        <a href="<%= url_for('blob', project => $project_ns, id_file => "$from_id/$from_file") %>">a/<%= $from_file %></a>
+      % }
+      <a href="<%= url_for('blob', project => $project_ns, id_file => "$id/$file") %>">b/<%= $file %></a></div>
+    % } elsif ($class eq 'diff binary_file') {
+      <div class="<%= $class %>">Binary files <a href="<%= url_for('blob', project => $project_ns, id_file => "$from_id/$file") %>">a/<%= $file %></a> and <a href="<%= url_for('blob', project => $project_ns, id_file => "$id/$file") %>">b/<%= $file %></a> differ</div>
+    % } else {
+      <div class="<%= $class %>"><%= $line->{value} %></div>
+    % }
+  % }
+</div>

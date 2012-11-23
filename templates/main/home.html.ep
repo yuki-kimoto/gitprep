@@ -1,0 +1,14 @@
+% layout 'common';
+  %= include '/include/header', title => 'Gitweb Lite';
+  <table class="project_list">
+    <th>Home Directory</th>
+    % my $toggle = 0;
+    % for my $home (@$homes) {
+      <tr class="<%= $toggle++ ? 'light' : 'dark' %>">
+        <td>
+          <a class="list" href="<%= url_for('projects', home => gitweblite_rel($home)); %>">
+            <%= $home %>
+          </a>
+        </td>
+    % }
+  </table>

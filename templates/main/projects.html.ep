@@ -1,0 +1,42 @@
+% layout 'common';
+  %= include '/include/header', title => 'Projects';
+  <table class="project_list">
+    <a href="<%= url_for '/' %>">home</a> &gt;
+    <a href="<%= url_for('projects', home => $home_ns) %>"><%= $home %></a>
+    <tr>
+      <th>Project</th>
+      <th>Description</th>
+      <th>Owner</th>
+      <th>Last Change</th>
+      <th></th>
+    </tr>
+    % my $toggle = 0;
+    % for my $project (@$projects) {
+      % my $pname = $project->{path};
+      % my $pname_ns = $project->{path_abs_ns};
+      <tr class="<%= $toggle++ ? 'light' : 'dark' %>">
+        <td>
+          <a class="list" href="<%= url_for('summary',  project => $pname_ns) %>">
+            <%= $project->{path} %>
+          </a>
+        </td>
+        <td>
+          <a class="list" title="<%= $project->{descr_long} %>" 
+              href="<%= url_for('summary',  project => $pname_ns) %>">
+            <%= $project->{descr} %>
+          </a>
+        </td>
+        <td><i><%= $project->{owner} %></i></td>
+        <td class="age2"><%= $project->{age_string} %></td>
+        <td class="link">
+          <a href="<%= url_for('summary',  project => $pname_ns) %>">summary</a> |
+          <a href="<%= url_for('shortlog', project => $pname_ns) %>">shortlog</a> |
+          <a href="<%= url_for('log', project => $pname_ns) %>">log</a> |
+          <a href="<%= url_for('tree', project => $pname_ns) %>">
+            tree
+          </a>
+        </td>
+      </tr>
+    % }
+  </table>
+  <div class="page_footer"></div>

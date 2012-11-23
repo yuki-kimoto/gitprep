@@ -1,0 +1,23 @@
+<div class="page_nav">
+  <a href="<%= url_for("$current", project => $project_ns, id => 'HEAD') %>">
+    HEAD
+  </a>
+  &sdot;
+  % if ($page != 0) {
+    <a title="Alt-p" accesskey="p" href=
+        "<%= url_for("$current", project => $project_ns, id => $id)->query(page => $page - 1) %>">
+      Prev
+    </a>
+  % } else {
+    Prev
+  % }
+  &sdot;
+  % if (@$commits == $page_count) {
+    <a title="Alt-n" accesskey="n" href=
+        "<%= url_for("$current", project => $project_ns, id => $id)->query(page => $page + 1) %>">
+      Next
+    </a>
+  % } else {
+    Next
+  % }
+</div>

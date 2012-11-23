@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head><title>Server error</title></head>
+   %= stylesheet begin
+      body { background-color: #caecf6 }
+      #raptor {
+        background: url(<%= url_for '/mojolicious-failraptor.png' %>);
+        height: 488px;
+        left: 50%;
+        margin-left: -371px;
+        margin-top: -244px;
+        position:absolute;
+        top: 50%;
+        width: 743px;
+      }
+    % end
+  <body><div id="raptor"></div></body>
+</html>

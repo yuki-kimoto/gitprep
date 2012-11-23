@@ -1,0 +1,58 @@
+% layout 'common';
+  %= include '/include/header', title => 'Short Log', project => $project;
+  %= include '/include/current_directory', home_ns => $home_ns, home => $home;
+  %= include '/include/page_navi', current => 'shortlog', project_ns => $project_ns;
+
+  <%= include '/include/page_navi2', current => 'shortlog', id => $id,
+    page => $page, page_count => $page_count,commits => $commits;
+  %>
+
+  <div class="header">
+    <a class="title" href="<%= url_for('shortlog', project => $project_ns) %>">
+     <%= $project %>
+   </a>
+  </div>
+  <table class="shortlog">
+    % for (my $i = 0; $i < @$commits; $i++) {
+      % my $commit = $commits->[$i];
+      % my $id = $commit->{id};
+      <tr class="<%= $i % 2 ? 'light' : 'dark' %>">
+        <td title="2012-03-20"><i><%= $commit->{age_string} %></i></td>
+        <td class="author"><%= $commit->{author_name} %></td>
+        <td>
+          <a class="list subject" href=
+              "<%= url_for('commit', project => $project_ns, id => $id) %>">
+            <%= $commit->{title_short} %>
+          </a>
+          %= include 'include/refs', project_ns => $project_ns, commit => $commit, refs => $refs;
+        </td>
+        <td class="link">
+          <a href="<%= url_for('commit', project => $project_ns, id => $id) %>">commit</a>
+          |
+          <a href="<%= url_for('commitdiff', project => $project_ns, diff => $id) %>">
+            commitdiff
+          </a>
+          |
+          <a href="<%= url_for('tree', project => $project_ns, id_dir => $id) %>">
+            tree
+          </a>
+          |
+          <a title="in format: tar.gz" rel="nofollow" href=
+              <%= url_for('snapshot', project => $project_ns, id => $id) %>>
+            snapshot
+          </a>
+        </td>
+      </tr>
+    % }
+    <tr>
+      <td colspan="4">
+        % if (@$commits == $page_count) {
+          <a title="Alt-n" accesskey="n" href="<%= url_for('shortlog', project => $project_ns, 
+              id => $id)->query(page => $page + 1) %>">
+            Next
+          </a>
+        % }
+      </td>
+    </tr>
+  </table>
+  

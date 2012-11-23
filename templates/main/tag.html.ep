@@ -1,0 +1,51 @@
+% layout 'common';
+  %= include '/include/header', title => 'Tag', project => $project;
+  %= include '/include/current_directory', home_ns => $home_ns, home => $home;
+  %= include '/include/page_navi', current => 'commit', project_ns => $project_ns;
+
+  <div class="header">
+    <a class="title" href="<%= url_for('commit', project => $project_ns, id => $tag->{id}) %>">
+      <%= $tag->{name} %>
+    </a>
+  </div>
+  <div class="title_text">
+  <table class="object_header">
+    <tr>
+      <td>object</td>
+      <td>
+        <a class="list" href="<%= url_for('commit', project => $project_ns, id => $tag->{object}) %>">
+          <%= $tag->{object} %>
+        </a>
+      </td>
+      <td class="link">
+        <a href="<%= url_for('commit', project => $project_ns, id => $tag->{object}) %>">
+          commit
+        </a>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        author
+      </td>
+      <td>
+        <%= $tag->{author} || '' %>
+      </td>
+      <td rowspan="2">
+      </td>
+    </tr>
+    <tr>
+      <td>
+      </td>
+      <td>
+        <%= $tag->{author_date} %>
+      </td>
+    </tr>
+  </table>
+
+  </div>
+  <div class="page_body">
+    % for my $comment (@{$tag->{comment}}) {
+      <%= $comment %>
+      <br>
+    % }
+  </div>

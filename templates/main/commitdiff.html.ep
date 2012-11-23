@@ -1,0 +1,43 @@
+% layout 'common';
+  %= include '/include/header', title => 'Commit diff', project => $project;
+  %= include '/include/current_directory', home_ns => $home_ns, home => $home;
+  %= include '/include/page_navi', current => 'commitdiff', project_ns => $project_ns;
+  <div class="page_nav">
+    <a href="<%= url_for('commitdiff_plain', project => $project_ns, diff => $commit->{id}) %>">
+      Raw
+    </a>
+  </div>
+  <div class="header">
+    <a class="title" href="<%= url_for('commit', project => $project_ns) %>">
+      <%= $commit->{title} %>
+    </a>
+  </div>
+  <div class="title_text">
+    %= include 'include/refs', project_ns => $project_ns, commit => $commit, refs => $refs;
+    <table class="object_header">
+      <tr><td>Author</td><td><%= $commit->{author} %></td><td rowspan="2"></td></tr>
+      <tr><td></td><td><%= $commit->{author_date} %></td></tr>
+      <tr><td>Committer</td><td><%= $commit->{committer} %></td><td rowspan="2"></td></tr>
+      <tr><td></td><td><%= $commit->{committer_date} %></td></tr>
+    </table>
+  </div>
+  <div class="page_body">
+    <div class="list_head"></div>
+
+    <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
+      difftrees => $difftrees, parents => $commit->{parents} %>
+
+    <div class="patchset">
+      % for (my $i = 0; $i < @$blobdiffs; $i++) {
+        % my $blobdiff = $blobdiffs->[$i];
+        <div class="patch" id="<%= $i + 1 %>">
+          % my $lines = $blobdiff->{lines};
+          % my $file = $blobdiff->{file};
+          % my $from_file = $blobdiff->{from_file};
+          % $from_file = $file unless defined $from_file;
+          % my $status = $blobdiff->{status};
+          %= include '/include/blobdiff_body', file => $file, from_file => $from_file, status => $status, lines => $blobdiff->{lines};
+        </div>
+      % }
+    </div>
+  </div>

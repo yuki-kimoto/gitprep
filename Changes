@@ -1,0 +1,19 @@
+1.00
+  - First major release!
+0.05
+  - added reverse proxy support
+0.04
+  - added encoding option
+  - added text_exts option
+  - added prevent_xss option
+  - fixed many bugs.
+0.03 (beta)
+  - don't overwrite gitweblite.conf
+  - config file become JSON.
+  - URL become more restful.
+  - Git command automatically detect
+0.02 (beta)
+  - fixed blob, blog_plain, commitdiff, commitdiff_plain encoding bug
+
+0.01 (beta)
+  - first beta release.

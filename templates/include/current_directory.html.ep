@@ -1,0 +1,4 @@
+<div>
+  <a href="<%= url_for '/' %>">home</a> &gt;
+  <a href="<%= url_for('projects', home => $home_ns) %>"><%= $home %></a>
+</div>

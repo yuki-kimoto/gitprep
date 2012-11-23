@@ -1,0 +1,10 @@
+% use File::Basename 'basename';
+% my $project = stash('project');
+% $project = basename $project if defined $project;
+
+<div class="page_header">
+  <a href="<%= config('logo_link') %>">
+    <img src="<%= url_for('/git-logo.png') %>" class="logo"/>
+  </a>
+  <%= $project ? "$project /" : '' %>  <a href="#"><%= $title %></a>
+</div>

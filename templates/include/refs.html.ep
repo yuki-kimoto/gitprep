@@ -1,0 +1,13 @@
+% if (my $full_names = $refs->{$commit->{id}}) {
+  % for my $full_name (@$full_names) {
+    % my ($type, $name) = $full_name =~ m#^(.+?)s/(.+)#;
+    
+    <span class="refs">
+      <span class="<%= $type %>" title="<%= $full_name %>">
+        <a href="<%= url_for('shortlog', project => $project_ns, id => "refs/${type}s/$name") %>">
+          <%= $name %>
+        </a>
+      </span>
+    </span>
+  % }
+% }
