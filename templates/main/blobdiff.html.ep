@@ -1,5 +1,5 @@
 % layout 'common';
-  % my $head_id = gitweblite_get_head_id($project);
+  % my $head_id = gitpub_get_head_id($project);
   %= include '/include/header', title => 'Blob Diff', project => $project;
   %= include '/include/current_directory', home_ns => $home_ns, home => $home;
   %= include '/include/page_navi', current => 'blobdiff', head_id => $id, project_ns => $project_ns;

@@ -1,4 +1,4 @@
-package Gitweblite::Main;
+package Gitpub::Main;
 use Mojo::Base 'Mojolicious::Controller';
 use File::Basename 'dirname';
 use Carp 'croak';

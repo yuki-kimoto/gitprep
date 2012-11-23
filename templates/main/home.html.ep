@@ -1,12 +1,12 @@
 % layout 'common';
-  %= include '/include/header', title => 'Gitweb Lite';
+  %= include '/include/header', title => 'Gitpub';
   <table class="project_list">
     <th>Home Directory</th>
     % my $toggle = 0;
     % for my $home (@$homes) {
       <tr class="<%= $toggle++ ? 'light' : 'dark' %>">
         <td>
-          <a class="list" href="<%= url_for('projects', home => gitweblite_rel($home)); %>">
+          <a class="list" href="<%= url_for('projects', home => gitpub_rel($home)); %>">
             <%= $home %>
           </a>
         </td>

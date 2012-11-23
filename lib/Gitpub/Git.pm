@@ -1,4 +1,4 @@
-package Gitweblite::Git;
+package Gitpub::Git;
 use Mojo::Base -base;
 
 use Carp 'croak';

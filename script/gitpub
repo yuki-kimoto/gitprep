@@ -17,7 +17,7 @@ Please visit http://mojolicio.us for detailed installation instructions.
 EOF
 
 # Application
-$ENV{MOJO_APP} ||= 'Gitweblite';
+$ENV{MOJO_APP} ||= 'Gitpub';
 
 # Start commands
 Mojolicious::Commands->start;

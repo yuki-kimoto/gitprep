@@ -1,10 +1,10 @@
 use 5.008007;
-package Gitweblite;
+package Gitpub;
 
 our $VERSION = '1.00';
 
 use Mojo::Base 'Mojolicious';
-use Gitweblite::Git;
+use Gitpub::Git;
 
 has 'git';
 
@@ -12,22 +12,22 @@ sub startup {
   my $self = shift;
   
   # Config
-  my $conf_file = $ENV{GITWEBLITE_CONFIG_FILE}
-    || $self->home->rel_file('gitweblite.conf');
+  my $conf_file = $ENV{GITPUB_CONFIG_FILE}
+    || $self->home->rel_file('gitpub.conf');
   $self->plugin('JSONConfigLoose', {file => $conf_file}) if -f $conf_file;
   my $conf = $self->config;
   $conf->{search_dirs} ||= ['/git/pub', '/home'];
   $conf->{search_max_depth} ||= 10;
-  $conf->{logo_link} ||= "https://github.com/yuki-kimoto/gitweblite";
+  $conf->{logo_link} ||= "https://github.com/yuki-kimoto/gitpub";
   $conf->{hypnotoad} ||= {listen => ["http://*:10010"]};
   $conf->{prevent_xss} ||= 0;
   $conf->{encoding} ||= 'UTF-8';
   $conf->{text_exts} ||= ['txt'];
   
   # Git
-  my $git = Gitweblite::Git->new;
+  my $git = Gitpub::Git->new;
   my $git_bin = $conf->{git_bin} ? $conf->{git_bin} : $git->search_bin;
-  die qq/Can't detect git command. set "git_bin" in gitweblite.conf/
+  die qq/Can't detect git command. set "git_bin" in gitpub.conf/
     unless $git_bin;
   $git->bin($git_bin);
   $git->search_dirs($conf->{search_dirs});
@@ -39,7 +39,7 @@ sub startup {
   # Helper
   {
     # Remove top slash
-    $self->helper('gitweblite_rel' => sub {
+    $self->helper('gitpub_rel' => sub {
       my ($self, $path) = @_;
       
       $path =~ s/^\///;
@@ -48,7 +48,7 @@ sub startup {
     });
     
     # Get head commit id
-    $self->helper('gitweblite_get_head_id' => sub {
+    $self->helper('gitpub_get_head_id' => sub {
       my ($self, $project) = @_;
       
       my $head_commit = $self->app->git->parse_commit($project, "HEAD");
