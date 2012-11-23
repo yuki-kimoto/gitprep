@@ -1,0 +1,81 @@
+% layout 'common';
+  %= include '/include/new_header';
+  
+  %= stylesheet begin
+    #menu-item li {
+      float:left;
+      border: 1px solid black;
+      padding: 10px 20px;
+      margin-bottom:10px;
+    }
+    .clear {
+      clear:both;
+    }
+  % end
+
+  <div>
+    <a href="<%= url_for("/$user") %>"><%= $user %></a> / <%= $repository %>
+  </div>
+  
+  <ul id="menu-item">
+    <li>Code</li>
+    <li>Issues</li>
+    <li>Wiki</li>
+    <li>Admin</li>
+  </ul>
+  
+  <div class="header" style="clear:both">
+    <a class="title" href="<%= url_for('commit', project => $project_ns, id => $id) %>">
+      <%= $commit->{title} %>
+    </a>
+  </div>
+
+  %= include '/include/page_path', project_ns => $project_ns, id => $id, Path => $dir, type => 'tree';
+
+  <div class="page_body">
+    %= include 'include/refs', project => $project_ns, commit => $commit, refs => $refs;
+    <table class="tree">
+      % for (my $i = 0; $i <@$trees; $i++) {
+        
+        % my $tree = $trees->[$i];
+        % my $type = $tree->{type};
+        % my $name = $tree->{name};
+        
+        % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
+        <tr class="<%= $i % 2 ? 'light' : 'dark' %>">
+          <td class="mode">
+            <%= $tree->{mode_str} %>
+          </td>
+          % my $file = defined $dir ? "$dir/$name" : $name;
+          % $file =~ s/^\///;
+          
+          <td class="list">
+            % if ($type eq 'blob') {
+              <a class="list" href="<%= url_for('blob', project => $project_ns, id_file => "$id/$file") %>">
+                <%= $name %>
+              </a>
+            % } elsif ($tree) {
+              <a href="<%= url_for('tree', project => $project_ns, id_dir => "$id/$child_dir") %>">
+                <%= $name %>
+              </a>
+            % }
+          </td>
+          <td class="link">
+            % if ($type eq 'blob') {
+              <a href="<%= url_for('blob', project => $project_ns, id_file => "$id/$file") %>">
+                blob
+              </a>
+              |
+              <a href="<%= url_for('blob_plain', project => $project_ns, id_file => "$id/$file") %>">
+                raw
+              </a>
+            % } elsif ($type eq 'tree') {
+              <a href="<%= url_for('tree', project => $project_ns, id_dir => "$id/$child_dir") %>">
+                tree
+              </a>
+            % }
+          </td>
+        </tr>
+      % }
+    </table>
+  </div>

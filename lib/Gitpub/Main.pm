@@ -403,6 +403,83 @@ sub log {
 
 has 'root' => '/gitpub';
 
+sub _root_ns {
+  my $self = shift;
+  
+  my $root = $self->root;
+  $root =~ s/^\///;
+  
+  return $root;
+}
+
+sub repository {
+  my $self = shift;
+  
+  # Parameters
+  my $user = $self->param('user');
+  my $repository = $self->param('repository');
+  my $root_ns = $self->_root_ns;
+  
+  my $project_ns = "$root_ns/$user/$repository.git";
+  my $project = "/$project_ns";
+  my $home_ns = dirname $project_ns;
+  my $home = "/$home_ns";
+  my $id_dir = $self->param('id_dir') || 'master/';
+
+  # Id and directory
+  my ($id, $dir) = $self->_parse_id_path($project, $id_dir);
+
+  # Git
+  my $git = $self->app->git;
+  
+  # Tree id
+  my $tid;
+  my $commit = $git->parse_commit($project, $id);
+  unless (defined $tid) {
+    if (defined $dir && $dir ne '') {
+      $tid = $git->id_by_path($project, $id, $dir, 'tree');
+    }
+    else { $tid = $commit->{tree} }
+  }
+  $self->render_not_found unless defined $tid;
+
+  # Get tree (command "git ls-tree")
+  my @entries = ();
+  my $show_sizes = 0;
+  open my $fh, '-|', $git->cmd($project), 'ls-tree', '-z',
+      ($show_sizes ? '-l' : ()), $tid
+    or croak 'Open git-ls-tree failed';
+  local $/ = "\0";
+  @entries = map { chomp; $git->dec($_) } <$fh>;
+  close $fh
+    or croak 404, "Reading tree failed";
+  
+  # Parse tree
+  my @trees;
+  for my $line (@entries) {
+    my $tree = $git->parse_ls_tree_line($line, -z => 1, -l => $show_sizes);
+    $tree->{mode_str} = $git->_mode_str($tree->{mode});
+    push @trees, $tree;
+  }
+  
+  # References
+  my $refs = $git->references($project);
+  
+  # Render
+  $self->render(
+    home => $home,
+    home_ns => $home_ns,
+    project => $project,
+    project_ns => $project_ns,
+    dir => $dir,
+    id => $id,
+    tid => $tid,
+    commit => $commit,
+    trees => \@trees,
+    refs => $refs
+  );
+}
+
 sub repositories {
   my $self = shift;
 

@@ -1,0 +1,22 @@
+%= stylesheet begin
+  #header {
+    margin-bottom:10px;
+    border-bottom:1px solid black;
+    height:40px;
+  }
+
+  #header li{
+    float:left;
+    padding: 10px 20px;
+  }
+% end
+<div id="header">
+  <ul>
+    <li><a href="<%= url_for('/') %>">Home</a></li>
+    <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
+    <li><a href="<%= url_for("/new") %>">Create a new repo</a></li>
+    <li><a href="<%= url_for("/setting/profile") %>">Account setting</a></li>
+    <li><a href="<%= url_for("/logout") %>">Sign out</a></li>
+  </ul>
+</div>
+<div style="clear:both"/>
