@@ -78,6 +78,9 @@ sub startup {
 
   # Home
   $r->get('/')->to('#home');
+
+  #User
+  $r->get('/:user')->to('#repositories');
   
   # Projects
   $r->get('/(*home)/projects')->to('#projects')->name('projects');

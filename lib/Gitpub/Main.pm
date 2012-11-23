@@ -432,6 +432,40 @@ sub projects {
   );
 }
 
+has 'root' => '/gitpub';
+
+sub repositories {
+  my $self = shift;
+
+  my $root = $self->root;
+  
+  # Parameters
+  my $home_ns = 'gitpub/' . $self->param('user');
+  my $home = "/$home_ns";
+
+  # Git
+  my $git = $self->app->git;
+  
+  # Fill project information
+  my $projects = $git->projects($home);
+  $projects = $git->fill_projects($home, $projects);
+  
+  # Fill owner and HEAD commit id
+  for my $project (@$projects) {
+    my $pname = "$home/$project->{path}";
+    $project->{path_abs_ns} = "$home_ns/$project->{path}";
+    my $head_commit = $git->parse_commit($pname, 'HEAD');
+    $project->{head_id} = $head_commit->{id}
+  }
+  
+  # Render
+  $self->render(
+    home => $home,
+    home_ns => $home_ns,
+    projects => $projects
+  );
+}
+
 sub snapshot {
   my $self = shift;
 

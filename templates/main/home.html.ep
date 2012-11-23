@@ -6,7 +6,7 @@
     % for my $user (@$users) {
       <tr class="<%= $toggle++ ? 'light' : 'dark' %>">
         <td>
-          <a class="list" href="<%= url_for("/gitpub/$user/projects") %>">
+          <a class="list" href="<%= url_for("/$user") %>">
             <%= $user %>
           </a>
         </td>
