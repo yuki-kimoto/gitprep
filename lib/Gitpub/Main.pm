@@ -323,21 +323,11 @@ sub commitdiff {
 sub home {
   my $self = shift;
 
-  # Search git repositories
-  my $dirs = $self->app->config('search_dirs');
-  my $max_depth = $self->app->config('search_max_depth');
-  my $projects = $self->app->git->search_projects(
-    dirs => $dirs,
-    max_depth => $max_depth
-  );
-  
-  # Home
-  my $homes = {};
-  $homes->{$_->{home}} = 1 for @$projects;
-  
-  $self->render(homes => [keys %$homes]);
-}
+  my $rep_home = '/gitpub';
+  my @users = qw/kimoto ken/;
 
+  $self->render(users => \@users);
+}
 
 sub heads {
   my $self = shift;

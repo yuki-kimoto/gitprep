@@ -1,13 +1,13 @@
 % layout 'common';
   %= include '/include/header', title => 'Gitpub';
   <table class="project_list">
-    <th>Home Directory</th>
+    <th>User</th>
     % my $toggle = 0;
-    % for my $home (@$homes) {
+    % for my $user (@$users) {
       <tr class="<%= $toggle++ ? 'light' : 'dark' %>">
         <td>
-          <a class="list" href="<%= url_for('projects', home => gitpub_rel($home)); %>">
-            <%= $home %>
+          <a class="list" href="<%= url_for("/gitpub/$user/projects") %>">
+            <%= $user %>
           </a>
         </td>
     % }
