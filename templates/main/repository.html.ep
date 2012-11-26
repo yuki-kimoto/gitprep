@@ -11,6 +11,24 @@
     .clear {
       clear:both;
     }
+    
+    #readme {
+      width:100%;
+      border:2px solid gray;
+    }
+    
+    #readme_title {
+      border-bottom:1px solid gray;
+      font-size:130%;
+      font-weight:bold;
+      padding:10px;
+    }
+    
+    #readme_body {
+      min-height: 50px;
+      font-size:120%;
+      padding:10px;
+    }
   % end
 
   <div>
@@ -23,17 +41,28 @@
     <li>Wiki</li>
     <li>Admin</li>
   </ul>
+  <div style="clear:both" />
+  <div>Project description</div>
+  <ul id="menu-item">
+    <li>Branch name</li>
+    <li>Files</li>
+    <li>Commits</li>
+    <li>Branches</li>
+    <li>Tags</li>
+  </ul>
+  <div style="clear:both" />
   
-  <div class="header" style="clear:both">
-    <a class="title" href="<%= url_for('commit', project => $project_ns, id => $id) %>">
+  <div>Repository name / Commit number</div>
+  
+  <div>
+    <a href="<%= url_for('commit', project => $project_ns, id => $id) %>">
       <%= $commit->{title} %>
     </a>
   </div>
-
-  %= include '/include/page_path', project_ns => $project_ns, id => $id, Path => $dir, type => 'tree';
-
+  <div>
+    Latest commit message | Author | time | latest commit number
+  </div>
   <div class="page_body">
-    %= include 'include/refs', project => $project_ns, commit => $commit, refs => $refs;
     <table class="tree">
       % for (my $i = 0; $i <@$trees; $i++) {
         
@@ -43,9 +72,6 @@
         
         % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
         <tr class="<%= $i % 2 ? 'light' : 'dark' %>">
-          <td class="mode">
-            <%= $tree->{mode_str} %>
-          </td>
           % my $file = defined $dir ? "$dir/$name" : $name;
           % $file =~ s/^\///;
           
@@ -60,22 +86,20 @@
               </a>
             % }
           </td>
-          <td class="link">
-            % if ($type eq 'blob') {
-              <a href="<%= url_for('blob', project => $project_ns, id_file => "$id/$file") %>">
-                blob
-              </a>
-              |
-              <a href="<%= url_for('blob_plain', project => $project_ns, id_file => "$id/$file") %>">
-                raw
-              </a>
-            % } elsif ($type eq 'tree') {
-              <a href="<%= url_for('tree', project => $project_ns, id_dir => "$id/$child_dir") %>">
-                tree
-              </a>
-            % }
+          <td>
+            Latest commit time
+          </td>
+          <td>
+            Latest commit comment[author]
           </td>
         </tr>
       % }
     </table>
+    
+    <div id="readme">
+      <div id="readme_title">README</div>
+      <div id="readme_body">
+        README body
+      </div>
+    </div>
   </div>
