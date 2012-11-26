@@ -1,0 +1,10 @@
+%= stylesheet begin
+  .main_panel {
+    width:900px;
+    margin: 5px auto;
+  }
+  
+  .clear {
+    clear:both;
+  }
+% end

@@ -1,4 +1,5 @@
 % layout 'common';
+  %= include '/css/common';
   %= include '/include/new_header';
   
   %= stylesheet begin
@@ -12,18 +13,18 @@
       clear:both;
     }
     
+    /* README */
     #readme {
       width:100%;
+      margin: 5px auto;
       border:2px solid gray;
     }
-    
     #readme_title {
       border-bottom:1px solid gray;
       font-size:130%;
       font-weight:bold;
       padding:10px;
     }
-    
     #readme_body {
       min-height: 50px;
       font-size:120%;
@@ -31,38 +32,39 @@
     }
   % end
 
-  <div>
-    <a href="<%= url_for("/$user") %>"><%= $user %></a> / <%= $repository %>
-  </div>
-  
-  <ul id="menu-item">
-    <li>Code</li>
-    <li>Issues</li>
-    <li>Wiki</li>
-    <li>Admin</li>
-  </ul>
-  <div style="clear:both" />
-  <div>Project description</div>
-  <ul id="menu-item">
-    <li>Branch name</li>
-    <li>Files</li>
-    <li>Commits</li>
-    <li>Branches</li>
-    <li>Tags</li>
-  </ul>
-  <div style="clear:both" />
-  
-  <div>Repository name / Commit number</div>
-  
-  <div>
-    <a href="<%= url_for('commit', project => $project_ns, id => $id) %>">
-      <%= $commit->{title} %>
-    </a>
-  </div>
-  <div>
-    Latest commit message | Author | time | latest commit number
-  </div>
-  <div class="page_body">
+  <div class="main_panel">
+    <div>
+      <a href="<%= url_for("/$user") %>"><%= $user %></a> / <%= $repository %>
+    </div>
+    
+    <ul id="menu-item">
+      <li>Code</li>
+      <li>Issues</li>
+      <li>Wiki</li>
+      <li>Admin</li>
+    </ul>
+    <div style="clear:both" />
+    <div>Project description</div>
+    <ul id="menu-item">
+      <li>Branch name</li>
+      <li>Files</li>
+      <li>Commits</li>
+      <li>Branches</li>
+      <li>Tags</li>
+    </ul>
+    <div style="clear:both" />
+    
+    <div>Repository name / Commit number</div>
+    
+    <div>
+      <a href="<%= url_for('commit', project => $project_ns, id => $id) %>">
+        <%= $commit->{title} %>
+      </a>
+    </div>
+    <div>
+      Latest commit message | Author | time | latest commit number
+    </div>
+
     <table class="tree">
       % for (my $i = 0; $i <@$trees; $i++) {
         
