@@ -1,7 +1,28 @@
 %= stylesheet begin
+  /* Header */
+  .header {
+    background-color:#ccffff;
+    margin-bottom:10px;
+    border-bottom:1px solid blue;
+    height:40px;
+  }
+  .header li{
+    float:left;
+    padding: 10px 20px;
+  }
+  
   .main_panel {
     width:900px;
     margin: 5px auto;
+  }
+  
+  .footer {
+    background-color:#ccffff;
+    margin-top:10px;
+    padding:10px;
+    border-top:1px solid blue;
+    height:80px;
+    text-align:center;
   }
   
   .clear {

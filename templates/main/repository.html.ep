@@ -1,5 +1,6 @@
 % layout 'common';
   %= include '/css/common';
+  
   %= include '/include/new_header';
   
   %= stylesheet begin
@@ -9,9 +10,7 @@
       padding: 10px 20px;
       margin-bottom:10px;
     }
-    .clear {
-      clear:both;
-    }
+
     
     /* README */
     #readme {
@@ -43,7 +42,7 @@
       <li>Wiki</li>
       <li>Admin</li>
     </ul>
-    <div style="clear:both" />
+    <div style="clear:both"></div>
     <div>Project description</div>
     <ul id="menu-item">
       <li>Branch name</li>
@@ -52,7 +51,7 @@
       <li>Branches</li>
       <li>Tags</li>
     </ul>
-    <div style="clear:both" />
+    <div style="clear:both"></div>
     
     <div>Repository name / Commit number</div>
     
@@ -104,4 +103,8 @@
         README body
       </div>
     </div>
+  </div>
+  
+  <div class="footer">
+    <a href="https://github.com/yuki-kimoto/gitprep">Gitprep</a>
   </div>

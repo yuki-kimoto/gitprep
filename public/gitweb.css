@@ -52,10 +52,6 @@ div.page_header a:visited, a.header {
 	color: #0000cc;
 }
 
-div.header {
-  font-size: 135%;
-}
-
 div.page_header a:hover {
 	color: #880000;
 }
