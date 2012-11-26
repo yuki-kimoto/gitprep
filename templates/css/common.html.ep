@@ -11,11 +11,40 @@
     padding: 10px 20px;
   }
   
+  /* Main panel */
   .main_panel {
     width:900px;
     margin: 5px auto;
   }
   
+  /* Source tree */
+  .tree {
+    width:100%;
+    margin: 5px auto;
+    border:2px solid gray;
+  }
+  .tree_header {
+    background-color: #ccffff;
+    border-bottom: 1px solid gray;
+    padding: 10px;
+  }
+  .tree_header2 {
+    padding: 5px;
+  }
+  .tree_body {
+    font-size:80%;
+    width: 100%;
+    background-color: #ccffff;
+    padding:0;
+    border-top: 1px solid blue;
+    border-left: 1px solid blue;
+    border-top: 1px solid blue;
+  }
+  .tree_body td {
+    border-bottom: 1px solid blue;
+  }
+  
+  /* Footer */
   .footer {
     background-color:#ccffff;
     margin-top:10px;
@@ -25,6 +54,7 @@
     text-align:center;
   }
   
+  /* Utility */
   .clear {
     clear:both;
   }

@@ -55,47 +55,48 @@
     
     <div>Repository name / Commit number</div>
     
-    <div>
-      <a href="<%= url_for('commit', project => $project_ns, id => $id) %>">
-        <%= $commit->{title} %>
-      </a>
-    </div>
-    <div>
-      Latest commit message | Author | time | latest commit number
-    </div>
-
-    <table class="tree">
-      % for (my $i = 0; $i <@$trees; $i++) {
-        
-        % my $tree = $trees->[$i];
-        % my $type = $tree->{type};
-        % my $name = $tree->{name};
-        
-        % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
-        <tr class="<%= $i % 2 ? 'light' : 'dark' %>">
-          % my $file = defined $dir ? "$dir/$name" : $name;
-          % $file =~ s/^\///;
+    <div class="tree">
+      <div class="tree_header">
+        <a href="<%= url_for('commit', project => $project_ns, id => $id) %>">
+          <%= $commit->{title} %>
+        </a>
+      </div>
+      <div class="tree_header2">
+        Latest commit message | Author | time | latest commit number
+      </div>
+      <table class="tree_body">
+        % for (my $i = 0; $i <@$trees; $i++) {
           
-          <td class="list">
-            % if ($type eq 'blob') {
-              <a class="list" href="<%= url_for('blob', project => $project_ns, id_file => "$id/$file") %>">
-                <%= $name %>
-              </a>
-            % } elsif ($tree) {
-              <a href="<%= url_for('tree', project => $project_ns, id_dir => "$id/$child_dir") %>">
-                <%= $name %>
-              </a>
-            % }
-          </td>
-          <td>
-            Latest commit time
-          </td>
-          <td>
-            Latest commit comment[author]
-          </td>
-        </tr>
-      % }
-    </table>
+          % my $tree = $trees->[$i];
+          % my $type = $tree->{type};
+          % my $name = $tree->{name};
+          
+          % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
+          <tr>
+            % my $file = defined $dir ? "$dir/$name" : $name;
+            % $file =~ s/^\///;
+            
+            <td class="list">
+              % if ($type eq 'blob') {
+                <a class="list" href="<%= url_for('blob', project => $project_ns, id_file => "$id/$file") %>">
+                  <%= $name %>
+                </a>
+              % } elsif ($tree) {
+                <a href="<%= url_for('tree', project => $project_ns, id_dir => "$id/$child_dir") %>">
+                  <%= $name %>
+                </a>
+              % }
+            </td>
+            <td>
+              Latest commit time
+            </td>
+            <td>
+              Latest commit comment[author]
+            </td>
+          </tr>
+        % }
+      </table>
+    </div>
     
     <div id="readme">
       <div id="readme_title">README</div>
