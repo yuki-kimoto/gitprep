@@ -3,4 +3,4 @@
 DIR=$(dirname $0)
 PERL5LIB="$DIR/mojolegacy/lib:$DIR/extlib/lib/perl5"
 export PERL5LIB
-$DIR/mojolegacy/script/morbo $DIR/script/gitpub "$*"
+$DIR/mojolegacy/script/morbo $DIR/script/gitprep "$*"

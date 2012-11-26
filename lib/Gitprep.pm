@@ -1,10 +1,10 @@
 use 5.008007;
-package Gitpub;
+package Gitprep;
 
 our $VERSION = '1.00';
 
 use Mojo::Base 'Mojolicious';
-use Gitpub::Git;
+use Gitprep::Git;
 
 has 'git';
 
@@ -25,7 +25,7 @@ sub startup {
   $conf->{text_exts} ||= ['txt'];
   
   # Git
-  my $git = Gitpub::Git->new;
+  my $git = Gitprep::Git->new;
   my $git_bin = $conf->{git_bin} ? $conf->{git_bin} : $git->search_bin;
   die qq/Can't detect git command. set "git_bin" in gitpub.conf/
     unless $git_bin;

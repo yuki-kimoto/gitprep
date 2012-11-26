@@ -1,5 +1,5 @@
 % layout 'common';
-  %= include '/include/header', title => 'Gitpub';
+  %= include '/include/header', title => 'Gitprep';
   <table class="project_list">
     <th>User</th>
     % my $toggle = 0;

@@ -1,4 +1,4 @@
-package Gitpub::Git;
+package Gitprep::Git;
 use Mojo::Base -base;
 
 use Carp 'croak';

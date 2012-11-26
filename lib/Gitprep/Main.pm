@@ -1,4 +1,4 @@
-package Gitpub::Main;
+package Gitprep::Main;
 use Mojo::Base 'Mojolicious::Controller';
 use File::Basename 'dirname';
 use Carp 'croak';

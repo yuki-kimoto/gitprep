@@ -17,7 +17,7 @@ Please visit http://mojolicio.us for detailed installation instructions.
 EOF
 
 # Application
-$ENV{MOJO_APP} ||= 'Gitpub';
+$ENV{MOJO_APP} ||= 'Gitprep';
 
 # Start commands
 Mojolicious::Commands->start;
