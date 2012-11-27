@@ -4,34 +4,54 @@
   %= include '/include/new_header';
   
   %= stylesheet begin
-
+    
+    /* User and repository name */
+    .user_rep {
+      font-size:140%;
+      font-weight:bold;
+      margin-top:15px;
+      margin-bottom:15px;
+    }
+    
+    /* Repository description */
+    .description {
+      padding:10px;
+      border:1px solid gray;
+      margin-top:-1px;
+    }
+    
     /* Git URL */
     .git_url {
       border: 1px solid gray;
       padding: 10px;
+      margin-top:-1px;
     }
     .git_url_zip {
       padding:5px;
       float:left;
       border:1px solid gray;
       margin-right:5px;
+      background-color:#F5F5F5;
     }
     .git_url_http {
       padding:5px;
       float:left;
       border:1px solid gray;
+      background-color:#F5F5F5;
     }
     .git_url_ssh {
       padding:5px;
       float:left;
       border:1px solid gray;
       border-left:none;
+      background-color:#F5F5F5;
     }
     .git_url_git {
       padding:5px;
       float:left;
       border:1px solid gray;
       border-left:none;
+      background-color:#F5F5F5;
     }
     .git_url_text {
       padding:5px;
@@ -48,7 +68,9 @@
     /* Code menu */
     .code_menu {
       border-bottom:1px solid black;
-      margin-bottom:20px;
+      padding-top:7px;
+      padding-bottom:7px;
+      margin-bottom:15px;
       height:30px;
     }
     .code_menu_left {
@@ -114,21 +136,23 @@
   % end
 
   <div class="main_panel">
-    <div>
+    <div class="user_rep">
       <a href="<%= url_for("/$user") %>"><%= $user %></a>
       /
       <a href="<%= url_for %>"><%= $repository %>
     </div>
     
-    <ul id="menu-item">
+    <ul class="main_menu">
       <li>Code</li>
-      <li>Issues</li>
+      <li>Network</li>
+      <li>Pull Requests 0</li>
+      <li>Issues 1</li>
       <li>Wiki</li>
+      <li>Graphs</li>
       <li>Admin</li>
     </ul>
-    <div style="clear:both"></div>
 
-    <div>Project description</div>
+    <div class="description">Project description</div>
     
     <div class="git_url">
       <div class="git_url_zip">ZIP</div>
@@ -151,7 +175,6 @@
         <div class="code_menu_tags">Tags</div>
       </div>
     </div>
-    <div style="clear:both"></div>
     
     <div class="commit_number">
       <div class="commit_number_left">
@@ -159,7 +182,6 @@
       </div>
       <div class="commit_number_right">Commit number</div>
     </div>
-    <div style="clear"></div>
     
     <div class="tree">
       <div class="tree_header">

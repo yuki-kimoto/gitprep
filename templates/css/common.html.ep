@@ -1,30 +1,82 @@
 %= stylesheet begin
+  /* reset */
+  * {
+    margin:0;
+    padding:0;
+  }
+  
   /* Header */
   .header {
-    background-color:#ccffff;
+    background-color:#F8F8FF;
     margin-bottom:10px;
     border-bottom:1px solid blue;
     height:40px;
   }
-  .header li{
-    float:left;
-    padding: 10px 20px;
+  .header_panel {
+    width:900px;
+    height:40px;
+    margin:auto;
   }
+  .header_left {
+    float:left;
+    width:400px;
+  }
+  .header_right {
+    
+  }
+  .header_home {
+    padding:10px;
+  }
+  .header_user {
+    float:right;
+    padding:10px;
+  }
+  .header_new_rep {
+    float:right;
+    padding:10px;
+  }
+  .header_account_set {
+    float:right;
+    padding:10px;
+  }
+  .header_signout {
+    float:right;
+    padding:10px;
+ }
   
   /* Main panel */
   .main_panel {
     width:900px;
-    margin: 5px auto;
+    margin:5px auto;
+  }
+  
+  /* Main menu */
+  .main_menu {
+    border:1px solid gray;
+    border-left:none;
+    list-style-type: none;
+    height:40px;
+    padding-left:0px;
+    background-color:#F5F5F5;
+  }
+  .main_menu li {
+    text-align:center;
+    padding:10px 0px;
+    float:left;
+    width:124px;
+    display:block;
+    border-left:1px solid gray;
+    height:20px;
   }
   
   /* Source tree */
   .tree {
     width:100%;
-    margin: 5px auto;
+    margin:5px auto;
     border:2px solid gray;
   }
   .tree_header {
-    background-color: #ccffff;
+    background-color: #F8F8FF;
     border-bottom: 1px solid gray;
     padding: 10px;
   }
@@ -41,7 +93,7 @@
   .tree_body {
     font-size:80%;
     width: 100%;
-    background-color: #ccffff;
+    background-color: #F8F8FF;
     padding:0;
     border-top: 1px solid blue;
     border-left: 1px solid blue;
@@ -54,7 +106,7 @@
   
   /* Footer */
   .footer {
-    background-color:#ccffff;
+    background-color:#F8F8FF;
     margin-top:10px;
     padding:10px;
     border-top:1px solid blue;
