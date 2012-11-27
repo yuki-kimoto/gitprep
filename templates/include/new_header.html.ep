@@ -7,11 +7,11 @@
       <div class="header_home"><a href="<%= url_for('/') %>">Home</a></div>
     </div>
     <div class="header_right">
-      <div class="header_signout"><a href="<%= url_for("/logout") %>">Sign out</a></div>
+      <div class="header_signout"><a href="<%= url_for("/logout") %>"><s>Sign out</s></a></div>
       <div class="header_account_set">
-        <a href="<%= url_for("/setting/profile") %>">Account setting</a>
+        <a href="<%= url_for("/setting/profile") %>"><s>Account setting</s></a>
       </div>
-      <div class="header_new_rep"><a href="<%= url_for("/new") %>">Create a new repo</a></div>
+      <div class="header_new_rep"><a href="<%= url_for("/new") %>"><s>Create a new repo</s></a></div>
       <div class="header_user"><a href="<%= url_for("/$user") %>"><%= $user %></a></div>
     </div>
   </div>
