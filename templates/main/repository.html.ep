@@ -4,27 +4,69 @@
   %= include '/include/new_header';
   
   %= stylesheet begin
-    #menu-item li {
-      float:left;
-      border: 1px solid black;
-      padding: 10px 20px;
-      margin-bottom:10px;
+    
+    /* Code menu */
+    .code_menu {
+      border-bottom:1px solid black;
+      margin-bottom:20px;
+      height:30px;
     }
-
+    .code_menu_left {
+      width:700px;
+      float:left;
+    }
+    .code_menu_current_ref {
+      float:left;
+      padding:5px 10px 5px 0px;
+    }
+    .code_menu_files {
+      float:left;
+      padding:5px 10px;
+    }
+    .code_menu_commits {
+      float:left;
+      padding:5px 10px;
+    }
+    .code_menu_branches {
+      padding:5px;
+    }
+    .code_menu_right {
+      text-align:right;
+    }
+    .code_menu_tags {
+      float:right;
+      padding:5px 10px;
+    }
+    .code_menu_downloads {
+      float:right;
+      padding:5px 10px;
+    }
+    
+    /* Commit number */
+    .commit_number {
+      font-size:120%;
+    }
+    .commit_number_left {
+      width:700px;
+      float:left;
+    }
+    .commit_number_right {
+      text-align:right;
+    }
     
     /* README */
-    #readme {
+    .readme {
       width:100%;
       margin: 5px auto;
       border:2px solid gray;
     }
-    #readme_title {
+    .readme_title {
       border-bottom:1px solid gray;
       font-size:130%;
       font-weight:bold;
       padding:10px;
     }
-    #readme_body {
+    .readme_body {
       min-height: 50px;
       font-size:120%;
       padding:10px;
@@ -33,7 +75,9 @@
 
   <div class="main_panel">
     <div>
-      <a href="<%= url_for("/$user") %>"><%= $user %></a> / <%= $repository %>
+      <a href="<%= url_for("/$user") %>"><%= $user %></a>
+      /
+      <a href="<%= url_for %>"><%= $repository %>
     </div>
     
     <ul id="menu-item">
@@ -43,17 +87,30 @@
       <li>Admin</li>
     </ul>
     <div style="clear:both"></div>
+
     <div>Project description</div>
-    <ul id="menu-item">
-      <li>Branch name</li>
-      <li>Files</li>
-      <li>Commits</li>
-      <li>Branches</li>
-      <li>Tags</li>
-    </ul>
+    
+    <div class="code_menu">
+      <div class="code_menu_left">
+        <div class="code_menu_current_ref">brach or tag</div>
+        <div class="code_menu_files">Files</div>
+        <div class="code_menu_commits">Commits</div>
+        <div class="code_menu_branches">Branches</div>
+      </div>
+      <div class="code_menu_right">
+        <div class="code_menu_downloads">Downloads</div>
+        <div class="code_menu_tags">Tags</div>
+      </div>
+    </div>
     <div style="clear:both"></div>
     
-    <div>Repository name / Commit number</div>
+    <div class="commit_number">
+      <div class="commit_number_left">
+        <a href="<%= url_for %>"><%= $repository %></a>
+      </div>
+      <div class="commit_number_right">Commit number</div>
+    </div>
+    <div style="clear"></div>
     
     <div class="tree">
       <div class="tree_header">
@@ -62,7 +119,10 @@
         </a>
       </div>
       <div class="tree_header2">
-        Latest commit message | Author | time | latest commit number
+        <div class="tree_header2_left">
+          Latest commit message | Author | time
+        </div>
+        <div class="tree_header2_right">latest commit</div>
       </div>
       <table class="tree_body">
         % for (my $i = 0; $i <@$trees; $i++) {
@@ -98,9 +158,9 @@
       </table>
     </div>
     
-    <div id="readme">
-      <div id="readme_title">README</div>
-      <div id="readme_body">
+    <div class="readme">
+      <div class="readme_title">README</div>
+      <div class="readme_body">
         README body
       </div>
     </div>

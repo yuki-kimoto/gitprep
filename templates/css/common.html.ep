@@ -31,6 +31,13 @@
   .tree_header2 {
     padding: 5px;
   }
+  .tree_header2_left {
+    width:700px;
+    float:left;
+  }
+  .tree_header2_right {
+    text-align:right;
+  }
   .tree_body {
     font-size:80%;
     width: 100%;

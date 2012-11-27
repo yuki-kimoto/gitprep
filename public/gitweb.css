@@ -17,7 +17,7 @@ a {
 }
 
 a:hover, a:visited, a:active {
-	color: #880000;
+	color: blue;
 }
 
 span.cntrl {
