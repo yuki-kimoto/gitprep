@@ -49,6 +49,7 @@
   }
   .tree_body td {
     border-bottom: 1px solid blue;
+    padding:5px;
   }
   
   /* Footer */

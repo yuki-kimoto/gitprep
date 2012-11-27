@@ -1,10 +1,50 @@
-% layout 'common';
+% layout 'new_common';
   %= include '/css/common';
   
   %= include '/include/new_header';
   
   %= stylesheet begin
-    
+
+    /* Git URL */
+    .git_url {
+      border: 1px solid gray;
+      padding: 10px;
+    }
+    .git_url_zip {
+      padding:5px;
+      float:left;
+      border:1px solid gray;
+      margin-right:5px;
+    }
+    .git_url_http {
+      padding:5px;
+      float:left;
+      border:1px solid gray;
+    }
+    .git_url_ssh {
+      padding:5px;
+      float:left;
+      border:1px solid gray;
+      border-left:none;
+    }
+    .git_url_git {
+      padding:5px;
+      float:left;
+      border:1px solid gray;
+      border-left:none;
+    }
+    .git_url_text {
+      padding:5px;
+      float:left;
+      border:1px solid gray;
+      width:300px;
+      margin-right:10px;
+      border-left:none;
+    }
+    .git_url_access {
+      padding:5px;
+    }
+      
     /* Code menu */
     .code_menu {
       border-bottom:1px solid black;
@@ -89,6 +129,15 @@
     <div style="clear:both"></div>
 
     <div>Project description</div>
+    
+    <div class="git_url">
+      <div class="git_url_zip">ZIP</div>
+      <div class="git_url_http">HTTP</div>
+      <div class="git_url_ssh">SSH</div>
+      <div class="git_url_git">Git Read-Only</div>
+      <input type="text" class="git_url_text">
+      <div class="git_url_access">Read+Write access</div>
+    </div>
     
     <div class="code_menu">
       <div class="code_menu_left">
