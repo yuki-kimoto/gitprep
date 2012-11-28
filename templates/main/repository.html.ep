@@ -1,6 +1,8 @@
 <%
   use Gitprep::API;
   
+  my $ref = 'master';
+  
   # Parameters
   my $user = param('user');
   my $repository = param('repository');
@@ -40,8 +42,10 @@
   open my $fh, '-|', $git->cmd($rep), 'ls-tree', '-z',
       ($show_sizes ? '-l' : ()), $tid
     or $api->croak('Open git-ls-tree failed');
-  local $/ = "\0";
-  @entries = map { chomp; $git->dec($_) } <$fh>;
+  {
+    local $/ = "\0";
+    @entries = map { chomp; $git->dec($_) } <$fh>;
+  }
   close $fh
     or $api->croak(404, "Reading tree failed");
   
@@ -58,6 +62,9 @@
   
   # Repository description
   my $desc = $git->repository_description($rep);
+  
+  # Commits number
+  my $commits_number = $git->commits_number($rep, $ref);
 %>
 
 % layout 'new_common';
@@ -294,7 +301,11 @@
       <div class="commit_number_left">
         <a href="<%= url_for %>"><%= $repository %></a>
       </div>
-      <div class="commit_number_right">Commit number</div>
+      <div class="commit_number_right">
+        <a href="<%= url_for("/$user/$repository/commits/master") %>">
+          <%= $commits_number %> commits
+        </a>
+      </div>
     </div>
     
     <div class="tree">

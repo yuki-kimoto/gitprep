@@ -83,6 +83,29 @@ sub cmd {
   return ($self->bin, "--git-dir=$project");
 }
 
+sub commits_number {
+  my ($self, $rep, $ref) = @_;
+  
+  # Command "git diff-tree"
+  my @cmd = ($self->cmd($rep), 'shortlog', '-s', $ref);
+  open my $fh, "-|", @cmd
+    or croak 500, "Open git-shortlog failed";
+  my @commits_infos = map { chomp; $self->dec($_) } <$fh>;
+  close $fh or croak 'Reading git-shortlog failed';
+  
+  use Data::Dumper;
+  warn Dumper \@commits_infos;
+  
+  my $commits_num = 0;
+  for my $commits_info (@commits_infos) {
+    if ($commits_info =~ /^ *([0-9]+)/) {
+      $commits_num += $1;
+    }
+  }
+  
+  return $commits_num;
+}
+
 sub file_type {
   my ($self, $mode) = @_;
   
