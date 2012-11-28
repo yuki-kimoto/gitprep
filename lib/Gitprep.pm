@@ -93,6 +93,9 @@ sub startup {
   # Branches
   $r->get('/:user/:repository/branches')->to('#branches');
 
+  # Tags
+  $r->get('/:user/:repository/tags')->to('#new_tags');
+
   # Projects
   $r->get('/(*home)/projects')->to('#projects')->name('projects');
   

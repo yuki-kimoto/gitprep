@@ -285,8 +285,8 @@
         <a href="<%= url_for("/$user/$repository/branches") %>"><div class="code_menu_branches">Branches</div></a>
       </div>
       <div class="code_menu_right">
-        <a href="<%= url_for('/tags') %>"><div class="code_menu_downloads"><s>Downloads</s></div></a>
-        <a href="<%= url_for('/downloads') %>"><div class="code_menu_tags">Tags</div></a>
+        <a href="<%= url_for("/$user/$repository/downloads") %>"><div class="code_menu_downloads"><s>Downloads</s></div></a>
+        <a href="<%= url_for("/$user/$repository/tags") %>"><div class="code_menu_tags">Tags</div></a>
       </div>
     </div>
     
