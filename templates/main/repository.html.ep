@@ -168,11 +168,10 @@
       
     /* Code menu */
     .code_menu {
-      border-bottom:1px solid black;
-      padding-top:7px;
-      padding-bottom:7px;
+      margin-top:7px;
       margin-bottom:15px;
       height:30px;
+      border-bottom:1px solid black;
     }
     .code_menu_left {
       width:700px;
@@ -180,11 +179,19 @@
     }
     .code_menu_current_ref {
       float:left;
-      padding:5px 10px 5px 0px;
+      padding:5px 10px 5px 10px;
+    }
+    .code_menu_current_ref_button {
+      border:1px solid black;
+      /* padding:3px; */
     }
     .code_menu_files {
       float:left;
       padding:5px 10px;
+      border:1px solid black;
+      border-bottom:none;
+      z-index:5;
+      background-color:#F5F5F5;
     }
     .code_menu_commits {
       float:left;
@@ -204,7 +211,7 @@
       float:right;
       padding:5px 10px;
     }
-    
+
     /* Commit number */
     .commit_number {
       font-size:120%;
@@ -246,13 +253,13 @@
     </div>
     
     <ul class="main_menu">
-      <li><a href="<%= url_for %>">Code</a></li>
-      <li><a href="<%= url_for("/$user/$repository/network") %>"><s>Network</s></a></li>
-      <li><a href="<%= url_for("/$user/$repository/pulls") %>"><s>Pull Requests 0</s></a></li>
-      <li><a href="<%= url_for("/$user/$repository/issues") %>"><s>Issues 1</s></a></li>
-      <li><a href="<%= url_for("/$user/$repository/wiki") %>"><s>Wiki</s></a></li>
-      <li><a href="<%= url_for("/$user/$repository/graphs") %>"><s>Graphs</s></a></li>
-      <li><a href="<%= url_for("/$user/$repository/admin") %>"><s>Admin</s></a></li>
+      <a href="<%= url_for %>"><li>Code</li></a>
+      <a href="<%= url_for("/$user/$repository/network") %>"><li><s>Network</s></li></a>
+      <a href="<%= url_for("/$user/$repository/pulls") %>"><li><s>Pull Requests 0</s></li></a>
+      <a href="<%= url_for("/$user/$repository/issues") %>"><li><s>Issues 1</s></li></a>
+      <a href="<%= url_for("/$user/$repository/wiki") %>"><li><s>Wiki</s></li></a>
+      <a href="<%= url_for("/$user/$repository/graphs") %>"><li><s>Graphs</s></li></a>
+      <a href="<%= url_for("/$user/$repository/admin") %>"><li><s>Admin</s></li></a>
     </ul>
 
     <div class="description"><%= $desc %></div>
@@ -268,14 +275,18 @@
     
     <div class="code_menu">
       <div class="code_menu_left">
-        <div class="code_menu_current_ref">brach or tag</div>
-        <div class="code_menu_files">Files</div>
-        <div class="code_menu_commits">Commits</div>
-        <div class="code_menu_branches">Branches</div>
+        <div class="code_menu_current_ref">
+          <div class="code_menu_current_ref_button">
+            branch <b>master</b>
+          </div>
+        </div>
+        <a href="<%= url_for %>"><div class="code_menu_files">Files</div></a>
+        <a href="<%= url_for('/commits/master') %>"><div class="code_menu_commits">Commits</div></a>
+        <a href="<%= url_for('/branches') %> %>"><div class="code_menu_branches">Branches</div></a>
       </div>
       <div class="code_menu_right">
-        <div class="code_menu_downloads">Downloads</div>
-        <div class="code_menu_tags">Tags</div>
+        <a href="<%= url_for('/tags') %>"><div class="code_menu_downloads"><s>Downloads</s></div></a>
+        <a href="<%= url_for('/downloads') %>"><div class="code_menu_tags">Tags</div></a>
       </div>
     </div>
     
