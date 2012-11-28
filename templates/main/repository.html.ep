@@ -67,12 +67,37 @@
     $(document).ready(function() {
       
       // Repository URL
+      var rep_url_bak_color = "#F5F5F5";
       var http_rep_url = "<%= url_for("/$user/$repository.git")->to_abs %>";
       var ssh_rep_url
         = "<%= url_for("/$rep_ns")->to_abs->scheme('ssh')->userinfo($user)->port(config->{ssh_port}) %>";
       var git_rep_url = "<%= url_for("/$user/$repository.git")->to_abs->scheme('git')->port('') %>";
-      $(".git_url_text").val(git_rep_url);
+      $(".git_url_text").val(http_rep_url);
       $(".git_url_http").css("background-color", "darkgray");
+      $(".git_url_http").on('click', function () {
+        $(".git_url_http").css("background-color", "darkgray");
+        $(".git_url_ssh").css("background-color", rep_url_bak_color);
+        $(".git_url_git").css("background-color", rep_url_bak_color);
+        
+        $(".git_url_text").val(http_rep_url);
+        $(".git_url_access").text("Read-only access");
+      });
+      $(".git_url_ssh").on('click', function () {
+        $(".git_url_http").css("background-color", rep_url_bak_color);
+        $(".git_url_ssh").css("background-color", "darkgray");
+        $(".git_url_git").css("background-color", rep_url_bak_color);
+        
+        $(".git_url_text").val(ssh_rep_url);
+        $(".git_url_access").text("Read-Write access");
+      });
+      $(".git_url_git").on('click', function () {
+        $(".git_url_http").css("background-color", rep_url_bak_color);
+        $(".git_url_ssh").css("background-color", rep_url_bak_color);
+        $(".git_url_git").css("background-color", "darkgray");
+        
+        $(".git_url_text").val(git_rep_url);
+        $(".git_url_access").text("Read-Only access");
+      });
       
     });
   % end
@@ -238,7 +263,7 @@
       <div class="git_url_ssh">SSH</div>
       <div class="git_url_git">Git Read-Only</div>
       <input type="text" class="git_url_text">
-      <div class="git_url_access">Read+Write access</div>
+      <div class="git_url_access">Read-only access</div>
     </div>
     
     <div class="code_menu">
