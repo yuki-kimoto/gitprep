@@ -10,25 +10,25 @@
   my $api = Gitprep::API->new($self);
   
   # Parameters
-  my $root_ns = $api->root_ns(app->root);
+  my $root_ns = $api->root_ns(config->{root});
   
-  my $project_ns = "$root_ns/$user/$repository.git";
-  my $project = "/$project_ns";
-  my $home_ns = $api->dirname($project_ns);
+  my $rep_ns = "$root_ns/$user/$repository.git";
+  my $rep = "/$rep_ns";
+  my $home_ns = $api->dirname($rep_ns);
   my $home = "/$home_ns";
 
   # Id and directory
-  my ($id, $dir) = $api->parse_id_path($project, $id_dir);
+  my ($id, $dir) = $api->parse_id_path($rep, $id_dir);
 
   # Git
   my $git = app->git;
   
   # Tree id
   my $tid;
-  my $commit = $git->parse_commit($project, $id);
+  my $commit = $git->parse_commit($rep, $id);
   unless (defined $tid) {
     if (defined $dir && $dir ne '') {
-      $tid = $git->id_by_path($project, $id, $dir, 'tree');
+      $tid = $git->id_by_path($rep, $id, $dir, 'tree');
     }
     else { $tid = $commit->{tree} }
   }
@@ -37,7 +37,7 @@
   # Get tree (command "git ls-tree")
   my @entries = ();
   my $show_sizes = 0;
-  open my $fh, '-|', $git->cmd($project), 'ls-tree', '-z',
+  open my $fh, '-|', $git->cmd($rep), 'ls-tree', '-z',
       ($show_sizes ? '-l' : ()), $tid
     or $api->croak('Open git-ls-tree failed');
   local $/ = "\0";
@@ -54,13 +54,28 @@
   }
   
   # References
-  my $refs = $git->references($project);
+  my $refs = $git->references($rep);
+  
+  # Repository description
+  my $desc = $git->repository_description($rep);
 %>
 
 % layout 'new_common';
   %= include '/css/common';
   
-  %= include '/include/new_header';
+  %= javascript begin 
+    $(document).ready(function() {
+      
+      // Repository URL
+      var http_rep_url = "<%= url_for("/$user/$repository.git")->to_abs %>";
+      var ssh_rep_url
+        = "<%= url_for("/$rep_ns")->to_abs->scheme('ssh')->userinfo($user)->port(config->{ssh_port}) %>";
+      var git_rep_url = "<%= url_for("/$user/$repository.git")->to_abs->scheme('git')->port('') %>";
+      $(".git_url_text").val(git_rep_url);
+      $(".git_url_http").css("background-color", "darkgray");
+      
+    });
+  % end
   
   %= stylesheet begin
     
@@ -84,6 +99,7 @@
       border: 1px solid gray;
       padding: 10px;
       margin-top:-1px;
+      font-size:80%;
     }
     .git_url_zip {
       padding:5px;
@@ -113,12 +129,13 @@
       background-color:#F5F5F5;
     }
     .git_url_text {
-      padding:5px;
+      padding:3px;
       float:left;
       border:1px solid gray;
       width:300px;
       margin-right:10px;
       border-left:none;
+      display:block;
     }
     .git_url_access {
       padding:5px;
@@ -194,6 +211,8 @@
     }
   % end
 
+  %= include '/include/new_header';
+
   <div class="main_panel">
     <div class="user_rep">
       <a href="<%= url_for("/$user") %>"><%= $user %></a>
@@ -211,10 +230,10 @@
       <li><a href="<%= url_for("/$user/$repository/admin") %>"><s>Admin</s></a></li>
     </ul>
 
-    <div class="description">Project description</div>
+    <div class="description"><%= $desc %></div>
     
     <div class="git_url">
-      <div class="git_url_zip">ZIP</div>
+      <div class="git_url_zip"><a href="<%= url_for('/archive/master.zip') %>"><s>ZIP</s></a></div>
       <div class="git_url_http">HTTP</div>
       <div class="git_url_ssh">SSH</div>
       <div class="git_url_git">Git Read-Only</div>
@@ -244,7 +263,7 @@
     
     <div class="tree">
       <div class="tree_header">
-        <a href="<%= url_for('commit', project => $project_ns, id => $id) %>">
+        <a href="<%= url_for('commit', project => $rep_ns, id => $id) %>">
           <%= $commit->{title} %>
         </a>
       </div>
@@ -268,11 +287,11 @@
             
             <td class="list">
               % if ($type eq 'blob') {
-                <a class="list" href="<%= url_for('blob', project => $project_ns, id_file => "$id/$file") %>">
+                <a class="list" href="<%= url_for('blob', project => $rep_ns, id_file => "$id/$file") %>">
                   <%= $name %>
                 </a>
               % } elsif ($tree) {
-                <a href="<%= url_for('tree', project => $project_ns, id_dir => "$id/$child_dir") %>">
+                <a href="<%= url_for('tree', project => $rep_ns, id_dir => "$id/$child_dir") %>">
                   <%= $name %>
                 </a>
               % }

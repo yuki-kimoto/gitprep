@@ -1,5 +1,5 @@
 <%
-  my $rep_home = app->root;;
+  my $rep_home = config->{root};
   my $users = [qw/kimoto ken/];
 %>
 

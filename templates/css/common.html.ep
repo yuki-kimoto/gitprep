@@ -114,6 +114,11 @@
     text-align:center;
   }
   
+  /* Hyper link */
+  a {
+    text-decoration:none;
+  }
+  
   /* Utility */
   .clear {
     clear:both;

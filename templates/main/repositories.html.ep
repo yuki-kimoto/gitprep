@@ -1,5 +1,5 @@
 <%
-  my $root = app->root;
+  my $root = config->{root};
   my $user = param('user');
   
   # Repositories

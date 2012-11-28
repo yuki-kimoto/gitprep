@@ -4,6 +4,7 @@
     <meta name="robots" content="index, nofollow" >
     <title>Gitprep</title>
     <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" >
+    %= javascript '/js/jquery-1.8.3.min.js';
   </head>
   <body>
     %= content;

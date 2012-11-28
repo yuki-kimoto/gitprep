@@ -393,8 +393,6 @@ sub log {
   );
 };
 
-has 'root' => '/gitpub';
-
 sub _root_ns {
   my $self = shift;
   
