@@ -1,0 +1,77 @@
+<%
+  # API
+  my $api = Gitprep::API->new($self);
+  
+  my $user = param('user');
+  my $repository = param('repository');
+
+  my $root_ns = $api->root_ns(config->{root});
+  
+  # Parameters
+  my $project_ns = "$root_ns/$user/$repository.git";
+  my $project = "/$project_ns";
+  my $home_ns = $api->dirname($project_ns);
+  my $home = "/$home_ns";
+  my $id = param('id');
+  my $page = $self->param('page');
+  $page = 0 if !defined $page;
+  
+  # Git
+  my $git = $self->app->git;
+  
+  # Commit
+  my $commit = $git->parse_commit($project, $id);
+  
+  # Commits
+  my $page_count = 20;
+  my $commits = $git->parse_commits(
+    $project, $commit->{id},$page_count, $page_count * $page);
+  for my $commit (@$commits) {
+    my $author_date
+      = $git->parse_date($commit->{author_epoch}, $commit->{author_tz});
+    $commit->{author_date} = $git->timestamp($author_date);
+  }
+  
+  # References
+  my $refs = $git->references($project);
+%>
+
+% layout 'common';
+  %= include '/include/header', title => 'Commits', project => $project;
+
+  % for my $commit (@$commits) {
+    <div class="header">
+      <a class="title" href="<%= url_for('commit', project => $project_ns, id => $commit->{id}) %>">
+        <span class="age" style="font-size:70%">
+          <%= $commit->{age_string} %>
+        </span>
+        &nbsp;
+        <%= $commit->{title} %>
+      </a>
+    </div>
+    <div class="title_text">
+      <div class="log_link">
+        <a href="<%= url_for('commit', project => $project_ns, id => $commit->{id}) %>">commit</a> |
+        <a href="<%= url_for('commitdiff', project => $project_ns, diff => $commit->{id}) %>">
+          commitdiff
+        </a>
+        |
+        <a href="<%= url_for('tree', project => $project_ns,
+            id_dir => $commit->{id}) %>">
+          tree
+        </a><br/>
+      </div>
+      <span class="author_date"><%= $commit->{author_name} %> [<%= $commit->{author_date} %>]</span>
+      <br/>
+    </div>
+    <div class="log_body">
+      %= include 'include/refs', project_ns => $project_ns, commit => $commit, refs => $refs;
+      <%= $commit->{title} %><br/>
+    <br/>
+    </div>
+  % }
+
+  <%= include '/include/page_navi2', current => 'log', id => $id,
+    page => $page, page_count => $page_count, commits => $commits,
+    project_ns => $project_ns;
+  %>

@@ -346,11 +346,20 @@ sub heads {
   );
 }
 
-sub log {
+=pod
+sub commits {
   my ($self, %opt) = @_;
+  
+  # API
+  my $api = Gitprep::API->new($self);
+  
+  my $user = $self->param('user');
+  my $repository = $self->param('repository');
 
+  my $root_ns = $api->root_ns($self->config->{root});
+  
   # Parameters
-  my $project_ns = $self->param('project');
+  my $project_ns = "$root_ns/$user/$repository.git";
   my $project = "/$project_ns";
   my $home_ns = dirname $project_ns;
   my $home = "/$home_ns";
@@ -392,6 +401,7 @@ sub log {
     page_count => $page_count
   );
 };
+=cut
 
 sub _root_ns {
   my $self = shift;
@@ -688,5 +698,55 @@ sub _quote_command {
   return join(' ',
     map { my $a = $_; $a =~ s/(['!])/'\\$1'/g; "'$a'" } @_ );
 }
+
+#---- No need ----#
+
+
+sub log {
+  my ($self, %opt) = @_;
+
+  # Parameters
+  my $project_ns = $self->param('project');
+  my $project = "/$project_ns";
+  my $home_ns = dirname $project_ns;
+  my $home = "/$home_ns";
+  my $id = $self->param('id');
+  my $page = $self->param('page');
+  $page = 0 if !defined $page;
+  my $short = $self->param('short');
+  
+  # Git
+  my $git = $self->app->git;
+  
+  # Commit
+  my $commit = $git->parse_commit($project, $id);
+  
+  # Commits
+  my $page_count = $short ? 50 : 20;
+  my $commits = $git->parse_commits(
+    $project, $commit->{id},$page_count, $page_count * $page);
+  for my $commit (@$commits) {
+    my $author_date
+      = $git->parse_date($commit->{author_epoch}, $commit->{author_tz});
+    $commit->{author_date} = $git->timestamp($author_date);
+  }
+  
+  # References
+  my $refs = $git->references($project);
+
+  # Render
+  $self->stash->{action} = 'shortlog' if $short;
+  $self->render(
+    home => $home,
+    home_ns => $home_ns,
+    project => $project,
+    project_ns => $project_ns,
+    id => $id,
+    commits => $commits,
+    refs => $refs,
+    page => $page,
+    page_count => $page_count
+  );
+};
 
 1;

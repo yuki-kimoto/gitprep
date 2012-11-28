@@ -281,7 +281,7 @@
           </div>
         </div>
         <a href="<%= url_for %>"><div class="code_menu_files">Files</div></a>
-        <a href="<%= url_for('/commits/master') %>"><div class="code_menu_commits">Commits</div></a>
+        <a href="<%= url_for("/$user/$repository/commits/master") %>"><div class="code_menu_commits">Commits</div></a>
         <a href="<%= url_for('/branches') %> %>"><div class="code_menu_branches">Branches</div></a>
       </div>
       <div class="code_menu_right">

@@ -86,8 +86,10 @@ sub startup {
   
   # Repository
   $r->get('/:user/:repository')->to('#repository');
+  
+  # Commits
+  $r->get('/:user/:repository/commits/(:id)', {id => 'HEAD'})->to('#commits');
 
-=pod  
   # Projects
   $r->get('/(*home)/projects')->to('#projects')->name('projects');
   
@@ -147,7 +149,6 @@ sub startup {
     $r->get('/snapshot/(:id)', {id => 'HEAD'})
       ->to('#snapshot')->name('snapshot');
   }
-=cut
   
   # File cache
   $git->search_projects;
