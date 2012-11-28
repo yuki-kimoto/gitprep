@@ -1,3 +1,62 @@
+<%
+  use Gitprep::API;
+  
+  # Parameters
+  my $user = param('user');
+  my $repository = param('repository');
+  my $id_dir ||= param('id_dir') || 'master/';
+
+  # API
+  my $api = Gitprep::API->new($self);
+  
+  # Parameters
+  my $root_ns = $api->root_ns(app->root);
+  
+  my $project_ns = "$root_ns/$user/$repository.git";
+  my $project = "/$project_ns";
+  my $home_ns = $api->dirname($project_ns);
+  my $home = "/$home_ns";
+
+  # Id and directory
+  my ($id, $dir) = $api->parse_id_path($project, $id_dir);
+
+  # Git
+  my $git = app->git;
+  
+  # Tree id
+  my $tid;
+  my $commit = $git->parse_commit($project, $id);
+  unless (defined $tid) {
+    if (defined $dir && $dir ne '') {
+      $tid = $git->id_by_path($project, $id, $dir, 'tree');
+    }
+    else { $tid = $commit->{tree} }
+  }
+  $self->render_not_found unless defined $tid;
+
+  # Get tree (command "git ls-tree")
+  my @entries = ();
+  my $show_sizes = 0;
+  open my $fh, '-|', $git->cmd($project), 'ls-tree', '-z',
+      ($show_sizes ? '-l' : ()), $tid
+    or $api->croak('Open git-ls-tree failed');
+  local $/ = "\0";
+  @entries = map { chomp; $git->dec($_) } <$fh>;
+  close $fh
+    or $api->croak(404, "Reading tree failed");
+  
+  # Parse tree
+  my $trees;
+  for my $line (@entries) {
+    my $tree = $git->parse_ls_tree_line($line, -z => 1, -l => $show_sizes);
+    $tree->{mode_str} = $git->_mode_str($tree->{mode});
+    push @$trees, $tree;
+  }
+  
+  # References
+  my $refs = $git->references($project);
+%>
+
 % layout 'new_common';
   %= include '/css/common';
   

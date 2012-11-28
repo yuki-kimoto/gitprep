@@ -8,6 +8,8 @@ use Gitprep::Git;
 
 has 'git';
 
+has 'root' => '/gitpub';
+
 sub startup {
   my $self = shift;
   

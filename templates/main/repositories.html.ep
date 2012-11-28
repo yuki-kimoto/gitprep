@@ -1,3 +1,11 @@
+<%
+  my $root = app->root;
+  my $user = param('user');
+  
+  # Repositories
+  my $reps = app->git->repositories("/$root/$user");
+%>
+
 % layout 'common';
   %= include '/include/header', title => 'Repositories';
   <table class="project_list">
