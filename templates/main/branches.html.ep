@@ -1,0 +1,8 @@
+% layout 'common';
+  %= include '/include/header', title => 'Branches', project => $project;
+  %= include '/include/current_directory', home_ns => $home_ns, home => $home;
+  %= include '/include/page_navi', project_ns => $project_ns, current => 'heads';
+  <div class="header">
+    <a class="title" href="<%= url_for('heads', project => $project_ns) %>">Heads</a>
+  </div>
+  %= include '/include/heads', project_ns => $project_ns, heads => $heads;

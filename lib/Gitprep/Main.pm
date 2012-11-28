@@ -346,6 +346,39 @@ sub heads {
   );
 }
 
+sub branches {
+  my $self = shift;
+
+  # API
+  my $api = Gitprep::API->new($self);
+
+  my $user = $self->param('user');
+  my $repository = $self->param('repository');
+
+  my $root_ns = $api->root_ns($self->config->{root});
+  
+  # Parameters
+  my $project_ns = "$root_ns/$user/$repository.git";
+  my $project = "/$project_ns";
+  my $home_ns = $api->dirname($project_ns);
+  my $home = "/$home_ns";
+  
+  # Git
+  my $git = $self->app->git;
+  
+  # Ref names
+  my $heads  = $git->heads($project);
+  
+  # Render
+  $self->render(
+    home => $home,
+    home_ns => $home_ns,
+    project => $project,
+    project_ns => $project_ns,
+    heads => $heads,
+  );
+}
+
 =pod
 sub commits {
   my ($self, %opt) = @_;
