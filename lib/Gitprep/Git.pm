@@ -572,7 +572,7 @@ sub latest_commit_log {
   my @cmd = ($self->cmd($rep), '--no-pager', 'log',
     '-n', '1',
     '--pretty=format:%H - %an - %ar : %s', 
-    $ref, $file);
+    $ref, '--', $file);
   open my $fh, '-|', @cmd
     or croak 'Open git-log failed';
   
