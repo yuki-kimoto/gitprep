@@ -54,6 +54,11 @@
   for my $line (@entries) {
     my $tree = $git->parse_ls_tree_line($line, -z => 1, -l => $show_sizes);
     $tree->{mode_str} = $git->_mode_str($tree->{mode});
+    
+    # Commit log
+    my $commit_log = $git->latest_commit_log($rep, $ref, $tree->{name});
+    $tree = {%$tree, %$commit_log};
+    
     push @$trees, $tree;
   }
   
@@ -316,7 +321,7 @@
       </div>
       <div class="tree_header2">
         <div class="tree_header2_left">
-          Latest commit message | Author | time
+          Author | time
         </div>
         <div class="tree_header2_right">latest commit</div>
       </div>
@@ -344,10 +349,13 @@
               % }
             </td>
             <td>
-              Latest commit time
+              <%= $tree->{author_date} %>
             </td>
             <td>
-              Latest commit comment[author]
+              <a href="<%= url_for("/$user/$repository/commit/$tree->{commit}") %>">
+                <%= $tree->{comment} %>
+              </a>
+              [<%= $tree->{author} %>]
             </td>
           </tr>
         % }

@@ -93,9 +93,6 @@ sub commits_number {
   my @commits_infos = map { chomp; $self->dec($_) } <$fh>;
   close $fh or croak 'Reading git-shortlog failed';
   
-  use Data::Dumper;
-  warn Dumper \@commits_infos;
-  
   my $commits_num = 0;
   for my $commits_info (@commits_infos) {
     if ($commits_info =~ /^ *([0-9]+)/) {
@@ -565,6 +562,35 @@ sub id_set_multi {
   if (!exists $cid->{$key}) { $cid->{$key} = $value }
   elsif (!ref $cid->{$key}) { $cid->{$key} = [ $cid->{$key}, $value ] }
   else { push @{$cid->{$key}}, $value }
+}
+
+sub latest_commit_log {
+  my ($self, $rep, $ref, $file) = @_;
+  
+  my $commit_log = {};
+  
+  my @cmd = ($self->cmd($rep), '--no-pager', 'log',
+    '-n', '1',
+    '--pretty=format:%H - %an - %ar : %s', 
+    $ref, $file);
+  open my $fh, '-|', @cmd
+    or croak 'Open git-log failed';
+  
+  local $/;
+  my $commit_log_text = $self->dec(scalar <$fh>);
+
+  if ($commit_log_text =~ /^([0-9a-zA-Z]+) - (.+) - (.+?) : (.+)/) {
+    $commit_log->{commit} = $1;
+    $commit_log->{author} = $2;
+    $commit_log->{author_date} = $3;
+    $commit_log->{comment} = substr($4, 0, 60) . '...';
+  }
+  
+  $commit_log->{author_date} =~ s/,.*$//;
+  $commit_log->{author_date} =~ s/ +ago.*$//;
+  $commit_log->{author_date} .= ' ago';
+  
+  return $commit_log;
 }
 
 sub parse_commit {
