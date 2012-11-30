@@ -114,17 +114,29 @@
   .tree_body {
     font-size:80%;
     width: 100%;
-    background-color: #F8F8FF;
+    background-color:#F8F8FF;
     padding:0;
   }
   .tree_body td {
-    border-bottom: 1px solid #DCDCDC;
+    border-bottom:1px solid #DCDCDC;
     padding:5px;
   }
-  .tree_td_file a {
+  .tree_td_blob a {
+    background-image:url(<%= url_for('/image/file_min.png') %>);
     text-decoration:none;
+    background-repeat:no-repeat;
+    padding-left:25px;
   }
-  .tree_td_file a:hover{
+  .tree_td_blob a:hover{
+    text-decoration:underline;
+  }
+  .tree_td_dir a {
+    background-image:url(<%= url_for('/image/folder_min.png') %>);
+    text-decoration:none;
+    background-repeat:no-repeat; 
+    padding-left:25px;
+  }
+  .tree_td_dir a:hover{
     text-decoration:underline;
   }
   .tree_td_commit a {
