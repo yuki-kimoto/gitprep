@@ -328,12 +328,12 @@
           <b><%= $latest_commit_log->{author} %></b> <span class="tree_header2_left_right">authored <%= $latest_commit_log->{author_date} %></span>
         </div>
         <div class="tree_header2_right">
-          <a href="<%= url_for("/$user/$rep/commit/$commit->{id}") %>">
+          <a href="<%= url_for("/$user/$repository/commit/$commit->{id}") %>">
             latest commit <%= substr($commit->{id}, 0, 10) %>
           </a>
         </div>
       </div>
-      <table class="tree_body">
+      <table>
         % for (my $i = 0; $i <@$trees; $i++) {
           
           % my $tree = $trees->[$i];
@@ -345,13 +345,13 @@
             % my $file = defined $dir ? "$dir/$name" : $name;
             % $file =~ s/^\///;
             
-            <td class="list">
+            <td>
               % if ($type eq 'blob') {
-                <a class="list" href="<%= url_for('blob', project => $rep_ns, id_file => "$id/$file") %>">
+                <a href="<%= url_for("/$user/$repository/blob/$ref/$name") %>">
                   <%= $name %>
                 </a>
               % } elsif ($tree) {
-                <a href="<%= url_for('tree', project => $rep_ns, id_dir => "$id/$child_dir") %>">
+                <a href="<%= url_for("/$user/$repository/tree/$ref/$child_dir") %>">
                   <%= $name %>
                 </a>
               % }
