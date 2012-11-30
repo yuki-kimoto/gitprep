@@ -3,17 +3,16 @@
 % end
 <div class="header">
   <div class="header_panel">
-    <div class="header_left">
-      <div class="header_home"><a href="<%= url_for('/') %>">Home</a></div>
-    </div>
-    <div class="header_right">
-      <div class="header_signout"><a href="<%= url_for("/logout") %>"><s>Sign out</s></a></div>
-      <div class="header_account_set">
+    <ul class="header_left">
+      <li><a href="<%= url_for('/') %>">Home</a></li>
+    </ul>
+    <ul class="header_right">
+      <li><a href="<%= url_for("/logout") %>"><s>Sign out</s></a></li>
+      <li>
         <a href="<%= url_for("/setting/profile") %>"><s>Account setting</s></a>
-      </div>
-      <div class="header_new_rep"><a href="<%= url_for("/new") %>"><s>Create a new repo</s></a></div>
-      <div class="header_user"><a href="<%= url_for("/$user") %>"><%= $user %></a></div>
-    </div>
+      </li>
+      <li><a href="<%= url_for("/new") %>"><s>Create a new repo</s></a></li>
+      <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
+    </ul>
   </div>
 </div>
-<div style="clear:both"/>

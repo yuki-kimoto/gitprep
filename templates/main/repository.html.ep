@@ -35,7 +35,7 @@
     else { $tid = $commit->{tree} }
   }
   $self->render_not_found unless defined $tid;
-
+  
   # Get tree (command "git ls-tree")
   my @entries = ();
   my $show_sizes = 0;
@@ -48,6 +48,9 @@
   }
   close $fh
     or $api->croak(404, "Reading tree failed");
+    
+  # Commit log
+  my $latest_commit_log = $git->latest_commit_log($rep, $ref);
   
   # Parse tree
   my $trees;
@@ -211,6 +214,7 @@
     }
     .code_menu_branches {
       padding:5px;
+      float:left;
     }
     .code_menu_right {
       text-align:right;
@@ -261,17 +265,17 @@
     <div class="user_rep">
       <a href="<%= url_for("/$user") %>"><%= $user %></a>
       /
-      <a href="<%= url_for %>"><%= $repository %>
+      <a href="<%= url_for %>"><%= $repository %></a>
     </div>
     
     <ul class="main_menu">
-      <a href="<%= url_for %>"><li>Code</li></a>
-      <a href="<%= url_for("/$user/$repository/network") %>"><li><s>Network</s></li></a>
-      <a href="<%= url_for("/$user/$repository/pulls") %>"><li><s>Pull Requests 0</s></li></a>
-      <a href="<%= url_for("/$user/$repository/issues") %>"><li><s>Issues 1</s></li></a>
-      <a href="<%= url_for("/$user/$repository/wiki") %>"><li><s>Wiki</s></li></a>
-      <a href="<%= url_for("/$user/$repository/graphs") %>"><li><s>Graphs</s></li></a>
-      <a href="<%= url_for("/$user/$repository/admin") %>"><li><s>Admin</s></li></a>
+      <li><a href="<%= url_for %>">Code</a></li>
+      <li><a href="<%= url_for("/$user/$repository/network") %>"><s>Network</s></a></li>
+      <li><a href="<%= url_for("/$user/$repository/pulls") %>"><s>Pull Requests 0</s></a></li>
+      <li><a href="<%= url_for("/$user/$repository/issues") %>"><s>Issues 1</s></a></li>
+      <li><a href="<%= url_for("/$user/$repository/wiki") %>"><s>Wiki</s></a></li>
+      <li><a href="<%= url_for("/$user/$repository/graphs") %>"><s>Graphs</s></a></li>
+      <li><a href="<%= url_for("/$user/$repository/admin") %>"><s>Admin</s></a></li>
     </ul>
 
     <div class="description"><%= $desc %></div>
@@ -321,9 +325,13 @@
       </div>
       <div class="tree_header2">
         <div class="tree_header2_left">
-          Author | time
+          <b><%= $latest_commit_log->{author} %></b> <span class="tree_header2_left_right">authored <%= $latest_commit_log->{author_date} %></span>
         </div>
-        <div class="tree_header2_right">latest commit</div>
+        <div class="tree_header2_right">
+          <a href="<%= url_for("/$user/$rep/commit/$commit->{id}") %>">
+            latest commit <%= substr($commit->{id}, 0, 10) %>
+          </a>
+        </div>
       </div>
       <table class="tree_body">
         % for (my $i = 0; $i <@$trees; $i++) {

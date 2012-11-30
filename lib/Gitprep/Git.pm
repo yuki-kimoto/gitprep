@@ -568,6 +568,7 @@ sub latest_commit_log {
   my ($self, $rep, $ref, $file) = @_;
   
   my $commit_log = {};
+  $file = '' unless defined $file;
   
   my @cmd = ($self->cmd($rep), '--no-pager', 'log',
     '-n', '1',
