@@ -98,6 +98,9 @@ sub startup {
 
   # Tags
   $r->get('/:user/:repository/tags')->to('#new_tags');
+  
+  # Tree
+  $r->get('/:user/:repository/tree/(*id_dir)')->to('#new_tree');
 
   # Projects
   $r->get('/(*home)/projects')->to('#projects')->name('projects');
