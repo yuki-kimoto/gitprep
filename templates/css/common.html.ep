@@ -34,6 +34,14 @@
   .header_right li a{
     display:block;
   }
+
+  /* User and repository name */
+  .user_rep {
+    font-size:140%;
+    font-weight:bold;
+    margin-top:15px;
+    margin-bottom:15px;
+  }
   
   /* Main panel */
   .main_panel {

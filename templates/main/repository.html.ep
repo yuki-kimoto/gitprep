@@ -78,6 +78,8 @@
   # README
   my $readme = $git->blob_plain($rep, $ref, 'README');
   
+  # Global variable
+  stash(user => $user, repository => $repository);
 %>
 
 % layout 'new_common';
@@ -123,14 +125,6 @@
   % end
   
   %= stylesheet begin
-    
-    /* User and repository name */
-    .user_rep {
-      font-size:140%;
-      font-weight:bold;
-      margin-top:15px;
-      margin-bottom:15px;
-    }
     
     /* Repository description */
     .description {
@@ -264,21 +258,7 @@
   %= include '/include/new_header';
 
   <div class="main_panel">
-    <div class="user_rep">
-      <a href="<%= url_for("/$user") %>"><%= $user %></a>
-      /
-      <a href="<%= url_for %>"><%= $repository %></a>
-    </div>
-    
-    <ul class="main_menu">
-      <li><a href="<%= url_for %>">Code</a></li>
-      <li><a href="<%= url_for("/$user/$repository/network") %>"><s>Network</s></a></li>
-      <li><a href="<%= url_for("/$user/$repository/pulls") %>"><s>Pull Requests 0</s></a></li>
-      <li><a href="<%= url_for("/$user/$repository/issues") %>"><s>Issues 1</s></a></li>
-      <li><a href="<%= url_for("/$user/$repository/wiki") %>"><s>Wiki</s></a></li>
-      <li><a href="<%= url_for("/$user/$repository/graphs") %>"><s>Graphs</s></a></li>
-      <li><a href="<%= url_for("/$user/$repository/admin") %>"><s>Admin</s></a></li>
-    </ul>
+    %= include '/include/sub_header';
 
     <div class="description"><%= $desc %></div>
     
@@ -383,6 +363,4 @@
     </div>
   </div>
   
-  <div class="footer">
-    <a href="https://github.com/yuki-kimoto/gitprep">Gitprep</a>
-  </div>
+  %= include '/include/footer';

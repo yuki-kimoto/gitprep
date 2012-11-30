@@ -34,44 +34,54 @@
   
   # References
   my $refs = $git->references($project);
+  
+  # Global variable
+  stash(user => $user, repository => $repository);
 %>
 
-% layout 'common';
-  %= include '/include/header', title => 'Commits', project => $project;
+% layout 'new_common';
+  %= include '/css/common';
+  %= include '/include/new_header';
 
-  % for my $commit (@$commits) {
-    <div class="header">
-      <a class="title" href="<%= url_for('commit', project => $project_ns, id => $commit->{id}) %>">
-        <span class="age" style="font-size:70%">
-          <%= $commit->{age_string} %>
-        </span>
-        &nbsp;
-        <%= $commit->{title} %>
-      </a>
-    </div>
-    <div class="title_text">
-      <div class="log_link">
-        <a href="<%= url_for('commit', project => $project_ns, id => $commit->{id}) %>">commit</a> |
-        <a href="<%= url_for('commitdiff', project => $project_ns, diff => $commit->{id}) %>">
-          commitdiff
+  <div class="main_panel">
+    %= include '/include/sub_header';
+
+    % for my $commit (@$commits) {
+      <div class="header">
+        <a class="title" href="<%= url_for('commit', project => $project_ns, id => $commit->{id}) %>">
+          <span class="age" style="font-size:70%">
+            <%= $commit->{age_string} %>
+          </span>
+          &nbsp;
+          <%= $commit->{title} %>
         </a>
-        |
-        <a href="<%= url_for('tree', project => $project_ns,
-            id_dir => $commit->{id}) %>">
-          tree
-        </a><br/>
       </div>
-      <span class="author_date"><%= $commit->{author_name} %> [<%= $commit->{author_date} %>]</span>
+      <div class="title_text">
+        <div class="log_link">
+          <a href="<%= url_for('commit', project => $project_ns, id => $commit->{id}) %>">commit</a> |
+          <a href="<%= url_for('commitdiff', project => $project_ns, diff => $commit->{id}) %>">
+            commitdiff
+          </a>
+          |
+          <a href="<%= url_for('tree', project => $project_ns,
+              id_dir => $commit->{id}) %>">
+            tree
+          </a><br/>
+        </div>
+        <span class="author_date"><%= $commit->{author_name} %> [<%= $commit->{author_date} %>]</span>
+        <br/>
+      </div>
+      <div class="log_body">
+        %= include 'include/refs', project_ns => $project_ns, commit => $commit, refs => $refs;
+        <%= $commit->{title} %><br/>
       <br/>
-    </div>
-    <div class="log_body">
-      %= include 'include/refs', project_ns => $project_ns, commit => $commit, refs => $refs;
-      <%= $commit->{title} %><br/>
-    <br/>
-    </div>
-  % }
+      </div>
+    % }
 
-  <%= include '/include/page_navi2', current => 'log', id => $id,
-    page => $page, page_count => $page_count, commits => $commits,
-    project_ns => $project_ns;
-  %>
+    <%= include '/include/page_navi2', current => 'log', id => $id,
+      page => $page, page_count => $page_count, commits => $commits,
+      project_ns => $project_ns;
+    %>
+  </div>
+  
+  %= include '/include/footer';
