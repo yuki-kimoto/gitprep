@@ -1,7 +1,7 @@
+<!doctype html>
 <html>
   <head>
-    <meta http-equiv="content-type" content="text/html;charset=UTF-8">
-    <meta name="robots" content="index, nofollow" >
+    <meta charset="UTF-8">
     <title>Gitprep</title>
     <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" >
     %= javascript '/js/jquery-1.8.3.min.js';
