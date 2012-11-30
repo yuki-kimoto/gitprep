@@ -120,6 +120,8 @@
   .tree_body td {
     border-bottom:1px solid #DCDCDC;
     padding:5px;
+    padding-top:9px;
+    padding-bottom:9px;
   }
   .tree_td_blob a {
     background-image:url(<%= url_for('/image/file_min.png') %>);
