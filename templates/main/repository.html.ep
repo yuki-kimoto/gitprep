@@ -64,6 +64,7 @@
     
     push @$trees, $tree;
   }
+  $trees = [sort {$b->{type} cmp $a->{type} || $a->{name} cmp $b->{name}} @$trees];
   
   # References
   my $refs = $git->references($rep);
