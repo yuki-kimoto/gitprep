@@ -179,49 +179,15 @@
     .git_url_access {
       padding:5px;
     }
-      
+    
     /* Code menu */
-    .code_menu {
-      margin-top:7px;
-      margin-bottom:15px;
-      height:30px;
-      overflow:hidden;
-    }
-    .code_menu_left {
-      width:700px;
-      float:left;
-      overflow:hidden;
-    }
-    .code_menu_current_ref {
-      float:left;
-      padding:5px 10px 10px 10px;
-    }
-    .code_menu_current_ref_button {
-      padding:1px;
-      border:1px solid black;
-    }
-    .code_menu_left li {
-      float:left;
-      padding:5px 10px;
-    }
     .code_menu_files {
       border:1px solid black;
       border-bottom:none;
       background-color:white;
       font-weight:bold;
     }
-    .code_menu_right {
-      text-align:right;
-      overflow:hidden;
-    }
-    .code_menu_right li {
-      float:right;
-      padding:5px 10px;
-    }
-    .code_menu_under {
-      border-top:1px solid black;
-    }
-
+      
     /* Commit number */
     .commit_number {
       font-size:120%;
@@ -271,24 +237,7 @@
       <div class="git_url_access">Read-only access</div>
     </div>
     
-    <div class="code_menu">
-      <ul class="code_menu_left">
-        <li class="code_menu_current_ref">
-          <div class="code_menu_current_ref_button">
-            branch <b>master</b>
-          </div>
-        </li>
-        <li class="code_menu_files"><a href="<%= url_for %>">Files</a></li>
-        <li class="code_menu_commits"><a href="<%= url_for("/$user/$repository/commits/master") %>">Commits</a></li>
-        <li class="code_menu_branches"><a href="<%= url_for("/$user/$repository/branches") %>">Branches</a></li>
-      </ul>
-      <ul class="code_menu_right">
-        <li class="code_menu_downloads"><a href="<%= url_for("/$user/$repository/downloads") %>"><s>Downloads</s></a></li>
-        <li class="code_menu_tags"><a href="<%= url_for("/$user/$repository/tags") %>">Tags</a></li>
-      </ul>
-      <div class="code_menu_under"></div>
-    </div>
-    
+    %= include '/include/code_menu';
     
     <div class="commit_number">
       <div class="commit_number_left">

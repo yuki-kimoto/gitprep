@@ -1,0 +1,17 @@
+<div class="code_menu">
+  <ul class="code_menu_left">
+    <li class="code_menu_current_ref">
+      <div class="code_menu_current_ref_button">
+        branch <b>master</b>
+      </div>
+    </li>
+    <li class="code_menu_files"><a href="<%= url_for %>">Files</a></li>
+    <li class="code_menu_commits"><a href="<%= url_for("/$user/$repository/commits/master") %>">Commits</a></li>
+    <li class="code_menu_branches"><a href="<%= url_for("/$user/$repository/branches") %>">Branches</a></li>
+  </ul>
+  <ul class="code_menu_right">
+    <li class="code_menu_downloads"><a href="<%= url_for("/$user/$repository/downloads") %>"><s>Downloads</s></a></li>
+    <li class="code_menu_tags"><a href="<%= url_for("/$user/$repository/tags") %>">Tags</a></li>
+  </ul>
+  <div class="code_menu_under"></div>
+</div>

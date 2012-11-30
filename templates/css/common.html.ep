@@ -73,6 +73,43 @@
     padding:10px 0px;
   }
   
+  /* Code menu */
+  .code_menu {
+    margin-top:7px;
+    margin-bottom:15px;
+    height:30px;
+    overflow:hidden;
+  }
+  .code_menu_left {
+    width:700px;
+    float:left;
+    overflow:hidden;
+  }
+  .code_menu_current_ref {
+    float:left;
+    padding:5px 10px 10px 10px;
+  }
+  .code_menu_current_ref_button {
+    padding:1px;
+    border:1px solid black;
+  }
+  .code_menu_left li {
+    float:left;
+    padding:5px 10px;
+  }
+  .code_menu_right {
+    text-align:right;
+    overflow:hidden;
+  }
+  .code_menu_right li {
+    float:right;
+    padding:5px 10px;
+  }
+  .code_menu_under {
+    border-top:1px solid black;
+  }
+    
+  
   /* Source tree */
   .tree {
     width:100%;

@@ -41,10 +41,23 @@
 
 % layout 'new_common';
   %= include '/css/common';
+  
+  %= stylesheet begin
+    /* Code menu */
+    .code_menu_commits {
+      border:1px solid black;
+      border-bottom:none;
+      background-color:white;
+      font-weight:bold;
+    }
+  % end
+  
   %= include '/include/new_header';
 
   <div class="main_panel">
     %= include '/include/sub_header';
+    
+    %= include '/include/code_menu';
 
     % for my $commit (@$commits) {
       <div class="header">
