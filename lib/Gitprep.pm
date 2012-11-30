@@ -101,6 +101,9 @@ sub startup {
   
   # Tree
   $r->get('/:user/:repository/tree/(*id_dir)')->to('#new_tree');
+  
+  # Blob
+  $r->get('/:user/:repository/blob/(*id_file)')->to('#new_blob');
 
   # Projects
   $r->get('/(*home)/projects')->to('#projects')->name('projects');

@@ -4,103 +4,6 @@ use File::Basename 'dirname';
 use Carp 'croak';
 use Gitprep::API;
 
-sub blob {
-  my $self = shift;
-
-  # Parameters
-  my $project_ns = $self->param('project');
-  my $project = "/$project_ns";
-  my $home_ns = dirname $project_ns;
-  my $home = "/$home_ns";
-  my $id_file = $self->param('id_file');
-
-  # Id and file
-  my ($id, $file) = $self->_parse_id_path($project, $id_file);
-
-  # Git
-  my $git = $self->app->git;
-
-  # Blob content
-  my $bid = $git->id_by_path($project, $id, $file, 'blob')
-    or croak 'Cannot find file';
-  my @cmd = ($git->cmd($project), 'cat-file', 'blob', $bid);
-  open my $fh, '-|', @cmd
-    or croak qq/Couldn't cat "$file", "$bid"/;
-  
-  # Blob plain
-  if ($self->stash('plain')) {
-    # Content type
-    my $type = $git->blob_contenttype($fh, $file);
-
-    # Convert text/* content type to text/plain
-    if ($self->config('prevent_xss') &&
-      ($type =~ m#^text/[a-z]+\b(.*)$# ||
-      ($type =~ m#^[a-z]+/[a-z]\+xml\b(.*)$# && -T $fh)))
-    {
-      my $rest = $1;
-      $rest = defined $rest ? $rest : '';
-      $type = "text/plain$rest";
-    }
-
-    # File name
-    my $file_name = $id;
-    if (defined $file) { $file_name = $file }
-    elsif ($type =~ m/^text\//) { $file_name .= '.txt' }
-    
-    # Content
-    my $content = do { local $/; <$fh> };
-    my $sandbox = $self->config('prevent_xss') &&
-      $type !~ m#^(?:text/[a-z]+|image/(?:gif|png|jpeg))(?:[ ;]|$)#;
-    my $content_disposition = $sandbox ? 'attachment' : 'inline';
-    $content_disposition .= "; filename=$file_name";
-    
-    # Render
-    $self->res->headers->content_disposition($content_disposition);
-    $self->res->headers->content_type($type);
-    $self->render_data($content);
-  }
-  
-  # Blob
-  else {
-    # MIME type
-    my $mimetype = $git->blob_mimetype($fh, $file);
-    
-    # Redirect to blob-plain if no display MIME type
-    if ($mimetype !~ m#^(?:text/|image/(?:gif|png|jpeg)$)# && -B $fh) {
-      close $fh;
-      my $url = $self->url_for('blob_plain',
-        project => $project_ns, id_file => "$id/$file");
-      
-      return $self->redirect_to($url);
-    }
-    
-    # Commit
-    my $commit = $git->parse_commit($project, $id);
-
-    # Parse line
-    my @lines;
-    while (my $line = $git->dec(scalar <$fh>)) {
-      chomp $line;
-      $line = $git->_tab_to_space($line);
-      push @lines, $line;
-    }
-    
-    # Render
-    $self->render(
-      home => $home,
-      home_ns => $home_ns,
-      project => $project,
-      project_ns => $project_ns,
-      commit => $commit,
-      id => $id,
-      file => $file,
-      bid => $bid,
-      lines => \@lines,
-      mimetype => $mimetype
-    );
-  }
-}
-
 sub blobdiff {
   my $self = shift;
 
@@ -422,70 +325,6 @@ sub tag {
   );
 }
 
-sub tree {
-  my $self = shift;
-  
-  # Parameters
-  my $project_ns = $self->param('project');
-  my $project = "/$project_ns";
-  my $home_ns = dirname $project_ns;
-  my $home = "/$home_ns";
-  my $id_dir = $self->param('id_dir');
-
-  # Id and directory
-  my ($id, $dir) = $self->_parse_id_path($project, $id_dir);
-
-  # Git
-  my $git = $self->app->git;
-  
-  # Tree id
-  my $tid;
-  my $commit = $git->parse_commit($project, $id);
-  unless (defined $tid) {
-    if (defined $dir && $dir ne '') {
-      $tid = $git->id_by_path($project, $id, $dir, 'tree');
-    }
-    else { $tid = $commit->{tree} }
-  }
-  $self->render_not_found unless defined $tid;
-
-  # Get tree (command "git ls-tree")
-  my @entries = ();
-  my $show_sizes = 0;
-  open my $fh, '-|', $git->cmd($project), 'ls-tree', '-z',
-      ($show_sizes ? '-l' : ()), $tid
-    or croak 'Open git-ls-tree failed';
-  local $/ = "\0";
-  @entries = map { chomp; $git->dec($_) } <$fh>;
-  close $fh
-    or croak 404, "Reading tree failed";
-  
-  # Parse tree
-  my @trees;
-  for my $line (@entries) {
-    my $tree = $git->parse_ls_tree_line($line, -z => 1, -l => $show_sizes);
-    $tree->{mode_str} = $git->_mode_str($tree->{mode});
-    push @trees, $tree;
-  }
-  
-  # References
-  my $refs = $git->references($project);
-  
-  # Render
-  $self->render(
-    home => $home,
-    home_ns => $home_ns,
-    project => $project,
-    project_ns => $project_ns,
-    dir => $dir,
-    id => $id,
-    tid => $tid,
-    commit => $commit,
-    trees => \@trees,
-    refs => $refs
-  );
-}
-
 sub _parse_blobdiff_lines {
   my ($self, $lines_raw) = @_;
   
@@ -797,4 +636,166 @@ sub commit {
     difftrees => $difftrees,
   );
 }
+
+sub tree {
+  my $self = shift;
+  
+  # Parameters
+  my $project_ns = $self->param('project');
+  my $project = "/$project_ns";
+  my $home_ns = dirname $project_ns;
+  my $home = "/$home_ns";
+  my $id_dir = $self->param('id_dir');
+
+  # Id and directory
+  my ($id, $dir) = $self->_parse_id_path($project, $id_dir);
+
+  # Git
+  my $git = $self->app->git;
+  
+  # Tree id
+  my $tid;
+  my $commit = $git->parse_commit($project, $id);
+  unless (defined $tid) {
+    if (defined $dir && $dir ne '') {
+      $tid = $git->id_by_path($project, $id, $dir, 'tree');
+    }
+    else { $tid = $commit->{tree} }
+  }
+  $self->render_not_found unless defined $tid;
+
+  # Get tree (command "git ls-tree")
+  my @entries = ();
+  my $show_sizes = 0;
+  open my $fh, '-|', $git->cmd($project), 'ls-tree', '-z',
+      ($show_sizes ? '-l' : ()), $tid
+    or croak 'Open git-ls-tree failed';
+  local $/ = "\0";
+  @entries = map { chomp; $git->dec($_) } <$fh>;
+  close $fh
+    or croak 404, "Reading tree failed";
+  
+  # Parse tree
+  my @trees;
+  for my $line (@entries) {
+    my $tree = $git->parse_ls_tree_line($line, -z => 1, -l => $show_sizes);
+    $tree->{mode_str} = $git->_mode_str($tree->{mode});
+    push @trees, $tree;
+  }
+  
+  # References
+  my $refs = $git->references($project);
+  
+  # Render
+  $self->render(
+    home => $home,
+    home_ns => $home_ns,
+    project => $project,
+    project_ns => $project_ns,
+    dir => $dir,
+    id => $id,
+    tid => $tid,
+    commit => $commit,
+    trees => \@trees,
+    refs => $refs
+  );
+}
+
+sub blob {
+  my $self = shift;
+
+  # Parameters
+  my $project_ns = $self->param('project');
+  my $project = "/$project_ns";
+  my $home_ns = dirname $project_ns;
+  my $home = "/$home_ns";
+  my $id_file = $self->param('id_file');
+
+  # Id and file
+  my ($id, $file) = $self->_parse_id_path($project, $id_file);
+
+  # Git
+  my $git = $self->app->git;
+
+  # Blob content
+  my $bid = $git->id_by_path($project, $id, $file, 'blob')
+    or croak 'Cannot find file';
+  my @cmd = ($git->cmd($project), 'cat-file', 'blob', $bid);
+  open my $fh, '-|', @cmd
+    or croak qq/Couldn't cat "$file", "$bid"/;
+  
+  # Blob plain
+  if ($self->stash('plain')) {
+    # Content type
+    my $type = $git->blob_contenttype($fh, $file);
+
+    # Convert text/* content type to text/plain
+    if ($self->config('prevent_xss') &&
+      ($type =~ m#^text/[a-z]+\b(.*)$# ||
+      ($type =~ m#^[a-z]+/[a-z]\+xml\b(.*)$# && -T $fh)))
+    {
+      my $rest = $1;
+      $rest = defined $rest ? $rest : '';
+      $type = "text/plain$rest";
+    }
+
+    # File name
+    my $file_name = $id;
+    if (defined $file) { $file_name = $file }
+    elsif ($type =~ m/^text\//) { $file_name .= '.txt' }
+    
+    # Content
+    my $content = do { local $/; <$fh> };
+    my $sandbox = $self->config('prevent_xss') &&
+      $type !~ m#^(?:text/[a-z]+|image/(?:gif|png|jpeg))(?:[ ;]|$)#;
+    my $content_disposition = $sandbox ? 'attachment' : 'inline';
+    $content_disposition .= "; filename=$file_name";
+    
+    # Render
+    $self->res->headers->content_disposition($content_disposition);
+    $self->res->headers->content_type($type);
+    $self->render_data($content);
+  }
+  
+  # Blob
+  else {
+    # MIME type
+    my $mimetype = $git->blob_mimetype($fh, $file);
+    
+    # Redirect to blob-plain if no display MIME type
+    if ($mimetype !~ m#^(?:text/|image/(?:gif|png|jpeg)$)# && -B $fh) {
+      close $fh;
+      my $url = $self->url_for('blob_plain',
+        project => $project_ns, id_file => "$id/$file");
+      
+      return $self->redirect_to($url);
+    }
+    
+    # Commit
+    my $commit = $git->parse_commit($project, $id);
+
+    # Parse line
+    my @lines;
+    while (my $line = $git->dec(scalar <$fh>)) {
+      chomp $line;
+      $line = $git->_tab_to_space($line);
+      push @lines, $line;
+    }
+    
+    # Render
+    $self->render(
+      home => $home,
+      home_ns => $home_ns,
+      project => $project,
+      project_ns => $project_ns,
+      commit => $commit,
+      id => $id,
+      file => $file,
+      bid => $bid,
+      lines => \@lines,
+      mimetype => $mimetype
+    );
+  }
+}
+
 1;
