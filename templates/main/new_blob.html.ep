@@ -4,6 +4,7 @@
   
   my $user = param('user');
   my $repository = param('repository');
+  my $plain = param('plain');
 
   my $root_ns = $api->root_ns(config->{root});
   
@@ -31,7 +32,7 @@
   my $commit;
   my $mimetype;
   my $lines =[];
-  if ($self->stash('plain')) {
+  if ($plain) {
     # Content type
     my $type = $git->blob_contenttype($fh, $file);
 

@@ -34,6 +34,20 @@ has 'search_max_depth';
 has 'encoding';
 has 'text_exts';
 
+sub blob_plain {
+  my ($self, $rep, $ref, $path) = @_;
+  
+  # Command "git diff-tree"
+  my @cmd = ($self->cmd($rep), 'cat-file', 'blob', "$ref:$path");
+  open my $fh, "-|", @cmd
+    or croak 500, "Open git-cat-file failed";
+  local $/;
+  my $content = $self->dec(scalar <$fh>);
+  close $fh or croak 'Reading git-shortlog failed';
+  
+  return $content;
+}
+
 sub blob_mimetype {
   my ($self, $fh, $file) = @_;
 

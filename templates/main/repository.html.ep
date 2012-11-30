@@ -74,6 +74,10 @@
   
   # Commits number
   my $commits_number = $git->commits_number($rep, $ref);
+  
+  # README
+  my $readme = $git->blob_plain($rep, $ref, 'README');
+  
 %>
 
 % layout 'new_common';
@@ -241,6 +245,8 @@
       width:100%;
       margin: 5px auto;
       border:2px solid gray;
+      margin-top:30px;
+      line-height:1.5em;
     }
     .readme_title {
       border-bottom:1px solid gray;
@@ -251,7 +257,7 @@
     .readme_body {
       min-height: 50px;
       font-size:120%;
-      padding:10px;
+      padding:30px;
     }
   % end
 
@@ -373,9 +379,7 @@
     
     <div class="readme">
       <div class="readme_title">README</div>
-      <div class="readme_body">
-        README body
-      </div>
+      <div class="readme_body"><pre><%= $readme %></pre></div>
     </div>
   </div>
   
