@@ -69,12 +69,23 @@
     border:2px solid gray;
   }
   .tree_header {
-    background-color: #F8F8FF;
+    background-color: #E0FFFF;
     border-bottom: 1px solid gray;
-    padding: 10px;
+    padding: 8px;
+    padding-left:6px;
+  }
+  .tree_header a {
+    text-decoration:none;
+    color:black;
+  }
+  .tree_header a:hover {
+    text-decoration:underline;
+    color:black;
   }
   .tree_header2 {
-    padding: 5px;
+    padding:5px;
+    padding-left:3px;
+    border-bottom:1px solid gray;
   }
   .tree_header2_left {
     width:700px;
@@ -102,13 +113,24 @@
     width: 100%;
     background-color: #F8F8FF;
     padding:0;
-    border-top: 1px solid blue;
-    border-left: 1px solid blue;
-    border-top: 1px solid blue;
   }
   .tree_body td {
-    border-bottom: 1px solid blue;
+    border-bottom: 1px solid #DCDCDC;
     padding:5px;
+  }
+  .tree_td_file a {
+    text-decoration:none;
+  }
+  .tree_td_file a:hover{
+    text-decoration:underline;
+  }
+  .tree_td_commit a {
+    text-decoration:none;
+    color:black;
+  }
+  .tree_td_commit a:hover {
+    text-decoration:underline;
+    color:black;
   }
   
   /* Footer */

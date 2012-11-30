@@ -333,7 +333,7 @@
           </a>
         </div>
       </div>
-      <table>
+      <table class="tree_body" cellpadding="0" cellspacing="0">
         % for (my $i = 0; $i <@$trees; $i++) {
           
           % my $tree = $trees->[$i];
@@ -345,7 +345,7 @@
             % my $file = defined $dir ? "$dir/$name" : $name;
             % $file =~ s/^\///;
             
-            <td>
+            <td class="tree_td_file">
               % if ($type eq 'blob') {
                 <a href="<%= url_for("/$user/$repository/blob/$ref/$name") %>">
                   <%= $name %>
@@ -359,7 +359,7 @@
             <td>
               <%= $tree->{author_date} %>
             </td>
-            <td>
+            <td class="tree_td_commit">
               <a href="<%= url_for("/$user/$repository/commit/$tree->{commit}") %>">
                 <%= $tree->{comment} %>
               </a>
