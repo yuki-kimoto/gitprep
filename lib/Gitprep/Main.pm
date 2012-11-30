@@ -167,49 +167,6 @@ sub blobdiff {
   }
 }
 
-sub commit {
-  my $self = shift;
-
-  # Parameters
-  my $project_ns = $self->param('project');
-  my $project = "/$project_ns";
-  my $home_ns = dirname $project_ns;
-  my $home = "/$home_ns";
-  my $id = $self->param('id');
-  
-  # Git
-  my $git = $self->app->git;
-
-  # Commit
-  my $commit = $git->parse_commit($project, $id);
-  my $committer_date
-    = $git->parse_date($commit->{committer_epoch}, $commit->{committer_tz});
-  my $author_date
-    = $git->parse_date($commit->{author_epoch}, $commit->{author_tz});
-  $commit->{author_date} = $git->timestamp($author_date);
-  $commit->{committer_date} = $git->timestamp($committer_date);
-  
-  # References
-  my $refs = $git->references($project);
-  
-  # Diff tree
-  my $parent = $commit->{parent};
-  my $parents = $commit->{parents};
-  my $difftrees = $git->difftree($project, $commit->{id}, $parent, $parents);
-  
-  # Render
-  $self->render(
-    home => $home,
-    home_ns => $home_ns,
-    project => $project,
-    project_ns => $project_ns,
-    id => $id,
-    commit => $commit,
-    refs => $refs,
-    difftrees => $difftrees,
-  );
-}
-
 sub commitdiff {
   my $self = shift;
   
@@ -798,4 +755,46 @@ sub heads {
   );
 }
 
+sub commit {
+  my $self = shift;
+
+  # Parameters
+  my $project_ns = $self->param('project');
+  my $project = "/$project_ns";
+  my $home_ns = dirname $project_ns;
+  my $home = "/$home_ns";
+  my $id = $self->param('id');
+  
+  # Git
+  my $git = $self->app->git;
+
+  # Commit
+  my $commit = $git->parse_commit($project, $id);
+  my $committer_date
+    = $git->parse_date($commit->{committer_epoch}, $commit->{committer_tz});
+  my $author_date
+    = $git->parse_date($commit->{author_epoch}, $commit->{author_tz});
+  $commit->{author_date} = $git->timestamp($author_date);
+  $commit->{committer_date} = $git->timestamp($committer_date);
+  
+  # References
+  my $refs = $git->references($project);
+  
+  # Diff tree
+  my $parent = $commit->{parent};
+  my $parents = $commit->{parents};
+  my $difftrees = $git->difftree($project, $commit->{id}, $parent, $parents);
+  
+  # Render
+  $self->render(
+    home => $home,
+    home_ns => $home_ns,
+    project => $project,
+    project_ns => $project_ns,
+    id => $id,
+    commit => $commit,
+    refs => $refs,
+    difftrees => $difftrees,
+  );
+}
 1;

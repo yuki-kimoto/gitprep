@@ -87,6 +87,9 @@ sub startup {
   # Repository
   $r->get('/:user/:repository')->to('#repository');
   
+  # Commit
+  $r->get('/:user/:repository/commit/:id')->to('#new_commit');
+  
   # Commits
   $r->get('/:user/:repository/commits/(:id)', {id => 'HEAD'})->to('#commits');
   
