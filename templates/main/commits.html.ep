@@ -45,11 +45,61 @@
   %= stylesheet begin
     /* Code menu */
     .code_menu_commits {
-      border:1px solid black;
+      border:1px solid gray;
       border-bottom:none;
       background-color:white;
       font-weight:bold;
     }
+    
+    /* Commit history */
+    .commit_history {
+      font-weight:bold;
+      margin: 1em 0;
+    }
+    
+    /* Commit */
+    .commit {
+      border:1px solid gray;
+      border-bottom:none;
+    }
+    .commit_date {
+      border-bottom:1px solid gray;
+      padding:5px;
+      background-color:#E6F1F6;
+      color:#3A505B;
+      font-weight:bold;
+    }
+    .commit_first {
+      overflow:hidden;
+    }
+    .commit_first_left {
+      float:left;
+      color:black;
+    }
+    .commit_first_left a {
+      color:black;
+      font-weight:bold;
+    }
+    .commit_first_right {
+      float:right;
+    }
+    .commit_first_right a {
+      color:#4183C4;
+    }
+    .commit_second {
+      overflow:hidden;
+      border-bottom:1px solid gray;
+    }
+    .commit_second_left {
+      float:left;
+    }
+    .commit_second_right {
+      float:right;
+    }
+    .commit_second_right a {
+      color:#4183C4;
+    }
+    
   % end
   
   %= include '/include/new_header';
@@ -58,6 +108,34 @@
     %= include '/include/sub_header';
     
     %= include '/include/code_menu';
+    
+    <div class="commit_history"><a>DBIx-Custom</a> / Commit History</div>
+    
+    <div class="commit">
+      <div class="commit_date">Nov 23, 2012</div>
+      <div class="commit_content">
+        <div class="commit_first">
+          <div class="commit_first_left">
+            <a class="ubar" href="<%= url_for("/$user/$repository/commit/$commit->{id}") %>">
+              improved documents
+            </a>
+          </div>
+          <div class="commit_first_right a_dec_on a_blue">
+            <a class="ubar" href="<%= url_for("/$user/$repository/commit/$commit->{id}") %>">
+              29ecfa4141
+            </a>
+          </div>
+        </div>
+        <div class="commit_second">
+          <div class="commit_second_left">yuki-kimoto authored 7 days ago</div>
+          <div class="commit_second_right">
+            <a class="ubar" href="<%= url_for("/$user/$repository/commit/$commit->{id}") %>">
+              Browse code
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
 
     % for my $commit (@$commits) {
       <div class="header">

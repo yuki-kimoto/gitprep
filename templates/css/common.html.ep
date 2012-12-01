@@ -8,6 +8,14 @@
     list-style: none;
   }
   
+  /* Link */
+  a {
+    text-decoration:none;
+  }
+  a.ubar:hover {
+    text-decoration:underline;
+  }
+  
   /* Header */
   .header {
     background-color:#F8F8FF;
@@ -91,7 +99,7 @@
   }
   .code_menu_current_ref_button {
     padding:1px;
-    border:1px solid black;
+    border:1px solid gray;
   }
   .code_menu_left li {
     float:left;
@@ -106,7 +114,7 @@
     padding:5px 10px;
   }
   .code_menu_under {
-    border-top:1px solid black;
+    border-top:1px solid gray;
   }
     
   

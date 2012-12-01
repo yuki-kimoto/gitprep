@@ -5,7 +5,7 @@
 </div>
 
 <ul class="main_menu">
-  <li><a href="<%= url_for %>">Code</a></li>
+  <li><a href="<%= url_for("/$user/$repository") %>">Code</a></li>
   <li><a href="<%= url_for("/$user/$repository/network") %>"><s>Network</s></a></li>
   <li><a href="<%= url_for("/$user/$repository/pulls") %>"><s>Pull Requests 0</s></a></li>
   <li><a href="<%= url_for("/$user/$repository/issues") %>"><s>Issues 1</s></a></li>

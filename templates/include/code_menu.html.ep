@@ -5,7 +5,7 @@
         branch <b>master</b>
       </div>
     </li>
-    <li class="code_menu_files"><a href="<%= url_for %>">Files</a></li>
+    <li class="code_menu_files"><a href="<%= url_for("/$user/$repository") %>">Files</a></li>
     <li class="code_menu_commits"><a href="<%= url_for("/$user/$repository/commits/master") %>">Commits</a></li>
     <li class="code_menu_branches"><a href="<%= url_for("/$user/$repository/branches") %>">Branches</a></li>
   </ul>
