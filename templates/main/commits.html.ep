@@ -32,6 +32,8 @@
     $commit->{author_date} = $git->timestamp($author_date);
   }
   
+  use D;d $commits;
+  
   # References
   my $refs = $git->references($project);
   
@@ -69,8 +71,12 @@
       color:#3A505B;
       font-weight:bold;
     }
+    .commit_content {
+    }
     .commit_first {
       overflow:hidden;
+      padding:8px;
+      padding-bottom:1px;
     }
     .commit_first_left {
       float:left;
@@ -89,6 +95,8 @@
     .commit_second {
       overflow:hidden;
       border-bottom:1px solid gray;
+      padding:8px;
+      padding-top:1px;
     }
     .commit_second_left {
       float:left;
