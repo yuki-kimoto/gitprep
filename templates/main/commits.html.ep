@@ -4,6 +4,8 @@
   
   my $user = param('user');
   my $repository = param('repository');
+  my $id = param('id');
+  my $page = param('page') || 0;
 
   my $root_ns = $api->root_ns(config->{root});
   
@@ -12,9 +14,6 @@
   my $project = "/$project_ns";
   my $home_ns = $api->dirname($project_ns);
   my $home = "/$home_ns";
-  my $id = param('id');
-  my $page = $self->param('page');
-  $page = 0 if !defined $page;
   
   # Git
   my $git = $self->app->git;
@@ -26,15 +25,13 @@
   my $page_count = 30;
   my $commits = $git->parse_commits(
     $project, $commit->{id}, $page_count, $page_count * $page);
+  my $commits_count = @$commits;
   my $commits_date = {};
   for my $commit (@$commits) {
     my $date = $commit->{age_string_date};
     $commits_date->{$date} ||= [];
     push @{$commits_date->{$date}}, $commit;
   }
-  
-  # References
-  my $refs = $git->references($project);
   
   # Global variable
   stash(user => $user, repository => $repository);
@@ -111,6 +108,36 @@
       color:#4183C4;
     }
     
+    /* Pagenation */
+    .pagination {
+      overflow:hidden;
+      border-radius:3px;
+      border:1px solid gray;
+      display:inline-block;
+      color:black
+    }
+    .pagination .left {
+      border-right:1px solid gray;
+      padding:5px;
+      display:block;
+      float:left
+    }
+    .pagination .right {
+      padding:5px;
+      display:block;
+      float:left;
+    }
+    .pagination a {
+      color:black;
+      height:100%;
+    }
+    .pagination a:hover {
+      background-color:#4183C4;
+    }
+    .pagination .disable {
+      color:gray;
+      cursor:default;
+    }    
   % end
   
   %= include '/include/new_header';
@@ -159,11 +186,20 @@
         % }
       </div>
     % }
-
-    <%= include '/include/page_navi2', current => 'log', id => $id,
-      page => $page, page_count => $page_count, commits => $commits,
-      project_ns => $project_ns;
-    %>
+    <div class="pagination">
+      % if ($page == 0) {
+        <span class="left disable">&laquo; Newer</span>
+      % } else {
+        % my $newer_page = $page - 1;
+        <a class="left" href="<%= url_for("/$user/$repository/commits/$id?page=$newer_page") %>">&laquo; Newer</a>
+      % }
+      % if ($commits_count < $page_count) {
+        <span class="right disable">Older &raquo;</span>
+      % } else {
+        % my $older_page = $page + 1;
+        <a class="right" href="<%= url_for("/$user/$repository/commits/$id?page=$older_page") %>">Older &raquo;</a>
+      % }
+    </div>
   </div>
   
   %= include '/include/footer';
