@@ -167,6 +167,7 @@ sub startup {
   
   # File cache
   $git->search_projects;
+
 }
 
 1;

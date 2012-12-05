@@ -1,12 +1,43 @@
 %= stylesheet begin
 
+  /* Header */
+  .header {
+    background-color:#F3F3F3;
+    margin-bottom:10px;
+    border-bottom:1px solid #E5E5E5;
+    height:40px;
+  }
+  .header .panel {
+    width:900px;
+    margin:auto;
+    overflow:hidden;
+  }
+  .header .left {
+    width:400px;
+  }
+  .header li {
+    padding:10px;
+  }
+  .header .left li {
+    float:left;
+  }
+  .header .right li{
+    float:right;
+  }
+  .header a {
+    color:#333;
+  }
+  .header a:hover {
+    color:#4183C4;
+  }
 % end
+
 <div class="header">
-  <div class="header_panel">
-    <ul class="header_left">
+  <div class="panel">
+    <ul class="left">
       <li><a href="<%= url_for('/') %>">Home</a></li>
     </ul>
-    <ul class="header_right">
+    <ul class="right">
       <li><a href="<%= url_for("/logout") %>"><s>Sign out</s></a></li>
       <li>
         <a href="<%= url_for("/setting/profile") %>"><s>Account setting</s></a>
