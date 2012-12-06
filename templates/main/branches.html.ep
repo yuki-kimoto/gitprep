@@ -18,13 +18,145 @@
   # Git
   my $git = $self->app->git;
   
-  # Ref names
-  my $heads  = $git->heads($project);
+  # Branches
+  my $branches  = $git->heads($project);
+  
+  # Default branch
+  my $default_branch;
+  my $default_branch_name = 'master';
+  my $branches_tmp = [];
+  for my $branch (@$branches) {
+    if ($branch->{name} eq $default_branch_name) {
+      $default_branch = $branch;
+    }
+    else { push @$branches_tmp, $branch }
+  }
+  $branches = $branches_tmp;
 %>
 
-% layout 'common';
-  %= include '/include/header', title => 'Branches', project => $project;
-  <div class="header">
-    <a class="title" href="<%= url_for('heads', project => $project_ns) %>">Branches</a>
+% layout 'new_common';
+  %= include '/css/common';
+  
+  %= stylesheet begin
+    /* h2 */
+    h2 {
+      font-size:140%;
+      padding-bottom:5px;
+    }
+    
+    /* Branches number */
+    .branches_number {
+      color:#666;
+      padding-bottom:5px;
+    }
+    
+    /* Branches */
+    .branches {
+      width:100%;
+    }
+    .branches .default {
+      width:100%;
+      background-color:black;
+      color:white;
+    }
+    .branches .default td {
+      padding-left:5px;
+      padding-right:5px;
+    }
+    .branches td {
+      padding-top:5px;
+      padding-bottom:5px;
+      border-bottom:1px solid #E5E5E5;
+      vertical-align:middle;
+    }
+    .branches .name {
+      font-size:120%;
+      font-weight:bold;
+    }
+    
+    .branches .last_updated {
+      color:#666;
+    }
+    .branches .left {
+      
+    }
+    .branches .right {
+      text-align:right;
+    }
+
+    .branches .right a {
+      color:#333;
+      display:inline-block;
+      padding:5px;
+      border:1px solid #E5E5E5;
+      border-radius:3px;
+      background-color:#F3F3F3;
+    }
+    .branches .right a:hover {
+      color:#FFF;
+      background-color:#4183C4;
+    }
+  % end
+  
+  %= include '/include/new_header';
+
+  <div class="main_panel">
+    %= include '/include/sub_header';
+    
+    %= include '/include/code_menu';
+    %= stylesheet begin
+      /* Code menu */
+      .code_menu_branches {
+        border:1px solid gray;
+        border-bottom:none;
+        background-color:white;
+        font-weight:bold;
+      }
+      .code_menu_branches a {
+        color:#333
+      }
+      
+    % end
+    
+    <h2>Branches</h2>
+    
+    <div class="branches_number">Showing 2 branches not merged into master</div>
+    <table class="branches">
+      <tr class="default">
+        <td class="left">
+          <div class="name"><%= $default_branch_name %></div>
+          <div class="last_updated">Last updated <%= $default_branch->{age} %> by author</div>
+        </td>
+        <td>
+          
+        </td>
+        <td class="right">
+          Base branch
+        </td>
+      </tr>
+    </table>
+    <table class="branches">
+      % for (my $i = 0; $i < @$branches; $i++) {
+        % my $branch = $branches->[$i];
+        % my $name = $branch->{name};
+        <tr>
+          <td class="left">
+            <div class="name">
+              <a href="<%= url_for("/$user/$repository/tree/$name") %>">
+                <%= $name %>
+              </a>
+            </div>
+            <div class="last_updated">Last updated <%= $branch->{age} %> by author</div>
+          </td>
+          <td>
+            
+          </td>
+          <td class="right">
+            <a href="<%= url_for("/$user/$repository/compare/$default_branch...$name") %>">Compare</a>
+          </td>
+        </tr>
+      % }
+    </table>
   </div>
-  %= include '/include/heads', project_ns => $project_ns, heads => $heads;
+  
+  %= include '/include/footer';

@@ -1,12 +1,49 @@
 %= stylesheet begin
   
   /* Reset */
-  * {
-    margin:0;
-    padding:0;
+  html, body, div, span, applet, object, iframe,
+  h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+  a, abbr, acronym, address, big, cite, code,
+  del, dfn, em, font, img, ins, kbd, q, s, samp,
+  small, strike, strong, sub, sup, tt, var,
+  b, u, i, center,
+  dl, dt, dd, ol, ul, li,
+  fieldset, form, label, legend,
+  table, caption, tbody, tfoot, thead, tr, th, td {
+  	margin: 0;
+  	padding: 0;
+  	border: 0;
+  	outline: 0;
+  	font-size: 100%;
+  	vertical-align: baseline;
+  	background: transparent;
   }
-  li {
-    list-style: none;
+  body {
+  	line-height: 1;
+  }
+  ol, ul {
+  	list-style: none;
+  }
+  blockquote, q {
+  	quotes: none;
+  }
+  blockquote:before, blockquote:after,
+  q:before, q:after {
+  	content: '';
+  	content: none;
+  }
+  :focus {
+  	outline: 0;
+  }
+  ins {
+  	text-decoration: none;
+  }
+  del {
+  	text-decoration: line-through;
+  }
+  table {
+  	border-collapse: collapse;
+  	border-spacing: 0;
   }
   
   /* Link */
@@ -22,43 +59,6 @@
     width:900px;
     margin:5px auto;
   }
-  
-  /* Code menu */
-  .code_menu {
-    margin-top:7px;
-    margin-bottom:15px;
-    height:30px;
-    overflow:hidden;
-  }
-  .code_menu_left {
-    width:700px;
-    float:left;
-    overflow:hidden;
-  }
-  .code_menu_current_ref {
-    float:left;
-    padding:5px 10px 10px 10px;
-  }
-  .code_menu_current_ref_button {
-    padding:1px;
-    border:1px solid gray;
-  }
-  .code_menu_left li {
-    float:left;
-    padding:5px 10px;
-  }
-  .code_menu_right {
-    text-align:right;
-    overflow:hidden;
-  }
-  .code_menu_right li {
-    float:right;
-    padding:5px 10px;
-  }
-  .code_menu_under {
-    border-top:1px solid gray;
-  }
-    
   
   /* Source tree */
   .tree {
