@@ -23,10 +23,10 @@
   $default_branch->{name} = 'master';
   $default_branch->{commit} = $git->parse_commit($project, $default_branch->{name});
   
-  use D;d $default_branch;
-
   # No merged branches
   my $branches  = $git->no_merged_branches($project);
+
+  use D;d $branches;
 %>
 
 % layout 'new_common';
@@ -120,7 +120,7 @@
       <tr class="default">
         <td class="left">
           <div class="name"><%= $default_branch->{name} %></div>
-          <div class="last_updated">Last updated <%= $default_branch->{commit}{age_string_age} %> by <%= $default_branch->{commit}{author_name} %></div>
+          <div class="last_updated">Last updated <%= $default_branch->{commit}{age_string} %> by <%= $default_branch->{commit}{author_name} %></div>
         </td>
         <td>
           
@@ -141,7 +141,7 @@
                 <%= $name %>
               </a>
             </div>
-            <div class="last_updated">Last updated <%= $default_branch->{commit}{age_string_age} %> by <%= $default_branch->{commit}{author_name} %></div>
+            <div class="last_updated">Last updated <%= $branch->{commit}{age_string} %> by <%= $branch->{commit}{author_name} %></div>
           </td>
           <td>
             
