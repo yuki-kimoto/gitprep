@@ -275,6 +275,29 @@ sub heads {
   return \@heads;
 }
 
+sub no_merged_branches {
+  my ($self, $project) = @_;
+  
+  # Command "git branch --no-merged"
+  my @cmd = ($self->cmd($project), 'branch', '--no-merged');
+  open my $fh, '-|', @cmd or return;
+  
+  my @branch_names = map { s/^\*//; s/^\s*//; s/\s*$//; $self->dec($_) } <$fh>;
+  close $fh or croak qq/Can't open "git branch"/;
+  
+  # Branches
+  my $branches = [];
+  for my $branch_name (@branch_names) {
+    my $branch = {};
+    $branch->{name} = $branch_name;
+    my $commit = $self->parse_commit($project, $branch_name);
+    $branch->{commit} = $commit;
+    push @$branches, $branch;
+  }
+  
+  return $branches;
+}
+
 sub id {
   my ($self, $project, $ref, @options) = @_;
   

@@ -18,20 +18,15 @@
   # Git
   my $git = $self->app->git;
   
-  # Branches
-  my $branches  = $git->heads($project);
-  
   # Default branch
-  my $default_branch;
-  my $default_branch_name = 'master';
-  my $branches_tmp = [];
-  for my $branch (@$branches) {
-    if ($branch->{name} eq $default_branch_name) {
-      $default_branch = $branch;
-    }
-    else { push @$branches_tmp, $branch }
-  }
-  $branches = $branches_tmp;
+  my $default_branch = {};
+  $default_branch->{name} = 'master';
+  $default_branch->{commit} = $git->parse_commit($project, $default_branch->{name});
+  
+  use D;d $default_branch;
+
+  # No merged branches
+  my $branches  = $git->no_merged_branches($project);
 %>
 
 % layout 'new_common';
@@ -120,12 +115,12 @@
     
     <h2>Branches</h2>
     
-    <div class="branches_number">Showing 2 branches not merged into master</div>
+    <div class="branches_number">Showing <%= @$branches %> branches not merged into master</div>
     <table class="branches">
       <tr class="default">
         <td class="left">
-          <div class="name"><%= $default_branch_name %></div>
-          <div class="last_updated">Last updated <%= $default_branch->{age} %> by author</div>
+          <div class="name"><%= $default_branch->{name} %></div>
+          <div class="last_updated">Last updated <%= $default_branch->{commit}{age_string_age} %> by <%= $default_branch->{commit}{author_name} %></div>
         </td>
         <td>
           
@@ -146,13 +141,13 @@
                 <%= $name %>
               </a>
             </div>
-            <div class="last_updated">Last updated <%= $branch->{age} %> by author</div>
+            <div class="last_updated">Last updated <%= $default_branch->{commit}{age_string_age} %> by <%= $default_branch->{commit}{author_name} %></div>
           </td>
           <td>
             
           </td>
           <td class="right">
-            <a href="<%= url_for("/$user/$repository/compare/$default_branch...$name") %>">Compare</a>
+            <a href="<%= url_for("/$user/$repository/compare/$default_branch->{name}...$name") %>">Compare</a>
           </td>
         </tr>
       % }
