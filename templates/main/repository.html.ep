@@ -180,14 +180,6 @@
       padding:5px;
     }
     
-    /* Code menu */
-    .code_menu_files {
-      border:1px solid black;
-      border-bottom:none;
-      background-color:white;
-      font-weight:bold;
-    }
-      
     /* Commit number */
     .commit_number {
       font-size:120%;
@@ -238,7 +230,19 @@
     </div>
     
     %= include '/include/code_menu';
-    
+    %= stylesheet begin
+      /* Code menu */
+      .code_menu_files {
+        border:1px solid #E5E5E5;
+        border-bottom:none;
+        background-color:white;
+        font-weight:bold;
+      }
+      .code_menu_files a {
+        color:#333
+      }
+    % end
+        
     <div class="commit_number">
       <div class="commit_number_left">
         <a href="<%= url_for %>"><%= $repository %></a>

@@ -41,13 +41,6 @@
   %= include '/css/common';
   
   %= stylesheet begin
-    /* Code menu */
-    .code_menu_commits {
-      border:1px solid gray;
-      border-bottom:none;
-      background-color:white;
-      font-weight:bold;
-    }
     
     /* Commit history */
     .commit_history {
@@ -146,7 +139,19 @@
     %= include '/include/sub_header';
     
     %= include '/include/code_menu';
-    
+    %= stylesheet begin
+    /* Code menu */
+    .code_menu_commits {
+      border:1px solid #E5E5E5;
+      border-bottom:none;
+      background-color:white;
+      font-weight:bold;
+    }
+    .code_menu_commits a {
+      color:#333
+    }
+    % end
+        
     <div class="commit_history">
       <a class="ubar" href="<%= url_for("/$user/$repository") %>">
         <%= $repository %>

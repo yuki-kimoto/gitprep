@@ -100,7 +100,7 @@
     %= stylesheet begin
       /* Code menu */
       .code_menu_branches {
-        border:1px solid gray;
+        border:1px solid #E5E5E5;
         border-bottom:none;
         background-color:white;
         font-weight:bold;
