@@ -1,0 +1,51 @@
+<%
+
+  my $user = param('user');
+  my $repository = param('repository');
+
+  my $default_branch = 'master';
+%>
+
+% layout 'new_common';
+  %= include '/css/common';
+  %= include '/include/new_header';
+
+  <div class="main_panel">
+    %= include '/include/sub_header';
+    
+    %= include '/include/code_menu';
+    %= stylesheet begin
+      /* Code menu */
+      .code_menu_downloads {
+        border:1px solid #E5E5E5;
+        border-bottom:none;
+        background-color:white;
+        font-weight:bold;
+      }
+      .code_menu_downloads a {
+        color:#333
+      }
+    % end
+    
+    %= stylesheet begin
+      .download {
+        margin-bottom:30px;
+      }
+      .download a {
+        display:inline-block;
+        border:1px solid #DDD;
+        border-radius:3px;
+        padding:8px 15px;
+        background-color:#E5E5E5;
+        color:#666
+      }
+      .download a:hover {
+        background-color:#f0f8ff;
+      }
+    % end
+    <div class="download">
+      <a href="<%= url_for("/$user/$repository/archive/$default_branch.zip") %>">Download as zip</a>
+      <a href="<%= url_for("/$user/$repository/archive/$default_branch.tar.gz") %>">Download as tar.gz</a>
+    </div>
+  </div>
+  %= include '/include/footer';

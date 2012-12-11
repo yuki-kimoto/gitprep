@@ -98,6 +98,9 @@ sub startup {
 
   # Tags
   $r->get('/:user/:repository/tags')->to('#new_tags');
+
+  # Downloads
+  $r->get('/:user/:repository/downloads')->to('#downloads');
   
   # Tree
   $r->get('/:user/:repository/tree/(*id_dir)')->to('#new_tree');

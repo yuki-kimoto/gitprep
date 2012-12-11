@@ -1,3 +1,22 @@
+%= stylesheet begin
+  /* Footer */
+  .footer {
+    background-color:#F3F3F3;
+    margin-top:10px;
+    padding:10px;
+    border-top:1px solid #E5E5E5;
+    height:80px;
+    text-align:center;
+  }
+  .footer .panel {
+    width:900px;
+    margin:auto;
+    overflow:hidden;
+  }
+% end
+
 <div class="footer">
-  <a href="https://github.com/yuki-kimoto/gitprep">Gitprep</a>
+  <div class="panel">
+    <a href="https://github.com/yuki-kimoto/gitprep">Gitprep</a>
+  </div>
 </div>

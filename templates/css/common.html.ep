@@ -145,19 +145,4 @@
     color:black;
   }
   
-  /* Footer */
-  .footer {
-    background-color:#F8F8FF;
-    margin-top:10px;
-    padding:10px;
-    border-top:1px solid blue;
-    height:80px;
-    text-align:center;
-  }
-  
-  /* Hyper link */
-  a {
-    text-decoration:none;
-  }
-  
 % end
