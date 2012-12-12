@@ -35,39 +35,12 @@
     else { $tid = $commit->{tree} }
   }
   $self->render_not_found unless defined $tid;
-  
-  # Get tree (command "git ls-tree")
-  my @entries = ();
-  my $show_sizes = 0;
-  open my $fh, '-|', $git->cmd($rep), 'ls-tree', '-z',
-      ($show_sizes ? '-l' : ()), $tid
-    or $api->croak('Open git-ls-tree failed');
-  {
-    local $/ = "\0";
-    @entries = map { chomp; $git->dec($_) } <$fh>;
-  }
-  close $fh
-    or $api->croak(404, "Reading tree failed");
-    
+
   # Commit log
   my $latest_commit_log = $git->latest_commit_log($rep, $ref);
   
-  # Parse tree
-  my $trees;
-  for my $line (@entries) {
-    my $tree = $git->parse_ls_tree_line($line, -z => 1, -l => $show_sizes);
-    $tree->{mode_str} = $git->_mode_str($tree->{mode});
-    
-    # Commit log
-    my $commit_log = $git->latest_commit_log($rep, $ref, $tree->{name});
-    $tree = {%$tree, %$commit_log};
-    
-    push @$trees, $tree;
-  }
-  $trees = [sort {$b->{type} cmp $a->{type} || $a->{name} cmp $b->{name}} @$trees];
-  
-  # References
-  my $refs = $git->references($rep);
+  # Tree
+  my $trees = $api->trees($rep, $tid, $ref);
   
   # Repository description
   my $desc = $git->repository_description($rep);
@@ -79,7 +52,17 @@
   my $readme = $git->blob_plain($rep, $ref, 'README');
   
   # Global variable
-  stash(user => $user, repository => $repository);
+  stash(
+    user => $user,
+    repository => $repository,
+    rep_ns => $rep_ns,
+    id => $id,
+    commit => $commit,
+    latest_commit_log => $latest_commit_log,
+    trees => $trees,
+    dir => $dir,
+    ref => $ref
+  );
 %>
 
 % layout 'new_common';
@@ -254,61 +237,7 @@
       </div>
     </div>
     
-    <div class="tree">
-      <div class="tree_header">
-        <a href="<%= url_for('commit', project => $rep_ns, id => $id) %>">
-          <%= $commit->{title} %>
-        </a>
-      </div>
-      <div class="tree_header2">
-        <div class="tree_header2_left">
-          <b><%= $latest_commit_log->{author} %></b> <span class="tree_header2_left_right">authored <%= $latest_commit_log->{author_date} %></span>
-        </div>
-        <div class="tree_header2_right">
-          <a href="<%= url_for("/$user/$repository/commit/$commit->{id}") %>">
-            latest commit <%= substr($commit->{id}, 0, 10) %>
-          </a>
-        </div>
-      </div>
-      <table class="tree_body" cellpadding="0" cellspacing="0">
-        % for (my $i = 0; $i <@$trees; $i++) {
-          
-          % my $tree = $trees->[$i];
-          % my $type = $tree->{type};
-          % my $name = $tree->{name};
-          
-          % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
-          <tr>
-            % my $file = defined $dir ? "$dir/$name" : $name;
-            % $file =~ s/^\///;
-            
-            % if ($type eq 'blob') {
-              <td class="tree_td_blob">
-                <a href="<%= url_for("/$user/$repository/blob/$ref/$name") %>">
-                  <%= $name %>
-                </a>
-              </td>
-            % } elsif ($tree) {
-              <td class="tree_td_dir">
-                <a href="<%= url_for("/$user/$repository/tree/$ref/$child_dir") %>">
-                  <%= $name %>
-                </a>
-              </td>
-            % }
-            
-            <td>
-              <%= $tree->{author_date} %>
-            </td>
-            <td class="tree_td_commit">
-              <a href="<%= url_for("/$user/$repository/commit/$tree->{commit}") %>">
-                <%= $tree->{comment} %>
-              </a>
-              [<%= $tree->{author} %>]
-            </td>
-          </tr>
-        % }
-      </table>
-    </div>
+    %= include '/include/tree';
     
     <div class="readme">
       <div class="readme_title">README</div>

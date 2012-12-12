@@ -1,0 +1,25 @@
+% use File::Basename 'basename';
+
+<div class="page_path">
+  <a href="<%= url_for("/$user/$repository") %>"><%= $repository %></a> /
+  % my @parts = split('/', $Path);
+  % my $path;
+  % for (my $i = 0; $i < @parts; $i++) {
+    % my $part = $parts[$i];
+    % $path .= "$part";
+    
+    % if ($type eq 'blob' && $i eq @parts - 1) {
+      <a href=
+          "<%= url_for("/$user/$repository/blob/$id/$path") %>">
+        <%= $part %>
+      </a>
+    % } else {
+      <a href=
+          "<%= url_for("/$user/$repository/tree/$id/$path") %>">
+        <%= $part %>
+      </a>
+      % $path .= '/';
+    % }
+      /
+  % }
+</div>
