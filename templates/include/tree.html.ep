@@ -115,7 +115,7 @@
         
         % if ($type eq 'blob') {
           <td class="tree_td_blob">
-            <a href="<%= url_for("/$user/$repository/blob/$ref/$name") %>">
+            <a href="<%= url_for("/$user/$repository/blob/$ref/$dir/$name") %>">
               <%= $name %>
             </a>
           </td>

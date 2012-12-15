@@ -56,7 +56,8 @@
     latest_commit_log => $latest_commit_log,
     trees => $trees,
     dir => $dir,
-    ref => $id
+    ref => $id,
+    title => "$repository/$dir at $id - $user/$repository"
   );
 %>
 

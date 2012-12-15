@@ -39,7 +39,7 @@
 <div class="user_rep">
   <a href="<%= url_for("/$user") %>"><%= $user %></a>
   /
-  <a href="<%= url_for %>"><b><%= $repository %></b></a>
+  <a href="<%= url_for("/$user/$repository") %>"><b><%= $repository %></b></a>
 </div>
 
 <ul class="main_menu">
