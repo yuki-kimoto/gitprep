@@ -9,22 +9,25 @@
   my $root_ns = $api->root_ns(config->{root});
   
   # Parameters
-  my $project_ns = "$root_ns/$user/$repository.git";
-  my $project = "/$project_ns";
-  my $home_ns = $api->dirname($project_ns);
+  my $rep_ns = "$root_ns/$user/$repository.git";
+  my $rep = "/$rep_ns";
+  my $home_ns = $api->dirname($rep_ns);
   my $home = "/$home_ns";
   my $id_file = param('id_file');
 
   # Id and file
-  my ($id, $file) = $api->parse_id_path($project, $id_file);
+  my ($id, $file) = $api->parse_id_path($rep, $id_file);
 
   # Git
   my $git = $self->app->git;
-
+  
+  # Commit
+  my $commit_log = $git->latest_commit_log($rep, $id, $file);
+  
   # Blob content
-  my $bid = $git->id_by_path($project, $id, $file, 'blob')
+  my $bid = $git->id_by_path($rep, $id, $file, 'blob')
     or $api->croak('Cannot find file');
-  my @cmd = ($git->cmd($project), 'cat-file', 'blob', $bid);
+  my @cmd = ($git->cmd($rep), 'cat-file', 'blob', $bid);
   open my $fh, '-|', @cmd
     or $api->croak(qq/Couldn't cat "$file", "$bid"/);
   
@@ -73,13 +76,13 @@
     if ($mimetype !~ m#^(?:text/|image/(?:gif|png|jpeg)$)# && -B $fh) {
       close $fh;
       my $url = $self->url_for('blob_plain',
-        project => $project_ns, id_file => "$id/$file");
+        project => $rep_ns, id_file => "$id/$file");
       
       return $self->redirect_to($url);
     }
     
     # Commit
-    $commit = $git->parse_commit($project, $id);
+    $commit = $git->parse_commit($rep, $id);
 
     # Parse line
     while (my $line = $git->dec(scalar <$fh>)) {
@@ -88,45 +91,64 @@
       push @$lines, $line;
     }
   }
+  
+  # Global variable
+  stash(id => $id);
 %>
 
-% layout 'common';
-  %= include '/include/header', title => 'Blob', project => $project;
-  %= include '/include/current_directory', home_ns => $home_ns, home => $home;
+% layout 'new_common';
+  %= include '/css/common';
+  
+  %= stylesheet begin
+    
+  % end
 
-  <div class="page_nav">
-    <a href="<%= url_for('blob_plain', project => $project_ns, id_file => "$id/$file") %>">
-      Raw
-    </a>
-    |
-    % my $head_id = gitprep_get_head_id($project);
-    <a href="<%= url_for('blob', project => $project_ns, id_file => "HEAD/$file") %>">
-      HEAD
-    </a>
-    <br/>
-  </div>
-  <div class="header">
-  <a class="title" href= "<%= url_for('commit', project => $project_ns, id => $id) %>">
-    <%= $commit->{title} %>
-  </a>
-  </div>
+  %= include '/include/new_header';
 
-  %= include '/include/page_path', project => $project, project_ns => $project_ns, id => $id, Path => $file, type => 'blob';
+  <div class="main_panel">
+    %= include '/include/sub_header';
 
-  <div class="page_body">
-    % if ($mimetype =~ m#^image/#) {
-      <img type="<%= $mimetype %>
-        % if (defined $file) {
-          alt="<%= $file %>" title="<%= $file %>"
+    %= include '/include/code_menu';
+    %= stylesheet begin
+      /* Code menu */
+      .code_menu_files {
+        border:1px solid #E5E5E5;
+        border-bottom:none;
+        background-color:white;
+        font-weight:bold;
+      }
+      .code_menu_files a {
+        color:#333
+      }
+    % end
+
+    %= include '/include/new_page_path', type => 'blob', Path => $file;
+    
+    <div>
+      <div>
+        <div><%= $commit_log->{author} %></div>
+        <div><%= $commit_log->{author_date} %></div>
+        <div><%= $commit_log->{comment} %></div>
+      </div>
+      <div></div>
+    </div>
+    
+    <div class="page_body">
+      % if ($mimetype =~ m#^image/#) {
+        <img type="<%= $mimetype %>
+          % if (defined $file) {
+            alt="<%= $file %>" title="<%= $file %>"
+          % }
+          src="<%= url_for('blob_plain', project => $rep_ns, id_file => "$id/$file") %>"
+        />
+      % } else {
+        % my $nr = 1;
+        % for my $line (@$lines) {
+          % my $nr4 = sprintf("%4i", $nr);
+          <div class="pre"><a id="l<%= $nr %>" href="<%#l<%= $nr %>" class="linenr"><%= $nr4 %></a> <%= $line %></div>
+          % $nr++;
         % }
-        src="<%= url_for('blob_plain', project => $project_ns, id_file => "$id/$file") %>"
-      />
-    % } else {
-      % my $nr = 1;
-      % for my $line (@$lines) {
-        % my $nr4 = sprintf("%4i", $nr);
-        <div class="pre"><a id="l<%= $nr %>" href="<%#l<%= $nr %>" class="linenr"><%= $nr4 %></a> <%= $line %></div>
-        % $nr++;
       % }
-    % }
+    </div>
   </div>
+  %= include '/include/footer';
