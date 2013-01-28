@@ -88,7 +88,7 @@ sub startup {
   $r->get('/:user/:repository')->to('#repository');
   
   # Commit
-  $r->get('/:user/:repository/commit/:id')->to('#new_commit');
+  $r->get('/:user/:repository/commit/:id')->to('#commit');
   
   # Commits
   $r->get('/:user/:repository/commits/(:id)', {id => 'HEAD'})->to('#commits');
@@ -97,16 +97,16 @@ sub startup {
   $r->get('/:user/:repository/branches')->to('#branches');
 
   # Tags
-  $r->get('/:user/:repository/tags')->to('#new_tags');
+  $r->get('/:user/:repository/tags')->to('#tags');
 
   # Downloads
   $r->get('/:user/:repository/downloads')->to('#downloads');
   
   # Tree
-  $r->get('/:user/:repository/tree/(*id_dir)')->to('#new_tree');
+  $r->get('/:user/:repository/tree/(*id_dir)')->to('#tree');
   
   # Blob
-  $r->get('/:user/:repository/blob/(*id_file)')->to('#new_blob');
+  $r->get('/:user/:repository/blob/(*id_file)')->to('#blob');
 
   # Projects
   $r->get('/(*home)/projects')->to('#projects')->name('projects');
@@ -115,41 +115,12 @@ sub startup {
   {
     my $r = $r->route('/(*project)', project => qr/.+?\.git/);
     
-    # Summary
-    $r->get('/summary')->to('#summary')->name('summary');
-    
-    # Short log
-    $r->get('/shortlog/(*id)', {id => 'HEAD'})
-      ->to('#log', short => 1)->name('shortlog');
-    
-    # Log
-    $r->get('/log/(*id)', {id => 'HEAD'})->to('#log')->name('log');
-    
-    # Commit
-    $r->get('/commit/(*id)')->to('#commit')->name('commit');
-    
     # Commit diff
     $r->get('/commitdiff/(*diff)')->to('#commitdiff')->name('commitdiff');
     
     # Commit diff plain
     $r->get('/commitdiff-plain/(*diff)')
       ->to('#commitdiff', plain => 1)->name('commitdiff_plain');
-    
-    # Tags
-    $r->get('/tags')->to('#tags')->name('tags');
-    
-    # Tag
-    $r->get('/tag/(*id)')->to('#tag')->name('tag');
-    
-    # Heads
-    $r->get('/heads')->to('#heads')->name('heads');
-    
-    # Tree
-    $r->get('/tree/(*id_dir)', {id_dir => 'HEAD'})
-      ->to('#tree')->name('tree');
-    
-    # Blob
-    $r->get('/blob/(*id_file)')->to('#blob')->name('blob');
     
     # Blob plain
     $r->get('/blob-plain/(*id_file)')
@@ -162,10 +133,6 @@ sub startup {
     # Blob diff plain
     $r->get('/blobdiff-plain/(#diff)/(*file)')
       ->to('#blobdiff', plain => 1)->name('blobdiff_plain');
-    
-    # Snapshot
-    $r->get('/snapshot/(:id)', {id => 'HEAD'})
-      ->to('#snapshot')->name('snapshot');
   }
   
   # File cache

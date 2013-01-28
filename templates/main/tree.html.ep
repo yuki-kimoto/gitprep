@@ -1,67 +1,231 @@
-% layout 'common';
-  %= include '/include/header', title => 'Tree', project => $project;
-  %= include '/include/current_directory', home_ns => $home_ns, home => $home;
-  %= include '/include/page_navi', current => 'tree', home_ns => $home_ns, project_ns => $project_ns;
+<%
+  use Gitprep::API;
 
-  <div class="page_nav">
-    <a title="in format: tar.gz" rel="nofollow"
-        href="<%= url_for('snapshot', project => $project_ns, id => $id) %>">
-      snapshot
-    </a>
-  </div>
+  # API
+  my $api = Gitprep::API->new($self);
+  
+  # Parameters
+  my $user = param('user');
+  my $repository = param('repository');
+  my $id_dir ||= param('id_dir') || 'master/';
+  my $root_ns = $api->root_ns(config->{root});
+  my $rep_ns = "$root_ns/$user/$repository.git";
+  my $rep = "/$rep_ns";
+  my $home_ns = $api->dirname($rep_ns);
+  my $home = "/$home_ns";
 
-  <div class="header">
-    <a class="title" href="<%= url_for('commit', project => $project_ns, id => $id) %>">
-      <%= $commit->{title} %>
-    </a>
-  </div>
+  # Id and directory
+  my ($id, $dir) = $api->parse_id_path($rep, $id_dir);
 
-  %= include '/include/page_path', project_ns => $project_ns, id => $id, Path => $dir, type => 'tree';
+  # Git
+  my $git = app->git;
+  
+  # Tree id
+  my $tid;
+  my $commit = $git->parse_commit($rep, $id);
+  unless (defined $tid) {
+    if (defined $dir && $dir ne '') {
+      $tid = $git->id_by_path($rep, $id, $dir, 'tree');
+    }
+    else { $tid = $commit->{tree} }
+  }
+  $self->render_not_found unless defined $tid;
+  
+  # Commit log
+  my $latest_commit_log = $git->latest_commit_log($rep, $id);
+  
+  # Tree
+  my $trees = $api->trees($rep, $tid, $id, $dir);
+  
+  # Repository description
+  my $desc = $git->repository_description($rep);
+  
+  # Commits number
+  my $commits_number = $git->commits_number($rep, $id);
+  
+  # README
+  my $readme = $git->blob_plain($rep, $id, 'README');
+  
+  # Global variable
+  stash(
+    user => $user,
+    repository => $repository,
+    rep_ns => $rep_ns,
+    id => $id,
+    commit => $commit,
+    latest_commit_log => $latest_commit_log,
+    trees => $trees,
+    dir => $dir,
+    ref => $id,
+    title => "$repository/$dir at $id - $user/$repository"
+  );
+%>
 
-  <div class="page_body">
-    %= include 'include/refs', project => $project_ns, commit => $commit, refs => $refs;
-    <table class="tree">
-      % for (my $i = 0; $i <@$trees; $i++) {
+% layout 'new_common';
+  %= include '/css/common';
+  
+  %= javascript begin 
+    $(document).ready(function() {
+      
+      // Repository URL
+      var rep_url_bak_color = "#F5F5F5";
+      var http_rep_url = "<%= url_for("/$user/$repository.git")->to_abs %>";
+      var ssh_rep_url
+        = "<%= url_for("/$rep_ns")->to_abs->scheme('ssh')->userinfo($user)->port(config->{ssh_port}) %>";
+      var git_rep_url = "<%= url_for("/$user/$repository.git")->to_abs->scheme('git')->port('') %>";
+      $(".git_url_text").val(http_rep_url);
+      $(".git_url_http").css("background-color", "darkgray");
+      $(".git_url_http").on('click', function () {
+        $(".git_url_http").css("background-color", "darkgray");
+        $(".git_url_ssh").css("background-color", rep_url_bak_color);
+        $(".git_url_git").css("background-color", rep_url_bak_color);
         
-        % my $tree = $trees->[$i];
-        % my $type = $tree->{type};
-        % my $name = $tree->{name};
+        $(".git_url_text").val(http_rep_url);
+        $(".git_url_access").text("Read-only access");
+      });
+      $(".git_url_ssh").on('click', function () {
+        $(".git_url_http").css("background-color", rep_url_bak_color);
+        $(".git_url_ssh").css("background-color", "darkgray");
+        $(".git_url_git").css("background-color", rep_url_bak_color);
         
-        % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
-        <tr class="<%= $i % 2 ? 'light' : 'dark' %>">
-          <td class="mode">
-            <%= $tree->{mode_str} %>
-          </td>
-          % my $file = defined $dir ? "$dir/$name" : $name;
-          % $file =~ s/^\///;
-          
-          <td class="list">
-            % if ($type eq 'blob') {
-              <a class="list" href="<%= url_for('blob', project => $project_ns, id_file => "$id/$file") %>">
-                <%= $name %>
-              </a>
-            % } elsif ($tree) {
-              <a href="<%= url_for('tree', project => $project_ns, id_dir => "$id/$child_dir") %>">
-                <%= $name %>
-              </a>
-            % }
-          </td>
-          <td class="link">
-            % if ($type eq 'blob') {
-              <a href="<%= url_for('blob', project => $project_ns, id_file => "$id/$file") %>">
-                blob
-              </a>
-              |
-              <a href="<%= url_for('blob_plain', project => $project_ns, id_file => "$id/$file") %>">
-                raw
-              </a>
-            % } elsif ($type eq 'tree') {
-              <a href="<%= url_for('tree', project => $project_ns, id_dir => "$id/$child_dir") %>">
-                tree
-              </a>
-            % }
-          </td>
-        </tr>
-      % }
-    </table>
+        $(".git_url_text").val(ssh_rep_url);
+        $(".git_url_access").text("Read-Write access");
+      });
+      $(".git_url_git").on('click', function () {
+        $(".git_url_http").css("background-color", rep_url_bak_color);
+        $(".git_url_ssh").css("background-color", rep_url_bak_color);
+        $(".git_url_git").css("background-color", "darkgray");
+        
+        $(".git_url_text").val(git_rep_url);
+        $(".git_url_access").text("Read-Only access");
+      });
+      
+    });
+  % end
+  
+  %= stylesheet begin
+    
+    /* Repository description */
+    .description {
+      padding:10px;
+      border:1px solid gray;
+      margin-top:-1px;
+    }
+    
+    /* Git URL */
+    .git_url {
+      border: 1px solid gray;
+      padding: 10px;
+      margin-top:-1px;
+      font-size:80%;
+    }
+    .git_url_zip {
+      padding:5px;
+      float:left;
+      border:1px solid gray;
+      margin-right:5px;
+      background-color:#F5F5F5;
+    }
+    .git_url_http {
+      padding:5px;
+      float:left;
+      border:1px solid gray;
+      background-color:#F5F5F5;
+    }
+    .git_url_ssh {
+      padding:5px;
+      float:left;
+      border:1px solid gray;
+      border-left:none;
+      background-color:#F5F5F5;
+    }
+    .git_url_git {
+      padding:5px;
+      float:left;
+      border:1px solid gray;
+      border-left:none;
+      background-color:#F5F5F5;
+    }
+    .git_url_text {
+      padding:3px;
+      float:left;
+      border:1px solid gray;
+      width:300px;
+      margin-right:10px;
+      border-left:none;
+      display:block;
+    }
+    .git_url_access {
+      padding:5px;
+    }
+    
+    /* Commit number */
+    .commit_number {
+      font-size:120%;
+    }
+    .commit_number_left {
+      width:700px;
+      float:left;
+    }
+    .commit_number_right {
+      text-align:right;
+    }
+    
+    /* README */
+    .readme {
+      width:100%;
+      margin: 5px auto;
+      border:2px solid gray;
+      margin-top:30px;
+      line-height:1.5em;
+    }
+    .readme_title {
+      border-bottom:1px solid gray;
+      font-size:130%;
+      font-weight:bold;
+      padding:10px;
+    }
+    .readme_body {
+      min-height: 50px;
+      font-size:120%;
+      padding:30px;
+    }
+  % end
+
+  %= include '/include/header';
+
+  <div class="main_panel">
+    %= include '/include/sub_header';
+
+    <div class="description"><%= $desc %></div>
+    
+    <div class="git_url">
+      <div class="git_url_zip"><a href="<%= url_for('/archive/master.zip') %>"><s>ZIP</s></a></div>
+      <div class="git_url_http">HTTP</div>
+      <div class="git_url_ssh">SSH</div>
+      <div class="git_url_git">Git Read-Only</div>
+      <input type="text" class="git_url_text">
+      <div class="git_url_access">Read-only access</div>
+    </div>
+    
+    %= include '/include/code_menu';
+    %= stylesheet begin
+      /* Code menu */
+      .code_menu_files {
+        border:1px solid #E5E5E5;
+        border-bottom:none;
+        background-color:white;
+        font-weight:bold;
+      }
+      .code_menu_files a {
+        color:#333
+      }
+    % end
+        
+    %= include '/include/new_page_path', type => 'tree', Path => $dir;
+
+    %= include '/include/tree';
   </div>
+  
+  %= include '/include/footer';
+

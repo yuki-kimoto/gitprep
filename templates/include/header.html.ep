@@ -43,7 +43,9 @@
         <a href="<%= url_for("/setting/profile") %>"><s>Account setting</s></a>
       </li>
       <li><a href="<%= url_for("/new") %>"><s>Create a new repo</s></a></li>
-      <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
+      % if (my $user = stash('user')) {
+        <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
+      % }
     </ul>
   </div>
 </div>
