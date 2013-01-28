@@ -24,6 +24,9 @@
   # Commit
   my $commit_log = $git->latest_commit_log($rep, $id, $file);
   
+  # Authors
+  my $authors = $git->authors($rep, $id, $file);
+  
   # Blob content
   my $bid = $git->id_by_path($rep, $id, $file, 'blob')
     or $api->croak('Cannot find file');
@@ -146,7 +149,7 @@
         </a>
       </div>
       <div class="bottom">
-        1 contributor
+        <%= @$authors %> contributor
       </div>
     </div>
     

@@ -34,6 +34,22 @@ has 'search_max_depth';
 has 'encoding';
 has 'text_exts';
 
+sub authors {
+  my ($self, $rep, $ref, $file) = @_;
+  
+  # Command "git log FILE"
+  my @cmd = ($self->cmd($rep), 'log',  '--format=%an', $ref, '--', $file);
+  open my $fh, "-|", @cmd
+    or croak 500, "Open git-cat-file failed";
+  my $authors = {};
+  while (my $line = $self->dec(<$fh>)) {
+    $line =~ s/[\r\n]//g;
+    $authors->{$line} = 1;
+  }
+  
+  return [sort keys %$authors];
+}
+
 sub blob_plain {
   my ($self, $rep, $ref, $path) = @_;
   
