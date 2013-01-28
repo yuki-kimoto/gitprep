@@ -93,14 +93,27 @@
   }
   
   # Global variable
-  stash(id => $id);
+  stash(id => $id, repository => $repository);
 %>
 
 % layout 'common';
   %= include '/css/common';
   
   %= stylesheet begin
-    
+    .blob_header {
+      border:1px solid gray;
+    }
+    .blob_header .top {
+      background-color:#E6F1F6;
+      padding:10px;
+    }
+    .blob_header .author_date {
+      color: #666;
+    }
+    .blob_header .bottom {
+      padding:5px;
+      padding-left:10px;
+    }
   % end
 
   %= include '/include/header';
@@ -124,13 +137,17 @@
 
     %= include '/include/page_path', type => 'blob', Path => $file;
     
-    <div>
-      <div>
-        <div><%= $commit_log->{author} %></div>
-        <div><%= $commit_log->{author_date} %></div>
-        <div><%= $commit_log->{comment} %></div>
+    <div class="blob_header">
+      <div class="top">
+        <b><%= $commit_log->{author} %></b>
+        <span class="author_date"><%= $commit_log->{author_date} %></span>
+        <a href="<%= url_for("/$user/$repository/commit/$id") %>">
+          <%= $commit->{title} %>
+        </a>
       </div>
-      <div></div>
+      <div class="bottom">
+        1 contributor
+      </div>
     </div>
     
     <div class="page_body">
