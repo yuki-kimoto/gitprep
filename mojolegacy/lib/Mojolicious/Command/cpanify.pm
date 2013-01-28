@@ -1,8 +1,8 @@
 package Mojolicious::Command::cpanify;
-use Mojo::Base 'Mojo::Command';
+use Mojo::Base 'Mojolicious::Command';
 
 use File::Basename 'basename';
-use Getopt::Long qw/GetOptions :config no_auto_abbrev no_ignore_case/;
+use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
 use Mojo::UserAgent;
 
 has description => "Upload distribution to CPAN.\n";
@@ -16,18 +16,14 @@ These options are available:
   -u, --user <name>           PAUSE username.
 EOF
 
-# "Hooray! A happy ending for the rich people!"
 sub run {
-  my $self = shift;
+  my ($self, @args) = @_;
 
   # Options
-  local @ARGV = @_;
-  my $password = my $user = '';
-  GetOptions(
-    'p|password=s' => sub { $password = $_[1] },
-    'u|user=s'     => sub { $user     = $_[1] }
-  );
-  die $self->usage unless my $file = shift @ARGV;
+  GetOptionsFromArray \@args,
+    'p|password=s' => \(my $password = ''),
+    'u|user=s'     => \(my $user     = '');
+  die $self->usage unless my $file = shift @args;
 
   # Upload
   my $tx = Mojo::UserAgent->new->detect_proxy->post_form(
@@ -44,16 +40,15 @@ sub run {
   # Error
   unless ($tx->success) {
     my $code = $tx->res->code || '';
-    my $message = $tx->error;
-    if    ($code eq '401') { $message = 'Wrong username or password.' }
-    elsif ($code eq '409') { $message = 'File already exists on CPAN.' }
-    die qq/Problem uploading file "$file". ($message)\n/;
+    my $msg = $tx->error;
+    if    ($code eq '401') { $msg = 'Wrong username or password.' }
+    elsif ($code eq '409') { $msg = 'File already exists on CPAN.' }
+    die qq{Problem uploading file "$file". ($msg)\n};
   }
   say 'Upload successful!';
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -70,10 +65,13 @@ Mojolicious::Command::cpanify - Cpanify command
 
 L<Mojolicious::Command::cpanify> uploads files to CPAN.
 
+This is a core command, that means it is always enabled and its code a good
+example for learning to build new commands, you're welcome to fork it.
+
 =head1 ATTRIBUTES
 
-L<Mojolicious::Command::cpanify> inherits all attributes from L<Mojo::Command>
-and implements the following new ones.
+L<Mojolicious::Command::cpanify> inherits all attributes from
+L<Mojolicious::Command> and implements the following new ones.
 
 =head2 C<description>
 
@@ -91,8 +89,8 @@ Usage information for this command, used for the help screen.
 
 =head1 METHODS
 
-L<Mojolicious::Command::cpanify> inherits all methods from L<Mojo::Command>
-and implements the following new ones.
+L<Mojolicious::Command::cpanify> inherits all methods from
+L<Mojolicious::Command> and implements the following new ones.
 
 =head2 C<run>
 

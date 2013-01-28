@@ -2,61 +2,89 @@ package Mojo::Loader;
 use Mojo::Base -base;
 
 use File::Basename 'fileparse';
-use File::Spec::Functions qw/catdir catfile splitdir/;
-use Mojo::Command;
+use File::Spec::Functions qw(catdir catfile splitdir);
 use Mojo::Exception;
+use Mojo::Util qw(b64_decode class_to_path);
 
-# "Homer no function beer well without."
+# Cache
+my %CACHE;
+
+sub data {
+  my ($self, $class, $data) = @_;
+  return $class ? $data ? _all($class)->{$data} : _all($class) : undef;
+}
+
 sub load {
   my ($self, $module) = @_;
 
   # Check module name
-  return 1 if !$module || $module !~ /^\w(?:[\w\:\']*\w)?$/;
-
-  # Already loaded
-  return if $module->can('new');
+  return 1 if !$module || $module !~ /^\w(?:[\w:']*\w)?$/;
 
   # Load
-  unless (eval "require $module; 1") {
+  return undef if $module->can('new') || eval "require $module; 1";
 
-    # Exists
-    my $path = Mojo::Command->class_to_path($module);
-    return 1 if $@ =~ /^Can't locate $path in \@INC/;
+  # Exists
+  my $path = class_to_path $module;
+  return 1 if $@ =~ /^Can't locate $path in \@INC/;
 
-    # Real error
-    return Mojo::Exception->new($@);
-  }
-
-  return;
+  # Real error
+  return Mojo::Exception->new($@);
 }
 
-# "This is the worst thing you've ever done.
-#  You say that so often that it lost its meaning."
 sub search {
   my ($self, $namespace) = @_;
 
-  # Scan
+  # Check all directories
   my (@modules, %found);
-  for my $directory (exists $INC{'blib.pm'} ? grep {/blib/} @INC : @INC) {
-    next unless -d (my $path = catdir $directory, (split /::/, $namespace));
+  for my $directory (@INC) {
+    next unless -d (my $path = catdir $directory, split(/::|'/, $namespace));
 
-    # Check files
+    # List "*.pm" files in directory
     opendir(my $dir, $path);
-    for my $file (grep /\.pm$/, readdir($dir)) {
+    for my $file (grep /\.pm$/, readdir $dir) {
       next if -d catfile splitdir($path), $file;
 
       # Module found
-      my $class = "$namespace\::" . fileparse $file, qr/\.pm/;
+      my $class = "${namespace}::" . fileparse $file, qr/\.pm/;
       push @modules, $class unless $found{$class}++;
     }
-    closedir $dir;
   }
 
   return \@modules;
 }
 
+sub _all {
+  my $class = shift;
+
+  # Refresh or use cached data
+  my $handle = do { no strict 'refs'; \*{"${class}::DATA"} };
+  return $CACHE{$class} || {} unless fileno $handle;
+  seek $handle, 0, 0;
+  my $content = join '', <$handle>;
+  close $handle;
+
+  # Ignore everything before __DATA__ (Windows will seek to start of file)
+  $content =~ s/^.*\n__DATA__\r?\n/\n/s;
+
+  # Ignore everything after __END__
+  $content =~ s/\n__END__\r?\n.*$/\n/s;
+
+  # Split
+  my @data = split /^@@\s*(.+?)\s*\r?\n/m, $content;
+  shift @data;
+
+  # Find data
+  my $all = $CACHE{$class} = {};
+  while (@data) {
+    my ($name, $content) = splice @data, 0, 2;
+    $content = b64_decode $content if $name =~ s/\s*\(\s*base64\s*\)$//;
+    $all->{$name} = $content;
+  }
+
+  return $all;
+}
+
 1;
-__END__
 
 =head1 NAME
 
@@ -70,9 +98,12 @@ Mojo::Loader - Loader
   my $loader = Mojo::Loader->new;
   for my $module (@{$loader->search('Some::Namespace')}) {
 
-    # And load them safely
+    # Load them safely
     my $e = $loader->load($module);
-    warn qq/Loading "$module" failed: $e/ if ref $e;
+    warn qq{Loading "$module" failed: $e} and next if ref $e;
+
+    # And extract files from the DATA section
+    say $loader->data($module, 'some_file.txt');
   }
 
 =head1 DESCRIPTION
@@ -84,6 +115,15 @@ L<Mojo::Loader> is a class loader and plugin framework.
 L<Mojo::Loader> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
+=head2 C<data>
+
+  my $all   = $loader->data('Foo::Bar');
+  my $index = $loader->data('Foo::Bar', 'index.html');
+
+Extract embedded file from the C<DATA> section of a class.
+
+  say for keys %{$loader->data('Foo::Bar')};
+
 =head2 C<load>
 
   my $e = $loader->load('Foo::Bar');
@@ -92,7 +132,7 @@ Load a class and catch exceptions. Note that classes are checked for a C<new>
 method to see if they are already loaded.
 
   if (my $e = $loader->load('Foo::Bar')) {
-    die "Exception: $e" if ref $e;
+    die ref $e ? "Exception: $e" : 'Already loaded!';
   }
 
 =head2 C<search>

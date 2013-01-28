@@ -2,18 +2,12 @@ package Mojo::Server;
 use Mojo::Base 'Mojo::EventEmitter';
 
 use Carp 'croak';
+use FindBin;
 use Mojo::Loader;
 use Mojo::Util 'md5_sum';
 use Scalar::Util 'blessed';
 
-has app => sub {
-  my $self = shift;
-  return $ENV{MOJO_APP} if ref $ENV{MOJO_APP};
-  if (my $e = Mojo::Loader->load($self->app_class)) { die $e if ref $e }
-  return $self->app_class->new;
-};
-has app_class =>
-  sub { ref $ENV{MOJO_APP} || $ENV{MOJO_APP} || 'Mojo::HelloWorld' };
+has app => sub { shift->build_app('Mojo::HelloWorld') };
 
 sub new {
   my $self = shift->SUPER::new(@_);
@@ -21,46 +15,45 @@ sub new {
   return $self;
 }
 
+sub build_app {
+  my ($self, $app) = @_;
+  local $ENV{MOJO_EXE};
+  local $ENV{MOJO_APP} = $app;
+  return $app->new unless my $e = Mojo::Loader->new->load($app);
+  die ref $e ? $e : qq{Couldn't find application class "$app".\n};
+}
+
 sub build_tx { shift->app->build_tx }
 
 sub load_app {
-  my ($self, $file) = @_;
+  my ($self, $path) = @_;
 
-  # Clean up environment
-  local $ENV{MOJO_APP_LOADER} = 1;
-  local ($ENV{MOJO_APP}, $ENV{MOJO_EXE});
+  # Clean environment (reset FindBin)
+  {
+    local $0 = $path;
+    FindBin->again;
+    local $ENV{MOJO_APP_LOADER} = 1;
+    local $ENV{MOJO_EXE};
 
-  # Try to load application from script into sandbox
-  my $class = 'Mojo::Server::SandBox::' . md5_sum($file . $$);
-  my $app;
-  die $@ unless eval <<EOF;
-package $class;
-{
-  unless (\$app = do \$file) {
-    die qq/Can't load application "\$file": \$@/ if \$@;
-    die qq/Can't load application "\$file": \$!/ unless defined \$app;
-    die qq/Can't load application' "\$file".\n/ unless \$app;
-  }
-}
-1;
+    # Try to load application from script into sandbox
+    $self->app(my $app = eval sprintf <<'EOF', md5_sum($path . $$));
+package Mojo::Server::SandBox::%s;
+my $app = do $path;
+if (!$app && (my $e = $@ || $!)) { die $e }
+$app;
 EOF
-  die qq/"$file" is not a valid application.\n/
-    unless blessed $app && $app->isa('Mojo');
-  return $self->app($app)->app;
+    die qq{Couldn't load application from file "$path": $@} if !$app && $@;
+    die qq{File "$path" did not return an application object.\n}
+      unless blessed $app && $app->isa('Mojo');
+  };
+  FindBin->again;
+
+  return $self->app;
 }
 
-# "Are you saying you're never going to eat any animal again? What about
-#  bacon?
-#  No.
-#  Ham?
-#  No.
-#  Pork chops?
-#  Dad, those all come from the same animal.
-#  Heh heh heh. Ooh, yeah, right, Lisa. A wonderful, magical animal."
 sub run { croak 'Method "run" not implemented by subclass' }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -68,6 +61,7 @@ Mojo::Server - HTTP server base class
 
 =head1 SYNOPSIS
 
+  package Mojo::Server::MyServer;
   use Mojo::Base 'Mojo::Server';
 
   sub run {
@@ -117,14 +111,6 @@ L<Mojo::Server> implements the following attributes.
 
 Application this server handles, defaults to a L<Mojo::HelloWorld> object.
 
-=head2 C<app_class>
-
-  my $app_class = $server->app_class;
-  $server       = $server->app_class('MojoSubclass');
-
-Class of the application this server handles, defaults to the value of the
-C<MOJO_APP> environment variable or L<Mojo::HelloWorld>.
-
 =head1 METHODS
 
 L<Mojo::Server> inherits all methods from L<Mojo::EventEmitter> and implements
@@ -137,6 +123,12 @@ the following new ones.
 Construct a new L<Mojo::Server> object and subscribe to C<request> event with
 default request handling.
 
+=head2 C<build_app>
+
+  my $app = $server->build_app('Mojo::HelloWorld');
+
+Build application from class.
+
 =head2 C<build_tx>
 
   my $tx = $server->build_tx;
@@ -145,7 +137,7 @@ Let application build a transaction.
 
 =head2 C<load_app>
 
-  my $app = $server->load_app('./myapp.pl');
+  my $app = $server->load_app('/home/sri/myapp.pl');
 
 Load application from script.
 

@@ -6,31 +6,39 @@ use Carp 'croak';
 has 'end_range';
 has start_range => 0;
 
-# "Marge, it takes two to lie. One to lie and one to listen."
 sub add_chunk { croak 'Method "add_chunk" not implemented by subclass' }
 sub contains  { croak 'Method "contains" not implemented by subclass' }
 sub get_chunk { croak 'Method "get_chunk" not implemented by subclass' }
 
 sub is_file {undef}
 
+sub is_range { !!($_[0]->end_range || $_[0]->start_range) }
+
 sub move_to { croak 'Method "move_to" not implemented by subclass' }
 sub size    { croak 'Method "size" not implemented by subclass' }
 sub slurp   { croak 'Method "slurp" not implemented by subclass' }
 
 1;
-__END__
 
 =head1 NAME
 
-Mojo::Asset - HTTP 1.1 content storage base class
+Mojo::Asset - HTTP content storage base class
 
 =head1 SYNOPSIS
 
+  package Mojo::Asset::MyAsset;
   use Mojo::Base 'Mojo::Asset';
+
+  sub add_chunk {...}
+  sub contains  {...}
+  sub get_chunk {...}
+  sub move_to   {...}
+  sub size      {...}
+  sub slurp     {...}
 
 =head1 DESCRIPTION
 
-L<Mojo::Asset> is an abstract base class for HTTP 1.1 content storage.
+L<Mojo::Asset> is an abstract base class for HTTP content storage.
 
 =head1 ATTRIBUTES
 
@@ -59,20 +67,20 @@ the following new ones.
 
   $asset = $asset->add_chunk('foo bar baz');
 
-Add chunk of data to asset, meant to be overloaded in a subclass.
+Add chunk of data to asset. Meant to be overloaded in a subclass.
 
 =head2 C<contains>
 
   my $position = $asset->contains('bar');
 
-Check if asset contains a specific string, meant to be overloaded in a
+Check if asset contains a specific string. Meant to be overloaded in a
 subclass.
 
 =head2 C<get_chunk>
 
   my $chunk = $asset->get_chunk($offset);
 
-Get chunk of data starting from a specific position, meant to be overloaded
+Get chunk of data starting from a specific position. Meant to be overloaded
 in a subclass.
 
 =head2 C<is_file>
@@ -81,17 +89,23 @@ in a subclass.
 
 False.
 
+=head2 C<is_range>
+
+  my $success = $asset->is_range;
+
+Check if asset has a C<start_range> or C<end_range>.
+
 =head2 C<move_to>
 
-  $asset = $asset->move_to('/foo/bar/baz.txt');
+  $asset = $asset->move_to('/home/sri/foo.txt');
 
-Move asset data into a specific file, meant to be overloaded in a subclass.
+Move asset data into a specific file. Meant to be overloaded in a subclass.
 
 =head2 C<size>
 
   my $size = $asset->size;
 
-Size of asset data in bytes, meant to be overloaded in a subclass.
+Size of asset data in bytes. Meant to be overloaded in a subclass.
 
 =head2 C<slurp>
 

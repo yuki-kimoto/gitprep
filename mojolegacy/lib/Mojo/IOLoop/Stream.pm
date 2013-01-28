@@ -1,11 +1,9 @@
 package Mojo::IOLoop::Stream;
 use Mojo::Base 'Mojo::EventEmitter';
 
-use Errno qw/EAGAIN ECONNRESET EINTR EPIPE EWOULDBLOCK/;
+use Errno qw(EAGAIN ECONNRESET EINTR EPIPE EWOULDBLOCK);
 use Scalar::Util 'weaken';
 use Time::HiRes 'time';
-
-use constant CHUNK_SIZE => $ENV{MOJO_CHUNK_SIZE} || 131072;
 
 has reactor => sub {
   require Mojo::IOLoop;
@@ -13,10 +11,6 @@ has reactor => sub {
 };
 has timeout => 15;
 
-# "And America has so many enemies.
-#  Iran, Iraq, China, Mordor, the hoochies that laid low Tiger Woods,
-#  undesirable immigrants - by which I mean everyone that came after me,
-#  including my children..."
 sub DESTROY { shift->close }
 
 sub new { shift->SUPER::new(handle => shift, buffer => '', active => time) }
@@ -45,31 +39,15 @@ sub is_readable {
 
 sub is_writing {
   my $self = shift;
-  return unless exists $self->{handle};
-  return length($self->{buffer}) || $self->has_subscribers('drain');
+  return undef unless exists $self->{handle};
+  return !!length($self->{buffer}) || $self->has_subscribers('drain');
 }
 
 sub start {
   my $self = shift;
-
-  # Timeout
-  my $reactor = $self->reactor;
-  weaken $self;
-  $self->{timer} ||= $reactor->recurring(
-    0.025 => sub {
-      return unless $self && (my $t = $self->timeout);
-      $self->emit_safe('timeout')->close if (time - ($self->{active})) >= $t;
-    }
-  );
-
-  # Start streaming
-  my $handle = $self->{handle};
-  return $reactor->io($handle => sub { pop() ? $self->_write : $self->_read })
-    unless $self->{streaming}++;
-
-  # Resume streaming
+  return $self->_startup unless $self->{startup}++;
   return unless delete $self->{paused};
-  $reactor->watch($handle, 1, $self->is_writing);
+  $self->reactor->watch($self->{handle}, 1, $self->is_writing);
 }
 
 sub stop {
@@ -78,8 +56,6 @@ sub stop {
   $self->reactor->watch($self->{handle}, 0, $self->is_writing);
 }
 
-# "No children have ever meddled with the Republican Party and lived to tell
-#  about it."
 sub steal_handle {
   my $self = shift;
   $self->reactor->remove($self->{handle});
@@ -94,27 +70,29 @@ sub write {
 
   # Write with roundtrip
   if ($cb) { $self->once(drain => $cb) }
-  else     { return unless length $self->{buffer} }
+  else     { return $self unless length $self->{buffer} }
 
   # Start writing
   $self->reactor->watch($self->{handle}, !$self->{paused}, 1)
     if $self->{handle};
+
+  return $self;
 }
 
 sub _read {
   my $self = shift;
 
   # Read
-  my $read = $self->{handle}->sysread(my $buffer, CHUNK_SIZE, 0);
+  my $read = $self->{handle}->sysread(my $buffer, 131072, 0);
 
   # Error
   unless (defined $read) {
 
     # Retry
-    return if grep {$_ eq $!} (EAGAIN, EINTR, EWOULDBLOCK);
+    return if grep { $_ == $! } EAGAIN, EINTR, EWOULDBLOCK;
 
     # Closed
-    return $self->close if grep {$_ eq $!} (ECONNRESET, EPIPE);
+    return $self->close if grep { $_ == $! } ECONNRESET, EPIPE;
 
     # Read error
     return $self->emit_safe(error => $!)->close;
@@ -124,12 +102,26 @@ sub _read {
   return $self->close if $read == 0;
 
   # Handle read
-  $self->emit_safe(read => $buffer);
-  $self->{active} = time;
+  $self->emit_safe(read => $buffer)->{active} = time;
 }
 
-# "Oh, I'm in no condition to drive. Wait a minute.
-#  I don't have to listen to myself. I'm drunk."
+sub _startup {
+  my $self = shift;
+
+  # Timeout (ignore 0 timeout)
+  my $reactor = $self->reactor;
+  weaken $self;
+  $self->{timer} = $reactor->recurring(
+    0.5 => sub {
+      return unless my $t = $self->timeout;
+      $self->emit_safe('timeout')->close if (time - $self->{active}) >= $t;
+    }
+  );
+
+  # Start streaming
+  $reactor->io($self->{handle}, sub { pop() ? $self->_write : $self->_read });
+}
+
 sub _write {
   my $self = shift;
 
@@ -142,10 +134,10 @@ sub _write {
     unless (defined $written) {
 
       # Retry
-      return if grep {$_ eq $!} (EAGAIN, EINTR, EWOULDBLOCK);
+      return if grep { $_ == $! } EAGAIN, EINTR, EWOULDBLOCK;
 
       # Closed
-      return $self->close if grep {$_ eq $!} (ECONNRESET, EPIPE);
+      return $self->close if grep { $_ == $! } ECONNRESET, EPIPE;
 
       # Write error
       return $self->emit_safe(error => $!)->close;
@@ -165,7 +157,6 @@ sub _write {
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -193,6 +184,9 @@ Mojo::IOLoop::Stream - Non-blocking I/O stream
   # Start and stop watching for new data
   $stream->start;
   $stream->stop;
+
+  # Start reactor if necessary
+  $stream->reactor->start unless $stream->reactor->is_running;
 
 =head1 DESCRIPTION
 
@@ -228,7 +222,7 @@ Emitted safely once all data has been written.
     ...
   });
 
-Emitted safely if an error happens on the stream.
+Emitted safely if an error occurs on the stream.
 
 =head2 C<read>
 
@@ -335,8 +329,8 @@ Steal handle from stream and prevent it from getting closed automatically.
 
 =head2 C<write>
 
-  $stream->write('Hello!');
-  $stream->write('Hello!', sub {...});
+  $stream = $stream->write('Hello!');
+  $stream = $stream->write('Hello!' => sub {...});
 
 Write data to stream, the optional drain callback will be invoked once all
 data has been written.

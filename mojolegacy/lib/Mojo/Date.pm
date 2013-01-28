@@ -10,17 +10,13 @@ use Time::Local 'timegm';
 has 'epoch';
 
 # Days and months
-my @DAYS   = qw/Sun Mon Tue Wed Thu Fri Sat/;
-my @MONTHS = qw/Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec/;
+my @DAYS   = qw(Sun Mon Tue Wed Thu Fri Sat);
+my @MONTHS = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 my %MONTHS;
 @MONTHS{@MONTHS} = (0 .. 11);
 
 sub new { shift->SUPER::new->parse(@_) }
 
-# "I suggest you leave immediately.
-#  Or what? You'll release the dogs or the bees?
-#  Or the dogs with bees in their mouths and when they bark they shoot bees
-#  at you?"
 sub parse {
   my ($self, $date) = @_;
 
@@ -67,24 +63,26 @@ sub to_string {
 }
 
 1;
-__END__
 
 =head1 NAME
 
-Mojo::Date - HTTP 1.1 date container
+Mojo::Date - HTTP date
 
 =head1 SYNOPSIS
 
   use Mojo::Date;
 
-  my $date = Mojo::Date->new(784111777);
-  my $http_date = $date->to_string;
-  $date->parse('Sun, 06 Nov 1994 08:49:37 GMT');
-  my $epoch = $date->epoch;
+  # Parse
+  my $date = Mojo::Date->new('Sun, 06 Nov 1994 08:49:37 GMT');
+  say $date->epoch;
+
+  # Build
+  my $date = Mojo::Date->new(time);
+  say "$date";
 
 =head1 DESCRIPTION
 
-L<Mojo::Date> implements HTTP 1.1 date and time functions according to RFC
+L<Mojo::Date> implements HTTP date and time functions as described in RFC
 2616.
 
   Sun, 06 Nov 1994 08:49:37 GMT  ; RFC 822, updated by RFC 1123
@@ -110,7 +108,7 @@ following new ones.
 =head2 C<new>
 
   my $date = Mojo::Date->new;
-  my $date = Mojo::Date->new($string);
+  my $date = Mojo::Date->new('Sun Nov  6 08:49:37 1994');
 
 Construct a new L<Mojo::Date> object.
 
@@ -118,18 +116,26 @@ Construct a new L<Mojo::Date> object.
 
   $date = $date->parse('Sun Nov  6 08:49:37 1994');
 
-Parse date in one of the following formats.
+Parse date.
 
-  - Epoch format (784111777)
-  - RFC 822/1123 (Sun, 06 Nov 1994 08:49:37 GMT)
-  - RFC 850/1036 (Sunday, 06-Nov-94 08:49:37 GMT)
-  - ANSI C asctime() (Sun Nov  6 08:49:37 1994)
+  # Epoch
+  say Mojo::Date->new('784111777')->epoch;
+
+  # RFC 822/1123
+  say Mojo::Date->new('Sun, 06 Nov 1994 08:49:37 GMT')->epoch;
+
+  # RFC 850/1036
+  say Mojo::Date->new('Sunday, 06-Nov-94 08:49:37 GMT')->epoch;
+
+  # Ansi C asctime()
+  say Mojo::Date->new('Sun Nov  6 08:49:37 1994')->epoch;
 
 =head2 C<to_string>
 
   my $string = $date->to_string;
+  my $string = "$date";
 
-Render date suitable for HTTP 1.1 messages.
+Render date suitable for HTTP messages.
 
 =head1 SEE ALSO
 

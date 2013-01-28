@@ -9,15 +9,7 @@ has auto_upgrade => 1;
 
 sub new {
   my $self = shift->SUPER::new(@_);
-
-  # Default content parser
-  $self->{read} = $self->on(
-    read => sub {
-      my ($self, $chunk) = @_;
-      $self->asset($self->asset->add_chunk($chunk));
-    }
-  );
-
+  $self->{read} = $self->on(read => \&_read);
   return $self;
 }
 
@@ -31,7 +23,7 @@ sub body_size {
 
 sub clone {
   my $self = shift;
-  return unless my $clone = $self->SUPER::clone();
+  return undef unless my $clone = $self->SUPER::clone();
   return $clone->asset($self->asset);
 }
 
@@ -49,11 +41,11 @@ sub parse {
   my $self = shift;
 
   # Parse headers
-  $self->parse_until_body(@_);
+  $self->_parse_until_body(@_);
 
   # Parse body
   return $self->SUPER::parse
-    unless $self->auto_upgrade && defined($self->boundary);
+    unless $self->auto_upgrade && defined $self->boundary;
 
   # Content needs to be upgraded to multipart
   $self->unsubscribe(read => $self->{read});
@@ -62,12 +54,16 @@ sub parse {
   return $multi->parse;
 }
 
+sub _read {
+  my ($self, $chunk) = @_;
+  $self->asset($self->asset->add_chunk($chunk));
+}
+
 1;
-__END__
 
 =head1 NAME
 
-Mojo::Content::Single - HTTP 1.1 content container
+Mojo::Content::Single - HTTP content
 
 =head1 SYNOPSIS
 
@@ -75,11 +71,12 @@ Mojo::Content::Single - HTTP 1.1 content container
 
   my $single = Mojo::Content::Single->new;
   $single->parse("Content-Length: 12\r\n\r\nHello World!");
+  say $single->headers->content_length;
 
 =head1 DESCRIPTION
 
-L<Mojo::Content::Single> is a container for HTTP 1.1 content as described in
-RFC 2616.
+L<Mojo::Content::Single> is a container for HTTP content as described in RFC
+2616.
 
 =head1 EVENTS
 

@@ -3,9 +3,6 @@ use Mojo::Base 'Mojo::Cookie';
 
 use Mojo::Util 'quote';
 
-# "Lisa, would you like a donut?
-#  No thanks. Do you have any fruit?
-#  This has purple in it. Purple is a fruit."
 sub parse {
   my ($self, $string) = @_;
 
@@ -30,11 +27,10 @@ sub to_string {
 }
 
 1;
-__END__
 
 =head1 NAME
 
-Mojo::Cookie::Request - HTTP 1.1 request cookie container
+Mojo::Cookie::Request - HTTP request cookie
 
 =head1 SYNOPSIS
 
@@ -43,11 +39,11 @@ Mojo::Cookie::Request - HTTP 1.1 request cookie container
   my $cookie = Mojo::Cookie::Request->new;
   $cookie->name('foo');
   $cookie->value('bar');
-  say $cookie;
+  say "$cookie";
 
 =head1 DESCRIPTION
 
-L<Mojo::Cookie::Request> is a container for HTTP 1.1 request cookies.
+L<Mojo::Cookie::Request> is a container for HTTP request cookies.
 
 =head1 ATTRIBUTES
 

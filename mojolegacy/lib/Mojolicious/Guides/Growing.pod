@@ -109,11 +109,12 @@ Traditionally all session data was stored on the server-side and only session
 ids were exchanged between browser and web server in the form of cookies.
 
   HTTP/1.1 200 OK
-  Set-Cookie: session=base64(hmac-md5(json($session)))
+  Set-Cookie: session=hmac-sha1(base64(json($session)))
 
 In L<Mojolicious> however we are taking this concept one step further by
-storing everything in C<HMAC-MD5> signed cookies, which is more compatible
-with the REST philosophy and reduces infrastructure requirements.
+storing everything C<JSON> serialized and C<Base64> encoded in C<HMAC-SHA1>
+signed cookies, which is more compatible with the REST philosophy and reduces
+infrastructure requirements.
 
 =head2 Test Driven Development
 
@@ -228,14 +229,14 @@ logic related to matching usernames and passwords.
     return 1 if $USERS->{$user} && $USERS->{$user} eq $pass;
 
     # Fail
-    return;
+    return undef;
   }
 
   1;
 
-A simple helper function can be registered with the method
-L<Mojolicious/"helper"> to make our C<model> available to all actions and
-templates.
+A simple helper can be registered with the function
+L<Mojolicious::Lite/"helper"> to make our C<model> available to all actions
+and templates.
 
   #!/usr/bin/env perl
   use Mojolicious::Lite;
@@ -243,11 +244,8 @@ templates.
   use lib 'lib';
   use MyUsers;
 
-  # Model object
-  my $users = MyUsers->new;
-
-  # Helper function returning our model object
-  helper users => sub { return $users };
+  # Helper to lazy initialize and store our model object
+  helper users => sub { state $users = MyUsers->new };
 
   # /?user=sri&pass=secr3t
   any '/' => sub {
@@ -280,10 +278,10 @@ promote it wherever we can.
   $ chmod 644 t/login.t
 
 L<Test::Mojo> is a scriptable HTTP user agent designed specifically for
-testing, with many fun state of the art features such as CSS3 selectors based
+testing, with many fun state of the art features such as CSS selectors based
 on L<Mojo::DOM>.
 
-  use Test::More tests => 16;
+  use Test::More;
   use Test::Mojo;
 
   # Include application
@@ -313,6 +311,8 @@ on L<Mojo::DOM>.
     ->element_exists('form input[name="user"]')
     ->element_exists('form input[name="pass"]')
     ->element_exists('form input[type="submit"]');
+
+  done_testing();
 
 From now on you can always check your progress by running these unit tests
 against your application.
@@ -349,20 +349,19 @@ L<Mojolicious/"secret">.
 
   app->secret('Mojolicious rocks');
 
-This passphrase is used by the C<HMAC-MD5> algorithm to make signed cookies
+This passphrase is used by the C<HMAC-SHA1> algorithm to make signed cookies
 secure and can be changed at any time to invalidate all existing sessions.
 
   $self->session(user => 'sri');
   my $user = $self->session('user');
 
-By default all sessions expire after one hour, for more control you can also
-use the C<expires> session value to set the expiration date to a specific time
-in epoch seconds.
+By default all sessions expire after one hour, for more control you can use
+the C<expiration> session value to set an expiration date in seconds from now.
 
-  $self->session(expires => time + 3600);
+  $self->session(expiration => 3600);
 
-And the whole session can be deleted by setting an expiration date in the
-past.
+And the whole session can be deleted by using the C<expires> session value to
+set an absolute expiration date in the past.
 
   $self->session(expires => 1);
 
@@ -373,8 +372,9 @@ method L<Mojolicious::Controller/"flash">.
   $self->flash(message => 'Everything is fine.');
   $self->redirect_to('goodbye');
 
-Just remember that everything is stored in C<HMAC-MD5> signed cookies, so
-there is usually a 4096 byte limit, depending on the browser.
+Just remember that all session data gets serialized with L<Mojo::JSON> and
+stored in C<HMAC-SHA1> signed cookies, which usually have a 4096 byte limit,
+depending on browser.
 
 =head2 Final prototype
 
@@ -390,8 +390,7 @@ like this.
   # Make signed cookies secure
   app->secret('Mojolicious rocks');
 
-  my $users = MyUsers->new;
-  helper users => sub { return $users };
+  helper users => sub { state $users = MyUsers->new };
 
   # Main login action
   any '/' => sub {
@@ -452,8 +451,8 @@ like this.
 
   @@ protected.html.ep
   % layout 'default';
-  % if (my $message = flash 'message') {
-    <b><%= $message %></b><br>
+  % if (my $msg = flash 'message') {
+    <b><%= $msg %></b><br>
   % }
   Welcome <%= session 'user' %>.<br>
   %= link_to Logout => 'logout'
@@ -506,8 +505,7 @@ actual action code needs to be changed.
     my $self = shift;
 
     $self->secret('Mojolicious rocks');
-    my $users = MyUsers->new;
-    $self->helper(users => sub { return $users });
+    $self->helper(users => sub { state $users = MyUsers->new });
 
     my $r = $self->routes;
 
@@ -612,8 +610,7 @@ information.
     my $self = shift;
 
     $self->secret('Mojolicious rocks');
-    my $users = MyUsers->new;
-    $self->helper(users => sub { return $users });
+    $self->helper(users => sub { state $users = MyUsers->new });
 
     my $r = $self->routes;
     $r->any('/')->to('login#index')->name('index');
@@ -644,30 +641,18 @@ Finally C<myapp.pl> can be replaced with a proper L<Mojolicious> script.
   $ touch script/myapp
   $ chmod 744 script/myapp
 
-The library detection code was specifically designed for tricky production
-environments.
+Only a few small details change.
 
   #!/usr/bin/env perl
 
   use strict;
   use warnings;
 
-  use File::Basename 'dirname';
-  use File::Spec::Functions qw/catdir splitdir/;
-
-  # Source directory has precedence
-  my @base = (splitdir(dirname(__FILE__)), '..');
-  my $lib = join('/', @base, 'lib');
-  -e catdir(@base, 't') ? unshift(@INC, $lib) : push(@INC, $lib);
-
-  # Check if Mojolicious is installed
-  die <<EOF unless eval 'use Mojolicious::Commands; 1';
-  It looks like you don't have the Mojolicious framework installed.
-  Please visit http://mojolicio.us for detailed installation instructions.
-
-  EOF
+  use FindBin;
+  use lib "$FindBin::Bin/../lib";
 
   # Start commands for application
+  require Mojolicious::Commands;
   Mojolicious::Commands->start_app('MyApp');
 
 =head2 Simplified tests
@@ -675,7 +660,7 @@ environments.
 Normal L<Mojolicious> applications are a little easier to test, so
 C<t/login.t> can be simplified.
 
-  use Test::More tests => 16;
+  use Test::More;
   use Test::Mojo;
 
   # Load application class
@@ -698,13 +683,15 @@ C<t/login.t> can be simplified.
     ->element_exists('form input[name="pass"]')
     ->element_exists('form input[type="submit"]');
 
+  done_testing();
+
 Test driven development takes a little getting used to, but is very well worth
 it!
 
 =head1 MORE
 
 You can continue with L<Mojolicious::Guides> now or take a look at the
-Mojolicious wiki L<http://github.com/kraih/mojo/wiki>, which contains a lot
+L<Mojolicious wiki|http://github.com/kraih/mojo/wiki>, which contains a lot
 more documentation and examples by many different authors.
 
 =cut

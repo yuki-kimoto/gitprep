@@ -1,7 +1,7 @@
 package Mojolicious::Command::eval;
-use Mojo::Base 'Mojo::Command';
+use Mojo::Base 'Mojolicious::Command';
 
-use Getopt::Long qw/GetOptions :config no_auto_abbrev no_ignore_case/;
+use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
 
 has description => "Run code against application.\n";
 has usage       => <<"EOF";
@@ -14,30 +14,22 @@ These options are available:
   -v, --verbose   Print return value to STDOUT.
 EOF
 
-# "It worked!
-#  Gravity normal.
-#  Air pressure returning.
-#  Terror replaced by cautious optimism."
 sub run {
-  my $self = shift;
+  my ($self, @args) = @_;
 
   # Options
-  local @ARGV = @_;
-  my $verbose;
-  GetOptions('v|verbose' => sub { $verbose = 1 });
-  my $code = shift @ARGV || '';
+  GetOptionsFromArray \@args, 'v|verbose' => \my $verbose;
+  my $code = shift @args || '';
 
   # Run code against application
   my $app = $self->app;
   no warnings;
   my $result = eval "package main; sub app { \$app }; $code";
   say $result if $verbose && defined $result;
-  die $@ if $@;
-  return $result;
+  return $@ ? die $@ : $result;
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -48,16 +40,19 @@ Mojolicious::Command::eval - Eval command
   use Mojolicious::Command::eval;
 
   my $eval = Mojolicious::Command::eval->new;
-  $eval->run;
+  $eval->run(@ARGV);
 
 =head1 DESCRIPTION
 
 L<Mojolicious::Command::eval> runs code against applications.
 
+This is a core command, that means it is always enabled and its code a good
+example for learning to build new commands, you're welcome to fork it.
+
 =head1 ATTRIBUTES
 
-L<Mojolicious::Command::eval> inherits all attributes from L<Mojo::Command>
-and implements the following new ones.
+L<Mojolicious::Command::eval> inherits all attributes from
+L<Mojolicious::Command> and implements the following new ones.
 
 =head2 C<description>
 
@@ -75,12 +70,12 @@ Usage information for this command, used for the help screen.
 
 =head1 METHODS
 
-L<Mojolicious::Command::eval> inherits all methods from L<Mojo::Command> and
-implements the following new ones.
+L<Mojolicious::Command::eval> inherits all methods from
+L<Mojolicious::Command> and implements the following new ones.
 
 =head2 C<run>
 
-  $eval->run;
+  $eval->run(@ARGV);
 
 Run this command.
 

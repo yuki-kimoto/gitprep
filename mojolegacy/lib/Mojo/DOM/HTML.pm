@@ -1,10 +1,10 @@
 package Mojo::DOM::HTML;
 use Mojo::Base -base;
 
-use Mojo::Util qw/decode encode html_unescape xml_escape/;
+use Mojo::Util qw(decode encode html_unescape xml_escape);
 use Scalar::Util 'weaken';
 
-has [qw/charset xml/];
+has [qw(charset xml)];
 has tree => sub { ['root'] };
 
 my $ATTR_RE = qr/
@@ -22,15 +22,15 @@ my $ATTR_RE = qr/
   )?
   \s*
 /x;
-my $END_RE   = qr#^\s*/\s*(.+)\s*#;
+my $END_RE   = qr!^\s*/\s*(.+)\s*!;
 my $TOKEN_RE = qr/
   ([^<]*)                                           # Text
   (?:
     <\?(.*?)\?>                                     # Processing Instruction
   |
-    <\!--(.*?)-->                                   # Comment
+    <!--(.*?)--\s*>                                 # Comment
   |
-    <\!\[CDATA\[(.*?)\]\]>                          # CDATA
+    <!\[CDATA\[(.*?)\]\]>                           # CDATA
   |
     <!DOCTYPE(
       \s+\w+
@@ -49,40 +49,36 @@ my $TOKEN_RE = qr/
 
 # Optional HTML elements
 my %OPTIONAL = map { $_ => 1 }
-  qw/body colgroup dd head li optgroup option p rt rp tbody td tfoot th/;
+  qw(body colgroup dd head li optgroup option p rt rp tbody td tfoot th);
 
 # Elements that break HTML paragraphs
 my %PARAGRAPH = map { $_ => 1 } (
-  qw/address article aside blockquote dir div dl fieldset footer form h1 h2/,
-  qw/h3 h4 h5 h6 header hgroup hr menu nav ol p pre section table or ul/
+  qw(address article aside blockquote dir div dl fieldset footer form h1 h2),
+  qw(h3 h4 h5 h6 header hgroup hr menu nav ol p pre section table ul)
 );
 
 # HTML table elements
-my %TABLE = map { $_ => 1 } qw/col colgroup tbody td th thead tr/;
+my %TABLE = map { $_ => 1 } qw(col colgroup tbody td th thead tr);
 
-# HTML5 void elements
+# HTML void elements
 my %VOID = map { $_ => 1 } (
-  qw/area base br col command embed hr img input keygen link meta param/,
-  qw/source track wbr/
+  qw(area base br col command embed hr img input keygen link meta param),
+  qw(source track wbr)
 );
 
-# HTML4/5 inline elements
-my @HTML4_INLINE = qw/applet basefont big del font iframe ins s strike u/;
-my @HTML5_INLINE = (
-  qw/a abbr acronym b bdo big br button cite code dfn em i img input kbd/,
-  qw/label map object q samp script select small strong span sub sup/,
-  qw/textarea tt var/
+# HTML inline elements
+my %INLINE = map { $_ => 1 } (
+  qw(a abbr acronym applet b basefont bdo big br button cite code del dfn em),
+  qw(font i iframe img ins input kbd label map object q s samp script select),
+  qw(small span strike strong sub sup textarea tt u var)
 );
-my %INLINE = map { $_ => 1 } @HTML4_INLINE, @HTML5_INLINE;
 
-# "No one believes me.
-#  I believe you, dad.
-#  Then can you stop the cats from swearing?"
 sub parse {
   my ($self, $html) = @_;
 
-  # Decode
-  if (my $charset = $self->charset) { $html = decode $charset, $html }
+  # Try to decode
+  my $charset = $self->charset;
+  defined ($html = decode($charset, $html)) || return $self->charset(undef) if $charset;
 
   # Tokenize
   my $tree    = ['root'];
@@ -115,7 +111,7 @@ sub parse {
     if ($tag =~ $END_RE) { $self->_end($cs ? $1 : lc($1), \$current) }
 
     # Start
-    elsif ($tag =~ qr#([^\s/]+)([\s\S]*)#) {
+    elsif ($tag =~ m!([^\s/]+)([\s\S]*)!) {
       my ($start, $attr) = ($cs ? $1 : lc($1), $2);
 
       # Attributes
@@ -137,11 +133,11 @@ sub parse {
 
       # Empty element
       $self->_end($start, \$current)
-        if (!$self->xml && $VOID{$start}) || $attr =~ m#/\s*$#;
+        if (!$self->xml && $VOID{$start}) || $attr =~ m!/\s*$!;
 
       # Relaxed "script" or "style"
-      if (grep {$_ eq $start } qw/script style/) {
-        if ($html =~ m#\G(.*?)<\s*/\s*$start\s*>#gcsi) {
+      if (grep { $_ eq $start } qw(script style)) {
+        if ($html =~ m!\G(.*?)<\s*/\s*$start\s*>!gcsi) {
           $self->_raw($1, \$current);
           $self->_end($start, \$current);
         }
@@ -159,8 +155,6 @@ sub render {
   return $charset ? encode($charset, $content) : $content;
 }
 
-# "Woah! God is so in your face!
-#  Yeah, he's my favorite fictional character."
 sub _cdata {
   my ($self, $cdata, $current) = @_;
   push @$$current, ['cdata', $cdata];
@@ -298,7 +292,7 @@ sub _render {
       push @attrs, $key and next unless defined $value;
 
       # Key and value
-      push @attrs, qq/$key="/ . xml_escape($value) . '"';
+      push @attrs, qq{$key="} . xml_escape($value) . '"';
     }
     my $attrs = join ' ', @attrs;
     $content .= " $attrs" if $attrs;
@@ -320,8 +314,6 @@ sub _render {
   return $content;
 }
 
-# "It's not important to talk about who got rich off of whom,
-#  or who got exposed to tainted what..."
 sub _start {
   my ($self, $start, $attrs, $current) = @_;
 
@@ -341,40 +333,30 @@ sub _start {
     elsif ($start eq 'optgroup') { $self->_end('optgroup', $current) }
 
     # "<option>"
-    elsif (grep {$_ eq $start} qw/option optgroup/) {
-      $self->_end('option', $current);
-      $self->_end('optgroup', $current) if $start eq 'optgroup';
+    elsif ($start eq 'option') { $self->_end('option', $current) }
+
+    # "<colgroup>", "<thead>", "tbody" and "tfoot"
+    elsif (grep { $_ eq $start } qw(colgroup thead tbody tfoot)) {
+      $self->_close($current);
     }
-
-    # "<colgroup>"
-    elsif ($start eq 'colgroup') { $self->_close($current) }
-
-    # "<thead>"
-    elsif ($start eq 'thead') { $self->_close($current) }
-
-    # "<tbody>"
-    elsif ($start eq 'tbody') { $self->_close($current) }
-
-    # "<tfoot>"
-    elsif ($start eq 'tfoot') { $self->_close($current) }
 
     # "<tr>"
     elsif ($start eq 'tr') { $self->_close($current, {tr => 1}) }
 
     # "<th>" and "<td>"
-    elsif (grep {$_ eq $start} qw/th td/) {
+    elsif (grep { $_ eq $start } qw(th td)) {
       $self->_close($current, {th => 1});
       $self->_close($current, {td => 1});
     }
 
     # "<dt>" and "<dd>"
-    elsif (grep {$_ eq $start} qw/dt dd/) {
+    elsif (grep { $_ eq $start } qw(dt dd)) {
       $self->_end('dt', $current);
       $self->_end('dd', $current);
     }
 
     # "<rt>" and "<rp>"
-    elsif (grep {$_ eq $start} qw/rt rp/) {
+    elsif (grep { $_ eq $start } qw(rt rp)) {
       $self->_end('rt', $current);
       $self->_end('rp', $current);
     }
@@ -393,24 +375,23 @@ sub _text {
 }
 
 1;
-__END__
 
 =head1 NAME
 
-Mojo::DOM::HTML - HTML5/XML engine
+Mojo::DOM::HTML - HTML/XML engine
 
 =head1 SYNOPSIS
 
   use Mojo::DOM::HTML;
 
-  # Turn HTML5 into DOM tree
+  # Turn HTML into DOM tree
   my $html = Mojo::DOM::HTML->new;
   $html->parse('<div><p id="a">A</p><p id="b">B</p></div>');
   my $tree = $html->tree;
 
 =head1 DESCRIPTION
 
-L<Mojo::DOM::HTML> is the HTML5/XML engine used by L<Mojo::DOM>.
+L<Mojo::DOM::HTML> is the HTML/XML engine used by L<Mojo::DOM>.
 
 =head1 ATTRIBUTES
 
@@ -421,12 +402,12 @@ L<Mojo::DOM::HTML> implements the following attributes.
   my $charset = $html->charset;
   $html       = $html->charset('UTF-8');
 
-Charset used for decoding and encoding HTML5/XML.
+Charset used for decoding and encoding HTML/XML.
 
 =head2 C<tree>
 
   my $tree = $html->tree;
-  $html    = $html->tree(['root', ['text', 'lalala']]);
+  $html    = $html->tree(['root', [qw(text lalala)]]);
 
 Document Object Model.
 
@@ -435,7 +416,7 @@ Document Object Model.
   my $xml = $html->xml;
   $html   = $html->xml(1);
 
-Disable HTML5 semantics in parser and activate case sensitivity, defaults to
+Disable HTML semantics in parser and activate case sensitivity, defaults to
 auto detection based on processing instructions.
 
 =head1 METHODS
@@ -447,7 +428,7 @@ following new ones.
 
   $html = $html->parse('<foo bar="baz">test</foo>');
 
-Parse HTML5/XML document.
+Parse HTML/XML document.
 
 =head2 C<render>
 

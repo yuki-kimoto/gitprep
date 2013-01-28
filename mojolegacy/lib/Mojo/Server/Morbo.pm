@@ -1,33 +1,31 @@
 package Mojo::Server::Morbo;
 use Mojo::Base -base;
 
+# "Linda: With Haley's Comet out of ice, Earth is experiencing the devastating
+#         effects of sudden, intense global warming.
+#  Morbo: Morbo is pleased but sticky."
 use Mojo::Home;
 use Mojo::Server::Daemon;
 use POSIX 'WNOHANG';
 
-has watch => sub { [qw/lib templates/] };
+has watch => sub { [qw(lib templates)] };
 
-# "All in all, this is one day Mittens the kitten won’t soon forget.
-#  Kittens give Morbo gas.
-#  In lighter news, the city of New New York is doomed.
-#  Blame rests with known human Professor Hubert Farnsworth and his tiny,
-#  inferior brain."
 sub check_file {
   my ($self, $file) = @_;
 
   # Check if modify time and/or size have changed
   my ($size, $mtime) = (stat $file)[7, 9];
-  return unless defined $mtime;
+  return undef unless defined $mtime;
   my $cache = $self->{cache} ||= {};
   my $stats = $cache->{$file} ||= [$^T, $size];
-  return if $mtime <= $stats->[0] && $size == $stats->[1];
-  return $cache->{$file} = [$mtime, $size];
+  return undef if $mtime <= $stats->[0] && $size == $stats->[1];
+  return !!($cache->{$file} = [$mtime, $size]);
 }
 
 sub run {
   my ($self, $app) = @_;
 
-  # Watch files and manage worker
+  # Prepare environment
   $SIG{CHLD} = sub { $self->_reap };
   $SIG{INT} = $SIG{TERM} = $SIG{QUIT} = sub {
     $self->{finished} = 1;
@@ -35,15 +33,15 @@ sub run {
   };
   unshift @{$self->watch}, $app;
   $self->{modified} = 1;
+
+  # Prepare and cache listen sockets for smooth restarting
+  my $daemon = Mojo::Server::Daemon->new(silent => 1)->start->stop;
+
+  # Watch files and manage worker
   $self->_manage while !$self->{finished} || $self->{running};
   exit 0;
 }
 
-# "And so with two weeks left in the campaign, the question on everyone’s
-#  mind is, who will be the president of Earth?
-#  Jack Johnson or bitter rival John Jackson.
-#  Two terrific candidates, Morbo?
-#  All humans are vermin in the eyes of Morbo!"
 sub _manage {
   my $self = shift;
 
@@ -60,7 +58,7 @@ sub _manage {
   # Check files
   for my $file (@files) {
     next unless $self->check_file($file);
-    say qq/File "$file" changed, restarting./ if $ENV{MORBO_VERBOSE};
+    say qq{File "$file" changed, restarting.} if $ENV{MORBO_VERBOSE};
     kill 'TERM', $self->{running} if $self->{running};
     $self->{modified} = 1;
   }
@@ -77,10 +75,6 @@ sub _reap {
   while ((my $pid = waitpid -1, WNOHANG) > 0) { delete $self->{running} }
 }
 
-# "Morbo cannot read his teleprompter.
-#  He forgot how you say that letter that looks like a man wearing a hat.
-#  It's a T. It goes 'tuh'.
-#  Hello, little man. I will destroy you!"
 sub _spawn {
   my $self = shift;
 
@@ -107,7 +101,6 @@ sub _spawn {
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -118,24 +111,26 @@ Mojo::Server::Morbo - DOOOOOOOOOOOOOOOOOOM!
   use Mojo::Server::Morbo;
 
   my $morbo = Mojo::Server::Morbo->new;
-  $morbo->run('./myapp.pl');
+  $morbo->run('/home/sri/myapp.pl');
 
 =head1 DESCRIPTION
 
-L<Mojo::Server::Morbo> is a full featured self-restart capable non-blocking
-I/O HTTP 1.1 and WebSocket server built around the very well tested and
-reliable L<Mojo::Server::Daemon> with C<IPv6>, C<TLS>, C<Bonjour> and C<libev>
-support.
+L<Mojo::Server::Morbo> is a full featured, self-restart capable non-blocking
+I/O HTTP and WebSocket server, built around the very well tested and reliable
+L<Mojo::Server::Daemon>, with C<IPv6>, C<TLS>, C<Comet> (long polling) and
+multiple event loop support.
 
 To start applications with it you can use the L<morbo> script.
 
   $ morbo myapp.pl
   Server available at http://127.0.0.1:3000.
 
-Optional modules L<EV>, L<IO::Socket::IP>, L<IO::Socket::SSL> and
-L<Net::Rendezvous::Publish> are supported transparently and used if installed.
-Individual features can also be disabled with the C<MOJO_NO_BONJOUR>,
-C<MOJO_NO_IPV6> and C<MOJO_NO_TLS> environment variables.
+Optional modules L<EV> (4.0+), L<IO::Socket::IP> (0.16+) and
+L<IO::Socket::SSL> (1.75+) are supported transparently through
+L<Mojo::IOLoop>, and used if installed. Individual features can also be
+disabled with the C<MOJO_NO_IPV6> and C<MOJO_NO_TLS> environment variables.
+
+See L<Mojolicious::Guides::Cookbook> for more.
 
 =head1 ATTRIBUTES
 

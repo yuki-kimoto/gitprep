@@ -1,12 +1,10 @@
 package Mojolicious::Commands;
-use Mojo::Base 'Mojo::Command';
+use Mojo::Base 'Mojolicious::Command';
 
 use Getopt::Long
-  qw/GetOptions :config no_auto_abbrev no_ignore_case pass_through/;
-use Mojo::Loader;
+  qw(GetOptions :config no_auto_abbrev no_ignore_case pass_through);
+use Mojo::Server;
 
-# "One day a man has everything, the next day he blows up a $400 billion
-#  space station, and the next day he has nothing. It makes you think."
 has hint => <<"EOF";
 
 These options are available for all commands:
@@ -26,7 +24,7 @@ Tip: CGI and PSGI environments can be automatically detected very often and
 
 These commands are currently available:
 EOF
-has namespaces => sub { [qw/Mojolicious::Command Mojo::Command/] };
+has namespaces => sub { ['Mojolicious::Command'] };
 
 sub detect {
   my ($self, $guess) = @_;
@@ -68,14 +66,15 @@ sub run {
 
     # Try all namespaces
     my $module;
-    $module = _command("${_}::$name") and last for @{$self->namespaces};
+    $module = _command("${_}::$name", 1) and last for @{$self->namespaces};
 
-    # Command missing
-    die qq/Command "$name" missing, maybe you need to install it?\n/
+    # Unknown command
+    die qq{Unknown command "$name", maybe you need to install it?\n}
       unless $module;
 
     # Run
-    return $help ? $module->new->help(@args) : $module->new->run(@args);
+    my $command = $module->new(app => $self->app);
+    return $help ? $command->help(@args) : $command->run(@args);
   }
 
   # Test
@@ -83,16 +82,14 @@ sub run {
 
   # Try all namespaces
   my (@commands, %seen);
+  my $loader = Mojo::Loader->new;
   for my $namespace (@{$self->namespaces}) {
-    for my $module (@{Mojo::Loader->search($namespace)}) {
+    for my $module (@{$loader->search($namespace)}) {
       next unless my $command = _command($module);
-      $command =~ s/^$namespace\:\://;
+      $command =~ s/^${namespace}:://;
       push @commands, [$command => $module] unless $seen{$command}++;
     }
   }
-
-  # Print overview
-  print $self->message;
 
   # Make list
   my @list;
@@ -104,6 +101,7 @@ sub run {
   }
 
   # Print list
+  print $self->message;
   for my $command (@list) {
     my ($name, $description) = @$command;
     print "  $name" . (' ' x ($max - length $name)) . "   $description";
@@ -113,41 +111,35 @@ sub run {
 
 sub start {
   my $self = shift;
-
-  # Executable
-  $ENV{MOJO_EXE} ||= (caller)[1] if $ENV{MOJO_APP};
-
-  # Run
-  my @args = @_ ? @_ : @ARGV;
-  ref $self ? $self->run(@args) : $self->new->run(@args);
+  return $self->start_app($ENV{MOJO_APP} => @_) if $ENV{MOJO_APP};
+  return $self->new->app->start(@_);
 }
 
 sub start_app {
   my $self = shift;
-  $ENV{MOJO_APP} = shift;
-  $self->start(@_);
+  return Mojo::Server->new->build_app(shift)->start(@_);
 }
 
 sub _command {
-  my $module = shift;
-  if (my $e = Mojo::Loader->load($module)) { ref $e ? die $e : return }
-  return $module->isa('Mojo::Command') ? $module : undef;
+  my ($module, $fatal) = @_;
+  return $module->isa('Mojolicious::Command') ? $module : undef
+    unless my $e = Mojo::Loader->new->load($module);
+  $fatal && ref $e ? die $e : return undef;
 }
 
 1;
-__END__
 
 =head1 NAME
 
-Mojolicious::Commands - Commands
+Mojolicious::Commands - Command line interface
 
 =head1 SYNOPSIS
 
   use Mojolicious::Commands;
 
-  # Command line interface
   my $commands = Mojolicious::Commands->new;
-  $commands->run(@ARGV);
+  push @{$commands->namespaces}, 'MyApp::Command';
+  $commands->run('daemon');
 
 =head1 DESCRIPTION
 
@@ -176,7 +168,7 @@ List available options for the command with short descriptions.
 
   $ ./myapp.pl cgi
 
-Start application with CGI backend.
+Start application with CGI backend, usually auto detected.
 
 =head2 C<cpanify>
 
@@ -188,7 +180,7 @@ Upload files to CPAN.
 
   $ ./myapp.pl daemon
 
-Start application with standalone HTTP 1.1 server backend.
+Start application with standalone HTTP server backend.
 
 =head2 C<eval>
 
@@ -253,7 +245,7 @@ application into real files.
 
   $ ./myapp.pl psgi
 
-Start application with PSGI backend.
+Start application with PSGI backend, usually auto detected.
 
 =head2 C<routes>
 
@@ -263,7 +255,6 @@ List application routes.
 
 =head2 C<test>
 
-  $ mojo test
   $ ./myapp.pl test
   $ ./myapp.pl test t/fun.t
 
@@ -279,8 +270,8 @@ for debugging.
 
 =head1 ATTRIBUTES
 
-L<Mojolicious::Commands> inherits all attributes from L<Mojo::Command> and
-implements the following new ones.
+L<Mojolicious::Commands> inherits all attributes from L<Mojolicious::Command>
+and implements the following new ones.
 
 =head2 C<hint>
 
@@ -291,22 +282,24 @@ Short hint shown after listing available commands.
 
 =head2 C<message>
 
-  my $message = $commands->message;
-  $commands   = $commands->message('Hello World!');
+  my $msg   = $commands->message;
+  $commands = $commands->message('Hello World!');
 
 Short usage message shown before listing available commands.
 
 =head2 C<namespaces>
 
   my $namespaces = $commands->namespaces;
-  $commands      = $commands->namespaces(['Mojolicious::Commands']);
+  $commands      = $commands->namespaces(['MyApp::Command']);
 
-Namespaces to search for available commands, defaults to
-C<Mojolicious::Command> and C<Mojo::Command>.
+Namespaces to load commands from, defaults to C<Mojolicious::Command>.
+
+  # Add another namespace to load commands from
+  push @{$commands->namespaces}, 'MyApp::Command';
 
 =head1 METHODS
 
-L<Mojolicious::Commands> inherits all methods from L<Mojo::Command> and
+L<Mojolicious::Commands> inherits all methods from L<Mojolicious::Command> and
 implements the following new ones.
 
 =head2 C<detect>
@@ -329,7 +322,8 @@ disabled with the C<MOJO_NO_DETECT> environment variable.
   Mojolicious::Commands->start;
   Mojolicious::Commands->start(@ARGV);
 
-Start the command line interface.
+Start the command line interface for application from the value of the
+C<MOJO_APP> environment variable or L<Mojo::HelloWorld>.
 
   # Always start daemon and ignore @ARGV
   Mojolicious::Commands->start('daemon', '-l', 'http://*:8080');

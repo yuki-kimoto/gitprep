@@ -14,7 +14,7 @@
         color: #445555;
         font: 0.9em 'Helvetica Neue', Helvetica, sans-serif;
         font-weight: normal;
-        line-height: 1.5;
+        line-height: 1.5em;
         margin: 0;
       }
       pre {
@@ -48,6 +48,10 @@
       .infobox tr:nth-child(odd) .value { background-color: #ddeeff }
       .infobox tr:nth-child(even) .value { background-color: #eef9ff }
       .key { text-align: right }
+      .spaced {
+        margin-left: 5em;
+        margin-right: 5em;
+      }
       .striped { border-top: solid #cce4ff 1px }
       .tap {
         font: 0.5em Verdana, sans-serif;
@@ -58,31 +62,26 @@
         width: 100%;
       }
       #footer {
-        margin-top: 1.5em;
+        padding-top: 1em;
         text-align: center;
-        width: 100%;
       }
-      #showcase {
-        -moz-border-radius-topleft: 5px;
-        border-top-left-radius: 5px;
-        -moz-border-radius-topright: 5px;
-        border-top-right-radius: 5px;
-        margin-left: 5em;
-        margin-right: 5em;
-      }
+      #nothing { padding-top: 60px }
       #showcase > pre {
         font: 1.5em 'Helvetica Neue', Helvetica, sans-serif;
         font-weight: 300;
         margin: 0;
         text-shadow: #333 0 1px 0;
       }
+      #showcase td {
+        padding-top: 0;
+        padding-bottom: 0;
+      }
+      #showcase .key { padding-right: 0 }
       #more, #trace {
         -moz-border-radius-bottomleft: 5px;
         border-bottom-left-radius: 5px;
         -moz-border-radius-bottomright: 5px;
         border-bottom-right-radius: 5px;
-        margin-left: 5em;
-        margin-right: 5em;
       }
       #more .tap, #trace .tap { text-shadow: #ddd 0 1px 0 }
       #request {
@@ -90,24 +89,22 @@
         border-top-left-radius: 5px;
         -moz-border-radius-topright: 5px;
         border-top-right-radius: 5px;
-        margin-left: 5em;
-        margin-right: 5em;
         margin-top: 1em;
       }
       #wrapperlicious {
         max-width: 1000px;
         margin: 0 auto;
-        padding-top: 90px;
       }
     % end
   </head>
   <body onload="prettyPrint()">
-    %= include inline => $Mojolicious::Controller::MOJOBAR
+    %= include inline => app->renderer->_bundled('mojobar')
     <div id="wrapperlicious">
+      <div id="nothing" class="box spaced"></div>
       % my $cv = begin
         % my ($key, $value, $i) = @_;
         %= tag 'tr', $i ? (class => 'important') : undef, begin
-          <td class="key"><%= $key %>.</td>
+          <td class="key"><%= $key %></td>
           <td class="value"><pre class="prettyprint"><%= $value %></pre></td>
         % end
       % end
@@ -118,7 +115,7 @@
           <td class="striped value"><pre><%= $value %></pre></td>
         </tr>
       % end
-      <div id="showcase" class="code box">
+      <div id="showcase" class="box code spaced">
         <pre><%= $exception->message %></pre>
         <div id="context">
           <table>
@@ -163,7 +160,7 @@
           % end
         % }
       </div>
-      <div class="box" id="trace">
+      <div id="trace" class="box spaced">
         % if (@{$exception->frames}) {
           <div class="infobox" id="frames">
             <table>
@@ -185,7 +182,7 @@
           % end
         % }
       </div>
-      <div class="box infobox" id="request">
+      <div id="request" class="box infobox spaced">
         <table>
           % my $req = $self->req;
           %= $kv->(Method => $req->method)
@@ -202,7 +199,7 @@
           % }
         </table>
       </div>
-      <div class="box infobox" id="more">
+      <div id="more" class="box infobox spaced">
         <div id="infos">
           <table>
             %= $kv->(Perl => "$^V ($^O)")

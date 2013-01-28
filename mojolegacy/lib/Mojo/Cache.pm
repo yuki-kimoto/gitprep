@@ -3,30 +3,22 @@ use Mojo::Base -base;
 
 has 'max_keys' => 100;
 
-# "If at first you don't succeed, give up."
 sub get { (shift->{cache} || {})->{shift()} }
 
-# "Maybe I should hook up with you guys.
-#  After all, how long do any of us have to live?
-#  Well, if you like the ribwich, not very.
-#  *holds up ribwich box with Krusty saying 'WILL CAUSE EARLY DEATH'*
-#  D'oh!"
 sub set {
   my ($self, $key, $value) = @_;
 
   # Cache with size limit
   my $cache = $self->{cache} ||= {};
-  my $stack = $self->{stack} ||= [];
-  my $keys  = $self->max_keys;
-  delete $cache->{shift @$stack} while @$stack >= $keys;
-  push @$stack, $key;
+  my $queue = $self->{queue} ||= [];
+  delete $cache->{shift @$queue} if @$queue >= $self->max_keys;
+  push @$queue, $key unless exists $cache->{$key};
   $cache->{$key} = $value;
 
   return $self;
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -50,8 +42,8 @@ L<Mojo::Cache> implements the following attributes.
 
 =head2 C<max_keys>
 
-  my $max_keys = $cache->max_keys;
-  $cache       = $cache->max_keys(50);
+  my $max = $cache->max_keys;
+  $cache  = $cache->max_keys(50);
 
 Maximum number of cache keys, defaults to C<100>.
 

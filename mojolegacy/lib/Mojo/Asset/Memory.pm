@@ -1,44 +1,41 @@
 package Mojo::Asset::Memory;
 use Mojo::Base 'Mojo::Asset';
 
-use Carp 'croak';
-use IO::Handle;
 use Mojo::Asset::File;
+use Mojo::Util 'spurt';
 
 has 'auto_upgrade';
 has max_memory_size => sub { $ENV{MOJO_MAX_MEMORY_SIZE} || 262144 };
 
-# "There's your giraffe, little girl.
-#  I'm a boy.
-#  That's the spirit. Never give up."
 sub new { shift->SUPER::new(@_, content => '') }
 
 sub add_chunk {
   my ($self, $chunk) = @_;
 
-  $self->{content} .= $chunk if defined $chunk;
+  # Upgrade if necessary
+  $self->{content} .= defined $chunk ? $chunk : '';
   return $self
     if !$self->auto_upgrade || $self->size <= $self->max_memory_size;
   my $file = Mojo::Asset::File->new;
-  $self->emit(upgrade => $file);
-
-  return $file->add_chunk($self->slurp);
+  return $file->add_chunk($self->emit(upgrade => $file)->slurp);
 }
 
 sub contains {
-  my $self  = shift;
+  my ($self, $string) = @_;
+
   my $start = $self->start_range;
-  my $pos   = index $self->{content}, shift, $start;
+  my $pos = index $self->{content}, $string, $start;
   $pos -= $start if $start && $pos >= 0;
   my $end = $self->end_range;
-  return $end && $pos >= $end ? -1 : $pos;
+
+  return $end && ($pos + length $string) >= $end ? -1 : $pos;
 }
 
 sub get_chunk {
   my ($self, $start) = @_;
 
   $start += $self->start_range;
-  my $size = $ENV{MOJO_CHUNK_SIZE} || 131072;
+  my $size = 131072;
   if (my $end = $self->end_range) {
     $size = $end + 1 - $start if ($start + $size) > $end;
   }
@@ -47,10 +44,8 @@ sub get_chunk {
 }
 
 sub move_to {
-  my ($self, $path) = @_;
-  croak qq/Can't open file "$path": $!/ unless open my $file, '>', $path;
-  croak qq/Can't write to file "$path": $!/
-    unless defined $file->syswrite($self->{content});
+  my ($self, $to) = @_;
+  spurt $self->{content}, $to;
   return $self;
 }
 
@@ -59,11 +54,10 @@ sub size { length shift->{content} }
 sub slurp { shift->{content} }
 
 1;
-__END__
 
 =head1 NAME
 
-Mojo::Asset::Memory - In-memory storage for HTTP 1.1 content
+Mojo::Asset::Memory - In-memory storage for HTTP content
 
 =head1 SYNOPSIS
 
@@ -75,7 +69,7 @@ Mojo::Asset::Memory - In-memory storage for HTTP 1.1 content
 
 =head1 DESCRIPTION
 
-L<Mojo::Asset::Memory> is an in-memory storage backend for HTTP 1.1 content.
+L<Mojo::Asset::Memory> is an in-memory storage backend for HTTP content.
 
 =head1 EVENTS
 
@@ -149,7 +143,7 @@ Get chunk of data starting from a specific position.
 
 =head2 C<move_to>
 
-  $mem = $mem->move_to('/foo/bar/baz.txt');
+  $mem = $mem->move_to('/home/sri/foo.txt');
 
 Move asset data into a specific file.
 

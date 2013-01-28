@@ -2,73 +2,54 @@ package Mojolicious::Plugin::EPRenderer;
 use Mojo::Base 'Mojolicious::Plugin';
 
 use Mojo::Template;
-use Mojo::Util qw/encode md5_sum/;
+use Mojo::Util qw(encode md5_sum);
+use Scalar::Util ();
 
-# "What do you want?
-#  I'm here to kick your ass!
-#  Wishful thinking. We have long since evolved beyond the need for asses."
 sub register {
   my ($self, $app, $conf) = @_;
-  $conf ||= {};
-
-  # Config
-  my $name     = $conf->{name}     || 'ep';
-  my $template = $conf->{template} || {};
-
-  # Custom sandbox
-  $template->{namespace} = defined $template->{namespace} ? $template->{namespace} : 'Mojo::Template::SandBox::'
-    . md5_sum(($ENV{MOJO_EXE} || ref $app) . $$);
 
   # Auto escape by default to prevent XSS attacks
-  $template->{auto_escape} = defined $template->{auto_escape} ? $template->{auto_escape} : 1;
+  my $template = {auto_escape => 1, %{$conf->{template} || {}}};
 
   # Add "ep" handler
   $app->renderer->add_handler(
-    $name => sub {
-      my ($r, $c, $output, $options) = @_;
+    $conf->{name} || 'ep' => sub {
+      my ($renderer, $c, $output, $options) = @_;
 
       # Generate name
-      my $path = $options->{inline} || $r->template_path($options);
-      return unless defined $path;
+      my $path = $options->{inline} || $renderer->template_path($options);
+      return undef unless defined $path;
       my $id = encode 'UTF-8', join(', ', $path, sort keys %{$c->stash});
       my $key = $options->{cache} = md5_sum $id;
 
-      # Cache
-      my $cache = $r->cache;
+      # Compile helpers and stash values
+      my $cache = $renderer->cache;
       unless ($cache->get($key)) {
         my $mt = Mojo::Template->new($template);
 
         # Be a bit more relaxed for helpers
-        my $prepend = q/my $self = shift; use Scalar::Util 'weaken';/
-          . q/weaken $self; no strict 'refs'; no warnings 'redefine';/;
+        my $prepend = 'my $self = shift; Scalar::Util::weaken $self;'
+          . q[no strict 'refs'; no warnings 'redefine';];
 
         # Helpers
         $prepend .= 'my $_H = $self->app->renderer->helpers;';
-        for my $name (sort keys %{$r->helpers}) {
-          next unless $name =~ /^\w+$/;
-          $prepend .= "sub $name; *$name = sub { ";
-          $prepend .= "\$_H->{'$name'}->(\$self, \@_) };";
-        }
+        $prepend .= "sub $_; *$_ = sub { \$_H->{'$_'}->(\$self, \@_) };"
+          for grep {/^\w+$/} keys %{$renderer->helpers};
 
         # Be less relaxed for everything else
         $prepend .= 'use strict;';
 
         # Stash
         $prepend .= 'my $_S = $self->stash;';
-        for my $var (keys %{$c->stash}) {
-          next unless $var =~ /^\w+$/;
-          $prepend .= " my \$$var = \$_S->{'$var'};";
-        }
-
-        # Prepend generated code
-        $mt->prepend($prepend);
+        $prepend .= " my \$$_ = \$_S->{'$_'};"
+          for grep {/^\w+$/} keys %{$c->stash};
 
         # Cache
-        $cache->set($key => $mt);
+        $cache->set($key => $mt->prepend($prepend . $mt->prepend));
       }
 
-      # Render with epl
-      return $r->handlers->{epl}->($r, $c, $output, $options);
+      # Render with "epl" handler
+      return $renderer->handlers->{epl}->($renderer, $c, $output, $options);
     }
   );
 
@@ -77,7 +58,6 @@ sub register {
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -99,14 +79,14 @@ Mojolicious::Plugin::EPRenderer - Embedded Perl renderer plugin
 
 L<Mojolicious::Plugin::EPRenderer> is a renderer for C<ep> templates.
 
-=head1 TEMPLATES
-
 C<ep> or C<Embedded Perl> is a simple template format where you embed perl
 code into documents. It is based on L<Mojo::Template>, but extends it with
 some convenient syntax sugar designed specifically for L<Mojolicious>. It
 supports L<Mojolicious> template helpers and exposes the stash directly as
-Perl variables. This is a core plugin, that means it is always enabled and its
-code a good example for learning to build new plugins.
+Perl variables.
+
+This is a core plugin, that means it is always enabled and its code a good
+example for learning to build new plugins, you're welcome to fork it.
 
 =head1 OPTIONS
 
@@ -117,7 +97,7 @@ L<Mojolicious::Plugin::EPRenderer> supports the following options.
   # Mojolicious::Lite
   plugin EPRenderer => {name => 'foo'};
 
-Handler name.
+Handler name, defaults to C<ep>.
 
 =head2 C<template>
 
@@ -133,7 +113,8 @@ L<Mojolicious::Plugin> and implements the following new ones.
 
 =head2 C<register>
 
-  $plugin->register;
+  $plugin->register(Mojolicious->new);
+  $plugin->register(Mojolicious->new, {name => 'foo'});
 
 Register renderer in L<Mojolicious> application.
 

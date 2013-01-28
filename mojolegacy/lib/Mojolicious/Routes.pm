@@ -8,11 +8,11 @@ use Mojo::Util 'camelize';
 use Mojolicious::Routes::Match;
 use Scalar::Util 'weaken';
 
-has base_classes => sub { [qw/Mojolicious::Controller Mojo/] };
+has base_classes => sub { [qw(Mojolicious::Controller Mojo)] };
 has cache        => sub { Mojo::Cache->new };
-has [qw/conditions shortcuts/] => sub { {} };
-has hidden => sub { [qw/attr has new/] };
-has 'namespace';
+has [qw(conditions shortcuts)] => sub { {} };
+has hidden     => sub { [qw(attr has new tap)] };
+has namespaces => sub { [] };
 
 sub add_condition {
   my ($self, $name, $cb) = @_;
@@ -26,24 +26,11 @@ sub add_shortcut {
   return $self;
 }
 
-# "Hey. What kind of party is this? There's no booze and only one hooker."
 sub auto_render {
   my ($self, $c) = @_;
   my $stash = $c->stash;
-  return if $stash->{'mojo.rendered'} || $c->tx->is_websocket;
+  return undef if $stash->{'mojo.rendered'} || $c->tx->is_websocket;
   $c->render or ($stash->{'mojo.routed'} or $c->render_not_found);
-}
-
-# DEPRECATED in Leaf Fluttering In Wind!
-sub controller_base_class {
-  warn <<EOF;
-Mojolicious::Routes->controller_base_class is DEPRECATED in favor of
-Mojolicious::Routes->base_classes!
-EOF
-  my $self = shift;
-  return $self->base_classes->[0] unless @_;
-  $self->base_classes->[0] = shift;
-  return $self;
 }
 
 sub dispatch {
@@ -52,7 +39,7 @@ sub dispatch {
   # Prepare path
   my $req  = $c->req;
   my $path = $c->stash->{path};
-  if (defined $path) { $path = "/$path" if $path !~ m#^/# }
+  if (defined $path) { $path = "/$path" if $path !~ m!^/! }
   else               { $path = $req->url->path->to_abs_string }
 
   # Prepare match
@@ -85,15 +72,27 @@ sub dispatch {
   }
 
   # No match
-  return unless $m && @{$m->stack};
+  return undef unless $m && @{$m->stack};
 
   # Dispatch
-  return if $self->_walk($c);
+  return undef if $self->_walk($c);
   $self->auto_render($c);
   return 1;
 }
 
 sub hide { push @{shift->hidden}, @_ }
+
+# DEPRECATED in Rainbow!
+sub namespace {
+  warn <<EOF;
+Mojolicious::Routes->namespace is DEPRECATED in favor of
+Mojolicious::Routes->namespaces!
+EOF
+  my $self = shift;
+  return $self->namespaces->[0] unless @_;
+  $self->namespaces->[0] = shift;
+  return $self;
+}
 
 sub route {
   shift->add_child(Mojolicious::Routes::Route->new(@_))->children->[-1];
@@ -102,38 +101,64 @@ sub route {
 sub _callback {
   my ($self, $c, $field, $staging) = @_;
   $c->stash->{'mojo.routed'}++;
-  $c->app->log->debug(qq/Routing to a callback./);
+  $c->app->log->debug('Routing to a callback.');
   my $continue = $field->{cb}->($c);
   return !$staging || $continue ? 1 : undef;
 }
 
 sub _class {
-  my ($self, $field, $c) = @_;
+  my ($self, $c, $field) = @_;
 
-  # Namespace and class
-  my $namespace = $field->{namespace};
+  # Application instance
+  return $field->{app} if ref $field->{app};
+
+  # Application class
+  my @classes;
   my $class = camelize $field->{controller} || '';
-  return unless $class || $namespace;
-  $class = length $class ? "${namespace}::$class" : $namespace
-    if length($namespace = defined $namespace ? $namespace : $self->namespace);
+  if ($field->{app}) { push @classes, $field->{app} }
 
-  # Check if it looks like a class
-  return $class =~ /^[a-zA-Z0-9_:]+$/ ? $class : undef;
+  # Specific namespace
+  elsif (defined(my $namespace = $field->{namespace})) {
+    if ($class) { push @classes, $namespace ? "${namespace}::$class" : $class }
+    elsif ($namespace) { push @classes, $namespace }
+  }
+
+  # All namespaces
+  elsif ($class) { push @classes, "${_}::$class" for @{$self->namespaces} }
+
+  # Try to load all classes
+  my $log = $c->app->log;
+  for my $class (@classes) {
+
+    # Failed
+    unless (my $found = $self->_load($class)) {
+      next unless defined $found;
+      $log->debug(qq{Class "$class" is not a controller.});
+      return undef;
+    }
+
+    # Success
+    return $class->new($c);
+  }
+
+  # Nothing found
+  $log->debug(qq{Controller "$classes[-1]" does not exist.}) if @classes;
+  return @classes ? undef : 0;
 }
 
 sub _controller {
   my ($self, $c, $field, $staging) = @_;
 
   # Load and instantiate controller/application
-  return 1 unless my $app = $field->{app} || $self->_class($field, $c);
-  return unless $self->_load($c, $app);
-  $app = $app->new($c) unless ref $app;
+  my $app;
+  unless ($app = $self->_class($c, $field)) { return defined $app ? 1 : undef }
 
   # Application
   my $continue;
   my $class = ref $app;
+  my $log   = $c->app->log;
   if (my $sub = $app->can('handler')) {
-    $c->app->log->debug(qq/Routing to application "$class"./);
+    $log->debug(qq{Routing to application "$class".});
 
     # Try to connect routes
     if (my $sub = $app->can('routes')) {
@@ -141,17 +166,16 @@ sub _controller {
       weaken $r->parent($c->match->endpoint)->{parent} unless $r->parent;
     }
     $app->$sub($c);
+    $c->stash->{'mojo.routed'}++;
   }
 
   # Action
-  elsif (my $method = $self->_method($field, $c)) {
-    my $log = $c->app->log;
-    $log->debug(qq/Routing to controller "$class" and action "$method"./);
+  elsif (my $method = $self->_method($c, $field)) {
+    $log->debug(qq{Routing to controller "$class" and action "$method".});
 
     # Try to call action
-    my $stash = $c->stash;
     if (my $sub = $app->can($method)) {
-      $stash->{'mojo.routed'}++ unless $staging;
+      $c->stash->{'mojo.routed'}++ unless $staging;
       $continue = $app->$sub;
     }
 
@@ -163,37 +187,28 @@ sub _controller {
 }
 
 sub _load {
-  my ($self, $c, $app) = @_;
+  my ($self, $app) = @_;
 
-  # Load unless already loaded or application
-  return 1 if $self->{loaded}{$app} || ref $app;
-  if (my $e = Mojo::Loader->load($app)) {
-
-    # Doesn't exist
-    $c->app->log->debug(qq/Controller "$app" does not exist./) and return
-      unless ref $e;
-
-    # Error
-    die $e;
-  }
+  # Load unless already loaded
+  return 1 if $self->{loaded}{$app};
+  if (my $e = Mojo::Loader->new->load($app)) { ref $e ? die $e : return undef }
 
   # Check base classes
-  $c->app->log->debug(qq/Class "$app" is not a controller./) and return
-    unless first { $app->isa($_) } @{$self->base_classes};
+  return 0 unless first { $app->isa($_) } @{$self->base_classes};
   return ++$self->{loaded}{$app};
 }
 
 sub _method {
-  my ($self, $field, $c) = @_;
+  my ($self, $c, $field) = @_;
 
   # Hidden
   $self->{hiding} = {map { $_ => 1 } @{$self->hidden}} unless $self->{hiding};
-  return unless my $method = $field->{action};
-  $c->app->log->debug(qq/Action "$method" is not allowed./) and return
+  return undef unless my $method = $field->{action};
+  $c->app->log->debug(qq{Action "$method" is not allowed.}) and return undef
     if $self->{hiding}{$method} || index($method, '_') == 0;
 
   # Invalid
-  $c->app->log->debug(qq/Action "$method" is invalid./) and return
+  $c->app->log->debug(qq{Action "$method" is invalid.}) and return undef
     unless $method =~ /^[a-zA-Z0-9_:]+$/;
 
   return $method;
@@ -224,21 +239,20 @@ sub _walk {
     return 1 if $staging && !$continue;
   }
 
-  return;
+  return undef;
 }
 
 1;
-__END__
 
 =head1 NAME
 
-Mojolicious::Routes - Always find your destination with routes
+Mojolicious::Routes - Always find your destination with routes!
 
 =head1 SYNOPSIS
 
   use Mojolicious::Routes;
 
-  # New routes tree
+  # New route tree
   my $r = Mojolicious::Routes->new;
 
   # Normal route matching "/articles" with parameters "controller" and
@@ -273,8 +287,9 @@ Mojolicious::Routes - Always find your destination with routes
 
 =head1 DESCRIPTION
 
-L<Mojolicious::Routes> is the core of the L<Mojolicious> web framework. See
-L<Mojolicious::Guides::Routing> for more.
+L<Mojolicious::Routes> is the core of the L<Mojolicious> web framework.
+
+See L<Mojolicious::Guides::Routing> for more.
 
 =head1 ATTRIBUTES
 
@@ -309,17 +324,20 @@ Contains all available conditions.
 =head2 C<hidden>
 
   my $hidden = $r->hidden;
-  $r         = $r->hidden([qw/attr has new/]);
+  $r         = $r->hidden([qw(attr has new)]);
 
 Controller methods and attributes that are hidden from routes, defaults to
-C<attr>, C<has> and C<new>.
+C<attr>, C<has>, C<new> and C<tap>.
 
-=head2 C<namespace>
+=head2 C<namespaces>
 
-  my $namespace = $r->namespace;
-  $r            = $r->namespace('Foo::Bar::Controller');
+  my $namespaces = $r->namespaces;
+  $r             = $r->namespaces(['Foo::Bar::Controller']);
 
-Namespace used by C<dispatch> to search for controllers.
+Namespaces to load controllers from.
+
+  # Add another namespace to load controllers from
+  push @{$r->namespaces}, 'MyApp::Controller';
 
 =head2 C<shortcuts>
 
@@ -359,15 +377,18 @@ Match routes with L<Mojolicious::Routes::Match> and dispatch.
 
 =head2 C<hide>
 
-  $r = $r->hide(qw/foo bar/);
+  $r = $r->hide(qw(foo bar));
 
 Hide controller methods and attributes from routes.
 
 =head2 C<route>
 
-  my $route = $r->route('/:c/:a', a => qr/\w+/);
+  my $route = $r->route;
+  my $route = $r->route('/:action');
+  my $route = $r->route('/:action', action => qr/\w+/);
+  my $route = $r->route(format => 0);
 
-Add a new nested L<Mojolicious::Routes::Route> child.
+Generate route matching all HTTP request methods.
 
 =head1 SEE ALSO
 

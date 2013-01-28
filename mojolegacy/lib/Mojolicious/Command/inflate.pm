@@ -1,19 +1,20 @@
 package Mojolicious::Command::inflate;
-use Mojo::Base 'Mojo::Command';
+use Mojo::Base 'Mojolicious::Command';
 
+use Mojo::Loader;
 use Mojo::Util 'encode';
 
 has description => "Inflate embedded files to real files.\n";
 has usage       => "usage: $0 inflate\n";
 
-# "Come on stem cells! Work your astounding scientific nonsense!"
 sub run {
   my $self = shift;
 
   # Find all embedded files
   my %all;
-  my $app = $self->app;
-  %all = (%{$self->get_all_data($_)}, %all)
+  my $app    = $self->app;
+  my $loader = Mojo::Loader->new;
+  %all = (%{$loader->data($_)}, %all)
     for @{$app->renderer->classes}, @{$app->static->classes};
 
   # Turn them into real files
@@ -25,7 +26,6 @@ sub run {
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -43,10 +43,13 @@ Mojolicious::Command::inflate - Inflate command
 L<Mojolicious::Command::inflate> turns templates and static files embedded in
 the C<DATA> sections of your application into real files.
 
+This is a core command, that means it is always enabled and its code a good
+example for learning to build new commands, you're welcome to fork it.
+
 =head1 ATTRIBUTES
 
-L<Mojolicious::Command::inflate> inherits all attributes from L<Mojo::Command>
-and implements the following new ones.
+L<Mojolicious::Command::inflate> inherits all attributes from
+L<Mojolicious::Command> and implements the following new ones.
 
 =head2 C<description>
 
@@ -64,8 +67,8 @@ Usage information for this command, used for the help screen.
 
 =head1 METHODS
 
-L<Mojolicious::Command::inflate> inherits all methods from L<Mojo::Command>
-and implements the following new ones.
+L<Mojolicious::Command::inflate> inherits all methods from
+L<Mojolicious::Command> and implements the following new ones.
 
 =head2 C<run>
 

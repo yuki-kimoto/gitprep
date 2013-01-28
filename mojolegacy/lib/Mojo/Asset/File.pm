@@ -2,14 +2,14 @@ package Mojo::Asset::File;
 use Mojo::Base 'Mojo::Asset';
 
 use Carp 'croak';
-use Errno;
-use Fcntl;
+use Errno 'EEXIST';
+use Fcntl qw(O_CREAT O_EXCL O_RDWR);
 use File::Copy 'move';
 use File::Spec;
 use IO::File;
 use Mojo::Util 'md5_sum';
 
-has [qw/cleanup path/];
+has [qw(cleanup path)];
 has handle => sub {
   my $self = shift;
 
@@ -17,7 +17,7 @@ has handle => sub {
   my $handle = IO::File->new;
   my $path   = $self->path;
   if (defined $path && -f $path) {
-    $handle->open("< $path") or croak qq/Can't open file "$path": $!/;
+    $handle->open("< $path") or croak qq{Can't open file "$path": $!};
     return $handle;
   }
 
@@ -25,7 +25,7 @@ has handle => sub {
   my $base = File::Spec->catfile($self->tmpdir, 'mojo.tmp');
   my $name = defined $path ? $path : $base;
   until ($handle->open($name, O_CREAT | O_EXCL | O_RDWR)) {
-    croak qq/Can't open file "$name": $!/ if defined $path || $! != $!{EEXIST};
+    croak qq{Can't open file "$name": $!} if defined $path || $! != $!{EEXIST};
     $name = "$base." . md5_sum(time . $$ . rand 9999999);
   }
   $self->path($name);
@@ -37,10 +37,6 @@ has handle => sub {
 };
 has tmpdir => sub { $ENV{MOJO_TMPDIR} || File::Spec->tmpdir };
 
-# "The only monster here is the gambling monster that has enslaved your
-#  mother!
-#  I call him Gamblor, and it's time to snatch your mother from his neon
-#  claws!"
 sub DESTROY {
   my $self = shift;
   return unless $self->cleanup && defined(my $path = $self->path);
@@ -61,31 +57,35 @@ sub add_chunk {
 }
 
 sub contains {
-  my ($self, $pattern) = @_;
+  my ($self, $string) = @_;
 
   # Seek to start
   my $handle = $self->handle;
   $handle->sysseek($self->start_range, SEEK_SET);
 
-  # Calculate window
-  my $end = defined $self->end_range ? $self->end_range : $self->size;
-  my $window_size = length($pattern) * 2;
-  $window_size = $end - $self->start_range
-    if $window_size > $end - $self->start_range;
-  my $read         = $handle->sysread(my $window, $window_size);
-  my $offset       = $read;
-  my $pattern_size = length $pattern;
-  my $range        = $self->end_range;
+  # Calculate window size
+  my $end  = defined $self->end_range ? $self->end_range : $self->size;
+  my $len  = length $string;
+  my $size = $len > 131072 ? $len : 131072;
+  $size = $end - $self->start_range if $size > $end - $self->start_range;
 
-  # Moving window search
-  while ($offset <= $end) {
-    return -1 if defined $range && ($pattern_size = $end + 1 - $offset) <= 0;
-    $read = $handle->sysread(my $buffer, $pattern_size);
-    $offset += $read;
+  # Sliding window search
+  my $offset = 0;
+  my $start = $handle->sysread(my $window, $len);
+  while ($offset < $end) {
+
+    # Read as much as possible
+    my $diff = $end - ($start + $offset);
+    my $read = $handle->sysread(my $buffer, $diff < $size ? $diff : $size);
     $window .= $buffer;
-    my $pos = index $window, $pattern;
-    return $pos if $pos >= 0;
-    return -1   if $read == 0;
+
+    # Search window
+    my $pos = index $window, $string;
+    return $offset + $pos if $pos >= 0;
+    $offset += $read;
+    return -1 if $read == 0 || $offset == $end;
+
+    # Resize window
     substr $window, 0, $read, '';
   }
 
@@ -102,14 +102,12 @@ sub get_chunk {
 
   # Range support
   my $buffer;
-  my $size = $ENV{MOJO_CHUNK_SIZE} || 131072;
   if (defined(my $end = $self->end_range)) {
     my $chunk = $end + 1 - $start;
     return '' if $chunk <= 0;
-    $chunk = $size if $chunk > $size;
-    $handle->sysread($buffer, $chunk);
+    $handle->sysread($buffer, $chunk > 131072 ? 131072 : $chunk);
   }
-  else { $handle->sysread($buffer, $size) }
+  else { $handle->sysread($buffer, 131072) }
 
   return $buffer;
 }
@@ -125,10 +123,8 @@ sub move_to {
 
   # Move file and prevent clean up
   my $from = $self->path;
-  move($from, $to) or croak qq/Can't move file "$from" to "$to": $!/;
-  $self->path($to)->cleanup(0);
-
-  return $self;
+  move($from, $to) or croak qq{Can't move file "$from" to "$to": $!};
+  return $self->path($to)->cleanup(0);
 }
 
 sub size {
@@ -145,11 +141,10 @@ sub slurp {
 }
 
 1;
-__END__
 
 =head1 NAME
 
-Mojo::Asset::File - File storage for HTTP 1.1 content
+Mojo::Asset::File - File storage for HTTP content
 
 =head1 SYNOPSIS
 
@@ -162,13 +157,13 @@ Mojo::Asset::File - File storage for HTTP 1.1 content
   say $file->slurp;
 
   # Existing file
-  my $file = Mojo::Asset::File->new(path => '/foo/bar/baz.txt');
+  my $file = Mojo::Asset::File->new(path => '/home/sri/foo.txt');
   $file->move_to('/yada.txt');
   say $file->slurp;
 
 =head1 DESCRIPTION
 
-L<Mojo::Asset::File> is a file storage backend for HTTP 1.1 content.
+L<Mojo::Asset::File> is a file storage backend for HTTP content.
 
 =head1 ATTRIBUTES
 
@@ -192,7 +187,7 @@ File handle, created on demand.
 =head2 C<path>
 
   my $path = $file->path;
-  $file    = $file->path('/foo/bar/baz.txt');
+  $file    = $file->path('/home/sri/foo.txt');
 
 File path used to create C<handle>, can also be automatically generated if
 necessary.
@@ -236,7 +231,7 @@ True.
 
 =head2 C<move_to>
 
-  $file = $file->move_to('/foo/bar/baz.txt');
+  $file = $file->move_to('/home/sri/bar.txt');
 
 Move asset data into a specific file and disable C<cleanup>.
 

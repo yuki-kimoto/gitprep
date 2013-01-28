@@ -1,15 +1,13 @@
 package Mojolicious::Command::version;
-use Mojo::Base 'Mojo::Command';
+use Mojo::Base 'Mojolicious::Command';
 
 use Mojo::IOLoop::Server;
-use Mojo::Server::Daemon;
 use Mojo::UserAgent;
 use Mojolicious;
 
 has description => "Show versions of installed modules.\n";
 has usage       => "usage: $0 version\n";
 
-# "It's so cold, my processor is running at peak efficiency!"
 sub run {
   my $self = shift;
 
@@ -24,22 +22,15 @@ sub run {
   my $tls
     = Mojo::IOLoop::Server::TLS ? $IO::Socket::SSL::VERSION : 'not installed';
 
-  # Bonjour
-  my $bonjour
-    = Mojo::Server::Daemon::BONJOUR
-    ? $Net::Rendezvous::Publish::VERSION
-    : 'not installed';
-
   print <<"EOF";
 CORE
   Perl        ($^V, $^O)
   Mojolicious ($Mojolicious::VERSION, $Mojolicious::CODENAME)
 
 OPTIONAL
-  EV                       ($ev)
-  IO::Socket::IP           ($ipv6)
-  IO::Socket::SSL          ($tls)
-  Net::Rendezvous::Publish ($bonjour)
+  EV              ($ev)
+  IO::Socket::IP  ($ipv6)
+  IO::Socket::SSL ($tls)
 
 EOF
 
@@ -51,16 +42,15 @@ EOF
 
   # Message
   return unless $latest;
-  my $message = 'This version is up to date, have fun!';
-  $message = 'Thanks for testing a development release, you are awesome!'
+  my $msg = 'This version is up to date, have fun!';
+  $msg = 'Thanks for testing a development release, you are awesome!'
     if $latest < $Mojolicious::VERSION;
-  $message = "You might want to update your Mojolicious to $latest."
+  $msg = "You might want to update your Mojolicious to $latest."
     if $latest > $Mojolicious::VERSION;
-  say $message;
+  say $msg;
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -78,10 +68,13 @@ Mojolicious::Command::version - Version command
 L<Mojolicious::Command::version> shows version information for installed core
 and optional modules.
 
+This is a core command, that means it is always enabled and its code a good
+example for learning to build new commands, you're welcome to fork it.
+
 =head1 ATTRIBUTES
 
 L<Mojolicious::Command::version> inherits all attributes from
-L<Mojo::Command> and implements the following new ones.
+L<Mojolicious::Command> and implements the following new ones.
 
 =head2 C<description>
 
@@ -99,8 +92,8 @@ Usage information for this command, used for the help screen.
 
 =head1 METHODS
 
-L<Mojolicious::Command::version> inherits all methods from L<Mojo::Command>
-and implements the following new ones.
+L<Mojolicious::Command::version> inherits all methods from
+L<Mojolicious::Command> and implements the following new ones.
 
 =head2 C<run>
 

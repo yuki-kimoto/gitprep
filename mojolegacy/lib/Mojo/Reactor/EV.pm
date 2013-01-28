@@ -6,19 +6,19 @@ use Scalar::Util 'weaken';
 
 my $EV;
 
+sub CLONE { die "EV does not work with ithreads.\n" }
+
 sub DESTROY { undef $EV }
 
 # We have to fall back to Mojo::Reactor::Poll, since EV is unique
 sub new { $EV++ ? Mojo::Reactor::Poll->new : shift->SUPER::new }
 
-sub is_running {EV::depth}
+sub is_running { !!EV::depth }
 
 sub one_tick { EV::run(EV::RUN_ONCE) }
 
 sub recurring { shift->_timer(1, @_) }
 
-# "Wow, Barney. You brought a whole beer keg.
-#  Yeah... where do I fill it up?"
 sub start {EV::run}
 
 sub stop { EV::break(EV::BREAK_ALL) }
@@ -52,7 +52,6 @@ sub _io {
     if EV::WRITE &$revents && $self->{io}{$fd};
 }
 
-# "It's great! We can do *anything* now that Science has invented Magic."
 sub _timer {
   my ($self, $recurring, $after, $cb) = @_;
   $after ||= '0.0001';
@@ -70,7 +69,6 @@ sub _timer {
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -87,6 +85,9 @@ Mojo::Reactor::EV - Low level event reactor with libev support
     say $writable ? 'Handle is writable' : 'Handle is readable';
   });
 
+  # Change to watching only if handle becomes writable
+  $reactor->watch($handle, 0, 1);
+
   # Add a timer
   $reactor->timer(15 => sub {
     my $reactor = shift;
@@ -99,7 +100,7 @@ Mojo::Reactor::EV - Low level event reactor with libev support
 
 =head1 DESCRIPTION
 
-L<Mojo::Reactor::EV> is a low level event reactor based on L<EV>.
+L<Mojo::Reactor::EV> is a low level event reactor based on L<EV> (4.0+).
 
 =head1 EVENTS
 
@@ -126,9 +127,8 @@ Check if reactor is running.
 
   $reactor->one_tick;
 
-Run reactor until at least one event has been handled or no events are being
-watched anymore. Note that this method can recurse back into the reactor, so
-you need to be careful.
+Run reactor until an event occurs or no events are being watched anymore. Note
+that this method can recurse back into the reactor, so you need to be careful.
 
 =head2 C<recurring>
 
@@ -161,7 +161,8 @@ seconds.
 
   $reactor = $reactor->watch($handle, $readable, $writable);
 
-Change I/O events to watch handle for with C<true> and C<false> values.
+Change I/O events to watch handle for with true and false values. Note that
+this method requires an active I/O watcher.
 
 =head1 SEE ALSO
 

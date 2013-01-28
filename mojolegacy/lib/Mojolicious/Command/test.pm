@@ -1,10 +1,10 @@
 package Mojolicious::Command::test;
-use Mojo::Base 'Mojo::Command';
+use Mojo::Base 'Mojolicious::Command';
 
 use Cwd 'realpath';
 use FindBin;
-use File::Spec::Functions qw/abs2rel catdir splitdir/;
-use Getopt::Long qw/GetOptions :config no_auto_abbrev no_ignore_case/;
+use File::Spec::Functions qw(abs2rel catdir splitdir);
+use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
 use Mojo::Home;
 
 has description => "Run unit tests.\n";
@@ -15,18 +15,14 @@ These options are available:
   -v, --verbose   Print verbose debug information to STDERR.
 EOF
 
-# "Why, the secret ingredient was...water!
-#  Yes, ordinary water, laced with nothing more than a few spoonfuls of LSD."
 sub run {
-  my $self = shift;
+  my ($self, @args) = @_;
 
   # Options
-  local @ARGV = @_;
-  GetOptions('v|verbose' => sub { $ENV{HARNESS_VERBOSE} = 1 });
-  my @tests = @ARGV;
+  GetOptionsFromArray \@args, 'v|verbose' => sub { $ENV{HARNESS_VERBOSE} = 1 };
 
   # Search tests
-  unless (@tests) {
+  unless (@args) {
     my @base = splitdir(abs2rel $FindBin::Bin);
 
     # Test directory in the same directory as "mojo" (t)
@@ -34,24 +30,22 @@ sub run {
 
     # Test dirctory in the directory above "mojo" (../t)
     $path = catdir @base, '..', 't' unless -d $path;
-    return say "Can't find test directory." unless -d $path;
+    die "Can't find test directory.\n" unless -d $path;
 
     # List test files
     my $home = Mojo::Home->new($path);
-    /\.t$/ and push(@tests, $home->rel_file($_)) for @{$home->list_files};
+    /\.t$/ and push(@args, $home->rel_file($_)) for @{$home->list_files};
 
-    $path = realpath $path;
-    say "Running tests from '$path'.";
+    say "Running tests from '", realpath($path), "'.";
   }
 
   # Run tests
   $ENV{HARNESS_OPTIONS} = defined $ENV{HARNESS_OPTIONS} ? $ENV{HARNESS_OPTIONS} : 'c';
   require Test::Harness;
-  Test::Harness::runtests(sort @tests);
+  Test::Harness::runtests(sort @args);
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -68,10 +62,13 @@ Mojolicious::Command::test - Test command
 
 L<Mojolicious::Command::test> runs application tests from the C<t> directory.
 
+This is a core command, that means it is always enabled and its code a good
+example for learning to build new commands, you're welcome to fork it.
+
 =head1 ATTRIBUTES
 
-L<Mojolicious::Command::test> inherits all attributes from L<Mojo::Command>
-and implements the following new ones.
+L<Mojolicious::Command::test> inherits all attributes from
+L<Mojolicious::Command> and implements the following new ones.
 
 =head2 C<description>
 
@@ -89,8 +86,8 @@ Usage information for this command, used for the help screen.
 
 =head1 METHODS
 
-L<Mojolicious::Command::test> inherits all methods from L<Mojo::Command> and
-implements the following new ones.
+L<Mojolicious::Command::test> inherits all methods from
+L<Mojolicious::Command> and implements the following new ones.
 
 =head2 C<run>
 

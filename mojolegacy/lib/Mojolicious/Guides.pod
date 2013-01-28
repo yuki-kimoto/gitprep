@@ -54,14 +54,13 @@ Generating content with the L<Mojolicious> renderer.
 
 Cooking with L<Mojolicious>, recipes for every taste.
 
+=item L<Mojolicious::Guides::Contributing>
+
+Become a part of the ongoing L<Mojolicious> development.
+
 =item L<Mojolicious::Guides::FAQ>
 
-Frequently asked questions with the right answers.
-
-=item L<Mojolicious::Guides::CodingGuidelines>
-
-Coding guidelines and mission statement. A must read for developers and
-contributors!
+Answers to the most frequently asked questions.
 
 =back
 
@@ -75,11 +74,11 @@ ones.
 
 =item L<Mojo::UserAgent>
 
-Full featured non-blocking I/O HTTP 1.1 and WebSocket user agent.
+Full featured non-blocking I/O HTTP and WebSocket user agent.
 
 =item L<Mojo::DOM>
 
-Very fun and minimalistic HTML5/XML DOM parser with CSS3 selector support.
+Very fun and minimalistic HTML/XML DOM parser with CSS selector support.
 
 =item L<Mojo::JSON>
 
@@ -87,15 +86,14 @@ Minimalistic JSON implementation that just works.
 
 =item L<Mojo::Server::Daemon>
 
-Highly portable non-blocking I/O HTTP 1.1 and WebSocket server with
-self-restart support through L<Mojo::Server::Morbo>, perfect for development
-and testing.
+Full featured, highly portable non-blocking I/O HTTP and WebSocket server,
+with self-restart support through L<Mojo::Server::Morbo>, perfect for
+development and testing.
 
 =item L<Mojo::Server::Hypnotoad>
 
-Full featured UNIX optimized preforking non-blocking I/O HTTP 1.1 and
-WebSocket server with support for zero downtime software upgrades (hot
-deployment).
+Full featured, UNIX optimized, preforking non-blocking I/O HTTP and WebSocket
+server with support for zero downtime software upgrades (hot deployment).
 
 =item L<Mojo::Server::CGI>, L<Mojo::Server::PSGI>
 
@@ -126,6 +124,6 @@ Fun oneliners using everything above.
 =head1 MORE
 
 A lot more documentation and examples by many different authors can be found
-in the Mojolicious wiki at L<http://github.com/kraih/mojo/wiki>.
+in the L<Mojolicious wiki|http://github.com/kraih/mojo/wiki>.
 
 =cut

@@ -1,6 +1,8 @@
 package Mojo;
 use Mojo::Base -base;
 
+# "Professor: These old Doomsday devices are dangerously unstable. I'll rest
+#             easier not knowing where they are."
 use Carp 'croak';
 use Mojo::Home;
 use Mojo::Log;
@@ -22,7 +24,6 @@ has ua   => sub {
   return $ua;
 };
 
-# "Oh, so they have internet on computers now!"
 sub new {
   my $self = shift->SUPER::new(@_);
 
@@ -40,7 +41,6 @@ sub build_tx { Mojo::Transaction::HTTP->new }
 
 sub config { shift->_dict(config => @_) }
 
-# "D’oh."
 sub handler { croak 'Method "handler" not implemented in subclass' }
 
 sub _dict {
@@ -60,7 +60,6 @@ sub _dict {
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -68,6 +67,7 @@ Mojo - Duct tape for the HTML5 web!
 
 =head1 SYNOPSIS
 
+  package MyApp;
   use Mojo::Base 'Mojo';
 
   # All the complexities of CGI, PSGI, HTTP and WebSockets get reduced to a
@@ -92,7 +92,7 @@ Mojo - Duct tape for the HTML5 web!
 
 Mojo provides a flexible runtime environment for Perl real-time web
 frameworks. It provides all the basic tools and helpers needed to write
-simple web applications and higher level web frameworks such as
+simple web applications and higher level web frameworks, such as
 L<Mojolicious>.
 
 See L<Mojolicious> for more!
@@ -127,8 +127,10 @@ The logging layer of your application, defaults to a L<Mojo::Log> object.
   my $ua = $app->ua;
   $app   = $app->ua(Mojo::UserAgent->new);
 
-A full featured HTTP 1.1 user agent for use in your applications, defaults to
-a L<Mojo::UserAgent> object.
+A full featured HTTP user agent for use in your applications, defaults to a
+L<Mojo::UserAgent> object. Note that this user agent should not be used in
+plugins, since non-blocking requests that are already in progress will
+interfere with new blocking ones.
 
   # Perform blocking request
   my $body = $app->ua->get('mojolicio.us')->res->body;
@@ -168,7 +170,7 @@ Application configuration.
 
 =head2 C<handler>
 
-  $app->handler($tx);
+  $app->handler(Mojo::Transaction::HTTP->new);
 
 The handler is the main entry point to your application or framework and will
 be called for each new transaction, which will usually be a

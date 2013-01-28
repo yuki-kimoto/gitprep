@@ -1,44 +1,45 @@
 package Mojolicious::Command::generate::app;
-use Mojo::Base 'Mojo::Command';
+use Mojo::Base 'Mojolicious::Command';
+
+use Mojo::Util qw(class_to_file class_to_path);
 
 has description => "Generate Mojolicious application directory structure.\n";
 has usage       => "usage: $0 generate app [NAME]\n";
 
-# "I say, you've damaged our servants quarters... and our servants."
 sub run {
   my ($self, $class) = @_;
   $class ||= 'MyMojoliciousApp';
 
   # Prevent bad applications
-  die <<EOF unless $class =~ /^[A-Z](?:\w|\:\:)+$/;
+  die <<EOF unless $class =~ /^[A-Z](?:\w|::)+$/;
 Your application name has to be a well formed (camel case) Perl module name
 like "MyApp".
 EOF
 
   # Script
-  my $name = $self->class_to_file($class);
+  my $name = class_to_file $class;
   $self->render_to_rel_file('mojo', "$name/script/$name", $class);
   $self->chmod_file("$name/script/$name", 0744);
 
-  # Appclass
-  my $app = $self->class_to_path($class);
+  # Application class
+  my $app = class_to_path $class;
   $self->render_to_rel_file('appclass', "$name/lib/$app", $class);
 
   # Controller
   my $controller = "${class}::Example";
-  my $path       = $self->class_to_path($controller);
+  my $path       = class_to_path $controller;
   $self->render_to_rel_file('controller', "$name/lib/$path", $controller);
 
   # Test
   $self->render_to_rel_file('test', "$name/t/basic.t", $class);
 
-  # Log
+  # Log directory
   $self->create_rel_dir("$name/log");
 
-  # Static
+  # Static file
   $self->render_to_rel_file('static', "$name/public/index.html");
 
-  # Layout and Templates
+  # Templates
   $self->render_to_rel_file('layout',
     "$name/templates/layouts/default.html.ep");
   $self->render_to_rel_file('welcome',
@@ -51,24 +52,15 @@ __DATA__
 @@ mojo
 % my $class = shift;
 #!/usr/bin/env perl
-use Mojo::Base -strict;
 
-use File::Basename 'dirname';
-use File::Spec::Functions qw/catdir splitdir/;
+use strict;
+use warnings;
 
-# Source directory has precedence
-my @base = (splitdir(dirname(__FILE__)), '..');
-my $lib = join('/', @base, 'lib');
--e catdir(@base, 't') ? unshift(@INC, $lib) : push(@INC, $lib);
-
-# Check if Mojolicious is installed;
-die <<EOF unless eval 'use Mojolicious::Commands; 1';
-It looks like you don't have the Mojolicious framework installed.
-Please visit http://mojolicio.us for detailed installation instructions.
-
-EOF
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 
 # Start commands for application
+require Mojolicious::Commands;
 Mojolicious::Commands->start_app('<%= $class %>');
 
 @@ appclass
@@ -125,11 +117,13 @@ sub welcome {
 % my $class = shift;
 use Mojo::Base -strict;
 
-use Test::More tests => 3;
+use Test::More;
 use Test::Mojo;
 
 my $t = Test::Mojo->new('<%= $class %>');
 $t->get_ok('/')->status_is(200)->content_like(qr/Mojolicious/i);
+
+done_testing();
 
 @@ layout
 <!DOCTYPE html>
@@ -142,13 +136,10 @@ $t->get_ok('/')->status_is(200)->content_like(qr/Mojolicious/i);
 %% layout 'default';
 %% title 'Welcome';
 <h2><%%= $message %></h2>
-This page was generated from the template
-"templates/example/welcome.html.ep" and the layout
-"templates/layouts/default.html.ep",
-<a href="<%%== url_for %>">click here</a>
-to reload the page or
-<a href="/index.html">here</a>
-to move forward to a static page.
+This page was generated from the template "templates/example/welcome.html.ep"
+and the layout "templates/layouts/default.html.ep",
+<a href="<%%== url_for %>">click here</a> to reload the page or
+<a href="/index.html">here</a> to move forward to a static page.
 
 __END__
 =head1 NAME
@@ -167,10 +158,13 @@ Mojolicious::Command::generate::app - App generator command
 L<Mojolicious::Command::generate::app> generates application directory
 structures for fully functional L<Mojolicious> applications.
 
+This is a core command, that means it is always enabled and its code a good
+example for learning to build new commands, you're welcome to fork it.
+
 =head1 ATTRIBUTES
 
 L<Mojolicious::Command::generate::app> inherits all attributes from
-L<Mojo::Command> and implements the following new ones.
+L<Mojolicious::Command> and implements the following new ones.
 
 =head2 C<description>
 
@@ -189,7 +183,7 @@ Usage information for this command, used for the help screen.
 =head1 METHODS
 
 L<Mojolicious::Command::generate::app> inherits all methods from
-L<Mojo::Command> and implements the following new ones.
+L<Mojolicious::Command> and implements the following new ones.
 
 =head2 C<run>
 

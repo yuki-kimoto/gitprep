@@ -1,9 +1,6 @@
 package Mojolicious::Plugin::HeaderCondition;
 use Mojo::Base 'Mojolicious::Plugin';
 
-# "You may have to "metaphorically" make a deal with the "devil".
-#  And by "devil", I mean Robot Devil.
-#  And by "metaphorically", I mean get your coat."
 sub register {
   my ($self, $app) = @_;
 
@@ -19,8 +16,6 @@ sub register {
     host => sub { _check($_[1]->req->url->to_abs->host, $_[3]) });
 }
 
-# "Wow, there's a million aliens! I've never seen something so mind-blowing!
-#  Ooh, a reception table with muffins!"
 sub _check {
   my ($value, $pattern) = @_;
   return 1
@@ -29,19 +24,18 @@ sub _check {
 }
 
 sub _headers {
-  my ($r, $c, $captures, $patterns) = @_;
-  return unless $patterns && ref $patterns eq 'HASH' && keys %$patterns;
+  my ($route, $c, $captures, $patterns) = @_;
+  return undef unless $patterns && ref $patterns eq 'HASH' && keys %$patterns;
 
   # All headers need to match
   my $headers = $c->req->headers;
   while (my ($name, $pattern) = each %$patterns) {
-    return unless _check(scalar $headers->header($name), $pattern);
+    return undef unless _check(scalar $headers->header($name), $pattern);
   }
   return 1;
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -72,9 +66,11 @@ Mojolicious::Plugin::HeaderCondition - Header condition plugin
 
 =head1 DESCRIPTION
 
-L<Mojolicious::Plugin::HeaderCondition> is a routes condition for header based
-routes. This is a core plugin, that means it is always enabled and its code a
-good example for learning to build new plugins.
+L<Mojolicious::Plugin::HeaderCondition> is a route condition for header based
+routes.
+
+This is a core plugin, that means it is always enabled and its code a good
+example for learning to build new plugins, you're welcome to fork it.
 
 =head1 METHODS
 
@@ -83,7 +79,7 @@ L<Mojolicious::Plugin> and implements the following new ones.
 
 =head2 C<register>
 
-  $plugin->register;
+  $plugin->register(Mojolicious->new);
 
 Register condition in L<Mojolicious> application.
 

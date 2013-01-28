@@ -2,52 +2,32 @@ package Mojo::Template;
 use Mojo::Base -base;
 
 use Carp 'croak';
-use IO::Handle;
 use Mojo::ByteStream;
 use Mojo::Exception;
-use Mojo::Util qw/decode encode/;
+use Mojo::Util qw(decode encode monkey_patch slurp);
 
-use constant CHUNK_SIZE => $ENV{MOJO_CHUNK_SIZE} || 131072;
+use constant DEBUG => $ENV{MOJO_TEMPLATE_DEBUG} || 0;
 
-# "If for any reason you're not completely satisfied, I hate you."
-has [qw/auto_escape compiled/];
-has [qw/append code prepend template/] => '';
+has [qw(auto_escape compiled)];
+has [qw(append code prepend template)] => '';
 has capture_end   => 'end';
 has capture_start => 'begin';
 has comment_mark  => '#';
 has encoding      => 'UTF-8';
-has [qw/escape_mark expression_mark trim_mark/] => '=';
-has [qw/line_start replace_mark/] => '%';
+has escape        => sub { \&Mojo::Util::xml_escape };
+has [qw(escape_mark expression_mark trim_mark)] => '=';
+has [qw(line_start replace_mark)] => '%';
 has name      => 'template';
 has namespace => 'Mojo::Template::SandBox';
 has tag_start => '<%';
 has tag_end   => '%>';
 has tree      => sub { [] };
 
-# Helpers
-my $HELPERS = <<'EOF';
-use Mojo::ByteStream 'b';
-use Mojo::Util;
-no strict 'refs';
-no warnings 'redefine';
-sub capture;
-*capture = sub { shift->(@_) };
-sub escape;
-*escape = sub {
-  return $_[0] if ref $_[0] eq 'Mojo::ByteStream';
-  no warnings 'uninitialized';
-  Mojo::Util::xml_escape "$_[0]";
-};
-use Mojo::Base -strict;
-EOF
-$HELPERS =~ s/\n//g;
-
 sub build {
   my $self = shift;
 
   # Lines
-  my (@lines, $cpst);
-  my $multi = 0;
+  my (@lines, $cpst, $multi);
   for my $line (@{$self->tree}) {
 
     # New line
@@ -61,7 +41,7 @@ sub build {
       if ($type eq 'cpen') {
 
         # End block
-        $lines[-1] .= 'return b($_M) }';
+        $lines[-1] .= 'return Mojo::ByteStream->new($_M) }';
 
         # No following code
         my $next = $line->[$j + 3];
@@ -72,7 +52,7 @@ sub build {
       if ($type eq 'text') {
 
         # Quote and fix line ending
-        $value = quotemeta($value);
+        $value = quotemeta $value;
         $value .= '\n' if $newline;
         $lines[-1] .= "\$_M .= \"" . $value . "\";" if length $value;
       }
@@ -81,15 +61,15 @@ sub build {
       if ($type eq 'code' || $multi) { $lines[-1] .= "$value" }
 
       # Expression
-      if (grep {$_ eq $type} qw/expr escp/) {
+      if (grep { $_ eq $type } qw(expr escp)) {
 
         # Start
         unless ($multi) {
 
           # Escaped
-          my $a = $self->auto_escape;
-          if (($type eq 'escp' && !$a) || ($type eq 'expr' && $a)) {
-            $lines[-1] .= "\$_M .= escape";
+          my $escape = $self->auto_escape;
+          if (($type eq 'escp' && !$escape) || ($type eq 'expr' && $escape)) {
+            $lines[-1] .= "\$_M .= _escape";
             $lines[-1] .= " scalar $value" if length $value;
           }
 
@@ -98,8 +78,8 @@ sub build {
         }
 
         # Multiline
-        $multi = ($line->[$j + 2] || '') eq 'text'
-          && ($line->[$j + 3] || '') eq '' ? 0 : 1;
+        $multi = !((defined $line->[$j + 2] ? $line->[$j + 2] : '') eq 'text'
+          && (defined $line->[$j + 3] ? $line->[$j + 3] : '') eq '');
 
         # Append semicolon
         $lines[-1] .= ';' if !$multi && !$cpst;
@@ -114,29 +94,19 @@ sub build {
     }
   }
 
-  # Closure
-  my $first = $lines[0] ||= '';
-  $lines[0] = 'package ' . $self->namespace . "; $HELPERS ";
-  $lines[0]  .= "sub { my \$_M = ''; " . $self->prepend . "; do { $first";
-  $lines[-1] .= $self->append . "; \$_M; } };";
-
-  return $self->code(join "\n", @lines)->tree([]);
+  return $self->code($self->_wrap(\@lines))->tree([]);
 }
 
 sub compile {
   my $self = shift;
 
-  # Compile
-  return unless my $code = $self->code;
-  my $compiled = eval $code;
+  # Compile with line directive
+  return undef unless my $code = $self->code;
+  my $compiled = eval qq{#line 1 "@{[$self->name]}"\n$code};
+  $self->compiled($compiled) and return undef unless $@;
 
   # Use local stacktrace for compile exceptions
-  return Mojo::Exception->new($@, [$self->template, $code], $self->name)
-    ->trace->verbose(1)
-    if $@;
-
-  $self->compiled($compiled);
-  return;
+  return Mojo::Exception->new($@, [$self->template, $code])->trace->verbose(1);
 }
 
 sub interpret {
@@ -145,18 +115,18 @@ sub interpret {
   # Stacktrace
   local $SIG{__DIE__} = sub {
     CORE::die($_[0]) if ref $_[0];
-    Mojo::Exception->throw(shift, [$self->template, $self->code], $self->name);
+    Mojo::Exception->throw(shift, [$self->template, $self->code]);
   };
 
   # Interpret
-  return unless my $compiled = $self->compiled;
+  return undef unless my $compiled = $self->compiled;
   my $output = eval { $compiled->(@_) };
-  return $@
-    ? Mojo::Exception->new($@, [$self->template], $self->name)->verbose(1)
-    : $output;
+  return $output unless $@;
+
+  # Exception
+  return Mojo::Exception->new($@, [$self->template])->verbose(1);
 }
 
-# "I am so smart! I am so smart! S-M-R-T! I mean S-M-A-R-T..."
 sub parse {
   my ($self, $tmpl) = @_;
 
@@ -178,31 +148,29 @@ sub parse {
   # Precompile
   my $token_re = qr/
     (
-      \Q$tag$replace\E                 # Replace
+      \Q$tag$replace\E                       # Replace
     |
-      \Q$tag$expr$escp\E\s*\Q$cpen\E   # Escaped expression (end)
+      \Q$tag$expr$escp\E\s*\Q$cpen\E(?!\w)   # Escaped expression (end)
     |
-      \Q$tag$expr$escp\E               # Escaped expression
+      \Q$tag$expr$escp\E                     # Escaped expression
     |
-      \Q$tag$expr\E\s*\Q$cpen\E        # Expression (end)
+      \Q$tag$expr\E\s*\Q$cpen\E(?!\w)        # Expression (end)
     |
-      \Q$tag$expr\E                    # Expression
+      \Q$tag$expr\E                          # Expression
     |
-      \Q$tag$cmnt\E\s*\Q$cpen\E        # Comment (end)
+      \Q$tag$cmnt\E                          # Comment
     |
-      \Q$tag$cmnt\E                    # Comment
+      \Q$tag\E\s*\Q$cpen\E(?!\w)             # Code (end)
     |
-      \Q$tag\E\s*\Q$cpen\E             # Code (end)
+      \Q$tag\E                               # Code
     |
-      \Q$tag\E                         # Code
+      (?<!\w)\Q$cpst\E\s*\Q$trim$end\E       # Trim end (start)
     |
-      \Q$cpst\E\s*\Q$trim$end\E        # Trim end (start)
+      \Q$trim$end\E                          # Trim end
     |
-      \Q$trim$end\E                    # Trim end
+      (?<!\w)\Q$cpst\E\s*\Q$end\E            # End (start)
     |
-      \Q$cpst\E\s*\Q$end\E             # End (start)
-    |
-      \Q$end\E                         # End
+      \Q$end\E                               # End
     )
   /x;
   my $cpen_re = qr/^(\Q$tag\E)(?:\Q$expr\E)?(?:\Q$escp\E)?\s*\Q$cpen\E/;
@@ -210,8 +178,7 @@ sub parse {
 
   # Split lines
   my $state = 'text';
-  my @capture_token;
-  my $trimming = 0;
+  my ($trimming, @capture_token);
   for my $line (split /\n/, $tmpl) {
     $trimming = 0 if $state eq 'text';
 
@@ -296,9 +263,8 @@ sub parse {
 }
 
 sub render {
-  my $self = shift;
-  my $e    = $self->parse(shift)->build->compile;
-  return $e ? $e : $self->interpret(@_);
+  my $self = shift->parse(shift)->build;
+  return $self->compile || $self->interpret(@_);
 }
 
 sub render_file {
@@ -306,28 +272,13 @@ sub render_file {
 
   # Slurp file
   $self->name($path) unless defined $self->{name};
-  croak qq/Can't open template "$path": $!/ unless open my $file, '<', $path;
-  my $tmpl = '';
-  while ($file->sysread(my $buffer, CHUNK_SIZE, 0)) { $tmpl .= $buffer }
+  my $tmpl = slurp $path;
 
   # Decode and render
-  if (my $encoding = $self->encoding) {
-    croak qq/Template "$path" has invalid encoding./
-      unless defined($tmpl = decode $encoding, $tmpl);
-  }
+  my $encoding = $self->encoding;
+  croak qq{Template "$path" has invalid encoding.}
+    if $encoding && !defined($tmpl = decode $encoding, $tmpl);
   return $self->render($tmpl, @_);
-}
-
-sub render_file_to_file {
-  my ($self, $spath, $tpath) = (shift, shift, shift);
-  my $output = $self->render_file($spath, @_);
-  return ref $output ? $output : $self->_write_file($tpath, $output);
-}
-
-sub render_to_file {
-  my ($self, $tmpl, $path) = (shift, shift, shift);
-  my $output = $self->render($tmpl, @_);
-  return ref $output ? $output : $self->_write_file($path, $output);
 }
 
 sub _trim {
@@ -337,7 +288,7 @@ sub _trim {
   for (my $j = @$line - 4; $j >= 0; $j -= 2) {
 
     # Skip capture
-    next if $line->[$j] eq 'cpst' || $line->[$j] eq 'cpen';
+    next if grep { $_ eq $line->[$j] } qw(cpst cpen);
 
     # Only trim text
     return unless $line->[$j] eq 'text';
@@ -354,20 +305,29 @@ sub _trim {
   }
 }
 
-sub _write_file {
-  my ($self, $path, $output) = @_;
+sub _wrap {
+  my ($self, $lines) = @_;
 
-  # Encode and write to file
-  croak qq/Can't open file "$path": $!/ unless open my $file, '>', $path;
-  $output = encode $self->encoding, $output if $self->encoding;
-  croak qq/Can't write to file "$path": $!/
-    unless defined $file->syswrite($output);
+  # Escape function
+  my $escape = $self->escape;
+  monkey_patch $self->namespace, '_escape', sub {
+    no warnings 'uninitialized';
+    ref $_[0] eq 'Mojo::ByteStream' ? $_[0] : $escape->("$_[0]");
+  };
 
-  return;
+  # Wrap lines
+  my $first = $lines->[0] ||= '';
+  $lines->[0] = "package @{[$self->namespace]}; use Mojo::Base -strict;";
+  $lines->[0]  .= "sub { my \$_M = ''; @{[$self->prepend]}; do { $first";
+  $lines->[-1] .= "@{[$self->append]}; \$_M } };";
+
+  # Code
+  my $code = join "\n", @$lines;
+  warn "-- Code for @{[$self->name]}\n@{[encode 'UTF-8', $code]}\n\n" if DEBUG;
+  return $code;
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -380,23 +340,31 @@ Mojo::Template - Perl-ish templates!
 
   # Simple
   my $output = $mt->render(<<'EOF');
+  % use Time::Piece;
   <!DOCTYPE html>
   <html>
     <head><title>Simple</title></head>
-    <body>Time: <%= localtime(time) %></body>
+    % my $now = localtime;
+    <body>Time: <%= $now->hms %></body>
   </html>
   EOF
   say $output;
 
-  # More complicated
+  # More advanced
   my $output = $mt->render(<<'EOF', 23, 'foo bar');
-  %= 5 * 5
   % my ($number, $text) = @_;
-  test 123
-  foo <% my $i = $number + 2; %>
-  % for (1 .. 23) {
-  * some text <%= $i++ %>
-  % }
+  %= 5 * 5
+  <!DOCTYPE html>
+  <html>
+    <head><title>More advanced</title></head>
+    <body>
+      test 123
+      foo <% my $i = $number + 2; %>
+      % for (1 .. 23) {
+      * some text <%= $i++ %>
+      % }
+    </body>
+  </html>
   EOF
   say $output;
 
@@ -406,6 +374,14 @@ L<Mojo::Template> is a minimalistic and very Perl-ish template engine,
 designed specifically for all those small tasks that come up during big
 projects. Like preprocessing a configuration file, generating text from
 heredocs and stuff like that.
+
+See L<Mojolicious::Guides::Rendering> for information on how to generate
+content with the L<Mojolicious> renderer.
+
+=head1 SYNTAX
+
+For all templates L<strict>, L<warnings>, L<utf8> and Perl 5.10 features are
+automatically enabled.
 
   <% Perl code %>
   <%= Perl expression, replaced with result %>
@@ -418,8 +394,6 @@ heredocs and stuff like that.
   %# Comment line, treated as "<%# line =%>"
   %% Replaced with "%", useful for generating templates
 
-=head2 Automatic escaping
-
 Escaping behavior can be reversed with the C<auto_escape> attribute, this is
 the default in L<Mojolicious> C<.ep> templates for example.
 
@@ -428,15 +402,23 @@ the default in L<Mojolicious> C<.ep> templates for example.
 
 L<Mojo::ByteStream> objects are always excluded from automatic escaping.
 
-  <%= b('<div>excluded!</div>') %>
+  <%= Mojo::ByteStream->new('<div>excluded!</div>') %>
 
-=head2 Trimming
+Newline characters can be escaped with a backslash.
+
+  This is <%= 1 + 1 %> a\
+  single line
+
+And a backslash in front of a newline character can be escaped with another
+backslash.
+
+  This will <%= 1 + 1 %> result\\
+  in multiple\\
+  lines
 
 Whitespace characters around tags can be trimmed with a special tag ending.
 
   <%= All whitespace characters around this expression will be trimmed =%>
-
-=head2 Blocks
 
 You can capture whole template blocks for reuse later with the C<begin> and
 C<end> keywords.
@@ -448,8 +430,6 @@ C<end> keywords.
   <%= $block->('Baerbel') %>
   <%= $block->('Wolfgang') %>
 
-=head2 Indentation
-
 Perl lines can also be indented freely.
 
   % my $block = begin
@@ -459,40 +439,16 @@ Perl lines can also be indented freely.
   %= $block->('Baerbel')
   %= $block->('Wolfgang')
 
-=head2 Arguments
-
-L<Mojo::Template> templates work just like Perl subs (actually they get
-compiled to a Perl sub internally). That means you can access arguments simply
-via C<@_>.
+L<Mojo::Template> templates get compiled to a Perl subroutine, that means you
+can access arguments simply via C<@_>.
 
   % my ($foo, $bar) = @_;
   % my $x = shift;
   test 123 <%= $foo %>
 
-=head2 More escaping
-
-You can use escaped tags and lines to generate templates.
-
-  %% my $number = <%= 20 + 3 %>;
-  The number is <%%= $number %>
-
-A newline can be escaped with a backslash.
-
-  This is <%= 23 * 3 %> a\
-  single line
-
-And a backslash in front of a newline can be escaped with another backslash.
-
-  % use Data::Dumper;
-  This will\\
-  result <%=  Dumper {foo => 'bar'} %>\\
-  in multiple lines
-
-=head2 Exceptions
-
-Templates get compiled to Perl code internally, this can make debugging a bit
-tricky. But L<Mojo::Template> will return L<Mojo::Exception> objects that
-stringify to error messages with context.
+The compilation of templates to Perl code can make debugging a bit tricky, but
+L<Mojo::Template> will return L<Mojo::Exception> objects that stringify to
+error messages with context.
 
   Bareword "xx" not allowed while "strict subs" in use at template line 4.
   2: </head>
@@ -501,45 +457,30 @@ stringify to error messages with context.
   5: %= $i * 2
   6: </body>
 
-=head2 Caching
-
-L<Mojo::Template> does not support caching by itself, but you can easily build
-a wrapper around it.
-
-  # Compile and store code somewhere
-  my $mt = Mojo::Template->new;
-  $mt->parse($template);
-  $mt->build;
-  my $code = $mt->code;
-
-  # Load code and template (template for debug trace only)
-  $mt->template($template);
-  $mt->code($code);
-  $mt->compile;
-  my $output = $mt->interpret(@args);
-
 =head1 ATTRIBUTES
 
 L<Mojo::Template> implements the following attributes.
 
 =head2 C<auto_escape>
 
-  my $auto_escape = $mt->auto_escape;
-  $mt             = $mt->auto_escape(1);
+  my $escape = $mt->auto_escape;
+  $mt        = $mt->auto_escape(1);
 
-Activate automatic XML escaping.
+Activate automatic escaping.
 
 =head2 C<append>
 
   my $code = $mt->append;
   $mt      = $mt->append('warn "Processed template"');
 
-Append Perl code to compiled template.
+Append Perl code to compiled template. Note that this code should not contain
+newline characters, or line numbers in error messages might end up being
+wrong.
 
 =head2 C<capture_end>
 
-  my $capture_end = $mt->capture_end;
-  $mt             = $mt->capture_end('end');
+  my $end = $mt->capture_end;
+  $mt     = $mt->capture_end('end');
 
 Keyword indicating the end of a capture block, defaults to C<end>.
 
@@ -549,8 +490,8 @@ Keyword indicating the end of a capture block, defaults to C<end>.
 
 =head2 C<capture_start>
 
-  my $capture_start = $mt->capture_start;
-  $mt               = $mt->capture_start('begin');
+  my $start = $mt->capture_start;
+  $mt       = $mt->capture_start('begin');
 
 Keyword indicating the start of a capture block, defaults to C<begin>.
 
@@ -563,16 +504,23 @@ Keyword indicating the start of a capture block, defaults to C<begin>.
   my $code = $mt->code;
   $mt      = $mt->code($code);
 
-Compiled template code.
+Perl code for template.
 
 =head2 C<comment_mark>
 
-  my $comment_mark = $mt->comment_mark;
-  $mt              = $mt->comment_mark('#');
+  my $mark = $mt->comment_mark;
+  $mt      = $mt->comment_mark('#');
 
 Character indicating the start of a comment, defaults to C<#>.
 
   <%# This is a comment %>
+
+=head2 C<compiled>
+
+  my $compiled = $mt->compiled;
+  $mt          = $mt->compiled($compiled);
+
+Compiled template code.
 
 =head2 C<encoding>
 
@@ -581,10 +529,18 @@ Character indicating the start of a comment, defaults to C<#>.
 
 Encoding used for template files.
 
+=head2 C<escape>
+
+  my $cb = $mt->escape;
+  $mt    = $mt->escape(sub { reverse $_[0] });
+
+A callback used to escape the results of escaped expressions, defaults to
+L<Mojo::Util/"xml_escape">.
+
 =head2 C<escape_mark>
 
-  my $escape_mark = $mt->escape_mark;
-  $mt             = $mt->escape_mark('=');
+  my $mark = $mt->escape_mark;
+  $mt      = $mt->escape_mark('=');
 
 Character indicating the start of an escaped expression, defaults to C<=>.
 
@@ -592,8 +548,8 @@ Character indicating the start of an escaped expression, defaults to C<=>.
 
 =head2 C<expression_mark>
 
-  my $expression_mark = $mt->expression_mark;
-  $mt                 = $mt->expression_mark('=');
+  my $mark = $mt->expression_mark;
+  $mt      = $mt->expression_mark('=');
 
 Character indicating the start of an expression, defaults to C<=>.
 
@@ -601,8 +557,8 @@ Character indicating the start of an expression, defaults to C<=>.
 
 =head2 C<line_start>
 
-  my $line_start = $mt->line_start;
-  $mt            = $mt->line_start('%');
+  my $start = $mt->line_start;
+  $mt       = $mt->line_start('%');
 
 Character indicating the start of a code line, defaults to C<%>.
 
@@ -614,7 +570,8 @@ Character indicating the start of a code line, defaults to C<%>.
   $mt      = $mt->name('foo.mt');
 
 Name of template currently being processed, defaults to C<template>. Note that
-this method is attribute and might change without warning!
+this value should not contain quotes or newline characters, or error messages
+might end up being wrong.
 
 =head2 C<namespace>
 
@@ -622,18 +579,22 @@ this method is attribute and might change without warning!
   $mt           = $mt->namespace('main');
 
 Namespace used to compile templates, defaults to C<Mojo::Template::SandBox>.
+Note that namespaces should only be shared very carefully between templates,
+since functions and global variables will not be cleared automatically.
 
 =head2 C<prepend>
 
   my $code = $mt->prepend;
   $mt      = $mt->prepend('my $self = shift;');
 
-Prepend Perl code to compiled template.
+Prepend Perl code to compiled template. Note that this code should not contain
+newline characters, or line numbers in error messages might end up being
+wrong.
 
 =head2 C<replace_mark>
 
-  my $replace_mark = $mt->replace_mark;
-  $mt              = $mt->replace_mark('%');
+  my $mark = $mt->replace_mark;
+  $mt      = $mt->replace_mark('%');
 
 Character used for escaping the start of a tag or line, defaults to C<%>.
 
@@ -641,8 +602,8 @@ Character used for escaping the start of a tag or line, defaults to C<%>.
 
 =head2 C<tag_start>
 
-  my $tag_start = $mt->tag_start;
-  $mt           = $mt->tag_start('<%');
+  my $start = $mt->tag_start;
+  $mt       = $mt->tag_start('<%');
 
 Characters indicating the start of a tag, defaults to C<E<lt>%>.
 
@@ -650,8 +611,8 @@ Characters indicating the start of a tag, defaults to C<E<lt>%>.
 
 =head2 C<tag_end>
 
-  my $tag_end = $mt->tag_end;
-  $mt         = $mt->tag_end('%>');
+  my $end = $mt->tag_end;
+  $mt     = $mt->tag_end('%>');
 
 Characters indicating the end of a tag, defaults to C<%E<gt>>.
 
@@ -673,8 +634,8 @@ Parsed tree.
 
 =head2 C<trim_mark>
 
-  my $trim_mark = $mt->trim_mark;
-  $mt           = $mt->trim_mark('-');
+  my $mark = $mt->trim_mark;
+  $mt      = $mt->trim_mark('-');
 
 Character activating automatic whitespace trimming, defaults to C<=>.
 
@@ -695,26 +656,31 @@ Construct a new L<Mojo::Template> object.
 
   $mt = $mt->build;
 
-Build template.
+Build Perl code from tree.
 
 =head2 C<compile>
 
   my $exception = $mt->compile;
 
-Compile template.
+Compile Perl code for template.
 
 =head2 C<interpret>
 
   my $output = $mt->interpret;
   my $output = $mt->interpret(@args);
 
-Interpret template.
+Interpret compiled template code.
+
+  # Reuse template
+  say $mt->render('Hello <%= $_[0] %>!', 'Bender');
+  say $mt->interpret('Fry');
+  say $mt->interpret('Leela');
 
 =head2 C<parse>
 
   $mt = $mt->parse($template);
 
-Parse template.
+Parse template into tree.
 
 =head2 C<render>
 
@@ -723,28 +689,21 @@ Parse template.
 
 Render template.
 
+  say $mt->render('Hello <%= $_[0] %>!', 'Bender');
+
 =head2 C<render_file>
 
-  my $output = $mt->render_file($template_file);
-  my $output = $mt->render_file($template_file, @args);
+  my $output = $mt->render_file('/tmp/foo.mt');
+  my $output = $mt->render_file('/tmp/foo.mt', @args);
 
 Render template file.
 
-=head2 C<render_file_to_file>
+=head1 DEBUGGING
 
-  my $exception = $mt->render_file_to_file($template_file, $output_file);
-  my $exception = $mt->render_file_to_file(
-    $template_file, $output_file, @args
-  );
+You can set the C<MOJO_TEMPLATE_DEBUG> environment variable to get some
+advanced diagnostics information printed to C<STDERR>.
 
-Render template file to a specific file.
-
-=head2 C<render_to_file>
-
-  my $exception = $mt->render_to_file($template, $output_file);
-  my $exception = $mt->render_to_file($template, $output_file, @args);
-
-Render template to a specific file.
+  MOJO_TEMPLATE_DEBUG=1
 
 =head1 SEE ALSO
 

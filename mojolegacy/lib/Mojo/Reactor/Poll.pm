@@ -1,23 +1,18 @@
 package Mojo::Reactor::Poll;
 use Mojo::Base 'Mojo::Reactor';
 
-use IO::Poll qw/POLLERR POLLHUP POLLIN POLLOUT/;
+use IO::Poll qw(POLLERR POLLHUP POLLIN POLLOUT);
 use List::Util 'min';
 use Mojo::Util 'md5_sum';
-use Time::HiRes qw/time usleep/;
+use Time::HiRes qw(time usleep);
 
-# "I don't know.
-#  Can I really betray my country?
-#  I say the Pledge of Allegiance every day.
-#  You pledge allegiance to the flag.
-#  And the flag is made in China."
 sub io {
   my ($self, $handle, $cb) = @_;
   $self->{io}{fileno $handle} = {cb => $cb};
   return $self->watch($handle, 1, 1);
 }
 
-sub is_running { shift->{running} }
+sub is_running { !!shift->{running} }
 
 sub one_tick {
   my $self = shift;
@@ -27,7 +22,7 @@ sub one_tick {
   $self->{running} = 1;
 
   # Wait for one event
-  my $i    = 0;
+  my $i;
   my $poll = $self->_poll;
   until ($i) {
 
@@ -36,7 +31,7 @@ sub one_tick {
 
     # Calculate ideal timeout based on timers
     my $min = min map { $_->{time} } values %{$self->{timers}};
-    my $timeout = defined $min ? ($min - time) : 0.025;
+    my $timeout = defined $min ? ($min - time) : 0.5;
     $timeout = 0 if $timeout < 0;
 
     # I/O
@@ -53,10 +48,10 @@ sub one_tick {
 
     # Timers
     while (my ($id, $t) = each %{$self->{timers} || {}}) {
-      next unless $t->{time} <= time;
+      next unless $t->{time} <= (my $time = time);
 
       # Recurring timer
-      if (exists $t->{recurring}) { $t->{time} = time + $t->{recurring} }
+      if (exists $t->{recurring}) { $t->{time} = $time + $t->{recurring} }
 
       # Normal timer
       else { $self->remove($id) }
@@ -74,9 +69,9 @@ sub recurring { shift->_timer(1, @_) }
 
 sub remove {
   my ($self, $remove) = @_;
-  return delete shift->{timers}{shift()} unless ref $remove;
+  return !!delete $self->{timers}{$remove} unless ref $remove;
   $self->_poll->remove($remove);
-  return delete $self->{io}{fileno $remove};
+  return !!delete $self->{io}{fileno $remove};
 }
 
 sub start {
@@ -87,8 +82,6 @@ sub start {
 
 sub stop { delete shift->{running} }
 
-# "Bart, how did you get a cellphone?
-#  The same way you got me, by accident on a golf course."
 sub timer { shift->_timer(0, @_) }
 
 sub watch {
@@ -123,7 +116,6 @@ sub _timer {
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -140,6 +132,9 @@ Mojo::Reactor::Poll - Low level event reactor with poll support
     say $writable ? 'Handle is writable' : 'Handle is readable';
   });
 
+  # Change to watching only if handle becomes writable
+  $reactor->watch($handle, 0, 1);
+
   # Add a timer
   $reactor->timer(15 => sub {
     my $reactor = shift;
@@ -152,7 +147,9 @@ Mojo::Reactor::Poll - Low level event reactor with poll support
 
 =head1 DESCRIPTION
 
-L<Mojo::Reactor::Poll> is a low level event reactor based on L<IO::Poll>.
+L<Mojo::Reactor::Poll> is a low level event reactor based on L<IO::Poll>. Note
+that this reactor was designed for maximum portability, and therefore does not
+use a monotonic clock to handle time jumps.
 
 =head1 EVENTS
 
@@ -180,9 +177,8 @@ Check if reactor is running.
 
   $reactor->one_tick;
 
-Run reactor until at least one event has been handled or no events are being
-watched anymore. Note that this method can recurse back into the reactor, so
-you need to be careful.
+Run reactor until an event occurs or no events are being watched anymore. Note
+that this method can recurse back into the reactor, so you need to be careful.
 
 =head2 C<recurring>
 
@@ -222,7 +218,8 @@ seconds.
 
   $reactor = $reactor->watch($handle, $readable, $writable);
 
-Change I/O events to watch handle for with C<true> and C<false> values.
+Change I/O events to watch handle for with true and false values. Note that
+this method requires an active I/O watcher.
 
 =head1 SEE ALSO
 

@@ -5,49 +5,39 @@ use overload
   '""'     => sub { shift->to_string },
   fallback => 1;
 
-use Mojo::Util qw/decode encode url_escape url_unescape/;
-use Mojo::URL;
+use Mojo::Util qw(decode encode url_escape url_unescape);
 
 has charset        => 'UTF-8';
 has pair_separator => '&';
 
-# "Yeah, Moe, that team sure did suck last night. They just plain sucked!
-#  I've seen teams suck before,
-#  but they were the suckiest bunch of sucks that ever sucked!
-#  HOMER!
-#  I gotta go Moe my damn weiner kids are listening."
-sub new {
-  my $self = shift->SUPER::new;
-
-  # Hash/Array
-  if (@_ > 1) { $self->append(@_) }
-
-  # String
-  else { $self->{string} = $_[0] }
-
-  return $self;
-}
+sub new { shift->SUPER::new->parse(@_) }
 
 sub append {
-  my ($self, @params) = @_;
+  my ($self, @pairs) = @_;
 
-  # Filter array values
-  for (my $i = 1; $i < @params; $i += 2) {
-    next if ref $params[$i] ne 'ARRAY';
-    push @params, map { ($params[$i - 1], $_) } @{$params[$i]};
-    splice @params, $i - 1, 2;
+  my $params = $self->params;
+  for (my $i = 0; $i < @pairs; $i += 2) {
+    my $key   = defined $pairs[$i] ? $pairs[$i] : '';
+    my $value = defined $pairs[$i + 1] ? $pairs[$i + 1] : '';
+
+    # Single value
+    if (ref $value ne 'ARRAY') { push @$params, $key => $value }
+
+    # Multiple values
+    else { push @$params, $key => (defined $_ ? "$_" : '') for @$value }
   }
-  push @{$self->params}, map { defined $_ ? "$_" : '' } @params;
 
   return $self;
 }
 
 sub clone {
-  my $self  = shift;
-  my $clone = Mojo::Parameters->new;
-  $clone->pair_separator($self->pair_separator);
+  my $self = shift;
+
+  my $clone = Mojo::Parameters->new->charset($self->charset)
+    ->pair_separator($self->pair_separator);
   if (defined $self->{string}) { $clone->{string} = $self->{string} }
   else                         { $clone->params([@{$self->params}]) }
+
   return $clone;
 }
 
@@ -78,58 +68,63 @@ sub param {
 }
 
 sub params {
-  my ($self, $params) = @_;
-  if ($params) { $self->{params} = $params and return $self }
-  elsif (defined $self->{string}) { $self->parse }
+  my $self = shift;
+
+  # Replace parameters
+  if (@_) {
+    $self->{params} = shift;
+    delete $self->{string};
+    return $self;
+  }
+
+  # Parse string
+  if (defined(my $string = delete $self->{string})) {
+    my $params = $self->{params} = [];
+
+    # Detect pair separator for reconstruction
+    return $params unless length(defined $string ? $string : '');
+    $self->pair_separator(';') if $string =~ /;/ && $string !~ /\&/;
+
+    # W3C suggests to also accept ";" as a separator
+    my $charset = $self->charset;
+    for my $pair (split /[\&\;]+/, $string) {
+
+      # Parse
+      $pair =~ /^([^=]*)(?:=(.*))?$/;
+      my $name  = defined $1 ? $1 : '';
+      my $value = defined $2 ? $2 : '';
+
+      # Replace "+" with whitespace
+      s/\+/ /g for $name, $value;
+
+      # Unescape
+      $name  = url_unescape $name;
+      $name  = do { my $tmp = decode($charset, $name); defined $tmp ? $tmp : $name } if $charset;
+      $value = url_unescape $value;
+      $value = do { my $tmp = decode($charset, $value); defined $tmp ? $tmp : $value } if $charset;
+
+      push @$params, $name, $value;
+    }
+  }
+
   return $self->{params} ||= [];
 }
 
 sub parse {
-  my ($self, $string) = @_;
-  $string = defined $string ? $string : $self->{string};
+  my $self = shift;
 
-  # Clear
-  delete $self->{string};
-  $self->params([]);
+  # Pairs
+  if (@_ > 1) { $self->append(@_) }
 
-  # Detect pair separator for reconstruction
-  return $self unless defined $string && length $string;
-  $self->pair_separator(';') if $string =~ /\;/ && $string !~ /\&/;
-
-  # W3C suggests to also accept ";" as a separator
-  my $charset = $self->charset;
-  for my $pair (split /[\&\;]+/, $string) {
-
-    # Parse
-    $pair =~ /^([^\=]*)(?:=(.*))?$/;
-    my $name  = defined $1 ? $1 : '';
-    my $value = defined $2 ? $2 : '';
-
-    # Replace "+" with whitespace
-    $name  =~ s/\+/\ /g;
-    $value =~ s/\+/\ /g;
-
-    # Unescape
-    if (index($name, '%') >= 0) {
-      $name = url_unescape $name;
-      $name = defined decode($charset, $name) ? decode($charset, $name) : $name if $charset;
-    }
-    if (index($value, '%') >= 0) {
-      $value = url_unescape $value;
-      $value = defined decode($charset, $value) ? decode($charset, $value) : $value if $charset;
-    }
-
-    push @{$self->params}, $name, $value;
-  }
+  # String
+  else { $self->{string} = $_[0] }
 
   return $self;
 }
 
-# "Don't kid yourself, Jimmy. If a cow ever got the chance,
-#  he'd eat you and everyone you care about!"
 sub remove {
-  my ($self, $name) = @_;
-  $name = defined $name ? $name : '';
+  my $self = shift;
+  my $name = do {my $tmp = shift; defined $tmp ? $tmp : ''};
 
   # Remove
   my $params = $self->params;
@@ -146,22 +141,21 @@ sub to_hash {
 
   # Format
   my $params = $self->params;
-  my %params;
+  my %hash;
   for (my $i = 0; $i < @$params; $i += 2) {
-    my $name  = $params->[$i];
-    my $value = $params->[$i + 1];
+    my ($name, $value) = @{$params}[$i, $i + 1];
 
     # Array
-    if (exists $params{$name}) {
-      $params{$name} = [$params{$name}] unless ref $params{$name} eq 'ARRAY';
-      push @{$params{$name}}, $value;
+    if (exists $hash{$name}) {
+      $hash{$name} = [$hash{$name}] unless ref $hash{$name} eq 'ARRAY';
+      push @{$hash{$name}}, $value;
     }
 
     # String
-    else { $params{$name} = $value }
+    else { $hash{$name} = $value }
   }
 
-  return \%params;
+  return \%hash;
 }
 
 sub to_string {
@@ -171,49 +165,50 @@ sub to_string {
   my $charset = $self->charset;
   if (defined(my $string = $self->{string})) {
     $string = encode $charset, $string if $charset;
-    return url_escape $string, "^$Mojo::URL::UNRESERVED\\&\\;\\=\\+\\%";
+    return url_escape $string, '^A-Za-z0-9\-._~!$&\'()*+,;=%:@/?';
   }
 
   # Build pairs
   my $params = $self->params;
-  return '' unless @{$self->params};
-  my @params;
+  return '' unless @$params;
+  my @pairs;
   for (my $i = 0; $i < @$params; $i += 2) {
-    my $name  = $params->[$i];
-    my $value = $params->[$i + 1];
+    my ($name, $value) = @{$params}[$i, $i + 1];
 
-    # Escape
+    # Escape and replace whitespace with "+"
     $name = encode $charset, $name if $charset;
-    $name = url_escape $name, "^$Mojo::URL::UNRESERVED";
+    $name = url_escape $name, '^A-Za-z0-9\-._~!$\'()*,:@/?';
+    $name =~ s/\%20/\+/g;
     if ($value) {
       $value = encode $charset, $value if $charset;
-      $value = url_escape $value, "^$Mojo::URL::UNRESERVED";
+      $value = url_escape $value, '^A-Za-z0-9\-._~!$\'()*,:@/?';
+      $value =~ s/\%20/\+/g;
     }
 
-    # Replace whitespace with "+"
-    $name =~ s/\%20/\+/g;
-    $value =~ s/\%20/\+/g if $value;
-
-    push @params, defined $value ? "$name=$value" : "$name";
+    push @pairs, defined $value ? "$name=$value" : $name;
   }
 
   # Concatenate pairs
-  my $separator = $self->pair_separator;
-  return join $separator, @params;
+  return join $self->pair_separator, @pairs;
 }
 
 1;
-__END__
 
 =head1 NAME
 
-Mojo::Parameters - Parameter container
+Mojo::Parameters - Parameters
 
 =head1 SYNOPSIS
 
   use Mojo::Parameters;
 
-  my $p = Mojo::Parameters->new(foo => 'bar', baz => 23);
+  # Parse
+  my $params = Mojo::Parameters->new('foo=bar&baz=23');
+  say $params->param('baz');
+
+  # Build
+  my $params = Mojo::Parameters->new(foo => 'bar', baz => 23);
+  say "$params";
 
 =head1 DESCRIPTION
 
@@ -225,15 +220,18 @@ L<Mojo::Parameters> implements the following attributes.
 
 =head2 C<charset>
 
-  my $charset = $p->charset;
-  $p          = $p->charset('UTF-8');
+  my $charset = $params->charset;
+  $params     = $params->charset('UTF-8');
 
-Charset used for decoding parameters, defaults to C<UTF-8>.
+Charset used for encoding and decoding parameters, defaults to C<UTF-8>.
+
+  # Disable encoding and decoding
+  $params->charset(undef);
 
 =head2 C<pair_separator>
 
-  my $separator = $p->pair_separator;
-  $p            = $p->pair_separator(';');
+  my $separator = $params->pair_separator;
+  $params       = $params->pair_separator(';');
 
 Separator for parameter pairs, defaults to C<&>.
 
@@ -244,59 +242,69 @@ following new ones.
 
 =head2 C<new>
 
-  my $p = Mojo::Parameters->new;
-  my $p = Mojo::Parameters->new('foo=b%3Bar&baz=23');
-  my $p = Mojo::Parameters->new(foo => 'b;ar', baz => 23);
+  my $params = Mojo::Parameters->new;
+  my $params = Mojo::Parameters->new('foo=b%3Bar&baz=23');
+  my $params = Mojo::Parameters->new(foo => 'b;ar');
+  my $params = Mojo::Parameters->new(foo => ['ba;r', 'b;az']);
+  my $params = Mojo::Parameters->new(foo => ['ba;r', 'b;az'], bar => 23);
 
 Construct a new L<Mojo::Parameters> object.
 
 =head2 C<append>
 
-  $p = $p->append(foo => 'ba;r');
+  $params = $params->append(foo => 'ba;r');
+  $params = $params->append(foo => ['ba;r', 'b;az']);
+  $params = $params->append(foo => ['ba;r', 'b;az'], bar => 23);
 
 Append parameters.
 
   # "foo=bar&foo=baz"
   Mojo::Parameters->new('foo=bar')->append(foo => 'baz');
 
+  # "foo=bar&foo=baz&foo=yada"
+  Mojo::Parameters->new('foo=bar')->append(foo => ['baz', 'yada']);
+
+  # "foo=bar&foo=baz&foo=yada&bar=23"
+  Mojo::Parameters->new('foo=bar')->append(foo => ['baz', 'yada'], bar => 23);
+
 =head2 C<clone>
 
-  my $p2 = $p->clone;
+  my $params2 = $params->clone;
 
 Clone parameters.
 
 =head2 C<merge>
 
-  $p = $p->merge($p2, $p3);
+  $params = $params->merge(Mojo::Parameters->new(foo => 'b;ar', baz => 23));
 
-Merge parameters.
+Merge L<Mojo::Parameters> objects.
 
 =head2 C<param>
 
-  my @names = $p->param;
-  my $foo   = $p->param('foo');
-  my @foo   = $p->param('foo');
-  my $foo   = $p->param(foo => 'ba;r');
-  my @foo   = $p->param(foo => qw/ba;r ba;z/);
+  my @names = $params->param;
+  my $foo   = $params->param('foo');
+  my @foo   = $params->param('foo');
+  my $foo   = $params->param(foo => 'ba;r');
+  my @foo   = $params->param(foo => qw(ba;r ba;z));
 
 Check and replace parameter values.
 
 =head2 C<params>
 
-  my $params = $p->params;
-  $p         = $p->params([foo => 'b;ar', baz => 23]);
+  my $array = $params->params;
+  $params   = $params->params([foo => 'b;ar', baz => 23]);
 
 Parsed parameters.
 
 =head2 C<parse>
 
-  $p = $p->parse('foo=b%3Bar&baz=23');
+  $params = $params->parse('foo=b%3Bar&baz=23');
 
 Parse parameters.
 
 =head2 C<remove>
 
-  $p = $p->remove('foo');
+  $params = $params->remove('foo');
 
 Remove parameters.
 
@@ -305,7 +313,7 @@ Remove parameters.
 
 =head2 C<to_hash>
 
-  my $hash = $p->to_hash;
+  my $hash = $params->to_hash;
 
 Turn parameters into a hash reference.
 
@@ -314,7 +322,8 @@ Turn parameters into a hash reference.
 
 =head2 C<to_string>
 
-  my $string = $p->to_string;
+  my $string = $params->to_string;
+  my $string = "$params";
 
 Turn parameters into a string.
 

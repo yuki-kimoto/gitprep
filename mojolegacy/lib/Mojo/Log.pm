@@ -3,14 +3,12 @@ use Mojo::Base 'Mojo::EventEmitter';
 
 use Carp 'croak';
 use Fcntl ':flock';
-use IO::Handle;
 
 has handle => sub {
-  my $self = shift;
 
   # File
-  if (my $path = $self->path) {
-    croak qq/Can't open log file "$path": $!/
+  if (my $path = shift->path) {
+    croak qq{Can't open log file "$path": $!}
       unless open my $file, '>>:utf8', $path;
     return $file;
   }
@@ -27,30 +25,17 @@ my $LEVEL = {debug => 1, info => 2, warn => 3, error => 4, fatal => 5};
 
 sub new {
   my $self = shift->SUPER::new(@_);
-
-  # Default logger
-  $self->on(
-    message => sub {
-      my $self = shift;
-      return unless my $handle = $self->handle;
-      flock $handle, LOCK_EX;
-      croak "Can't write to log: $!"
-        unless defined $handle->syswrite($self->format(@_));
-      flock $handle, LOCK_UN;
-    }
-  );
-
+  $self->on(message => \&_message);
   return $self;
 }
 
-# "Yes, I got the most! I win X-Mas!"
 sub debug { shift->log(debug => @_) }
 sub error { shift->log(error => @_) }
 sub fatal { shift->log(fatal => @_) }
 
 sub format {
-  my ($self, $level, @msgs) = @_;
-  return '[' . localtime(time) . "] [$level] " . join("\n", @msgs) . "\n";
+  my ($self, $level, @lines) = @_;
+  return '[' . localtime(time) . "] [$level] " . join("\n", @lines) . "\n";
 }
 
 sub info { shift->log(info => @_) }
@@ -61,26 +46,30 @@ sub is_fatal { shift->is_level('fatal') }
 sub is_info  { shift->is_level('info') }
 
 sub is_level {
-  my $self  = shift;
-  my $level = lc shift;
-  return $LEVEL->{$level} >= $LEVEL->{$ENV{MOJO_LOG_LEVEL} || $self->level};
+  my ($self, $level) = @_;
+  return $LEVEL->{lc $level} >= $LEVEL->{$ENV{MOJO_LOG_LEVEL} || $self->level};
 }
 
 sub is_warn { shift->is_level('warn') }
 
-# "If The Flintstones has taught us anything,
-#  it's that pelicans can be used to mix cement."
-sub log {
-  my $self  = shift;
-  my $level = lc shift;
-  return $self unless $self->is_level($level);
-  return $self->emit(message => $level => @_);
-}
+sub log { shift->emit('message', lc(shift), @_) }
 
 sub warn { shift->log(warn => @_) }
 
+sub _message {
+  my ($self, $level, @lines) = @_;
+
+  # Check level
+  return unless $self->is_level($level) && (my $handle = $self->handle);
+
+  # Format lines and write to handle
+  flock $handle, LOCK_EX;
+  croak "Can't write to log: $!"
+    unless defined $handle->syswrite($self->format($level, @lines));
+  flock $handle, LOCK_UN;
+}
+
 1;
-__END__
 
 =head1 NAME
 
@@ -97,11 +86,11 @@ Mojo::Log - Simple logger
   my $log = Mojo::Log->new(path => '/var/log/mojo.log', level => 'warn');
 
   # Log messages
-  $log->debug("Why isn't this working?");
-  $log->info("FYI: it happened again");
-  $log->warn("This might be a problem");
-  $log->error("Garden variety error");
-  $log->fatal("Boom!");
+  $log->debug('Why is this not working?');
+  $log->info('FYI: it happened again.');
+  $log->warn('This might be a problem.');
+  $log->error('Garden variety error.');
+  $log->fatal('Boom!');
 
 =head1 DESCRIPTION
 
@@ -114,7 +103,7 @@ L<Mojo::Log> can emit the following events.
 =head2 C<message>
 
   $log->on(message => sub {
-    my ($log, $level, @messages) = @_;
+    my ($log, $level, @lines) = @_;
     ...
   });
 
@@ -122,8 +111,8 @@ Emitted when a new message gets logged.
 
   $log->unsubscribe('message');
   $log->on(message => sub {
-    my ($log, $level, @messages) = @_;
-    say "$level: ", @messages;
+    my ($log, $level, @lines) = @_;
+    say "$level: ", @lines;
   });
 
 =head1 ATTRIBUTES
@@ -201,8 +190,8 @@ Log fatal message.
 
 =head2 C<format>
 
-  my $message = $log->format('debug', 'Hi there!');
-  my $message = $log->format('debug', 'Hi', 'there!');
+  my $msg = $log->format('debug', 'Hi there!');
+  my $msg = $log->format('debug', 'Hi', 'there!');
 
 Format log message.
 

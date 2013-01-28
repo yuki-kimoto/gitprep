@@ -1,7 +1,6 @@
 package Mojolicious::Command::generate;
 use Mojo::Base 'Mojolicious::Commands';
 
-# "Ah, nothing like a warm fire and a SuperSoaker of fine cognac."
 has description => "Generate files and directories from templates.\n";
 has hint        => <<"EOF";
 
@@ -12,14 +11,12 @@ usage: $0 generate GENERATOR [OPTIONS]
 
 These generators are currently available:
 EOF
-has namespaces =>
-  sub { [qw/Mojolicious::Command::generate Mojo::Command::generate/] };
+has namespaces => sub { ['Mojolicious::Command::generate'] };
 has usage => "usage: $0 generate GENERATOR [OPTIONS]\n";
 
 sub help { shift->run(@_) }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -35,6 +32,9 @@ Mojolicious::Command::generate - Generator command
 =head1 DESCRIPTION
 
 L<Mojolicious::Command::generate> lists available generators.
+
+This is a core command, that means it is always enabled and its code a good
+example for learning to build new commands, you're welcome to fork it.
 
 =head1 ATTRIBUTES
 
@@ -55,20 +55,27 @@ Short description of this command, used for the command list.
 
 Short hint shown after listing available generator commands.
 
+=head2 C<usage>
+
+  my $usage  = $generator->usage;
+  $generator = $generator->usage('Foo!');
+
+Usage information for this command, used for the help screen.
+
 =head2 C<message>
 
-  my $message = $generator->message;
-  $generator  = $generator->message('Bar!');
+  my $msg    = $generator->message;
+  $generator = $generator->message('Bar!');
 
 Short usage message shown before listing available generator commands.
 
 =head2 C<namespaces>
 
   my $namespaces = $generator->namespaces;
-  $generator     = $generator->namespaces(['Mojo::Command::generate']);
+  $generator     = $generator->namespaces(['MyApp::Command::generate']);
 
 Namespaces to search for available generator commands, defaults to
-L<Mojolicious::Command::generate> and L<Mojo::Command::generate>.
+L<Mojolicious::Command::generate>.
 
 =head1 METHODS
 

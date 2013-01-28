@@ -2,17 +2,16 @@ package Mojo::Reactor;
 use Mojo::Base 'Mojo::EventEmitter';
 
 use Carp 'croak';
-use IO::Poll qw/POLLERR POLLHUP POLLIN/;
+use IO::Poll qw(POLLERR POLLHUP POLLIN);
 use Mojo::Loader;
 
 sub detect {
   my $try = $ENV{MOJO_REACTOR} || 'Mojo::Reactor::EV';
-  return Mojo::Loader->load($try) ? 'Mojo::Reactor::Poll' : $try;
+  return Mojo::Loader->new->load($try) ? 'Mojo::Reactor::Poll' : $try;
 }
 
 sub io { croak 'Method "io" not implemented by subclass' }
 
-# "This was such a pleasant St. Patrick's Day until Irish people showed up."
 sub is_readable {
   my ($self, $handle) = @_;
 
@@ -35,7 +34,6 @@ sub timer      { croak 'Method "timer" not implemented by subclass' }
 sub watch      { croak 'Method "watch" not implemented by subclass' }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -57,8 +55,6 @@ Mojo::Reactor - Low level event reactor base class
   sub stop       {...}
   sub timer      {...}
   sub watch      {...}
-
-  1;
 
 =head1 DESCRIPTION
 
@@ -128,9 +124,8 @@ Check if reactor is running. Meant to be overloaded in a subclass.
 
   $reactor->one_tick;
 
-Run reactor until at least one event has been handled or no events are being
-watched anymore. Note that this method can recurse back into the reactor, so
-you need to be careful. Meant to be overloaded in a subclass.
+Run reactor until an event occurs. Note that this method can recurse back into
+the reactor, so you need to be careful. Meant to be overloaded in a subclass.
 
   # Don't block longer than 0.5 seconds
   my $id = $reactor->timer(0.5 => sub {});
@@ -159,8 +154,8 @@ Remove handle or timer. Meant to be overloaded in a subclass.
   $reactor->start;
 
 Start watching for I/O and timer events, this will block until C<stop> is
-called or no events are being watched anymore. Meant to be overloaded in a
-subclass.
+called. Note that some reactors stop automatically if there are no events
+being watched anymore. Meant to be overloaded in a subclass.
 
 =head2 C<stop>
 
@@ -182,8 +177,9 @@ seconds. Meant to be overloaded in a subclass.
 
   $reactor = $reactor->watch($handle, $readable, $writable);
 
-Change I/O events to watch handle for with C<true> and C<false> values, meant
-to be overloaded in a subclass.
+Change I/O events to watch handle for with true and false values. Meant to be
+overloaded in a subclass. Note that this method requires an active I/O
+watcher.
 
   # Watch only for readable events
   $reactor->watch($handle, 1, 0);

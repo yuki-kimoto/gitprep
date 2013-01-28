@@ -1,13 +1,11 @@
 package Mojo::HelloWorld;
 use Mojolicious::Lite;
 
-# "Does whisky count as beer?"
 app->log->level('error')->path(undef);
 
 any '/*whatever' => {whatever => '', text => 'Your Mojo is working!'};
 
 1;
-__END__
 
 =head1 NAME
 
@@ -16,6 +14,9 @@ Mojo::HelloWorld - Hello World!
 =head1 SYNOPSIS
 
   use Mojo::HelloWorld;
+
+  my $hello = Mojo::HelloWorld->new;
+  $hello->start;
 
 =head1 DESCRIPTION
 

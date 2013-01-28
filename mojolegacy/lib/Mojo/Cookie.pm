@@ -8,11 +8,8 @@ use overload
 use Carp 'croak';
 use Mojo::Util 'unquote';
 
-has [qw/name value/];
+has [qw(name value)];
 
-# "My Homer is not a communist.
-#  He may be a liar, a pig, an idiot, a communist,
-#  but he is not a porn star."
 sub parse     { croak 'Method "parse" not implemented by subclass' }
 sub to_string { croak 'Method "to_string" not implemented by subclass' }
 
@@ -24,22 +21,22 @@ sub _tokenize {
   while ($string) {
 
     # Name
-    last unless $string =~ s/^\s*([^\=\;\,]+)\s*\=?\s*//;
+    last unless $string =~ s/^\s*([^=;,]+)\s*=?\s*//;
     my $name = $1;
 
     # "expires" is a special case, thank you Netscape...
-    $string =~ s/^([^\;\,]+\,?[^\;\,]+)/"$1"/ if $name =~ /^expires$/i;
+    $string =~ s/^([^;,]+,?[^;,]+)/"$1"/ if $name =~ /^expires$/i;
 
     # Value
     my $value;
-    $value = unquote $1 if $string =~ s/^("(?:\\\\|\\"|[^"])+"|[^\;\,]+)\s*//;
+    $value = unquote $1 if $string =~ s/^("(?:\\\\|\\"|[^"])+"|[^;,]+)\s*//;
 
     # Token
     push @token, [$name, $value];
 
     # Separator
-    $string =~ s/^\s*\;\s*//;
-    if ($string =~ s/^\s*\,\s*//) {
+    $string =~ s/^\s*;\s*//;
+    if ($string =~ s/^\s*,\s*//) {
       push @tree, [@token];
       @token = ();
     }
@@ -50,19 +47,22 @@ sub _tokenize {
 }
 
 1;
-__END__
 
 =head1 NAME
 
-Mojo::Cookie - HTTP 1.1 cookie base class
+Mojo::Cookie - HTTP cookie base class
 
 =head1 SYNOPSIS
 
+  package Mojo::Cookie::MyCookie;
   use Mojo::Base 'Mojo::Cookie';
+
+  sub parse     {...}
+  sub to_string {...}
 
 =head1 DESCRIPTION
 
-L<Mojo::Cookie> is an abstract base class for HTTP 1.1 cookies.
+L<Mojo::Cookie> is an abstract base class for HTTP cookies.
 
 =head1 ATTRIBUTES
 
@@ -96,6 +96,7 @@ Parse cookies. Meant to be overloaded in a subclass.
 =head2 C<to_string>
 
   my $string = $cookie->to_string;
+  my $string = "$cookie";
 
 Render cookie. Meant to be overloaded in a subclass.
 

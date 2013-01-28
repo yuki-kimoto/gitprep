@@ -3,8 +3,6 @@ use Mojo::Base 'Mojo::EventEmitter';
 
 use Mojo::Util 'camelize';
 
-# "Who would have thought Hell would really exist?
-#  And that it would be in New Jersey?"
 has namespaces => sub { ['Mojolicious::Plugin'] };
 
 sub emit_hook {
@@ -26,19 +24,16 @@ sub emit_chain {
   return $self;
 }
 
-# "Everybody's a jerk. You, me, this jerk."
 sub emit_hook_reverse {
   my $self = shift;
   $_->(@_) for reverse @{$self->subscribers(shift)};
   return $self;
 }
 
-# "Also you have a rectangular object in your colon.
-#  That's a calculator. I ate it to gain its power."
 sub load_plugin {
   my ($self, $name) = @_;
 
-  # Try all namspaces
+  # Try all namespaces
   my $class = $name =~ /^[a-z]/ ? camelize($name) : $name;
   for my $namespace (@{$self->namespaces}) {
     my $module = "${namespace}::$class";
@@ -49,7 +44,7 @@ sub load_plugin {
   return $name->new if $self->_load($name);
 
   # Not found
-  die qq/Plugin "$name" missing, maybe you need to install it?\n/;
+  die qq{Plugin "$name" missing, maybe you need to install it?\n};
 }
 
 sub register_plugin {
@@ -60,25 +55,26 @@ sub _load {
   my ($self, $module) = @_;
 
   # Load
-  if (my $e = Mojo::Loader->load($module)) { ref $e ? die $e : return }
+  if (my $e = Mojo::Loader->new->load($module)) {
+    ref $e ? die $e : return undef;
+  }
 
   # Module is a plugin
   return $module->isa('Mojolicious::Plugin') ? 1 : undef;
 }
 
 1;
-__END__
 
 =head1 NAME
 
-Mojolicious::Plugins - Plugins
+Mojolicious::Plugins - Plugin manager
 
 =head1 SYNOPSIS
 
   use Mojolicious::Plugins;
 
   my $plugins = Mojolicious::Plugin->new;
-  $plugins->load_plugin('Config');
+  push @{$plugins->namespaces}, 'MyApp::Plugin';
 
 =head1 DESCRIPTION
 
@@ -93,9 +89,10 @@ L<Mojolicious::Plugins> implements the following attributes.
   my $namespaces = $plugins->namespaces;
   $plugins       = $plugins->namespaces(['Mojolicious::Plugin']);
 
-Namespaces to load plugins from.
+Namespaces to load plugins from, defaults to L<Mojolicious::Plugin>.
 
-  push @{$plugins->namespaces}, 'MyApp::Plugins';
+  # Add another namespace to load plugins from
+  push @{$plugins->namespaces}, 'MyApp::Plugin';
 
 =head1 METHODS
 
@@ -133,15 +130,17 @@ Load a plugin from the configured namespaces or by full module name.
 
 =head2 C<register_plugin>
 
-  $plugins->register_plugin('some_thing', $app);
-  $plugins->register_plugin('some_thing', $app, foo => 23);
-  $plugins->register_plugin('some_thing', $app, {foo => 23});
-  $plugins->register_plugin('SomeThing', $app);
-  $plugins->register_plugin('SomeThing', $app, foo => 23);
-  $plugins->register_plugin('SomeThing', $app, {foo => 23});
-  $plugins->register_plugin('MyApp::Plugin::SomeThing', $app);
-  $plugins->register_plugin('MyApp::Plugin::SomeThing', $app, foo => 23);
-  $plugins->register_plugin('MyApp::Plugin::SomeThing', $app, {foo => 23});
+  $plugins->register_plugin('some_thing', Mojolicious->new);
+  $plugins->register_plugin('some_thing', Mojolicious->new, foo => 23);
+  $plugins->register_plugin('some_thing', Mojolicious->new, {foo => 23});
+  $plugins->register_plugin('SomeThing', Mojolicious->new);
+  $plugins->register_plugin('SomeThing', Mojolicious->new, foo => 23);
+  $plugins->register_plugin('SomeThing', Mojolicious->new, {foo => 23});
+  $plugins->register_plugin('MyApp::Plugin::SomeThing', Mojolicious->new);
+  $plugins->register_plugin(
+    'MyApp::Plugin::SomeThing', Mojolicious->new, foo => 23);
+  $plugins->register_plugin(
+    'MyApp::Plugin::SomeThing', Mojolicious->new, {foo => 23});
 
 Load a plugin from the configured namespaces or by full module name and run
 C<register>, optional arguments are passed through.

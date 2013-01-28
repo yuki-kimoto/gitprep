@@ -25,7 +25,7 @@ my %ESCAPE = (
   'u2029' => "\x{2029}"
 );
 my %REVERSE = map { $ESCAPE{$_} => "\\$_" } keys %ESCAPE;
-for (0x00 .. 0x1F, 0x7F) { $REVERSE{pack 'C', $_} = defined $REVERSE{pack 'C', $_} ? $REVERSE{pack 'C', $_} : sprintf '\u%.4X', $_ }
+for (0x00 .. 0x1F, 0x7F) { $REVERSE{pack 'C', $_} = do {my $tmp = $REVERSE{pack 'C', $_}; defined $tmp ? $tmp : sprintf '\u%.4X', $_} }
 
 # Unicode encoding detection
 my $UTF_PATTERNS = {
@@ -37,32 +37,30 @@ my $UTF_PATTERNS = {
 
 my $WHITESPACE_RE = qr/[\x20\x09\x0a\x0d]*/;
 
-# "Hey...That's not the wallet inspector..."
 sub decode {
-  my ($self, $string) = @_;
+  my ($self, $bytes) = @_;
 
   # Cleanup
   $self->error(undef);
 
   # Missing input
-  $self->error('Missing or empty input.') and return unless $string;
+  $self->error('Missing or empty input') and return undef unless $bytes;
 
   # Remove BOM
-  $string
-    =~ s/^(?:\357\273\277|\377\376\0\0|\0\0\376\377|\376\377|\377\376)//g;
+  $bytes =~ s/^(?:\357\273\277|\377\376\0\0|\0\0\376\377|\376\377|\377\376)//g;
 
   # Wide characters
-  $self->error('Wide character in input.') and return
-    unless utf8::downgrade($string, 1);
+  $self->error('Wide character in input') and return undef
+    unless utf8::downgrade($bytes, 1);
 
-  # Detect and decode unicode
+  # Detect and decode Unicode
   my $encoding = 'UTF-8';
-  $string =~ $UTF_PATTERNS->{$_} and $encoding = $_ for keys %$UTF_PATTERNS;
-  $string = Mojo::Util::decode $encoding, $string;
+  $bytes =~ $UTF_PATTERNS->{$_} and $encoding = $_ for keys %$UTF_PATTERNS;
+  $bytes = Mojo::Util::decode $encoding, $bytes;
 
   # Object or array
   my $res = eval {
-    local $_ = $string;
+    local $_ = $bytes;
 
     # Leading whitespace
     m/\G$WHITESPACE_RE/gc;
@@ -158,7 +156,7 @@ sub _decode_string {
   my $pos = pos;
 
   # Extract string with escaped characters
-  m#\G(((?:[^\x00-\x1F\\"]|\\(?:["\\/bfnrt]|u[A-Fa-f0-9]{4})){0,32766})*)#gc;
+  m#\G(((?:[^\x00-\x1F\\"]|\\(?:["\\/bfnrt]|u[[:xdigit:]]{4})){0,32766})*)#gc;
   my $str = $1;
 
   # Missing quote
@@ -170,7 +168,7 @@ sub _decode_string {
 
   # Unescape popular characters
   if (index($str, '\\u') < 0) {
-    $str =~ s|\\(["\\/bfnrt])|$ESCAPE{$1}|gs;
+    $str =~ s!\\(["\\/bfnrt])!$ESCAPE{$1}!gs;
     return $str;
   }
 
@@ -210,8 +208,6 @@ sub _decode_string {
   return $buffer . substr $str, pos($str), length($str);
 }
 
-# "Eternity with nerds.
-#  It's the Pasadena Star Trek convention all over again."
 sub _decode_value {
 
   # Leading whitespace
@@ -244,7 +240,8 @@ sub _decode_value {
 }
 
 sub _encode_array {
-  return '[' . join(',', map { _encode_values($_) } @{shift()}) . ']';
+  my $array = shift;
+  return '[' . join(',', map { _encode_values($_) } @$array) . ']';
 }
 
 sub _encode_object {
@@ -262,7 +259,7 @@ sub _encode_string {
   my $string = shift;
 
   # Escape string
-  $string =~ s|([\x00-\x1F\x7F\x{2028}\x{2029}\\"/\b\f\n\r\t])|$REVERSE{$1}|gs;
+  $string =~ s!([\x00-\x1F\x7F\x{2028}\x{2029}\\"/\b\f\n\r\t])!$REVERSE{$1}!gs;
 
   # Stringify
   return "\"$string\"";
@@ -281,7 +278,8 @@ sub _encode_values {
     return _encode_object($value) if $ref eq 'HASH';
 
     # True or false
-    return $value ? 'true' : 'false' if $ref eq 'Mojo::JSON::_Bool';
+    return $$value ? 'true' : 'false' if $ref eq 'SCALAR';
+    return $value  ? 'true' : 'false' if $ref eq 'Mojo::JSON::_Bool';
 
     # Blessed reference with TO_JSON method
     if (blessed $value && (my $sub = $value->can('TO_JSON'))) {
@@ -315,7 +313,7 @@ sub _exception {
   }
 
   # Throw
-  die "$context.\n";
+  die "$context\n";
 }
 
 # Emulate boolean type
@@ -323,7 +321,6 @@ package Mojo::JSON::_Bool;
 use overload '0+' => sub { ${$_[0]} }, '""' => sub { ${$_[0]} }, fallback => 1;
 
 1;
-__END__
 
 =head1 NAME
 
@@ -333,9 +330,9 @@ Mojo::JSON - Minimalistic JSON
 
   use Mojo::JSON;
 
-  my $json   = Mojo::JSON->new;
-  my $string = $json->encode({foo => [1, 2], bar => 'hello!'});
-  my $hash   = $json->decode('{"foo": [3, -2, 1]}');
+  my $json  = Mojo::JSON->new;
+  my $bytes = $json->encode({foo => [1, 2], bar => 'hello!', baz => \1});
+  my $hash  = $json->decode($bytes);
 
 =head1 DESCRIPTION
 
@@ -351,14 +348,15 @@ stringify them if it doesn't exist.
   {"foo": "bar"} -> {foo => 'bar'}
 
 Literal names will be translated to and from L<Mojo::JSON> constants or a
-similar native Perl value.
+similar native Perl value. In addition C<Scalar> references will be used to
+generate booleans, based on if their values are true or false.
 
   true  -> Mojo::JSON->true
   false -> Mojo::JSON->false
   null  -> undef
 
 Decoding UTF-16 (LE/BE) and UTF-32 (LE/BE) will be handled transparently,
-encoding will only generate UTF-8. The two unicode whitespace characters
+encoding will only generate UTF-8. The two Unicode whitespace characters
 C<u2028> and C<u2029> will always be escaped to make JSONP easier.
 
 =head1 ATTRIBUTES
@@ -368,7 +366,7 @@ L<Mojo::JSON> implements the following attributes.
 =head2 C<error>
 
   my $err = $json->error;
-  $json   = $json->error('Oops!');
+  $json   = $json->error('Parser error');
 
 Parser errors.
 
@@ -379,16 +377,16 @@ following new ones.
 
 =head2 C<decode>
 
-  my $array = $json->decode('[1, 2, 3]');
-  my $hash  = $json->decode('{"foo": "bar"}');
+  my $array = $json->decode($bytes);
+  my $hash  = $json->decode($bytes);
 
-Decode JSON string.
+Decode JSON.
 
 =head2 C<encode>
 
-  my $string = $json->encode({foo => 'bar'});
+  my $bytes = $json->encode({foo => 'bar'});
 
-Encode Perl structure.
+Encode Perl data structure.
 
 =head2 C<false>
 

@@ -1,14 +1,16 @@
 package Mojo::Server::Hypnotoad;
 use Mojo::Base -base;
 
+# "Bender: I was God once.
+#  God: Yes, I saw. You were doing well, until everyone died."
 use Cwd 'abs_path';
 use Fcntl ':flock';
 use File::Basename 'dirname';
-use File::Spec::Functions qw/catfile tmpdir/;
+use File::Spec::Functions qw(catfile tmpdir);
 use IO::Poll 'POLLIN';
 use List::Util 'shuffle';
 use Mojo::Server::Daemon;
-use POSIX qw/setsid WNOHANG/;
+use POSIX qw(setsid WNOHANG);
 use Scalar::Util 'weaken';
 use Time::HiRes 'ualarm';
 
@@ -23,31 +25,14 @@ sub DESTROY {
   if (my $file = $self->{config}{lock_file}) { unlink $file if -w $file }
 }
 
-# "Marge? Since I'm not talking to Lisa,
-#  would you please ask her to pass me the syrup?
-#  Dear, please pass your father the syrup, Lisa.
-#  Bart, tell Dad I will only pass the syrup if it won't be used on any meat
-#  product.
-#  You dunkin' your sausages in that syrup homeboy?
-#  Marge, tell Bart I just want to drink a nice glass of syrup like I do
-#  every morning.
-#  Tell him yourself, you're ignoring Lisa, not Bart.
-#  Bart, thank your mother for pointing that out.
-#  Homer, you're not not-talking to me and secondly I heard what you said.
-#  Lisa, tell your mother to get off my case.
-#  Uhhh, dad, Lisa's the one you're not talking to.
-#  Bart, go to your room."
 sub run {
-  my ($self, $path, $config) = @_;
+  my ($self, $path) = @_;
 
-  # No windows support
+  # No Windows support
   _exit('Hypnotoad not available for Windows.') if $^O eq 'MSWin32';
 
   # Application
   $ENV{HYPNOTOAD_APP} ||= abs_path $path;
-
-  # DEPRECATED in Leaf Fluttering In Wind!
-  $ENV{HYPNOTOAD_CONFIG} ||= abs_path $config;
 
   # This is a production server
   $ENV{MOJO_MODE} ||= 'production';
@@ -89,7 +74,7 @@ sub run {
 
   # Start accepting connections
   my $log = $self->{log} = $app->log;
-  $log->info(qq/Hypnotoad server $$ started for "$ENV{HYPNOTOAD_APP}"./);
+  $log->info(qq[Hypnotoad server $$ started for "$ENV{HYPNOTOAD_APP}".]);
   $daemon->start;
 
   # Pipe for worker communication
@@ -97,7 +82,7 @@ sub run {
   $self->{poll} = IO::Poll->new;
   $self->{poll}->mask($self->{reader}, POLLIN);
 
-  # Manager environment
+  # Clean manager environment
   my $c = $self->{config};
   $SIG{INT} = $SIG{TERM} = sub { $self->{finished} = 1 };
   $SIG{CHLD} = sub {
@@ -118,23 +103,9 @@ sub run {
 sub _config {
   my ($self, $app) = @_;
 
-  # Load configuration from application
-  my $c = $app->config('hypnotoad') || {};
-
-  # DEPRECATED in Leaf Fluttering In Wind!
-  if (-r (my $file = $ENV{HYPNOTOAD_CONFIG})) {
-    warn "Hypnotoad config files are DEPRECATED!\n";
-    unless ($c = do $file) {
-      die qq/Can't load config file "$file": $@/ if $@;
-      die qq/Can't load config file "$file": $!/ unless defined $c;
-      die qq/Config file "$file" did not return a hash reference.\n/
-        unless ref $c eq 'HASH';
-    }
-  }
-
   # Hypnotoad settings
-  $self->{config} = $c;
-  $c->{graceful_timeout}   ||= 30;
+  my $c = $self->{config} = $app->config('hypnotoad') || {};
+  $c->{graceful_timeout}   ||= 20;
   $c->{heartbeat_interval} ||= 5;
   $c->{heartbeat_timeout}  ||= 20;
   $c->{lock_file}          ||= catfile tmpdir, 'hypnotoad.lock';
@@ -147,14 +118,17 @@ sub _config {
   # Daemon settings
   $ENV{MOJO_REVERSE_PROXY} = $c->{proxy} if defined $c->{proxy};
   my $daemon = $self->{daemon};
-  $daemon->backlog($c->{backlog}) if defined $c->{backlog};
-  $daemon->max_clients($c->{clients} || 1000);
-  $daemon->group($c->{group}) if defined $c->{group};
+  defined $c->{$_} and $daemon->$_($c->{$_}) for qw(backlog group user);
+  $daemon->max_clients($c->{clients}              || 1000);
   $daemon->max_requests($c->{keep_alive_requests} || 25);
   $daemon->inactivity_timeout(defined $c->{inactivity_timeout} ? $c->{inactivity_timeout} : 15);
-  $daemon->user($c->{user}) if defined $c->{user};
-  $daemon->ioloop->max_accepts(defined $c->{accepts} ? $c->{accepts} : 1000);
   $daemon->listen($c->{listen} || ['http://*:8080']);
+
+  # Event loop settings
+  my $loop = $daemon->ioloop;
+  $loop->max_accepts(defined $c->{accepts} ? $c->{accepts} : 1000);
+  defined $c->{$_} and $loop->$_($c->{$_})
+    for qw(accept_interval multi_accept);
 }
 
 sub _exit { say shift and exit 0 }
@@ -176,9 +150,10 @@ sub _heartbeat {
 sub _hot_deploy {
   my $self = shift;
 
-  # Make sure server is running
-  return unless my $pid = $self->_pid;
-  return unless kill 0, $pid;
+  # Make sure server is running and clean up PID file if necessary
+  return unless defined(my $pid = $self->_pid);
+  my $file = $self->{config}{pid_file};
+  return -w $file ? unlink $file : undef unless $pid && kill 0, $pid;
 
   # Start hot deployment
   kill 'USR2', $pid;
@@ -233,9 +208,9 @@ sub _manage {
     # No heartbeat (graceful stop)
     my $interval = $c->{heartbeat_interval};
     my $timeout  = $c->{heartbeat_timeout};
-    if ($w->{time} + $interval + $timeout <= time) {
+    if (!$w->{graceful} && ($w->{time} + $interval + $timeout <= time)) {
       $self->{log}->info("Worker $pid has no heartbeat, restarting.");
-      $w->{graceful} ||= time;
+      $w->{graceful} = time;
     }
 
     # Graceful stop with timeout
@@ -255,7 +230,7 @@ sub _manage {
 }
 
 sub _pid {
-  return unless open my $file, '<', shift->{config}{pid_file};
+  return undef unless open my $file, '<', shift->{config}{pid_file};
   my $pid = <$file>;
   chomp $pid;
   return $pid;
@@ -271,24 +246,20 @@ sub _pid_file {
   return if -e (my $file = $self->{config}{pid_file});
 
   # Create PID file
-  $self->{log}->info(qq/Creating process id file "$file"./);
-  die qq/Can't create process id file "$file": $!/
+  $self->{log}->info(qq{Creating process id file "$file".});
+  die qq{Can't create process id file "$file": $!}
     unless open my $pid, '>', $file;
   chmod 0644, $pid;
   print $pid $$;
 }
 
-# "Dear Mr. President, there are too many states nowadays.
-#  Please eliminate three.
-#  P.S. I am not a crackpot."
 sub _reap {
   my ($self, $pid) = @_;
 
   # Clean up failed upgrade
   if (($self->{new} || '') eq $pid) {
     $self->{log}->info('Zero downtime software upgrade failed.');
-    delete $self->{upgrade};
-    delete $self->{new};
+    delete $self->{$_} for qw(new upgrade);
   }
 
   # Clean up worker
@@ -298,7 +269,6 @@ sub _reap {
   }
 }
 
-# "I hope this has taught you kids a lesson: kids never learn."
 sub _spawn {
   my $self = shift;
 
@@ -309,7 +279,7 @@ sub _spawn {
   # Prepare lock file
   my $c    = $self->{config};
   my $file = $c->{lock_file};
-  die qq/Can't open lock file "$file": $!/ unless open my $lock, '>', $file;
+  die qq{Can't open lock file "$file": $!} unless open my $lock, '>', $file;
 
   # Change user/group
   my $loop = $self->{daemon}->setuidgid->ioloop;
@@ -338,7 +308,7 @@ sub _spawn {
   );
   $loop->unlock(sub { flock $lock, LOCK_UN });
 
-  # Heartbeat
+  # Heartbeat messages (stop sending during graceful stop)
   weaken $self;
   $loop->recurring(
     $c->{heartbeat_interval} => sub {
@@ -348,11 +318,9 @@ sub _spawn {
   );
 
   # Clean worker environment
-  $SIG{INT} = $SIG{TERM} = $SIG{CHLD} = $SIG{USR2} = $SIG{TTIN} = $SIG{TTOU}
-    = 'DEFAULT';
+  $SIG{$_} = 'DEFAULT' for qw(INT TERM CHLD USR2 TTIN TTOU);
   $SIG{QUIT} = sub { $loop->max_connections(0) };
-  delete $self->{reader};
-  delete $self->{poll};
+  delete $self->{$_} for qw(poll reader);
 
   # Start
   $self->{log}->debug("Worker $$ started.");
@@ -367,7 +335,6 @@ sub _stop {
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -378,21 +345,23 @@ Mojo::Server::Hypnotoad - ALL GLORY TO THE HYPNOTOAD!
   use Mojo::Server::Hypnotoad;
 
   my $toad = Mojo::Server::Hypnotoad->new;
-  $toad->run('./myapp.pl');
+  $toad->run('/home/sri/myapp.pl');
 
 =head1 DESCRIPTION
 
-L<Mojo::Server::Hypnotoad> is a full featured UNIX optimized preforking
-non-blocking I/O HTTP 1.1 and WebSocket server built around the very well
-tested and reliable L<Mojo::Server::Daemon> with C<IPv6>, C<TLS>, C<Bonjour>,
-C<libev> and hot deployment support that just works.
+L<Mojo::Server::Hypnotoad> is a full featured, UNIX optimized, preforking
+non-blocking I/O HTTP and WebSocket server, built around the very well tested
+and reliable L<Mojo::Server::Daemon>, with C<IPv6>, C<TLS>, C<Comet> (long
+polling), multiple event loop and hot deployment support that just works. Note
+that the server uses signals for process management, so you should avoid
+modifying signal handlers in your applications.
 
 To start applications with it you can use the L<hypnotoad> script.
 
   $ hypnotoad myapp.pl
   Server available at http://127.0.0.1:8080.
 
-You can run the exact same command again for automatic hot deployment.
+You can run the same command again for automatic hot deployment.
 
   $ hypnotoad myapp.pl
   Starting hot deployment for Hypnotoad server 31841.
@@ -400,12 +369,12 @@ You can run the exact same command again for automatic hot deployment.
 For L<Mojolicious> and L<Mojolicious::Lite> applications it will default to
 C<production> mode.
 
-Optional modules L<EV>, L<IO::Socket::IP>, L<IO::Socket::SSL> and
-L<Net::Rendezvous::Publish> are supported transparently and used if installed.
-Individual features can also be disabled with the C<MOJO_NO_BONJOUR>,
-C<MOJO_NO_IPV6> and C<MOJO_NO_TLS> environment variables.
+Optional modules L<EV> (4.0+), L<IO::Socket::IP> (0.16+) and
+L<IO::Socket::SSL> (1.75+) are supported transparently through
+L<Mojo::IOLoop>, and used if installed. Individual features can also be
+disabled with the C<MOJO_NO_IPV6> and C<MOJO_NO_TLS> environment variables.
 
-See L<Mojolicious::Guides::Cookbook> for deployment recipes.
+See L<Mojolicious::Guides::Cookbook> for more.
 
 =head1 SIGNALS
 
@@ -472,13 +441,23 @@ Stop worker gracefully.
 L<Mojo::Server::Hypnotoad> can be configured with the following settings, see
 L<Mojolicious::Guides::Cookbook/"Hypnotoad"> for examples.
 
+=head2 C<accept_interval>
+
+  accept_interval => 0.5
+
+Interval in seconds for trying to reacquire the accept mutex and connection
+management, defaults to C<0.025>. Note that changing this value can affect
+performance and idle CPU usage.
+
 =head2 C<accepts>
 
   accepts => 100
 
 Maximum number of connections a worker is allowed to accept before stopping
 gracefully, defaults to C<1000>. Setting the value to C<0> will allow workers
-to accept new connections indefinitely.
+to accept new connections indefinitely. Note that up to half of this value can
+be subtracted randomly to improve load balancing, and that worker processes
+will stop sending heartbeat messages once the limit has been reached.
 
 =head2 C<backlog>
 
@@ -499,8 +478,8 @@ performance.
 
   graceful_timeout => 15
 
-Maximum amount of time in seconds a graceful worker stop may take before being
-forced, defaults to C<30>.
+Maximum amount of time in seconds stopping a worker gracefully may take before
+being forced, defaults to C<20>.
 
 =head2 C<group>
 
@@ -519,7 +498,7 @@ Heartbeat interval in seconds, defaults to C<5>.
   heartbeat_timeout => 2
 
 Maximum amount of time in seconds before a worker without a heartbeat will be
-stopped, defaults to C<20>.
+stopped gracefully, defaults to C<20>.
 
 =head2 C<inactivity_timeout>
 
@@ -556,6 +535,12 @@ appended, defaults to a random temporary path.
 Maximum amount of time in seconds a worker may block when waiting for the
 accept mutex, defaults to C<0.5>.
 
+=head2 C<multi_accept>
+
+  multi_accept => 100
+
+Number of connections to accept at once, defaults to C<50>.
+
 =head2 C<pid_file>
 
   pid_file => '/var/run/hypnotoad.pid'
@@ -568,12 +553,13 @@ the server has been stopped.
 
   proxy => 1
 
-Activate reverse proxy support, defaults to the value of the
-C<MOJO_REVERSE_PROXY> environment variable.
+Activate reverse proxy support, which allows for the C<X-Forwarded-For> and
+C<X-Forwarded-HTTPS> headers to be picked up automatically, defaults to the
+value of the C<MOJO_REVERSE_PROXY> environment variable.
 
 =head2 C<upgrade_timeout>
 
-  upgrade_timeout => 30
+  upgrade_timeout => 45
 
 Maximum amount of time in seconds a zero downtime software upgrade may take
 before getting canceled, defaults to C<60>.
@@ -589,7 +575,7 @@ Username for worker processes.
   workers => 10
 
 Number of worker processes, defaults to C<4>. A good rule of thumb is two
-worker processes per cpu core.
+worker processes per CPU core.
 
 =head1 METHODS
 

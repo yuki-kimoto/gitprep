@@ -3,9 +3,9 @@ use Mojo::Base -base;
 
 use File::Spec::Functions 'catfile';
 use Mojo::Cache;
-use Mojo::Command;
-use Mojo::Home;
 use Mojo::JSON;
+use Mojo::Home;
+use Mojo::Loader;
 use Mojo::Util 'encode';
 
 has cache   => sub { Mojo::Cache->new };
@@ -13,40 +13,18 @@ has classes => sub { ['main'] };
 has default_format => 'html';
 has 'default_handler';
 has encoding => 'UTF-8';
-has [qw/handlers helpers/] => sub { {} };
+has [qw(handlers helpers)] => sub { {} };
 has paths => sub { [] };
 
-# "This is not how Xmas is supposed to be.
-#  In my day Xmas was about bringing people together,
-#  not blowing them apart."
+# Bundled templates
+my $HOME = Mojo::Home->new;
+$HOME->parse(
+  $HOME->parse($HOME->mojo_lib_dir)->rel_dir('Mojolicious/templates'));
+my %TEMPLATES = map { $_ => $HOME->slurp_rel_file($_) } @{$HOME->list_files};
+
 sub new {
-  my $self = shift->SUPER::new(@_);
-
-  # Data
-  $self->add_handler(
-    data => sub {
-      my ($r, $c, $output, $options) = @_;
-      $$output = $options->{data};
-    }
-  );
-
-  # JSON
-  $self->add_handler(
-    json => sub {
-      my ($r, $c, $output, $options) = @_;
-      $$output = Mojo::JSON->new->encode($options->{json});
-    }
-  );
-
-  # Text
-  $self->add_handler(
-    text => sub {
-      my ($r, $c, $output, $options) = @_;
-      $$output = $options->{text};
-    }
-  );
-
-  return $self;
+  my $self = shift->SUPER::new(@_)->add_handler(json => \&_json);
+  return $self->add_handler(data => \&_data)->add_handler(text => \&_text);
 }
 
 sub add_handler {
@@ -61,39 +39,28 @@ sub add_helper {
   return $self;
 }
 
-# DEPRECATED in Leaf Fluttering In Wind!
-sub default_template_class {
-  warn <<EOF;
-Mojolicious::Renderer->default_template_class is DEPRECATED in favor of
-Mojolicious::Renderer->classes!
-EOF
-  my $self = shift;
-  return $self->classes->[0] unless @_;
-  $self->classes->[0] = shift;
-  return $self;
-}
-
 sub get_data_template {
-  my ($self, $options, $template) = @_;
+  my ($self, $options) = @_;
 
   # Index DATA templates
+  my $loader = Mojo::Loader->new;
   unless ($self->{index}) {
     my $index = $self->{index} = {};
     for my $class (reverse @{$self->classes}) {
-      $index->{$_} = $class for keys %{Mojo::Command->get_all_data($class)};
+      $index->{$_} = $class for keys %{$loader->data($class)};
     }
   }
 
   # Find template
-  return Mojo::Command->get_data($template, $self->{index}{$template});
+  my $template = $self->template_name($options);
+  return $loader->data($self->{index}{$template}, $template);
 }
 
-# "Bodies are for hookers and fat people."
 sub render {
   my ($self, $c, $args) = @_;
   $args ||= {};
 
-  # Localize extends and layout
+  # Localize "extends" and "layout"
   my $partial = $args->{partial};
   my $stash   = $c->stash;
   local $stash->{layout}  = $partial ? undef : $stash->{layout};
@@ -108,11 +75,11 @@ sub render {
     handler  => $stash->{handler},
     template => delete $stash->{template}
   };
-  my $data   = $options->{data}   = delete $stash->{data};
+  my $data   = delete $stash->{data};
   my $format = $options->{format} = $stash->{format} || $self->default_format;
   my $inline = $options->{inline} = delete $stash->{inline};
-  my $json   = $options->{json}   = delete $stash->{json};
-  my $text   = $options->{test}   = delete $stash->{text};
+  my $json   = delete $stash->{json};
+  my $text   = delete $stash->{text};
   $options->{handler} = defined $options->{handler} ? $options->{handler} : $self->default_handler if defined $inline;
 
   # Text
@@ -141,7 +108,7 @@ sub render {
 
   # Template or templateless handler
   else {
-    return unless $self->_render_template($c, \$output, $options);
+    return undef unless $self->_render_template($c, \$output, $options);
     $content->{content} = $output
       if ($c->stash->{extends} || $c->stash->{layout});
   }
@@ -167,22 +134,10 @@ sub render {
   return $output, $c->app->types->type($format) || 'text/plain';
 }
 
-# DEPRECATED in Leaf Fluttering In Wind!
-sub root {
-  warn <<EOF;
-Mojolicious::Renderer->root is DEPRECATED in favor of
-Mojolicious::Renderer->paths!
-EOF
-  my $self = shift;
-  return $self->paths->[0] unless @_;
-  $self->paths->[0] = shift;
-  return $self;
-}
-
 sub template_name {
   my ($self, $options) = @_;
-  return unless my $template = $options->{template} || '';
-  return unless my $format = $options->{format};
+  return undef unless my $template = $options->{template};
+  return undef unless my $format   = $options->{format};
   my $handler = $options->{handler};
   return defined $handler ? "$template.$format.$handler" : "$template.$format";
 }
@@ -191,7 +146,7 @@ sub template_path {
   my $self = shift;
 
   # Nameless
-  return unless my $name = $self->template_name(shift);
+  return undef unless my $name = $self->template_name(shift);
 
   # Search all paths
   for my $path (@{$self->paths}) {
@@ -203,11 +158,18 @@ sub template_path {
   return catfile($self->paths->[0], split '/', $name);
 }
 
+sub _bundled { $TEMPLATES{"@{[pop]}.html.ep"} }
+
+sub _data {
+  my ($self, $c, $output, $options) = @_;
+  $$output = $options->{data};
+}
+
 sub _detect_handler {
   my ($self, $options) = @_;
 
   # Templates
-  return unless my $file = $self->template_name($options);
+  return undef unless my $file = $self->template_name($options);
   unless ($self->{templates}) {
     s/\.(\w+)$// and $self->{templates}{$_} ||= $1
       for map { sort @{Mojo::Home->new($_)->list_files} } @{$self->paths};
@@ -216,45 +178,50 @@ sub _detect_handler {
 
   # DATA templates
   unless ($self->{data}) {
-    my @templates
-      = map { sort keys %{Mojo::Command->get_all_data($_)} } @{$self->classes};
+    my $loader = Mojo::Loader->new;
+    my @templates = map { sort keys %{$loader->data($_)} } @{$self->classes};
     s/\.(\w+)$// and $self->{data}{$_} ||= $1 for @templates;
   }
   return $self->{data}{$file} if exists $self->{data}{$file};
 
   # Nothing
-  return;
+  return undef;
 }
 
 sub _extends {
   my ($self, $c) = @_;
-  my $stash = $c->stash;
-  if (my $layout = delete $stash->{layout}) {
-    $stash->{extends} ||= 'layouts' . '/' . $layout;
-  }
+  my $stash  = $c->stash;
+  my $layout = delete $stash->{layout};
+  $stash->{extends} ||= join('/', 'layouts', $layout) if $layout;
   return delete $stash->{extends};
+}
+
+sub _json {
+  my ($self, $c, $output, $options) = @_;
+  $$output = Mojo::JSON->new->encode($options->{json});
 }
 
 sub _render_template {
   my ($self, $c, $output, $options) = @_;
 
   # Find handler and render
-  my $handler
-    = $options->{handler}
-    || $self->_detect_handler($options)
-    || $self->default_handler;
-  $options->{handler} = $handler;
+  my $handler = $options->{handler} || $self->_detect_handler($options);
+  $options->{handler} = $handler ||= $self->default_handler;
   if (my $renderer = $self->handlers->{$handler}) {
     return 1 if $renderer->($self, $c, $output, $options);
   }
 
   # No handler
-  else { $c->app->log->error(qq/No handler for "$handler" available./) }
-  return;
+  else { $c->app->log->error(qq{No handler for "$handler" available.}) }
+  return undef;
+}
+
+sub _text {
+  my ($self, $c, $output, $options) = @_;
+  $$output = $options->{text};
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -265,11 +232,14 @@ Mojolicious::Renderer - MIME type based renderer
   use Mojolicious::Renderer;
 
   my $renderer = Mojolicious::Renderer->new;
+  push @{$renderer->classes}, 'MyApp::Foo';
+  push @{renderer->paths}, '/home/sri/templates';
 
 =head1 DESCRIPTION
 
-L<Mojolicious::Renderer> is the standard L<Mojolicious> renderer. See
-L<Mojolicious::Guides::Rendering> for more.
+L<Mojolicious::Renderer> is the standard L<Mojolicious> renderer.
+
+See L<Mojolicious::Guides::Rendering> for more.
 
 =head1 ATTRIBUTES
 
@@ -287,7 +257,7 @@ Renderer cache, defaults to a L<Mojo::Cache> object.
   my $classes = $renderer->classes;
   $renderer   = $renderer->classes(['main']);
 
-Classes to use for finding templates in C<DATA> section, first one has the
+Classes to use for finding templates in C<DATA> sections, first one has the
 highest precedence, defaults to C<main>.
 
   # Add another class with templates in DATA section
@@ -333,12 +303,12 @@ Registered helpers.
 =head2 C<paths>
 
   my $paths = $renderer->paths;
-  $renderer = $renderer->paths(['/foo/bar/templates']);
+  $renderer = $renderer->paths(['/home/sri/templates']);
 
 Directories to look for templates in, first one has the highest precedence.
 
   # Add another "templates" directory
-  push @{$renderer->paths}, '/foo/bar/templates';
+  push @{$renderer->paths}, '/home/sri/templates';
 
 =head1 METHODS
 
@@ -370,9 +340,9 @@ Register a new helper.
     template       => 'foo/bar',
     format         => 'html',
     handler        => 'epl'
-  }, 'foo.html.ep');
+  });
 
-Get a DATA template by name, usually used by handlers.
+Get a C<DATA> section template by name, usually used by handlers.
 
 =head2 C<render>
 

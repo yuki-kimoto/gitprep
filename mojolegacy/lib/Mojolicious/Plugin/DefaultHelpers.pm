@@ -1,20 +1,19 @@
 package Mojolicious::Plugin::DefaultHelpers;
 use Mojo::Base 'Mojolicious::Plugin';
 
-require Data::Dumper;
+use Data::Dumper ();
+use Mojo::ByteStream;
 
-# "You're watching Futurama,
-#  the show that doesn't condone the cool crime of robbery."
 sub register {
   my ($self, $app) = @_;
 
   # Controller alias helpers
-  for my $name (qw/app flash param stash session url_for/) {
+  for my $name (qw(app flash param stash session url_for)) {
     $app->helper($name => sub { shift->$name(@_) });
   }
 
   # Stash key shortcuts
-  for my $name (qw/extends layout title/) {
+  for my $name (qw(extends layout title)) {
     $app->helper(
       $name => sub {
         my $self  = shift;
@@ -30,96 +29,109 @@ sub register {
   $app->helper(config => sub { shift->app->config(@_) });
 
   # Add "content" helper
-  $app->helper(content => sub { shift->render_content(@_) });
+  $app->helper(content => \&_content);
 
   # Add "content_for" helper
-  $app->helper(
-    content_for => sub {
-      my ($self, $name) = (shift, shift);
-      $self->render_content($name, $self->render_content($name), @_);
-    }
-  );
+  $app->helper(content_for => \&_content_for);
 
   # Add "current_route" helper
-  $app->helper(
-    current_route => sub {
-      my $self = shift;
-      return '' unless my $endpoint = $self->match->endpoint;
-      return $endpoint->name unless @_;
-      return $endpoint->name eq shift;
-    }
-  );
+  $app->helper(current_route => \&_current_route);
 
   # Add "dumper" helper
-  $app->helper(
-    dumper => sub {
-      shift;
-      Data::Dumper->new([@_])->Indent(1)->Terse(1)->Dump;
-    }
-  );
+  $app->helper(dumper => \&_dumper);
 
   # Add "include" helper
-  $app->helper(
-    include => sub {
-      my $self     = shift;
-      my $template = @_ % 2 ? shift : undef;
-      my $args     = {@_};
-      $args->{template} = $template if defined $template;
-
-      # "layout" and "extends" can't be localized
-      my $layout  = delete $args->{layout};
-      my $extends = delete $args->{extends};
-
-      # Localize arguments
-      my @keys = keys %$args;
-      local @{$self->stash}{@keys} = @{$args}{@keys};
-
-      return $self->render_partial(layout => $layout, extend => $extends);
-    }
-  );
+  $app->helper(include => \&_include);
 
   # Add "memorize" helper
-  my %memorize;
+  my %mem;
   $app->helper(
     memorize => sub {
-      shift;
-      my $cb = pop;
-      return '' unless ref $cb eq 'CODE';
-      my $name = shift;
-      my $args;
-      if (ref $name eq 'HASH') { ($args, $name) = ($name, undef) }
-      else                     { $args = shift || {} }
+      my $self = shift;
+      return '' unless ref(my $cb = pop) eq 'CODE';
+      my ($name, $args)
+        = ref $_[0] eq 'HASH' ? (undef, shift) : (shift, shift || {});
 
       # Default name
       $name ||= join '', map { $_ || '' } (caller(1))[0 .. 3];
 
-      # Expire
+      # Expire old results
       my $expires = $args->{expires} || 0;
-      delete $memorize{$name}
-        if exists $memorize{$name}
-          && $expires > 0
-          && $memorize{$name}{expires} < time;
+      delete $mem{$name}
+        if exists $mem{$name} && $expires > 0 && $mem{$name}{expires} < time;
 
-      # Memorized
-      return $memorize{$name}{content} if exists $memorize{$name};
+      # Memorized result
+      return $mem{$name}{content} if exists $mem{$name};
 
-      # Memorize
-      $memorize{$name}{expires} = $expires;
-      $memorize{$name}{content} = $cb->();
+      # Memorize new result
+      $mem{$name}{expires} = $expires;
+      return $mem{$name}{content} = $cb->();
+    }
+  );
+
+  # DEPRECATED in Rainbow!
+  $app->helper(
+    render_content => sub {
+      warn "Mojolicious::Controller->render_content is DEPRECATED!\n";
+      shift->content(@_);
     }
   );
 
   # Add "url_with" helper
-  $app->helper(
-    url_with => sub {
-      my $self = shift;
-      return $self->url_for(@_)->query($self->req->url->query->clone);
-    }
-  );
+  $app->helper(url_with => \&_url_with);
+}
+
+sub _content {
+  my ($self, $name, $content) = @_;
+  $name ||= 'content';
+
+  # Set (first come)
+  my $c = $self->stash->{'mojo.content'} ||= {};
+  $c->{$name} ||= ref $content eq 'CODE' ? $content->() : $content
+    if defined $content;
+
+  # Get
+  return Mojo::ByteStream->new(defined $c->{$name} ? $c->{$name} : '');
+}
+
+sub _content_for {
+  my ($self, $name, $content) = @_;
+  return _content($self, $name) unless defined $content;
+  my $c = $self->stash->{'mojo.content'} ||= {};
+  return $c->{$name} .= ref $content eq 'CODE' ? $content->() : $content;
+}
+
+sub _current_route {
+  return '' unless my $endpoint = shift->match->endpoint;
+  return $endpoint->name unless @_;
+  return $endpoint->name eq shift;
+}
+
+sub _dumper { shift; Data::Dumper->new([@_])->Indent(1)->Terse(1)->Dump }
+
+sub _include {
+  my $self     = shift;
+  my $template = @_ % 2 ? shift : undef;
+  my $args     = {@_};
+  $args->{template} = $template if defined $template;
+
+  # "layout" and "extends" can't be localized
+  my $layout  = delete $args->{layout};
+  my $extends = delete $args->{extends};
+
+  # Localize arguments
+  my @keys = keys %$args;
+  local @{$self->stash}{@keys} = @{$args}{@keys};
+
+  return $self->render_partial(layout => $layout, extend => $extends);
+}
+
+sub _url_with {
+  my $self = shift;
+  return $self->url_for(@_)->query($self->req->url->query->clone);
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -136,8 +148,10 @@ Mojolicious::Plugin::DefaultHelpers - Default helpers plugin
 =head1 DESCRIPTION
 
 L<Mojolicious::Plugin::DefaultHelpers> is a collection of renderer helpers for
-L<Mojolicious>. This is a core plugin, that means it is always enabled and its
-code a good example for learning to build new plugins.
+L<Mojolicious>.
+
+This is a core plugin, that means it is always enabled and its code a good
+example for learning to build new plugins, you're welcome to fork it.
 
 =head1 HELPERS
 
@@ -160,10 +174,12 @@ Alias for L<Mojo/"config">.
   %= content foo => begin
     test
   % end
+  %= content bar => 'Hello World!'
   %= content 'foo'
+  %= content 'bar'
   %= content
 
-Store content and retrieve it.
+Store partial rendered content in named buffer and retrieve it.
 
 =head2 C<content_for>
 
@@ -172,7 +188,7 @@ Store content and retrieve it.
   % end
   %= content_for 'foo'
 
-Append content to named buffer and retrieve it.
+Append partial rendered content to named buffer and retrieve it.
 
   % content_for message => begin
     Hello
@@ -195,14 +211,14 @@ Check or get name of current route.
 
   %= dumper {some => 'data'}
 
-Dump a Perl data structure using L<Data::Dumper>.
+Dump a Perl data structure with L<Data::Dumper>.
 
 =head2 C<extends>
 
   % extends 'blue';
   % extends 'blue', title => 'Blue!';
 
-Extend a template, all arguments get merged into the stash.
+Extend a template. All additional values get merged into the C<stash>.
 
 =head2 C<flash>
 
@@ -223,7 +239,8 @@ only available in the partial template.
   % layout 'green';
   % layout 'green', title => 'Green!';
 
-Render this template with a layout, all arguments get merged into the stash.
+Render this template with a layout. All additional values get merged into the
+C<stash>.
 
 =head2 C<memorize>
 
@@ -261,13 +278,15 @@ Alias for L<Mojolicious::Controller/"session">.
 
 Alias for L<Mojolicious::Controller/"stash">.
 
+  %= stash 'name' // 'Somebody'
+
 =head2 C<title>
 
   % title 'Welcome!';
   % title 'Welcome!', foo => 'bar';
   %= title
 
-Page title, all arguments get merged into the stash.
+Page title. All additional values get merged into the C<stash>.
 
 =head2 C<url_for>
 
@@ -291,7 +310,7 @@ L<Mojolicious::Plugin> and implements the following new ones.
 
 =head2 C<register>
 
-  $plugin->register;
+  $plugin->register(Mojolicious->new);
 
 Register helpers in L<Mojolicious> application.
 

@@ -1,12 +1,11 @@
 package Mojolicious::Plugin;
 use Mojo::Base -base;
 
-# "This is Fry's decision.
-#  And he made it wrong, so it's time for us to interfere in his life."
-sub register { }
+use Carp 'croak';
+
+sub register { croak 'Method "register" not implemented by subclass' }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -14,7 +13,15 @@ Mojolicious::Plugin - Plugin base class
 
 =head1 SYNOPSIS
 
+  # Camel case plugin name
+  package Mojolicious::Plugin::MyPlugin;
   use Mojo::Base 'Mojolicious::Plugin';
+
+  sub register {
+    my ($self, $app, $conf) = @_;
+
+    # Magic here! :)
+  }
 
 =head1 DESCRIPTION
 
@@ -27,10 +34,11 @@ the following new ones.
 
 =head2 C<register>
 
-  $plugin->register;
+  $plugin->register(Mojolicious->new);
+  $plugin->register(Mojolicious->new, {foo => 'bar'});
 
-This method will be called by L<Mojolicious::Plugins> at startup time, your
-plugin should use this to hook into the application.
+This method will be called by L<Mojolicious::Plugins> at startup time. Meant
+to be overloaded in a subclass.
 
 =head1 SEE ALSO
 

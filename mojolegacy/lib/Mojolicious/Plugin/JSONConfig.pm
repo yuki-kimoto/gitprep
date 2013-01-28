@@ -5,8 +5,6 @@ use Mojo::JSON;
 use Mojo::Template;
 use Mojo::Util 'encode';
 
-# "And so we say goodbye to our beloved pet, Nibbler, who's gone to a place
-#  where I, too, hope one day to go. The toilet."
 sub parse {
   my ($self, $content, $file, $conf, $app) = @_;
 
@@ -17,41 +15,28 @@ sub parse {
   my $json   = Mojo::JSON->new;
   my $config = $json->decode($content);
   my $err    = $json->error;
-  die qq/Couldn't parse config "$file": $err/ if !$config && $err;
-  die qq/Invalid config "$file"./ if !$config || ref $config ne 'HASH';
+  die qq{Couldn't parse config "$file": $err} if !$config && $err;
+  die qq{Invalid config "$file".} if !$config || ref $config ne 'HASH';
 
   return $config;
 }
 
-sub register {
-  my ($self, $app, $conf) = @_;
-  $conf->{ext} = 'json' unless exists $conf->{ext};
-  $self->SUPER::register($app, $conf);
-}
+sub register { shift->SUPER::register(shift, {ext => 'json', %{shift()}}) }
 
 sub render {
   my ($self, $content, $file, $conf, $app) = @_;
 
-  # Instance
-  my $prepend = 'my $app = shift;';
-
-  # Be less strict
-  $prepend .= q/no strict 'refs'; no warnings 'redefine';/;
-
-  # Helper
-  $prepend .= "sub app; *app = sub { \$app };";
-
-  # Be strict again
-  $prepend .= q/use Mojo::Base -strict;/;
+  # Application instance and helper
+  my $prepend = q[my $app = shift; no strict 'refs'; no warnings 'redefine';];
+  $prepend .= q[sub app; *app = sub { $app }; use Mojo::Base -strict;];
 
   # Render
-  my $mt = Mojo::Template->new($conf->{template} || {});
-  my $json = $mt->prepend($prepend)->render($content, $app);
-  return ref $json ? die($json) : encode('UTF-8', $json);
+  my $mt = Mojo::Template->new($conf->{template} || {})->name($file);
+  my $json = $mt->prepend($prepend . $mt->prepend)->render($content, $app);
+  return ref $json ? die $json : encode 'UTF-8', $json;
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -71,7 +56,10 @@ Mojolicious::Plugin::JSONConfig - JSON configuration plugin
   # Mojolicious::Lite
   my $config = plugin 'JSONConfig';
 
-  # Reads "myapp.json" by default
+  # foo.html.ep
+  %= $config->{foo}
+
+  # The configuration is available application wide
   my $config = app->config;
 
   # Everything can be customized with options
@@ -80,10 +68,16 @@ Mojolicious::Plugin::JSONConfig - JSON configuration plugin
 =head1 DESCRIPTION
 
 L<Mojolicious::Plugin::JSONConfig> is a JSON configuration plugin that
-preprocesses it's input with L<Mojo::Template>. The application object can be
-accessed via C<$app> or the C<app> function. You can extend the normal config
-file C<myapp.json> with C<mode> specific ones like C<myapp.$mode.json>. The
-code of this plugin is a good example for learning to build new plugins.
+preprocesses its input with L<Mojo::Template>.
+
+The application object can be accessed via C<$app> or the C<app> function. You
+can extend the normal config file C<myapp.json> with C<mode> specific ones
+like C<myapp.$mode.json>. A default configuration filename will be generated
+by decamelizing the application class with L<Mojo::Util/"decamelize"> or from
+the application filename.
+
+The code of this plugin is a good example for learning to build new plugins,
+you're welcome to fork it.
 
 =head1 OPTIONS
 
@@ -119,7 +113,8 @@ Process content with C<render> and parse it with L<Mojo::JSON>.
 
 =head2 C<register>
 
-  $plugin->register;
+  my $config = $plugin->register(Mojolicious->new);
+  my $config = $plugin->register(Mojolicious->new, {file => '/etc/foo.conf'});
 
 Register plugin in L<Mojolicious> application.
 

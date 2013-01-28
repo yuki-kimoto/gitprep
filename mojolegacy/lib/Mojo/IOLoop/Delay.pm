@@ -5,34 +5,59 @@ use Mojo::IOLoop;
 
 has ioloop => sub { Mojo::IOLoop->singleton };
 
-# "Ah, alcohol and night-swimming. It's a winning combination."
 sub begin {
   my $self = shift;
-  $self->{counter}++;
-  return sub { shift; $self->end(@_) };
+  my $id   = $self->{counter}++;
+  return sub { shift; $self->_step($id, @_) };
 }
 
-sub end {
+sub end { shift->_step(undef, @_) }
+
+sub steps {
   my $self = shift;
-  push @{$self->{args} ||= []}, @_;
-  $self->emit_safe('finish', @{$self->{args}}) if --$self->{counter} <= 0;
+  $self->{steps} = [@_];
+  $self->begin->();
+  return $self;
 }
 
-# "Mrs. Simpson, bathroom is not for customers.
-#  Please use the crack house across the street."
 sub wait {
   my $self = shift;
-  $self->once(finish => sub { shift->ioloop->stop });
+  my @args;
+  $self->once(finish => sub { shift->ioloop->stop; @args = @_ });
   $self->ioloop->start;
-  return wantarray ? @{$self->{args}} : $self->{args}[0];
+  return wantarray ? @args : $args[0];
+}
+
+sub _step {
+  my ($self, $id) = (shift, shift);
+
+  # Arguments
+  my $ordered   = $self->{ordered}   ||= [];
+  my $unordered = $self->{unordered} ||= [];
+  if (defined $id) { $ordered->[$id] = [@_] }
+  else             { push @$unordered, @_ }
+
+  # Wait for more events
+  return $self->{counter} if --$self->{counter};
+
+  # Next step
+  my $cb = shift @{$self->{steps} ||= []};
+  $self->{$_} = [] for qw(ordered unordered);
+  my @args = ((map {@$_} grep {defined} @$ordered), @$unordered);
+  $self->$cb(@args) if $cb;
+
+  # Finished
+  $self->emit('finish', @args)
+    if !$self->{counter} && !@{$self->{steps}} && !$self->{finished}++;
+
+  return 0;
 }
 
 1;
-__END__
 
 =head1 NAME
 
-Mojo::IOLoop::Delay - Synchronize events
+Mojo::IOLoop::Delay - Control the flow of events
 
 =head1 SYNOPSIS
 
@@ -49,12 +74,38 @@ Mojo::IOLoop::Delay - Synchronize events
     });
   }
 
+  # Sequentialize multiple events
+  my $delay = Mojo::IOLoop::Delay->new;
+  $delay->steps(
+
+    # First step (simple timer)
+    sub {
+      my $delay = shift;
+      Mojo::IOLoop->timer(2 => $delay->begin);
+      say 'Second step in 2 seconds.';
+    },
+
+    # Second step (parallel timers)
+    sub {
+      my ($delay, @args) = @_;
+      Mojo::IOLoop->timer(1 => $delay->begin);
+      Mojo::IOLoop->timer(3 => $delay->begin);
+      say 'Third step in 3 seconds.';
+    },
+
+    # Third step (the end)
+    sub {
+      my ($delay, @args) = @_;
+      say 'And done after 5 seconds total.';
+    }
+  );
+
   # Wait for events if necessary
   $delay->wait unless Mojo::IOLoop->is_running;
 
 =head1 DESCRIPTION
 
-L<Mojo::IOLoop::Delay> synchronizes events for L<Mojo::IOLoop>.
+L<Mojo::IOLoop::Delay> controls the flow of events for L<Mojo::IOLoop>.
 
 =head1 EVENTS
 
@@ -63,11 +114,12 @@ L<Mojo::IOLoop::Delay> can emit the following events.
 =head2 C<finish>
 
   $delay->on(finish => sub {
-    my $delay = shift;
+    my ($delay, @args) = @_;
     ...
   });
 
-Emitted safely once the active event counter reaches zero.
+Emitted once the active event counter reaches zero and there are no more
+steps.
 
 =head1 ATTRIBUTES
 
@@ -78,7 +130,8 @@ L<Mojo::IOLoop::Delay> implements the following attributes.
   my $ioloop = $delay->ioloop;
   $delay     = $delay->ioloop(Mojo::IOLoop->new);
 
-Loop object to control, defaults to the global L<Mojo::IOLoop> singleton.
+Event loop object to control, defaults to the global L<Mojo::IOLoop>
+singleton.
 
 =head1 METHODS
 
@@ -90,7 +143,8 @@ implements the following new ones.
   my $cb = $delay->begin;
 
 Increment active event counter, the returned callback can be used instead of
-C<end>.
+C<end>, which has the advantage of preserving the order of arguments. Note
+that the first argument passed to the callback will be ignored.
 
   my $delay = Mojo::IOLoop->delay;
   Mojo::UserAgent->new->get('mojolicio.us' => $delay->begin);
@@ -98,10 +152,19 @@ C<end>.
 
 =head2 C<end>
 
-  $delay->end;
-  $delay->end(@args);
+  my $remaining = $delay->end;
+  my $remaining = $delay->end(@args);
 
-Decrement active event counter.
+Decrement active event counter, all arguments are queued for the next step or
+C<finish> event and C<wait> method.
+
+=head2 C<steps>
+
+  $delay = $delay->steps(sub {...}, sub {...});
+
+Sequentialize multiple events, the first callback will run right away, and the
+next one once the active event counter reaches zero, this chain will continue
+until there are no more callbacks left.
 
 =head2 C<wait>
 

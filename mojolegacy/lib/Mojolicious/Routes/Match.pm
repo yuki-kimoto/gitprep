@@ -1,31 +1,23 @@
 package Mojolicious::Routes::Match;
 use Mojo::Base -base;
 
-use List::Util 'first';
-use Mojo::Util qw/decode url_unescape/;
+use Mojo::Util qw(decode url_unescape);
 
 has captures => sub { {} };
-has [qw/endpoint root/];
+has [qw(endpoint root)];
 has stack => sub { [] };
 
-# "I'm Bender, baby, please insert liquor!"
 sub new {
   my $self = shift->SUPER::new;
 
-  # Method
   $self->{method} = uc shift;
-
-  # Path
   my $path = url_unescape shift;
-  $self->{path} = defined decode('UTF-8', $path) ? decode('UTF-8', $path) : $path;
-
-  # WebSocket
+  $self->{path} = do { my $tmp = decode('UTF-8', $path); defined $tmp ? $tmp : $path};
   $self->{websocket} = shift;
 
   return $self;
 }
 
-# "Life can be hilariously cruel."
 sub match {
   my ($self, $r, $c) = @_;
 
@@ -40,7 +32,7 @@ sub match {
   # Method
   if (my $methods = $r->via) {
     my $method = $self->{method} eq 'HEAD' ? 'GET' : $self->{method};
-    return unless first { $method eq $_ } @$methods;
+    return unless grep { $_ eq $method } @$methods;
   }
 
   # Conditions
@@ -68,12 +60,8 @@ sub match {
   my $endpoint = $r->is_endpoint;
   if ($r->inline || ($endpoint && $empty)) {
     push @{$self->stack}, {%$captures};
-    delete $captures->{cb};
-    delete $captures->{app};
+    delete $captures->{$_} for qw(app cb);
   }
-
-  # DEPRECATED in Leaf Fluttering In Wind!
-  return $self->endpoint($r) if $r->block && $empty;
 
   # Endpoint
   return $self->endpoint($r) if $endpoint && $empty;
@@ -84,15 +72,13 @@ sub match {
     $self->match($child, $c);
 
     # Endpoint found
-    return $self if $self->endpoint;
+    return if $self->endpoint;
 
     # Reset
     $self->{path} = $path;
     if   ($r->parent) { $self->captures($captures)->stack([@$snapshot]) }
     else              { $self->captures({})->stack([]) }
   }
-
-  return $self;
 }
 
 sub path_for {
@@ -144,7 +130,7 @@ sub path_for {
     = defined $captures->{format}
     ? $captures->{format}
     : $pattern->defaults->{format}
-    if $pattern->reqs->{format};
+    if $pattern->constraints->{format};
 
   # Render
   my $path = $endpoint->render('', \%values);
@@ -153,7 +139,6 @@ sub path_for {
 }
 
 1;
-__END__
 
 =head1 NAME
 
@@ -161,6 +146,7 @@ Mojolicious::Routes::Match - Routes visitor
 
 =head1 SYNOPSIS
 
+  use Mojolicious::Controller;
   use Mojolicious::Routes;
   use Mojolicious::Routes::Match;
 
@@ -170,8 +156,9 @@ Mojolicious::Routes::Match - Routes visitor
   $r->put('/bar')->to(action => 'bar');
 
   # Match
+  my $c = Mojolicious::Controller->new;
   my $m = Mojolicious::Routes::Match->new(PUT => '/bar');
-  $m->match($r);
+  $m->match($r, $c);
   say $m->captures->{action};
 
 =head1 DESCRIPTION
@@ -195,14 +182,14 @@ Captured parameters.
   my $endpoint = $m->endpoint;
   $m           = $m->endpoint(Mojolicious::Routes->new);
 
-The routes endpoint that actually matched.
+The route endpoint that actually matched.
 
 =head2 C<root>
 
   my $root = $m->root;
   $m       = $m->root($routes);
 
-The root of the routes tree.
+The root of the route tree.
 
 =head2 C<stack>
 
@@ -221,13 +208,13 @@ implements the following ones.
   my $m = Mojolicious::Routes::Match->new(GET => '/foo');
   my $m = Mojolicious::Routes::Match->new(GET => '/foo', $ws);
 
-Construct a new match object.
+Construct a new L<Mojolicious::Routes::Match> object.
 
 =head2 C<match>
 
   $m->match(Mojolicious::Routes->new, Mojolicious::Controller->new);
 
-Match against a routes tree.
+Match against a route tree.
 
 =head2 C<path_for>
 

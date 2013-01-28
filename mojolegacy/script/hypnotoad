@@ -3,39 +3,20 @@
 use strict;
 use warnings;
 
-use File::Basename 'dirname';
-use File::Spec::Functions qw/catdir splitdir/;
-use Getopt::Long qw/GetOptions :config no_auto_abbrev no_ignore_case/;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 
-# Source directory has precedence
-my @base = (splitdir(dirname(__FILE__)), '..');
-my $lib = join('/', @base, 'lib');
--e catdir(@base, 't') ? unshift(@INC, $lib) : push(@INC, $lib);
+use Getopt::Long qw(GetOptions :config no_auto_abbrev no_ignore_case);
 
-# Check if Mojolicious is installed
-die <<EOF unless eval 'use Mojo::Server::Hypnotoad; 1';
-It looks like you don't have the Mojolicious framework installed.
-Please visit http://mojolicio.us for detailed installation instructions.
-
-EOF
-
-# "Hey sexy mama, wanna kill all humans?"
-my $config = 'hypnotoad.conf';
-my $help;
 GetOptions(
-
-  # DEPRECATED in Leaf Fluttering In Wind!
-  'c|config=s' => sub { $config = $_[1] },
-
   'f|foreground' => sub { $ENV{HYPNOTOAD_FOREGROUND} = 1 },
-  'h|help'       => sub { $help                      = 1 },
+  'h|help'       => \my $help,
   's|stop'       => sub { $ENV{HYPNOTOAD_STOP}       = 1 },
   't|test'       => sub { $ENV{HYPNOTOAD_TEST}       = 1 }
 );
-$help = 1 unless my $app = shift || $ENV{HYPNOTOAD_APP};
 
 # Usage
-die <<"EOF" if $help;
+die <<"EOF" if $help || !(my $app = shift || $ENV{HYPNOTOAD_APP});
 usage: $0 [OPTIONS] [APPLICATION]
 
   hypnotoad script/myapp
@@ -43,21 +24,18 @@ usage: $0 [OPTIONS] [APPLICATION]
   hypnotoad -f myapp.pl
 
 These options are available:
-  -f, --foreground      Keep manager process in foreground.
-  -h, --help            Show this message.
-  -s, --stop            Stop server gracefully.
-  -t, --test            Test application/configuration and exit.
+  -f, --foreground   Keep manager process in foreground.
+  -h, --help         Show this message.
+  -s, --stop         Stop server gracefully.
+  -t, --test         Test application and exit.
 EOF
 
-# "This is it.
-#  The moment we should've trained for."
-Mojo::Server::Hypnotoad->new->run($app, $config);
-
-__END__
+require Mojo::Server::Hypnotoad;
+Mojo::Server::Hypnotoad->new->run($app);
 
 =head1 NAME
 
-hypnotoad - Hypnotoad HTTP 1.1 and WebSocket server
+hypnotoad - Hypnotoad HTTP and WebSocket server
 
 =head1 SYNOPSIS
 
