@@ -96,7 +96,7 @@
   stash(id => $id);
 %>
 
-% layout 'new_common';
+% layout 'common';
   %= include '/css/common';
   
   %= stylesheet begin
@@ -122,7 +122,7 @@
       }
     % end
 
-    %= include '/include/new_page_path', type => 'blob', Path => $file;
+    %= include '/include/page_path', type => 'blob', Path => $file;
     
     <div>
       <div>

@@ -6,7 +6,7 @@
   my $default_branch = 'master';
 %>
 
-% layout 'new_common';
+% layout 'common';
   %= include '/css/common';
   %= include '/include/header';
 

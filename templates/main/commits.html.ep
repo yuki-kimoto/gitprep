@@ -37,7 +37,7 @@
   stash(user => $user, repository => $repository);
 %>
 
-% layout 'new_common';
+% layout 'common';
   %= include '/css/common';
   
   %= stylesheet begin

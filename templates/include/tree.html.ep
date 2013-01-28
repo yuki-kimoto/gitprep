@@ -110,12 +110,12 @@
       
       % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
       <tr>
-        % my $file = defined $dir ? "$dir/$name" : $name;
-        % $file =~ s/^\///;
         
         % if ($type eq 'blob') {
+          % my $file = defined $dir && $dir ne '' ? "$dir/$name" : $name;
+          
           <td class="tree_td_blob">
-            <a href="<%= url_for("/$user/$repository/blob/$ref/$dir/$name") %>">
+            <a href="<%= url_for("/$user/$repository/blob/$ref/$file") %>">
               <%= $name %>
             </a>
           </td>

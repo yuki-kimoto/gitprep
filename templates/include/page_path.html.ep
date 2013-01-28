@@ -1,26 +1,34 @@
 % use File::Basename 'basename';
 
+%= stylesheet begin
+  .page_path {
+    font-size:120%;
+    margin-bottom:10px;
+  }
+  
+  .page_path a {
+    color:#4183C4;
+  }
+% end
+
 <div class="page_path">
-  [<a href="<%= url_for('tree', project => $project_ns, id_dir => $id) %>"><%= basename $project %></a>]
+  <a href="<%= url_for("/$user/$repository") %>"><b><%= $repository %></b></a> /
   % my @parts = split('/', $Path);
   % my $path;
   % for (my $i = 0; $i < @parts; $i++) {
     % my $part = $parts[$i];
     % $path .= "$part";
     
-    % if ($type eq 'blob' && $i eq @parts - 1) {
-      <a title="tree home" href=
-          "<%= url_for('blob', project => $project_ns, id_file => "$id/$path") %>">
-        <%= $part %>
-      </a>
+    % if ($type eq 'blob' && $i == @parts - 1) {
+      <b><%= $part %></b>
     % } else {
-      <a title="tree home" href=
-          "<%= url_for('tree', project => $project_ns, id_dir => "$id/$path") %>">
+      <a href=
+          "<%= url_for("/$user/$repository/tree/$id/$path") %>">
         <%= $part %>
       </a>
       % $path .= '/';
     % }
-    % unless ($i == @parts - 1) {
+    % unless ($type eq 'blob' && $i == @parts - 1) {
       /
     % }
   % }

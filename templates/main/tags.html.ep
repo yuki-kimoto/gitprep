@@ -23,7 +23,7 @@
   }
 %>
 
-% layout 'new_common';
+% layout 'common';
   %= include '/css/common';
   
   %= stylesheet begin

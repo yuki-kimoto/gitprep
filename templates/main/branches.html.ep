@@ -27,7 +27,7 @@
   my $branches  = $git->no_merged_branches($project);
 %>
 
-% layout 'new_common';
+% layout 'common';
   %= include '/css/common';
   
   %= stylesheet begin
