@@ -1,10 +1,49 @@
-% use File::Basename 'basename';
-% my $project = stash('project');
-% $project = basename $project if defined $project;
+%= stylesheet begin
 
-<div class="page_header">
-  <a href="<%= config('logo_link') %>">
-    <img src="<%= url_for('/git-logo.png') %>" class="logo"/>
-  </a>
-  <%= $project ? "$project /" : '' %>  <a href="#"><%= $title %></a>
+  /* Header */
+  .header {
+    background-color:#F3F3F3;
+    margin-bottom:10px;
+    border-bottom:1px solid #E5E5E5;
+    height:40px;
+  }
+  .header .panel {
+    width:900px;
+    margin:auto;
+    overflow:hidden;
+  }
+  .header .left {
+    width:400px;
+  }
+  .header li {
+    padding:10px;
+  }
+  .header .left li {
+    float:left;
+  }
+  .header .right li{
+    float:right;
+  }
+  .header a {
+    color:#333;
+  }
+  .header a:hover {
+    color:#4183C4;
+  }
+% end
+
+<div class="header">
+  <div class="panel">
+    <ul class="left">
+      <li><a href="<%= url_for('/') %>">Home</a></li>
+    </ul>
+    <ul class="right">
+      <li><a href="<%= url_for("/logout") %>"><s>Sign out</s></a></li>
+      <li>
+        <a href="<%= url_for("/setting/profile") %>"><s>Account setting</s></a>
+      </li>
+      <li><a href="<%= url_for("/new") %>"><s>Create a new repo</s></a></li>
+      <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
+    </ul>
+  </div>
 </div>

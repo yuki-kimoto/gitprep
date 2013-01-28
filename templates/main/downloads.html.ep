@@ -8,7 +8,7 @@
 
 % layout 'new_common';
   %= include '/css/common';
-  %= include '/include/new_header';
+  %= include '/include/header';
 
   <div class="main_panel">
     %= include '/include/sub_header';
