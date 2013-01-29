@@ -25,7 +25,7 @@
   # Commits
   my $page_count = 30;
   my $commits = $git->parse_commits(
-    $project, $commit->{id}, $page_count, $page_count * $page);
+    $project, $commit->{id}, $page_count, $page_count * $page, $file);
   my $commits_count = @$commits;
   my $commits_date = {};
   for my $commit (@$commits) {

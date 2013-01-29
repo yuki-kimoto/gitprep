@@ -782,7 +782,7 @@ sub parse_commits {
   $skip ||= 0;
   my @cmd = ($self->cmd($project), 'rev-list', '--header', @args,
     ('--max-count=' . $maxcount), ('--skip=' . $skip), $cid, '--',
-    ($file ? ($file) : ()));
+    (defined $file ? ($file) : ()));
   open my $fh, '-|', @cmd
     or croak 'Open git-rev-list failed';
 
