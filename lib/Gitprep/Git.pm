@@ -97,6 +97,22 @@ sub blob_contenttype {
   return $type;
 }
 
+sub blob_size_kb {
+  my ($self, $rep, $rev, $file) = @_;
+  
+  # Command "git diff-tree"
+  my @cmd = ($self->cmd($rep), 'cat-file', '-s', "$rev:$file");
+  open my $fh, "-|", @cmd
+    or croak 500, "Open cat-file failed";
+  my $size = $self->dec(scalar <$fh>);
+  chomp $size;
+  close $fh or croak 'Reading cat-file failed';
+  
+  my $size_kb = sprintf('%.3f', $size / 1024);
+  
+  return $size_kb;
+}
+
 sub check_head_link {
   my ($self, $dir) = @_;
   

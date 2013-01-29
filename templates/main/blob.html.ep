@@ -34,6 +34,9 @@
   open my $fh, '-|', @cmd
     or $api->croak(qq/Couldn't cat "$file", "$bid"/);
   
+  # Blob size
+  my $blob_size = $git->blob_size_kb($rep, $id, $file);
+  
   # Blob plain
   my $commit;
   my $mimetype;
@@ -125,13 +128,28 @@
     
     /* Soruce */
     .source .sheader {
-      
+      margin-top:15px;
+      padding:10px;
+      padding-left:27px;
+      border:1px gray solid;
+      background-image:url(<%= url_for('/image/file_min.png') %>);
+      background-repeat:no-repeat;
+      background-position: 7px center;
+      background-color:#F3F3F3;
+      overflow:hidden;
+    }
+    .source .sleft_header {
+      float:left;
+    }
+    .source .sright_header {
+      float:right;
     }
     .source .sbody {
       padding: 10px;
       padding-left:0;
       font-family: monospace;
       border:1px gray solid;
+      border-top:none;
     }
     .source .sline {
       font-family: monospace;
@@ -180,7 +198,12 @@
 
     <div class="source">
       <div class="sheader">
-        file | 23 lines | 33.174kb Raw Blame History
+        <div class="sleft_header">
+          file <span style="color:gray">|</span> <%= @$lines %> lines <span style="color:gray">|</span> <%= $blob_size %>kb
+        </div>
+        <div class="sright_header">
+          Raw Blame History
+        </div>
       </div>
       <div class="sbody">
         % if ($mimetype =~ m#^image/#) {
