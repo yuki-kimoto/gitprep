@@ -194,7 +194,7 @@
         </div>
         <div class="sright_header">
           <a class="sraw" href="<%= url_for("/$user/$repository/raw/$id/$file") %>">Raw</a>
-          <a class="sblame" href="<%= url_for("/$user/$repository/blame/$id/$file") %>">Blame</a>
+          <!-- TODO: <a class="sblame" href="<%= url_for("/$user/$repository/blame/$id/$file") %>">Blame</a> -->
           <a class="shistory" href="<%= url_for("/$user/$repository/commits/$id/$file") %>">History</a>
         </div>
       </div>
