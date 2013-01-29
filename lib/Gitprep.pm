@@ -38,32 +38,6 @@ sub startup {
   $git->text_exts($conf->{text_exts});
   $self->git($git);
 
-  # Helper
-  {
-    # Remove top slash
-    $self->helper('gitprep_rel' => sub {
-      my ($self, $path) = @_;
-      
-      $path =~ s/^\///;
-      
-      return $path;
-    });
-    
-    # Get head commit id
-    $self->helper('gitprep_get_head_id' => sub {
-      my ($self, $project) = @_;
-      
-      my $head_commit = $self->app->git->parse_commit($project, "HEAD");
-      my $head_id = $head_commit->{id};
-      
-      return $head_id;
-    });
-  }
-  
-  # Added user public and templates path
-  unshift @{$self->static->paths}, $self->home->rel_file('user/public');
-  unshift @{$self->renderer->paths}, $self->home->rel_file('user/templates');
-  
   # Reverse proxy support
   $ENV{MOJO_REVERSE_PROXY} = 1;
   $self->hook('before_dispatch' => sub {
