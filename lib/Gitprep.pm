@@ -107,7 +107,7 @@ sub startup {
   $r->get('/:user/:project/tree/(*id_dir)')->to('#tree');
   
   # Blob
-  $r->get('/:user/:project/blob/(*id_file)')->to('#blob');
+  $r->get('/:user/:project/blob/(*object)')->to('#blob');
   
   # Raw
   $r->get('/:user/:project/raw/(*id_file)')->to('#raw');

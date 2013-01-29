@@ -2,69 +2,52 @@
   # API
   my $api = Gitprep::API->new($self);
   
+  # Parameter
   my $user = param('user');
   my $project = param('project');
-  my $plain = param('plain');
-
   my $root_ns = $api->root_ns(config->{root});
   
   # Parameters
   my $rep_ns = "$root_ns/$user/$project.git";
   my $rep = "/$rep_ns";
-  my $home_ns = $api->dirname($rep_ns);
-  my $home = "/$home_ns";
-  my $id_file = param('id_file');
+  my $object = param('object');
 
-  # Id and file
-  my ($id, $file) = $api->parse_id_path($rep, $id_file);
+  # Revision and blob
+  my ($rev, $blob) = $api->parse_id_path($rep, $object);
 
   # Git
   my $git = $self->app->git;
   
+  # Commit log
+  my $commit_log = $git->latest_commit_log($rep, $rev, $blob);
+
   # Commit
-  my $commit_log = $git->latest_commit_log($rep, $id, $file);
+  my $commit = $git->parse_commit($rep, $rev);
   
   # Authors
-  my $authors = $git->authors($rep, $id, $file);
+  my $authors = $git->authors($rep, $rev, $blob);
   
   # Blob content
-  my $bid = $git->id_by_path($rep, $id, $file, 'blob')
+  my $bid = $git->id_by_path($rep, $rev, $blob, 'blob')
     or $api->croak('Cannot find file');
   my @cmd = ($git->cmd($rep), 'cat-file', 'blob', $bid);
   open my $fh, '-|', @cmd
-    or $api->croak(qq/Couldn't cat "$file", "$bid"/);
+    or $api->croak(qq/Couldn't cat "$blob", "$bid"/);
   
-  # Blob size
-  my $blob_size = $git->blob_size_kb($rep, $id, $file);
-  
-  # Blob plain
-  my $commit;
-  my $mimetype;
-  my $lines =[];
-  # MIME type
-  $mimetype = $git->blob_mimetype($fh, $file);
-  
-  # Redirect to blob-plain if no display MIME type
-  if ($mimetype !~ m#^(?:text/|image/(?:gif|png|jpeg)$)# && -B $fh) {
-    close $fh;
-    my $url = $self->url_for('blob_plain',
-      project => $rep_ns, id_file => "$id/$file");
-    
-    return $self->redirect_to($url);
-  }
-  
-  # Commit
-  $commit = $git->parse_commit($rep, $id);
+  # Blob info
+  my $blob_size = $git->blob_size_kb($rep, $rev, $blob);
+  my $mimetype = $git->blob_mimetype($fh, $blob);
 
   # Parse line
+  my $lines =[];
   while (my $line = $git->dec(scalar <$fh>)) {
     chomp $line;
     $line = $git->_tab_to_space($line);
     push @$lines, $line;
   }
   
-  # Global variable
-  stash(id => $id, project => $project);
+  # Variables for included template
+  stash(id => $rev, project => $project);
 %>
 
 % layout 'common';
@@ -76,17 +59,17 @@
     .blob_header {
       border:1px solid gray;
     }
-    .blob_header .top {
+    .blob_header .htop {
       background-color:#E6F1F6;
       padding:10px;
     }
-    .blob_header .author_date {
+    .blob_header .hauthor_date {
       color: #666;
     }
-    .blob_header a.comment {
+    .blob_header a.hcomment {
       color:#4183C4;
     }
-    .blob_header .bottom {
+    .blob_header .hbottom {
       padding:5px;
       padding-left:10px;
     }
@@ -172,17 +155,17 @@
       }
     % end
 
-    %= include '/include/page_path', type => 'blob', Path => $file;
+    %= include '/include/page_path', type => 'blob', Path => $blob;
         
     <div class="blob_header">
-      <div class="top">
+      <div class="htop">
         <b><%= $commit_log->{author} %></b>
-        <span class="author_date"><%= $commit_log->{author_date} %></span>
-        <a class="comment" href="<%= url_for("/$user/$project/commit/$id") %>">
+        <span class="hauthor_date"><%= $commit_log->{author_date} %></span>
+        <a class="hcomment" href="<%= url_for("/$user/$project/commit/$rev") %>">
           <%= $commit->{title} %>
         </a>
       </div>
-      <div class="bottom">
+      <div class="hbottom">
         <%= @$authors %> contributor
       </div>
     </div>
@@ -193,18 +176,18 @@
           file <span style="color:gray">|</span> <%= @$lines %> lines <span style="color:gray">|</span> <%= $blob_size %>kb
         </div>
         <div class="sright_header">
-          <a class="sraw" href="<%= url_for("/$user/$project/raw/$id/$file") %>">Raw</a>
-          <!-- TODO: <a class="sblame" href="<%= url_for("/$user/$project/blame/$id/$file") %>">Blame</a> -->
-          <a class="shistory" href="<%= url_for("/$user/$project/commits/$id/$file") %>">History</a>
+          <a class="sraw" href="<%= url_for("/$user/$project/raw/$rev/$blob") %>">Raw</a>
+          <!-- TODO: <a class="sblame" href="<%= url_for("/$user/$project/blame/$rev/$blob") %>">Blame</a> -->
+          <a class="shistory" href="<%= url_for("/$user/$project/commits/$rev/$blob") %>">History</a>
         </div>
       </div>
       <div class="sbody">
         % if ($mimetype =~ m#^image/#) {
           <img type="<%= $mimetype %>
-            % if (defined $file) {
-              alt="<%= $file %>" title="<%= $file %>"
+            % if (defined $blob) {
+              alt="<%= $blob %>" title="<%= $blob %>"
             % }
-            src="<%= url_for('blob_plain', project => $rep_ns, id_file => "$id/$file") %>"
+            src="<%= url_for('blob_plain', project => $rep_ns, id_file => "$rev/$blob") %>"
           />
         % } else {
           % my $nr = 1;
