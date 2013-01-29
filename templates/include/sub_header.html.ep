@@ -1,6 +1,6 @@
 %= stylesheet begin
 
-  /* User and repository name */
+  /* User and project name */
   .user_rep {
     font-size:140%;
     margin-top:15px;
@@ -39,15 +39,15 @@
 <div class="user_rep">
   <a href="<%= url_for("/$user") %>"><%= $user %></a>
   /
-  <a href="<%= url_for("/$user/$repository") %>"><b><%= $repository %></b></a>
+  <a href="<%= url_for("/$user/$project") %>"><b><%= $project %></b></a>
 </div>
 
 <ul class="main_menu">
-  <li><a href="<%= url_for("/$user/$repository") %>">Code</a></li>
-  <li><a href="<%= url_for("/$user/$repository/network") %>"><s>Network</s></a></li>
-  <li><a href="<%= url_for("/$user/$repository/pulls") %>"><s>Pull Requests 0</s></a></li>
-  <li><a href="<%= url_for("/$user/$repository/issues") %>"><s>Issues 1</s></a></li>
-  <li><a href="<%= url_for("/$user/$repository/wiki") %>"><s>Wiki</s></a></li>
-  <li><a href="<%= url_for("/$user/$repository/graphs") %>"><s>Graphs</s></a></li>
-  <li><a href="<%= url_for("/$user/$repository/admin") %>"><s>Admin</s></a></li>
+  <li><a href="<%= url_for("/$user/$project") %>">Code</a></li>
+  <li><a href="<%= url_for("/$user/$project/network") %>"><s>Network</s></a></li>
+  <li><a href="<%= url_for("/$user/$project/pulls") %>"><s>Pull Requests 0</s></a></li>
+  <li><a href="<%= url_for("/$user/$project/issues") %>"><s>Issues 1</s></a></li>
+  <li><a href="<%= url_for("/$user/$project/wiki") %>"><s>Wiki</s></a></li>
+  <li><a href="<%= url_for("/$user/$project/graphs") %>"><s>Graphs</s></a></li>
+  <li><a href="<%= url_for("/$user/$project/admin") %>"><s>Admin</s></a></li>
 </ul>

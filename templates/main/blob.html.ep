@@ -3,13 +3,13 @@
   my $api = Gitprep::API->new($self);
   
   my $user = param('user');
-  my $repository = param('repository');
+  my $project = param('project');
   my $plain = param('plain');
 
   my $root_ns = $api->root_ns(config->{root});
   
   # Parameters
-  my $rep_ns = "$root_ns/$user/$repository.git";
+  my $rep_ns = "$root_ns/$user/$project.git";
   my $rep = "/$rep_ns";
   my $home_ns = $api->dirname($rep_ns);
   my $home = "/$home_ns";
@@ -64,7 +64,7 @@
   }
   
   # Global variable
-  stash(id => $id, repository => $repository);
+  stash(id => $id, project => $project);
 %>
 
 % layout 'common';
@@ -178,7 +178,7 @@
       <div class="top">
         <b><%= $commit_log->{author} %></b>
         <span class="author_date"><%= $commit_log->{author_date} %></span>
-        <a class="comment" href="<%= url_for("/$user/$repository/commit/$id") %>">
+        <a class="comment" href="<%= url_for("/$user/$project/commit/$id") %>">
           <%= $commit->{title} %>
         </a>
       </div>
@@ -193,9 +193,9 @@
           file <span style="color:gray">|</span> <%= @$lines %> lines <span style="color:gray">|</span> <%= $blob_size %>kb
         </div>
         <div class="sright_header">
-          <a class="sraw" href="<%= url_for("/$user/$repository/raw/$id/$file") %>">Raw</a>
-          <!-- TODO: <a class="sblame" href="<%= url_for("/$user/$repository/blame/$id/$file") %>">Blame</a> -->
-          <a class="shistory" href="<%= url_for("/$user/$repository/commits/$id/$file") %>">History</a>
+          <a class="sraw" href="<%= url_for("/$user/$project/raw/$id/$file") %>">Raw</a>
+          <!-- TODO: <a class="sblame" href="<%= url_for("/$user/$project/blame/$id/$file") %>">Blame</a> -->
+          <a class="shistory" href="<%= url_for("/$user/$project/commits/$id/$file") %>">History</a>
         </div>
       </div>
       <div class="sbody">

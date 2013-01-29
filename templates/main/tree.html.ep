@@ -6,10 +6,10 @@
   
   # Parameters
   my $user = param('user');
-  my $repository = param('repository');
+  my $project = param('project');
   my $id_dir ||= param('id_dir') || 'master/';
   my $root_ns = $api->root_ns(config->{root});
-  my $rep_ns = "$root_ns/$user/$repository.git";
+  my $rep_ns = "$root_ns/$user/$project.git";
   my $rep = "/$rep_ns";
   my $home_ns = $api->dirname($rep_ns);
   my $home = "/$home_ns";
@@ -38,7 +38,7 @@
   my $trees = $api->trees($rep, $tid, $id, $dir);
   
   # Repository description
-  my $desc = $git->repository_description($rep);
+  my $desc = $git->project_description($rep);
   
   # Commits number
   my $commits_number = $git->commits_number($rep, $id);
@@ -49,7 +49,7 @@
   # Global variable
   stash(
     user => $user,
-    repository => $repository,
+    project => $project,
     rep_ns => $rep_ns,
     id => $id,
     commit => $commit,
@@ -57,7 +57,7 @@
     trees => $trees,
     dir => $dir,
     ref => $id,
-    title => "$repository/$dir at $id - $user/$repository"
+    title => "$project/$dir at $id - $user/$project"
   );
 %>
 
@@ -69,10 +69,10 @@
       
       // Repository URL
       var rep_url_bak_color = "#F5F5F5";
-      var http_rep_url = "<%= url_for("/$user/$repository.git")->to_abs %>";
+      var http_rep_url = "<%= url_for("/$user/$project.git")->to_abs %>";
       var ssh_rep_url
         = "<%= url_for("/$rep_ns")->to_abs->scheme('ssh')->userinfo($user)->port(config->{ssh_port}) %>";
-      var git_rep_url = "<%= url_for("/$user/$repository.git")->to_abs->scheme('git')->port('') %>";
+      var git_rep_url = "<%= url_for("/$user/$project.git")->to_abs->scheme('git')->port('') %>";
       $(".git_url_text").val(http_rep_url);
       $(".git_url_http").css("background-color", "darkgray");
       $(".git_url_http").on('click', function () {

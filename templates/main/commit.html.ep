@@ -3,13 +3,13 @@
   my $api = Gitprep::API->new($self);
   
   my $user = param('user');
-  my $repository = param('repository');
+  my $project = param('project');
   my $id = param('id');
 
   my $root_ns = $api->root_ns(config->{root});
   
   # Parameters
-  my $project_ns = "$root_ns/$user/$repository.git";
+  my $project_ns = "$root_ns/$user/$project.git";
   my $project = "/$project_ns";
   my $home_ns = $api->dirname($project_ns);
   my $home = "/$home_ns";

@@ -3,7 +3,7 @@
   my $api = Gitprep::API->new($self);
   
   my $user = param('user');
-  my $repository = param('repository');
+  my $project = param('project');
   my $id = param('id');
   my $file = param('file');
   my $page = param('page') || 0;
@@ -11,7 +11,7 @@
   my $root_ns = $api->root_ns(config->{root});
   
   # Parameters
-  my $project_ns = "$root_ns/$user/$repository.git";
+  my $project_ns = "$root_ns/$user/$project.git";
   my $project = "/$project_ns";
   my $home_ns = $api->dirname($project_ns);
   my $home = "/$home_ns";
@@ -35,7 +35,7 @@
   }
   
   # Global variable
-  stash(user => $user, repository => $repository);
+  stash(user => $user, project => $project);
 %>
 
 % layout 'common';
@@ -158,8 +158,8 @@
         History for
         %= include '/include/page_path', type => 'blob', Path => $file, operation => 'commits';
       % } else {
-        <a class="ubar" href="<%= url_for("/$user/$repository") %>">
-          <%= $repository %>
+        <a class="ubar" href="<%= url_for("/$user/$project") %>">
+          <%= $project %>
         </a>
         /
         Commit History
@@ -175,12 +175,12 @@
           <div class="commit_content">
             <div class="commit_first">
               <div class="commit_first_left">
-                <a class="ubar" href="<%= url_for("/$user/$repository/commit/$commit->{id}") %>">
+                <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                   <%= $commit->{title_short} %>
                 </a>
               </div>
               <div class="commit_first_right a_dec_on a_blue">
-                <a class="ubar" href="<%= url_for("/$user/$repository/commit/$commit->{id}") %>">
+                <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                   <%= substr($commit->{id}, 0, 10) %>
                 </a>
               </div>
@@ -188,7 +188,7 @@
             <div class="commit_second">
               <div class="commit_second_left">yuki-kimoto authored 7 days ago</div>
               <div class="commit_second_right">
-                <a class="ubar" href="<%= url_for("/$user/$repository/commit/$commit->{id}") %>">
+                <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                   Browse code
                 </a>
               </div>
@@ -202,13 +202,13 @@
         <span class="left disable">&laquo; Newer</span>
       % } else {
         % my $newer_page = $page - 1;
-        <a class="left" href="<%= url_for("/$user/$repository/commits/$id?page=$newer_page") %>">&laquo; Newer</a>
+        <a class="left" href="<%= url_for("/$user/$project/commits/$id?page=$newer_page") %>">&laquo; Newer</a>
       % }
       % if ($commits_count < $page_count) {
         <span class="right disable">Older &raquo;</span>
       % } else {
         % my $older_page = $page + 1;
-        <a class="right" href="<%= url_for("/$user/$repository/commits/$id?page=$older_page") %>">Older &raquo;</a>
+        <a class="right" href="<%= url_for("/$user/$project/commits/$id?page=$older_page") %>">Older &raquo;</a>
       % }
     </div>
   </div>

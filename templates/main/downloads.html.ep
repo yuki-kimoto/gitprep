@@ -1,7 +1,7 @@
 <%
 
   my $user = param('user');
-  my $repository = param('repository');
+  my $project = param('project');
 
   my $default_branch = 'master';
 %>
@@ -44,8 +44,8 @@
       }
     % end
     <div class="download">
-      <a href="<%= url_for("/$user/$repository/archive/$default_branch.zip") %>">Download as zip</a>
-      <a href="<%= url_for("/$user/$repository/archive/$default_branch.tar.gz") %>">Download as tar.gz</a>
+      <a href="<%= url_for("/$user/$project/archive/$default_branch.zip") %>">Download as zip</a>
+      <a href="<%= url_for("/$user/$project/archive/$default_branch.tar.gz") %>">Download as tar.gz</a>
     </div>
   </div>
   %= include '/include/footer';

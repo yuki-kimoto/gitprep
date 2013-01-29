@@ -18,8 +18,8 @@
 % end
 
 <span class="page_path">
-  <a href="<%= url_for("/$user/$repository" . ($operation eq 'commits' ? '/commits' : '')) %>">
-    <b><%= $repository %></b>
+  <a href="<%= url_for("/$user/$project" . ($operation eq 'commits' ? '/commits' : '')) %>">
+    <b><%= $project %></b>
   </a> /
   % my @parts = split('/', $Path);
   % my $path;
@@ -31,7 +31,7 @@
       <b><%= $part %></b>
     % } else {
       <a href=
-          "<%= url_for("/$user/$repository/$operation/$id/$path") %>">
+          "<%= url_for("/$user/$project/$operation/$id/$path") %>">
         <%= $part %>
       </a>
       % $path .= '/';

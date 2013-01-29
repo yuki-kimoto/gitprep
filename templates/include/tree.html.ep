@@ -98,7 +98,7 @@
       <b><%= $latest_commit_log->{author} %></b> <span class="tree_header2_left_right">authored <%= $latest_commit_log->{author_date} %></span>
     </div>
     <div class="tree_header2_right">
-      <a href="<%= url_for("/$user/$repository/commit/$commit->{id}") %>">
+      <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
         latest commit <%= substr($commit->{id}, 0, 10) %>
       </a>
     </div>
@@ -117,13 +117,13 @@
           % my $file = defined $dir && $dir ne '' ? "$dir/$name" : $name;
           
           <td class="tree_td_blob">
-            <a href="<%= url_for("/$user/$repository/blob/$ref/$file") %>">
+            <a href="<%= url_for("/$user/$project/blob/$ref/$file") %>">
               <%= $name %>
             </a>
           </td>
         % } elsif ($tree) {
           <td class="tree_td_dir">
-            <a href="<%= url_for("/$user/$repository/tree/$ref/$child_dir") %>">
+            <a href="<%= url_for("/$user/$project/tree/$ref/$child_dir") %>">
               <%= $name %>
             </a>
           </td>
@@ -133,7 +133,7 @@
           <%= $tree->{author_date} %>
         </td>
         <td class="tree_td_commit">
-          <a href="<%= url_for("/$user/$repository/commit/$tree->{commit}") %>">
+          <a href="<%= url_for("/$user/$project/commit/$tree->{commit}") %>">
             <%= $tree->{comment} %>
           </a>
           [<%= $tree->{author} %>]

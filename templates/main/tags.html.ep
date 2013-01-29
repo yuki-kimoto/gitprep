@@ -3,12 +3,12 @@
   my $api = Gitprep::API->new($self);
 
   my $user = param('user');
-  my $repository = param('repository');
+  my $project = param('project');
 
   my $root_ns = $api->root_ns(config->{root});
   
   # Parameters
-  my $project_ns = "$root_ns/$user/$repository.git";
+  my $project_ns = "$root_ns/$user/$project.git";
   my $project = "/$project_ns";
   my $home_ns = $api->dirname($project_ns);
   my $home = "/$home_ns";
@@ -110,7 +110,7 @@
         % my $name = $tag->{name};
         <div class="tag">
           <div class="top">
-            <a class="name ubar" href="<%= url_for("/$user/$repository/archive/$name.zip") %>" title ="<%= $name %>">
+            <a class="name ubar" href="<%= url_for("/$user/$project/archive/$name.zip") %>" title ="<%= $name %>">
               <%= "$name.zip" %>
             </a>
             —
@@ -121,11 +121,11 @@
                 <%= $tag->{commit}{title_short} %>
               % }
             <span>
-            <a class="archive ubar" href="<%= url_for("/$user/$repository/archive/$name.zip") %>">ZIP</a>
-            <a class="archive ubar" href="<%= url_for("/$user/$repository/archive/$name.tar.gz") %>">TAR.GZ</a>
+            <a class="archive ubar" href="<%= url_for("/$user/$project/archive/$name.zip") %>">ZIP</a>
+            <a class="archive ubar" href="<%= url_for("/$user/$project/archive/$name.tar.gz") %>">TAR.GZ</a>
           </div>
           <div class="bottom">
-            <a class="commit ubar" href="<%= url_for("/$user/$repository/commit/$tag->{commit}{id}") %>"><%= substr($tag->{commit}{id}, 0, 10) %></a>
+            <a class="commit ubar" href="<%= url_for("/$user/$project/commit/$tag->{commit}{id}") %>"><%= substr($tag->{commit}{id}, 0, 10) %></a>
              · 
             <span class="uploaded">Uploaded <%= $tag->{commit}{age_string} %></span>
           </div>

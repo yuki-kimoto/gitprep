@@ -5,12 +5,12 @@
   my $api = Gitprep::API->new($self);
 
   my $user = param('user');
-  my $repository = param('repository');
+  my $project = param('project');
 
   my $root_ns = $api->root_ns(config->{root});
   
   # Parameters
-  my $project_ns = "$root_ns/$user/$repository.git";
+  my $project_ns = "$root_ns/$user/$project.git";
   my $project = "/$project_ns";
   my $home_ns = $api->dirname($project_ns);
   my $home = "/$home_ns";
@@ -135,7 +135,7 @@
         <tr>
           <td class="left">
             <div class="name">
-              <a href="<%= url_for("/$user/$repository/tree/$name") %>">
+              <a href="<%= url_for("/$user/$project/tree/$name") %>">
                 <%= $name %>
               </a>
             </div>
@@ -145,7 +145,7 @@
             
           </td>
           <td class="right">
-            <a href="<%= url_for("/$user/$repository/compare/$default_branch->{name}...$name") %>">Compare</a>
+            <a href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$name") %>">Compare</a>
           </td>
         </tr>
       % }

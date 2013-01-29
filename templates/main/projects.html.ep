@@ -3,16 +3,16 @@
   my $user = param('user');
   
   # Repositories
-  my $reps = app->git->repositories("/$root/$user");
+  my $reps = app->git->projects("/$root/$user");
 %>
 
 % layout 'common';
-  %= include '/include/header', title => 'Repositories';
+  %= include '/include/header', title => 'Project';
   <table class="project_list">
     <a href="<%= url_for '/' %>">home</a> &gt;
     <%= $user %>
     <tr>
-      <th>Repository</th>
+      <th>Project</th>
       <th>Description</th>
       <th>Last Change</th>
       <th></th>

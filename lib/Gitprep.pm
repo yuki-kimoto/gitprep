@@ -82,35 +82,35 @@ sub startup {
   $r->get('/')->to('#home');
 
   # Repositories
-  $r->get('/:user')->to('#repositories');
+  $r->get('/:user')->to('#projects');
   
   # Repository
-  $r->get('/:user/:repository')->to('#repository');
+  $r->get('/:user/:project')->to('#project');
   
   # Commit
-  $r->get('/:user/:repository/commit/:id')->to('#commit');
+  $r->get('/:user/:project/commit/:id')->to('#commit');
   
   # Commits
-  $r->get('/:user/:repository/commits/:id', {id => 'HEAD'})->to('#commits');
-  $r->get('/:user/:repository/commits/:id/(*file)')->to('#commits');
+  $r->get('/:user/:project/commits/:id', {id => 'HEAD'})->to('#commits');
+  $r->get('/:user/:project/commits/:id/(*file)')->to('#commits');
   
   # Branches
-  $r->get('/:user/:repository/branches')->to('#branches');
+  $r->get('/:user/:project/branches')->to('#branches');
 
   # Tags
-  $r->get('/:user/:repository/tags')->to('#tags');
+  $r->get('/:user/:project/tags')->to('#tags');
 
   # Downloads
-  $r->get('/:user/:repository/downloads')->to('#downloads');
+  $r->get('/:user/:project/downloads')->to('#downloads');
   
   # Tree
-  $r->get('/:user/:repository/tree/(*id_dir)')->to('#tree');
+  $r->get('/:user/:project/tree/(*id_dir)')->to('#tree');
   
   # Blob
-  $r->get('/:user/:repository/blob/(*id_file)')->to('#blob');
+  $r->get('/:user/:project/blob/(*id_file)')->to('#blob');
   
   # Raw
-  $r->get('/:user/:repository/raw/(*id_file)')->to('#raw');
+  $r->get('/:user/:project/raw/(*id_file)')->to('#raw');
   
   # Projects
   $r->get('/(*home)/projects')->to('#projects')->name('projects');

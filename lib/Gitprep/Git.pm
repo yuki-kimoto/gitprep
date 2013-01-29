@@ -398,16 +398,6 @@ sub project_description {
   return $description;
 }
 
-sub repository_description {
-  my ($self, $rep) = @_;
-  
-  # Description
-  my $file = "$rep/description";
-  my $description = $self->_slurp($file) || '';
-  
-  return $description;
-}
-
 sub last_activity {
   my ($self, $project) = @_;
   
@@ -489,7 +479,7 @@ sub references {
   return \%refs;
 }
 
-sub fill_repositories {
+sub fill_projects {
   my ($self, $home, $ps) = @_;
   
   # Fill rep info
@@ -499,7 +489,7 @@ sub fill_repositories {
     next unless @activity;
     ($rep->{age}, $rep->{age_string}) = @activity;
     if (!defined $rep->{descr}) {
-      my $descr = $self->repository_description("$home/$rep->{path}") || '';
+      my $descr = $self->project_description("$home/$rep->{path}") || '';
       $rep->{descr_long} = $descr;
       $rep->{descr} = $self->_chop_str($descr, 25, 5);
     }
@@ -510,7 +500,7 @@ sub fill_repositories {
   return \@resp;
 }
 
-sub repositories {
+sub projects {
   my ($self, $dir, %opt) = @_;
   
   my $filter = $opt{filter};
@@ -534,7 +524,7 @@ sub repositories {
     next unless @activity;
     ($rep->{age}, $rep->{age_string}) = @activity;
     if (!defined $rep->{descr}) {
-      my $descr = $self->repository_description("$dir/$rep->{path}") || '';
+      my $descr = $self->project_description("$dir/$rep->{path}") || '';
       $rep->{descr_long} = $descr;
       $rep->{descr} = $self->_chop_str($descr, 25, 5);
     }
