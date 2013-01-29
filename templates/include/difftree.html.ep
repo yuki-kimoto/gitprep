@@ -1,5 +1,5 @@
 <table class="<%= @$parents > 1 ? 'combined' : 'diff_tree' %>"">
-
+  
   % my $has_header = @$difftrees && @$parents > 1 && stash('action') eq 'commitdiff';
   % if ($has_header) {
     <thead>

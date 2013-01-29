@@ -62,7 +62,7 @@ sub startup {
   $r->get('/:user/:project')->to('#project');
   
   # Commit
-  $r->get('/:user/:project/commit/:id')->to('#commit');
+  $r->get('/:user/:project/commit/:diff')->to('#commitdiff');
   
   # Commits
   $r->get('/:user/:project/commits/:rev', {id => 'HEAD'})->to('#commits');

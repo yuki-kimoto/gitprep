@@ -2,12 +2,10 @@
   # API
   my $api = Gitprep::API->new($self);
   
-  # Parameter
+  # Parameters
   my $user = param('user');
   my $project = param('project');
   my $root_ns = $api->root_ns(config->{root});
-  
-  # Parameters
   my $rep_ns = "$root_ns/$user/$project.git";
   my $rep = "/$rep_ns";
   my $object = param('object');

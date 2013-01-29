@@ -653,6 +653,29 @@ sub latest_commit_log {
   return $commit_log;
 }
 
+sub parse_blobdiff_lines {
+  my ($self, $lines_raw) = @_;
+  
+  # Parse
+  my @lines;
+  for my $line (@$lines_raw) {
+    $line = $self->dec($line);
+    chomp $line;
+    my $class;
+    
+    if ($line =~ /^diff \-\-git /) { $class = 'diff header' }
+    elsif ($line =~ /^index /) { $class = 'diff extended_header' }
+    elsif ($line =~ /^\+/) { $class = 'diff to_file' }
+    elsif ($line =~ /^\-/) { $class = 'diff from_file' }
+    elsif ($line =~ /^\@\@/) { $class = 'diff chunk_header' }
+    elsif ($line =~ /^Binary files/) { $class = 'diff binary_file' }
+    else { $class = 'diff' }
+    push @lines, {value => $line, class => $class};
+  }
+  
+  return \@lines;
+}
+
 sub parse_commit {
   my ($self, $project, $id) = @_;
   

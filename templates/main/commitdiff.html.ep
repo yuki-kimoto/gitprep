@@ -1,19 +1,128 @@
+<%
+  use Gitprep::API;
+  
+  # API
+  my $api = Gitprep::API->new($self);
+  
+  # Paramters
+  my $project = param('project');
+  my $root_ns = $api->root_ns(config->{root});
+  my $rep_ns = "$root_ns/$user/$project.git";
+  my $rep = "/$rep_ns";
+  my $home_ns = $api->dirname($project);
+  my $home = "/$home_ns";
+  my $diff = param('diff');
+  my ($from_id, $id) = $diff =~ /(.+)\.\.(.+)/;
+  $id = $diff unless defined $id;
+  
+  # Git
+  my $git = app->git;
+  
+  # Commit
+  my $commit = $git->parse_commit($rep, $id)
+    or $api->croak('Unknown commit object');
+  my $author_date
+    = $git->parse_date($commit->{author_epoch}, $commit->{author_tz});
+  my $committer_date
+    = $git->parse_date($commit->{committer_epoch}, $commit->{committer_tz});
+  $commit->{author_date} = $git->timestamp($author_date);
+  $commit->{committer_date} = $git->timestamp($committer_date);
+  $from_id = $commit->{parent} unless defined $from_id;
+  
+  my $difftrees;
+  my $blobdiffs;
+
+  # Plain text
+  if ($self->param('plain')) {
+    # Get blob diffs (command "git diff-tree")
+    my @cmd = ($git->cmd($rep), 'diff-tree', '-r', '-M',
+        '-p', $from_id, $id, '--');
+    open my $fh, '-|', @cmd
+      or $api->croak('Open git-diff-tree failed');
+
+    # Content
+    my $content = do { local $/; <$fh> };
+    my $content_disposition .= "inline; filename=$id";
+    
+    # Render
+    $self->res->headers->content_disposition($content_disposition);
+    $self->res->headers->content_type("text/plain;charset=" . $git->encoding);
+    $self->render_data($content);
+  }
+  
+  # HTML
+  else {
+    
+    # Diff tree
+    $difftrees = $git->difftree($rep,
+      $id, $commit->{parent}, $commit->{parents});
+    
+    # Get blob diffs (command "git diff-tree")
+    my @cmd = ($git->cmd($rep), 'diff-tree', '-r', '-M',
+      '--no-commit-id', '--patch-with-raw', $from_id, $id, '--');
+    open my $fh, '-|', @cmd
+      or $api->croak('Open git-diff-tree failed');
+
+    # Parse output
+    while (my $line = $git->dec(scalar <$fh>)) {
+      
+      # Parse line
+      chomp $line;
+      my $diffinfo = $git->parse_difftree_raw_line($line);
+      my $from_file = $diffinfo->{from_file};
+      my $file = $diffinfo->{to_file};
+      
+      # Get blobdiff (command "git diff-tree")
+      my @cmd = ($git->cmd($rep), 'diff-tree', '-r', '-M', '-p',
+        $from_id, $id, '--', (defined $from_file ? $from_file : ()), $file);
+      open my $fh_blobdiff, '-|', @cmd
+        or $api->croak('Open git-diff-tree failed');
+      my @lines = map { $git->dec($_) } <$fh>;
+      close $fh_blobdiff;
+      my $blobdiff = {
+        file => $file,
+        from_file => $from_file,
+        lines => $git->parse_blobdiff_lines(\@lines)
+      };
+      
+      # Status
+      for my $difftree (@$difftrees) {
+        if ($difftree->{to_file} eq $file) {
+          $blobdiff->{status} = $difftree->{status};
+          last;
+        }
+      }
+      
+      push @$blobdiffs, $blobdiff;
+    }
+    
+    # Render
+    stash(
+      home => $home,
+      home_ns => $home_ns,
+      project => $project,
+      project => $project,
+      from_id => $from_id,
+      id => $id,
+      commit => $commit,
+    );
+  }
+%>
+
 % layout 'common';
+  %= include '/css/common';
   %= include '/include/header', title => 'Commit diff', project => $project;
-  %= include '/include/current_directory', home_ns => $home_ns, home => $home;
-  %= include '/include/page_navi', current => 'commitdiff', project_ns => $project_ns;
   <div class="page_nav">
-    <a href="<%= url_for('commitdiff_plain', project => $project_ns, diff => $commit->{id}) %>">
+    <a href="<%= url_for('commitdiff_plain', project => $project, diff => $commit->{id}) %>">
       Raw
     </a>
   </div>
   <div class="header">
-    <a class="title" href="<%= url_for('commit', project => $project_ns) %>">
+    <a class="title" href="<%= url_for('commit', project => $project) %>">
       <%= $commit->{title} %>
     </a>
   </div>
   <div class="title_text">
-    %= include 'include/refs', project_ns => $project_ns, commit => $commit, refs => $refs;
     <table class="object_header">
       <tr><td>Author</td><td><%= $commit->{author} %></td><td rowspan="2"></td></tr>
       <tr><td></td><td><%= $commit->{author_date} %></td></tr>
@@ -25,7 +134,7 @@
     <div class="list_head"></div>
 
     <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
-      difftrees => $difftrees, parents => $commit->{parents} %>
+      difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project %>
 
     <div class="patchset">
       % for (my $i = 0; $i < @$blobdiffs; $i++) {
@@ -36,7 +145,7 @@
           % my $from_file = $blobdiff->{from_file};
           % $from_file = $file unless defined $from_file;
           % my $status = $blobdiff->{status};
-          %= include '/include/blobdiff_body', file => $file, from_file => $from_file, status => $status, lines => $blobdiff->{lines};
+          %= include '/include/blobdiff_body', file => $file, from_file => $from_file, status => $status, lines => $blobdiff->{lines}, project_ns => $project;
         </div>
       % }
     </div>
