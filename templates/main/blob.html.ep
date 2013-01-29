@@ -129,20 +129,46 @@
     /* Soruce */
     .source .sheader {
       margin-top:15px;
-      padding:10px;
-      padding-left:27px;
+      padding:7px;
       border:1px gray solid;
-      background-image:url(<%= url_for('/image/file_min.png') %>);
-      background-repeat:no-repeat;
-      background-position: 7px center;
       background-color:#F3F3F3;
       overflow:hidden;
     }
     .source .sleft_header {
+      padding:3px;
+      padding-left:27px;
+      background-image:url(<%= url_for('/image/file_min.png') %>);
+      background-repeat:no-repeat;
+      background-position: 7px center;
       float:left;
     }
     .source .sright_header {
       float:right;
+    }
+    .source .sright_header a {
+      color:#555;
+      font-weight:bold;
+      display:block;
+      float:left;
+      border:1px solid gray;
+      padding:4px;
+      margin:0;
+    }
+    .source .sright_header a:hover {
+      color:white;
+      background-color:#4183C4;
+    }
+    .source a.sraw {
+      border-right:none;
+      border-top-left-radius:2px;
+      border-bottom-left-radius:2px;
+    }
+    .source a.sblame {
+      border-right:none;
+    }
+    .source a.shistory {
+      border-top-right-radius:2px;
+      border-bottom-right-radius:2px;
     }
     .source .sbody {
       padding: 10px;
@@ -202,7 +228,9 @@
           file <span style="color:gray">|</span> <%= @$lines %> lines <span style="color:gray">|</span> <%= $blob_size %>kb
         </div>
         <div class="sright_header">
-          Raw Blame History
+          <a class="sraw" href="<%= url_for("/$user/$repository/raw/$id/$file") %>">Raw</a>
+          <a class="sblame" href="<%= url_for("/$user/$repository/blame/$id/$file") %>">Blame</a>
+          <a class="shistory" href="<%= url_for("/$user/$repository/commits/$id/$file") %>">History</a>
         </div>
       </div>
       <div class="sbody">
