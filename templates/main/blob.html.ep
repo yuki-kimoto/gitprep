@@ -103,6 +103,8 @@
   %= include '/css/common';
   
   %= stylesheet begin
+  
+    /* Header */
     .blob_header {
       border:1px solid gray;
     }
@@ -120,7 +122,27 @@
       padding:5px;
       padding-left:10px;
     }
-  % end
+    
+    /* Soruce */
+    .source .sheader {
+      
+    }
+    .source .sbody {
+      padding: 10px;
+      padding-left:0;
+      font-family: monospace;
+      border:1px gray solid;
+    }
+    .source .sline {
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre;
+      margin:3px;
+    }
+    .source .snumber {
+      color:gray;
+    }
+  % end 
 
   %= include '/include/header';
 
@@ -142,7 +164,7 @@
     % end
 
     %= include '/include/page_path', type => 'blob', Path => $file;
-    
+        
     <div class="blob_header">
       <div class="top">
         <b><%= $commit_log->{author} %></b>
@@ -155,23 +177,28 @@
         <%= @$authors %> contributor
       </div>
     </div>
-    
-    <div class="page_body">
-      % if ($mimetype =~ m#^image/#) {
-        <img type="<%= $mimetype %>
-          % if (defined $file) {
-            alt="<%= $file %>" title="<%= $file %>"
+
+    <div class="source">
+      <div class="sheader">
+        file | 23 lines | 33.174kb Raw Blame History
+      </div>
+      <div class="sbody">
+        % if ($mimetype =~ m#^image/#) {
+          <img type="<%= $mimetype %>
+            % if (defined $file) {
+              alt="<%= $file %>" title="<%= $file %>"
+            % }
+            src="<%= url_for('blob_plain', project => $rep_ns, id_file => "$id/$file") %>"
+          />
+        % } else {
+          % my $nr = 1;
+          % for my $line (@$lines) {
+            % my $nr5 = sprintf("%5i", $nr);
+            <div class="sline"><a class="snumber" href="#<%= $nr %>"><%= $nr5 %></a> <%= $line %></div>
+            % $nr++;
           % }
-          src="<%= url_for('blob_plain', project => $rep_ns, id_file => "$id/$file") %>"
-        />
-      % } else {
-        % my $nr = 1;
-        % for my $line (@$lines) {
-          % my $nr4 = sprintf("%4i", $nr);
-          <div class="pre"><a id="l<%= $nr %>" href="<%#l<%= $nr %>" class="linenr"><%= $nr4 %></a> <%= $line %></div>
-          % $nr++;
         % }
-      % }
+      </div>
     </div>
   </div>
   %= include '/include/footer';

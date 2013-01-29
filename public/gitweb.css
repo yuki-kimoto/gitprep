@@ -86,11 +86,6 @@ div#generating_info {
         color: #505050;
 }
 
-div.page_body {
-        padding: 8px;
-        font-family: monospace;
-}
-
 div.title, a.title {
         display: block;
         padding: 6px 8px;

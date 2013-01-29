@@ -1,6 +1,7 @@
+<!DOCTYPE html>
 <html>
   <head>
-    <meta http-equiv="content-type" content="text/html;charset=UTF-8">
+    <meta charset="UTF-8">
     <meta name="robots" content="index, nofollow" >
     <title>Git</title>
     %= stylesheet '/gitweb.css';
