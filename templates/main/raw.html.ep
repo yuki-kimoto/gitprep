@@ -1,0 +1,67 @@
+<%
+  # API
+  my $api = Gitprep::API->new($self);
+  
+  my $user = param('user');
+  my $repository = param('repository');
+  my $root_ns = $api->root_ns(config->{root});
+  
+  # Parameters
+  my $rep_ns = "$root_ns/$user/$repository.git";
+  my $rep = "/$rep_ns";
+  my $home_ns = $api->dirname($rep_ns);
+  my $home = "/$home_ns";
+  my $id_file = param('id_file');
+
+  # Id and file
+  my ($id, $file) = $api->parse_id_path($rep, $id_file);
+
+  # Git
+  my $git = $self->app->git;
+  
+  # Commit
+  my $commit_log = $git->latest_commit_log($rep, $id, $file);
+  
+  # Blob content
+  my $bid = $git->id_by_path($rep, $id, $file, 'blob')
+    or $api->croak('Cannot find file');
+  my @cmd = ($git->cmd($rep), 'cat-file', 'blob', $bid);
+  open my $fh, '-|', @cmd
+    or $api->croak(qq/Couldn't cat "$file", "$bid"/);
+  
+  # Blob plain
+  my $commit;
+  my $mimetype;
+  my $lines =[];
+  
+  # Content type
+  my $type = $git->blob_contenttype($fh, $file);
+
+  # Convert text/* content type to text/plain
+  if ($self->config('prevent_xss') &&
+    ($type =~ m#^text/[a-z]+\b(.*)$# ||
+    ($type =~ m#^[a-z]+/[a-z]\+xml\b(.*)$# && -T $fh)))
+  {
+    my $rest = $1;
+    $rest = defined $rest ? $rest : '';
+    $type = "text/plain$rest";
+  }
+
+  # File name
+  my $file_name = $id;
+  if (defined $file) { $file_name = $file }
+  elsif ($type =~ m/^text\//) { $file_name .= '.txt' }
+  
+  # Content
+  my $content = do { local $/; <$fh> };
+  my $sandbox = $self->config('prevent_xss') &&
+    $type !~ m#^(?:text/[a-z]+|image/(?:gif|png|jpeg))(?:[ ;]|$)#;
+  my $content_disposition = $sandbox ? 'attachment' : 'inline';
+  $content_disposition .= "; filename=$file_name";
+  
+  # Render
+  $self->res->headers->content_disposition($content_disposition);
+  $self->res->headers->content_type($type);
+  
+  return $content;
+%>

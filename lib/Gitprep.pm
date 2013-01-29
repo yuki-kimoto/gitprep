@@ -107,7 +107,10 @@ sub startup {
   
   # Blob
   $r->get('/:user/:repository/blob/(*id_file)')->to('#blob');
-
+  
+  # Raw
+  $r->get('/:user/:repository/raw/(*id_file)')->to('#raw');
+  
   # Projects
   $r->get('/(*home)/projects')->to('#projects')->name('projects');
   
@@ -121,10 +124,6 @@ sub startup {
     # Commit diff plain
     $r->get('/commitdiff-plain/(*diff)')
       ->to('#commitdiff', plain => 1)->name('commitdiff_plain');
-    
-    # Blob plain
-    $r->get('/blob-plain/(*id_file)')
-      ->to('#blob', plain => 1)->name('blob_plain');
     
     # Blob diff
     $r->get('/blobdiff/(#diff)/(*file)')

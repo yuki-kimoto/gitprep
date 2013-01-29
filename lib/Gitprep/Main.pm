@@ -238,64 +238,6 @@ sub snapshot {
   $self->$cb;
 }
 
-sub summary {
-  my $self = shift;
-  
-  # Parameters
-  my $project_ns = $self->param('project');
-  my $project = "/$project_ns";
-  my $home_ns = dirname $project_ns;
-  my $home = "/$home_ns";
-  
-  # Git
-  my $git = $self->app->git;
-  
-  # HEAd commit
-  my $project_description = $git->project_description($project);
-  my $project_owner = $git->project_owner($project);
-  my $head_commit = $git->parse_commit($project, 'HEAD');
-  my $committer_date
-    = $git->parse_date($head_commit->{committer_epoch}, $head_commit->{committer_tz});
-  my $last_change = $git->timestamp($committer_date);
-  my $head_id = $head_commit->{id};
-  my $urls = $git->project_urls($project);
-  
-  # Commits
-  my $commit_count = 20;
-  my $commits = $head_id ? $git->parse_commits($project, $head_id, $commit_count) : ();
-
-  # References
-  my $refs = $git->references($project);
-  
-  # Tags
-  my $tag_count = 20;
-  my $tags  = $git->tags($project, $tag_count - 1);
-
-  # Heads
-  my $head_count = 20;
-  my $heads = $git->heads($project, $head_count - 1);
-  
-  # Render
-  $self->render(
-    home => $home,
-    home_ns => $home_ns,
-    project => $project,
-    project_ns => $project_ns,
-    project_description => $project_description,
-    project_owner => $project_owner,
-    last_change => $last_change,
-    urls => $urls,
-    commits => $commits,
-    tags => $tags,
-    head_id => $head_id,
-    heads => $heads,
-    refs => $refs,
-    commit_count => $commit_count,
-    tag_count => $tag_count,
-    head_count => $head_count
-  );
-}
-
 sub tag {
   my $self = shift;
   
