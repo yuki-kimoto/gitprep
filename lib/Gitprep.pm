@@ -91,7 +91,8 @@ sub startup {
   $r->get('/:user/:repository/commit/:id')->to('#commit');
   
   # Commits
-  $r->get('/:user/:repository/commits/(:id)', {id => 'HEAD'})->to('#commits');
+  $r->get('/:user/:repository/commits/:id', {id => 'HEAD'})->to('#commits');
+  $r->get('/:user/:repository/commits/:id/(*file)')->to('#commits');
   
   # Branches
   $r->get('/:user/:repository/branches')->to('#branches');

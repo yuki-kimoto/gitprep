@@ -5,6 +5,7 @@
   my $user = param('user');
   my $repository = param('repository');
   my $id = param('id');
+  my $file = param('file');
   my $page = param('page') || 0;
 
   my $root_ns = $api->root_ns(config->{root});
@@ -153,11 +154,16 @@
     % end
         
     <div class="commit_history">
-      <a class="ubar" href="<%= url_for("/$user/$repository") %>">
-        <%= $repository %>
-      </a>
-      /
-      Commit History
+      % if (defined $file) {
+        History for
+        %= include '/include/page_path', type => 'blob', Path => $file, operation => 'commits';
+      % } else {
+        <a class="ubar" href="<%= url_for("/$user/$repository") %>">
+          <%= $repository %>
+        </a>
+        /
+        Commit History
+      % }
     </div>
     
     % for my $date (sort keys %$commits_date) {

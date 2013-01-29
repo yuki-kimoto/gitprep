@@ -1,4 +1,10 @@
 % use File::Basename 'basename';
+<%
+  my $operation = stash('operation') // 'tree';
+  unless ($operation eq 'commits' || $operation eq 'tree') {
+    $operation = 'tree';
+  }
+%>
 
 %= stylesheet begin
   .page_path {
@@ -11,8 +17,10 @@
   }
 % end
 
-<div class="page_path">
-  <a href="<%= url_for("/$user/$repository") %>"><b><%= $repository %></b></a> /
+<span class="page_path">
+  <a href="<%= url_for("/$user/$repository" . ($operation eq 'commits' ? '/commits' : '')) %>">
+    <b><%= $repository %></b>
+  </a> /
   % my @parts = split('/', $Path);
   % my $path;
   % for (my $i = 0; $i < @parts; $i++) {
@@ -23,7 +31,7 @@
       <b><%= $part %></b>
     % } else {
       <a href=
-          "<%= url_for("/$user/$repository/tree/$id/$path") %>">
+          "<%= url_for("/$user/$repository/$operation/$id/$path") %>">
         <%= $part %>
       </a>
       % $path .= '/';
@@ -32,4 +40,4 @@
       /
     % }
   % }
-</div>
+</span>
