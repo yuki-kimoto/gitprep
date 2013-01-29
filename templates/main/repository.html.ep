@@ -168,6 +168,9 @@
     .commit_number {
       font-size:120%;
     }
+    .commit_number a {
+      color:#4183C4;
+    }
     .commit_number_left {
       width:700px;
       float:left;
