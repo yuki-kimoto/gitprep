@@ -112,41 +112,57 @@
 % layout 'common';
   %= include '/css/common';
   %= include '/include/header', title => 'Commit diff', project => $project;
-  <div class="page_nav">
-    <a href="<%= url_for('commitdiff_plain', project => $project, diff => $commit->{id}) %>">
-      Raw
-    </a>
-  </div>
-  <div class="header">
-    <a class="title" href="<%= url_for('commit', project => $project) %>">
-      <%= $commit->{title} %>
-    </a>
-  </div>
-  <div class="title_text">
-    <table class="object_header">
-      <tr><td>Author</td><td><%= $commit->{author} %></td><td rowspan="2"></td></tr>
-      <tr><td></td><td><%= $commit->{author_date} %></td></tr>
-      <tr><td>Committer</td><td><%= $commit->{committer} %></td><td rowspan="2"></td></tr>
-      <tr><td></td><td><%= $commit->{committer_date} %></td></tr>
-    </table>
-  </div>
-  <div class="page_body">
-    <div class="list_head"></div>
 
-    <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
-      difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project %>
+  <div class="main_panel">
+    %= include '/include/sub_header';
+    
+    %= include '/include/code_menu';
+    %= stylesheet begin
+    /* Code menu */
+    .code_menu_commits {
+      border:1px solid #E5E5E5;
+      border-bottom:none;
+      background-color:white;
+      font-weight:bold;
+    }
+    .code_menu_commits a {
+      color:#333
+    }
+    % end
+        
+    <div class="header">
+      <a class="title" href="<%= url_for('commit', project => $project) %>">
+        <%= $commit->{title} %>
+      </a>
+    </div>
+    <div class="title_text">
+      <table class="object_header">
+        <tr><td>Author</td><td><%= $commit->{author} %></td><td rowspan="2"></td></tr>
+        <tr><td></td><td><%= $commit->{author_date} %></td></tr>
+        <tr><td>Committer</td><td><%= $commit->{committer} %></td><td rowspan="2"></td></tr>
+        <tr><td></td><td><%= $commit->{committer_date} %></td></tr>
+      </table>
+    </div>
+    <div class="page_body">
+      <div class="list_head"></div>
 
-    <div class="patchset">
-      % for (my $i = 0; $i < @$blobdiffs; $i++) {
-        % my $blobdiff = $blobdiffs->[$i];
-        <div class="patch" id="<%= $i + 1 %>">
-          % my $lines = $blobdiff->{lines};
-          % my $file = $blobdiff->{file};
-          % my $from_file = $blobdiff->{from_file};
-          % $from_file = $file unless defined $from_file;
-          % my $status = $blobdiff->{status};
-          %= include '/include/blobdiff_body', file => $file, from_file => $from_file, status => $status, lines => $blobdiff->{lines}, project_ns => $project;
-        </div>
-      % }
+      <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
+        difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project %>
+
+      <div class="patchset">
+        % for (my $i = 0; $i < @$blobdiffs; $i++) {
+          % my $blobdiff = $blobdiffs->[$i];
+          <div class="patch" id="<%= $i + 1 %>">
+            % my $lines = $blobdiff->{lines};
+            % my $file = $blobdiff->{file};
+            % my $from_file = $blobdiff->{from_file};
+            % $from_file = $file unless defined $from_file;
+            % my $status = $blobdiff->{status};
+            %= include '/include/blobdiff_body', file => $file, from_file => $from_file, status => $status, lines => $blobdiff->{lines}, project_ns => $project;
+          </div>
+        % }
+      </div>
     </div>
   </div>
+  
+  %= include '/include/footer';
