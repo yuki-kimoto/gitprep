@@ -4,16 +4,12 @@
   # API
   my $api = Gitprep::API->new($self);
 
+  # Parameters
   my $user = param('user');
   my $project = param('project');
-
   my $root_ns = $api->root_ns(config->{root});
-  
-  # Parameters
   my $project_ns = "$root_ns/$user/$project.git";
   my $project = "/$project_ns";
-  my $home_ns = $api->dirname($project_ns);
-  my $home = "/$home_ns";
   
   # Git
   my $git = $self->app->git;
@@ -47,12 +43,12 @@
     .branches {
       width:100%;
     }
-    .branches .default {
+    .branches .bdefault {
       width:100%;
       background-color:black;
       color:white;
     }
-    .branches .default td {
+    .branches .bdefault td {
       padding-left:5px;
       padding-right:5px;
     }
@@ -62,22 +58,21 @@
       border-bottom:1px solid #E5E5E5;
       vertical-align:middle;
     }
-    .branches .name {
+    .branches .bname {
       font-size:120%;
       font-weight:bold;
     }
     
-    .branches .last_updated {
+    .branches .blast_updated {
       color:#666;
     }
-    .branches .left {
+    .branches .bleft {
       
     }
-    .branches .right {
+    .branches .bright {
       text-align:right;
     }
-
-    .branches .right a {
+    .branches .bright a {
       color:#333;
       display:inline-block;
       padding:5px;
@@ -85,7 +80,7 @@
       border-radius:3px;
       background-color:#F3F3F3;
     }
-    .branches .right a:hover {
+    .branches .bright a:hover {
       color:#FFF;
       background-color:#4183C4;
     }
@@ -115,15 +110,15 @@
     
     <div class="branches_number">Showing <%= @$branches %> branches not merged into master</div>
     <table class="branches">
-      <tr class="default">
-        <td class="left">
-          <div class="name"><%= $default_branch->{name} %></div>
-          <div class="last_updated">Last updated <%= $default_branch->{commit}{age_string} %> by <%= $default_branch->{commit}{author_name} %></div>
+      <tr class="bdefault">
+        <td class="bleft">
+          <div class="bname"><%= $default_branch->{name} %></div>
+          <div class="blast_updated">Last updated <%= $default_branch->{commit}{age_string} %> by <%= $default_branch->{commit}{author_name} %></div>
         </td>
         <td>
           
         </td>
-        <td class="right">
+        <td class="bright">
           Base branch
         </td>
       </tr>
@@ -133,18 +128,18 @@
         % my $branch = $branches->[$i];
         % my $name = $branch->{name};
         <tr>
-          <td class="left">
-            <div class="name">
+          <td class="bleft">
+            <div class="bname">
               <a href="<%= url_for("/$user/$project/tree/$name") %>">
                 <%= $name %>
               </a>
             </div>
-            <div class="last_updated">Last updated <%= $branch->{commit}{age_string} %> by <%= $branch->{commit}{author_name} %></div>
+            <div class="blast_updated">Last updated <%= $branch->{commit}{age_string} %> by <%= $branch->{commit}{author_name} %></div>
           </td>
           <td>
             
           </td>
-          <td class="right">
+          <td class="bright">
             <a href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$name") %>">Compare</a>
           </td>
         </tr>
