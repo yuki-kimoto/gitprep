@@ -113,6 +113,9 @@
     .blob_header .author_date {
       color: #666;
     }
+    .blob_header a.comment {
+      color:#4183C4;
+    }
     .blob_header .bottom {
       padding:5px;
       padding-left:10px;
@@ -144,7 +147,7 @@
       <div class="top">
         <b><%= $commit_log->{author} %></b>
         <span class="author_date"><%= $commit_log->{author_date} %></span>
-        <a href="<%= url_for("/$user/$repository/commit/$id") %>">
+        <a class="comment" href="<%= url_for("/$user/$repository/commit/$id") %>">
           <%= $commit->{title} %>
         </a>
       </div>

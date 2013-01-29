@@ -1,0 +1,2 @@
+# CSS color
+link blue:#4183C4
