@@ -1,31 +1,27 @@
 <%
   # API
   my $api = Gitprep::API->new($self);
-  
+
+  # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $id = param('id');
-  my $file = param('file');
+  my $rev = param('rev');
+  my $blob = param('blob');
   my $page = param('page') || 0;
-
   my $root_ns = $api->root_ns(config->{root});
-  
-  # Parameters
-  my $project_ns = "$root_ns/$user/$project.git";
-  my $project = "/$project_ns";
-  my $home_ns = $api->dirname($project_ns);
-  my $home = "/$home_ns";
+  my $rep_ns = "$root_ns/$user/$project.git";
+  my $rep = "/$rep_ns";
   
   # Git
   my $git = $self->app->git;
   
   # Commit
-  my $commit = $git->parse_commit($project, $id);
+  my $commit = $git->parse_commit($rep, $rev);
   
   # Commits
   my $page_count = 30;
   my $commits = $git->parse_commits(
-    $project, $commit->{id}, $page_count, $page_count * $page, $file);
+    $rep, $commit->{id}, $page_count, $page_count * $page, $blob);
   my $commits_count = @$commits;
   my $commits_date = {};
   for my $commit (@$commits) {
@@ -58,47 +54,45 @@
       border-bottom:none;
       margin-bottom:15px;
     }
-    .commit_date {
+    .commit .cdate {
       border-bottom:1px solid gray;
       padding:5px;
       background-color:#E6F1F6;
       color:#3A505B;
       font-weight:bold;
     }
-    .commit_content {
-    }
-    .commit_first {
+    .commit .cfirst {
       overflow:hidden;
       padding:8px;
       padding-bottom:1px;
     }
-    .commit_first_left {
+    .commit .cfirst_left {
       float:left;
       color:black;
     }
-    .commit_first_left a {
+    .commit .cfirst_left a {
       color:black;
       font-weight:bold;
     }
-    .commit_first_right {
+    .commit .cfirst_right {
       float:right;
     }
-    .commit_first_right a {
+    .commit .cfirst_right a {
       color:#4183C4;
     }
-    .commit_second {
+    .commit .csecond {
       overflow:hidden;
       border-bottom:1px solid gray;
       padding:8px;
       padding-top:1px;
     }
-    .commit_second_left {
+    .commit .csecond_left {
       float:left;
     }
-    .commit_second_right {
+    .commit .csecond_right {
       float:right;
     }
-    .commit_second_right a {
+    .commit .csecond_right a {
       color:#4183C4;
     }
     
@@ -110,13 +104,13 @@
       display:inline-block;
       color:black
     }
-    .pagination .left {
+    .pagination .pleft {
       border-right:1px solid gray;
       padding:5px;
       display:block;
       float:left
     }
-    .pagination .right {
+    .pagination .pright {
       padding:5px;
       display:block;
       float:left;
@@ -128,7 +122,7 @@
     .pagination a:hover {
       background-color:#4183C4;
     }
-    .pagination .disable {
+    .pagination .pdisable {
       color:gray;
       cursor:default;
     }    
@@ -154,9 +148,9 @@
     % end
         
     <div class="commit_history">
-      % if (defined $file) {
+      % if (defined $blob) {
         History for
-        %= include '/include/page_path', type => 'blob', Path => $file, operation => 'commits';
+        %= include '/include/page_path', type => 'blob', Path => $blob, operation => 'commits';
       % } else {
         <a class="ubar" href="<%= url_for("/$user/$project") %>">
           <%= $project %>
@@ -170,24 +164,24 @@
       <div class="commit">
         % my $commits = $commits_date->{$date};
         
-        <div class="commit_date"><%= $date %></div>
+        <div class="cdate"><%= $date %></div>
         % for my $commit (sort {$a->{author_epoch} <=> $b->{author_epoch}} @$commits) {
-          <div class="commit_content">
-            <div class="commit_first">
-              <div class="commit_first_left">
+          <div class="ccontent">
+            <div class="cfirst">
+              <div class="cfirst_left">
                 <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                   <%= $commit->{title_short} %>
                 </a>
               </div>
-              <div class="commit_first_right a_dec_on a_blue">
+              <div class="cfirst_right a_dec_on a_blue">
                 <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                   <%= substr($commit->{id}, 0, 10) %>
                 </a>
               </div>
             </div>
-            <div class="commit_second">
-              <div class="commit_second_left">yuki-kimoto authored 7 days ago</div>
-              <div class="commit_second_right">
+            <div class="csecond">
+              <div class="csecond_left">yuki-kimoto authored 7 days ago</div>
+              <div class="csecond_right">
                 <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                   Browse code
                 </a>
@@ -199,16 +193,16 @@
     % }
     <div class="pagination">
       % if ($page == 0) {
-        <span class="left disable">&laquo; Newer</span>
+        <span class="pleft pdisable">&laquo; Newer</span>
       % } else {
         % my $newer_page = $page - 1;
-        <a class="left" href="<%= url_for("/$user/$project/commits/$id?page=$newer_page") %>">&laquo; Newer</a>
+        <a class="pleft" href="<%= url_for("/$user/$project/commits/$rev?page=$newer_page") %>">&laquo; Newer</a>
       % }
       % if ($commits_count < $page_count) {
-        <span class="right disable">Older &raquo;</span>
+        <span class="pright pdisable">Older &raquo;</span>
       % } else {
         % my $older_page = $page + 1;
-        <a class="right" href="<%= url_for("/$user/$project/commits/$id?page=$older_page") %>">Older &raquo;</a>
+        <a class="pright" href="<%= url_for("/$user/$project/commits/$rev?page=$older_page") %>">Older &raquo;</a>
       % }
     </div>
   </div>
