@@ -83,31 +83,14 @@ sub startup {
   # Blob
   $r->get('/:user/:project/blob/(*object)')->to('#blob');
   
+  # Blob diff
+  $r->get('/:user/:project/blobdiff/:diff/(*file)')->to('#blobdiff');
+  
   # Raw
   $r->get('/:user/:project/raw/(*id_file)')->to('#raw');
   
   # Projects
   $r->get('/(*home)/projects')->to('#projects')->name('projects');
-  
-  # Project
-  {
-    my $r = $r->route('/(*project)', project => qr/.+?\.git/);
-    
-    # Commit diff
-    $r->get('/commitdiff/(*diff)')->to('#commitdiff')->name('commitdiff');
-    
-    # Commit diff plain
-    $r->get('/commitdiff-plain/(*diff)')
-      ->to('#commitdiff', plain => 1)->name('commitdiff_plain');
-    
-    # Blob diff
-    $r->get('/blobdiff/(#diff)/(*file)')
-      ->to('#blobdiff')->name('blobdiff');
-
-    # Blob diff plain
-    $r->get('/blobdiff-plain/(#diff)/(*file)')
-      ->to('#blobdiff', plain => 1)->name('blobdiff_plain');
-  }
   
   # File cache
   $git->search_projects;

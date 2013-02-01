@@ -4,6 +4,8 @@
   unless ($operation eq 'commits' || $operation eq 'tree') {
     $operation = 'tree';
   }
+  
+  my $rev = stash('id') || stash('rev');
 %>
 
 %= stylesheet begin

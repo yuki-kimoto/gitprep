@@ -4,10 +4,10 @@
   my $api = Gitprep::API->new($self);
   
   # Parameters
-  my $project_ns = $self->param('project');
-  my $project = "/$project_ns";
-  my $home_ns = $api->dirname($project_ns);
-  my $home = "/$home_ns";
+  my $project = $self->param('project');
+  my $root_ns = $api->root_ns(config->{root});
+  my $rep_ns = "$root_ns/$user/$project.git";
+  my $rep = "/$rep_ns";
   my $diff = $self->param('diff');
   my $file = $self->param('file');
   my $from_file = $self->param('from-file');
@@ -26,53 +26,29 @@
       $from_id, $id, '--', $from_file, $file
     or $api->croak("Open git-diff-tree failed");
   
-  # Blob diff plain
-  if ($plain) {
-    # Content
-    my $content = do { local $/; <$fh> };
-    close $fh;
-    
-    # Render
-    my $content_disposition .= "inline; filename=$file";
-    $self->res->headers->content_disposition($content_disposition);
-    $self->res->headers->content_type("text/plain; charset=" . $git->encoding);
-    $self->render(data => $content);
-  }
+  # Lines
+  my @lines = map { $git->dec($_) } <$fh>;
+  close $fh;
+  my $lines = $git->parse_blobdiff_lines(\@lines);
   
-  # Blob diff
-  else {
-    # Lines
-    my @lines = map { $git->dec($_) } <$fh>;
-    close $fh;
-    my $lines = $self->_parse_blobdiff_lines(\@lines);
-    
-    # Commit
-    my $commit = $git->parse_commit($project, $id);
-    
-    # Render
-    $self->render(
-      '/blobdiff',
-      home => $home,
-      home_ns => $home_ns,
-      project => $project,
-      project_ns => $project_ns,
-      id => $id,
-      from_id => $from_id,
-      file => $file,
-      from_file => $from_file,
-      commit => $commit,
-      lines => $lines
-    );
-  }
+  # Commit
+  my $commit = $git->parse_commit($project, $id);
+  
+  # Variables for included templates
+  stash(
+    lines => $lines,
+    rev => $id,
+    project_ns => $project,
+    from_id => $from_id,
+    from_file => $from_file,
+    id => $id
+  );
 %>
 
 % layout 'common';
-  % my $head_id = gitprep_get_head_id($project);
   %= include '/include/header', title => 'Blob Diff', project => $project;
-  %= include '/include/current_directory', home_ns => $home_ns, home => $home;
-  %= include '/include/page_navi', current => 'blobdiff', head_id => $id, project_ns => $project_ns;
   <div class="page_nav">
-    % my $blobdiff_plain_url = url_for('blobdiff_plain', project => $project_ns,
+    % my $blobdiff_plain_url = url_for('blobdiff_plain', project => $project,
     %   diff => "$from_id..$id", file => $file);
     % $blobdiff_plain_url->query('from-file' => $from_file) if $file ne $from_file;
     <a href="<%= $blobdiff_plain_url %>">
@@ -82,9 +58,9 @@
   </div>
   <div class="header">
     <a class="title" href=
-      "<%= url_for('commit', project => $project_ns, id => $id) %>">
+      "<%= url_for('commit', project => $project, id => $id) %>">
       <%= $commit->{title} %>
     </a>
   </div>
-  %= include '/include/page_path', project_ns => $project_ns, id => $id, Path => $file, type => 'blob';
+  %= include '/include/page_path', project_ns => $project, Path => $file, type => 'blob';
   %= include '/include/blobdiff_body';

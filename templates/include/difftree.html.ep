@@ -73,8 +73,10 @@
               <td  class="link" align="right"> | </td>
             % } elsif ($status eq 'D') {
               <td class="link">
-                <a class="list ubar" href="<%= url_for('blob', project => $project_ns,
-                    id_file => "$from_id/$from_file") %>">
+                % my $blobdiff_url = url_for("/$user/$project/blobdiff/$id/$file");
+                % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
+
+                <a class="list ubar" href="<%= $blobdiff_url %>">
                   blob<%= $i + 1 %>
                 </a>
                 |
@@ -85,8 +87,7 @@
               % } else {
                 <td class="link">
               % }
-              % my $blobdiff_url = url_for('blobdiff',project => $project_ns,
-              %   diff => "$from_id..$id", file => $file);
+              % my $blobdiff_url = url_for("/$user/$project/blobdiff/$id/$file");
               % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
               
               <a class="ubar" href="<%= $blobdiff_url %>">
@@ -98,7 +99,11 @@
 
           <td class="link">
             % if ($not_deleted) {
-              <a class="ubar" href="<%= url_for('blob', project => $project_ns, id_file => "$id/$file") %>">
+              % my $from_file = $difftree->{from_file};
+              % my $blobdiff_url = url_for("/$user/$project/blobdiff/$id/$file");
+              % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
+
+              <a class="ubar" href="<%= $blobdiff_url %>">
                 blob
               </a>
             % }
@@ -119,8 +124,9 @@
             % if ($status eq 'D') {
               <%= $file %>
             % } else {
-              <a class="list ubar" href="<%= url_for('blob', project => $project_ns,
-                  id_file => "$id/$file") %>">
+              % my $blobdiff_url = url_for("/$user/$project/blobdiff/$id/$file");
+              % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
+              <a class="list ubar" href="<%= $blobdiff_url %>">
                 <%= $file %>
               </a>
             % }
@@ -167,8 +173,9 @@
               <span class="file_status <%= $status_name %>">
                 [
                   <%= $status_name %> from
-                  <a class="ubar" href="<%= url_for('blob', project => $project_ns,
-                      id_file => "$from_id/$from_file") %>">
+                  % my $blobdiff_url = url_for("/$user/$project/blobdiff/$id/$file");
+                  % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
+                  <a class="ubar" href="<%= $blobdiff_url %>">
                     <%= $difftree->{from_file} %></a>
                   with <%= $difftree->{similarity} %>%
                   <%= $mode_change %>
