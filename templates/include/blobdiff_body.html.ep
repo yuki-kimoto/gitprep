@@ -6,18 +6,37 @@
     margin-bottom:10px;
     border:1px solid #ccc;
     margin-top:15px;
+    overflow:hidden;
   }
-  
-   .blob_diff_status a {
-     color:gray;
-   }
-   .blob_diff_status a:hover {
-     text-decoration:underline;
-   }
-   
-   .blob_diff_source {
-     border:1px solid #ccc;
-   }
+  .blob_diff_status .sfile {
+    float:left;
+    padding-top:7px;
+  }
+  .blob_diff_status a.sblob_link {
+    float:right;
+    display:block;
+    border:1px solid #ccc;
+    border-radius:2px;
+    padding:6px;
+  }
+  .blob_diff_status a.sblob_link {
+    text-decoration:none;
+    color:white;
+    color:gray;
+    font-weight:bold;
+  }
+  .blob_diff_status a.sblob_link:hover {
+    text-decoration:none;
+    color:white;
+    background-color:#4183C4;
+  }  
+  .blob_diff_status a:hover {
+    text-decoration:underline;
+  }
+
+  .blob_diff_source {
+   border:1px solid #ccc;
+  }
 % end
 
 <div class="blob_diff_body">
@@ -36,11 +55,13 @@
     % next if $value =~ /^\+\+\+ /;
     % my $status = stash('status') || '';
     % if ($class eq 'diff header') {
-      % my $file = $value;
-      % $file =~ s#diff --git a/##;
-      % $file =~ s# b/.*$##;
       <div class="blob_diff_status">
-        <%= $file %>
+        <div class="sfile">
+          <%= $file %>
+        </div>
+        <a class="sblob_link" href="<%= url_for("/$user/$project/blob/$id/$file") %>">
+          View file @ <%= substr($id, 0, 7) %>
+        </a>
       </div>
     % } elsif ($class eq 'diff binary_file') {
       <div class="<%= $class %>">Binary files <a href="<%= url_for("/$user/$project/blob/$from_id/$file") %>">a/<%= $file %></a> and <a href="<%= url_for("/$user/$project/blob/$id/$file") %>">b/<%= $file %></a> differ</div>

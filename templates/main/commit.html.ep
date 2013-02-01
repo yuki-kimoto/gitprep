@@ -29,7 +29,6 @@
   $commit->{committer_date} = $git->timestamp($committer_date);
   $from_id = $commit->{parent} unless defined $from_id;
   
-  my $blobdiffs = [];
 
   # Diff tree
   my $difftrees = $git->difftree($rep,
@@ -40,12 +39,20 @@
     '--no-commit-id', '--patch-with-raw', $from_id, $id, '--');
   open my $fh, '-|', @cmd
     or $api->croak('Open git-diff-tree failed');
+
+
+  my @file_info_raws;
+  while (my $line = $git->dec(scalar <$fh>)) {
+    chomp $line;
+    push @file_info_raws, $line if $line =~ /^:/;
+    last if $line =~ /^\n/;
+  }
+  close $fh;
   
   # Parse output
-  while (my $line = $git->dec(scalar <$fh>)) {
-    
-    warn $line;
-    
+  my $blobdiffs = [];
+  for my $line (@file_info_raws) {
+  
     # Parse line
     chomp $line;
     my $diffinfo = $git->parse_difftree_raw_line($line);
@@ -57,7 +64,7 @@
       $from_id, $id, '--', (defined $from_file ? $from_file : ()), $file);
     open my $fh_blobdiff, '-|', @cmd
       or $api->croak('Open git-diff-tree failed');
-    my @lines = map { $git->dec($_) } <$fh>;
+    my @lines = map { $git->dec($_) } <$fh_blobdiff>;
     close $fh_blobdiff;
     my $blobdiff = {
       file => $file,
@@ -72,7 +79,6 @@
         last;
       }
     }
-    
     push @$blobdiffs, $blobdiff;
   }
   

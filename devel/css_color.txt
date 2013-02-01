@@ -6,3 +6,4 @@ border color blue:#c5d5dd
 border color gray:#ccc
 background blue:#e6f1f6
 text shallow gray:#999;
+background dark-blue:#4183C4
