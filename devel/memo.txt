@@ -1,0 +1,10 @@
+# Create gitprep user and directory
+su -
+useradd gitprep
+mkdir /gitprep
+chown gitprep:gitprep /gitprep
+chmod 770 /gitprep
+
+# Add user to group
+usermod -G gitprep kimoto
+

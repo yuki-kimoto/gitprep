@@ -117,17 +117,22 @@
     %= include '/include/sub_header';
     
     %= include '/include/code_menu';
+    
     %= stylesheet begin
-    /* Code menu */
-    .code_menu_commits {
-      border:1px solid #E5E5E5;
-      border-bottom:none;
-      background-color:white;
-      font-weight:bold;
-    }
-    .code_menu_commits a {
-      color:#333
-    }
+    
+    % end
+    
+    %= stylesheet begin
+      /* Code menu */
+      .code_menu_commits {
+        border:1px solid #E5E5E5;
+        border-bottom:none;
+        background-color:white;
+        font-weight:bold;
+      }
+      .code_menu_commits a {
+        color:#333
+      }
     % end
         
     <div class="header">

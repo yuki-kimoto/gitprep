@@ -37,123 +37,149 @@
 %>
 
 % layout 'common';
-  %= include '/include/header', title => 'Commit', project => $project;
-  %= include '/include/current_directory', home_ns => $home_ns, home => $home;
+  %= include '/css/common';
+  
+  %= stylesheet begin
 
-  <div class="page_nav">
-    % my $parent = $commit->{parent};
-    % my $parents = $commit->{parents};
-    % my $from_id = $parent;
+  % end
+  
+  %= include '/include/header';
+
+  <div class="main_panel">
+    %= include '/include/sub_header';
     
-    % if (!defined $parent) {
-      (initial)
-    % }
-    % elsif (@$parents == 1) {
-      (
-        parent:
-        <a href="<%= url_for('commit', project => $project_ns, id => $parent) %>">
-          <%= substr($parent, 0, 7) %>
-        </a>
-      )
-    % } else {
-      (
-        merge:
-        % for my $parent (@$parents) {
+    %= include '/include/code_menu';
+    %= stylesheet begin
+    /* Code menu */
+    .code_menu_commits {
+      border:1px solid #E5E5E5;
+      border-bottom:none;
+      background-color:white;
+      font-weight:bold;
+    }
+    .code_menu_commits a {
+      color:#333
+    }
+    % end
+  
+    <div class="page_nav">
+      % my $parent = $commit->{parent};
+      % my $parents = $commit->{parents};
+      % my $from_id = $parent;
+      
+      % if (!defined $parent) {
+        (initial)
+      % }
+      % elsif (@$parents == 1) {
+        (
+          parent:
           <a href="<%= url_for('commit', project => $project_ns, id => $parent) %>">
-            <%= substr($parent, 0, 7) %></a>
-        % }
-      )
-    % }
-  </div>
+            <%= substr($parent, 0, 7) %>
+          </a>
+        )
+      % } else {
+        (
+          merge:
+          % for my $parent (@$parents) {
+            <a href="<%= url_for('commit', project => $project_ns, id => $parent) %>">
+              <%= substr($parent, 0, 7) %></a>
+          % }
+        )
+      % }
+    </div>
 
-  <div class="header">
-    % if (defined $parent) {
-      <a class="title" href="<%= url_for('commitdiff', project => $project_ns, diff => $commit->{id}) %>">
-        <%= $commit->{title} %>
-      </a>
-    % } else {
-      <a class="title" href="<%= url_for('tree', project => $project_ns, id_dir => $commit->{id}) %>">
-        <%= $commit->{title} %>
-      </a>
-    % }
-  </div>
-  <div class="title_text">
-    %= include 'include/refs', project_ns => $project_ns, project => $project_ns, commit => $commit, refs => $refs;
-    <table class="object_header">
-      <tr>
-        <td>author</td>
-        <td><%= $commit->{author} %></td>
-        <td rowspan="2"></td>
-      </tr>
-      <tr>
-        <td></td>
-        <td><%= $commit->{author_date} %></td>
-      </tr>
-      <tr>
-        <td>committer</td>
-        <td><%= $commit->{committer} %></td>
-        <td rowspan="2"></td>
-      </tr>
-      <tr>
-        <td></td>
-        <td><%= $commit->{committer_date} %></td>
-      </tr>
-      <tr>
-        <td>commit</td>
-        <td class="sha1"><%= $commit->{id} %></td>
-      </tr>
-      <tr>
-        <td>tree</td>
-        <td class="sha1">
-          <a class="list" href="<%= url_for('tree', project => $project_ns, id_dir => $commit->{id}) %>">
-            <%= $commit->{id} %>
-          </a>
-        </td>
-        <td class="link">
-          <a href="<%= url_for('tree', project => $project_ns, id_dir => $commit->{id}) %>">
-            tree
-          </a>
-          |
-          <a title="in format: tar.gz" rel="nofollow"
-              href="<%= url_for('snapshot', project => $project_ns, id => $commit->{id}) %>">
-            snapshot
-          </a>
-        </td>
-      </tr>
-      % for my $parent (@$parents) {
-        % my $from_id = $parent;
+    <div class="header">
+      % if (defined $parent) {
+        <a class="title" href="<%= url_for('commitdiff', project => $project_ns, diff => $commit->{id}) %>">
+          <%= $commit->{title} %>
+        </a>
+      % } else {
+        <a class="title" href="<%= url_for('tree', project => $project_ns, id_dir => $commit->{id}) %>">
+          <%= $commit->{title} %>
+        </a>
+      % }
+    </div>
+    <div class="title_text">
+      %= include 'include/refs', project_ns => $project_ns, project => $project_ns, commit => $commit, refs => $refs;
+      <table class="object_header">
         <tr>
-          <td>
-            parent
-          </td>
+          <td>author</td>
+          <td><%= $commit->{author} %></td>
+          <td rowspan="2"></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td><%= $commit->{author_date} %></td>
+        </tr>
+        <tr>
+          <td>committer</td>
+          <td><%= $commit->{committer} %></td>
+          <td rowspan="2"></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td><%= $commit->{committer_date} %></td>
+        </tr>
+        <tr>
+          <td>commit</td>
+          <td class="sha1"><%= $commit->{id} %></td>
+        </tr>
+        <tr>
+          <td>tree</td>
           <td class="sha1">
-            <a class="list" href="<%= url_for('commit', project => $project_ns, id => $from_id) %>">
-              <%= $from_id %>
+            <a class="list" href="<%= url_for('tree', project => $project_ns, id_dir => $commit->{id}) %>">
+              <%= $commit->{id} %>
             </a>
           </td>
           <td class="link">
-            <a href="<%= url_for('commit', project => $project_ns, id => $from_id) %>">
-              commit
+            <a href="<%= url_for('tree', project => $project_ns, id_dir => $commit->{id}) %>">
+              tree
             </a>
             |
-            <a href="<%= url_for('commitdiff', project => $project_ns,
-                diff => "$from_id..$commit->{id}") %>">
-              diff
+            <a title="in format: tar.gz" rel="nofollow"
+                href="<%= url_for('snapshot', project => $project_ns, id => $commit->{id}) %>">
+              snapshot
             </a>
           </td>
         </tr>
+        % for my $parent (@$parents) {
+          % my $from_id = $parent;
+          <tr>
+            <td>
+              parent
+            </td>
+            <td class="sha1">
+              <a class="list" href="<%= url_for('commit', project => $project_ns, id => $from_id) %>">
+                <%= $from_id %>
+              </a>
+            </td>
+            <td class="link">
+              <a href="<%= url_for('commit', project => $project_ns, id => $from_id) %>">
+                commit
+              </a>
+              |
+              <a href="<%= url_for('commitdiff', project => $project_ns,
+                  diff => "$from_id..$commit->{id}") %>">
+                diff
+              </a>
+            </td>
+          </tr>
+        % }
+      </table>
+    </div>
+    <div class="page_body">
+      <%= $commit->{title} %><br/>
+      <br/>
+      % for (my $i = 1; $i < @{$commit->{comment}}; $i++) {
+        &nbsp;<%= $commit->{comment}->[$i] %>
+        <br>
       % }
-    </table>
+    </div>
+    <div class="list_head">
+    </div>
+    <%= include '/include/difftree', id => $commit->{id}, from_id => $from_id,
+      difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project_ns%>
   </div>
-  <div class="page_body">
-    <%= $commit->{title} %><br/>
-    <br/>
-    % for (my $i = 1; $i < @{$commit->{comment}}; $i++) {
-      &nbsp;<%= $commit->{comment}->[$i] %>
-      <br>
-    % }
-  </div>
-  <div class="list_head">
-  </div>
-  <%= include '/include/difftree', id => $commit->{id}, from_id => $from_id,
-    difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project_ns%>
+  
+  %= include '/include/footer';
+
