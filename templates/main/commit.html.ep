@@ -233,13 +233,13 @@
         </div>
       </div>
     </div>
-        
-    <div class="page_body">
-      <div class="list_head"></div>
-
-      <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
-        difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project %>
-
+    
+    <div style="margin-top:10px;margin-bottom:10px;">
+    <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
+      difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project %>
+    </div>
+    
+    <div>
       <div class="patchset">
         % for (my $i = 0; $i < @$blobdiffs; $i++) {
           % my $blobdiff = $blobdiffs->[$i];

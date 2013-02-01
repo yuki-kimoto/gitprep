@@ -31,7 +31,7 @@
       <b><%= $part %></b>
     % } else {
       <a href=
-          "<%= url_for("/$user/$project/$operation/$id/$path") %>">
+          "<%= url_for("/$user/$project/$operation/$rev/$path") %>">
         <%= $part %>
       </a>
       % $path .= '/';

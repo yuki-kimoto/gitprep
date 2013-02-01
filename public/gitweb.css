@@ -8,14 +8,6 @@ body {
         color: #000000;
 }
 
-a {
-        color: #0000cc;
-}
-
-a:hover, a:visited, a:active {
-        color: #880000;
-}
-
 span.cntrl {
         border: dashed #aaaaaa;
         border-width: 1px;
@@ -32,10 +24,6 @@ img.avatar {
         vertical-align: middle;
 }
 
-a.list img.avatar {
-        border-style: none;
-}
-
 div.page_header {
         height: 25px;
         padding: 8px;
@@ -44,7 +32,7 @@ div.page_header {
         background-color: #d9d8d1;
 }
 
-div.page_header a:visited, a.header {
+div.page_header a:visited {
         color: #0000cc;
 }
 
@@ -86,7 +74,7 @@ div#generating_info {
         color: #505050;
 }
 
-div.title, a.title {
+div.title{
         display: block;
         padding: 6px 8px;
         font-weight: bold;
@@ -97,10 +85,6 @@ div.title, a.title {
 
 div.readme {
         padding: 8px;
-}
-
-a.title:hover {
-        background-color: #d9d8d1;
 }
 
 div.title_text {
@@ -144,39 +128,6 @@ div.list_head {
 
 .author {
         font-style: italic;
-}
-
-a.list {
-        text-decoration: none;
-        color: #000000;
-}
-
-a.subject, a.name {
-        font-weight: bold;
-}
-
-table.tags a.subject {
-        font-weight: normal;
-}
-
-a.list:hover {
-        text-decoration: underline;
-        color: #880000;
-}
-
-a.text {
-        text-decoration: none;
-        color: #0000cc;
-}
-
-a.text:visited {
-        text-decoration: none;
-        color: #880000;
-}
-
-a.text:hover {
-        text-decoration: underline;
-        color: #880000;
 }
 
 table {
@@ -261,7 +212,7 @@ td {
         vertical-align: top;
 }
 
-td.link, td.selflink {
+td.selflink {
         padding: 2px 5px;
         font-family: sans-serif;
         font-size: 70%;
@@ -387,15 +338,7 @@ div.diff.header {
         border-width: 1px 0px 1px 0px;
 }
 
-div.diff.header a.path {
-        text-decoration: underline;
-}
-
 div.diff.extended_header,
-div.diff.extended_header a.path,
-div.diff.extended_header a.hash {
-        color: #777777;
-}
 
 div.diff.extended_header .info {
         color: #b0b0b0;
@@ -406,19 +349,6 @@ div.diff.extended_header {
         padding: 2px 0px 2px 0px;
 }
 
-div.diff a.list,
-div.diff a.path,
-div.diff a.hash {
-        text-decoration: none;
-}
-
-div.diff a.list:hover,
-div.diff a.path:hover,
-div.diff a.hash:hover {
-        text-decoration: underline;
-}
-
-div.diff.to_file a.path,
 div.diff.to_file {
         color: #007000;
 }
@@ -427,7 +357,6 @@ div.diff.add {
         color: #008800;
 }
 
-div.diff.from_file a.path,
 div.diff.from_file {
         color: #aa0000;
 }
@@ -485,39 +414,6 @@ p.projsearch {
 
 td.linenr {
         text-align: right;
-}
-
-a.linenr {
-        color: #999999;
-        text-decoration: none
-}
-
-a.rss_logo {
-        float: right;
-        padding: 3px 0px;
-        width: 35px;
-        line-height: 10px;
-        border: 1px solid;
-        border-color: #fcc7a5 #7d3302 #3e1a01 #ff954e;
-        color: #ffffff;
-        background-color: #ff6600;
-        font-weight: bold;
-        font-family: sans-serif;
-        font-size: 70%;
-        text-align: center;
-        text-decoration: none;
-}
-
-a.rss_logo:hover {
-        background-color: #ee5500;
-}
-
-a.rss_logo.generic {
-        background-color: #ff8800;
-}
-
-a.rss_logo.generic:hover {
-        background-color: #ee7700;
 }
 
 span.refs span {

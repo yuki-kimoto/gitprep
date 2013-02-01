@@ -1,3 +1,24 @@
+%= stylesheet begin
+  /* Diff tree header */
+  .diff_tree_header {
+    margin-bottom:5px;
+  }
+  
+  /* Diff tree */
+  .diff_tree a.list {
+    color:#4183C4;
+  }
+  .diff_tree td {
+    padding:3px;
+  }
+  .diff_tree tr {
+    border-bottom:1px solid #CCC;
+  }
+% end
+
+<div class="diff_tree_header">
+  Showing <b><%= @$difftrees %> changed files</b>
+</div>
 <table class="<%= @$parents > 1 ? 'combined' : 'diff_tree' %>"">
   
   % my $has_header = @$difftrees && @$parents > 1 && stash('action') eq 'commitdiff';
@@ -9,7 +30,7 @@
           % my $parent = $parents->[$i];
           % my $from_id = $parent;
           <th>
-            <a href="<%= url_for('commitdiff', project => $project_ns, diff => "$from_id..$id") %>"
+            <a class="ubar" href="<%= url_for('commitdiff', project => $project_ns, diff => "$from_id..$id") %>"
                 title="commitdiff to parent number <%= $i + 1 %> <%= substr($from_id, 0, 7) %>">
               <%= $i + 1 %>
             </a>
@@ -22,7 +43,7 @@
     % my $toggle = 0;
     % for my $difftree (@$difftrees) {
     
-      <tr class="<%= $toggle++ % 2 ? 'light' : 'dark' %>">
+      <tr>
         % if (exists $difftree->{'nparents'}) {
           % my $file = $difftree->{to_file};
           
@@ -32,7 +53,7 @@
             </td>
           % } else {
             <td>
-              <a class="list" href="<%= url_for('blob', project => $project_ns,
+              <a class="list ubar" href="<%= url_for('blob', project => $project_ns,
                   id_file => "$id/$file") %>">
                 <%= $file %>
               </a>
@@ -49,10 +70,10 @@
             % $not_deleted ||= ($status ne 'D');
 
             % if ($status eq 'A') {
-              <td  class=\"link\" align=\"right\"> | </td>
+              <td  class="link" align="right"> | </td>
             % } elsif ($status eq 'D') {
               <td class="link">
-                <a class="list" href="<%= url_for('blob', project => $project_ns,
+                <a class="list ubar" href="<%= url_for('blob', project => $project_ns,
                     id_file => "$from_id/$from_file") %>">
                   blob<%= $i + 1 %>
                 </a>
@@ -68,7 +89,7 @@
               %   diff => "$from_id..$id", file => $file);
               % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
               
-              <a href="<%= $blobdiff_url %>">
+              <a class="ubar" href="<%= $blobdiff_url %>">
                 diff<%= $i + 1 %>
               </a>
               | </td>
@@ -77,7 +98,7 @@
 
           <td class="link">
             % if ($not_deleted) {
-              <a href="<%= url_for('blob', project => $project_ns, id_file => "$id/$file") %>">
+              <a class="ubar" href="<%= url_for('blob', project => $project_ns, id_file => "$id/$file") %>">
                 blob
               </a>
             % }
@@ -98,7 +119,7 @@
             % if ($status eq 'D') {
               <%= $file %>
             % } else {
-              <a class="list" href="<%= url_for('blob', project => $project_ns,
+              <a class="list ubar" href="<%= url_for('blob', project => $project_ns,
                   id_file => "$id/$file") %>">
                 <%= $file %>
               </a>
@@ -146,30 +167,13 @@
               <span class="file_status <%= $status_name %>">
                 [
                   <%= $status_name %> from
-                  <a href="<%= url_for('blob', project => $project_ns,
+                  <a class="ubar" href="<%= url_for('blob', project => $project_ns,
                       id_file => "$from_id/$from_file") %>">
                     <%= $difftree->{from_file} %></a>
                   with <%= $difftree->{similarity} %>%
                   <%= $mode_change %>
                 ]
               </span>
-            % }
-          </td>
-          <td class="link">
-            % if ($status ne 'A') {
-              % my $blobdiff_url = url_for('blobdiff',project => $project_ns,
-              %   diff => "$from_id..$id", file => $file);
-              % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
-              <a href="<%= $blobdiff_url %>">
-                diff
-              </a>
-              |
-            % }
-            % if ($status ne 'D') {
-              <a href="<%= url_for('blob', project => $project_ns,
-                  id_file => "$id/$file") %>">
-                blob
-              </a>
             % }
           </td>
         % }

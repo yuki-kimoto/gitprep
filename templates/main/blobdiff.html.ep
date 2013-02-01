@@ -1,3 +1,71 @@
+<%
+
+  # API
+  my $api = Gitprep::API->new($self);
+  
+  # Parameters
+  my $project_ns = $self->param('project');
+  my $project = "/$project_ns";
+  my $home_ns = $api->dirname($project_ns);
+  my $home = "/$home_ns";
+  my $diff = $self->param('diff');
+  my $file = $self->param('file');
+  my $from_file = $self->param('from-file');
+  $from_file = $file unless defined $from_file;
+  my $plain = $self->param('plain');
+  my $from_id;
+  my $id;
+  if ($diff =~ /\.\./) { ($from_id, $id) = $diff =~ /(.+)\.\.(.+)/ }
+  else { $id = $diff }
+  
+  # Git
+  my $git = $self->app->git;
+
+  # Get blob diff (command "git diff")
+  open my $fh, '-|', $git->cmd($project), 'diff', '-r', '-M', '-p',
+      $from_id, $id, '--', $from_file, $file
+    or $api->croak("Open git-diff-tree failed");
+  
+  # Blob diff plain
+  if ($plain) {
+    # Content
+    my $content = do { local $/; <$fh> };
+    close $fh;
+    
+    # Render
+    my $content_disposition .= "inline; filename=$file";
+    $self->res->headers->content_disposition($content_disposition);
+    $self->res->headers->content_type("text/plain; charset=" . $git->encoding);
+    $self->render(data => $content);
+  }
+  
+  # Blob diff
+  else {
+    # Lines
+    my @lines = map { $git->dec($_) } <$fh>;
+    close $fh;
+    my $lines = $self->_parse_blobdiff_lines(\@lines);
+    
+    # Commit
+    my $commit = $git->parse_commit($project, $id);
+    
+    # Render
+    $self->render(
+      '/blobdiff',
+      home => $home,
+      home_ns => $home_ns,
+      project => $project,
+      project_ns => $project_ns,
+      id => $id,
+      from_id => $from_id,
+      file => $file,
+      from_file => $from_file,
+      commit => $commit,
+      lines => $lines
+    );
+  }
+%>
+
 % layout 'common';
   % my $head_id = gitprep_get_head_id($project);
   %= include '/include/header', title => 'Blob Diff', project => $project;
