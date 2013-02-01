@@ -1,11 +1,11 @@
 %= stylesheet begin
   .blob_diff_status {
-    background-color:#e6f1f6;
+    background-color:#F3F3F3;
     padding:10px;
-    padding-bottom:30px;
+    padding-bottom:10px;
     margin-bottom:10px;
-    border-radius:4px;
-    border:1px solid #c5d5dd;
+    border:1px solid #ccc;
+    margin-top:15px;
   }
   
    .blob_diff_status a {
@@ -21,18 +21,26 @@
 % end
 
 <div class="blob_diff_body">
+  % my $start;
   % for my $line (@$lines) {
     % my $class = $line->{class};
+    % my $value = $line->{value};
+    % unless ($start) {
+      % if ($class eq 'diff header') {
+        % $start = 1;
+      % }
+      % else { next }
+    % }
+    % next if $value =~ /^index /;
+    % next if $value =~ /^--- /;
+    % next if $value =~ /^\+\+\+ /;
     % my $status = stash('status') || '';
     % if ($class eq 'diff header') {
+      % my $file = $value;
+      % $file =~ s#diff --git a/##;
+      % $file =~ s# b/.*$##;
       <div class="blob_diff_status">
-        Diff
-        % if ($status eq 'A') {
-          a/<%= $file %>
-        % } else {
-          <a href="<%= url_for("/$user/$project/blob/$from_id/$from_file") %>">a/<%= $from_file %></a>
-        % }
-        <a href="<%= url_for("/$user/$project/blob/$id/$file") %>">b/<%= $file %></a>
+        <%= $file %>
       </div>
     % } elsif ($class eq 'diff binary_file') {
       <div class="<%= $class %>">Binary files <a href="<%= url_for("/$user/$project/blob/$from_id/$file") %>">a/<%= $file %></a> and <a href="<%= url_for("/$user/$project/blob/$id/$file") %>">b/<%= $file %></a> differ</div>

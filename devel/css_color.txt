@@ -1,6 +1,6 @@
 # CSS color
 link blue:#4183C4
-header background:#F3F3F3;
+backgroud gray:#F3F3F3
 Default Text black:#555;
 border color blue:#c5d5dd
 border color gray:#ccc
