@@ -37,6 +37,11 @@
   .blob_diff_source {
    border:1px solid #ccc;
   }
+  
+  .diff {
+    font-size:100%;
+    line-height:130%;
+  }
 % end
 
 <div class="blob_diff_body">

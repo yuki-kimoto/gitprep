@@ -106,6 +106,8 @@
     }
     .commit_header .htop {
       padding:8px;
+      padding-bottom:0;
+      margin-bottom:0;
       background-color:#e6f1f6;
       overflow:hidden;
     }
@@ -113,6 +115,7 @@
       float:left;
       font-weight:bold;
       font-size:120%;
+      padding-top:2px;
     }
     .commit_header .hcode {
       float:right;

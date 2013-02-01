@@ -1,6 +1,5 @@
 body {
         font-family: sans-serif;
-        font-size: small;
         border: solid #d9d8d1;
         border-width: 1px;
         margin: 10px;
@@ -27,7 +26,6 @@ img.avatar {
 div.page_header {
         height: 25px;
         padding: 8px;
-        font-size: 150%;
         font-weight: bold;
         background-color: #d9d8d1;
 }
@@ -69,7 +67,6 @@ div.page_footer_text {
 
 div#generating_info {
         margin: 4px;
-        font-size: smaller;
         text-align: center;
         color: #505050;
 }
@@ -111,7 +108,6 @@ span.signoff {
 
 div.log_link {
         padding: 0px 8px;
-        font-size: 70%;
         font-family: sans-serif;
         font-style: normal;
         position: relative;
@@ -167,13 +163,11 @@ table.blame {
 
 table.blame td {
         padding: 0px 5px;
-        font-size: 100%;
         vertical-align: top;
 }
 
 th {
         padding: 2px 5px;
-        font-size: 100%;
         text-align: left;
 }
 
@@ -208,14 +202,12 @@ tr.color3 { background-color: #fff6f6; }
 
 td {
         padding: 2px 5px;
-        font-size: 100%;
         vertical-align: top;
 }
 
 td.selflink {
         padding: 2px 5px;
         font-family: sans-serif;
-        font-size: 70%;
 }
 
 td.selflink {
@@ -296,7 +288,6 @@ table.blame td.age0 {
 
 td.pre, div.pre, div.diff {
         font-family: monospace;
-        font-size: 12px;
         white-space: pre;
 }
 
@@ -400,7 +391,6 @@ div.index_include {
 }
 
 div.search {
-        font-size: 100%;
         font-weight: normal;
         margin: 4px 8px;
         float: right;
@@ -418,7 +408,6 @@ td.linenr {
 
 span.refs span {
         padding: 0px 4px;
-        font-size: 70%;
         font-weight: normal;
         border: 1px solid;
         background-color: #ffaaff;
@@ -496,7 +485,6 @@ div.remote {
         padding-bottom: 2px;
         width:     12px;
         height:    10px;
-        font-size:  9px;
         font-weight: bold;
         text-align: center;
         background-color: #fff0f0;
