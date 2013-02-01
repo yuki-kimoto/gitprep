@@ -84,7 +84,7 @@ sub startup {
   $r->get('/:user/:project/blob/(*object)')->to('#blob');
   
   # Blob diff
-  $r->get('/:user/:project/blobdiff/:diff/(*file)')->to('#blobdiff');
+  $r->get('/:user/:project/blobdiff/(#diff)/(*file)')->to('#blobdiff');
   
   # Raw
   $r->get('/:user/:project/raw/(*id_file)')->to('#raw');

@@ -22,9 +22,11 @@
   my $git = $self->app->git;
 
   # Get blob diff (command "git diff")
-  open my $fh, '-|', $git->cmd($project), 'diff', '-r', '-M', '-p',
+  open my $fh, '-|', $git->cmd($rep), 'diff', '-r', '-M', '-p',
       $from_id, $id, '--', $from_file, $file
     or $api->croak("Open git-diff-tree failed");
+  
+  use D;d [$diff, $from_id, $id, $from_file, $file];
   
   # Lines
   my @lines = map { $git->dec($_) } <$fh>;
@@ -32,7 +34,7 @@
   my $lines = $git->parse_blobdiff_lines(\@lines);
   
   # Commit
-  my $commit = $git->parse_commit($project, $id);
+  my $commit = $git->parse_commit($rep, $id);
   
   # Variables for included templates
   stash(
@@ -46,21 +48,32 @@
 %>
 
 % layout 'common';
-  %= include '/include/header', title => 'Blob Diff', project => $project;
-  <div class="page_nav">
-    % my $blobdiff_plain_url = url_for('blobdiff_plain', project => $project,
-    %   diff => "$from_id..$id", file => $file);
-    % $blobdiff_plain_url->query('from-file' => $from_file) if $file ne $from_file;
-    <a href="<%= $blobdiff_plain_url %>">
-      Raw
-    </a>
-    <br/>
+  %= include '/css/common';
+    
+  %= stylesheet begin
+    
+  % end
+  
+  %= include '/include/header', title => 'Blob diff', project => $project;
+
+  <div class="main_panel">
+    %= include '/include/sub_header';
+    
+    %= include '/include/code_menu';
+    %= stylesheet begin
+      /* Code menu */
+      .code_menu_commits {
+        border:1px solid #E5E5E5;
+        border-bottom:none;
+        background-color:white;
+        font-weight:bold;
+      }
+      .code_menu_commits a {
+        color:#333
+      }
+    % end
+    %= include '/include/page_path', project_ns => $project, Path => $file, type => 'blob';
+    %= include '/include/blobdiff_body';
   </div>
-  <div class="header">
-    <a class="title" href=
-      "<%= url_for('commit', project => $project, id => $id) %>">
-      <%= $commit->{title} %>
-    </a>
-  </div>
-  %= include '/include/page_path', project_ns => $project, Path => $file, type => 'blob';
-  %= include '/include/blobdiff_body';
+  
+  %= include '/include/footer';

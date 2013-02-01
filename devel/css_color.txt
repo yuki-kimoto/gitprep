@@ -3,5 +3,6 @@ link blue:#4183C4
 header background:#F3F3F3;
 Default Text black:#555;
 border color blue:#c5d5dd
+border color gray:#ccc
 background blue:#e6f1f6
 text shallow gray:#999;
