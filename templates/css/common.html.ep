@@ -53,7 +53,7 @@
   a.ubar:hover {
     text-decoration:underline;
   }
-
+  
   /* Main panel */
   .main_panel {
     width:900px;
