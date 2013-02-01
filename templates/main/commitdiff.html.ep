@@ -111,17 +111,17 @@
 
 % layout 'common';
   %= include '/css/common';
+    
+  %= stylesheet begin
+    
+  % end
+  
   %= include '/include/header', title => 'Commit diff', project => $project;
 
   <div class="main_panel">
     %= include '/include/sub_header';
     
     %= include '/include/code_menu';
-    
-    %= stylesheet begin
-    
-    % end
-    
     %= stylesheet begin
       /* Code menu */
       .code_menu_commits {
@@ -134,20 +134,48 @@
         color:#333
       }
     % end
+
+    <div class="commit_header">
+      <div class="htop">
+        <div class="htop_left">
+          <%= $commit->{title} %>
+        </div>
+        <div class="htop_right">
+          <a href="<%= url_for("/$user/$project/tree/$commit->{id}") %>">
+            Browse code
+          </a>          
+        </div>
+      </div>
+      <div class="hbottom">
+        <div class="hbottom_left">
+          <%= $commit->{author} %>
+          <%= $commit->{author_date} %>
+        </div>
+        <div class="hbottom_right">
+          % my $parent = $commit->{parent};
+          % my $parents = $commit->{parents};
+          
+          % if (!defined $parent) {
+            0 parent
+          % } elsif (@$parents == 1) {
+            1 parent:
+            <a href="<%= url_for("/$user/project/$parent") %>">
+              <%= substr($parent, 0, 7) %>
+            </a>
+          % } else {
+            <%= @$parents %> parents:
+            % for my $parent (@$parents) {
+              <a href="<%= url_for("$user/$project/$parent") %>">
+                <%= substr($parent, 0, 7) %>
+              </a>
+            % }
+          % }
+          
+          commit <%= $commit->{id} %>
+        </div>
+      </div>
+    </div>
         
-    <div class="header">
-      <a class="title" href="<%= url_for('commit', project => $project) %>">
-        <%= $commit->{title} %>
-      </a>
-    </div>
-    <div class="title_text">
-      <table class="object_header">
-        <tr><td>Author</td><td><%= $commit->{author} %></td><td rowspan="2"></td></tr>
-        <tr><td></td><td><%= $commit->{author_date} %></td></tr>
-        <tr><td>Committer</td><td><%= $commit->{committer} %></td><td rowspan="2"></td></tr>
-        <tr><td></td><td><%= $commit->{committer_date} %></td></tr>
-      </table>
-    </div>
     <div class="page_body">
       <div class="list_head"></div>
 

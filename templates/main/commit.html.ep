@@ -31,6 +31,7 @@
   
   # Diff tree
   my $parent = $commit->{parent};
+  my $from_id = $parent;
   my $parents = $commit->{parents};
   my $difftrees = $git->difftree($project, $commit->{id}, $parent, $parents);
 
@@ -61,31 +62,43 @@
       color:#333
     }
     % end
-  
-    <div class="page_nav">
-      % my $parent = $commit->{parent};
-      % my $parents = $commit->{parents};
-      % my $from_id = $parent;
-      
-      % if (!defined $parent) {
-        (initial)
-      % }
-      % elsif (@$parents == 1) {
-        (
-          parent:
-          <a href="<%= url_for('commit', project => $project_ns, id => $parent) %>">
-            <%= substr($parent, 0, 7) %>
-          </a>
-        )
-      % } else {
-        (
-          merge:
-          % for my $parent (@$parents) {
-            <a href="<%= url_for('commit', project => $project_ns, id => $parent) %>">
-              <%= substr($parent, 0, 7) %></a>
+    
+    <div class="commit_header">
+      <div class="htop">
+        <div class="htop_left">
+          <%= $commit->{title} %>
+        </div>
+        <div class="htop_right">
+          <a href="<%= url_for("/$user/$project/tree/$commit->{id}") %>">
+            Browse code
+          </a>          
+        </div>
+      </div>
+      <div class="hbottom">
+        <div class="hbottom_left">
+          <%= $commit->{author} %>
+          <%= $commit->{author_date} %>
+        </div>
+        <div class="hbottom_right">
+          % if (!defined $parent) {
+            0 parent
+          % } elsif (@$parents == 1) {
+            1 parent:
+            <a href="<%= url_for("/$user/project/$parent") %>">
+              <%= substr($parent, 0, 7) %>
+            </a>
+          % } else {
+            <%= @$parents %> parents:
+            % for my $parent (@$parents) {
+              <a href="<%= url_for("$user/$project/$parent") %>">
+                <%= substr($parent, 0, 7) %>
+              </a>
+            % }
           % }
-        )
-      % }
+          
+          commit <%= $commit->{id} %>
+        </div>
+      </div>
     </div>
 
     <div class="header">
