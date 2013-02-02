@@ -29,19 +29,17 @@
   # Tree id
   my $tid;
   my $commit = $git->parse_commit($rep, $id);
-  unless (defined $tid) {
-    if (defined $dir && $dir ne '') {
-      $tid = $git->id_by_path($rep, $id, $dir, 'tree');
-    }
-    else { $tid = $commit->{tree} }
+  if (defined $dir && $dir ne '') {
+    $tid = $git->id_by_path($rep, $id, $dir, 'tree');
   }
+  else { $tid = $commit->{tree} }
   $self->render_not_found unless defined $tid;
 
   # Commit log
   my $latest_commit_log = $git->latest_commit_log($rep, $rev);
   
   # Tree
-  my $trees = $api->trees($rep, $tid, $rev);
+  my $trees = $git->trees($rep, $tid, $rev);
   
   # Repository description
   my $desc = $git->project_description($rep);

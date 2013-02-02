@@ -43,11 +43,14 @@
 
 <div class="code_menu">
   <ul class="code_menu_left">
-    <li class="code_menu_current_ref">
-      <div class="code_menu_current_ref_button">
-        branch <b>master</b>
-      </div>
-    </li>
+    
+    % if (defined(my $rev = stash('rev'))) {
+      <li class="code_menu_current_ref">
+        <div class="code_menu_current_ref_button">
+          branch <b><%= $rev %></b>
+        </div>
+      </li>
+    % }
     <li class="code_menu_files"><a href="<%= url_for("/$user/$project") %>">Files</a></li>
     <li class="code_menu_commits"><a href="<%= url_for("/$user/$project/commits/master") %>">Commits</a></li>
     <li class="code_menu_branches"><a href="<%= url_for("/$user/$project/branches") %>">Branches</a></li>

@@ -21,10 +21,14 @@
   # Tree id
   my $commit = $git->parse_commit($rep, $rev);
   my $tid;
+  my $top;
   if (defined $dir && $dir ne '') {
     $tid = $git->id_by_path($rep, $rev, $dir, 'tree');
   }
-  else { $tid = $commit->{tree} }
+  else {
+    $top = 1;
+    $tid = $commit->{tree};
+  }
   $self->render_not_found unless defined $tid;
   
   # Commit log
@@ -217,6 +221,13 @@
     %= include '/include/page_path', type => 'tree', Path => $dir;
 
     %= include '/include/tree';
+    
+    % if ($top) {
+      <div class="readme">
+        <div class="readme_title">README</div>
+        <div class="readme_body"><pre><%= $readme %></pre></div>
+      </div>
+    % }
   </div>
   
   %= include '/include/footer';

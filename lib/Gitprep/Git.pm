@@ -1206,7 +1206,7 @@ sub trees {
     $tree->{mode_str} = $self->_mode_str($tree->{mode});
     
     # Commit log
-    my $name = defined $dir ? "$dir/$tree->{name}" : $tree->{name};
+    my $name = defined $dir && $dir ne '' ? "$dir/$tree->{name}" : $tree->{name};
     my $commit_log = $self->latest_commit_log($rep, $ref, $name);
     $tree = {%$tree, %$commit_log};
     
