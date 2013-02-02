@@ -78,7 +78,7 @@ sub startup {
   $r->get('/:user/:project/downloads')->to('#downloads');
   
   # Tree
-  $r->get('/:user/:project/tree/(*id_dir)')->to('#tree');
+  $r->get('/:user/:project/tree/(*object)')->to('#tree');
   
   # Blob
   $r->get('/:user/:project/blob/(*object)')->to('#blob');

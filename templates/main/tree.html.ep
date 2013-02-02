@@ -7,13 +7,13 @@
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $id_dir ||= param('id_dir') || 'master/';
+  my $object ||= param('object') || 'master/';
   my $root_ns = $api->root_ns(config->{root});
   my $rep_ns = "$root_ns/$user/$project.git";
   my $rep = "/$rep_ns";
 
   # Id and directory
-  my ($id, $dir) = $api->parse_id_path($rep, $id_dir);
+  my ($id, $dir) = $api->parse_id_path($rep, $object);
 
   # Git
   my $git = app->git;

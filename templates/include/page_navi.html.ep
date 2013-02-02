@@ -35,6 +35,6 @@
   % if ($current eq 'tree') {
     Tree
   % } else {
-    <a href="<%= url_for('tree', project => $project_ns, id_dir => $id) %>">Tree</a>
+    <a href="<%= url_for('tree', project => $project_ns, object => $id) %>">Tree</a>
   % }
 </div>

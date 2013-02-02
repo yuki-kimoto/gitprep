@@ -16,7 +16,7 @@
       <a href="<%= url_for('log', project => $project_ns, id => "refs/heads/$name") %>">
         log
       </a> |
-        <a href="<%= url_for('tree', project => $project_ns, id_dir => $name) %>">
+        <a href="<%= url_for('tree', project => $project_ns, object => $name) %>">
           tree
         </a>
       </td>
