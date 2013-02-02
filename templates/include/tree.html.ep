@@ -89,7 +89,7 @@
 
 <div class="tree">
   <div class="tree_header">
-    <a href="<%= url_for('commit', project => $rep_ns, id => $id) %>">
+    <a href="<%= url_for("/$user/$project/commit/$rev") %>">
       <%= $commit->{title} %>
     </a>
   </div>
@@ -117,13 +117,13 @@
           % my $file = defined $dir && $dir ne '' ? "$dir/$name" : $name;
           
           <td class="tree_td_blob">
-            <a href="<%= url_for("/$user/$project/blob/$ref/$file") %>">
+            <a href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
               <%= $name %>
             </a>
           </td>
         % } elsif ($tree) {
           <td class="tree_td_dir">
-            <a href="<%= url_for("/$user/$project/tree/$ref/$child_dir") %>">
+            <a href="<%= url_for("/$user/$project/tree/$rev/$child_dir") %>">
               <%= $name %>
             </a>
           </td>

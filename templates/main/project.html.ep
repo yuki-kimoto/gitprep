@@ -1,7 +1,8 @@
 <%
   use Gitprep::API;
   
-  my $ref = 'master';
+  # Default revision
+  my $rev = 'master';
   
   # Parameters
   my $user = param('user');
@@ -37,31 +38,27 @@
   $self->render_not_found unless defined $tid;
 
   # Commit log
-  my $latest_commit_log = $git->latest_commit_log($rep, $ref);
+  my $latest_commit_log = $git->latest_commit_log($rep, $rev);
   
   # Tree
-  my $trees = $api->trees($rep, $tid, $ref);
+  my $trees = $api->trees($rep, $tid, $rev);
   
   # Repository description
   my $desc = $git->project_description($rep);
   
   # Commits number
-  my $commits_number = $git->commits_number($rep, $ref);
+  my $commits_number = $git->commits_number($rep, $rev);
   
   # README
-  my $readme = $git->blob_plain($rep, $ref, 'README');
+  my $readme = $git->blob_plain($rep, $rev, 'README');
   
-  # Global variable
+  # Variable for included template
   stash(
-    user => $user,
-    project => $project,
-    rep_ns => $rep_ns,
-    id => $id,
     commit => $commit,
     latest_commit_log => $latest_commit_log,
     trees => $trees,
     dir => $dir,
-    ref => $ref,
+    rev => $rev,
     title => "$user/$project"
   );
 %>

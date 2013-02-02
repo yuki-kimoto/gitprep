@@ -8,8 +8,8 @@
   my $user = param('user');
   my $project = param('project');
   my $root_ns = $api->root_ns(config->{root});
-  my $project_ns = "$root_ns/$user/$project.git";
-  my $project = "/$project_ns";
+  my $rep_ns = "$root_ns/$user/$project.git";
+  my $rep = "/$rep_ns";
   
   # Git
   my $git = $self->app->git;
@@ -17,10 +17,10 @@
   # Default branch
   my $default_branch = {};
   $default_branch->{name} = 'master';
-  $default_branch->{commit} = $git->parse_commit($project, $default_branch->{name});
+  $default_branch->{commit} = $git->parse_commit($rep, $default_branch->{name});
   
   # No merged branches
-  my $branches  = $git->no_merged_branches($project);
+  my $branches  = $git->no_merged_branches($rep);
 %>
 
 % layout 'common';

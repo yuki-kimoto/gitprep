@@ -11,8 +11,6 @@
   my $root_ns = $api->root_ns(config->{root});
   my $rep_ns = "$root_ns/$user/$project.git";
   my $rep = "/$rep_ns";
-  my $home_ns = $api->dirname($rep_ns);
-  my $home = "/$home_ns";
 
   # Id and directory
   my ($id, $dir) = $api->parse_id_path($rep, $id_dir);
@@ -49,14 +47,12 @@
   # Global variable
   stash(
     user => $user,
-    project => $project,
-    rep_ns => $rep_ns,
     id => $id,
+    rev => $id,
     commit => $commit,
     latest_commit_log => $latest_commit_log,
     trees => $trees,
     dir => $dir,
-    ref => $id,
     title => "$project/$dir at $id - $user/$project"
   );
 %>
