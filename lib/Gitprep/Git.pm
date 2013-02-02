@@ -1183,6 +1183,40 @@ sub timestamp {
   return $strtime;
 }
 
+sub trees {
+  my ($self, $rep, $tid, $ref, $dir) = @_;
+  
+  # Get tree (command "git ls-tree")
+  my @entries = ();
+  my $show_sizes = 0;
+  open my $fh, '-|', $self->cmd($rep), 'ls-tree', '-z',
+      ($show_sizes ? '-l' : ()), $tid
+    or $self->croak('Open git-ls-tree failed');
+  {
+    local $/ = "\0";
+    @entries = map { chomp; $self->dec($_) } <$fh>;
+  }
+  close $fh
+    or $self->croak(404, "Reading tree failed");
+
+  # Parse tree
+  my $trees;
+  for my $line (@entries) {
+    my $tree = $self->parse_ls_tree_line($line, -z => 1, -l => $show_sizes);
+    $tree->{mode_str} = $self->_mode_str($tree->{mode});
+    
+    # Commit log
+    my $name = defined $dir ? "$dir/$tree->{name}" : $tree->{name};
+    my $commit_log = $self->latest_commit_log($rep, $ref, $name);
+    $tree = {%$tree, %$commit_log};
+    
+    push @$trees, $tree;
+  }
+  $trees = [sort {$b->{type} cmp $a->{type} || $a->{name} cmp $b->{name}} @$trees];
+  
+  return $trees;
+}
+
 sub _slurp {
   my ($self, $file) = @_;
   

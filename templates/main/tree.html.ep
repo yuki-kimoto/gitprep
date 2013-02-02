@@ -7,7 +7,7 @@
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $object ||= param('object') || 'master/';
+  my $object ||= param('object') || 'master';
   my $root_ns = $api->root_ns(config->{root});
   my $rep_ns = "$root_ns/$user/$project.git";
   my $rep = "/$rep_ns";
@@ -29,9 +29,9 @@
   
   # Commit log
   my $latest_commit_log = $git->latest_commit_log($rep, $rev);
-  
+
   # Tree
-  my $trees = $api->trees($rep, $tid, $rev, $dir);
+  my $trees = $git->trees($rep, $tid, $rev, $dir);
   
   # Repository description
   my $desc = $git->project_description($rep);
