@@ -1,5 +1,8 @@
 <%
   use Gitprep::API;
+
+  # API
+  my $api = Gitprep::API->new($self);
   
   # Default revision
   my $rev = 'master';
@@ -8,9 +11,6 @@
   my $user = param('user');
   my $project = param('project');
   my $object ||= param('object') || 'master/';
-
-  # API
-  my $api = Gitprep::API->new($self);
   
   # Parameters
   my $root_ns = $api->root_ns(config->{root});
@@ -20,11 +20,11 @@
   my $home_ns = $api->dirname($rep_ns);
   my $home = "/$home_ns";
 
-  # Id and directory
-  my ($id, $dir) = $api->parse_id_path($rep, $object);
-
   # Git
   my $git = app->git;
+
+  # Id and directory
+  my ($id, $dir) = $git->parse_object($rep, $object);
   
   # Tree id
   my $tid;

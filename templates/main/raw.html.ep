@@ -11,14 +11,14 @@
   my $rep = "/$rep_ns";
   my $home_ns = $api->dirname($rep_ns);
   my $home = "/$home_ns";
-  my $id_file = param('id_file');
-
-  # Id and file
-  my ($id, $file) = $api->parse_id_path($rep, $id_file);
+  my $object = param('object');
 
   # Git
   my $git = $self->app->git;
   
+  # Id and file
+  my ($id, $file) = $git->parse_object($rep, $object);
+
   # Commit
   my $commit_log = $git->latest_commit_log($rep, $id, $file);
   

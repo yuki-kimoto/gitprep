@@ -10,12 +10,12 @@
   my $rep = "/$rep_ns";
   my $object = param('object');
 
-  # Revision and blob
-  my ($rev, $blob) = $api->parse_id_path($rep, $object);
-
   # Git
   my $git = $self->app->git;
   
+  # Revision and blob
+  my ($rev, $blob) = $git->parse_object($rep, $object);
+
   # Commit log
   my $commit_log = $git->latest_commit_log($rep, $rev, $blob);
 
@@ -185,7 +185,7 @@
             % if (defined $blob) {
               alt="<%= $blob %>" title="<%= $blob %>"
             % }
-            src="<%= url_for('blob_plain', project => $rep_ns, id_file => "$rev/$blob") %>"
+            src="<%= url_for("/$user/$project/raw/$rev/$blob") %>"
           />
         % } else {
           % my $nr = 1;

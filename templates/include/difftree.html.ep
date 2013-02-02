@@ -53,8 +53,7 @@
             </td>
           % } else {
             <td>
-              <a class="list ubar" href="<%= url_for('blob', project => $project_ns,
-                  id_file => "$id/$file") %>">
+              <a class="list ubar" href="<%= url_for("/$user/$project/blob/$id/$file") %>">
                 <%= $file %>
               </a>
             </td>

@@ -12,48 +12,44 @@
   my $rep_ns = "$root_ns/$user/$project.git";
   my $rep = "/$rep_ns";
 
-  # Id and directory
-  my ($id, $dir) = $api->parse_id_path($rep, $object);
-
   # Git
   my $git = app->git;
+
+  # Id and directory
+  my ($rev, $dir) = $git->parse_object($rep, $object);
   
   # Tree id
+  my $commit = $git->parse_commit($rep, $rev);
   my $tid;
-  my $commit = $git->parse_commit($rep, $id);
-  unless (defined $tid) {
-    if (defined $dir && $dir ne '') {
-      $tid = $git->id_by_path($rep, $id, $dir, 'tree');
-    }
-    else { $tid = $commit->{tree} }
+  if (defined $dir && $dir ne '') {
+    $tid = $git->id_by_path($rep, $rev, $dir, 'tree');
   }
+  else { $tid = $commit->{tree} }
   $self->render_not_found unless defined $tid;
   
   # Commit log
-  my $latest_commit_log = $git->latest_commit_log($rep, $id);
+  my $latest_commit_log = $git->latest_commit_log($rep, $rev);
   
   # Tree
-  my $trees = $api->trees($rep, $tid, $id, $dir);
+  my $trees = $api->trees($rep, $tid, $rev, $dir);
   
   # Repository description
   my $desc = $git->project_description($rep);
   
   # Commits number
-  my $commits_number = $git->commits_number($rep, $id);
+  my $commits_number = $git->commits_number($rep, $rev);
   
   # README
-  my $readme = $git->blob_plain($rep, $id, 'README');
+  my $readme = $git->blob_plain($rep, $rev, 'README');
   
-  # Global variable
+  # Variable for included templates
   stash(
-    user => $user,
-    id => $id,
-    rev => $id,
+    rev => $rev,
     commit => $commit,
     latest_commit_log => $latest_commit_log,
     trees => $trees,
     dir => $dir,
-    title => "$project/$dir at $id - $user/$project"
+    title => "$project/$dir at $rev - $user/$project"
   );
 %>
 
