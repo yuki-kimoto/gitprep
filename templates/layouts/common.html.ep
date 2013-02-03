@@ -5,6 +5,7 @@
     <meta name="robots" content="index, nofollow" >
     <title>Git</title>
     %= stylesheet '/gitweb.css';
+    %= javascript '/js/jquery-1.9.0.min.js';
     <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" >
   </head>
   <body>

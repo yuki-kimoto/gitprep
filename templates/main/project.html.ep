@@ -206,7 +206,7 @@
       <div class="git_url_zip"><a href="<%= url_for('/archive/master.zip') %>"><s>ZIP</s></a></div>
       <div class="git_url_http">HTTP</div>
       <div class="git_url_ssh">SSH</div>
-      <div class="git_url_git">Git Read-Only</div>
+      <!-- <div class="git_url_git">Git Read-Only</div> -->
       <input type="text" class="git_url_text">
       <div class="git_url_access">Read-only access</div>
     </div>
