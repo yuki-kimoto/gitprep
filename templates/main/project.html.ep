@@ -131,6 +131,7 @@
       float:left;
       border:1px solid gray;
       background-color:#F5F5F5;
+      cursor:pointer;
     }
     .git_url_ssh {
       padding:5px;
@@ -138,6 +139,7 @@
       border:1px solid gray;
       border-left:none;
       background-color:#F5F5F5;
+      cursor:pointer;
     }
     .git_url_git {
       padding:5px;
@@ -150,10 +152,12 @@
       padding:3px;
       float:left;
       border:1px solid gray;
-      width:300px;
+      width:400px;
+      margin-top:0;
       margin-right:10px;
       border-left:none;
       display:block;
+      padding-bottom:4px;
     }
     .git_url_access {
       padding:5px;

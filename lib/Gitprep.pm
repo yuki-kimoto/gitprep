@@ -26,6 +26,9 @@ sub startup {
   $conf->{root} ||= '/gitprep';
   $conf->{ssh_port} ||= '';
   
+  # Added public directory
+  push @{$self->static->paths}, $conf->{root};
+  
   # Git
   my $git = Gitprep::Git->new;
   my $git_bin = $conf->{git_bin} ? $conf->{git_bin} : $git->search_bin;
@@ -91,7 +94,7 @@ sub startup {
   
   # Projects
   $r->get('/(*home)/projects')->to('#projects')->name('projects');
-  
+
   # File cache
   $git->search_projects;
 
