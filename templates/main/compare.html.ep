@@ -1,0 +1,36 @@
+% layout 'common';
+  %= include '/css/common';
+  
+  %= stylesheet begin
+    
+  % end
+
+  %= include '/include/header';
+
+  <div class="main_panel">
+    %= include '/include/sub_header';
+
+    <h2>Compare View</h2>
+    <div class="description">Last commit a year ago</div>
+    %= include '/include/code_menu', display => 'files';
+    
+    <div class="commit_number">
+      <div class="commit_number_left">
+        <a href="<%= url_for %>"><%= $project %></a>
+      </div>
+      <div class="commit_number_right">
+        <a href="<%= url_for("/$user/$project/commits/master") %>">
+          <%= $commits_number %> commits
+        </a>
+      </div>
+    </div>
+    
+    %= include '/include/tree';
+    
+    <div class="readme">
+      <div class="readme_title">README</div>
+      <div class="readme_body"><pre><%= $readme %></pre></div>
+    </div>
+  </div>
+  
+  %= include '/include/footer';

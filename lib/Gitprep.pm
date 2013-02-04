@@ -58,43 +58,43 @@ sub startup {
   # Home
   $r->get('/')->to('#home');
 
-  # Repositories
+  # Projects
   $r->get('/:user')->to('#projects');
   
-  # Repository
-  $r->get('/:user/:project')->to('#project');
-  
-  # Commit
-  $r->get('/:user/:project/commit/:diff')->to('#commit');
-  
-  # Commits
-  $r->get('/:user/:project/commits/:rev', {id => 'HEAD'})->to('#commits');
-  $r->get('/:user/:project/commits/:rev/(*blob)')->to('#commits');
-  
-  # Branches
-  $r->get('/:user/:project/branches')->to('#branches');
+  # Project
+  {
+    my $r = $r->route('/:user/:project');
+    $r->get('/')->to('#project');
+    
+    # Commit
+    $r->get('/commit/:diff')->to('#commit');
+    
+    # Commits
+    $r->get('/commits/:rev', {id => 'HEAD'})->to('#commits');
+    $r->get('/commits/:rev/(*blob)')->to('#commits');
+    
+    # Branches
+    $r->get('/branches')->to('#branches');
 
-  # Tags
-  $r->get('/:user/:project/tags')->to('#tags');
+    # Tags
+    $r->get('/tags')->to('#tags');
 
-  # Tree
-  $r->get('/:user/:project/tree/(*object)')->to('#tree');
-  
-  # Blob
-  $r->get('/:user/:project/blob/(*object)')->to('#blob');
-  
-  # Blob diff
-  $r->get('/:user/:project/blobdiff/(#diff)/(*file)')->to('#blobdiff');
-  
-  # Raw
-  $r->get('/:user/:project/raw/(*id_file)')->to('#raw');
-  
-  # Projects
-  $r->get('/(*home)/projects')->to('#projects')->name('projects');
-  
-  # Archive
-  $r->get('/:user/:project/archive/(:rev).tar.gz')->to('#archive', archive_type => 'tar');
-  $r->get('/:user/:project/archive/(:rev).zip')->to('#archive', archive_type => 'zip');
+    # Tree
+    $r->get('/tree/(*object)')->to('#tree');
+    
+    # Blob
+    $r->get('/blob/(*object)')->to('#blob');
+    
+    # Blob diff
+    $r->get('/blobdiff/(#diff)/(*file)')->to('#blobdiff');
+    
+    # Raw
+    $r->get('/raw/(*id_file)')->to('#raw');
+    
+    # Archive
+    $r->get('/archive/(:rev).tar.gz')->to('#archive', archive_type => 'tar');
+    $r->get('/archive/(:rev).zip')->to('#archive', archive_type => 'zip');
+  }
   
   # File cache
   $git->search_projects;
