@@ -77,9 +77,6 @@ sub startup {
   # Tags
   $r->get('/:user/:project/tags')->to('#tags');
 
-  # Downloads
-  $r->get('/:user/:project/downloads')->to('#downloads');
-  
   # Tree
   $r->get('/:user/:project/tree/(*object)')->to('#tree');
   
@@ -94,6 +91,8 @@ sub startup {
   
   # Projects
   $r->get('/(*home)/projects')->to('#projects')->name('projects');
+  
+  # Download
 
   # File cache
   $git->search_projects;

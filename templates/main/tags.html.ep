@@ -41,31 +41,29 @@
     
     /* tags */
     .tags {
-      font-size:95%;
       border-top:1px solid #E5E5E5;
     }
     .tag {
       border-bottom:1px solid #E5E5E5;
       padding:5px;
     }
-    
-    .tag .top {
+    .tag .ttop {
       padding-bottom:3px;
+      overflow:hidden;
     }
-    .tag a.name {
+    .tag .tname {
+      font-size:120%;
       font-weight:bold;
+      float:left;
+    }
+    .tag .tarchive {
+      float:right;
+    }
+    .tag .tarchive a {
       color:#4183C4;
     }
-    .tag a.archive {
-      font-size:70%;
-      color:#4183C4;
-      display:none;
-    }
-    .tag a.commit {
-      color:#666;
-    }
-    .tag .uploaded {
-      color:#666;
+    .tag .tcomment {
+      color:#999;
     }
   % end
   
@@ -87,7 +85,7 @@
   <div class="main_panel">
     %= include '/include/sub_header';
     
-    %= include '/include/code_menu';
+    %= include '/include/code_menu', tags_count => scalar @$tags;
     %= stylesheet begin
       /* Code menu */
       .code_menu_tags {
@@ -102,32 +100,28 @@
       
     % end
     
-    <h2><%= @$tags %> tags</h2>
-    
     <div class="tags">
       % for (my $i = 0; $i < @$tags; $i++) {
         % my $tag = $tags->[$i];
         % my $name = $tag->{name};
         <div class="tag">
-          <div class="top">
-            <a class="name ubar" href="<%= url_for("/$user/$project/archive/$name.zip") %>" title ="<%= $name %>">
-              <%= "$name.zip" %>
-            </a>
-            —
-            <span class="comment">
-              % if ($tag->{type} eq 'tag') {
-                <%= $tag->{comment_short} %>
-              % } else {
-                <%= $tag->{commit}{title_short} %>
-              % }
-            <span>
-            <a class="archive ubar" href="<%= url_for("/$user/$project/archive/$name.zip") %>">ZIP</a>
-            <a class="archive ubar" href="<%= url_for("/$user/$project/archive/$name.tar.gz") %>">TAR.GZ</a>
+          <div class="ttop">
+            <div class="tname"><%= $name %></div>
+            <div class="tarchive">
+              <a class="ubar" href="<%= url_for("/$user/$project/archive/$name.tar.gz") %>">Source code (tar.gz)</a>
+              <a class="ubar" href="<%= url_for("/$user/$project/archive/$name.zip") %>">Source code (zip)</a>
+              <a class="ubar" href="<%= url_for("/$user/$project/tree/$name") %>">Browse code</a>
+            </div>
           </div>
-          <div class="bottom">
-            <a class="commit ubar" href="<%= url_for("/$user/$project/commit/$tag->{commit}{id}") %>"><%= substr($tag->{commit}{id}, 0, 10) %></a>
-             · 
-            <span class="uploaded">Uploaded <%= $tag->{commit}{age_string} %></span>
+          <div class="tcomment">
+            % if ($tag->{type} eq 'tag') {
+              % use D;d $tag;
+              <%= $tag->{subject} %>
+            % } else {
+              % for my $comment (@{$tag->{commit}{comment}}) {
+                <p><%= $comment %></p>
+              % }
+            % }
           </div>
         </div>
       % }

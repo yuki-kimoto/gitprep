@@ -1,3 +1,7 @@
+<%
+  my $tags_count = stash('tags_count');
+%>
+
 %= stylesheet begin
   /* Code menu */
   .code_menu {
@@ -56,8 +60,11 @@
     <li class="code_menu_branches"><a href="<%= url_for("/$user/$project/branches") %>">Branches</a></li>
   </ul>
   <ul class="code_menu_right">
-    <li class="code_menu_downloads"><a href="<%= url_for("/$user/$project/downloads") %>">Downloads</a></li>
-    <li class="code_menu_tags"><a href="<%= url_for("/$user/$project/tags") %>">Tags</a></li>
+    <li class="code_menu_tags">
+      <a href="<%= url_for("/$user/$project/tags") %>">
+        Tags <span><%= defined $tags_count ? " $tags_count" : '' %></span>
+      </a>
+     </li>
   </ul>
   <div class="code_menu_under"></div>
 </div>

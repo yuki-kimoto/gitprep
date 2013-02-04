@@ -6,26 +6,31 @@ use Gitprep::API;
 
 sub snapshot {
   my $self = shift;
+  
+  # API
+  my $api = Gitprep::API->new($self);
 
   # Parameter
+  my $user = $self->param('user');
   my $project_ns = $self->param('project');
   my $project = "/$project_ns";
-  my $home_ns = dirname $project_ns;
-  my $home = "/$home_ns";
-  my $id = $self->param('id');
+  my $root_ns = $api->root_ns($self->config->{root});
+  my $rep_ns = "$root_ns/$user/$project.git";
+  my $rep = "/$rep_ns";
+  my $rev = $self->param('rev');
   
   # Git
   my $git = $self->app->git;
 
   # Object type
-  my $type = $git->object_type($project, "$id^{}");
+  my $type = $git->object_type($rep, "$rev^{}");
   if (!$type) { croak 404, 'Object does not exist' }
   elsif ($type eq 'blob') { croak 400, 'Object is not a tree-ish' }
   
-  my ($name, $prefix) = $git->snapshot_name($project, $id);
+  my ($name, $prefix) = $git->snapshot_name($rep, $rev);
   my $file = "$name.tar.gz";
   my $cmd = $self->_quote_command(
-    $git->cmd($project), 'archive', "--format=tar", "--prefix=$prefix/", $id
+    $git->cmd($rep), 'archive', "--format=tar", "--prefix=$prefix/", $rev
   );
   $cmd .= ' | ' . $self->_quote_command('gzip', '-n');
 
@@ -42,7 +47,7 @@ sub snapshot {
     my $c = shift;
     my $size = 500 * 1024;
     my $length = sysread($fh, my $buffer, $size);
-    unless (defined $length) {
+    unless ($length) {
       close $fh;
       undef $cb;
       return;
