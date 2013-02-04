@@ -94,6 +94,9 @@ sub startup {
     # Archive
     $r->get('/archive/(:rev).tar.gz')->to('#archive', archive_type => 'tar');
     $r->get('/archive/(:rev).zip')->to('#archive', archive_type => 'zip');
+    
+    # Compare
+    $r->get('/compare/(#diff)')->to('#compare');
   }
   
   # File cache

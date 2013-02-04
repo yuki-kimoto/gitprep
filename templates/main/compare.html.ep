@@ -2,34 +2,59 @@
   %= include '/css/common';
   
   %= stylesheet begin
+    /* Title */
+    h2 {
+      font-size:150%;
+      padding-bottom:5px;
+    }
     
+    /* Header */
+    .compare_header {
+      border-bottom:1px solid #ccc;
+      padding-bottom:10px;
+      margin-bottom:10px;
+      overflow:hidden;
+    }
+    .compare_header .cdate {
+      color:#999;
+      float:left;
+    }
+    .compare_header .ctarget {
+      float:right;
+    }
+    
+    .compare_tabs {
+      overflow:hidden;
+    }
+    .compare_tabs li {
+      float:left;
+      padding:12px;
+    }
+    .compare_tabs .ccommits {
+      font-weight:bold;
+    }
   % end
 
   %= include '/include/header';
 
   <div class="main_panel">
     %= include '/include/sub_header';
-
-    <h2>Compare View</h2>
-    <div class="description">Last commit a year ago</div>
     %= include '/include/code_menu', display => 'files';
     
-    <div class="commit_number">
-      <div class="commit_number_left">
-        <a href="<%= url_for %>"><%= $project %></a>
-      </div>
-      <div class="commit_number_right">
-        <a href="<%= url_for("/$user/$project/commits/master") %>">
-          <%= $commits_number %> commits
-        </a>
-      </div>
+    <h2>Compare View</h2>
+    <div class="compare_header">
+      <div class="cdate">Last commit a year ago</div>
+      <div class="ctarget">master ... next</div>
     </div>
     
-    %= include '/include/tree';
+    <ul class="compare_tabs">
+      <li class="ccommits">Commits</li>
+      <li class="cchanged">Files Changed</li>
+      <li class="ccomment">Commit Comments</li>
+    </ul>
     
-    <div class="readme">
-      <div class="readme_title">README</div>
-      <div class="readme_body"><pre><%= $readme %></pre></div>
+    <div class="commits_number">
+      Showing 47 commits by 1 author.
     </div>
   </div>
   
