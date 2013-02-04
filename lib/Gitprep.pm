@@ -92,11 +92,12 @@ sub startup {
   # Projects
   $r->get('/(*home)/projects')->to('#projects')->name('projects');
   
-  # Download
-
+  # Archive
+  $r->get('/:user/:project/archive/(:rev).tar.gz')->to('#archive', archive_type => 'tar');
+  $r->get('/:user/:project/archive/(:rev).zip')->to('#archive', archive_type => 'zip');
+  
   # File cache
   $git->search_projects;
-
 }
 
 1;

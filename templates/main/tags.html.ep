@@ -2,24 +2,20 @@
   # API
   my $api = Gitprep::API->new($self);
 
+  # Parameters
   my $user = param('user');
   my $project = param('project');
-
   my $root_ns = $api->root_ns(config->{root});
-  
-  # Parameters
-  my $project_ns = "$root_ns/$user/$project.git";
-  my $project = "/$project_ns";
-  my $home_ns = $api->dirname($project_ns);
-  my $home = "/$home_ns";
+  my $rep_ns = "$root_ns/$user/$project.git";
+  my $rep = "/$rep_ns";
   
   # Git
   my $git = $self->app->git;
   
   # Ref names
-  my $tags  = $git->tags($project);
+  my $tags  = $git->tags($rep);
   for my $tag (@$tags) {
-    $tag->{commit} = $git->parse_commit($project, $tag->{name});
+    $tag->{commit} = $git->parse_commit($rep, $tag->{name});
   }
 %>
 
@@ -84,21 +80,7 @@
 
   <div class="main_panel">
     %= include '/include/sub_header';
-    
-    %= include '/include/code_menu', tags_count => scalar @$tags;
-    %= stylesheet begin
-      /* Code menu */
-      .code_menu_tags {
-        border:1px solid #E5E5E5;
-        border-bottom:none;
-        background-color:white;
-        font-weight:bold;
-      }
-      .code_menu_tags a {
-        color:#333
-      }
-      
-    % end
+    %= include '/include/code_menu', display => 'tags', tags_count => scalar @$tags;
     
     <div class="tags">
       % for (my $i = 0; $i < @$tags; $i++) {

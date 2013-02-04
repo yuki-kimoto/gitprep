@@ -90,21 +90,7 @@
 
   <div class="main_panel">
     %= include '/include/sub_header';
-    
-    %= include '/include/code_menu';
-    %= stylesheet begin
-      /* Code menu */
-      .code_menu_branches {
-        border:1px solid #E5E5E5;
-        border-bottom:none;
-        background-color:white;
-        font-weight:bold;
-      }
-      .code_menu_branches a {
-        color:#333
-      }
-      
-    % end
+    %= include '/include/code_menu', display => 'branches', branches_count => scalar @$branches;
     
     <h2>Branches</h2>
     

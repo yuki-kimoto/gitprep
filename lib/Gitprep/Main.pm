@@ -4,7 +4,7 @@ use File::Basename 'dirname';
 use Carp 'croak';
 use Gitprep::API;
 
-sub snapshot {
+sub archive {
   my $self = shift;
   
   # API
@@ -12,12 +12,25 @@ sub snapshot {
 
   # Parameter
   my $user = $self->param('user');
-  my $project_ns = $self->param('project');
-  my $project = "/$project_ns";
+  my $project = $self->param('project');
   my $root_ns = $api->root_ns($self->config->{root});
   my $rep_ns = "$root_ns/$user/$project.git";
   my $rep = "/$rep_ns";
   my $rev = $self->param('rev');
+  my $archive_type = $self->stash('archive_type');
+  my $content_type;
+  my $format;
+  my $ext;
+  if ($archive_type eq 'tar') {
+    $format = 'tar';
+    $ext = 'tar.gz';
+    $content_type = 'application/x-tar';
+  }
+  elsif ($archive_type eq 'zip') {
+    $format = 'zip';
+    $ext = 'zip';
+    $content_type = 'application/zip';
+  }
   
   # Git
   my $git = $self->app->git;
@@ -27,20 +40,22 @@ sub snapshot {
   if (!$type) { croak 404, 'Object does not exist' }
   elsif ($type eq 'blob') { croak 400, 'Object is not a tree-ish' }
   
-  my ($name, $prefix) = $git->snapshot_name($rep, $rev);
-  my $file = "$name.tar.gz";
+  my $name = "$project-$rev";
+  my $file = "$name.$ext";
+  
   my $cmd = $self->_quote_command(
-    $git->cmd($rep), 'archive', "--format=tar", "--prefix=$prefix/", $rev
+    $git->cmd($rep), 'archive', "--format=$format", "--prefix=$name/", $rev
   );
-  $cmd .= ' | ' . $self->_quote_command('gzip', '-n');
-
+  if ($archive_type eq 'tar') {
+    $cmd .= ' | ' . $self->_quote_command('gzip', '-n');
+  }
   $file =~ s/(["\\])/\\$1/g;
 
   open my $fh, '-|', $cmd
     or croak 'Execute git-archive failed';
   
   # Write chunk
-  $self->res->headers->content_type('application/x-tar');
+  $self->res->headers->content_type($content_type);
   $self->res->headers->content_disposition(qq/attachment; filename="$file"/);
   my $cb;
   $cb = sub {
@@ -50,6 +65,7 @@ sub snapshot {
     unless ($length) {
       close $fh;
       undef $cb;
+      $c->finish;
       return;
     }
     $c->write_chunk($buffer, $cb);

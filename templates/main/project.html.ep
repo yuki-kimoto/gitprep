@@ -207,7 +207,7 @@
     <div class="description"><%= $desc %></div>
     
     <div class="git_url">
-      <div class="git_url_zip"><a href="<%= url_for('/archive/master.zip') %>"><s>ZIP</s></a></div>
+      <div class="git_url_zip"><a href="<%= url_for("/$user/$project/archive/master.zip") %>">ZIP</a></div>
       <div class="git_url_http">HTTP</div>
       <div class="git_url_ssh">SSH</div>
       <!-- <div class="git_url_git">Git Read-Only</div> -->
@@ -215,20 +215,8 @@
       <div class="git_url_access">Read-only access</div>
     </div>
     
-    %= include '/include/code_menu';
-    %= stylesheet begin
-      /* Code menu */
-      .code_menu_files {
-        border:1px solid #E5E5E5;
-        border-bottom:none;
-        background-color:white;
-        font-weight:bold;
-      }
-      .code_menu_files a {
-        color:#333
-      }
-    % end
-        
+    %= include '/include/code_menu', display => 'files';
+    
     <div class="commit_number">
       <div class="commit_number_left">
         <a href="<%= url_for %>"><%= $project %></a>

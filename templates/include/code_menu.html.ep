@@ -1,5 +1,7 @@
 <%
-  my $tags_count = stash('tags_count');
+  my $tags_count = stash('tags_count') || 0;
+  my $branches_count = stash('branches_count') || 0;
+  my $display = stash('display') || '';
 %>
 
 %= stylesheet begin
@@ -10,61 +12,95 @@
     height:30px;
     overflow:hidden;
   }
-  .code_menu_left {
+  .code_menu .cleft {
     width:700px;
     float:left;
     overflow:hidden;
   }
-  .code_menu_current_ref {
+  .code_menu .ccurrent_rev {
     float:left;
     padding:5px 10px 10px 10px;
   }
-  .code_menu_current_ref_button {
+  .code_menu .ccurrent_rev_button {
     border:1px solid #E5E5E5;
   }
-  .code_menu_left li {
+  .code_menu .cleft li {
     float:left;
     padding:5px 10px;
   }
-  .code_menu_right {
+  .code_menu .cright {
     text-align:right;
     overflow:hidden;
     height:27px;
   }
-  .code_menu_right li {
+  .code_menu .cright li {
     float:right;
     padding:5px 10px;
     height:27px;
   }
-  .code_menu_under {
+  .code_menu .cunder {
     border-top:1px solid #E5E5E5;
     margin-top:-1px;
   }
   .code_menu a {
     color:#666;
   }
+  .code_menu .ccount {
+    display:inline-block;
+    font-weight:normal;
+    border:1px solid #CCC;
+    background-color:#EEE;
+    padding:2px;
+    padding-left:5px;
+    padding-right:5px;
+    border-radius:9px;
+    font-size:75%;
+  }
+  
+  % if ($display) {
+    /* Code menu */
+    .code_menu .c<%= $display %> {
+      border:1px solid #E5E5E5;
+      border-bottom:none;
+      background-color:white;
+      font-weight:bold;
+    }
+    .code_menu .c<%= $display %> a {
+      color:#333
+    }
+  % }
+
 % end
 
 <div class="code_menu">
-  <ul class="code_menu_left">
+  <ul class="cleft">
     
     % if (defined(my $rev = stash('rev'))) {
-      <li class="code_menu_current_ref">
-        <div class="code_menu_current_ref_button">
+      <li class="ccurrent_rev">
+        <div class="ccurrent_rev_button">
           branch <b><%= $rev %></b>
         </div>
       </li>
     % }
-    <li class="code_menu_files"><a href="<%= url_for("/$user/$project") %>">Files</a></li>
-    <li class="code_menu_commits"><a href="<%= url_for("/$user/$project/commits/master") %>">Commits</a></li>
-    <li class="code_menu_branches"><a href="<%= url_for("/$user/$project/branches") %>">Branches</a></li>
+    <li class="cfiles"><a href="<%= url_for("/$user/$project") %>">Files</a></li>
+    <li class="ccommits"><a href="<%= url_for("/$user/$project/commits/master") %>">Commits</a>
+      </li>
+    <li class="cbranches">
+      <a href="<%= url_for("/$user/$project/branches") %>">Branches</a>
+      % if ($display eq 'branches') {
+        <span class="ccount"><%= $branches_count %></span>
+      % }
+    </li>
   </ul>
-  <ul class="code_menu_right">
-    <li class="code_menu_tags">
+  <ul class="cright">
+    <li class="ctags">
       <a href="<%= url_for("/$user/$project/tags") %>">
-        Tags <span><%= defined $tags_count ? " $tags_count" : '' %></span>
+        Tags
+        % if ($display eq 'tags') {
+          <span class="ccount"><%= $tags_count %></span>
+        % }
       </a>
      </li>
   </ul>
-  <div class="code_menu_under"></div>
+  <div class="cunder"></div>
 </div>
