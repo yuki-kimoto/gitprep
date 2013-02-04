@@ -133,7 +133,7 @@ sub branch_commits {
   my ($self, $rep, $rev1, $rev2) = @_;
   
   # Command "git diff-tree"
-  my @cmd = ($self->cmd($rep), 'show-branch', '--all', $rev1, $rev2);
+  my @cmd = ($self->cmd($rep), 'show-branch', $rev1, $rev2);
   open my $fh, "-|", @cmd
     or croak 500, "Open git-show-branch failed";
 
@@ -145,7 +145,7 @@ sub branch_commits {
     if ($start) {
       my ($id) = $line =~ /^.*?\[(.+)?\]/;
       
-      next unless $id =~ /^\Q$rev2\E^?$/ || $id =~ /^\Q$rev2\E^[0-9]+$/;
+      next unless $id =~ /^\Q$rev2\E\^?$/ || $id =~ /^\Q$rev2\E^[0-9]+$/;
       
       my $commit = $self->parse_commit($rep, $id);
       
@@ -161,6 +161,27 @@ sub branch_commits {
   close $fh or croak 'Reading git-show-branch failed';
   
   return $commits;
+}
+
+sub separated_commit {
+  my ($self, $rep, $rev1, $rev2) = @_;
+  
+  # Command "git diff-tree"
+  my @cmd = ($self->cmd($rep), 'show-branch', $rev1, $rev2);
+  open my $fh, "-|", @cmd
+    or croak 500, "Open git-show-branch failed";
+
+  my $commits = [];
+  my $start;
+  my @lines = <$fh>;
+  my $last_line = pop @lines;
+  my $commit;
+  if (defined $last_line) {
+      my ($id) = $last_line =~ /^.*?\[(.+)?\]/;
+      $commit = $self->parse_commit($rep, $id);
+  }
+
+  return $commit;
 }
 
 sub commits_number {
