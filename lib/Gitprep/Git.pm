@@ -129,6 +129,40 @@ sub cmd {
   return ($self->bin, "--git-dir=$project");
 }
 
+sub branch_commits {
+  my ($self, $rep, $rev1, $rev2) = @_;
+  
+  # Command "git diff-tree"
+  my @cmd = ($self->cmd($rep), 'show-branch', '--all', $rev1, $rev2);
+  open my $fh, "-|", @cmd
+    or croak 500, "Open git-show-branch failed";
+
+  my $commits = [];
+  my $start;
+  while (my $line = <$fh>) {
+    chomp $line;
+    
+    if ($start) {
+      my ($id) = $line =~ /^.*?\[(.+)?\]/;
+      
+      next unless $id =~ /^\Q$rev2\E^?$/ || $id =~ /^\Q$rev2\E^[0-9]+$/;
+      
+      my $commit = $self->parse_commit($rep, $id);
+      
+      push @$commits, $commit;
+    }
+    else {
+      if ($line =~ /^-/) {
+        $start = 1;
+      }
+    }
+  }
+  
+  close $fh or croak 'Reading git-show-branch failed';
+  
+  return $commits;
+}
+
 sub commits_number {
   my ($self, $rep, $ref) = @_;
   

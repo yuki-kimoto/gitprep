@@ -67,11 +67,11 @@ sub startup {
     $r->get('/')->to('#project');
     
     # Commit
-    $r->get('/commit/:diff')->to('#commit');
+    $r->get('/commit/#diff')->to('#commit');
     
     # Commits
-    $r->get('/commits/:rev', {id => 'HEAD'})->to('#commits');
-    $r->get('/commits/:rev/(*blob)')->to('#commits');
+    $r->get('/commits/#rev', {id => 'HEAD'})->to('#commits');
+    $r->get('/commits/#rev/(*blob)')->to('#commits');
     
     # Branches
     $r->get('/branches')->to('#branches');
@@ -92,11 +92,11 @@ sub startup {
     $r->get('/raw/(*id_file)')->to('#raw');
     
     # Archive
-    $r->get('/archive/(:rev).tar.gz')->to('#archive', archive_type => 'tar');
-    $r->get('/archive/(:rev).zip')->to('#archive', archive_type => 'zip');
+    $r->get('/archive/(#rev).tar.gz')->to('#archive', archive_type => 'tar');
+    $r->get('/archive/(#rev).zip')->to('#archive', archive_type => 'zip');
     
     # Compare
-    $r->get('/compare/(#diff)')->to('#compare');
+    $r->get('/compare/(#rev1)...(#rev2)')->to('#compare');
   }
   
   # File cache

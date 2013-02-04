@@ -1,3 +1,36 @@
+<%
+  # API
+  my $api = Gitprep::API->new($self);
+
+  # Parameters
+  my $user = param('user');
+  my $project = param('project');
+  my $rev = param('rev');
+  my $rev1 = param('rev1');
+  my $rev2 = param('rev2');
+  my $page = param('page') || 0;
+  my $root_ns = $api->root_ns(config->{root});
+  my $rep_ns = "$root_ns/$user/$project.git";
+  my $rep = "/$rep_ns";
+  
+  # Git
+  my $git = $self->app->git;
+  
+  # Commits
+  my $page_count = 30;
+  my $commits = $git->branch_commits($rep, $rev1, $rev2);
+  my $commits_count = @$commits;
+  my $commits_date = {};
+  for my $commit (@$commits) {
+    my $date = $commit->{age_string_date};
+    $commits_date->{$date} ||= [];
+    push @{$commits_date->{$date}}, $commit;
+  }
+  
+  # Global variable
+  stash(user => $user, project => $project);
+%>
+
 % layout 'common';
   %= include '/css/common';
   
@@ -56,6 +89,38 @@
     <div class="commits_number">
       Showing 47 commits by 1 author.
     </div>
+
+    % for my $date (sort keys %$commits_date) {
+      <div class="commit">
+        % my $commits = $commits_date->{$date};
+        
+        <div class="cdate"><%= $date %></div>
+        % for my $commit (sort {$a->{author_epoch} <=> $b->{author_epoch}} @$commits) {
+          <div class="ccontent">
+            <div class="cfirst">
+              <div class="cfirst_left">
+                <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                  <%= $commit->{title_short} %>
+                </a>
+              </div>
+              <div class="cfirst_right a_dec_on a_blue">
+                <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                  <%= substr($commit->{id}, 0, 10) %>
+                </a>
+              </div>
+            </div>
+            <div class="csecond">
+              <div class="csecond_left">yuki-kimoto authored 7 days ago</div>
+              <div class="csecond_right">
+                <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                  Browse code
+                </a>
+              </div>
+            </div>
+          </div>
+        % }
+      </div>
+    % }
   </div>
   
   %= include '/include/footer';
