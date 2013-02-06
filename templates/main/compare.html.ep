@@ -20,13 +20,14 @@
   my $commits = $git->branch_commits($rep, $rev1, $rev2);
   my $commits_count = @$commits;
   my $commits_date = {};
+  my $authors = {};
   for my $commit (@$commits) {
     my $date = $commit->{age_string_date};
     $commits_date->{$date} ||= [];
+    $authors->{$commit->{author}} = 1;
     push @{$commits_date->{$date}}, $commit;
   }
-  
-  use D;d $commits;
+  my $authors_count = keys %$authors;
   
   # Global variable
   stash(user => $user, project => $project);
@@ -42,7 +43,7 @@
       padding-bottom:5px;
     }
     
-    /* Header */
+    /* Compare header */
     .compare_header {
       border-bottom:1px solid #ccc;
       padding-bottom:10px;
@@ -57,21 +58,10 @@
       float:right;
     }
     
-    .compare_tabs {
-      overflow:hidden;
-    }
-    .compare_tabs li {
-      float:left;
-      padding:12px;
-    }
-    .compare_tabs .ccommits {
-      font-weight:bold;
-    }
-
-    /* Compare menu */
+    /* Compare tabs */
     .compare_tabs {
       margin-top:7px;
-      margin-bottom:15px;
+      margin-bottom:10px;
       height:30px;
       overflow:hidden;
     }
@@ -111,7 +101,13 @@
       font-weight:bold;
     }
     .compare_tabs .ccommits a {
-      color:#333
+      color:#333;
+    }
+    
+    /* Commits number */
+    .commits_number {
+      color:#333;
+      padding-bottom:10px;
     }
   % end
 
@@ -136,7 +132,7 @@
     </div>
       
     <div class="commits_number">
-      Showing 47 commits by 1 author.
+      Showing <%= @$commits %> commits by <%= $authors_count %> author.
     </div>
 
     % for my $date (sort keys %$commits_date) {
