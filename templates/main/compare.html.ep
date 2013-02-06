@@ -29,6 +29,11 @@
   
   # Global variable
   stash(user => $user, project => $project);
+  
+  my $tags_count = stash('tags_count') || 0;
+  my $branches_count = stash('branches_count') || 0;
+  my $display = stash('display') || '';
+
 %>
 
 % layout 'common';
@@ -66,6 +71,52 @@
     .compare_tabs .ccommits {
       font-weight:bold;
     }
+
+    /* Compare menu */
+    .compare_tabs {
+      margin-top:7px;
+      margin-bottom:15px;
+      height:30px;
+      overflow:hidden;
+    }
+    .compare_tabs .cright {
+      text-align:right;
+      overflow:hidden;
+      height:27px;
+    }
+    .compare_tabs .cright li {
+      float:left;
+      padding:5px 10px;
+      height:27px;
+    }
+    .compare_tabs .cunder {
+      border-top:1px solid #E5E5E5;
+      margin-top:-1px;
+    }
+    .compare_tabs a {
+      color:#666;
+    }
+    .compare_tabs .ccount {
+      display:inline-block;
+      font-weight:normal;
+      border:1px solid #CCC;
+      background-color:#EEE;
+      padding:2px;
+      padding-left:5px;
+      padding-right:5px;
+      border-radius:9px;
+      font-size:75%;
+    }
+    
+    .compare_tabs .ccommits {
+      border:1px solid #E5E5E5;
+      border-bottom:none;
+      background-color:white;
+      font-weight:bold;
+    }
+    .compare_tabs .ccommits a {
+      color:#333
+    }
   % end
 
   %= include '/include/header';
@@ -79,13 +130,15 @@
       <div class="cdate">Last commit a year ago</div>
       <div class="ctarget">master ... next</div>
     </div>
-    
-    <ul class="compare_tabs">
-      <li class="ccommits">Commits</li>
-      <li class="cchanged">Files Changed</li>
-      <li class="ccomment">Commit Comments</li>
-    </ul>
-    
+
+    <div class="compare_tabs">
+      <ul class="cright">
+        <li class="ccommits"><a href="<%= url_for %>">Commits</a></li>
+        <li class="cchanged"><a href="<%= url_for . "#files_bucket" %>">Files Changed</a></li>
+      </ul>
+      <div class="cunder"></div>
+    </div>
+      
     <div class="commits_number">
       Showing 47 commits by 1 author.
     </div>
