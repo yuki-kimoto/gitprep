@@ -17,7 +17,6 @@
   my $git = $self->app->git;
   
   # Commits
-  my $page_count = 30;
   my $commits = $git->branch_commits($rep, $rev1, $rev2);
   my $commits_count = @$commits;
   my $commits_date = {};
@@ -27,13 +26,10 @@
     push @{$commits_date->{$date}}, $commit;
   }
   
+  use D;d $commits;
+  
   # Global variable
   stash(user => $user, project => $project);
-  
-  my $tags_count = stash('tags_count') || 0;
-  my $branches_count = stash('branches_count') || 0;
-  my $display = stash('display') || '';
-
 %>
 
 % layout 'common';
@@ -79,17 +75,17 @@
       height:30px;
       overflow:hidden;
     }
-    .compare_tabs .cright {
+    .compare_tabs .ctop {
       text-align:right;
       overflow:hidden;
       height:27px;
     }
-    .compare_tabs .cright li {
+    .compare_tabs .ctop li {
       float:left;
       padding:5px 10px;
       height:27px;
     }
-    .compare_tabs .cunder {
+    .compare_tabs .cbottom {
       border-top:1px solid #E5E5E5;
       margin-top:-1px;
     }
@@ -127,16 +123,16 @@
     
     <h2>Compare View</h2>
     <div class="compare_header">
-      <div class="cdate">Last commit a year ago</div>
+      <div class="cdate">Last commit <%= $commits->[0]{age_string_age} %></div>
       <div class="ctarget">master ... next</div>
     </div>
 
     <div class="compare_tabs">
-      <ul class="cright">
+      <ul class="ctop">
         <li class="ccommits"><a href="<%= url_for %>">Commits</a></li>
         <li class="cchanged"><a href="<%= url_for . "#files_bucket" %>">Files Changed</a></li>
       </ul>
-      <div class="cunder"></div>
+      <div class="cbottom"></div>
     </div>
       
     <div class="commits_number">
