@@ -109,6 +109,42 @@
       color:#333;
       padding-bottom:10px;
     }
+    
+    /* Commits header */
+    .commits {
+      margin-bottom:15px;
+    }
+    .commits .cdate {
+      background-color:#F3F3F3;
+      border:1px solid #ccc;
+      padding:7px;
+    }
+    .commits .cbody  {
+      width:100%;
+      text-align:left;
+    }
+    .commits .crecord {
+      border:1px solid #ccc;
+      border-top:none;
+    }
+    .commits td {
+      padding:7px;
+    }
+    .commits .cauthor {
+      width:80px;
+    }
+    .commits .ccomment {
+      
+    }
+    .commits .ccomment a {
+      color:#999;
+    }
+    .commits .cid {
+      width:1%;
+    }
+    .commits .cid a {
+      color:#4183C4;
+    }
   % end
 
   %= include '/include/header';
@@ -136,33 +172,28 @@
     </div>
 
     % for my $date (sort keys %$commits_date) {
-      <div class="commit">
+      <div class="commits">
         % my $commits = $commits_date->{$date};
         
         <div class="cdate"><%= $date %></div>
         % for my $commit (sort {$a->{author_epoch} <=> $b->{author_epoch}} @$commits) {
-          <div class="ccontent">
-            <div class="cfirst">
-              <div class="cfirst_left">
+          <table class="cbody">
+            <tr class="crecord">
+              <td class="cauthor">
+                <%= $commit->{author_name} %>
+              </td>
+              <td class="ccomment">
                 <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                   <%= $commit->{title_short} %>
                 </a>
-              </div>
-              <div class="cfirst_right a_dec_on a_blue">
+              </td>
+              <td class="cid">
                 <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                  <%= substr($commit->{id}, 0, 10) %>
+                  <%= substr($commit->{id}, 0, 7) %>
                 </a>
-              </div>
-            </div>
-            <div class="csecond">
-              <div class="csecond_left">yuki-kimoto authored 7 days ago</div>
-              <div class="csecond_right">
-                <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                  Browse code
-                </a>
-              </div>
-            </div>
-          </div>
+              </td>
+            </tr>
+          </table>
         % }
       </div>
     % }
