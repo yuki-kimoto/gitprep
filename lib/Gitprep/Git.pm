@@ -50,6 +50,55 @@ sub authors {
   return [sort keys %$authors];
 }
 
+sub blobdiffs {
+  my ($self, $rep, $from_id, $id, $difftrees) = @_;
+  
+  my $blobdiffs = [];
+  my @cmd = ($self->cmd($rep), 'diff-tree', '-r', '-M',
+    '--no-commit-id', '--patch-with-raw', $from_id, $id, '--');
+  open my $fh, '-|', @cmd
+    or croak('Open self-diff-tree failed');
+  my @file_info_raws;
+  while (my $line = $self->dec(scalar <$fh>)) {
+    chomp $line;
+    push @file_info_raws, $line if $line =~ /^:/;
+    last if $line =~ /^\n/;
+  }
+  close $fh;
+  for my $line (@file_info_raws) {
+  
+    # Parse line
+    chomp $line;
+    my $diffinfo = $self->parse_difftree_raw_line($line);
+    my $from_file = $diffinfo->{from_file};
+    my $file = $diffinfo->{to_file};
+    
+    # Get blobdiff (command "self diff-tree")
+    my @cmd = ($self->cmd($rep), 'diff-tree', '-r', '-M', '-p',
+      $from_id, $id, '--', (defined $from_file ? $from_file : ()), $file);
+    open my $fh_blobdiff, '-|', @cmd
+      or croak('Open self-diff-tree failed');
+    my @lines = map { $self->dec($_) } <$fh_blobdiff>;
+    close $fh_blobdiff;
+    my $blobdiff = {
+      file => $file,
+      from_file => $from_file,
+      lines => $self->parse_blobdiff_lines(\@lines)
+    };
+    
+    # Status
+    for my $difftree (@$difftrees) {
+      if ($difftree->{to_file} eq $file) {
+        $blobdiff->{status} = $difftree->{status};
+        last;
+      }
+    }
+    push @$blobdiffs, $blobdiff;
+  }
+  
+  return $blobdiffs;
+}
+
 sub blob_plain {
   my ($self, $rep, $ref, $path) = @_;
   

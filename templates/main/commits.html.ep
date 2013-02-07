@@ -148,7 +148,7 @@
       % }
     </div>
     
-    % for my $date (sort keys %$commits_date) {
+    % for my $date (reverse sort keys %$commits_date) {
       <div class="commit">
         % my $commits = $commits_date->{$date};
         

@@ -28,6 +28,24 @@
     push @{$commits_date->{$date}}, $commit;
   }
   my $authors_count = keys %$authors;
+
+  # Start commit
+  my $start_commit = $git->separated_commit($rep, $rev1, $rev2);
+
+  # End commit
+  my $end_commit = $git->parse_commit($rep, $rev2)
+    or $api->croak('Unknown commit object');
+  
+  use D;d [$start_commit->{id}, $end_commit->{id}];
+  
+  # Diff tree
+  my $difftrees = $git->difftree($rep,
+    ,$end_commit->{id}, $start_commit->{id}, []);
+  
+  use D;d $difftrees;
+  
+  # Get blob diffs (command "git diff-tree")
+  my $blobdiffs = $git->blobdiffs($rep, $start_commit->{id}, $end_commit->{id}, $difftrees);
   
   # Global variable
   stash(user => $user, project => $project);
@@ -156,7 +174,7 @@
     <h2>Compare View</h2>
     <div class="compare_header">
       <div class="cdate">Last commit <%= $commits->[0]{age_string_age} %></div>
-      <div class="ctarget">master ... next</div>
+      <div class="ctarget"><%= $rev1 %> ... <%= $rev2 %></div>
     </div>
 
     <div class="compare_tabs">
@@ -171,7 +189,7 @@
       Showing <%= @$commits %> commits by <%= $authors_count %> author.
     </div>
 
-    % for my $date (sort keys %$commits_date) {
+    % for my $date (reverse sort keys %$commits_date) {
       <div class="commits">
         % my $commits = $commits_date->{$date};
         
@@ -197,6 +215,27 @@
         % }
       </div>
     % }
+
+    <div style="margin-top:10px;margin-bottom:10px;">
+      <%= include '/include/difftree', id => $end_commit->{id}, from_id => $start_commit->{id},
+        difftrees => $difftrees, parents => [], project_ns => $project %>
+    </div>
+    
+    <div>
+      <div class="patchset">
+        % for (my $i = 0; $i < @$blobdiffs; $i++) {
+          % my $blobdiff = $blobdiffs->[$i];
+          <div class="patch" id="<%= $i + 1 %>">
+            % my $lines = $blobdiff->{lines};
+            % my $file = $blobdiff->{file};
+            % my $from_file = $blobdiff->{from_file};
+            % $from_file = $file unless defined $from_file;
+            % my $status = $blobdiff->{status};
+            %= include '/include/blobdiff_body', file => $file, from_file => $from_file, status => $status, lines => $blobdiff->{lines}, project_ns => $project, from_id => $start_commit->{id}, id => $end_commit->{id};
+          </div>
+        % }
+      </div>
+    </div>
   </div>
   
   %= include '/include/footer';
