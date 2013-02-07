@@ -36,8 +36,6 @@
   my $end_commit = $git->parse_commit($rep, $rev2)
     or $api->croak('Unknown commit object');
   
-  use D;d [$start_commit->{id}, $end_commit->{id}];
-  
   # Diff tree
   my $difftrees = $git->difftree($rep,
     ,$end_commit->{id}, $start_commit->{id}, []);
@@ -163,6 +161,48 @@
     .commits .cid a {
       color:#4183C4;
     }
+    
+    /* Files changed */
+    .files_changed_panel {
+      display:none;
+    }
+  % end
+  
+  %= javascript begin
+    $(document).ready(function () {
+      $('.compare_tabs .ccommits').click(function () {
+        $('.commits_panel').css('display', 'block');
+        $('.files_changed_panel').css('display', 'none');
+        $('.compare_tabs .ccommits')
+          .css('border', '1px solid #E5E5E5')
+          .css('border-bottom', 'none')
+          .css('background-color', 'white')
+          .css('font-weight', 'bold');
+        $('.compare_tabs .cchanged')
+          .css('border', 'none')
+          .css('border-bottom', '1px solid #E5E5E5')
+          .css('background-color', 'transparent')
+          .css('font-weight', 'normal');
+        
+        return false;
+      });
+      $('.compare_tabs .cchanged').click(function () {
+        $('.commits_panel').css('display', 'none');
+        $('.files_changed_panel').css('display', 'block');
+        $('.compare_tabs .ccommits')
+          .css('border', 'none')
+          .css('border-bottom', '1px solid #E5E5E5')
+          .css('background-color', 'transparent')
+          .css('font-weight', 'normal');
+        $('.compare_tabs .cchanged')
+          .css('border', '1px solid #E5E5E5')
+          .css('border-bottom', 'none')
+          .css('background-color', 'white')
+          .css('font-weight', 'bold');
+        
+        return false;
+      });
+    });
   % end
 
   %= include '/include/header';
@@ -179,61 +219,64 @@
 
     <div class="compare_tabs">
       <ul class="ctop">
-        <li class="ccommits"><a href="<%= url_for %>">Commits</a></li>
-        <li class="cchanged"><a href="<%= url_for . "#files_bucket" %>">Files Changed</a></li>
+        <li class="ccommits"><a href="#">Commits</a></li>
+        <li class="cchanged"><a href="#files_bucket">Files Changed</a></li>
       </ul>
       <div class="cbottom"></div>
     </div>
-      
-    <div class="commits_number">
-      Showing <%= @$commits %> commits by <%= $authors_count %> author.
-    </div>
-
-    % for my $date (reverse sort keys %$commits_date) {
-      <div class="commits">
-        % my $commits = $commits_date->{$date};
-        
-        <div class="cdate"><%= $date %></div>
-        % for my $commit (sort {$a->{author_epoch} <=> $b->{author_epoch}} @$commits) {
-          <table class="cbody">
-            <tr class="crecord">
-              <td class="cauthor">
-                <%= $commit->{author_name} %>
-              </td>
-              <td class="ccomment">
-                <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                  <%= $commit->{title_short} %>
-                </a>
-              </td>
-              <td class="cid">
-                <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                  <%= substr($commit->{id}, 0, 7) %>
-                </a>
-              </td>
-            </tr>
-          </table>
-        % }
-      </div>
-    % }
-
-    <div style="margin-top:10px;margin-bottom:10px;">
-      <%= include '/include/difftree', id => $end_commit->{id}, from_id => $start_commit->{id},
-        difftrees => $difftrees, parents => [], project_ns => $project %>
-    </div>
     
-    <div>
-      <div class="patchset">
-        % for (my $i = 0; $i < @$blobdiffs; $i++) {
-          % my $blobdiff = $blobdiffs->[$i];
-          <div class="patch" id="<%= $i + 1 %>">
-            % my $lines = $blobdiff->{lines};
-            % my $file = $blobdiff->{file};
-            % my $from_file = $blobdiff->{from_file};
-            % $from_file = $file unless defined $from_file;
-            % my $status = $blobdiff->{status};
-            %= include '/include/blobdiff_body', file => $file, from_file => $from_file, status => $status, lines => $blobdiff->{lines}, project_ns => $project, from_id => $start_commit->{id}, id => $end_commit->{id};
-          </div>
-        % }
+    <div class="commits_panel">
+      <div class="commits_number">
+        Showing <%= @$commits %> commits by <%= $authors_count %> author.
+      </div>
+
+      % for my $date (reverse sort keys %$commits_date) {
+        <div class="commits">
+          % my $commits = $commits_date->{$date};
+          
+          <div class="cdate"><%= $date %></div>
+          % for my $commit (sort {$a->{author_epoch} <=> $b->{author_epoch}} @$commits) {
+            <table class="cbody">
+              <tr class="crecord">
+                <td class="cauthor">
+                  <%= $commit->{author_name} %>
+                </td>
+                <td class="ccomment">
+                  <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                    <%= $commit->{title_short} %>
+                  </a>
+                </td>
+                <td class="cid">
+                  <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                    <%= substr($commit->{id}, 0, 7) %>
+                  </a>
+                </td>
+              </tr>
+            </table>
+          % }
+        </div>
+      % }
+    </div>
+
+    <div class="files_changed_panel">
+      <div style="margin-top:10px;margin-bottom:10px;">
+        <%= include '/include/difftree', id => $end_commit->{id}, from_id => $start_commit->{id},
+          difftrees => $difftrees, parents => [], project_ns => $project %>
+      </div>
+      <div>
+        <div class="patchset">
+          % for (my $i = 0; $i < @$blobdiffs; $i++) {
+            % my $blobdiff = $blobdiffs->[$i];
+            <div class="patch" id="<%= $i + 1 %>">
+              % my $lines = $blobdiff->{lines};
+              % my $file = $blobdiff->{file};
+              % my $from_file = $blobdiff->{from_file};
+              % $from_file = $file unless defined $from_file;
+              % my $status = $blobdiff->{status};
+              %= include '/include/blobdiff_body', file => $file, from_file => $from_file, status => $status, lines => $blobdiff->{lines}, project_ns => $project, from_id => $start_commit->{id}, id => $end_commit->{id};
+            </div>
+          % }
+        </div>
       </div>
     </div>
   </div>
