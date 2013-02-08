@@ -89,7 +89,7 @@ sub startup {
     $r->get('/blobdiff/(#diff)/(*file)')->to('#blobdiff');
     
     # Raw
-    $r->get('/raw/(*id_file)')->to('#raw');
+    $r->get('/raw/(*object)')->to('#raw');
     
     # Archive
     $r->get('/archive/(#rev).tar.gz')->to('#archive', archive_type => 'tar');

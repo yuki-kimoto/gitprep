@@ -2,28 +2,26 @@
   # API
   my $api = Gitprep::API->new($self);
   
+  # Parameters
   my $user = param('user');
   my $project = param('project');
   my $root_ns = $api->root_ns(config->{root});
-  
-  # Parameters
   my $rep_ns = "$root_ns/$user/$project.git";
   my $rep = "/$rep_ns";
-  my $home_ns = $api->dirname($rep_ns);
-  my $home = "/$home_ns";
   my $object = param('object');
 
   # Git
   my $git = $self->app->git;
   
   # Id and file
-  my ($id, $file) = $git->parse_object($rep, $object);
+  use D;d [$rep, $object];
+  my ($rev, $file) = $git->parse_object($rep, $object);
 
   # Commit
-  my $commit_log = $git->latest_commit_log($rep, $id, $file);
+  my $commit_log = $git->latest_commit_log($rep, $rev, $file);
   
   # Blob content
-  my $bid = $git->id_by_path($rep, $id, $file, 'blob')
+  my $bid = $git->id_by_path($rep, $rev, $file, 'blob')
     or $api->croak('Cannot find file');
   my @cmd = ($git->cmd($rep), 'cat-file', 'blob', $bid);
   open my $fh, '-|', @cmd
@@ -48,7 +46,7 @@
   }
 
   # File name
-  my $file_name = $id;
+  my $file_name = $rev;
   if (defined $file) { $file_name = $file }
   elsif ($type =~ m/^text\//) { $file_name .= '.txt' }
   
