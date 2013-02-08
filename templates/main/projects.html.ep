@@ -19,10 +19,15 @@
     
     /* Projects */
     .projects {
-      font-size:150%;
+      font-size:130%;
     }
-    .projects .precord {
-      padding:20px;
+    .projects a {
+      color:#4183C4;
+    }
+    .projects td {
+      padding:5px;
+      padding-left:15px;
+      padding-right:15px;
     }
 
   % end
@@ -39,15 +44,15 @@
       % for my $rep (@$reps) {
         % my $pname = $rep->{name};
         <tr class="precord">
-          <td>
-            <a href="<%= url_for("/$user/$pname") %>">
+          <td class="pname">
+            <a class="ubar" href="<%= url_for("/$user/$pname") %>">
               <%= $rep->{name} %>
             </a>
           </td>
-          <td>
+          <td class="pdescription">
             <%= $rep->{descr} %>
           </td>
-          <td><%= $rep->{age_string} %></td>
+          <td class="pdate"><%= $rep->{age_string} %></td>
         </tr>
       % }
     </table>

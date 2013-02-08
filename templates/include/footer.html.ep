@@ -8,6 +8,9 @@
     height:80px;
     text-align:center;
   }
+  .footer a {
+    color:#4183C4;
+  }
   .footer .panel {
     width:900px;
     margin:auto;
@@ -17,6 +20,6 @@
 
 <div class="footer">
   <div class="panel">
-    <a href="https://github.com/yuki-kimoto/gitprep">Gitprep</a>
+    <a class="ubar" href="https://github.com/yuki-kimoto/gitprep">Gitprep</a>
   </div>
 </div>
