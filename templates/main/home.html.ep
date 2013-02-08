@@ -1,19 +1,43 @@
 <%
-  my $rep_home = config->{root};
   my $users = [qw/kimoto ken/];
 %>
 
 % layout 'common';
+  %= include '/css/common';
+  
+  %= stylesheet begin
+    .users .uheader {
+      border: 1px solid #ccc;
+      font-size:150%;
+      padding:5px;
+    }
+    .users .urecord {
+      border: 1px solid #ccc;
+      border-top:none;
+      padding:5px;
+    }
+    .users .uname {
+      font-size:140%;
+      padding:5px;
+    }
+    
+    .users .uname a {
+      color:#4183C4;
+    }
+  % end
+  
   %= include '/include/header', title => 'Gitprep';
-  <table class="project_list">
-    <th>User</th>
-    % my $toggle = 0;
-    % for my $user (@$users) {
-      <tr class="<%= $toggle++ ? 'light' : 'dark' %>">
-        <td>
-          <a class="list" href="<%= url_for("/$user") %>">
-            <%= $user %>
-          </a>
-        </td>
-    % }
-  </table>
+  <div class="main_panel">
+    <table class="users">
+      <th class="uheader">User</th>
+      % for my $user (@$users) {
+        <tr class="urecord">
+          <td class="uname">
+            <a class="ubar" href="<%= url_for("/$user") %>">
+              <%= $user %>
+            </a>
+          </td>
+        </tr>
+      % }
+    </table>
+  </div>

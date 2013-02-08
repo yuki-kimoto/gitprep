@@ -103,7 +103,6 @@
           </div>
           <div class="tcomment">
             % if ($tag->{type} eq 'tag') {
-              % use D;d $tag;
               <%= $tag->{subject} %>
             % } else {
               % for my $comment (@{$tag->{commit}{comment}}) {
