@@ -7,30 +7,49 @@
 %>
 
 % layout 'common';
+  %= include '/css/common';
   %= include '/include/header', title => 'Project';
-  <table class="project_list">
-    <a href="<%= url_for '/' %>">home</a> &gt;
-    <%= $user %>
-    <tr>
-      <th>Project</th>
-      <th>Description</th>
-      <th>Last Change</th>
-      <th></th>
-    </tr>
-    % my $toggle = 0;
-    % for my $rep (@$reps) {
-      % my $pname = $rep->{name};
-      <tr class="<%= $toggle++ ? 'light' : 'dark' %>">
-        <td>
-          <a class="list" href="<%= url_for("/$user/$pname") %>">
-            <%= $rep->{name} %>
-          </a>
-        </td>
-        <td>
-          <%= $rep->{descr} %>
-        </td>
-        <td class="age2"><%= $rep->{age_string} %></td>
+  
+  %= stylesheet begin
+    /* User */
+    .user {
+      font-size:180%;
+      margin-bottom:10px;
+    }
+    
+    /* Projects */
+    .projects {
+      font-size:150%;
+    }
+    .projects .precord {
+      padding:20px;
+    }
+
+  % end
+  
+  <div class="main_panel">
+    <table class="projects">
+      <div class="user"><%= $user %></div>
+      <tr>
+        <th>Project</th>
+        <th>Description</th>
+        <th>Last Change</th>
+        <th></th>
       </tr>
-    % }
-  </table>
-  <div class="page_footer"></div>
+      % for my $rep (@$reps) {
+        % my $pname = $rep->{name};
+        <tr class="precord">
+          <td>
+            <a href="<%= url_for("/$user/$pname") %>">
+              <%= $rep->{name} %>
+            </a>
+          </td>
+          <td>
+            <%= $rep->{descr} %>
+          </td>
+          <td><%= $rep->{age_string} %></td>
+        </tr>
+      % }
+    </table>
+  </div>
+  %= include '/include/footer';

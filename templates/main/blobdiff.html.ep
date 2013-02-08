@@ -26,8 +26,6 @@
       $from_id, $id, '--', $from_file, $file
     or $api->croak("Open git-diff-tree failed");
   
-  use D;d [$diff, $from_id, $id, $from_file, $file];
-  
   # Lines
   my @lines = map { $git->dec($_) } <$fh>;
   close $fh;

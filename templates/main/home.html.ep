@@ -41,3 +41,4 @@
       % }
     </table>
   </div>
+  %= include '/include/footer';

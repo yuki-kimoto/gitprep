@@ -70,8 +70,12 @@
       </div>
     % } elsif ($class eq 'diff binary_file') {
       <div class="<%= $class %>">Binary files <a href="<%= url_for("/$user/$project/blob/$from_id/$file") %>">a/<%= $file %></a> and <a href="<%= url_for("/$user/$project/blob/$id/$file") %>">b/<%= $file %></a> differ</div>
+    % } elsif ($class eq 'diff chunk_header') {
+      % my ($hvalue, $dvalue) = $value =~ /^(.+@@)(.+)/;
+      <div class="<%= $class %>"><%= $hvalue %></div>
+      <div class="diff"><%= $dvalue %></div>
     % } else {
-      <div class="<%= $class %>"><%= $line->{value} %></div>
+      <div class="<%= $class %>"><%= $value %></div>
     % }
   % }
 </div>
