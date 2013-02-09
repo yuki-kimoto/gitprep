@@ -1,0 +1,124 @@
+<%
+  use Mojo::JSON ();
+  use Encode ();
+  
+  my $op = param('op') || '';
+  my $state = 'start';
+  
+  my $errors;
+  if ($op eq 'create') {
+    $state = 'create';
+    
+    my $params = {
+      id => scalar param('id'),
+      password => scalar param('password'),
+      password2 => scalar param('password2')
+    };
+    my $id = param('id');
+    my $validator = $self->app->validator;
+    my $rule = [
+      id => [
+        ['not_blank' => 'Input admin user.'],
+        [{'regex' => qr/^[a-zA-Z0-9_]+$/} => 'Admin User contain invalid character.'],
+        [{'length' => {max => 20}} => 'Admin User is too long.']
+      ],
+      password => [
+        ['not_blank' => 'Input password.'],
+        ['ascii' => 'Password contain invalid character.'],
+        [{'length' => {max => 20}} => 'Password is too long.']
+      ],
+      {password_check => [qw/password password2/]}
+        => {copy => 0}
+        => [
+          ['duplication' => "Two password don't match"]
+        ]
+    ];
+    my $vresult = $validator->validate($params, $rule);
+    
+    if ($vresult->is_ok) {
+      my $valid_params = $vresult->data;
+      my $id = delete $valid_params->{id};
+      my $config = Encode::decode('UTF-8', Mojo::JSON->new->encode($valid_params));
+      
+      $self->app->dbi->insert({id => $id, config => $config}, table => 'user');
+      
+      $self->flash('success' => 1);
+      $self->redirect_to('/_login');
+    }
+    else {
+      $state = 'error';
+      $errors = $vresult->messages;
+    }
+  }
+%>
+
+%= stylesheet begin
+  .error {
+    margin-left:auto;
+    margin-right:auto;
+    width:300px;
+    color:red;
+    margin-bottom:10px;
+  }
+  .account_panel {
+    margin-top:50px;
+    margin-left:auto;
+    margin-right:auto;
+    width:500px;
+    background-color:#e6f1f6;
+    padding:30px;
+    border:1px solid #c5d5dd;
+    border-radius:7px;
+  }
+  .account {
+    margin-left:auto;
+    margin-right:auto;
+    width:300px;
+    margin-bottom:10px;
+  }
+  .account_panel .atitle {
+    font-size:130%;
+    maring-top:30px;
+  }
+  .submit {
+    text-align:center;
+  }
+  .submit input {
+    width:200px;
+    height:40px;
+  }
+% end
+
+% layout 'common';
+%= include '/css/common';
+
+% if ($state eq 'start' || $state eq 'error') {
+  <div class="account_panel">
+    % if ($state eq 'error') {
+      <div class="error">
+        % for my $error (@$errors) {
+          <div><%= $error %></div>
+        % }
+      </div>
+    % }
+    <form action="<%= url_for->query(op => 'create') %>" method="post">
+      <div class="account">
+        <table>
+          <tr class="auser">
+            <td>Admin User: </td>
+            <td><%= input_tag id => 'admin' %></td>
+          </tr>
+          <tr class="apassword">
+            <td>Password: </td>
+            <td><%= password_field 'password' %></td>
+          </tr>
+          <tr class="apassword">
+            <td>(Again): </td>
+            <td><%= password_field 'password2' %></td>
+          </tr>
+        </table>
+      </div>
+      <div class="submit"><input type="submit" value="Start Git Prep!"></div>
+    </form>
+  </div>
+% }

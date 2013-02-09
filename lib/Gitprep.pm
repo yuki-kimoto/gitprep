@@ -5,8 +5,12 @@ our $VERSION = '0.01';
 
 use Mojo::Base 'Mojolicious';
 use Gitprep::Git;
+use DBIx::Custom;
+use Validator::Custom;
 
 has 'git';
+has 'dbi';
+has 'validator';
 
 sub startup {
   my $self = shift;
@@ -58,8 +62,11 @@ sub startup {
   # Home
   $r->get('/')->to('#home');
   
+  # Start
+  $r->any('/_start')->to('#start');
+  
   # Login
-  $r->get('/_login')->to('#login');
+  $r->any('/_login')->to('#login');
   
   # Admin
   {
@@ -112,6 +119,31 @@ sub startup {
   
   # File cache
   $git->search_projects;
+  
+  # DBI
+  my $db_file = $self->home->rel_file('db/gitprep.db');
+  my $dbi = DBIx::Custom->connect(
+    dsn => "dbi:SQLite:database=$db_file",
+    connector => 1,
+    option => {sqlite_unicode => 1}
+  );
+
+  eval {
+  # Create table
+    my $sql = <<"EOS";
+create table user (
+  row_id integer primary key autoincrement,
+  id not null unique,
+  config not null
+);
+EOS
+    $dbi->execute($sql);
+  };
+  $self->dbi($dbi);
+  
+  # Validator
+  my $validator = Validator::Custom->new;
+  $self->validator($validator);
 }
 
 1;
