@@ -25,3 +25,5 @@ user/public/*
 !user/public/.gitignore
 user/templates/*
 !user/templates/.gitignore
+db/*
+!db/.gitignore

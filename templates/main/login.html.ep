@@ -1,0 +1,36 @@
+%= stylesheet begin
+  .account_panel {
+    margin-top:50px;
+    margin-left:auto;
+    margin-right:auto;
+    width:500px;
+    background-color:#e6f1f6;
+    padding:30px;
+  }
+  .account {
+    margin-left:auto;
+    margin-right:auto;
+    width:300px;
+  }
+  .account_panel .atitle {
+    font-size:130%;
+    maring-top:30px;
+  }
+% end
+
+% layout 'common';
+%= include '/css/common';
+  <div class="account_panel">
+    <table class="account">
+      <tr class="auser">
+        <td>管理者: </td>
+        <td><input value="admin"></td>
+      </tr>
+      <tr class="apassword">
+        <td>パスワード: </td>
+        <td><input></td>
+      </tr>
+    </table>
+    <div><input type="submit" value="Start Git Prep!"></div>
+</div>
+ 

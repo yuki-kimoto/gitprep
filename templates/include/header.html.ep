@@ -6,6 +6,7 @@
     margin-bottom:10px;
     border-bottom:1px solid #E5E5E5;
     height:40px;
+    font-weight:bold;
   }
   .header .panel {
     width:900px;
@@ -42,7 +43,7 @@
       <li>
         <a href="<%= url_for("/setting/profile") %>"><s>Account setting</s></a>
       </li>
-      <li><a href="<%= url_for("/new") %>"><s>Create a new repo</s></a></li>
+      <li><a href="<%= url_for("/_admin/create") %>">Create a new repo</a></li>
       % if (my $user = stash('user')) {
         <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
       % }

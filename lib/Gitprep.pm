@@ -57,6 +57,17 @@ sub startup {
 
   # Home
   $r->get('/')->to('#home');
+  
+  # Login
+  $r->get('/_login')->to('#login');
+  
+  # Admin
+  {
+    my $r = $r->route('/_admin')->to('admin#');
+    
+    # Create new repository
+    $r->get('/create')->to('#create');
+  }
 
   # Projects
   $r->get('/:user')->to('#projects');

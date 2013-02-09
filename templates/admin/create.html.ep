@@ -1,0 +1,42 @@
+% layout 'common';
+  %= include '/css/common';
+  
+  %= stylesheet begin
+    .rep_panel {
+      overflow:hidden;
+    }
+    .rep_panel .rleft {
+      float:left;
+    }
+    .rep_panel .rmiddle {
+      float:left;
+    }
+    .rep_panel .rbottom {
+      float:left;
+    }
+  % end 
+
+  %= include '/include/header';
+
+  <div class="main_panel">
+    <div class="rep_panel">
+      <div class="rleft">
+        <div class="rowner_header>Owner</div>
+        <div class="rowner">yuki-kimoto</div>
+      </div>
+      <div class="rmiddle">
+        <div class="rmiddle_top></div>
+        <div class="rmiddle_bottom">/</div>
+      </div>
+      <div class="rbottom">
+        <div class="rrep_header">Repository name</div>
+        <div class="rrep"><input></div>
+      </div>
+    </div>
+
+    <div>Description (optional)</div>
+    <div><input></div>
+
+    <div>Initialize this repository with a README</div>
+  </div>
+  %= include '/include/footer';
