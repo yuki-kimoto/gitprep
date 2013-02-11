@@ -1,6 +1,145 @@
+<%
+  use Mojo::JSON ();
+  use Encode ();
+  use Gitprep::API;
+  use Mojo::Util 'md5_sum';
 
+  my $api = Gitprep::API->new($self);
+  
+  my $op = param('op') || '';
+  my $state = 'start';
+  
+  # DBI
+  my $dbi = $self->app->dbi;
+  
+  if ($op eq 'login') {
+    $state = 'login';
+    
+    my $params = {
+      id => scalar param('id'),
+      password => scalar param('password'),
+    };
+    my $id = param('id');
+    my $validator = $self->app->validator;
+    my $password_check = sub {
+      my $values = shift;
+      
+      my ($id, $password) = @$values;
+      my $password_md5 = md5_sum $password;
+      
+      my $config_json
+        = $dbi->model('user')->select('config', id => $id)->value;
+      
+      return unless $config_json;
+      
+      my $config = $api->json($config_json);
+      
+      return $config->{password} eq $password_md5;
+    };
+    
+    my $rule = [
+      id => [
+        'any'
+      ],
+      password => [
+        'any'
+      ],
+      {password_check => [qw/id password/]}
+        => {copy => 0},
+        => [
+          $password_check
+        ]
+    ];
+    my $vresult = $validator->validate($params, $rule);
+    
+    if ($vresult->is_ok) {
+      my $valid_params = $vresult->data;
+      my $id = $valid_params->{id};
+      
+      my $config_json = $self->app->dbi->model('user')->select('config', id => $id)->value;
+      my $config = $api->json($config_json);
+      my $admin = $config->{admin};
+      
+      if ($admin) {
+        $self->redirect_to('/_admin');
+      }
+      else {
+        $self->redirect_to("/$id");
+      }
+    }
+    else {
+      $state = 'error';
+    }
+  }
+%>
+
+%= stylesheet begin
+  .error {
+    margin-left:auto;
+    margin-right:auto;
+    width:300px;
+    color:red;
+    margin-bottom:10px;
+  }
+  .account_panel {
+    margin-top:50px;
+    margin-left:auto;
+    margin-right:auto;
+    width:500px;
+    background-color:#e6f1f6;
+    padding:30px;
+    border:1px solid #c5d5dd;
+    border-radius:7px;
+  }
+  .account {
+    margin-left:auto;
+    margin-right:auto;
+    width:300px;
+    margin-bottom:10px;
+  }
+  .account_panel .atitle {
+    font-size:130%;
+    maring-top:30px;
+  }
+  .submit {
+    text-align:center;
+  }
+  .submit input {
+    width:150px;
+    height:40px;
+  }
+% end
+
+% layout 'common';
+%= include '/css/common';
+% my $id = '';
 % if (flash('success')) {
-  Start up success!
+  <br>
+  <b><center>Start up success! Please login as admin user.</center></b>
+  % $id = flash('id');
 % }
 
-Login page
+% if ($state eq 'start' || $state eq 'error') {
+  <div class="account_panel">
+    % if ($state eq 'error') {
+      <div class="error">
+        User id or passowrd is invalid.
+      </div>
+    % }
+    <form action="<%= url_for->query(op => 'login') %>" method="post">
+      <div class="account">
+        <table>
+          <tr class="auser">
+            <td>User: </td>
+            <td><%= input_tag id => $id %></td>
+          </tr>
+          <tr class="apassword">
+            <td>Password: </td>
+            <td><%= password_field 'password' %></td>
+          </tr>
+        </table>
+      </div>
+      <div class="submit"><input type="submit" value="Login"></div>
+    </form>
+  </div>
+% }

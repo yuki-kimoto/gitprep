@@ -3,6 +3,8 @@ use Mojo::Base -base;
 
 use Carp ();
 use File::Basename ();
+use Mojo::JSON;
+use Encode qw/encode decode/;
 
 sub croak { Carp::croak(@_) }
 sub dirname { File::Basename::dirname(@_) }
@@ -23,6 +25,17 @@ sub root_ns {
   $root =~ s/^\///;
   
   return $root;
+}
+
+sub json {
+  my ($self, $value) = @_;
+  
+  if (ref $value) {
+    return decode('UTF-8', Mojo::JSON->new->encode($value));
+  }
+  else {
+    return Mojo::JSON->new->decode(encode('UTF-8', $value));
+  }
 }
 
 1;

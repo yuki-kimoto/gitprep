@@ -69,6 +69,9 @@ sub startup {
   $r->any('/_login')->to('#login');
   
   # Admin
+  $r->get('/_admin')->to('#admin');
+  
+  # Admin
   {
     my $r = $r->route('/_admin')->to('admin#');
     
@@ -140,6 +143,9 @@ EOS
     $dbi->execute($sql);
   };
   $self->dbi($dbi);
+  
+  # Model
+  $dbi->create_model({table => 'user', primary_key => 'id'});
   
   # Validator
   my $validator = Validator::Custom->new;

@@ -1,6 +1,10 @@
 <%
   use Mojo::JSON ();
   use Encode ();
+  use Gitprep::API;
+  use Mojo::Util 'md5_sum';
+  
+  my $api = Gitprep::API->new($self);
   
   my $op = param('op') || '';
   my $state = 'start';
@@ -38,11 +42,15 @@
     if ($vresult->is_ok) {
       my $valid_params = $vresult->data;
       my $id = delete $valid_params->{id};
-      my $config = Encode::decode('UTF-8', Mojo::JSON->new->encode($valid_params));
+      $valid_params->{admin} = 1;
+      $valid_params->{password} = md5_sum $valid_params->{password};
+      my $config_json = $api->json($valid_params);
       
-      $self->app->dbi->insert({id => $id, config => $config}, table => 'user');
+      $self->app->dbi->model('user')->insert({id => $id, config => $config_json});
       
-      $self->flash('success' => 1);
+      $self->flash(success => 1);
+      $self->flash(id => $id);
+      use D;d [$self->flash('id')];
       $self->redirect_to('/_login');
     }
     else {
