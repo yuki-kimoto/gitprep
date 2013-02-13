@@ -38,5 +38,18 @@ sub json {
   }
 }
 
+sub users {
+  my $self = shift;
+ 
+  my $users = $self->cntl->app->dbi->model('user')->select(
+    ['id', 'config'],
+    append => 'order by id'
+  )->filter(config => 'json')->all;
+
+  @$users = grep { ! $_->{config}{admin} } @$users;
+  
+  return $users;
+}
+
 1;
 

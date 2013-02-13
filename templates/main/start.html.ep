@@ -1,6 +1,4 @@
 <%
-  use Mojo::JSON ();
-  use Encode ();
   use Gitprep::API;
   use Mojo::Util 'md5_sum';
   
@@ -50,7 +48,6 @@
       
       $self->flash(success => 1);
       $self->flash(id => $id);
-      use D;d [$self->flash('id')];
       $self->redirect_to('/_login');
     }
     else {

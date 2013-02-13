@@ -1,0 +1,158 @@
+<%
+  use Gitprep::API;
+  use Mojo::Util 'md5_sum';
+  
+  my $api = Gitprep::API->new($self);
+  
+  my $op = param('op') || '';
+  my $state = 'start';
+  
+  my $errors;
+  my $users;
+  if ($op eq 'create') {
+    $state = 'create';
+    
+    my $params = {
+      id => scalar param('id'),
+      password => scalar param('password'),
+      password2 => scalar param('password2')
+    };
+    my $id = param('id');
+    my $validator = $self->app->validator;
+    my $rule = [
+      id => [
+        ['not_blank' => 'Input admin user.'],
+        [{'regex' => qr/^[a-zA-Z0-9_]+$/} => 'Admin User contain invalid character.'],
+        [{'length' => {max => 20}} => 'Admin User is too long.']
+      ],
+      password => [
+        ['not_blank' => 'Input password.'],
+        ['ascii' => 'Password contain invalid character.'],
+        [{'length' => {max => 20}} => 'Password is too long.']
+      ],
+      {password_check => [qw/password password2/]}
+        => {copy => 0}
+        => [
+          ['duplication' => "Two password don't match"]
+        ]
+    ];
+    my $vresult = $validator->validate($params, $rule);
+    
+    if ($vresult->is_ok) {
+      my $valid_params = $vresult->data;
+      my $id = delete $valid_params->{id};
+      $valid_params->{password} = md5_sum $valid_params->{password};
+      my $config_json = $api->json($valid_params);
+      
+      $self->app->dbi->model('user')->insert({id => $id, config => $config_json});
+      
+      $self->flash(success => 1);
+      $self->flash(id => $id);
+      $self->redirect_to('/_admin/user');
+    }
+    else {
+      $state = 'error';
+      $errors = $vresult->messages;
+    }
+  }
+  else {
+    $users = $api->users;
+  }
+%>
+
+% layout 'common';
+  %= include '/css/common';
+
+  %= stylesheet begin
+    h2 {
+      margin-top:30px;
+      text-align:center;
+    }
+
+    .error {
+      margin-left:auto;
+      margin-right:auto;
+      width:300px;
+      color:red;
+      margin-bottom:10px;
+    }
+    .account_panel {
+      margin-top:30px;
+      margin-left:auto;
+      margin-right:auto;
+      margin-bottom:50px;
+      width:500px;
+      background-color:#e6f1f6;
+      padding:30px;
+      border:1px solid #c5d5dd;
+      border-radius:7px;
+    }
+    .account {
+      margin-left:auto;
+      margin-right:auto;
+      width:300px;
+      margin-bottom:10px;
+    }
+    .account_panel .atitle {
+      font-size:130%;
+      maring-top:30px;
+    }
+    .submit {
+      text-align:center;
+    }
+    .submit input {
+      width:200px;
+      height:40px;
+    }
+    
+    /* Users */
+    .users {
+      
+    }
+  % end
+
+  <h2>Create User</h2>
+  <div class"=main_panel">
+    <form action="<%= url_for->query(op => 'create') %>" method="post">
+      <div class="account_panel">
+        % if ($state eq 'error') {
+          <div class="error">
+            % for my $error (@$errors) {
+              <div><%= $error %></div>
+            % }
+          </div>
+        % }
+        % if (flash('success')) {
+          <div>
+            <center><%= flash('id') %> is created</center>
+          </div>
+        % }
+        <div class="account">
+          <table>
+            <tr class="auser">
+              <td>User: </td>
+              <td><%= input_tag 'id' %></td>
+            </tr>
+            <tr class="apassword">
+              <td>Password: </td>
+              <td><%= password_field 'password' %></td>
+            </tr>
+            <tr class="apassword">
+              <td>(Again): </td>
+              <td><%= password_field 'password2' %></td>
+            </tr>
+          </table>
+        </div>
+        <div class="submit"><input type="submit" value="Create User"></div>
+      </div>
+    </form>
+  </div>
+
+  <h2>Users</h2>
+  <div class="main_panel">
+    <ul>
+      % for my $user (@$users) {
+        <li><%= $user->{id} %></li>
+      % }
+    </ul>
+  </div>

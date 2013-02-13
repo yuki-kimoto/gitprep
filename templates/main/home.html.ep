@@ -1,5 +1,8 @@
 <%
-  my $users = [qw/kimoto ken/];
+  use Gitprep::API;
+  my $api = Gitprep::API->new($self);
+  
+  my $users = $api->users;
 %>
 
 % layout 'common';
@@ -33,8 +36,8 @@
       % for my $user (@$users) {
         <tr class="urecord">
           <td class="uname">
-            <a class="ubar" href="<%= url_for("/$user") %>">
-              <%= $user %>
+            <a class="ubar" href="<%= url_for("/$user->{id}") %>">
+              <%= $user->{id} %>
             </a>
           </td>
         </tr>

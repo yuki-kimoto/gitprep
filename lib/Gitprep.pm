@@ -7,6 +7,8 @@ use Mojo::Base 'Mojolicious';
 use Gitprep::Git;
 use DBIx::Custom;
 use Validator::Custom;
+use Encode qw/encode decode/;
+use Mojo::JSON;
 
 has 'git';
 has 'dbi';
@@ -77,6 +79,9 @@ sub startup {
     
     # Create new repository
     $r->get('/create')->to('#create');
+    
+    # User
+    $r->any('/user')->to('#user');
   }
 
   # Projects
@@ -146,6 +151,18 @@ EOS
   
   # Model
   $dbi->create_model({table => 'user', primary_key => 'id'});
+  
+  # Fiter
+  $dbi->register_filter(json => sub {
+    my $value = shift;
+    
+    if (ref $value) {
+      return decode('UTF-8', Mojo::JSON->new->encode($value));
+    }
+    else {
+      return Mojo::JSON->new->decode(encode('UTF-8', $value));
+    }
+  });
   
   # Validator
   my $validator = Validator::Custom->new;
