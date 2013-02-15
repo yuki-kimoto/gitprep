@@ -74,37 +74,73 @@
 %>
 
 %= stylesheet begin
-  .error {
+  .signin {
+    width:350px;
     margin-left:auto;
     margin-right:auto;
-    width:300px;
+  }
+  .signin .sheader {
+    margin-top:50px;
+    background-color:#6c8393;
+    padding:15px;
+    border:1px solid #586873;
+    border-bottom:1px solid #6c8393;
+    border-top-left-radius:5px;
+    border-top-right-radius:5px;
+    color:white;
+    font-weight:bold;
+  }
+  .signin .serror {
     color:red;
     margin-bottom:10px;
   }
-  .account_panel {
-    margin-top:50px;
+  .signin .sbody {
     margin-left:auto;
     margin-right:auto;
-    width:500px;
-    background-color:#e6f1f6;
-    padding:30px;
-    border:1px solid #c5d5dd;
-    border-radius:7px;
-  }
-  .account {
-    margin-left:auto;
-    margin-right:auto;
-    width:300px;
     margin-bottom:10px;
+    border:1px solid #d8dee2;
+    border-top:none;
+    border-bottom-left-radius:5px;
+    border-bottom-right-radius:5px;
+    padding:20px 20px;
   }
-  .account_panel .atitle {
-    font-size:130%;
-    maring-top:30px;
+  .signin .suser_header {
+    font-weight:bold;
+    margin-bottom:5px;
   }
-  .submit {
+  .signin .suser {
+    background-color:white;
+    border:1px solid #d8dee2;
+    width:100%;
+    height:25px;
+    border-radius:3px;
+    margin-bottom:10px;
+    display:block;
+  }
+  .signin .spassword_header {
+    font-weight:bold;
+    padding-bottom:5px;
+  }
+  .signin .spassword {
+    background-color:white;
+    border:1px solid #d8dee2;
+    width:100%;
+    height:25px;
+    border-radius:3px;
+    margin-bottom:10px;
+    display:block;
+  }
+  .signin .ssubmit {
+    display:block;
+    background-color:#EEE;
+    border:1px solid #d8dee2;
     text-align:center;
+    height:35px;
+    width:60px;
+    border-radius:4px;
+    cursor:pointer;
   }
-  .submit input {
+  .signin .submit input {
     width:150px;
     height:40px;
   }
@@ -120,26 +156,22 @@
 % }
 
 % if ($state eq 'start' || $state eq 'error') {
-  <div class="account_panel">
-    % if ($state eq 'error') {
-      <div class="error">
-        User id or passowrd is invalid.
-      </div>
-    % }
-    <form action="<%= url_for->query(op => 'login') %>" method="post">
-      <div class="account">
-        <table>
-          <tr class="auser">
-            <td>User: </td>
-            <td><%= input_tag id => $id %></td>
-          </tr>
-          <tr class="apassword">
-            <td>Password: </td>
-            <td><%= password_field 'password' %></td>
-          </tr>
-        </table>
-      </div>
-      <div class="submit"><input type="submit" value="Login"></div>
-    </form>
-  </div>
+  <div class="signin">
+    <div class="sheader">
+      Sing in
+    </div>
+    <div class="sbody">
+      % if ($state eq 'error') {
+        <div class="serror">
+          Incorrect username or password.
+        </div>
+      % }
+      <form action="<%= url_for->query(op => 'login') %>" method="post">
+        <div class="suser_header">Username</div>
+        <%= input_tag id => $id, class => 'suser' %>
+        <div class="spassword_header">Password</div>
+        <%= password_field 'password', class => 'spassword' %>
+        <input class="ssubmit" type="submit" value="Sign in">
+      </form>
+    </div>
 % }

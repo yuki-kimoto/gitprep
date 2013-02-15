@@ -7,3 +7,9 @@ border color gray:#ccc
 background blue:#e6f1f6
 text shallow gray:#999;
 background dark-blue:#4183C4
+
+-------------------------------
+background gray2:#6c8393;
+border gray2 #586873;
+border sallow gray2 #d8dee2;
+--------------------------------

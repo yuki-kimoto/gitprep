@@ -67,7 +67,7 @@ sub startup {
   # Start
   $r->any('/_start')->to('#start');
   
-  # Login
+  # Sign in
   $r->any('/_login')->to('#login');
   
   # Admin
