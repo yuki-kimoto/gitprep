@@ -10,7 +10,9 @@
   
   %= stylesheet begin
     .users {
-      width:300px;
+      width:400px;
+      margin-left:auto;
+      margin-right:auto;
     }
     .users .uheader {
       border: 1px solid #ccc;
