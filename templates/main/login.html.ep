@@ -73,6 +73,7 @@
   }
 %>
 
+
 %= stylesheet begin
   .signin {
     width:350px;
@@ -148,6 +149,8 @@
 
 % layout 'common';
 %= include '/css/common';
+%= include '/include/header';
+
 % my $id = '';
 % if (flash('success')) {
   <br>

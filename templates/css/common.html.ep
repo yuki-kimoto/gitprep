@@ -58,6 +58,7 @@
   .main_panel {
     width:900px;
     margin:5px auto;
+    min-height:300px;
   }
   
   /* Diff */
