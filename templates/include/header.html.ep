@@ -77,6 +77,12 @@
       float:left;
       padding-top:12px;
     }
+    .header h1 a {
+      color:#555;
+    }
+    .header h1 a:hover {
+      color:#4183C4;
+    }
     .header .hsignin {
       float:right;
       background-color:#EEE;
@@ -86,10 +92,10 @@
       display:block;
       border-radius:3px;
     }
-    .header a {
+    .header a.hsignin {
       color:#333;
     }
-    .header a:hover {
+    .header a.hsignin:hover {
       color:white;
       background-color:#4183C4;
     }

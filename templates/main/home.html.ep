@@ -9,19 +9,26 @@
   %= include '/css/common';
   
   %= stylesheet begin
+    .users {
+      width:300px;
+    }
     .users .uheader {
       border: 1px solid #ccc;
       font-size:150%;
       padding:5px;
-    }
-    .users .urecord {
-      border: 1px solid #ccc;
-      border-top:none;
-      padding:5px;
+      background-color:#6c8393;
+      border:1px solid #586873;
+      border-top-left-radius:5px;
+      border-top-right-radius:5px;
+      color:white;
+      text-align:center;
     }
     .users .uname {
+      border: 1px solid #ccc;
+      border-top:none;
       font-size:140%;
-      padding:5px;
+      padding:10px;
+      padding-left:20px;
     }
     
     .users .uname a {
@@ -31,16 +38,14 @@
   
   %= include '/include/header', title => 'Gitprep';
   <div class="main_panel">
-    <table class="users">
-      <th class="uheader">User</th>
+    <div class="users">
+      <div class="uheader">Users</div>
       % for my $user (@$users) {
-        <tr class="urecord">
-          <td class="uname">
-            <a class="ubar" href="<%= url_for("/$user->{id}") %>">
-              <%= $user->{id} %>
-            </a>
-          </td>
-        </tr>
+        <div class="uname">
+          <a class="ubar" href="<%= url_for("/$user->{id}") %>">
+            <%= $user->{id} %>
+          </a>
+        </div>
       % }
     </table>
   </div>
