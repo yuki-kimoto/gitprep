@@ -11,50 +11,91 @@
   %= include '/include/header', title => 'Project';
   
   %= stylesheet begin
+    /* Projects */
+    .projects {
+      overflow:hidden;
+      padding:20px;
+    }
+    
     /* User */
-    .user {
+    .projects .puser {
       font-size:180%;
       margin-bottom:10px;
+      float:left;
+      width:150px;
     }
     
     /* Projects */
-    .projects {
-      font-size:130%;
+    .projects .pright {
+      float:left;
+      width:650px;
+    }
+    .projects .prepostiory {
+      background-color:white;
+      border:1px solid #ccc;
+      border-bottom:none;
+      width:150px;
+      text-align:center;
+      padding:5px;
+      font-weight:bold;
+      position: relative;
+      z-index:1;
+      border-top-left-radius:3px;
+      border-top-right-radius:3px;
+    }
+    .projects .propository_bottom {
+      border-top:1px solid #ccc;
+      margin-top:-1px;
+      position: relative;
+      z-index:0;
+    }
+    .projects .pproject {
+      border-bottom:1px solid #ccc;
+      padding:10px;
+    }
+    .projects .pname {
+      font-weight:bold;
+      font-size:150%;
+      margin-bottom:2px;
+      padding:5px;
+    }
+    .projects .pdescription {
+      margin-bottom:5px;
+      padding-left:5px;
+    }
+    .projects .pdate {
+      font-size:90%;
+      margin-bottom:5px;
+      padding-left:5px;
+      color:#999;
     }
     .projects a {
       color:#4183C4;
     }
-    .projects td {
-      padding:5px;
-      padding-left:15px;
-      padding-right:15px;
-    }
-
   % end
   
   <div class="main_panel">
-    <table class="projects">
-      <div class="user"><%= $user %></div>
-      <tr>
-        <th>Project</th>
-        <th>Description</th>
-        <th>Last Change</th>
-        <th></th>
-      </tr>
-      % for my $rep (@$reps) {
-        % my $pname = $rep->{name};
-        <tr class="precord">
-          <td class="pname">
-            <a class="ubar" href="<%= url_for("/$user/$pname") %>">
-              <%= $rep->{name} %>
-            </a>
-          </td>
-          <td class="pdescription">
-            <%= $rep->{descr} %>
-          </td>
-          <td class="pdate"><%= $rep->{age_string} %></td>
-        </tr>
-      % }
-    </table>
+    <div class="projects">
+      <div class="puser"><%= $user %></div>
+      <div class="pright">
+        <div class="prepostiory">Repositories</div>
+        <div class="propository_bottom"></div>
+        
+        % for my $rep (@$reps) {
+          % my $pname = $rep->{name};
+          <div class="pproject">
+            <div class="pname">
+              <a class="ubar" href="<%= url_for("/$user/$pname") %>">
+                <%= $rep->{name} %>
+              </a>
+            </div>
+            <div class="pdescription">
+              <%= $rep->{descr} %>
+            </div>
+            <div class="pdate">last updated <%= $rep->{age_string} %></div>
+          </div>
+        % }
+      </div>
+    </div>
   </div>
   %= include '/include/footer';

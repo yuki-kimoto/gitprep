@@ -100,7 +100,7 @@
           <span class="ccount"><%= $tags_count %></span>
         % }
       </a>
-     </li>
+    </li>
   </ul>
   <div class="cunder"></div>
 </div>
