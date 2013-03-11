@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="robots" content="index, nofollow" >
     <title>Git</title>
+    %= stylesheet '/css/bootstrap.css', rel => 'stylesheet', media => 'screen';
     %= javascript '/js/jquery-1.9.0.min.js';
+    %= javascript '/js/bootstrap.js';
+
     <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" >
   </head>
   <body>

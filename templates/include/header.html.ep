@@ -1,5 +1,5 @@
 <%
-  my $user_id = stash('user_id');
+  my $user_id = session('user_id');
 %>
 
 % if (defined $user_id) {
@@ -44,12 +44,12 @@
         <li><a href="<%= url_for('/') %>">GitPrep</a></li>
       </ul>
       <ul class="right">
-        <li><a href="<%= url_for("/logout") %>"><s>Sign out</s></a></li>
+        <li><a href="<%= url_for("/_login?op=logout") %>">Sign out</a></li>
         <li>
           <a href="<%= url_for("/setting/profile") %>"><s>Account setting</s></a>
         </li>
         <li><a href="<%= url_for("/_admin/create") %>">Create a new repo</a></li>
-        % if (my $user = stash('user')) {
+        % if (my $user = session('user_id')) {
           <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
         % }
       </ul>

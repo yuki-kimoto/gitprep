@@ -59,6 +59,7 @@
       my $config_json = $self->app->dbi->model('user')->select('config', id => $id)->value;
       my $config = $api->json($config_json);
       my $admin = $config->{admin};
+      session(user_id => $id);
       
       if ($admin) {
         $self->redirect_to('/_admin');
@@ -70,6 +71,9 @@
     else {
       $state = 'error';
     }
+  } elsif ($op eq 'logout') {
+    session(expires => 1);
+    $self->redirect_to('/');
   }
 %>
 
