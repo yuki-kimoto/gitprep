@@ -1,5 +1,15 @@
 %= stylesheet begin
 
+  /* User and project name */
+  .user_rep {
+    font-size:140%;
+    margin-top:15px;
+    margin-bottom:15px;
+  }
+  .user_rep a {
+    color:#4183C4;
+  }
+  
   /* Main menu */
   .main_menu {
     border:1px solid gray;

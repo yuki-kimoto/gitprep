@@ -9,6 +9,18 @@
     %= javascript '/js/bootstrap.js';
     <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" >
     
+    %= stylesheet begin
+      .corner-left-none {
+        border-top-left-radius:0;
+        border-bottom-left-radius:0;
+        margin-left:0;
+      }
+      .corner-right-none {
+        border-top-right-radius:0;
+        border-bottom-right-radius:0;
+        margin-right:0;
+      }
+    % end
   </head>
   <body>
     %= content;
