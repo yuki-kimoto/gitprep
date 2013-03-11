@@ -3,47 +3,12 @@
 %>
 
 % if (defined $user_id) {
-  %= stylesheet begin
-
-    /* Header */
-    .header {
-      background-color:#F3F3F3;
-      margin-bottom:10px;
-      border-bottom:1px solid #E5E5E5;
-      height:40px;
-      font-weight:bold;
-    }
-    .header .panel {
-      width:900px;
-      margin:auto;
-      overflow:hidden;
-    }
-    .header .left {
-      width:400px;
-    }
-    .header li {
-      padding:10px;
-    }
-    .header .left li {
-      float:left;
-    }
-    .header .right li{
-      float:right;
-    }
-    .header a {
-      color:#333;
-    }
-    .header a:hover {
-      color:#4183C4;
-    }
-  % end
-
-  <div class="header">
-    <div class="panel">
-      <ul class="left">
+  <div class="container">
+    <div>
+      <ul>
         <li><a href="<%= url_for('/') %>">GitPrep</a></li>
       </ul>
-      <ul class="right">
+      <ul>
         <li><a href="<%= url_for("/_login?op=logout") %>">Sign out</a></li>
         <li>
           <a href="<%= url_for("/setting/profile") %>"><s>Account setting</s></a>
@@ -56,56 +21,16 @@
     </div>
   </div>
 % } else {
-  %= stylesheet begin
-
-    /* Header */
-    .header {
-      background-color:white;
-      margin-bottom:10px;
-      border-bottom:1px solid #E5E5E5;
-      height:65px;
-      font-weight:bold;
-    }
-    .header .hpanel {
-      width:900px;
-      margin:auto;
-      overflow:hidden;
-      padding:10px;
-    }
-    .header h1 {
-      font-size:140%;
-      float:left;
-      padding-top:12px;
-    }
-    .header h1 a {
-      color:#555;
-    }
-    .header h1 a:hover {
-      color:#4183C4;
-    }
-    .header .hsignin {
-      float:right;
-      background-color:#EEE;
-      border:1px solid #d8dee2;
-      margin-top:5px;
-      padding:10px;
-      display:block;
-      border-radius:3px;
-    }
-    .header a.hsignin {
-      color:#333;
-    }
-    .header a.hsignin:hover {
-      color:white;
-      background-color:#4183C4;
-    }
-  % end
-
-  <div class="header">
-    <div class="hpanel">
-      <h1><a href="<%= url_for('/') %>">GitPrep</a></h1>
-      <a class="hsignin" href="<%= url_for('/_login') %>">Sing in</a>
+  <div class="container">
+    <div class="masthead">
+      <ul class="nav nav-pills pull-right">
+        <li class="active">
+          <a href="<%= url_for('/_login') %>">Sing in</a>
+        </li>
+      </ul>
+      <h3 class="muted"><a href="<%= url_for('/') %>">GitPrep</a></h3>
     </div>
   </div>
 % }
 
+<hr style="margin:0 0">

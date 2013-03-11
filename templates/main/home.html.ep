@@ -6,7 +6,6 @@
 %>
 
 % layout 'common';
-  %= include '/css/common';
   
   %= stylesheet begin
     .users {
@@ -39,16 +38,16 @@
   % end
   
   %= include '/include/header', title => 'Gitprep';
-  <div class="main_panel">
-    <div class="users">
-      <div class="uheader">Users</div>
+  <div class="container" style="min-heigth:500px">
+    <h3>Users</h3>
+    <ul class="nav nav-tabs nav-stacked">
       % for my $user (@$users) {
-        <div class="uname">
-          <a class="ubar" href="<%= url_for("/$user->{id}") %>">
+        <li>
+          <a href="<%= url_for("/$user->{id}") %>">
             <%= $user->{id} %>
           </a>
-        </div>
+        </li>
       % }
-    </table>
+    </ul>
   </div>
   %= include '/include/footer';
