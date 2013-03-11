@@ -136,30 +136,16 @@
 
   %= include '/include/header';
 
-  <div class="main_panel">
-    %= include '/include/sub_header';
-
-    %= include '/include/code_menu';
-    %= stylesheet begin
-      /* Code menu */
-      .code_menu_files {
-        border:1px solid #E5E5E5;
-        border-bottom:none;
-        background-color:white;
-        font-weight:bold;
-      }
-      .code_menu_files a {
-        color:#333
-      }
-    % end
-
+  <div class="container">
+    %= include '/include/project_header';
+    %= include '/include/code_menu', display => 'files';
     %= include '/include/page_path', type => 'blob', Path => $blob;
         
     <div class="blob_header">
       <div class="htop">
-        <b><%= $commit_log->{author} %></b>
-        <span class="hauthor_date"><%= $commit_log->{author_date} %></span>
-        <a class="hcomment" href="<%= url_for("/$user/$project/commit/$rev") %>">
+        <%= $commit_log->{author} %>
+        <span class="muted"><%= $commit_log->{author_date} %></span>
+        <a href="<%= url_for("/$user/$project/commit/$rev") %>">
           <%= $commit->{title} %>
         </a>
       </div>

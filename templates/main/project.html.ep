@@ -73,9 +73,9 @@
     <h4 style="margin-top:0px">
       <%= $desc %>
     </h4>
-    
+
     <div class="breadcrumb" style="background-color:white;border:1px solid #ccc;padding:0 5px;">
-      <a class="btn" href="<%= url_for("/$user/$project/archive/master.zip") %>">ZIP</a>
+      <a class="btn" href="<%= url_for("/$user/$project/archive/master.zip") %>"><i class="icon-arrow-down"></i>ZIP</a>
       <a class="btn corner-right-none" href="#" >HTTP</a><a class="btn corner-left-none corner-right-none" href="#">SSH</a><input type="text" style="border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0;margin-top:10px;">
       <span>Read-only access</span>
     </div>
