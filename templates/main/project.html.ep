@@ -200,8 +200,8 @@
 
   %= include '/include/header';
 
-  <div class="main_panel">
-    %= include '/include/sub_header';
+  <div class="container">
+    %= include '/include/project_header';
 
     <div class="description"><%= $desc %></div>
     
