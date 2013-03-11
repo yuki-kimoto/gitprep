@@ -84,8 +84,8 @@ sub startup {
     $r->any('/user')->to('#user');
   }
 
-  # Projects
-  $r->get('/:user')->to('#projects');
+  # User
+  $r->get('/:user')->to('#user');
   
   # Project
   {

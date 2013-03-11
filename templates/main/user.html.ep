@@ -2,7 +2,7 @@
   my $root = config->{root};
   my $user = param('user');
   
-  # Repositories
+  # Projects
   my $reps = app->git->projects("/$root/$user");
 %>
 
@@ -17,7 +17,7 @@
         <li><a href="<%= url_for %>"><%= $user %></a></li>
       </ul>
 
-      <h3>Repositories</h3>
+      <h3>Projects</h3>
       
       <table class="table">
         % for my $rep (@$reps) {
@@ -31,7 +31,7 @@
               <td>
                 <%= $rep->{descr} %>
               </td>
-              <td>last updated <%= $rep->{age_string} %></td>
+              <td class="muted">last updated <%= $rep->{age_string} %></td>
             </div>
           </tr>
         % }
