@@ -27,11 +27,6 @@
   %= include '/css/common';
   
   %= stylesheet begin
-    /* h2 */
-    h2 {
-      font-size:140%;
-      padding-bottom:5px;
-    }
     
     /* Branches number */
     .branches_number {
@@ -88,49 +83,61 @@
   
   %= include '/include/header';
 
-  <div class="main_panel">
-    %= include '/include/sub_header';
+  <div class="container">
+    %= include '/include/project_header';
     %= include '/include/code_menu', display => 'branches', branches_count => scalar @$branches;
     
-    <h2>Branches</h2>
+    <h3>Branches</h3>
     
-    <div class="branches_number">Showing <%= @$branches %> branches not merged into master</div>
-    <table class="branches">
-      <tr class="bdefault">
-        <td class="bleft">
-          <div class="bname"><%= $default_branch->{name} %></div>
-          <div class="blast_updated">Last updated <%= $default_branch->{commit}{age_string} %> by <%= $default_branch->{commit}{author_name} %></div>
-        </td>
-        <td>
-          
-        </td>
-        <td class="bright">
-          Base branch
-        </td>
-      </tr>
-    </table>
-    <table class="branches">
-      % for (my $i = 0; $i < @$branches; $i++) {
-        % my $branch = $branches->[$i];
-        % my $name = $branch->{name};
-        <tr>
-          <td class="bleft">
-            <div class="bname">
-              <a href="<%= url_for("/$user/$project/tree/$name") %>">
-                <%= $name %>
+    <div class="muted">
+      Showing <%= @$branches %> branches not merged into master
+    </div>
+    <div class="row">
+      <div class="span12 bk-black padding-default">
+        <div class="row">
+          <div class="span8">
+            <div class="font-white"><b><%= $default_branch->{name} %></b></div>
+            <div class="muted">
+              Last updated
+              <%= $default_branch->{commit}{age_string} %>
+              by
+              <%= $default_branch->{commit}{author_name} %>
+            </div>
+          </div>
+          <div class="span4 text-right font-white" style="padding-top:10px">
+            Base branch
+          </div>
+        </div>
+      </div>
+    </div>
+    % for (my $i = 0; $i < @$branches; $i++) {
+      % my $branch = $branches->[$i];
+      % my $name = $branch->{name};
+      <div class="row">
+        <div class="span12 padding-default border-bottom-gray">
+          <div class="row">
+            <div class="span8">
+              <div>
+                <a href="<%= url_for("/$user/$project/tree/$name") %>">
+                  <%= $name %>
+                </a>
+              </div>
+              <div class="muted">
+                Last updated
+                <%= $branch->{commit}{age_string} %>
+                by
+                <%= $branch->{commit}{author_name} %>
+              </div>
+            </div>
+            <div class="span4 text-right" style="padding-top:5px">
+              <a class="btn" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$name") %>">
+                Compare
               </a>
             </div>
-            <div class="blast_updated">Last updated <%= $branch->{commit}{age_string} %> by <%= $branch->{commit}{author_name} %></div>
-          </td>
-          <td>
-            
-          </td>
-          <td class="bright">
-            <a href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$name") %>">Compare</a>
-          </td>
-        </tr>
-      % }
-    </table>
+          </div>
+        </div>
+      </div>
+    % }
   </div>
   
   %= include '/include/footer';

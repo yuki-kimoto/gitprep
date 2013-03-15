@@ -19,10 +19,12 @@
     <a href="<%= url_for("/$user/$project/commits/master") %>">Commits</a>
   </li>
   <li class="<%= $display eq 'branches' ? 'active' : '' %>">
-    <a href="<%= url_for("/$user/$project/branches") %>">Branches</a>
-    % if ($display eq 'branches') {
-      <span><%= $branches_count %></span>
-    % }
+    <a href="<%= url_for("/$user/$project/branches") %>">
+      Branches
+      % if ($display eq 'branches') {
+        <span class="badge"><%= $branches_count %></span>
+      % }
+    </a>
   </li>
   <li class="<%= $display eq 'tags' ? 'active' : '' %>">
     <a href="<%= url_for("/$user/$project/tags") %>">

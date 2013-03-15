@@ -40,8 +40,6 @@
   my $difftrees = $git->difftree($rep,
     ,$end_commit->{id}, $start_commit->{id}, []);
   
-  use D;d $difftrees;
-  
   # Get blob diffs (command "git diff-tree")
   my $blobdiffs = $git->blobdiffs($rep, $start_commit->{id}, $end_commit->{id}, $difftrees);
   
