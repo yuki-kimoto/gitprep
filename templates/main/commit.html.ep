@@ -49,137 +49,78 @@
 %>
 
 % layout 'common';
-  %= include '/css/common';
-    
-  %= stylesheet begin
-    .commit_header {
-      border:1px solid #c5d5dd;
-      border-radius:4px;
-      margin:10px 0;
-      padding:0;
-    }
-    .commit_header .htop {
-      padding:8px;
-      padding-bottom:0;
-      margin-bottom:0;
-      background-color:#e6f1f6;
-      overflow:hidden;
-    }
-    .commit_header .htitle {
-      float:left;
-      font-weight:bold;
-      font-size:120%;
-      padding-top:2px;
-    }
-    .commit_header .hcode {
-      float:right;
-      border:1px solid #c5d5dd;
-      border-radius:2px;
-      padding:4px;
-    }
-    .commit_header .hcomment {
-      background-color:#e6f1f6;
-      border-bottom:1px solid #c5d5dd;
-      padding-left:8px;
-      padding-bottom:10px;
-      color:gray;
-    }
-    .commit_header .hbottom {
-      padding:8px;
-      overflow:hidden;
-    }
-    .commit_header .hbottom_left {
-      float:left;
-    }
-    .commit_header .hauthor {
-      font-weight:bold;
-    }
-    .commit_header .hdate {
-      color:#999;
-    }
-    .commit_header .hbottom_right {
-      float:right;
-    }
-  % end
   
   %= include '/include/header', title => 'Commit diff', project => $project;
 
-  <div class="main_panel">
-    %= include '/include/sub_header';
-    
-    %= include '/include/code_menu';
-    %= stylesheet begin
-      /* Code menu */
-      .code_menu_commits {
-        border:1px solid #E5E5E5;
-        border-bottom:none;
-        background-color:white;
-        font-weight:bold;
-      }
-      .code_menu_commits a {
-        color:#333
-      }
-    % end
+  <div class="container">
+    %= include '/include/project_header';
+    %= include '/include/code_menu', display => 'commits';
 
-    <div class="commit_header">
-      <div class="htop">
-        <div class="htitle">
-          <%= $commit->{title_short} %>
-          % unless ($commit->{title_short} eq $commit->{title}) {
-            ...
-          % }
-        </div>
-        <div class="hcode">
-          <a class="ubar" style="color:blue" href="<%= url_for("/$user/$project/tree/$commit->{id}") %>">
-            Browse code
-          </a>          
+    <div class="row" style="margin-bottom:10px">
+      <div class="span12 bk-blue-light vpadding5 border-gray" style="border-bottom:none">
+        <div class="row">
+          <div class="span8">
+            <div class="space5"></div>
+            <b>
+              <big>
+                <%= $commit->{title_short} %>
+                % unless ($commit->{title_short} eq $commit->{title}) {
+                  ...
+                % }
+              </big>
+            </b>
+            % for (my $i = 0; $i < @{$commit->{comment}}; $i++) {
+              % my $comment = $commit->{comment}[$i];
+              % if ($i == 0) {
+                % $comment =~ s/^\Q$commit->{title_short}//;
+              % }
+              % if ($comment ne '') {
+                <div>
+                  <div class="space5"></div>
+                  <%= $comment %>
+                </div>
+              % }
+            % }
+          </div>
+          <div class="span4 text-right">
+            <a class="btn btn-primary" href="<%= url_for("/$user/$project/tree/$commit->{id}") %>">
+              Browse code
+            </a>
+            <div class="space5"></div>
+          </div>
         </div>
       </div>
-      <div class="hcomment">
-        % for (my $i = 0; $i < @{$commit->{comment}}; $i++) {
-          % my $comment = $commit->{comment}[$i];
-          % if ($i == 0) {
-            % $comment =~ s/^\Q$commit->{title_short}//;
-          % }
-          % if ($comment ne '') {
-            <p><%= $comment %></p>
-          % }
-        % }
+      <div class="span12 border-gray vpadding5" style="border-bottom:none">
+        <div class="space5"></div>
+        <span><%= $commit->{author_name} %></span>
+        <span class="muted">authored <%= $commit->{age_string_age} %></span>
       </div>
-      <div class="hbottom">
-        <div class="hbottom_left">
-          <span class="hauthor"><%= $commit->{author_name} %></span>
-          <span class="hdate">authored <%= $commit->{age_string_age} %></span>
-        </div>
-        <div class="hbottom_right">
-          % my $parent = $commit->{parent};
-          % my $parents = $commit->{parents};
-          
-          % if (!defined $parent) {
-            0 <span style="color:#999">parent</span>
-          % } elsif (@$parents == 1) {
-            1 <span style="color:#999">parent</span>
-            <a style="color:gray" class="ubar" href="<%= url_for("/$user/$project/commit/$parent") %>">
+      <div class="span12 border-gray vpadding5" style="padding-top:0;border-top:none">
+        % my $parent = $commit->{parent};
+        % my $parents = $commit->{parents};
+        
+        <div class="space5"></div>
+        % if (!defined $parent) {
+          0 <span class="muted">parent</span>
+        % } elsif (@$parents == 1) {
+          1 <span class="muted">parent</span>
+          <a class="font-black" href="<%= url_for("/$user/$project/commit/$parent") %>">
+            <%= substr($parent, 0, 7) %>
+          </a>
+        % } else {
+          <%= @$parents %> <span class="muted">parents</span>:
+          % for my $parent (@$parents) {
+            <a class="font-black" href="<%= url_for("/$user/$project/commit/$parent") %>">
               <%= substr($parent, 0, 7) %>
             </a>
-          % } else {
-            <%= @$parents %> <span style="color:#999">parents</span>:
-            % for my $parent (@$parents) {
-              <a style="color:gray" class="ubar" href="<%= url_for("/$user/$project/commit/$parent") %>">
-                <%= substr($parent, 0, 7) %>
-              </a>
-            % }
           % }
-          
-          <span style="color:#999">commit</span> <%= $commit->{id} %>
-        </div>
+        % }
+        <span class="muted">commit</span> <%= $commit->{id} %>
       </div>
     </div>
     
-    <div style="margin-top:10px;margin-bottom:10px;">
-      <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
-        difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project %>
-    </div>
+    <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
+      difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project %>
     
     <div class="patchset">
       % for (my $i = 0; $i < @$blobdiffs; $i++) {
