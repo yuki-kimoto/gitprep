@@ -17,7 +17,7 @@
       .font-white {
         color: white;
       }
-    
+      
       /* Background color */
       .bk-blue-light {
         background-color:#E6F1F6;

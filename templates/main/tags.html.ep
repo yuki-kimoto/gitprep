@@ -20,95 +20,42 @@
 %>
 
 % layout 'common';
-  %= include '/css/common';
-  
-  %= stylesheet begin
-    /* h2 */
-    h2 {
-      font-size:120%;
-      padding-bottom:15px;
-    }
-    
-    /* tags number */
-    .tags_number {
-      color:#666;
-      padding-bottom:5px;
-    }
-    
-    /* tags */
-    .tag {
-      border-bottom:1px solid #E5E5E5;
-      padding:5px;
-      padding-left:28px;
-      background-image:url(<%= url_for('/image/tag.png') %>);
-      text-decoration:none;
-      background-repeat:no-repeat;
-      background-position:5px 7px;
-    }
-    .tag_last {
-      border-bottom:none;
-    }
-    .tag .ttop {
-      padding-bottom:3px;
-      overflow:hidden;
-    }
-    .tag .tname {
-      font-size:120%;
-      font-weight:bold;
-      float:left;
-    }
-    .tag .tarchive {
-      float:right;
-    }
-    .tag .tarchive a {
-      color:#4183C4;
-    }
-    .tag .tcomment {
-      color:#999;
-    }
-  % end
-  
-  %= javascript begin
-    $(document).ready(function () {
-      $(".tag").on({
-        "mouseenter": function () {
-          $(this).find('a.archive').css('display', 'inline');
-        },
-        "mouseleave": function () {
-          $(this).find('a.archive').css('display', 'none');
-        }
-      })
-    });
-  % end
   
   %= include '/include/header';
 
-  <div class="main_panel">
-    %= include '/include/sub_header';
+  <div class="container">
+    %= include '/include/project_header';
     %= include '/include/code_menu', display => 'tags', tags_count => scalar @$tags;
     
-    <div class="tags">
+    <div>
       % for (my $i = 0; $i < @$tags; $i++) {
         % my $tag = $tags->[$i];
         % my $name = $tag->{name};
         % my $tag_class = $i == @$tags - 1 ? 'tag tag_last' : 'tag';
-        <div class="<%= $tag_class %>">
-          <div class="ttop">
-            <div class="tname"><%= $name %></div>
-            <div class="tarchive">
-              <a class="ubar" href="<%= url_for("/$user/$project/archive/$name.tar.gz") %>">Source code (tar.gz)</a>
-              <a class="ubar" href="<%= url_for("/$user/$project/archive/$name.zip") %>">Source code (zip)</a>
-              <a class="ubar" href="<%= url_for("/$user/$project/tree/$name") %>">Browse code</a>
+        <div class="row">
+          <div class="span12 padding-default border-bottom-gray">
+            <div class="row">
+              <div class="span2">
+                <a class="font-black" href="<%= url_for("/$user/$project/tree/$name") %>">
+                  <b><%= $name %></b>
+                </a>
+              </div>
+              <div class="span10">
+                % my $commit_id = $tag->{commit}{id};
+                <a class="muted" href="<%= url_for("/$user/$project/commit/$commit_id") %>">
+                  <i class="icon-share-alt"></i>
+                  <%= substr($commit_id, 0, 7) %>
+                </a>
+                <a class="muted" href="<%= url_for("/$user/$project/archive/$name.zip") %>">
+                  <i class="icon-file"></i>
+                  zip
+                </a>
+                <a class="muted" href="<%= url_for("/$user/$project/archive/$name.tar.gz") %>">
+                  <i class="icon-file"></i>
+                  tar.gz
+                </a>
+              </div>
             </div>
-          </div>
-          <div class="tcomment">
-            % if ($tag->{type} eq 'tag') {
-              <%= $tag->{subject} %>
-            % } else {
-              % for my $comment (@{$tag->{commit}{comment}}) {
-                <p><%= $comment %></p>
-              % }
-            % }
           </div>
         </div>
       % }

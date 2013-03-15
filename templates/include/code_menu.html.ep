@@ -30,7 +30,7 @@
     <a href="<%= url_for("/$user/$project/tags") %>">
       Tags
       % if ($display eq 'tags') {
-        <span><%= $tags_count %></span>
+        <span class="badge"><%= $tags_count %></span>
       % }
     </a>
   </li>
