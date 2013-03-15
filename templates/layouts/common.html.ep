@@ -10,6 +10,32 @@
     <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" >
     
     %= stylesheet begin
+      /* Font color */
+      .font-black {
+        color: #333;
+      }
+    
+      /* Background color */
+      .bk-blue-light {
+        background-color:#E6F1F6;
+      }
+      
+      /* Padding */
+      .padding-default {
+        padding:5px;
+      }
+      
+      /* border */
+      .border-top-gray {
+        border-top:1px solid #ccc;
+      }
+
+      .border-3-gray {
+        border-left:1px solid #ccc;
+        border-bottom:1px solid #ccc;
+        border-right:1px solid #ccc;
+      }
+      
       .corner-left-none {
         border-top-left-radius:0;
         border-bottom-left-radius:0;

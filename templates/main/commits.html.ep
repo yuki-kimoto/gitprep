@@ -35,107 +35,15 @@
 %>
 
 % layout 'common';
-  %= include '/css/common';
-  
-  %= stylesheet begin
-    
-    /* Commit history */
-    .commit_history {
-      font-weight:bold;
-      margin: 1em 0;
-    }
-    .commit_history a {
-      color:#4183C4;
-    }
-    
-    /* Commit */
-    .commit {
-      border:1px solid gray;
-      border-bottom:none;
-      margin-bottom:15px;
-    }
-    .commit .cdate {
-      border-bottom:1px solid gray;
-      padding:5px;
-      background-color:#E6F1F6;
-      color:#3A505B;
-      font-weight:bold;
-    }
-    .commit .cfirst {
-      overflow:hidden;
-      padding:8px;
-      padding-bottom:1px;
-    }
-    .commit .cfirst_left {
-      float:left;
-      color:black;
-    }
-    .commit .cfirst_left a {
-      color:black;
-      font-weight:bold;
-    }
-    .commit .cfirst_right {
-      float:right;
-    }
-    .commit .cfirst_right a {
-      color:#4183C4;
-    }
-    .commit .csecond {
-      overflow:hidden;
-      border-bottom:1px solid gray;
-      padding:8px;
-      padding-top:1px;
-    }
-    .commit .csecond_left {
-      float:left;
-    }
-    .commit .csecond_right {
-      float:right;
-    }
-    .commit .csecond_right a {
-      color:#4183C4;
-    }
-    
-    /* Pagenation */
-    .pagination {
-      overflow:hidden;
-      border-radius:3px;
-      border:1px solid gray;
-      display:inline-block;
-      color:black
-    }
-    .pagination .pleft {
-      border-right:1px solid gray;
-      padding:5px;
-      display:block;
-      float:left
-    }
-    .pagination .pright {
-      padding:5px;
-      display:block;
-      float:left;
-    }
-    .pagination a {
-      color:black;
-      height:100%;
-    }
-    .pagination a:hover {
-      background-color:#4183C4;
-    }
-    .pagination .pdisable {
-      color:gray;
-      cursor:default;
-    }    
-  % end
   
   %= include '/include/header';
 
-  <div class="main_panel">
-    %= include '/include/sub_header';
+  <div class="container">
+    %= include '/include/project_header';
     
     %= include '/include/code_menu', display => 'commits';
         
-    <div class="commit_history">
+    <div style="font-weight:bold;margin-bottom:5px">
       % if (defined $blob) {
         History for
         %= include '/include/page_path', type => 'blob', Path => $blob, operation => 'commits';
@@ -147,32 +55,44 @@
         Commit History
       % }
     </div>
-    
+
     % for my $date (reverse sort keys %$commits_date) {
-      <div class="commit">
+      <div style="padding-bottom:20px">
         % my $commits = $commits_date->{$date};
         
-        <div class="cdate"><%= $date %></div>
+        <div class="row">
+          <div class="span12 padding-default bk-blue-light border-top-gray border-3-gray">
+            <b><%= $date %></b>
+          </div>
+        </div>
         % for my $commit (sort {$a->{author_epoch} <=> $b->{author_epoch}} @$commits) {
-          <div class="ccontent">
-            <div class="cfirst">
-              <div class="cfirst_left">
-                <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                  <%= $commit->{title_short} %>
-                </a>
-              </div>
-              <div class="cfirst_right a_dec_on a_blue">
-                <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                  <%= substr($commit->{id}, 0, 10) %>
-                </a>
+          <div class="row">
+            <div class="span12 padding-default border-3-gray" style="padding-bottom:0;border-bottom:none">
+              <div class="row">
+                <div class="span8">
+                  <a class="font-black" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                    <b><%= $commit->{title_short} %></b>
+                  </a>
+                </div>
+                <div class="span4 text-right">
+                  <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                    <%= substr($commit->{id}, 0, 10) %>
+                  </a>
+                </div>
               </div>
             </div>
-            <div class="csecond">
-              <div class="csecond_left">yuki-kimoto authored 7 days ago</div>
-              <div class="csecond_right">
-                <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                  Browse code
-                </a>
+          </div>
+          <div class="row">
+            <div class="span12 padding-default border-3-gray">
+              <div class="row">
+                <div class="span8 muted">
+                  yuki-kimoto authored 7 days ago
+                </div>
+                <div class="span4 text-right">
+                  <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                    Browse code
+                  </a>
+                </div>
               </div>
             </div>
           </div>
