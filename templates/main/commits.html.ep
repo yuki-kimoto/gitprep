@@ -99,20 +99,25 @@
         % }
       </div>
     % }
-    <div class="pagination">
+
+    <ul class="pager">
       % if ($page == 0) {
-        <span class="pleft pdisable">&laquo; Newer</span>
+        <li class="disabled">&laquo; Newer</li>
       % } else {
         % my $newer_page = $page - 1;
-        <a class="pleft" href="<%= url_for("/$user/$project/commits/$rev?page=$newer_page") %>">&laquo; Newer</a>
+        <li class="disable">
+          <a href="<%= url_for("/$user/$project/commits/$rev?page=$newer_page") %>">&laquo; Newer</a>
+        </li>
       % }
       % if ($commits_count < $page_count) {
-        <span class="pright pdisable">Older &raquo;</span>
+        <li class="disabled">Older &raquo;</li>
       % } else {
         % my $older_page = $page + 1;
-        <a class="pright" href="<%= url_for("/$user/$project/commits/$rev?page=$older_page") %>">Older &raquo;</a>
+        <li>
+          <a href="<%= url_for("/$user/$project/commits/$rev?page=$older_page") %>">Older &raquo;</a>
+        </li>
       % }
-    </div>
+    </ul>
   </div>
   
   %= include '/include/footer';
