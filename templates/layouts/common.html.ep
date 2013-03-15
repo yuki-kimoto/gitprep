@@ -13,6 +13,11 @@
     <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" >
     
     %= stylesheet begin
+      /* Offset */
+      .offset1-mini {
+        margin-left: 88px;
+      }
+      
       /* Font color */
       .font-black {
         color: #333;
