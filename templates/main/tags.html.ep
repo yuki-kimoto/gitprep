@@ -33,7 +33,7 @@
         % my $name = $tag->{name};
         % my $tag_class = $i == @$tags - 1 ? 'tag tag_last' : 'tag';
         <div class="row">
-          <div class="span12 padding-default border-bottom-gray">
+          <div class="span12 vpadding5 border-bottom-gray">
             <div class="row">
               <div class="span2">
                 <a class="font-black" href="<%= url_for("/$user/$project/tree/$name") %>">
@@ -46,10 +46,12 @@
                   <i class="icon-share-alt"></i>
                   <%= substr($commit_id, 0, 7) %>
                 </a>
+                <div class="space5"></div>
                 <a class="muted" href="<%= url_for("/$user/$project/archive/$name.zip") %>">
                   <i class="icon-file"></i>
                   zip
                 </a>
+                <div class="space5"></div>
                 <a class="muted" href="<%= url_for("/$user/$project/archive/$name.tar.gz") %>">
                   <i class="icon-file"></i>
                   tar.gz
