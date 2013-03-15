@@ -2,8 +2,8 @@
   my $user_id = session('user_id');
 %>
 
-% if (defined $user_id) {
-  <div class="container">
+<div class="container">
+  % if (defined $user_id) {
     <div>
       <ul>
         <li><a href="<%= url_for('/') %>">GitPrep</a></li>
@@ -19,18 +19,15 @@
         % }
       </ul>
     </div>
-  </div>
-% } else {
-  <div class="container">
-    <div class="masthead">
-      <ul class="nav nav-pills pull-right">
-        <li class="active">
-          <a href="<%= url_for('/_login') %>">Sing in</a>
-        </li>
-      </ul>
-      <h3 class="muted"><a href="<%= url_for('/') %>">GitPrep</a></h3>
+  % } else {
+    <div class="row">
+      <div class="span4">
+        <h3 class="muted"><a href="<%= url_for('/') %>">GitPrep</a></h3>
+      </div>
+      <div class="span8 text-right" style="margin-top:15px">
+        <a class="btn btn-primary" href="<%= url_for('/_login') %>">Sing in</a>
+      </div>
     </div>
-  </div>
-% }
-
-<hr style="margin:0 0">
+  % }
+</div>
+<hr style="margin-top:0;margin-bottom:10px">
