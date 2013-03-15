@@ -43,33 +43,39 @@
     
     %= include '/include/code_menu', display => 'commits';
         
-    <div style="font-weight:bold;margin-bottom:5px">
-      % if (defined $blob) {
-        History for
-        %= include '/include/page_path', type => 'blob', Path => $blob, operation => 'commits';
-      % } else {
-        <a class="ubar" href="<%= url_for("/$user/$project") %>">
-          <%= $project %>
-        </a>
-        /
-        Commit History
-      % }
+    <div>
+      <b>
+        % if (defined $blob) {
+          History for
+          %= include '/include/page_path', type => 'blob', Path => $blob, operation => 'commits';
+        % } else {
+          <a class="ubar" href="<%= url_for("/$user/$project") %>">
+            <%= $project %>
+          </a>
+          /
+          Commit History
+        % }
+      </b>
     </div>
 
+    <div class="vspace5"></div>
+
     % for my $date (reverse sort keys %$commits_date) {
-      <div style="padding-bottom:20px">
+      <div>
         % my $commits = $commits_date->{$date};
         
         <div class="row">
-          <div class="span12 padding-default bk-blue-light border-top-gray border-3-gray">
+          <div class="span12 vpadding5 bk-blue-light border-top-gray border-3-gray">
+            <div class="space5"></div>
             <b><%= $date %></b>
           </div>
         </div>
         % for my $commit (sort {$a->{author_epoch} <=> $b->{author_epoch}} @$commits) {
           <div class="row">
-            <div class="span12 padding-default border-3-gray" style="padding-bottom:0;border-bottom:none">
+            <div class="span12 vpadding5 border-3-gray" style="padding-bottom:0;border-bottom:none">
               <div class="row">
                 <div class="span8">
+                  <div class="space5"></div>
                   <a class="font-black" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                     <b><%= $commit->{title_short} %></b>
                   </a>
@@ -78,25 +84,29 @@
                   <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                     <%= substr($commit->{id}, 0, 10) %>
                   </a>
+                  <div class="space5"></div>
                 </div>
               </div>
             </div>
           </div>
           <div class="row">
-            <div class="span12 padding-default border-3-gray">
+            <div class="span12 vpadding5 border-3-gray">
               <div class="row">
                 <div class="span8 muted">
+                  <div class="space5"></div>
                   yuki-kimoto authored 7 days ago
                 </div>
                 <div class="span4 text-right">
                   <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                     Browse code
                   </a>
+                  <div class="space5"></div>
                 </div>
               </div>
             </div>
           </div>
         % }
+        <div class="vspace20"></div>
       </div>
     % }
 

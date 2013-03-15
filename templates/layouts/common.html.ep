@@ -65,6 +65,9 @@
       }
       
       /* Border */
+      .border-bottom-none {
+        border-bottom:none;
+      }
       .border-gray {
         border:1px solid #ccc;
       }
