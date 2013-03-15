@@ -14,19 +14,15 @@
     % next if $value =~ /^\+\+\+ /;
     % my $status = stash('status') || '';
     % if ($class eq 'diff header') {
-      <div class="row">
-        <div class="span12">
-          <div class="border-gray padding5 bk-gray-light" style="margin-top:20px;">
-            <div class="row">
-              <div class="span8" style="padding-top:6px">
-                <%= $file %>
-              </div>
-              <div class="span3 offset1-mini text-right">
-                <a class="btn" href="<%= url_for("/$user/$project/blob/$id/$file") %>">
-                  View file @ <%= substr($id, 0, 7) %>
-                </a>
-              </div>
-            </div>
+      <div class="border-gray padding5 bk-gray-light" style="margin-top:20px;">
+        <div class="row">
+          <div class="span8" style="padding-top:6px">
+            <%= $file %>
+          </div>
+          <div class="span3 offset1-mini text-right">
+            <a class="btn" href="<%= url_for("/$user/$project/blob/$id/$file") %>">
+              View file @ <%= substr($id, 0, 7) %>
+            </a>
           </div>
         </div>
       </div>

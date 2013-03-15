@@ -32,31 +32,27 @@
         % my $tag = $tags->[$i];
         % my $name = $tag->{name};
         % my $tag_class = $i == @$tags - 1 ? 'tag tag_last' : 'tag';
-        <div class="row">
-          <div class="span12 vpadding5 border-bottom-gray">
-            <div class="row">
-              <div class="span2">
-                <a class="font-black" href="<%= url_for("/$user/$project/tree/$name") %>">
-                  <b><%= $name %></b>
-                </a>
-              </div>
-              <div class="span10">
-                % my $commit_id = $tag->{commit}{id};
-                <a class="muted" href="<%= url_for("/$user/$project/commit/$commit_id") %>">
-                  <i class="icon-share-alt"></i>
-                  <%= substr($commit_id, 0, 7) %>
-                </a>
-                <div class="space5"></div>
-                <a class="muted" href="<%= url_for("/$user/$project/archive/$name.zip") %>">
-                  <i class="icon-file"></i>
-                  zip
-                </a>
-                <div class="space5"></div>
-                <a class="muted" href="<%= url_for("/$user/$project/archive/$name.tar.gz") %>">
-                  <i class="icon-file"></i>
-                  tar.gz
-                </a>
-              </div>
+        <div class="padding5 border-bottom-gray">
+          <div class="row">
+            <div class="span2">
+              <a class="font-black" href="<%= url_for("/$user/$project/tree/$name") %>">
+                <b><%= $name %></b>
+              </a>
+            </div>
+            <div class="span9 ofsset1-mini">
+              % my $commit_id = $tag->{commit}{id};
+              <a class="muted" href="<%= url_for("/$user/$project/commit/$commit_id") %>">
+                <i class="icon-share-alt"></i>
+                <%= substr($commit_id, 0, 7) %>
+              </a>
+              <a class="muted" href="<%= url_for("/$user/$project/archive/$name.zip") %>">
+                <i class="icon-file"></i>
+                zip
+              </a>
+              <a class="muted" href="<%= url_for("/$user/$project/archive/$name.tar.gz") %>">
+                <i class="icon-file"></i>
+                tar.gz
+              </a>
             </div>
           </div>
         </div>

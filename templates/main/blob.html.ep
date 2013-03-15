@@ -77,21 +77,17 @@
       </div>
     </div>
 
-    <div class="row">
-      <div class="span12">
-        <div class="border-gray bk-gray-light padding5">
-          <div class="row">
-            <div class="span7" style="padding-top:5px">
-              <i class="icon-file icon-white"></i>
-              <span style="color:gray">|</span>
-              <%= @$lines %> lines
-              <span style="color:gray">|</span>
-              <%= $blob_size %>kb
-            </div>
-            <div class="span4 offset1-mini text-right">
-              <a class="btn" href="<%= url_for("/$user/$project/raw/$rev/$blob") %>">Raw</a><a class="btn" href="<%= url_for("/$user/$project/commits/$rev/$blob") %>">History</a>
-            </div>
-          </div>
+    <div class="border-gray bk-gray-light padding5">
+      <div class="row">
+        <div class="span7" style="padding-top:5px">
+          <i class="icon-file icon-white"></i>
+          <span style="color:gray">|</span>
+          <%= @$lines %> lines
+          <span style="color:gray">|</span>
+          <%= $blob_size %>kb
+        </div>
+        <div class="span4 offset1-mini text-right">
+          <a class="btn" href="<%= url_for("/$user/$project/raw/$rev/$blob") %>">Raw</a><a class="btn" href="<%= url_for("/$user/$project/commits/$rev/$blob") %>">History</a>
         </div>
       </div>
     </div>

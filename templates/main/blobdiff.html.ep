@@ -4,15 +4,14 @@
   my $api = Gitprep::API->new($self);
   
   # Parameters
-  my $project = $self->param('project');
+  my $project = param('project');
   my $root_ns = $api->root_ns(config->{root});
   my $rep_ns = "$root_ns/$user/$project.git";
   my $rep = "/$rep_ns";
-  my $diff = $self->param('diff');
-  my $file = $self->param('file');
-  my $from_file = $self->param('from-file');
+  my $diff = param('diff');
+  my $file = param('file');
+  my $from_file = param('from-file');
   $from_file = $file unless defined $from_file;
-  my $plain = $self->param('plain');
   my $from_id;
   my $id;
   if ($diff =~ /\.\./) { ($from_id, $id) = $diff =~ /(.+)\.\.(.+)/ }
@@ -37,8 +36,6 @@
   # Variables for included templates
   stash(
     lines => $lines,
-    rev => $id,
-    project_ns => $project,
     from_id => $from_id,
     from_file => $from_file,
     id => $id
@@ -46,31 +43,13 @@
 %>
 
 % layout 'common';
-  %= include '/css/common';
-    
-  %= stylesheet begin
-    
-  % end
   
   %= include '/include/header', title => 'Blob diff', project => $project;
 
-  <div class="main_panel">
-    %= include '/include/sub_header';
-    
-    %= include '/include/code_menu';
-    %= stylesheet begin
-      /* Code menu */
-      .code_menu_commits {
-        border:1px solid #E5E5E5;
-        border-bottom:none;
-        background-color:white;
-        font-weight:bold;
-      }
-      .code_menu_commits a {
-        color:#333
-      }
-    % end
-    %= include '/include/page_path', project_ns => $project, Path => $file, type => 'blob';
+  <div class="container">
+    %= include '/include/project_header';
+    %= include '/include/code_menu', display => 'files';
+    %= include '/include/page_path', Path => $file, type => 'blob';
     %= include '/include/blobdiff_body';
   </div>
   
