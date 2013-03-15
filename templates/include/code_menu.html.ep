@@ -6,11 +6,10 @@
 
 <ul class="nav nav-tabs" style="margin-bottom:10px">
   % if (defined(my $rev = stash('rev'))) {
-    <li>
+    <li style="padding-right:10px">
       <button class="btn">
         <i class="icon-share-alt"></i><span class="muted">branch</span> <b><%= $rev %></b>
       </button>
-      <div class="space5"></div>
     </li>
   % }
   <li class="<%= $display eq 'files' ? 'active' : '' %>">

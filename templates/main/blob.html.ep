@@ -64,37 +64,33 @@
     %= include '/include/code_menu', display => 'files';
     %= include '/include/page_path', type => 'blob', Path => $blob;
         
-    <div class="border-gray">
-      <div class="bk-blue-light vpadding5">
-        <div class="space5"></div>
+    <div class="border-gray" style="margin-bottom:20px">
+      <div class="bk-blue-light padding5">
         <%= $commit_log->{author} %>
         <span class="muted"><%= $commit_log->{author_date} %></span>
         <a href="<%= url_for("/$user/$project/commit/$rev") %>">
           <%= $commit->{title} %>
         </a>
       </div>
-      <div class="vpadding5">
-        <div class="space5"></div>
+      <div class="padding5">
         <%= @$authors %> contributor
       </div>
     </div>
-    
-    <div class="vspace20"></div>
 
     <div class="row">
-      <div class="span12 border-gray bk-gray-light">
-        <div class="row">
-          <div class="span8" style="padding-top:10px">
-            <div class="space5"></div>
-            <i class="icon-file icon-white"></i>
-            <span style="color:gray">|</span>
-            <%= @$lines %> lines
-            <span style="color:gray">|</span>
-            <%= $blob_size %>kb
-          </div>
-          <div class="span4 text-right vpadding5">
-            <a class="btn" href="<%= url_for("/$user/$project/raw/$rev/$blob") %>">Raw</a><a class="btn" href="<%= url_for("/$user/$project/commits/$rev/$blob") %>">History</a>
-            <div class="space5"></div>
+      <div class="span12">
+        <div class="border-gray bk-gray-light padding5">
+          <div class="row">
+            <div class="span7" style="padding-top:5px">
+              <i class="icon-file icon-white"></i>
+              <span style="color:gray">|</span>
+              <%= @$lines %> lines
+              <span style="color:gray">|</span>
+              <%= $blob_size %>kb
+            </div>
+            <div class="span4 offset1-mini text-right">
+              <a class="btn" href="<%= url_for("/$user/$project/raw/$rev/$blob") %>">Raw</a><a class="btn" href="<%= url_for("/$user/$project/commits/$rev/$blob") %>">History</a>
+            </div>
           </div>
         </div>
       </div>
