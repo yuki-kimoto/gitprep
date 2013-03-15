@@ -201,39 +201,42 @@
 
     <div class="tab-content">
       <div class="tab-pane active" id="commits">
-        <div class="commits_number">
+        <div>
           Showing <%= @$commits %> commits by <%= $authors_count %> author.
         </div>
 
         % for my $date (reverse sort keys %$commits_date) {
-          <div class="commits">
-            % my $commits = $commits_date->{$date};
-            
-            <div class="cdate"><%= $date %></div>
+          % my $commits = $commits_date->{$date};
+          
+          <div class="bk-gray-light border-gray padding5" style="border-bottom:none">
+            <%= $date %>
+          </div>
+          
+          <div style="margin-bottom:20px">
             % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
-              <table class="cbody">
-                <tr class="crecord">
-                  <td class="cauthor">
+              <div class="border-gray padding5">
+                <div class="row">
+                  <div class="span2">
                     <%= $commit->{author_name} %>
-                  </td>
-                  <td class="ccomment">
-                    <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                  </div>
+                  <div class="span2">
+                    <a class="muted" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                       <%= $commit->{title_short} %>
                     </a>
-                  </td>
-                  <td class="cid">
-                    <a class="ubar" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                  </div>
+                  <div class="span7 text-right">
+                    <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                       <%= substr($commit->{id}, 0, 7) %>
                     </a>
-                  </td>
-                </tr>
-              </table>
+                  </div>
+                </div>
+              </div>
             % }
           </div>
         % }
       </div>
       <div class="tab-pane" id="file-changed">
-        <div style="margin-top:10px;margin-bottom:10px;">
+        <div>
           <%= include '/include/difftree', id => $end_commit->{id}, from_id => $start_commit->{id},
             difftrees => $difftrees, parents => [], project_ns => $project %>
         </div>

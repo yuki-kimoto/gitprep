@@ -37,7 +37,9 @@
         padding-top:5px;
         padding-bottom:5px;
       }
-      
+      .padding5 {
+        padding:5px;
+      }      
       /* space */
       .space5 {
         display:inline-block;
