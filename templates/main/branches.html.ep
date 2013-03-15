@@ -37,11 +37,15 @@
       Showing <%= @$branches %> branches not merged into master
     </div>
     <div class="row">
-      <div class="span12 bk-black padding-default">
+      <div class="span12 bk-black vpadding5">
         <div class="row">
           <div class="span8">
-            <div class="font-white"><b><%= $default_branch->{name} %></b></div>
+            <div class="font-white">
+              <div class="space5"></div>
+              <b><%= $default_branch->{name} %></b>
+            </div>
             <div class="muted">
+              <div class="space5"></div>
               Last updated
               <%= $default_branch->{commit}{age_string} %>
               by
@@ -50,6 +54,7 @@
           </div>
           <div class="span4 text-right font-white" style="padding-top:10px">
             Base branch
+            <div class="space5"></div>
           </div>
         </div>
       </div>
@@ -58,15 +63,17 @@
       % my $branch = $branches->[$i];
       % my $name = $branch->{name};
       <div class="row">
-        <div class="span12 padding-default border-bottom-gray">
+        <div class="span12 vpadding5 border-bottom-gray">
           <div class="row">
             <div class="span8">
               <div>
+                <div class="space5"></div>
                 <a href="<%= url_for("/$user/$project/tree/$name") %>">
                   <%= $name %>
                 </a>
               </div>
               <div class="muted">
+                <div class="space5"></div>
                 Last updated
                 <%= $branch->{commit}{age_string} %>
                 by
@@ -77,6 +84,7 @@
               <a class="btn" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$name") %>">
                 Compare
               </a>
+              <div class="space5"></div>
             </div>
           </div>
         </div>
