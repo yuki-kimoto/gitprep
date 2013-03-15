@@ -66,6 +66,13 @@
     %= include '/include/code_menu', display => 'files';
     %= include '/include/page_path', type => 'tree', Path => $dir;
     %= include '/include/tree';
+
+    % if ($top) {
+      <div>
+        <h3>README</h3>
+        <pre><%= $readme %></pre>
+      </div>
+    % }
   </div>
   
   %= include '/include/footer';

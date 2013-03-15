@@ -49,91 +49,14 @@
 %>
 
 % layout 'common';
-  %= include '/css/common';
-  
-  %= stylesheet begin
-  
-    /* Header */
-    .blob_header {
-      border:1px solid gray;
-    }
-    .blob_header .htop {
-      background-color:#E6F1F6;
-      padding:10px;
-    }
-    .blob_header .hauthor_date {
-      color: #666;
-    }
-    .blob_header a.hcomment {
-      color:#4183C4;
-    }
-    .blob_header .hbottom {
-      padding:5px;
-      padding-left:10px;
-    }
-    
-    /* Soruce */
-    .source .sheader {
-      margin-top:15px;
-      padding:7px;
-      border:1px gray solid;
-      background-color:#F3F3F3;
-      overflow:hidden;
-    }
-    .source .sleft_header {
-      padding:3px;
-      padding-left:27px;
-      background-image:url(<%= url_for('/image/file_min.png') %>);
-      background-repeat:no-repeat;
-      background-position: 7px center;
-      float:left;
-    }
-    .source .sright_header {
-      float:right;
-    }
-    .source .sright_header a {
-      color:#555;
-      font-weight:bold;
-      display:block;
-      float:left;
-      border:1px solid gray;
-      padding:4px;
-      margin:0;
-    }
-    .source .sright_header a:hover {
-      color:white;
-      background-color:#4183C4;
-    }
-    .source a.sraw {
-      border-right:none;
-      border-top-left-radius:2px;
-      border-bottom-left-radius:2px;
-    }
-    .source a.sblame {
-      border-right:none;
-    }
-    .source a.shistory {
-      border-top-right-radius:2px;
-      border-bottom-right-radius:2px;
-    }
-    .source .sbody {
-      padding: 10px;
-      padding-left:0;
-      font-family: monospace;
-      border:1px gray solid;
-      border-top:none;
-    }
-    .source .sline {
-      font-family: monospace;
-      font-size: 12px;
-      white-space: pre;
-      margin:3px;
-    }
-    .source .snumber {
-      color:gray;
-    }
-  % end 
 
+  %= javascript begin
+    $(document).ready(function () {
+      // Google prety print
+      prettyPrint();
+    });
+  % end
+  
   %= include '/include/header';
 
   <div class="container">
@@ -141,47 +64,56 @@
     %= include '/include/code_menu', display => 'files';
     %= include '/include/page_path', type => 'blob', Path => $blob;
         
-    <div class="blob_header">
-      <div class="htop">
+    <div class="border-gray">
+      <div class="bk-blue-light vpadding5">
+        <div class="space5"></div>
         <%= $commit_log->{author} %>
         <span class="muted"><%= $commit_log->{author_date} %></span>
         <a href="<%= url_for("/$user/$project/commit/$rev") %>">
           <%= $commit->{title} %>
         </a>
       </div>
-      <div class="hbottom">
+      <div class="vpadding5">
+        <div class="space5"></div>
         <%= @$authors %> contributor
       </div>
     </div>
+    
+    <div class="vspace20"></div>
 
-    <div class="source">
-      <div class="sheader">
-        <div class="sleft_header">
-          file <span style="color:gray">|</span> <%= @$lines %> lines <span style="color:gray">|</span> <%= $blob_size %>kb
+    <div class="row">
+      <div class="span12 border-gray bk-gray-light">
+        <div class="row">
+          <div class="span8" style="padding-top:10px">
+            <div class="space5"></div>
+            <i class="icon-file icon-white"></i>
+            <span style="color:gray">|</span>
+            <%= @$lines %> lines
+            <span style="color:gray">|</span>
+            <%= $blob_size %>kb
+          </div>
+          <div class="span4 text-right vpadding5">
+            <a class="btn" href="<%= url_for("/$user/$project/raw/$rev/$blob") %>">Raw</a><a class="btn" href="<%= url_for("/$user/$project/commits/$rev/$blob") %>">History</a>
+            <div class="space5"></div>
+          </div>
         </div>
-        <div class="sright_header">
-          <a class="sraw" href="<%= url_for("/$user/$project/raw/$rev/$blob") %>">Raw</a>
-          <!-- TODO: <a class="sblame" href="<%= url_for("/$user/$project/blame/$rev/$blob") %>">Blame</a> -->
-          <a class="shistory" href="<%= url_for("/$user/$project/commits/$rev/$blob") %>">History</a>
-        </div>
-      </div>
-      <div class="sbody">
-        % if ($mimetype =~ m#^image/#) {
-          <img type="<%= $mimetype %>
-            % if (defined $blob) {
-              alt="<%= $blob %>" title="<%= $blob %>"
-            % }
-            src="<%= url_for("/$user/$project/raw/$rev/$blob") %>"
-          />
-        % } else {
-          % my $nr = 1;
-          % for my $line (@$lines) {
-            % my $nr5 = sprintf("%5i", $nr);
-            <div class="sline"><a class="snumber" href="#<%= $nr %>"><%= $nr5 %></a> <%= $line %></div>
-            % $nr++;
-          % }
-        % }
       </div>
     </div>
+    % if ($mimetype =~ m#^image/#) {
+      <div>
+        <img type="<%= $mimetype %>
+          % if (defined $blob) {
+            alt="<%= $blob %>" title="<%= $blob %>"
+          % }
+          src="<%= url_for("/$user/$project/raw/$rev/$blob") %>"
+        />
+      </div>
+    % } else {
+      <pre class="prettyprint linenums">
+        % for my $line (@$lines) {
+%= $line;
+        % }
+      </pre>
+    % }
   </div>
   %= include '/include/footer';

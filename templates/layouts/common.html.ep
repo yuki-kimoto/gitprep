@@ -5,8 +5,11 @@
     <meta name="robots" content="index, nofollow" >
     <title>Git</title>
     %= stylesheet '/css/bootstrap.css', rel => 'stylesheet', media => 'screen';
+    %= stylesheet '/js/google-code-prettify/prettify.css';
     %= javascript '/js/jquery-1.9.0.min.js';
     %= javascript '/js/bootstrap.js';
+    %= javascript '/js/google-code-prettify/prettify.js';
+    
     <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" >
     
     %= stylesheet begin
@@ -25,13 +28,46 @@
       .bk-black {
         background-color:black;
       }
+      .bk-gray-light {
+        background-color:#eee;
+      }
       
       /* Padding */
-      .padding-default {
-        padding:5px;
+      .vpadding5 {
+        padding-top:5px;
+        padding-bottom:5px;
+      }
+      
+      /* space */
+      .space5 {
+        display:inline-block;
+        width:5px;
+      }
+      
+      /* Vritical space */
+      .vspace5 {
+        margin-top:5px;
+      }
+      .vspace10 {
+        margin-top:10px;
+      }
+      .vspace15 {
+        margin-top:15px;
+      }
+      .vspace20 {
+        margin-top:20px;
+      }
+      .vspace25 {
+        margin-top:25px;
+      }
+      .vspace30 {
+        margin-top:30px;
       }
       
       /* Border */
+      .border-gray {
+        border:1px solid #ccc;
+      }
       .border-top-gray {
         border-top:1px solid #ccc;
       }
@@ -43,7 +79,7 @@
         border-bottom:1px solid #ccc;
         border-right:1px solid #ccc;
       }
-      
+            
       .corner-left-none {
         border-top-left-radius:0;
         border-bottom-left-radius:0;
