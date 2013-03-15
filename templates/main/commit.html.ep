@@ -122,10 +122,10 @@
     <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
       difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project %>
     
-    <div class="patchset">
+    <div>
       % for (my $i = 0; $i < @$blobdiffs; $i++) {
         % my $blob_diff = $blobdiffs->[$i];
-        <div class="patch" id="<%= $i + 1 %>">
+        <div>
           % my $lines = $blob_diff->{lines};
           % my $file = $blob_diff->{file};
           % my $from_file = $blob_diff->{from_file};

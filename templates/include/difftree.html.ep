@@ -19,7 +19,7 @@
 <div class="diff_tree_header">
   Showing <b><%= @$difftrees %> changed files</b>
 </div>
-<table class="<%= @$parents > 1 ? 'combined' : 'diff_tree' %>"">
+<table class="<%= @$parents > 1 ? 'combined' : 'diff_tree' %>" style="margin-bottom:10px">
   
   % my $has_header = @$difftrees && @$parents > 1 && stash('action') eq 'commitdiff';
   % if ($has_header) {

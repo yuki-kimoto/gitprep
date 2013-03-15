@@ -70,7 +70,7 @@
             <b><%= $date %></b>
           </div>
         </div>
-        % for my $commit (sort {$a->{author_epoch} <=> $b->{author_epoch}} @$commits) {
+        % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
           <div class="row">
             <div class="span12 vpadding5 border-3-gray" style="padding-bottom:0;border-bottom:none">
               <div class="row">

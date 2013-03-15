@@ -1,81 +1,59 @@
-%= stylesheet begin
-  .blob_diff_status {
-    background-color:#F3F3F3;
-    padding:10px;
-    padding-bottom:10px;
-    margin-bottom:10px;
-    border:1px solid #ccc;
-    margin-top:15px;
-    overflow:hidden;
-  }
-  .blob_diff_status .sfile {
-    float:left;
-    padding-top:7px;
-  }
-  .blob_diff_status a.sblob_link {
-    float:right;
-    display:block;
-    border:1px solid #ccc;
-    border-radius:2px;
-    padding:6px;
-  }
-  .blob_diff_status a.sblob_link {
-    text-decoration:none;
-    color:white;
-    color:gray;
-    font-weight:bold;
-  }
-  .blob_diff_status a.sblob_link:hover {
-    text-decoration:none;
-    color:white;
-    background-color:#4183C4;
-  }  
-  .blob_diff_status a:hover {
-    text-decoration:underline;
-  }
-
-  .blob_diff_source {
-   border:1px solid #ccc;
-  }
-  
-  .diff {
-    font-size:100%;
-    line-height:130%;
-  }
-% end
-
-<div class="blob_diff_body">
-  % my $start;
-  % for my $line (@$lines) {
-    % my $class = $line->{class};
-    % my $value = $line->{value};
-    % unless ($start) {
-      % if ($class eq 'diff header') {
-        % $start = 1;
+<div class="row">
+  <div class="span12">
+    % my $start;
+    % for my $line (@$lines) {
+      % my $class = $line->{class};
+      % my $value = $line->{value};
+      % unless ($start) {
+        % if ($class eq 'diff header') {
+          % $start = 1;
+        % }
+        % else { next }
       % }
-      % else { next }
-    % }
-    % next if $value =~ /^index /;
-    % next if $value =~ /^--- /;
-    % next if $value =~ /^\+\+\+ /;
-    % my $status = stash('status') || '';
-    % if ($class eq 'diff header') {
-      <div class="blob_diff_status">
-        <div class="sfile">
-          <%= $file %>
+      % next if $value =~ /^index /;
+      % next if $value =~ /^--- /;
+      % next if $value =~ /^\+\+\+ /;
+      % my $status = stash('status') || '';
+      % if ($class eq 'diff header') {
+        <div class="row">
+          <div class="span12 border-gray vpadding5 bk-gray-light" style="margin-top:20px;">
+            <div class="row">
+              <div class="span8" style="padding-top:6px">
+                <div class="space5"></div>
+                <%= $file %>
+              </div>
+              <div class="span4 text-right">
+                <a class="btn" href="<%= url_for("/$user/$project/blob/$id/$file") %>">
+                  View file @ <%= substr($id, 0, 7) %>
+                </a>
+                <div class="space5"></div>
+              </div>
+            </div>
+          </div>
         </div>
-        <a class="sblob_link" href="<%= url_for("/$user/$project/blob/$id/$file") %>">
-          View file @ <%= substr($id, 0, 7) %>
-        </a>
-      </div>
-    % } elsif ($class eq 'diff binary_file') {
-      <div class="<%= $class %>">Binary files <a href="<%= url_for("/$user/$project/blob/$from_id/$file") %>">a/<%= $file %></a> and <a href="<%= url_for("/$user/$project/blob/$id/$file") %>">b/<%= $file %></a> differ</div>
-    % } elsif ($class eq 'diff chunk_header') {
-      % my ($hvalue, $dvalue) = $value =~ /^(.+@@)(.+)/;
-      <div class="<%= $class %>"><%= $hvalue %></div>
-      <div class="diff"><%= $dvalue %></div>
-    % } else {
-      <div class="<%= $class %>"><%= $value %></div>
+      % } elsif ($class eq 'diff binary_file') {
+        Binary files
+        <a href="<%= url_for("/$user/$project/blob/$from_id/$file") %>">a/<%= $file %></a>
+        and
+        <a href="<%= url_for("/$user/$project/blob/$id/$file") %>">b/<%= $file %></a>
+        differ
+      % } else {
+        % my $bk_color;
+        % if ($value =~ /^@/) {
+          % $bk_color = '#eee';
+        % } elsif ($value =~ /^\+/) {
+          % $bk_color = '#ddffdd';
+        % } elsif ($value =~ /^-/) {
+          % $bk_color = '#ffdddd';
+        % } else {
+          % $bk_color = '';
+        % }
+        <div style="background-color:<%= $bk_color %>;border-left:1px solid #ccc;border-right:1px #ccc solid">
+          <div class="space5"></div>
+          <%= $value %>
+        </div>
+      % }
     % }
-  % }
+  </div>
 </div>
+<div class="vspace20"></div>
