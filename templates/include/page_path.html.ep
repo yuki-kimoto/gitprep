@@ -8,38 +8,29 @@
   my $rev = stash('id') || stash('rev');
 %>
 
-%= stylesheet begin
-  .page_path {
-    font-size:120%;
-    margin-bottom:10px;
-  }
-  
-  .page_path a {
-    color:#4183C4;
-  }
-% end
-
-<span class="page_path">
-  <a href="<%= url_for("/$user/$project" . ($operation eq 'commits' ? '/commits' : '')) %>">
-    <b><%= $project %></b>
-  </a> /
-  % my @parts = split('/', $Path);
-  % my $path;
-  % for (my $i = 0; $i < @parts; $i++) {
-    % my $part = $parts[$i];
-    % $path .= "$part";
-    
-    % if ($type eq 'blob' && $i == @parts - 1) {
-      <b><%= $part %></b>
-    % } else {
-      <a href=
-          "<%= url_for("/$user/$project/$operation/$rev/$path") %>">
-        <%= $part %>
-      </a>
-      % $path .= '/';
+<div style="margin-bottom:10px">
+  <big>
+    <a href="<%= url_for("/$user/$project" . ($operation eq 'commits' ? '/commits' : '')) %>">
+      <b><%= $project %></b>
+    </a> /
+    % my @parts = split('/', $Path);
+    % my $path;
+    % for (my $i = 0; $i < @parts; $i++) {
+      % my $part = $parts[$i];
+      % $path .= "$part";
+      
+      % if ($type eq 'blob' && $i == @parts - 1) {
+        <b><%= $part %></b>
+      % } else {
+        <a href=
+            "<%= url_for("/$user/$project/$operation/$rev/$path") %>">
+          <%= $part %>
+        </a>
+        % $path .= '/';
+      % }
+      % unless ($type eq 'blob' && $i == @parts - 1) {
+        /
+      % }
     % }
-    % unless ($type eq 'blob' && $i == @parts - 1) {
-      /
-    % }
-  % }
-</span>
+  </big>
+</div>

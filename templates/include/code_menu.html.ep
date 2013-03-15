@@ -4,7 +4,7 @@
   my $display = stash('display') || '';
 %>
 
-<ul class="nav nav-tabs">
+<ul class="nav nav-tabs" style="margin-bottom:10px">
   % if (defined(my $rev = stash('rev'))) {
     <li>
       <button class="btn">

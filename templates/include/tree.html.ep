@@ -87,58 +87,67 @@
   }
 % end
 
-<div class="tree">
-  <div class="tree_header">
+<div class="border-gray border-bottom-none" style="margin-bottom:10px">
+  <div class="vpadding5 bk-blue-light border-bottom-gray">
+    <div class="space5"></div>
     <a href="<%= url_for("/$user/$project/commit/$rev") %>">
       <%= $commit->{title} %>
     </a>
   </div>
-  <div class="tree_header2">
-    <div class="tree_header2_left">
-      <b><%= $latest_commit_log->{author} %></b> <span class="tree_header2_left_right">authored <%= $latest_commit_log->{author_date} %></span>
-    </div>
-    <div class="tree_header2_right">
-      <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-        latest commit <%= substr($commit->{id}, 0, 10) %>
-      </a>
+  <div class="row">
+    <div class="span12 vpadding5 border-bottom-gray">
+      <div class="row">
+        <div class="span8">
+          <div class="space5"></div>
+          <b><%= $latest_commit_log->{author} %></b>
+          <span class="muted">
+            authored <%= $latest_commit_log->{author_date} %>
+          </span>
+        </div>
+        <div class="span4 text-right">
+          <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+            latest commit <%= substr($commit->{id}, 0, 10) %>
+          </a>
+          <div class="space5"></div>
+       </div>
+      </div>
     </div>
   </div>
-  <table class="tree_body" cellpadding="0" cellspacing="0">
+  <div class="row">
     % for (my $i = 0; $i <@$trees; $i++) {
-      
-      % my $tree = $trees->[$i];
-      % my $type = $tree->{type};
-      % my $name = $tree->{name};
-      
-      % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
-      <tr>
-        
-        % if ($type eq 'blob') {
-          % my $file = defined $dir && $dir ne '' ? "$dir/$name" : $name;
+      <div class="span12 border-bottom-gray vpadding5" style="font-size:90%">
+        <div class="row">
+          % my $tree = $trees->[$i];
+          % my $type = $tree->{type};
+          % my $name = $tree->{name};
           
-          <td class="tree_td_blob">
-            <a href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
-              <%= $name %>
+          <div class="span2">
+            <div class="space5"></div>
+            % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
+            % if ($type eq 'blob') {
+              % my $file = defined $dir && $dir ne '' ? "$dir/$name" : $name;
+              <i class="icon-file"></i>
+              <a href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
+                <%= $name %>
+              </a>
+            % } elsif ($tree) {
+              <i class="icon-folder-open"></i>
+              <a href="<%= url_for("/$user/$project/tree/$rev/$child_dir") %>">
+                <%= $name %>
+              </a>
+            % }
+          </div>
+          <div class="span2">
+            <%= $tree->{author_date} %>
+          </div>
+          <div class="span8">
+            <a class="font-black" href="<%= url_for("/$user/$project/commit/$tree->{commit}") %>">
+              <%= $tree->{comment} %>
             </a>
-          </td>
-        % } elsif ($tree) {
-          <td class="tree_td_dir">
-            <a href="<%= url_for("/$user/$project/tree/$rev/$child_dir") %>">
-              <%= $name %>
-            </a>
-          </td>
-        % }
-        
-        <td>
-          <%= $tree->{author_date} %>
-        </td>
-        <td class="tree_td_commit">
-          <a href="<%= url_for("/$user/$project/commit/$tree->{commit}") %>">
-            <%= $tree->{comment} %>
-          </a>
-          [<%= $tree->{author} %>]
-        </td>
-      </tr>
+            [<%= $tree->{author} %>]
+          </div>
+        </div>
+      </div>
     % }
-  </table>
+  </div>
 </div>
