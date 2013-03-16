@@ -13,6 +13,7 @@
   my $dbi = $self->app->dbi;
   
   if ($op eq 'login') {
+    sleep 3;
     $state = 'login';
     
     my $params = {
@@ -55,11 +56,14 @@
     if ($vresult->is_ok) {
       my $valid_params = $vresult->data;
       my $id = $valid_params->{id};
+      my $password = $valid_params->{password};
+      my $password_md5 = md5_sum $password;
       
       my $config_json = $self->app->dbi->model('user')->select('config', id => $id)->value;
       my $config = $api->json($config_json);
       my $admin = $config->{admin};
       session(user_id => $id);
+      session(user_password => $password_md5);
       
       if ($admin) {
         $self->redirect_to('/_admin');

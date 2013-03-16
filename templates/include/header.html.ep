@@ -1,9 +1,9 @@
 <%
-  my $user_id = session('user_id');
+  my $api = gitprep_api;
 %>
 
 <div class="container">
-  % if (defined $user_id) {
+  % if ($api->logined) {
     <div>
       <ul>
         <li><a href="<%= url_for('/') %>">GitPrep</a></li>

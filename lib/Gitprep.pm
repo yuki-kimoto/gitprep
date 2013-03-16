@@ -9,6 +9,7 @@ use DBIx::Custom;
 use Validator::Custom;
 use Encode qw/encode decode/;
 use Mojo::JSON;
+use Gitprep::API;
 
 has 'git';
 has 'dbi';
@@ -167,6 +168,9 @@ EOS
   # Validator
   my $validator = Validator::Custom->new;
   $self->validator($validator);
+  
+  # Helper
+  $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
 }
 
 1;

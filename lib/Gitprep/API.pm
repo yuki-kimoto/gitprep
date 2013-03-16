@@ -51,5 +51,22 @@ sub users {
   return $users;
 }
 
+sub logined {
+  my $self = shift;
+  
+  my $c = $self->cntl;
+  
+  my $dbi = $c->app->dbi;
+  
+  my $id = $c->session('user_id');
+  my $password = $c->session('user_password');
+  
+  my $row = $dbi->model('user')->select('config', id => $id)->one;
+  return unless $row;
+  my $config = $self->json($row->{config});
+  
+  return $password eq $config->{password};
+}
+
 1;
 
