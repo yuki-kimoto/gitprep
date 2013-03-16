@@ -3,31 +3,27 @@
 %>
 
 <div class="container">
-  % if ($api->logined) {
-    <div>
-      <ul>
-        <li><a href="<%= url_for('/') %>">GitPrep</a></li>
-      </ul>
-      <ul>
-        <li><a href="<%= url_for("/_login?op=logout") %>">Sign out</a></li>
-        <li>
-          <a href="<%= url_for("/setting/profile") %>"><s>Account setting</s></a>
-        </li>
-        <li><a href="<%= url_for("/_admin/create") %>">Create a new repo</a></li>
-        % if (my $user = session('user_id')) {
-          <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
-        % }
-      </ul>
+  <div class="row">
+    <div class="span4">
+      <h3><a href="<%= url_for('/') %>">GitPrep</a></h3>
     </div>
-  % } else {
-    <div class="row">
-      <div class="span4">
-        <h3 class="muted"><a href="<%= url_for('/') %>">GitPrep</a></h3>
-      </div>
-      <div class="span8 text-right" style="margin-top:15px">
-        <a class="btn btn-primary" href="<%= url_for('/_login') %>">Sing in</a>
-      </div>
+    <div class="span8 text-right">
+      % if ($api->logined) {
+        <div  style="margin-top:5px">
+          <div>
+            % my $user = session('user_id');
+            <i class="icon-user"></i><a href="<%= url_for("/$user") %>"><%= $user %></a>
+          </div>
+          <a class="btn btn-small" href="<%= url_for("/_admin/create") %>">Create a new repo</a>
+          <a class="btn btn-small" href="<%= url_for("/setting/profile") %>">Account setting</a>
+          <a class="btn btn-small" href="<%= url_for("/_login?op=logout") %>">Sign out</a>
+        </div>
+      % } else {
+        <div  style="margin-top:15px">
+          <a class="btn btn-primary" href="<%= url_for('/_login') %>">Sing in</a>
+        </div>
+      % }
     </div>
-  % }
+  </div>
 </div>
 <hr style="margin-top:0;margin-bottom:10px">

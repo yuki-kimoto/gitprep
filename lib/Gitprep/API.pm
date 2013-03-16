@@ -60,6 +60,7 @@ sub logined {
   
   my $id = $c->session('user_id');
   my $password = $c->session('user_password');
+  return unless defined $password;
   
   my $row = $dbi->model('user')->select('config', id => $id)->one;
   return unless $row;

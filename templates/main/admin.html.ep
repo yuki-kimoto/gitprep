@@ -2,6 +2,8 @@
 
 <h2>Admin</h2>
 
-<ul>
-  <li><a href="/_admin/user">User</a></li>
-</ul>
+<table class="table">
+  <tr>
+    <td><a href="/_admin/user">User</a></td>
+  </tr>
+</table>
