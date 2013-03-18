@@ -1,8 +1,59 @@
+<%
+  my $op = param('op');
+  
+  my $errors;
+  if ($op eq 'create') {
+    # API
+    my $api = gitprep_api;
+    
+    # Validation
+    my $params = $api->params;
+    my $repository_name_check = sub {
+      my $value = shift;
+      
+      return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/
+    };
+    my $rule = [
+      repository_name => [
+        ['not_blank' => 'Repository name is empty'],
+        [$repository_name_check => 'Invalid repository name']
+      ],
+      description => [
+        'any'
+      ],
+      readme_contain => {require => 0} => [
+        'any'
+      ]
+    ];
+    my $validator = app->validator;
+    my $vresult = $validator->validate($params, $rule);
+    
+    if ($vresult->is_ok) {
+      my $user = session('user_id');
+      my $data = $vresult->data;
+      my $rep = $data->{repository_name};
+      $self->redirect_to("/$user/$rep");
+      return 1;
+    }
+    else {
+      $errors = $vresult->messages;
+    }
+  }
+%>
+
 % layout 'common';
 
   %= include '/include/header';
-
+  
   <div class="container">
+    % if ($errors) {
+      <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        % for my $error (@$errors) {
+          <p><%= $error %></p>
+        % }
+      </div>
+    % }
     <form action="<%= url_for->query(op => 'create') %>" method="post">
       <div><b>Repository name</b></div>
       <div><%= input_tag 'repository_name', type => 'text', style => 'width:300px' %></div>
@@ -11,7 +62,7 @@
       <div><%= input_tag 'description', type => 'text', style => 'width:600px' %></div>
 
       <label class="checkbox">
-        <%= check_box 'readme_contain' %> <b>Initialize this repository with a README</b>
+        <%= check_box 'readme_contain' => 1 %> <b>Initialize this repository with a README</b>
       </label>
       <div style="margin-bottom:10px">
         This will allow you to git clone the repository immediately.

@@ -13,7 +13,7 @@
   my $dbi = $self->app->dbi;
   
   if ($op eq 'login') {
-    sleep 3;
+    sleep 2;
     $state = 'login';
     
     my $params = {

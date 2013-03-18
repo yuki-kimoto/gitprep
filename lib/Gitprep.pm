@@ -79,7 +79,7 @@ sub startup {
     my $r = $r->route('/_admin')->to('admin#');
     
     # Create new repository
-    $r->get('/create')->to('#create');
+    $r->any('/create')->to('#create');
     
     # User
     $r->any('/user')->to('#user');

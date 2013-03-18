@@ -69,5 +69,15 @@ sub logined {
   return $password eq $config->{password};
 }
 
+sub params {
+  my $self = shift;
+  
+  my $c = $self->cntl;
+  
+  my %params = map { $_ => $c->param($_) } $c->param;
+  
+  return \%params;
+}
+
 1;
 
