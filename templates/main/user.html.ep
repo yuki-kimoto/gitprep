@@ -1,9 +1,8 @@
 <%
-  my $root = config->{root};
   my $user = param('user');
   
   # Projects
-  my $reps = app->git->projects("/$root/$user");
+  my $reps = app->git->projects($user);
 %>
 
 % layout 'common';
@@ -29,9 +28,10 @@
                 </a>
               </td>
               <td>
-                <%= $rep->{descr} %>
+                <%= $rep->{description} %>
               </td>
-              <td class="muted">last updated <%= $rep->{age_string} %></td>
+              % my $age = $rep->{age_string};
+              <td class="muted"><%= $age ? "last updated $age" : 'new repository' %></td>
             </div>
           </tr>
         % }

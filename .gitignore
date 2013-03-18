@@ -27,4 +27,5 @@ user/templates/*
 !user/templates/.gitignore
 db/*
 !db/.gitignore
-extlib
+extlib/*
+rep/*

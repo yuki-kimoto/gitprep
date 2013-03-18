@@ -8,20 +8,17 @@
     
     # Validation
     my $params = $api->params;
-    my $repository_name_check = sub {
+    my $project_check = sub {
       my $value = shift;
       
       return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/
     };
     my $rule = [
-      repository_name => [
+      project => [
         ['not_blank' => 'Repository name is empty'],
-        [$repository_name_check => 'Invalid repository name']
+        [$project_check => 'Invalid repository name']
       ],
       description => [
-        'any'
-      ],
-      readme_contain => {require => 0} => [
         'any'
       ]
     ];
@@ -31,13 +28,19 @@
     if ($vresult->is_ok) {
       my $user = session('user_id');
       my $data = $vresult->data;
-      my $rep = $data->{repository_name};
-      $self->redirect_to("/$user/$rep");
+      my $project = $data->{project};
+      my $description = $data->{description};
+      
+      app->git->create_repository(
+        $user,
+        $project,
+        {description => $description}
+      );
+      
+      $self->redirect_to("/$user/$project");
       return 1;
     }
-    else {
-      $errors = $vresult->messages;
-    }
+    else { $errors = $vresult->messages }
   }
 %>
 
@@ -56,17 +59,11 @@
     % }
     <form action="<%= url_for->query(op => 'create') %>" method="post">
       <div><b>Repository name</b></div>
-      <div><%= input_tag 'repository_name', type => 'text', style => 'width:300px' %></div>
+      <div><%= input_tag 'project', type => 'text', style => 'width:300px' %></div>
 
       <div><b>Description</b> (optional)</div>
       <div><%= input_tag 'description', type => 'text', style => 'width:600px' %></div>
 
-      <label class="checkbox">
-        <%= check_box 'readme_contain' => 1 %> <b>Initialize this repository with a README</b>
-      </label>
-      <div style="margin-bottom:10px">
-        This will allow you to git clone the repository immediately.
-      </div>
       <input type="submit" class="btn" value="Create repository">
     </form>
   </div>

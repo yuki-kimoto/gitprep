@@ -5,6 +5,12 @@ use Carp 'croak';
 use File::Find 'find';
 use File::Basename qw/basename dirname/;
 use Fcntl ':mode';
+use File::Path 'mkpath';
+
+# Attributes
+has 'bin';
+has 'rep_home';
+has 'encoding' => 'UTF-8';
 
 # Encode
 use Encode qw/encode decode/;
@@ -26,13 +32,6 @@ sub dec {
   
   return $@ ? $str : $new_str;
 }
-
-# Attributes
-has 'bin';
-has 'search_dirs';
-has 'search_max_depth';
-has 'encoding';
-has 'text_exts';
 
 sub authors {
   my ($self, $rep, $ref, $file) = @_;
@@ -176,6 +175,47 @@ sub cmd {
   
   # Execute git command
   return ($self->bin, "--git-dir=$project");
+}
+
+sub create_repository {
+  my ($self, $user, $project, $opts) = @_;
+  
+  # Repository
+  my $rep_home = $self->rep_home;
+  my $rep = "$rep_home/$user/$project.git";
+  mkpath $rep;
+    
+  # Git init
+  my @git_init_cmd = ($self->cmd($rep), 'init', '--bare');
+  warn "@git_init_cmd";
+  system(@git_init_cmd) == 0
+    or croak "Can't execute git init";
+  
+  # Description
+  if (my $description = $opts->{description}) {
+    my $file = "$rep/description";
+    open my $fh, '>', $file
+      or croak "Can't open $file: $!";
+    print $fh $description
+      or croak "Can't write $file: $!";
+    close $fh;
+  }
+}
+
+sub branch_exists {
+  my ($self, $user, $project) = @_;
+  
+  my $home = $self->rep_home;
+  my $rep = "$home/$user/$project.git";
+
+  my @cmd = ($self->cmd($rep), 'branch');
+  open my $fh, "-|", @cmd
+    or croak 'git branch failed';
+  
+  local $/;
+  my $branches = <$fh>;
+  
+  return $branches eq '' ? 0 : 1;
 }
 
 sub branch_commits {
@@ -601,9 +641,10 @@ sub fill_projects {
 }
 
 sub projects {
-  my ($self, $dir, %opt) = @_;
+  my ($self, $user, $opts) = @_;
   
-  my $filter = $opt{filter};
+  my $home = $self->rep_home;
+  my $dir = "$home/$user";
   
   # Repositories
   opendir my $dh, $self->enc($dir)
@@ -611,8 +652,6 @@ sub projects {
   my @reps;
   while (my $rep = readdir $dh) {
     next unless $rep =~ /\.git$/;
-    next unless $self->check_head_link("$dir/$rep");
-    next if defined $filter && $rep !~ /\Q$filter\E/;
     my $rep_name = $rep;
     $rep_name =~ s/\.git$//;
     push @reps, { name => $rep_name, path => $rep };
@@ -620,14 +659,14 @@ sub projects {
 
   # Fill repositroies information
   for my $rep (@reps) {
-    my (@activity) = $self->last_activity("$dir/$rep->{path}");
-    next unless @activity;
-    ($rep->{age}, $rep->{age_string}) = @activity;
-    if (!defined $rep->{descr}) {
-      my $descr = $self->project_description("$dir/$rep->{path}") || '';
-      $rep->{descr_long} = $descr;
-      $rep->{descr} = $self->_chop_str($descr, 25, 5);
+    my @activity = $self->last_activity("$dir/$rep->{path}");
+    
+    if (@activity) {
+      ($rep->{age}, $rep->{age_string}) = @activity;
     }
+
+    my $description = $self->project_description("$dir/$rep->{path}") || '';
+    $rep->{description} = $self->_chop_str($description, 25, 5);
   }
 
   return \@reps;
@@ -1072,65 +1111,6 @@ sub search_bin {
   return $bin if -f $bin;
   
   return;
-}
-
-sub search_projects {
-  my ($self, %opt) = @_;
-  my $dirs = $self->search_dirs;
-  my $max_depth = $self->search_max_depth;
-  
-  # Search
-  my @projects;
-  for my $dir (@$dirs) {
-    next unless -d $dir;
-  
-    $dir =~ s/\/$//;
-    my $prefix_length = length($dir);
-    my $prefix_depth = 0;
-    for my $c (split //, $dir) {
-      $prefix_depth++ if $c eq '/';
-    }
-    
-    no warnings 'File::Find';
-    File::Find::find({
-      follow_fast => 1,
-      follow_skip => 2,
-      dangling_symlinks => 0,
-      wanted => sub {
-        my $path = $File::Find::name;
-        my $base_path = $_;
-        
-        return if (m!^[/.]$!);
-        return unless -d $base_path;
-        
-        if ($base_path eq '.git') {
-          $File::Find::prune = 1;
-          return;
-        };
-        
-        my $depth = 0;
-        for my $c (split //, $dir) {
-          $depth++ if $c eq '/';
-        }
-        
-        if ($depth - $prefix_depth > $max_depth) {
-          $File::Find::prune = 1;
-          return;
-        }
-        
-        if (-d $path) {
-          if ($self->check_head_link($path)) {
-            my $home = dirname $path;
-            my $name = basename $path;
-            push @projects, {home => $home, name => $name};
-            $File::Find::prune = 1;
-          }
-        }
-      },
-    }, $dir);
-  }
-  
-  return \@projects;
 }
 
 sub snapshot_name {

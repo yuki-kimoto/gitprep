@@ -1,7 +1,5 @@
 <%
-  use Gitprep::API;
-  my $api = Gitprep::API->new($self);
-  
+  my $api = gitprep_api;
   my $users = $api->users;
 %>
 

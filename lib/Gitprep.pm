@@ -10,6 +10,7 @@ use Validator::Custom;
 use Encode qw/encode decode/;
 use Mojo::JSON;
 use Gitprep::API;
+use Carp 'croak';
 
 has 'git';
 has 'dbi';
@@ -19,19 +20,12 @@ sub startup {
   my $self = shift;
   
   # Config
-  my $conf_file = $ENV{GITPREP_CONFIG_FILE}
-    || $self->home->rel_file('gitprep.conf');
-  $self->plugin('JSONConfigLoose', {file => $conf_file}) if -f $conf_file;
+  #my $conf_file = $ENV{GITPREP_CONFIG_FILE}
+  #  || $self->home->rel_file('gitprep.conf');
+  #$self->plugin('JSONConfigLoose', {file => $conf_file}) if -f $conf_file;
   my $conf = $self->config;
-  $conf->{search_dirs} ||= ['/git/pub', '/home'];
-  $conf->{search_max_depth} ||= 10;
-  $conf->{logo_link} ||= "https://github.com/yuki-kimoto/gitprep";
-  $conf->{hypnotoad} ||= {listen => ["http://*:10010"]};
-  $conf->{prevent_xss} ||= 0;
-  $conf->{encoding} ||= 'UTF-8';
-  $conf->{text_exts} ||= ['txt'];
-  $conf->{root} ||= '/gitprep';
-  $conf->{ssh_port} ||= '';
+  $conf->{root} = $self->home->rel_file('rep');
+  $conf->{hypnotoad} ||= {listen => ["http://*:10020"]};
   
   # Added public directory
   push @{$self->static->paths}, $conf->{root};
@@ -42,10 +36,12 @@ sub startup {
   die qq/Can't detect git command. set "git_bin" in gitprep.conf/
     unless $git_bin;
   $git->bin($git_bin);
-  $git->search_dirs($conf->{search_dirs});
-  $git->search_max_depth($conf->{search_max_depth});
-  $git->encoding($conf->{encoding});
-  $git->text_exts($conf->{text_exts});
+  my $rep_home = $self->home->rel_file('rep');
+  $git->rep_home($rep_home);
+  unless (-d $rep_home) {
+    mkdir $rep_home
+      or croak "Can't create directory $rep_home: $!";
+  }
   $self->git($git);
 
   # Reverse proxy support
@@ -125,9 +121,6 @@ sub startup {
     # Compare
     $r->get('/compare/(#rev1)...(#rev2)')->to('#compare');
   }
-  
-  # File cache
-  $git->search_projects;
   
   # DBI
   my $db_file = $self->home->rel_file('db/gitprep.db');
