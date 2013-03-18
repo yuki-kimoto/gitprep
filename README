@@ -2,6 +2,15 @@ gitprep
 
   Github clone. Serve git repository.
 
+Features
+
+  - Github clone
+  - Perl 5.8.7+ only needed
+
+Installation
+
+  perl cpanm -L extlib --installdeps .
+
 Operation
 
   Start
@@ -11,7 +20,7 @@ Operation
     Application start in back ground. Port is 10020.
     You can access the following URL.
       
-      http://localhost:10010
+      http://localhost:10020
     
     If you change port, edit githublite.conf.
   
