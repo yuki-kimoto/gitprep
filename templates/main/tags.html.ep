@@ -5,17 +5,14 @@
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $root_ns = $api->root_ns(config->{root});
-  my $rep_ns = "$root_ns/$user/$project.git";
-  my $rep = "/$rep_ns";
   
   # Git
   my $git = $self->app->git;
   
   # Ref names
-  my $tags  = $git->tags($rep);
+  my $tags  = $git->tags($user, $project);
   for my $tag (@$tags) {
-    $tag->{commit} = $git->parse_commit($rep, $tag->{name});
+    $tag->{commit} = $git->parse_commit($user, $project, $tag->{name});
   }
 %>
 

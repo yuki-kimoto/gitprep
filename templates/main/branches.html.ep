@@ -1,15 +1,10 @@
 <%
-  use Gitprep::API;
-  
   # API
-  my $api = Gitprep::API->new($self);
+  my $api = gitprep_api;
 
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $root_ns = $api->root_ns(config->{root});
-  my $rep_ns = "$root_ns/$user/$project.git";
-  my $rep = "/$rep_ns";
   
   # Git
   my $git = $self->app->git;
@@ -17,10 +12,10 @@
   # Default branch
   my $default_branch = {};
   $default_branch->{name} = 'master';
-  $default_branch->{commit} = $git->parse_commit($rep, $default_branch->{name});
+  $default_branch->{commit} = $git->parse_commit($user, $project, $default_branch->{name});
   
   # No merged branches
-  my $branches  = $git->no_merged_branches($rep);
+  my $branches  = $git->no_merged_branches($user, $project);
 %>
 
 % layout 'common';

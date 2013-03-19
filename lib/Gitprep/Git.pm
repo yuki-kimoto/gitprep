@@ -438,13 +438,14 @@ sub head_id {
 };
 
 sub no_merged_branches {
-  my ($self, $project) = @_;
+  my ($self, $user, $project) = @_;
   
   # Command "git branch --no-merged"
-  my @cmd = ($self->cmd($project), 'branch', '--no-merged');
+  my @cmd = $self->_cmd($user, $project, 'branch', '--no-merged');
   open my $fh, '-|', @cmd or return;
   
-  my @branch_names = map { s/^\*//; s/^\s*//; s/\s*$//; $self->dec($_) } <$fh>;
+  my @branch_names
+    = map { s/^\*//; s/^\s*//; s/\s*$//; $self->dec($_) } <$fh>;
   close $fh or croak qq/Can't open "git branch"/;
   
   # Branches
@@ -726,14 +727,19 @@ sub tag {
 }
 
 sub tags {
-  my ($self, $project, $limit) = @_;
+  my ($self, $user, $project, $limit) = @_;
   
-  # Get tags (command "git for-each-ref")
-  my @cmd = ($self->cmd($project), 'for-each-ref',
-    ($limit ? '--count='.($limit+1) : ()), '--sort=-creatordate',
-    '--format=%(objectname) %(objecttype) %(refname) '.
-    '%(*objectname) %(*objecttype) %(subject)%00%(creator)',
-    'refs/tags');
+  # Get tags
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'for-each-ref',
+    ($limit ? '--count='.($limit+1) : ()),
+    '--sort=-creatordate',
+    '--format=%(objectname) %(objecttype) %(refname) '
+      . '%(*objectname) %(*objecttype) %(subject)%00%(creator)',
+    'refs/tags'
+  );
   open my $fh, '-|', @cmd or return;
   
   # Parse Tags
