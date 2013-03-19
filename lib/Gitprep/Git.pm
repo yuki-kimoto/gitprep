@@ -542,7 +542,7 @@ sub path_by_id {
 sub project_description {
   my ($self, $project) = @_;
   
-  # Description
+  # Project Description
   my $file = "$project/description";
   my $description = $self->_slurp($file) || '';
   
@@ -640,25 +640,26 @@ sub projects {
   opendir my $dh, $self->enc($dir)
     or croak qq/Can't open directory $dir: $!/;
   my @reps;
-  while (my $rep = readdir $dh) {
-    next unless $rep =~ /\.git$/;
-    my $rep_name = $rep;
-    $rep_name =~ s/\.git$//;
-    push @reps, { name => $rep_name, path => $rep };
-  }
-
-  # Fill repositroies information
-  for my $rep (@reps) {
-    my @activity = $self->last_activity("$dir/$rep->{path}");
+  while (my $rep_name = readdir $dh) {
+    next unless $rep_name =~ /\.git$/;
+    my $project = $rep_name;
+    $project =~ s/\.git$//;
+    my $rep_path = "$home/$user/$rep_name";
+    my @activity = $self->last_activity($rep_path);
     
+    my $rep = {};
+    $rep->{name} = $project;
     if (@activity) {
-      ($rep->{age}, $rep->{age_string}) = @activity;
+      $rep->{age} = $activity[0];
+      $rep->{age_string} = $activity[1];
     }
-
-    my $description = $self->project_description("$dir/$rep->{path}") || '';
+    
+    my $description = $self->project_description($rep_path) || '';
     $rep->{description} = $self->_chop_str($description, 25, 5);
+    
+    push @reps, $rep;
   }
-
+  
   return \@reps;
 }
 
