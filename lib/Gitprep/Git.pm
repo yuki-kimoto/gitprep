@@ -486,10 +486,11 @@ sub root_ns {
 }
 
 sub parse_object {
-  my ($self, $project, $id_path) = @_;
+  my ($self, $user, $project, $id_path) = @_;
   
   # Parse id and path
-  my $refs = $self->references($project);
+  my $rep = $self->rep($user, $project);
+  my $refs = $self->references($user, $project);
   my $id;
   my $path;
   for my $rs (values %$refs) {
@@ -510,7 +511,7 @@ sub parse_object {
     }
   }
   
-  return ($id, $path);
+  return [$id, $path];
 }
 
 sub path_by_id {
@@ -622,13 +623,18 @@ sub project_urls {
 }
 
 sub references {
-  my ($self, $project, $type) = @_;
+  my ($self, $user, $project, $type) = @_;
   
   $type ||= '';
   
-  # Command "git show-ref" (get references)
-  my @cmd = ($self->cmd($project), 'show-ref', '--dereference',
-    ($type ? ('--', "refs/$type") : ()));
+  # Get references
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'show-ref',
+    '--dereference',
+    ($type ? ('--', "refs/$type") : ())
+  );
   open my $fh, '-|', @cmd or return;
   
   # Parse references

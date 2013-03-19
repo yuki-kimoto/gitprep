@@ -28,7 +28,7 @@
   my $readme;
   if ($git->branch_exists($user, $project)) {
     # Id and directory
-    my ($id, $dir) = $git->parse_object($rep, $object);
+    my ($id, $dir) = @{$git->parse_object($user, $project, $object)};
     
     # Tree id
     my $tid;
