@@ -1,16 +1,9 @@
 <%
-  use Gitprep::API;
-  
   # API
-  my $api = Gitprep::API->new($self);
+  my $api = gitprep_api;
   
   # Paramters
   my $project = param('project');
-  my $root_ns = $api->root_ns(config->{root});
-  my $rep_ns = "$root_ns/$user/$project.git";
-  my $rep = "/$rep_ns";
-  my $home_ns = $api->dirname($project);
-  my $home = "/$home_ns";
   my $diff = param('diff');
   my ($from_id, $id) = $diff =~ /(.+)\.\.(.+)/;
   $id = $diff unless defined $id;
@@ -19,7 +12,7 @@
   my $git = app->git;
   
   # Commit
-  my $commit = $git->parse_commit($rep, $id)
+  my $commit = $git->parse_commit($user, $project, $id)
     or $api->croak('Unknown commit object');
   my $author_date
     = $git->parse_date($commit->{author_epoch}, $commit->{author_tz});
@@ -30,27 +23,28 @@
   $from_id = $commit->{parent} unless defined $from_id;
 
   # Diff tree
-  my $difftrees = $git->difftree($rep,
-    $id, $commit->{parent}, $commit->{parents});
+  my $difftrees = $git->difftree(
+    $user,
+    $project,
+    $id,
+    $commit->{parent},
+    $commit->{parents}
+  );
   
-  # Get blob diffs (command "git diff-tree")
-  my $blobdiffs = $git->blobdiffs($rep, $from_id, $id, $difftrees);
+  # Get blob diffs
+  my $blobdiffs = $git->blobdiffs($user, $project, $from_id, $id, $difftrees);
   
-  # Render
+  # Global variable for included template
   stash(
-    home => $home,
-    home_ns => $home_ns,
-    project => $project,
-    project => $project,
     from_id => $from_id,
     id => $id,
-    commit => $commit,
+    commit => $commit
   );
 %>
 
 % layout 'common';
   
-  %= include '/include/header', title => 'Commit diff', project => $project;
+  %= include '/include/header', title => 'Commit diff';
 
   <div class="container">
     %= include '/include/project_header';

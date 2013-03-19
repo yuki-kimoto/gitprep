@@ -59,11 +59,21 @@ sub authors {
 }
 
 sub blobdiffs {
-  my ($self, $rep, $from_id, $id, $difftrees) = @_;
+  my ($self, $user, $project, $from_id, $id, $difftrees) = @_;
   
   my $blobdiffs = [];
-  my @cmd = ($self->cmd($rep), 'diff-tree', '-r', '-M',
-    '--no-commit-id', '--patch-with-raw', $from_id, $id, '--');
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'diff-tree',
+    '-r',
+    '-M',
+    '--no-commit-id',
+    '--patch-with-raw',
+    $from_id,
+    $id,
+    '--'
+  );
   open my $fh, '-|', @cmd
     or croak('Open self-diff-tree failed');
   my @file_info_raws;
@@ -82,8 +92,19 @@ sub blobdiffs {
     my $file = $diffinfo->{to_file};
     
     # Get blobdiff (command "self diff-tree")
-    my @cmd = ($self->cmd($rep), 'diff-tree', '-r', '-M', '-p',
-      $from_id, $id, '--', (defined $from_file ? $from_file : ()), $file);
+    my @cmd = $self->_cmd(
+      $user,
+      $project,
+      'diff-tree',
+      '-r',
+      '-M',
+      '-p',
+      $from_id,
+      $id,
+      '--',
+      (defined $from_file ? $from_file : ()),
+      $file
+    );
     open my $fh_blobdiff, '-|', @cmd
       or croak('Open self-diff-tree failed');
     my @lines = map { $self->dec($_) } <$fh_blobdiff>;
@@ -369,14 +390,23 @@ sub fill_from_file_info {
 }
 
 sub difftree {
-  my ($self, $project, $cid, $parent, $parents) = @_;
+  my ($self, $user, $project, $cid, $parent, $parents) = @_;
   
   # Root
   $parent = '--root' unless defined $parent;
 
-  # Command "git diff-tree"
-  my @cmd = ($self->cmd($project), "diff-tree", '-r', '--no-commit-id',
-    '-M', (@$parents <= 1 ? $parent : '-c'), $cid, '--');
+  # Get diff tree
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    "diff-tree",
+    '-r',
+    '--no-commit-id',
+    '-M',
+    (@$parents <= 1 ? $parent : '-c'),
+    $cid,
+    '--'
+  );
   open my $fh, "-|", @cmd
     or croak 500, "Open git-diff-tree failed";
   my @difftree = map { chomp; $self->dec($_) } <$fh>;
