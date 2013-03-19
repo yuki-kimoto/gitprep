@@ -1,13 +1,9 @@
 <%
-
   # API
-  my $api = Gitprep::API->new($self);
+  my $api = gitprep_api;
   
   # Parameters
   my $project = param('project');
-  my $root_ns = $api->root_ns(config->{root});
-  my $rep_ns = "$root_ns/$user/$project.git";
-  my $rep = "/$rep_ns";
   my $diff = param('diff');
   my $file = param('file');
   my $from_file = param('from-file');
@@ -20,9 +16,21 @@
   # Git
   my $git = $self->app->git;
 
-  # Get blob diff (command "git diff")
-  open my $fh, '-|', $git->cmd($rep), 'diff', '-r', '-M', '-p',
-      $from_id, $id, '--', $from_file, $file
+  # Get blob diff
+  my @cmd = $git->_cmd(
+    $user,
+    $project,
+    'diff',
+    '-r',
+    '-M',
+    '-p',
+    $from_id,
+    $id,
+    '--',
+    $from_file,
+    $file
+  );
+  open my $fh, '-|', @cmd
     or $api->croak("Open git-diff-tree failed");
   
   # Lines
@@ -31,7 +39,7 @@
   my $lines = $git->parse_blobdiff_lines(\@lines);
   
   # Commit
-  my $commit = $git->parse_commit($rep, $id);
+  my $commit = $git->parse_commit($user, $project, $id);
   
   # Variables for included templates
   stash(
