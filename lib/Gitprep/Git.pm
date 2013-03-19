@@ -977,18 +977,27 @@ sub parse_commit_text {
 }
 
 sub parse_commits {
-  my ($self, $project, $cid, $maxcount, $skip, $file, @args) = @_;
+  my ($self, $user, $project, $cid, $maxcount, $skip, $file, @args) = @_;
 
-  # git rev-list
+  # Get Commits
   $maxcount ||= 1;
   $skip ||= 0;
-  my @cmd = ($self->cmd($project), 'rev-list', '--header', @args,
-    ('--max-count=' . $maxcount), ('--skip=' . $skip), $cid, '--',
-    (defined $file ? ($file) : ()));
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'rev-list',
+    '--header',
+    @args,
+    ('--max-count=' . $maxcount),
+    ('--skip=' . $skip),
+    $cid,
+    '--',
+    (defined $file ? ($file) : ())
+  );
   open my $fh, '-|', @cmd
     or croak 'Open git-rev-list failed';
-
-  # Parse rev-list results
+  
+  # Prase Commits text
   local $/ = "\0";
   my @commits;
   while (my $line = $self->dec(scalar <$fh>)) {
@@ -996,7 +1005,7 @@ sub parse_commits {
     push @commits, $commit;
   }
   close $fh;
-
+  
   return \@commits;
 }
 

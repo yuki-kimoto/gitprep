@@ -1,6 +1,6 @@
 <%
   # API
-  my $api = Gitprep::API->new($self);
+  my $api = gitprep_api;
 
   # Parameters
   my $user = param('user');
@@ -8,20 +8,23 @@
   my $rev = param('rev');
   my $blob = param('blob');
   my $page = param('page') || 0;
-  my $root_ns = $api->root_ns(config->{root});
-  my $rep_ns = "$root_ns/$user/$project.git";
-  my $rep = "/$rep_ns";
   
   # Git
   my $git = $self->app->git;
   
   # Commit
-  my $commit = $git->parse_commit($rep, $rev);
+  my $commit = $git->parse_commit($user, $project, $rev);
   
   # Commits
   my $page_count = 30;
   my $commits = $git->parse_commits(
-    $rep, $commit->{id}, $page_count, $page_count * $page, $blob);
+    $user,
+    $project,
+    $commit->{id},
+    $page_count,
+    $page_count * $page,
+    $blob
+  );
   my $commits_count = @$commits;
   my $commits_date = {};
   for my $commit (@$commits) {
