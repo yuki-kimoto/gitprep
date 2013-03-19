@@ -539,23 +539,38 @@ sub path_by_id {
   return;
 }
 
-sub project_description {
-  my ($self, $project) = @_;
+sub rep {
+  my ($self, $user, $project) = @_;
+  
+  my $home = $self->rep_home;
+  
+  return "$home/$user/$project.git";
+}
+
+sub description {
+  my ($self, $user, $project) = @_;
+  
+  my $rep = $self->rep($user, $project);
   
   # Project Description
-  my $file = "$project/description";
+  my $file = "$rep/description";
   my $description = $self->_slurp($file) || '';
   
   return $description;
 }
 
 sub last_activity {
-  my ($self, $project) = @_;
+  my ($self, $user, $project) = @_;
   
   # Command "git for-each-ref"
-  my @cmd = ($self->cmd($project), 'for-each-ref',
-    '--format=%(committer)', '--sort=-committerdate',
-    '--count=1', 'refs/heads');
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'for-each-ref',
+    '--format=%(committer)',
+    '--sort=-committerdate',
+    '--count=1', 'refs/heads'
+  );
   open my $fh, '-|', @cmd or return;
   my $most_recent = $self->dec(scalar <$fh>);
   close $fh or return;
@@ -645,7 +660,7 @@ sub projects {
     my $project = $rep_name;
     $project =~ s/\.git$//;
     my $rep_path = "$home/$user/$rep_name";
-    my @activity = $self->last_activity($rep_path);
+    my @activity = $self->last_activity($user, $project);
     
     my $rep = {};
     $rep->{name} = $project;
@@ -654,7 +669,7 @@ sub projects {
       $rep->{age_string} = $activity[1];
     }
     
-    my $description = $self->project_description($rep_path) || '';
+    my $description = $self->description($user, $project) || '';
     $rep->{description} = $self->_chop_str($description, 25, 5);
     
     push @reps, $rep;
