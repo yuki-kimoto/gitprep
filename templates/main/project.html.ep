@@ -1,10 +1,8 @@
 <%
-  use Gitprep::API;
-  
   my $state;
 
   # API
-  my $api = Gitprep::API->new($self);
+  my $api = gitprep_api;
   
   # Default revision
   my $rev = 'master';
@@ -32,18 +30,18 @@
     
     # Tree id
     my $tid;
-    my $commit = $git->parse_commit($rep, $id);
+    my $commit = $git->parse_commit($user, $project, $id);
     if (defined $dir && $dir ne '') {
-      $tid = $git->id_by_path($rep, $id, $dir, 'tree');
+      $tid = $git->id_by_path($user, $project, $id, $dir, 'tree');
     }
     else { $tid = $commit->{tree} }
     $self->render_not_found unless defined $tid;
 
     # Commit log
-    my $latest_commit_log = $git->latest_commit_log($rep, $rev);
+    my $latest_commit_log = $git->latest_commit_log($user, $project, $rev);
     
     # Tree
-    my $trees = $git->trees($rep, $tid, $rev);
+    my $trees = $git->trees($user, $project, $tid, $rev);
     
     # Repository description
     $desc = $git->description($user, $project);

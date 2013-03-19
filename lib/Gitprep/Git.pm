@@ -462,11 +462,18 @@ sub id {
 }
 
 sub id_by_path {
-  my ($self, $project, $commit_id, $path, $type) = @_;
+  my ($self, $user, $project, $commit_id, $path, $type) = @_;
   
   # Get blob id or tree id (command "git ls-tree")
   $path =~ s#/+$##;
-  my @cmd = ($self->cmd($project), 'ls-tree', $commit_id, '--', $path);
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'ls-tree',
+    $commit_id,
+    '--',
+    $path
+  );
   open my $fh, '-|', @cmd
     or croak 'Open git-ls-tree failed';
   my $line = $self->dec(scalar <$fh>);
@@ -775,15 +782,23 @@ sub id_set_multi {
 }
 
 sub latest_commit_log {
-  my ($self, $rep, $ref, $file) = @_;
+  my ($self, $user, $project, $ref, $file) = @_;
   
   my $commit_log = {};
   $file = '' unless defined $file;
   
-  my @cmd = ($self->cmd($rep), '--no-pager', 'log',
-    '-n', '1',
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    '--no-pager',
+    'log',
+    '-n',
+    '1',
     '--pretty=format:%H - %an - %ar : %s', 
-    $ref, '--', $file);
+    $ref,
+    '--',
+    $file
+  );
   open my $fh, '-|', @cmd
     or croak 'Open git-log failed';
   
@@ -828,11 +843,19 @@ sub parse_blobdiff_lines {
 }
 
 sub parse_commit {
-  my ($self, $project, $id) = @_;
+  my ($self, $user, $project, $id) = @_;
   
   # Git rev-list
-  my @cmd = ($self->cmd($project), 'rev-list', '--parents',
-    '--header', '--max-count=1', $id, '--');
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'rev-list',
+    '--parents',
+    '--header',
+    '--max-count=1',
+    $id,
+    '--'
+  );
   open my $fh, '-|', @cmd
     or croak 'Open git-rev-list failed';
   
@@ -1280,13 +1303,20 @@ sub timestamp {
 }
 
 sub trees {
-  my ($self, $rep, $tid, $ref, $dir) = @_;
+  my ($self, $user, $project, $tid, $ref, $dir) = @_;
   
-  # Get tree (command "git ls-tree")
+  # Get tree
   my @entries = ();
   my $show_sizes = 0;
-  open my $fh, '-|', $self->cmd($rep), 'ls-tree', '-z',
-      ($show_sizes ? '-l' : ()), $tid
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'ls-tree',
+    '-z',
+    ($show_sizes ? '-l' : ()),
+    $tid
+  );
+  open my $fh, '-|', @cmd
     or $self->croak('Open git-ls-tree failed');
   {
     local $/ = "\0";
@@ -1303,7 +1333,7 @@ sub trees {
     
     # Commit log
     my $name = defined $dir && $dir ne '' ? "$dir/$tree->{name}" : $tree->{name};
-    my $commit_log = $self->latest_commit_log($rep, $ref, $name);
+    my $commit_log = $self->latest_commit_log($user, $project, $ref, $name);
     $tree = {%$tree, %$commit_log};
     
     push @$trees, $tree;
