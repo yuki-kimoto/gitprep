@@ -177,6 +177,17 @@ sub cmd {
   return ($self->bin, "--git-dir=$project");
 }
 
+sub _cmd {
+  my ($self, $user, $project, @cmd) = @_;
+  
+  my $home = $self->rep_home;
+  
+  my $rep = "$home/$user/$project.git";
+  
+  # Execute git command
+  return ($self->bin, "--git-dir=$rep", @cmd);
+}
+
 sub create_repository {
   my ($self, $user, $project, $opts) = @_;
   

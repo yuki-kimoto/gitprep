@@ -5,36 +5,6 @@
 
 % layout 'common';
   
-  %= stylesheet begin
-    .users {
-      width:400px;
-      margin-left:auto;
-      margin-right:auto;
-    }
-    .users .uheader {
-      border: 1px solid #ccc;
-      font-size:150%;
-      padding:5px;
-      background-color:#6c8393;
-      border:1px solid #586873;
-      border-top-left-radius:5px;
-      border-top-right-radius:5px;
-      color:white;
-      text-align:center;
-    }
-    .users .uname {
-      border: 1px solid #ccc;
-      border-top:none;
-      font-size:140%;
-      padding:10px;
-      padding-left:20px;
-    }
-    
-    .users .uname a {
-      color:#4183C4;
-    }
-  % end
-  
   %= include '/include/header', title => 'Gitprep';
   <div class="container" style="min-heigth:500px">
     <h3>Users</h3>
