@@ -266,10 +266,16 @@ sub branch_exists {
 }
 
 sub branch_commits {
-  my ($self, $rep, $rev1, $rev2) = @_;
+  my ($self, $user, $project, $rev1, $rev2) = @_;
   
-  # Command "git diff-tree"
-  my @cmd = ($self->cmd($rep), 'show-branch', $rev1, $rev2);
+  # Get bramcj commits
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'show-branch',
+    $rev1,
+    $rev2
+  );
   open my $fh, "-|", @cmd
     or croak 500, "Open git-show-branch failed";
 
@@ -283,7 +289,7 @@ sub branch_commits {
       
       next unless $id =~ /^\Q$rev2\E\^?$/ || $id =~ /^\Q$rev2\E^[0-9]+$/;
       
-      my $commit = $self->parse_commit($rep, $id);
+      my $commit = $self->parse_commit($user, $project, $id);
       
       push @$commits, $commit;
     }
@@ -300,10 +306,16 @@ sub branch_commits {
 }
 
 sub separated_commit {
-  my ($self, $rep, $rev1, $rev2) = @_;
+  my ($self, $user, $project, $rev1, $rev2) = @_;
   
   # Command "git diff-tree"
-  my @cmd = ($self->cmd($rep), 'show-branch', $rev1, $rev2);
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'show-branch',
+    $rev1,
+    $rev2
+  );
   open my $fh, "-|", @cmd
     or croak 500, "Open git-show-branch failed";
 
@@ -314,7 +326,7 @@ sub separated_commit {
   my $commit;
   if (defined $last_line) {
       my ($id) = $last_line =~ /^.*?\[(.+)?\]/;
-      $commit = $self->parse_commit($rep, $id);
+      $commit = $self->parse_commit($user, $project, $id);
   }
 
   return $commit;
