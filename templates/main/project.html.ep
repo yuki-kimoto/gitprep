@@ -18,8 +18,6 @@
   my $root_ns = $api->root_ns(config->{root});
   my $rep_ns = "$root_ns/$user/$project.git";
   my $rep = "/$rep_ns";
-  my $home_ns = $api->dirname($rep_ns);
-  my $home = "/$home_ns";
 
   # Git
   my $git = app->git;
@@ -28,7 +26,6 @@
   my $desc;
   my $commits_number;
   my $readme;
-  
   if ($git->branch_exists($user, $project)) {
     # Id and directory
     my ($id, $dir) = $git->parse_object($rep, $object);
@@ -49,13 +46,13 @@
     my $trees = $git->trees($rep, $tid, $rev);
     
     # Repository description
-    my $desc = $git->project_description($rep);
+    $desc = $git->description($user, $project);
     
     # Commits number
-    my $commits_number = $git->commits_number($rep, $rev);
+    $commits_number = $git->commits_number($rep, $rev);
     
     # README
-    my $readme = $git->blob_plain($rep, $rev, 'README');
+    $readme = $git->blob_plain($rep, $rev, 'README');
     
     # Variable for included template
     stash(
