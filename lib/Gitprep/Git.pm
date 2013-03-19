@@ -206,13 +206,6 @@ sub check_head_link {
     (-l $head_file && readlink($head_file) =~ /^refs\/heads\//));
 }
 
-sub cmd {
-  my ($self, $project) = @_;
-  
-  # Execute git command
-  return ($self->bin, "--git-dir=$project");
-}
-
 sub _cmd {
   my ($self, $user, $project, @cmd) = @_;
   
@@ -233,8 +226,7 @@ sub create_repository {
   mkpath $rep;
     
   # Git init
-  my @git_init_cmd = ($self->cmd($rep), 'init', '--bare');
-  warn "@git_init_cmd";
+  my @git_init_cmd = $self->_cmd($user, $project, 'init', '--bare');
   system(@git_init_cmd) == 0
     or croak "Can't execute git init";
   
@@ -253,9 +245,8 @@ sub branch_exists {
   my ($self, $user, $project) = @_;
   
   my $home = $self->rep_home;
-  my $rep = "$home/$user/$project.git";
 
-  my @cmd = ($self->cmd($rep), 'branch');
+  my @cmd = $self->_cmd($user, $project, 'branch');
   open my $fh, "-|", @cmd
     or croak 'git branch failed';
   
@@ -386,7 +377,7 @@ sub file_type_long {
 }
 
 sub fill_from_file_info {
-  my ($self, $project, $diff, $parents) = @_;
+  my ($self, $user, $project, $diff, $parents) = @_;
   
   # Fill file info
   $diff->{from_file} = [];
@@ -394,7 +385,7 @@ sub fill_from_file_info {
   for (my $i = 0; $i < $diff->{nparents}; $i++) {
     if ($diff->{status}[$i] eq 'R' || $diff->{status}[$i] eq 'C') {
       $diff->{from_file}[$i] =
-        $self->path_by_id($project, $parents->[$i], $diff->{from_id}[$i]);
+        $self->path_by_id($user, $project, $parents->[$i], $diff->{from_id}[$i]);
     }
   }
 
@@ -433,7 +424,7 @@ sub difftree {
     # Parent are more than one
     if (exists $diff->{nparents}) {
 
-      $self->fill_from_file_info($project, $diff, $parents)
+      $self->fill_from_file_info($user, $project, $diff, $parents)
         unless exists $diff->{from_file};
       $diff->{is_deleted} = 1 if $self->is_deleted($diff);
       push @$diffs, $diff;
@@ -472,13 +463,6 @@ sub difftree {
   return $diffs;
 }
 
-sub head_id {
-  my ($self, $project) = (shift, shift);
-  
-  # HEAD id
-  return $self->id($project, 'HEAD', @_);
-};
-
 sub no_merged_branches {
   my ($self, $user, $project) = @_;
   
@@ -495,28 +479,12 @@ sub no_merged_branches {
   for my $branch_name (@branch_names) {
     my $branch = {};
     $branch->{name} = $branch_name;
-    my $commit = $self->parse_commit($project, $branch_name);
+    my $commit = $self->parse_commit($user, $project, $branch_name);
     $branch->{commit} = $commit;
     push @$branches, $branch;
   }
   
   return $branches;
-}
-
-sub id {
-  my ($self, $project, $ref, @options) = @_;
-  
-  # Command "git rev-parse" (get commit id)
-  my $id;
-  my @cmd = ($self->cmd($project), 'rev-parse',
-    '--verify', '-q', @options, $ref);
-  if (open my $fh, '-|', @cmd) {
-    $id = $self->dec(scalar <$fh>);
-    chomp $id if defined $id;
-    close $fh;
-  }
-  
-  return $id;
 }
 
 sub id_by_path {
@@ -554,7 +522,6 @@ sub parse_object {
   my ($self, $user, $project, $id_path) = @_;
   
   # Parse id and path
-  my $rep = $self->rep($user, $project);
   my $refs = $self->references($user, $project);
   my $id;
   my $path;
@@ -580,13 +547,13 @@ sub parse_object {
 }
 
 sub path_by_id {
-  my $self = shift;
-  my $project = shift;
-  my $base = shift || return;
-  my $hash = shift || return;
+  my ($self, $user, $project, $base, $hash) = @_;
+  
+  return unless $base;
+  return unless $hash;
   
   # Command "git ls-tree"
-  my @cmd = ($self->cmd($project), 'ls-tree', '-r', '-t', '-z', $base);
+  my @cmd = $self->_cmd($user, $project, 'ls-tree', '-r', '-t', '-z', $base);
   open my $fh, '-|' or return;
 
   # Get path
@@ -1162,44 +1129,6 @@ sub parse_ls_tree_line {
   }
 
   return \%res;
-}
-
-sub parse_tag {
-  my ($self, $project, $tag_id) = @_;
-  
-  # Get tag (command "git cat-file")
-  my @cmd = ($self->cmd($project), 'cat-file', 'tag', $tag_id);
-  open my $fh, '-|', @cmd or return;
-  
-  # Parse tag
-  my %tag;
-  my @comment;
-  $tag{id} = $tag_id;
-  while (my $line = $self->dec(scalar <$fh>)) {
-    chomp $line;
-    if ($line =~ m/^object ([0-9a-fA-F]{40})$/) { $tag{object} = $1 }
-    elsif ($line =~ m/^type (.+)$/) { $tag{type} = $1 }
-    elsif ($line =~ m/^tag (.+)$/) { $tag{name} = $1 }
-    elsif ($line =~ m/^tagger (.*) ([0-9]+) (.*)$/) {
-      $tag{author} = $1;
-      $tag{author_epoch} = $2;
-      $tag{author_tz} = $3;
-      if ($tag{author} =~ m/^([^<]+) <([^>]*)>/) {
-        $tag{author_name}  = $1;
-        $tag{author_email} = $2;
-      } else { $tag{author_name} = $tag{author} }
-    } elsif ($line =~ m/--BEGIN/) { 
-      push @comment, $line;
-      last;
-    } elsif ($line eq '') { last }
-  }
-  my $comment = $self->dec(scalar <$fh>);
-  push @comment, $comment;
-  $tag{comment} = \@comment;
-  close $fh or return;
-  return unless defined $tag{name};
-  
-  return \%tag;
 }
 
 sub search_bin {

@@ -1,31 +1,33 @@
 <%
   # API
-  my $api = Gitprep::API->new($self);
+  my $api = gitprep_api;
   
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $root_ns = $api->root_ns(config->{root});
-  my $rep_ns = "$root_ns/$user/$project.git";
-  my $rep = "/$rep_ns";
   my $object = param('object');
 
   # Git
   my $git = $self->app->git;
   
   # Id and file
-  use D;d [$rep, $object];
-  my ($rev, $file) = $git->parse_object($rep, $object);
+  my ($rev, $blob) = @{$git->parse_object($user, $project, $object)};
 
   # Commit
-  my $commit_log = $git->latest_commit_log($rep, $rev, $file);
+  my $commit_log = $git->latest_commit_log($user, $project, $rev, $blob);
   
   # Blob content
-  my $bid = $git->id_by_path($rep, $rev, $file, 'blob')
+  my $bid = $git->id_by_path($user, $project, $rev, $blob, 'blob')
     or $api->croak('Cannot find file');
-  my @cmd = ($git->cmd($rep), 'cat-file', 'blob', $bid);
+  my @cmd = $git->_cmd(
+    $user,
+    $project,
+    'cat-file',
+    'blob',
+    $bid
+  );
   open my $fh, '-|', @cmd
-    or $api->croak(qq/Couldn't cat "$file", "$bid"/);
+    or $api->croak(qq/Couldn't cat "$blob", "$bid"/);
   
   # Blob plain
   my $commit;
@@ -33,7 +35,7 @@
   my $lines =[];
   
   # Content type
-  my $type = $git->blob_contenttype($fh, $file);
+  my $type = $git->blob_contenttype($fh, $blob);
 
   # Convert text/* content type to text/plain
   if ($self->config('prevent_xss') &&
@@ -46,16 +48,16 @@
   }
 
   # File name
-  my $file_name = $rev;
-  if (defined $file) { $file_name = $file }
-  elsif ($type =~ m/^text\//) { $file_name .= '.txt' }
+  my $blob_name = $rev;
+  if (defined $blob) { $blob_name = $blob }
+  elsif ($type =~ m/^text\//) { $blob_name .= '.txt' }
   
   # Content
   my $content = do { local $/; <$fh> };
   my $sandbox = $self->config('prevent_xss') &&
     $type !~ m#^(?:text/[a-z]+|image/(?:gif|png|jpeg))(?:[ ;]|$)#;
   my $content_disposition = $sandbox ? 'attachment' : 'inline';
-  $content_disposition .= "; filename=$file_name";
+  $content_disposition .= "; filename=$blob_name";
   
   # Render
   $self->res->headers->content_disposition($content_disposition);
