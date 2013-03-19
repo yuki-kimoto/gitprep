@@ -1,0 +1,74 @@
+<%
+  # API
+  my $api = $self->gitprep_api;
+  
+  # Parameter
+  my $user = param('user');
+  my $project = param('project');
+  my $rev = param('rev');
+  my $archive_type = stash('archive_type');
+  my $content_type;
+  my $format;
+  my $ext;
+  if ($archive_type eq 'tar') {
+    $format = 'tar';
+    $ext = 'tar.gz';
+    $content_type = 'application/x-tar';
+  }
+  elsif ($archive_type eq 'zip') {
+    $format = 'zip';
+    $ext = 'zip';
+    $content_type = 'application/zip';
+  }
+  
+  # Git
+  my $git = app->git;
+
+  # Object type
+  my $type = $git->object_type($user, $project, "$rev^{}");
+  if (!$type) { $api->croak('Object does not exist') }
+  elsif ($type eq 'blob') { $api->croak('Object is not a tree-ish') }
+  
+  my $name = "$project-$rev";
+  my $file = "$name.$ext";
+  my $quote = sub {
+    return join(' ',
+      map { my $a = $_; $a =~ s/(['!])/'\\$1'/g; "'$a'" } @_
+    );
+  };
+  my $cmd = $quote->(
+    $git->_cmd(
+      $user,
+      $project,
+      'archive',
+      "--format=$format",
+      "--prefix=$name/",
+      $rev
+    )
+  );
+  if ($archive_type eq 'tar') {
+    $cmd .= ' | ' . $quote->('gzip', '-n');
+  }
+  $file =~ s/(["\\])/\\$1/g;
+
+  open my $fh, '-|', $cmd
+    or $api->croak('Execute git-archive failed');
+  
+  # Write chunk
+  $self->res->headers->content_type($content_type);
+  $self->res->headers->content_disposition(qq/attachment; filename="$file"/);
+  my $cb;
+  $cb = sub {
+    my $c = shift;
+    my $size = 500 * 1024;
+    my $length = sysread($fh, my $buffer, $size);
+    unless ($length) {
+      close $fh;
+      undef $cb;
+      $c->finish;
+      return;
+    }
+    $c->write_chunk($buffer, $cb);
+  };
+  $self->$cb;
+%>

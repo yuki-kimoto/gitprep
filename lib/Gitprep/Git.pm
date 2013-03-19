@@ -653,10 +653,16 @@ sub last_activity {
 }
 
 sub object_type {
-  my ($self, $project, $cid) = @_;
+  my ($self, $user, $project, $cid) = @_;
   
-  # Get object type (command "git cat-file")
-  my @cmd = ($self->cmd($project), 'cat-file', '-t', $cid);
+  # Get object type
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'cat-file',
+    '-t',
+    $cid
+  );
   open my $fh, '-|', @cmd  or return;
   my $type = $self->dec(scalar <$fh>);
   close $fh or return;
