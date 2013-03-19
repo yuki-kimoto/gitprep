@@ -5,35 +5,38 @@
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $root_ns = $api->root_ns(config->{root});
-  my $rep_ns = "$root_ns/$user/$project.git";
-  my $rep = "/$rep_ns";
   my $object = param('object');
 
   # Git
   my $git = $self->app->git;
   
   # Revision and blob
-  my ($rev, $blob) = $git->parse_object($rep, $object);
+  my ($rev, $blob) = @{$git->parse_object($user, $project, $object)};
 
   # Commit log
-  my $commit_log = $git->latest_commit_log($rep, $rev, $blob);
+  my $commit_log = $git->latest_commit_log($user, $project, $rev, $blob);
 
   # Commit
-  my $commit = $git->parse_commit($rep, $rev);
+  my $commit = $git->parse_commit($user, $project, $rev);
   
   # Authors
-  my $authors = $git->authors($rep, $rev, $blob);
+  my $authors = $git->authors($user, $project, $rev, $blob);
   
   # Blob content
-  my $bid = $git->id_by_path($rep, $rev, $blob, 'blob')
+  my $bid = $git->id_by_path($user, $project, $rev, $blob, 'blob')
     or $api->croak('Cannot find file');
-  my @cmd = ($git->cmd($rep), 'cat-file', 'blob', $bid);
+  my @cmd = $git->_cmd(
+    $user,
+    $project,
+    'cat-file',
+    'blob',
+    $bid
+  );
   open my $fh, '-|', @cmd
     or $api->croak(qq/Couldn't cat "$blob", "$bid"/);
   
   # Blob info
-  my $blob_size = $git->blob_size_kb($rep, $rev, $blob);
+  my $blob_size = $git->blob_size_kb($user, $project, $rev, $blob);
   my $mimetype = $git->blob_mimetype($fh, $blob);
 
   # Parse line

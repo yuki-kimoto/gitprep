@@ -11,6 +11,7 @@ use File::Path 'mkpath';
 has 'bin';
 has 'rep_home';
 has 'encoding' => 'UTF-8';
+has text_exts => sub { ['txt'] };
 
 # Encode
 use Encode qw/encode decode/;
@@ -34,10 +35,18 @@ sub dec {
 }
 
 sub authors {
-  my ($self, $rep, $ref, $file) = @_;
+  my ($self, $user, $project, $ref, $file) = @_;
   
   # Command "git log FILE"
-  my @cmd = ($self->cmd($rep), 'log',  '--format=%an', $ref, '--', $file);
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'log',
+    '--format=%an',
+    $ref,
+    '--',
+    $file
+  );
   open my $fh, "-|", @cmd
     or croak 500, "Open git-cat-file failed";
   my $authors = {};
@@ -146,10 +155,16 @@ sub blob_contenttype {
 }
 
 sub blob_size_kb {
-  my ($self, $rep, $rev, $file) = @_;
+  my ($self, $user, $project, $rev, $file) = @_;
   
   # Command "git diff-tree"
-  my @cmd = ($self->cmd($rep), 'cat-file', '-s', "$rev:$file");
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'cat-file',
+    '-s',
+    "$rev:$file"
+  );
   open my $fh, "-|", @cmd
     or croak 500, "Open cat-file failed";
   my $size = $self->dec(scalar <$fh>);
