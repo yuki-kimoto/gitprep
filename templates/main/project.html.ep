@@ -11,11 +11,6 @@
   my $user = param('user');
   my $project = param('project');
   my $object ||= param('object') || 'master/';
-  
-  # Parameters
-  my $root_ns = $api->root_ns(config->{root});
-  my $rep_ns = "$root_ns/$user/$project.git";
-  my $rep = "/$rep_ns";
 
   # Git
   my $git = app->git;
@@ -47,10 +42,10 @@
     $desc = $git->description($user, $project);
     
     # Commits number
-    $commits_number = $git->commits_number($rep, $rev);
+    $commits_number = $git->commits_number($user, $project, $rev);
     
     # README
-    $readme = $git->blob_plain($rep, $rev, 'README');
+    $readme = $git->blob_plain($user, $project, $rev, 'README');
     
     # Variable for included template
     stash(

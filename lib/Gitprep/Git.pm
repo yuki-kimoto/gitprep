@@ -99,10 +99,10 @@ sub blobdiffs {
 }
 
 sub blob_plain {
-  my ($self, $rep, $ref, $path) = @_;
+  my ($self, $user, $project, $ref, $path) = @_;
   
-  # Command "git diff-tree"
-  my @cmd = ($self->cmd($rep), 'cat-file', 'blob', "$ref:$path");
+  # Get blob
+  my @cmd = $self->_cmd($user, $project, 'cat-file', 'blob', "$ref:$path");
   open my $fh, "-|", @cmd
     or croak 500, "Open git-cat-file failed";
   local $/;
@@ -285,10 +285,10 @@ sub separated_commit {
 }
 
 sub commits_number {
-  my ($self, $rep, $ref) = @_;
+  my ($self, $user, $project, $ref) = @_;
   
   # Command "git diff-tree"
-  my @cmd = ($self->cmd($rep), 'shortlog', '-s', $ref);
+  my @cmd = $self->_cmd($user, $project, 'shortlog', '-s', $ref);
   open my $fh, "-|", @cmd
     or croak 500, "Open git-shortlog failed";
   my @commits_infos = map { chomp; $self->dec($_) } <$fh>;
