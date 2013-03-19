@@ -630,27 +630,6 @@ sub references {
   return \%refs;
 }
 
-sub fill_projects {
-  my ($self, $home, $ps) = @_;
-  
-  # Fill rep info
-  my @resp;
-  for my $rep (@$ps) {
-    my (@activity) = $self->last_activity("$home/$rep->{path}");
-    next unless @activity;
-    ($rep->{age}, $rep->{age_string}) = @activity;
-    if (!defined $rep->{descr}) {
-      my $descr = $self->project_description("$home/$rep->{path}") || '';
-      $rep->{descr_long} = $descr;
-      $rep->{descr} = $self->_chop_str($descr, 25, 5);
-    }
-
-    push @resp, $rep;
-  }
-
-  return \@resp;
-}
-
 sub projects {
   my ($self, $user, $opts) = @_;
   
