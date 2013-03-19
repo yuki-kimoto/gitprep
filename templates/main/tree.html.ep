@@ -1,29 +1,24 @@
 <%
-  use Gitprep::API;
-
   # API
-  my $api = Gitprep::API->new($self);
+  my $api = gitprep_api;
   
   # Parameters
   my $user = param('user');
   my $project = param('project');
   my $object ||= param('object') || 'master';
-  my $root_ns = $api->root_ns(config->{root});
-  my $rep_ns = "$root_ns/$user/$project.git";
-  my $rep = "/$rep_ns";
 
   # Git
   my $git = app->git;
 
   # Id and directory
-  my ($rev, $dir) = $git->parse_object($rep, $object);
+  my ($rev, $dir) = @{$git->parse_object($user, $project, $object)};
   
   # Tree id
-  my $commit = $git->parse_commit($rep, $rev);
+  my $commit = $git->parse_commit($user, $project, $rev);
   my $tid;
   my $top;
   if (defined $dir && $dir ne '') {
-    $tid = $git->id_by_path($rep, $rev, $dir, 'tree');
+    $tid = $git->id_by_path($user, $project, $rev, $dir, 'tree');
   }
   else {
     $top = 1;
@@ -32,19 +27,19 @@
   $self->render_not_found unless defined $tid;
   
   # Commit log
-  my $latest_commit_log = $git->latest_commit_log($rep, $rev);
+  my $latest_commit_log = $git->latest_commit_log($user, $project, $rev);
 
   # Tree
-  my $trees = $git->trees($rep, $tid, $rev, $dir);
+  my $trees = $git->trees($user, $project, $tid, $rev, $dir);
   
   # Repository description
-  my $desc = $git->project_description($rep);
+  my $desc = $git->description($user, $project);
   
   # Commits number
-  my $commits_number = $git->commits_number($rep, $rev);
+  my $commits_number = $git->commits_number($user, $project, $rev);
   
   # README
-  my $readme = $git->blob_plain($rep, $rev, 'README');
+  my $readme = $git->blob_plain($user, $project, $rev, 'README');
   
   # Variable for included templates
   stash(
