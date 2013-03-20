@@ -6,6 +6,7 @@ use File::Find 'find';
 use File::Basename qw/basename dirname/;
 use Fcntl ':mode';
 use File::Path 'mkpath';
+use File::Copy 'move';
 
 # Attributes
 has 'bin';
@@ -229,6 +230,25 @@ sub create_repository {
   my @git_init_cmd = $self->_cmd($user, $project, 'init', '--bare');
   system(@git_init_cmd) == 0
     or croak "Can't execute git init";
+    
+  # Add git-daemon-export-ok
+  {
+    my $file = "$rep/git-daemon-export-ok";
+    open my $fh, '>', $file
+      or croak "Can't create git-daemon-export-ok: $!"
+  }
+  
+  # HTTP support
+  my @git_update_server_info_cmd = $self->_cmd(
+    $user,
+    $project,
+    '--bare',
+    'update-server-info'
+  );
+  system(@git_update_server_info_cmd) == 0
+    or croak "Can't execute git --bare update-server-info";
+  move("$rep/hooks/post-update.sample", "$rep/hooks/post-update")
+    or croak "Can't move post-update";
   
   # Description
   if (my $description = $opts->{description}) {

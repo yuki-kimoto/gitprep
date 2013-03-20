@@ -6,7 +6,7 @@
 %>
 
 % layout 'common';
-  %= include '/include/header', title => 'Project';
+  %= include '/include/header', title => 'Repositories';
 
   <div class="container">
     <div>
@@ -16,7 +16,7 @@
         <li><a href="<%= url_for %>"><%= $user %></a></li>
       </ul>
 
-      <h3>Projects</h3>
+      <h3>Repositories</h3>
       
       <table class="table">
         % for my $rep (@$reps) {
