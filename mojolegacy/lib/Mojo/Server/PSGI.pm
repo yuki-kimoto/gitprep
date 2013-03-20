@@ -4,11 +4,8 @@ use Mojo::Base 'Mojo::Server';
 sub run {
   my ($self, $env) = @_;
 
-  # Environment
   my $tx  = $self->build_tx;
   my $req = $tx->req->parse($env);
-
-  # Store connection information
   $tx->local_port($env->{SERVER_PORT})->remote_address($env->{REMOTE_ADDR});
 
   # Request body
@@ -20,7 +17,7 @@ sub run {
     last if ($len -= $read) <= 0;
   }
 
-  # Handle
+  # Handle request
   $self->emit(request => $tx);
 
   # Response headers
@@ -47,6 +44,7 @@ sub to_psgi_app {
 package Mojo::Server::PSGI::_IO;
 use Mojo::Base -base;
 
+# Finish transaction
 sub close { shift->{tx}->server_close }
 
 sub getline {
@@ -59,7 +57,6 @@ sub getline {
   # End of content
   return undef unless length $chunk;
 
-  # Content
   $self->{offset} += length $chunk;
   return $chunk;
 }
@@ -109,13 +106,13 @@ L<Mojo::Server::PSGI> inherits all events from L<Mojo::Server>.
 L<Mojo::Server::PSGI> inherits all methods from L<Mojo::Server> and implements
 the following new ones.
 
-=head2 C<run>
+=head2 run
 
   my $res = $psgi->run($env);
 
 Run L<PSGI>.
 
-=head2 C<to_psgi_app>
+=head2 to_psgi_app
 
   my $app = $psgi->to_psgi_app;
 

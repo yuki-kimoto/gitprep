@@ -2,50 +2,55 @@ package Mojolicious::Lite;
 use Mojo::Base 'Mojolicious';
 
 # "Bender: Bite my shiny metal ass!"
-use File::Basename 'dirname';
+use File::Basename qw(basename dirname);
 use File::Spec::Functions 'catdir';
 use Mojo::UserAgent;
 use Mojo::Util 'monkey_patch';
 
 sub import {
-  my $class = shift;
 
-  # Executable
+  # Remember executable for later
   $ENV{MOJO_EXE} ||= (caller)[1];
 
-  # Home
-  local $ENV{MOJO_HOME} = catdir(split '/', dirname($ENV{MOJO_EXE}))
+  # Reuse home directory if possible
+  local $ENV{MOJO_HOME} = catdir(split '/', dirname $ENV{MOJO_EXE})
     unless $ENV{MOJO_HOME};
 
-  # Initialize app
+  # Initialize application class
   my $caller = caller;
   no strict 'refs';
   push @{"${caller}::ISA"}, 'Mojo';
-  my $app = $class->new;
+  my $app = shift->new;
 
-  # Initialize routes
+  # Generate moniker based on filename
+  my $moniker = basename $ENV{MOJO_EXE};
+  $moniker =~ s/\.(?:pl|pm|t)$//i;
+  $app->moniker($moniker);
+
+  # Initialize routes without namespaces
   my $routes = $app->routes->namespaces([]);
 
   # Default static and template class
   $app->static->classes->[0] = $app->renderer->classes->[0] = $caller;
 
-  # Export
+  # The Mojolicious::Lite DSL
   my $root = $routes;
   for my $name (qw(any get options patch post put websocket)) {
     monkey_patch $caller, $name, sub { $routes->$name(@_) };
   }
   monkey_patch $caller, $_, sub {$app}
     for qw(new app);
-  monkey_patch $caller, 'del', sub { $routes->delete(@_) };
-  monkey_patch $caller, 'group', sub (&) {
+  monkey_patch $caller, del => sub { $routes->delete(@_) };
+  monkey_patch $caller, group => sub (&) {
     my $old = $root;
     $_[0]->($root = $routes);
     ($routes, $root) = ($root, $old);
   };
-  monkey_patch $caller, 'helper', sub { $app->helper(@_) };
-  monkey_patch $caller, 'hook',   sub { $app->hook(@_) };
-  monkey_patch $caller, 'plugin', sub { $app->plugin(@_) };
-  monkey_patch $caller, 'under',  sub { $routes = $root->under(@_) };
+  monkey_patch $caller,
+    helper => sub { $app->helper(@_) },
+    hook   => sub { $app->hook(@_) },
+    plugin => sub { $app->plugin(@_) },
+    under  => sub { $routes = $root->under(@_) };
 
   # Make sure there's a default application for testing
   Mojo::UserAgent->app($app) unless Mojo::UserAgent->app;
@@ -929,7 +934,7 @@ fun!
 
 L<Mojolicious::Lite> implements the following functions.
 
-=head2 C<any>
+=head2 any
 
   my $route = any '/:foo' => sub {...};
   my $route = any [qw(GET POST)] => '/:foo' => sub {...};
@@ -938,45 +943,45 @@ Generate route with L<Mojolicious::Routes::Route/"any">, matching any of the
 listed HTTP request methods or all. See also the tutorial above for more
 argument variations.
 
-=head2 C<app>
+=head2 app
 
   my $app = app;
 
 The L<Mojolicious::Lite> application.
 
-=head2 C<del>
+=head2 del
 
   my $route = del '/:foo' => sub {...};
 
 Generate route with L<Mojolicious::Routes::Route/"delete">, matching only
 C<DELETE> requests. See also the tutorial above for more argument variations.
 
-=head2 C<get>
+=head2 get
 
   my $route = get '/:foo' => sub {...};
 
 Generate route with L<Mojolicious::Routes::Route/"get">, matching only C<GET>
 requests. See also the tutorial above for more argument variations.
 
-=head2 C<group>
+=head2 group
 
   group {...};
 
 Start a new route group.
 
-=head2 C<helper>
+=head2 helper
 
   helper foo => sub {...};
 
 Add a new helper with L<Mojolicious/"helper">.
 
-=head2 C<hook>
+=head2 hook
 
   hook after_dispatch => sub {...};
 
 Share code with L<Mojolicious/"hook">.
 
-=head2 C<options>
+=head2 options
 
   my $route = options '/:foo' => sub {...};
 
@@ -984,34 +989,34 @@ Generate route with L<Mojolicious::Routes::Route/"options">, matching only
 C<OPTIONS> requests. See also the tutorial above for more argument
 variations.
 
-=head2 C<patch>
+=head2 patch
 
   my $route = patch '/:foo' => sub {...};
 
 Generate route with L<Mojolicious::Routes::Route/"patch">, matching only
 C<PATCH> requests. See also the tutorial above for more argument variations.
 
-=head2 C<plugin>
+=head2 plugin
 
   plugin SomePlugin => {foo => 23};
 
 Load a plugin with L<Mojolicious/"plugin">.
 
-=head2 C<post>
+=head2 post
 
   my $route = post '/:foo' => sub {...};
 
 Generate route with L<Mojolicious::Routes::Route/"post">, matching only
 C<POST> requests. See also the tutorial above for more argument variations.
 
-=head2 C<put>
+=head2 put
 
   my $route = put '/:foo' => sub {...};
 
 Generate route with L<Mojolicious::Routes::Route/"put">, matching only C<PUT>
 requests. See also the tutorial above for more argument variations.
 
-=head2 C<under>
+=head2 under
 
   my $route = under sub {...};
   my $route = under '/:foo';
@@ -1020,7 +1025,7 @@ Generate bridge route with L<Mojolicious::Routes::Route/"under">, to which all
 following routes are automatically appended. See also the tutorial above for
 more argument variations.
 
-=head2 C<websocket>
+=head2 websocket
 
   my $route = websocket '/:foo' => sub {...};
 

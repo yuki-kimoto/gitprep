@@ -24,11 +24,8 @@ sub parse {
   # Make sure we have a viable pattern
   my $pattern = @_ % 2 ? (shift || '/') : '/';
   $pattern = "/$pattern" unless $pattern =~ m!^/!;
-
-  # Constraints
   $self->constraints({@_});
 
-  # Tokenize
   return $pattern eq '/' ? $self : $self->pattern($pattern)->_tokenize;
 }
 
@@ -39,7 +36,6 @@ sub render {
   my $format = ($values ||= {})->{format};
   $values = {%{$self->defaults}, %$values};
 
-  # Turn pattern into path
   my $string   = '';
   my $optional = 1;
   for my $token (reverse @{$self->tree}) {
@@ -104,7 +100,6 @@ sub shape_match {
 sub _compile {
   my $self = shift;
 
-  # Compile tree to regex
   my $block = my $regex = '';
   my $constraints = $self->constraints;
   my $optional    = 1;
@@ -152,7 +147,6 @@ sub _compile {
       $compiled .= '?' if $optional;
     }
 
-    # Add to block
     $block = "$compiled$block";
   }
 
@@ -188,14 +182,12 @@ sub _compile_req {
 sub _tokenize {
   my $self = shift;
 
-  # Token
   my $quote_end   = $self->quote_end;
   my $quote_start = $self->quote_start;
   my $placeholder = $self->placeholder_start;
   my $relaxed     = $self->relaxed_start;
   my $wildcard    = $self->wildcard_start;
 
-  # Parse the pattern character wise
   my $pattern = $self->pattern;
   my $state   = 'text';
   my (@tree, $quoted);
@@ -278,84 +270,84 @@ L<Mojolicious::Routes::Pattern> is the core of L<Mojolicious::Routes>.
 
 L<Mojolicious::Routes::Pattern> implements the following attributes.
 
-=head2 C<constraints>
+=head2 constraints
 
   my $constraints = $pattern->constraints;
   $pattern        = $pattern->constraints({foo => qr/\w+/});
 
 Regular expression constraints.
 
-=head2 C<defaults>
+=head2 defaults
 
   my $defaults = $pattern->defaults;
   $pattern     = $pattern->defaults({foo => 'bar'});
 
 Default parameters.
 
-=head2 C<format_regex>
+=head2 format_regex
 
   my $regex = $pattern->format_regex;
   $pattern  = $pattern->format_regex($regex);
 
 Compiled regular expression for format matching.
 
-=head2 C<pattern>
+=head2 pattern
 
   my $pattern = $pattern->pattern;
   $pattern    = $pattern->pattern('/(foo)/(bar)');
 
 Raw unparsed pattern.
 
-=head2 C<placeholder_start>
+=head2 placeholder_start
 
   my $start = $pattern->placeholder_start;
   $pattern  = $pattern->placeholder_start(':');
 
 Character indicating a placeholder, defaults to C<:>.
 
-=head2 C<placeholders>
+=head2 placeholders
 
   my $placeholders = $pattern->placeholders;
   $pattern         = $pattern->placeholders(['foo', 'bar']);
 
 Placeholder names.
 
-=head2 C<quote_end>
+=head2 quote_end
 
   my $end  = $pattern->quote_end;
   $pattern = $pattern->quote_end(']');
 
 Character indicating the end of a quoted placeholder, defaults to C<)>.
 
-=head2 C<quote_start>
+=head2 quote_start
 
   my $start = $pattern->quote_start;
   $pattern  = $pattern->quote_start('[');
 
 Character indicating the start of a quoted placeholder, defaults to C<(>.
 
-=head2 C<regex>
+=head2 regex
 
   my $regex = $pattern->regex;
   $pattern  = $pattern->regex($regex);
 
 Pattern in compiled regular expression form.
 
-=head2 C<relaxed_start>
+=head2 relaxed_start
 
   my $start = $pattern->relaxed_start;
   $pattern  = $pattern->relaxed_start('*');
 
 Character indicating a relaxed placeholder, defaults to C<#>.
 
-=head2 C<tree>
+=head2 tree
 
   my $tree = $pattern->tree;
   $pattern = $pattern->tree([ ... ]);
 
 Pattern in parsed form.
 
-=head2 C<wildcard_start>
+=head2 wildcard_start
 
   my $start = $pattern->wildcard_start;
   $pattern  = $pattern->wildcard_start('*');
@@ -365,9 +357,9 @@ Character indicating the start of a wildcard placeholder, defaults to C<*>.
 =head1 METHODS
 
 L<Mojolicious::Routes::Pattern> inherits all methods from L<Mojo::Base> and
-implements the following ones.
+implements the following new ones.
 
-=head2 C<new>
+=head2 new
 
   my $pattern = Mojolicious::Routes::Pattern->new('/:action');
   my $pattern
@@ -376,14 +368,14 @@ implements the following ones.
 
 Construct a new L<Mojolicious::Routes::Pattern> object.
 
-=head2 C<match>
+=head2 match
 
   my $result = $pattern->match('/foo/bar');
   my $result = $pattern->match('/foo/bar', 1);
 
 Match pattern against entire path, format detection is disabled by default.
 
-=head2 C<parse>
+=head2 parse
 
   $pattern = $pattern->parse('/:action');
   $pattern = $pattern->parse('/:action', action => qr/\w+/);
@@ -391,7 +383,7 @@ Match pattern against entire path, format detection is disabled by default.
 
 Parse a raw pattern.
 
-=head2 C<render>
+=head2 render
 
   my $path = $pattern->render({action => 'foo'});
   my $path = $pattern->render({action => 'foo'}, 1);
@@ -399,7 +391,7 @@ Parse a raw pattern.
 Render pattern into a path with parameters, format rendering is disabled by
 default.
 
-=head2 C<shape_match>
+=head2 shape_match
 
   my $result = $pattern->shape_match(\$path);
   my $result = $pattern->shape_match(\$path, 1);

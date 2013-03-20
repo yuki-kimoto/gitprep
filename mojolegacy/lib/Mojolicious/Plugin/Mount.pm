@@ -6,7 +6,6 @@ use Mojo::Server;
 sub register {
   my ($self, $app, $conf) = @_;
 
-  # Load application
   my $path  = (keys %$conf)[0];
   my $embed = Mojo::Server->new->load_app($conf->{$path});
 
@@ -17,7 +16,6 @@ sub register {
     $path = $3;
   }
 
-  # Generate route
   my $route = $app->routes->route($path)->detour(app => $embed);
   $route->over(host => $host) if $host;
 
@@ -64,7 +62,7 @@ you're welcome to fork it.
 L<Mojolicious::Plugin::Mount> inherits all methods from L<Mojolicious::Plugin>
 and implements the following new ones.
 
-=head2 C<register>
+=head2 register
 
   my $route = $plugin->register(Mojolicious->new, {'/foo' => '/some/app.pl'});
 

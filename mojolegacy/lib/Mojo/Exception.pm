@@ -16,18 +16,11 @@ sub new {
   return @_ ? $self->_detect(@_) : $self;
 }
 
-# DEPRECATED in Rainbow!
-sub raw_message {
-  warn "Mojo::Exception->raw_message has been DEPRECATED!\n";
-  shift->message(@_);
-}
-
 sub throw { die shift->new->trace(2)->_detect(@_) }
 
 sub to_string {
   my $self = shift;
 
-  # Message
   return $self->message unless $self->verbose;
   my $string = $self->message ? $self->message : '';
 
@@ -94,7 +87,6 @@ sub _context {
 sub _detect {
   my ($self, $msg, $files) = @_;
 
-  # Message
   return $msg if blessed $msg && $msg->isa('Mojo::Exception');
   $self->message($msg);
 
@@ -144,76 +136,76 @@ L<Mojo::Exception> is a container for exceptions with context information.
 
 L<Mojo::Exception> implements the following attributes.
 
-=head2 C<frames>
+=head2 frames
 
   my $frames = $e->frames;
   $e         = $e->frames($frames);
 
 Stacktrace.
 
-=head2 C<line>
+=head2 line
 
   my $line = $e->line;
   $e       = $e->line([3 => 'foo']);
 
 The line where the exception occured.
 
-=head2 C<lines_after>
+=head2 lines_after
 
   my $lines = $e->lines_after;
   $e        = $e->lines_after([[1 => 'bar'], [2 => 'baz']]);
 
 Lines after the line where the exception occured.
 
-=head2 C<lines_before>
+=head2 lines_before
 
   my $lines = $e->lines_before;
   $e        = $e->lines_before([[4 => 'bar'], [5 => 'baz']]);
 
 Lines before the line where the exception occured.
 
-=head2 C<message>
+=head2 message
 
   my $msg = $e->message;
   $e      = $e->message('Oops!');
 
 Exception message.
 
-=head2 C<verbose>
+=head2 verbose
 
   my $verbose = $e->verbose;
   $e          = $e->verbose(1);
 
-Activate verbose rendering, defaults to the value of
-C<MOJO_EXCEPTION_VERBOSE> or C<0>.
+Activate verbose rendering, defaults to the value of the
+C<MOJO_EXCEPTION_VERBOSE> environment variable or C<0>.
 
 =head1 METHODS
 
 L<Mojo::Exception> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
-=head2 C<new>
+=head2 new
 
   my $e = Mojo::Exception->new('Oops!');
   my $e = Mojo::Exception->new('Oops!', $files);
 
 Construct a new L<Mojo::Exception> object.
 
-=head2 C<throw>
+=head2 throw
 
   Mojo::Exception->throw('Oops!');
   Mojo::Exception->throw('Oops!', $files);
 
 Throw exception with stacktrace.
 
-=head2 C<to_string>
+=head2 to_string
 
   my $string = $e->to_string;
   my $string = "$e";
 
 Render exception.
 
-=head2 C<trace>
+=head2 trace
 
   $e = $e->trace;
   $e = $e->trace(2);

@@ -42,13 +42,13 @@ sub acceptor {
   # Make sure connection manager is running
   $self->_manager;
 
-  # New acceptor
+  # Connect acceptor with reactor
   my $id = $self->_id;
   $self->{acceptors}{$id} = $acceptor;
   weaken $acceptor->reactor($self->reactor)->{reactor};
   $self->{accepts} = $self->max_accepts if $self->max_accepts;
 
-  # Stop accepting
+  # Stop accepting so new acceptor can get picked up
   $self->_not_accepting;
 
   return $id;
@@ -61,25 +61,22 @@ sub client {
   # Make sure connection manager is running
   $self->_manager;
 
-  # New client
   my $id     = $self->_id;
   my $c      = $self->{connections}{$id} ||= {};
   my $client = $c->{client} = Mojo::IOLoop::Client->new;
   weaken $client->reactor($self->reactor)->{reactor};
 
-  # Connect
   weaken $self;
   $client->on(
     connect => sub {
       my $handle = pop;
 
-      # New stream
+      # Turn handle into stream
       my $c = $self->{connections}{$id};
       delete $c->{client};
       my $stream = $c->{stream} = Mojo::IOLoop::Stream->new($handle);
       $self->_stream($stream => $id);
 
-      # Connected
       $self->$cb(undef, $stream);
     }
   );
@@ -128,14 +125,13 @@ sub server {
   my ($self, $cb) = (shift, pop);
   $self = $self->singleton unless ref $self;
 
-  # New server
   my $server = Mojo::IOLoop::Server->new;
   weaken $self;
   $server->on(
     accept => sub {
       my $handle = pop;
 
-      # Accept
+      # Turn handle into stream
       my $stream = Mojo::IOLoop::Stream->new($handle);
       $self->$cb($stream, $self->stream($stream));
 
@@ -144,7 +140,7 @@ sub server {
         if defined $self->{accepts}
         && ($self->{accepts} -= int(rand 2) + 1) <= 0;
 
-      # Stop accepting
+      # Stop accepting to release accept mutex
       $self->_not_accepting;
     }
   );
@@ -214,7 +210,7 @@ sub _id {
 sub _manage {
   my $self = shift;
 
-  # Start accepting if possible
+  # Try to acquire accept mutex
   $self->_accepting;
 
   # Close connections gracefully
@@ -241,9 +237,8 @@ sub _not_accepting {
   # Release accept mutex
   return unless delete $self->{accepting};
   return unless my $cb = $self->unlock;
-  $self->$cb();
+  $self->$cb;
 
-  # Stop accepting
   $_->stop for values %{$self->{acceptors} || {}};
 }
 
@@ -274,7 +269,7 @@ sub _stream {
   $self->{connections}{$id}{stream} = $stream;
   weaken $stream->reactor($self->reactor)->{reactor};
 
-  # Stream
+  # Start streaming
   weaken $self;
   $stream->on(close => sub { $self->{connections}{$id}{finish} = 1 });
   $stream->start;
@@ -297,12 +292,12 @@ Mojo::IOLoop - Minimalistic event loop
     my ($loop, $stream) = @_;
 
     $stream->on(read => sub {
-      my ($stream, $chunk) = @_;
+      my ($stream, $bytes) = @_;
 
-      # Process input
-      say $chunk;
+      # Process input chunk
+      say $bytes;
 
-      # Got some data, time to write
+      # Write response
       $stream->write('HTTP/1.1 200 OK');
     });
   });
@@ -312,14 +307,14 @@ Mojo::IOLoop - Minimalistic event loop
     my ($loop, $err, $stream) = @_;
 
     $stream->on(read => sub {
-      my ($stream, $chunk) = @_;
+      my ($stream, $bytes) = @_;
 
       # Process input
-      say "Input: $chunk";
+      say "Input: $bytes";
     });
 
     # Write request
-    $stream->write("GET / HTTP/1.1\r\n\r\n");
+    $stream->write("GET / HTTP/1.1\x0d\x0a\x0d\x0a");
   });
 
   # Add a timer
@@ -352,7 +347,7 @@ See L<Mojolicious::Guides::Cookbook> for more.
 
 L<Mojo::IOLoop> implements the following attributes.
 
-=head2 C<accept_interval>
+=head2 accept_interval
 
   my $interval = $loop->accept_interval;
   $loop        = $loop->accept_interval(0.5);
@@ -361,7 +356,7 @@ Interval in seconds for trying to reacquire the accept mutex and connection
 management, defaults to C<0.025>. Note that changing this value can affect
 performance and idle CPU usage.
 
-=head2 C<lock>
+=head2 lock
 
   my $cb = $loop->lock;
   $loop  = $loop->lock(sub {...});
@@ -377,7 +372,7 @@ this callback are not captured.
     return 1;
   });
 
-=head2 C<max_accepts>
+=head2 max_accepts
 
   my $max = $loop->max_accepts;
   $loop   = $loop->max_accepts(1000);
@@ -388,7 +383,7 @@ to C<0>. Setting the value to C<0> will allow this event loop to accept new
 connections indefinitely. Note that up to half of this value can be subtracted
 randomly to improve load balancing between multiple server processes.
 
-=head2 C<max_connections>
+=head2 max_connections
 
   my $max = $loop->max_connections;
   $loop   = $loop->max_connections(1000);
@@ -399,14 +394,14 @@ C<1000>. Setting the value to C<0> will make this event loop stop accepting
 new connections and allow it to shut down gracefully without interrupting
 existing connections.
 
-=head2 C<multi_accept>
+=head2 multi_accept
 
   my $multi = $loop->multi_accept;
   $loop     = $loop->multi_accept(100);
 
 Number of connections to accept at once, defaults to C<50>.
 
-=head2 C<reactor>
+=head2 reactor
 
   my $reactor = $loop->reactor;
   $loop       = $loop->reactor(Mojo::Reactor->new);
@@ -423,7 +418,7 @@ L<Mojo::Reactor::EV> object.
   # Change to watching only if handle becomes writable
   $loop->reactor->watch($handle, 0, 1);
 
-=head2 C<unlock>
+=head2 unlock
 
   my $cb = $loop->unlock;
   $loop  = $loop->unlock(sub {...});
@@ -436,7 +431,7 @@ processes. Note that exceptions in this callback are not captured.
 L<Mojo::IOLoop> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
-=head2 C<acceptor>
+=head2 acceptor
 
   my $server = Mojo::IOLoop->acceptor($id);
   my $server = $loop->acceptor($id);
@@ -444,7 +439,7 @@ following new ones.
 
 Get L<Mojo::IOLoop::Server> object for id or turn object into an acceptor.
 
-=head2 C<client>
+=head2 client
 
   my $id
     = Mojo::IOLoop->client(address => '127.0.0.1', port => 3000, sub {...});
@@ -460,7 +455,7 @@ L<Mojo::IOLoop::Client/"connect">.
     ...
   });
 
-=head2 C<delay>
+=head2 delay
 
   my $delay = Mojo::IOLoop->delay;
   my $delay = $loop->delay;
@@ -506,14 +501,14 @@ ones as a chain of steps.
   # Wait for events if necessary
   $delay->wait unless Mojo::IOLoop->is_running;
 
-=head2 C<generate_port>
+=head2 generate_port
 
   my $port = Mojo::IOLoop->generate_port;
   my $port = $loop->generate_port;
 
 Find a free TCP port, this is a utility function primarily used for tests.
 
-=head2 C<is_running>
+=head2 is_running
 
   my $success = Mojo::IOLoop->is_running;
   my $success = $loop->is_running;
@@ -522,7 +517,7 @@ Check if event loop is running.
 
   exit unless Mojo::IOLoop->is_running;
 
-=head2 C<one_tick>
+=head2 one_tick
 
   Mojo::IOLoop->one_tick;
   $loop->one_tick;
@@ -530,7 +525,7 @@ Check if event loop is running.
 Run event loop until an event occurs. Note that this method can recurse back
 into the reactor, so you need to be careful.
 
-=head2 C<recurring>
+=head2 recurring
 
   my $id = Mojo::IOLoop->recurring(0.5 => sub {...});
   my $id = $loop->recurring(3 => sub {...});
@@ -541,7 +536,7 @@ amount of time in seconds.
   # Invoke as soon as possible
   Mojo::IOLoop->recurring(0 => sub { say 'Reactor tick.' });
 
-=head2 C<remove>
+=head2 remove
 
   Mojo::IOLoop->remove($id);
   $loop->remove($id);
@@ -549,7 +544,7 @@ amount of time in seconds.
 Remove anything with an id, connections will be dropped gracefully by allowing
 them to finish writing all data in their write buffers.
 
-=head2 C<server>
+=head2 server
 
   my $id = Mojo::IOLoop->server(port => 3000, sub {...});
   my $id = $loop->server(port => 3000, sub {...});
@@ -564,7 +559,7 @@ as L<Mojo::IOLoop::Server/"listen">.
     ...
   });
 
-=head2 C<singleton>
+=head2 singleton
 
   my $loop = Mojo::IOLoop->singleton;
 
@@ -575,7 +570,7 @@ loop object from everywhere inside the process.
   Mojo::IOLoop->timer(2 => sub { Mojo::IOLoop->stop });
   Mojo::IOLoop->start;
 
-=head2 C<start>
+=head2 start
 
   Mojo::IOLoop->start;
   $loop->start;
@@ -586,7 +581,7 @@ reactors stop automatically if there are no events being watched anymore.
   # Start event loop only if it is not running already
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
-=head2 C<stop>
+=head2 stop
 
   Mojo::IOLoop->stop;
   $loop->stop;
@@ -594,7 +589,7 @@ reactors stop automatically if there are no events being watched anymore.
 Stop the event loop, this will not interrupt any existing connections and the
 event loop can be restarted by running C<start> again.
 
-=head2 C<stream>
+=head2 stream
 
   my $stream = Mojo::IOLoop->stream($id);
   my $stream = $loop->stream($id);
@@ -605,7 +600,7 @@ Get L<Mojo::IOLoop::Stream> object for id or turn object into a connection.
   # Increase inactivity timeout for connection to 300 seconds
   Mojo::IOLoop->stream($id)->timeout(300);
 
-=head2 C<timer>
+=head2 timer
 
   my $id = Mojo::IOLoop->timer(5 => sub {...});
   my $id = $loop->timer(5 => sub {...});

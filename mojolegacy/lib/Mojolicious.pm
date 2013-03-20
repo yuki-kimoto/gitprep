@@ -4,6 +4,7 @@ use Mojo::Base 'Mojo';
 # "Fry: Shut up and take my money!"
 use Carp 'croak';
 use Mojo::Exception;
+use Mojo::Util 'decamelize';
 use Mojolicious::Commands;
 use Mojolicious::Controller;
 use Mojolicious::Plugins;
@@ -21,6 +22,7 @@ has commands => sub {
 };
 has controller_class => 'Mojolicious::Controller';
 has mode => sub { $ENV{MOJO_MODE} || 'development' };
+has moniker  => sub { decamelize ref shift };
 has plugins  => sub { Mojolicious::Plugins->new };
 has renderer => sub { Mojolicious::Renderer->new };
 has routes   => sub { Mojolicious::Routes->new };
@@ -38,7 +40,7 @@ has static   => sub { Mojolicious::Static->new };
 has types    => sub { Mojolicious::Types->new };
 
 our $CODENAME = 'Rainbow';
-our $VERSION  = '3.70';
+our $VERSION  = '3.84';
 
 sub AUTOLOAD {
   my $self = shift;
@@ -61,7 +63,6 @@ sub DESTROY { }
 sub new {
   my $self = shift->SUPER::new(@_);
 
-  # Paths
   my $home = $self->home;
   push @{$self->renderer->paths}, $home->rel_dir('templates');
   push @{$self->static->paths},   $home->rel_dir('public');
@@ -76,25 +77,22 @@ sub new {
   $r->hide(qw(rendered req res respond_to send session signed_cookie stash));
   $r->hide(qw(tx ua url_for write write_chunk));
 
-  # Prepare log
+  # Check if we have a log directory
   my $mode = $self->mode;
   $self->log->path($home->rel_file("log/$mode.log"))
     if -w $home->rel_file('log');
 
-  # Load default plugins
   $self->plugin($_) for qw(HeaderCondition DefaultHelpers TagHelpers);
   $self->plugin($_) for qw(EPLRenderer EPRenderer RequestTimer PoweredBy);
 
-  # Exception handling
+  # Exception handling should be first in chain
   $self->hook(around_dispatch => \&_exception);
 
   # Reduced log output outside of development mode
   $self->log->level('info') unless $mode eq 'development';
 
-  # Run mode
+  # Run mode before startup
   if (my $sub = $self->can("${mode}_mode")) { $self->$sub(@_) }
-
-  # Startup
   $self->startup(@_);
 
   return $self;
@@ -119,10 +117,18 @@ sub dispatch {
   my $plugins = $self->plugins->emit_hook(before_dispatch => $c);
 
   # Try to find a static file
-  $self->static->dispatch($c) unless $tx->res->code;
-  $plugins->emit_hook_reverse(after_static_dispatch => $c);
+  $self->static->dispatch($c) and $plugins->emit_hook(after_static => $c)
+    unless $tx->res->code;
+
+  # DEPRECATED in Rainbow!
+  if ($plugins->has_subscribers('after_static_dispatch')) {
+    warn <<EOF and $plugins->emit_hook_reverse(after_static_dispatch => $c);
+after_static_dispatch hook is DEPRECATED in favor of before_routes!!!
+EOF
+  }
 
   # Routes
+  $plugins->emit_hook(before_routes => $c);
   my $res = $tx->res;
   return if $res->code;
   if (my $code = ($tx->req->error)[1]) { $res->code($code) }
@@ -145,18 +151,19 @@ sub handler {
     = $self->controller_class->new(app => $self, stash => $stash, tx => $tx);
   weaken $c->{$_} for qw(app tx);
 
-  # Dispatcher
-  ++$self->{dispatch} and $self->hook(around_dispatch => \&_dispatch)
+  # Dispatcher has to be last in the chain
+  ++$self->{dispatch}
+    and $self->hook(around_dispatch => sub { $_[1]->app->dispatch($_[1]) })
     unless $self->{dispatch};
 
-  # Process
+  # Process with chain
   unless (eval { $self->plugins->emit_chain(around_dispatch => $c) }) {
     $self->log->fatal("Processing request failed: $@");
     $tx->res->code(500);
     $tx->resume;
   }
 
-  # Delayed
+  # Delayed response
   $self->log->debug('Nothing has been rendered, expecting delayed response.')
     unless $stash->{'mojo.rendered'} || $tx->is_writing;
 }
@@ -179,11 +186,6 @@ sub plugin {
 sub start { shift->commands->run(@_ ? @_ : @ARGV) }
 
 sub startup { }
-
-sub _dispatch {
-  my ($next, $c) = @_;
-  $c->app->dispatch($c);
-}
 
 sub _exception {
   my ($next, $c) = @_;
@@ -229,7 +231,7 @@ Take a look at our excellent documentation in L<Mojolicious::Guides>!
 L<Mojolicious> inherits all attributes from L<Mojo> and implements the
 following new ones.
 
-=head2 C<commands>
+=head2 commands
 
   my $commands = $app->commands;
   $app         = $app->commands(Mojolicious::Commands->new);
@@ -240,7 +242,7 @@ L<Mojolicious::Commands> object.
   # Add another namespace to load commands from
   push @{$app->commands->namespaces}, 'MyApp::Command';
 
-=head2 C<controller_class>
+=head2 controller_class
 
   my $class = $app->controller_class;
   $app      = $app->controller_class('Mojolicious::Controller');
@@ -248,7 +250,7 @@ L<Mojolicious::Commands> object.
 Class to be used for the default controller, defaults to
 L<Mojolicious::Controller>.
 
-=head2 C<mode>
+=head2 mode
 
   my $mode = $app->mode;
   $app     = $app->mode('production');
@@ -272,7 +274,16 @@ Right before calling C<startup> and mode specific methods, L<Mojolicious>
 will pick up the current mode, name the log file after it and raise the log
 level from C<debug> to C<info> if it has a value other than C<development>.
 
-=head2 C<plugins>
+=head2 moniker
+
+  my $moniker = $app->moniker;
+  $app        = $app->moniker('foo_bar');
+
+Moniker of this application, often used as default filename for configuration
+files and the like, defaults to decamelizing the application class with
+L<Mojo::Util/"decamelize">.
+
+=head2 plugins
 
   my $plugins = $app->plugins;
   $app        = $app->plugins(Mojolicious::Plugins->new);
@@ -283,7 +294,7 @@ C<plugin> method below if you want to load a plugin.
   # Add another namespace to load plugins from
   push @{$app->plugins->namespaces}, 'MyApp::Plugin';
 
-=head2 C<renderer>
+=head2 renderer
 
   my $renderer = $app->renderer;
   $app         = $app->renderer(Mojolicious::Renderer->new);
@@ -299,7 +310,7 @@ contain more information.
   # Add another class with templates in DATA section
   push @{$app->renderer->classes}, 'Mojolicious::Plugin::Fun';
 
-=head2 C<routes>
+=head2 routes
 
   my $routes = $app->routes;
   $app       = $app->routes(Mojolicious::Routes->new);
@@ -307,14 +318,15 @@ contain more information.
 The router, defaults to a L<Mojolicious::Routes> object. You use this in your
 startup method to define the url endpoints for your application.
 
-  sub startup {
-    my $self = shift;
+  # Add routes
+  my $r = $app->routes;
+  $r->get('/foo/bar')->to('test#foo', title => 'Hello Mojo!');
+  $r->post('/baz')->to('test#baz');
 
-    my $r = $self->routes;
-    $r->get('/:controller/:action')->to('test#welcome');
-  }
+  # Add another namespace to load controllers from
+  push @{$app->routes->namespaces}, 'MyApp::Controller';
 
-=head2 C<secret>
+=head2 secret
 
   my $secret = $app->secret;
   $app       = $app->secret('passw0rd');
@@ -324,7 +336,7 @@ application name which is not very secure, so you should change it!!! As long
 as you are using the insecure default there will be debug messages in the log
 file reminding you to change your passphrase.
 
-=head2 C<sessions>
+=head2 sessions
 
   my $sessions = $app->sessions;
   $app         = $app->sessions(Mojolicious::Sessions->new);
@@ -334,7 +346,7 @@ object. You can usually leave this alone, see
 L<Mojolicious::Controller/"session"> for more information about working with
 session data.
 
-=head2 C<static>
+=head2 static
 
   my $static = $app->static;
   $app       = $app->static(Mojolicious::Static->new);
@@ -348,7 +360,7 @@ L<Mojolicious::Static> object.
   # Add another class with static files in DATA section
   push @{$app->static->classes}, 'Mojolicious::Plugin::Fun';
 
-=head2 C<types>
+=head2 types
 
   my $types = $app->types;
   $app      = $app->types(Mojolicious::Types->new);
@@ -363,23 +375,23 @@ L<Mojolicious::Types> object.
 L<Mojolicious> inherits all methods from L<Mojo> and implements the following
 new ones.
 
-=head2 C<new>
+=head2 new
 
   my $app = Mojolicious->new;
 
 Construct a new L<Mojolicious> application, calling C<${mode}_mode> and
 C<startup> in the process. Will automatically detect your home directory and
 set up logging based on your current operating mode. Also sets up the
-renderer, static dispatcher and a default set of plugins.
+renderer, static file server and a default set of plugins.
 
-=head2 C<build_tx>
+=head2 build_tx
 
   my $tx = $app->build_tx;
 
 Transaction builder, defaults to building a L<Mojo::Transaction::HTTP>
 object.
 
-=head2 C<defaults>
+=head2 defaults
 
   my $defaults = $app->defaults;
   my $foo      = $app->defaults('foo');
@@ -394,7 +406,7 @@ request.
   my $foo = $app->defaults->{foo};
   delete $app->defaults->{foo};
 
-=head2 C<dispatch>
+=head2 dispatch
 
   $app->dispatch(Mojolicious::Controller->new);
 
@@ -402,14 +414,14 @@ The heart of every Mojolicious application, calls the C<static> and C<routes>
 dispatchers for every request and passes them a L<Mojolicious::Controller>
 object.
 
-=head2 C<handler>
+=head2 handler
 
   $app->handler(Mojo::Transaction::HTTP->new);
   $app->handler(Mojolicious::Controller->new);
 
 Sets up the default controller and calls process for every request.
 
-=head2 C<helper>
+=head2 helper
 
   $app->helper(foo => sub {...});
 
@@ -427,7 +439,7 @@ and the application object, as well as a function in C<ep> templates.
   % cache->{foo} = 'bar';
   %= cache->{foo}
 
-=head2 C<hook>
+=head2 hook
 
   $app->hook(after_dispatch => sub {...});
 
@@ -438,14 +450,14 @@ requests indiscriminately.
   $app->hook(before_dispatch => sub {
     my $c = shift;
     $c->render(text => 'Skipped dispatchers!')
-      if $c->req->url->path->contains('/do_not_dispatch');
+      if $c->req->url->path->to_route =~ /do_not_dispatch/;
   });
 
 These hooks are currently available and are emitted in the listed order:
 
 =over 2
 
-=item C<after_build_tx>
+=item after_build_tx
 
 Emitted right after the transaction is built and before the HTTP request gets
 parsed.
@@ -460,9 +472,9 @@ rather advanced features such as upload progress bars possible. Note that this
 hook will not work for embedded applications. (Passed the transaction and
 application object)
 
-=item C<before_dispatch>
+=item before_dispatch
 
-Emitted right before the static dispatcher and router start their work.
+Emitted right before the static file server and router start their work.
 
   $app->hook(before_dispatch => sub {
     my $c = shift;
@@ -472,25 +484,51 @@ Emitted right before the static dispatcher and router start their work.
 Very useful for rewriting incoming requests and other preprocessing tasks.
 (Passed the default controller object)
 
-=item C<after_static_dispatch>
+=item after_static
 
-Emitted in reverse order after the static dispatcher determined if a static
-file should be served and before the router starts its work.
+Emitted after the static file server decided to serve a static file.
 
-  $app->hook(after_static_dispatch => sub {
+  $app->hook(after_static => sub {
     my $c = shift;
     ...
   });
 
-Mostly used for custom dispatchers and post-processing static file responses.
-(Passed the default controller object)
+Mostly used for post-processing static file responses. (Passed the default
+controller object)
 
-=item C<after_dispatch>
+=item before_routes
+
+Emitted after the static file server decided if a static file should be served
+and before the router starts its work.
+
+  $app->hook(before_routes => sub {
+    my $c = shift;
+    ...
+  });
+
+Mostly used for custom dispatchers and collecting metrics. (Passed the default
+controller object)
+
+=item after_render
+
+Emitted after content has been generated by the renderer that is not partial.
+Note that this hook can trigger out of order due to its dynamic nature, and
+with embedded applications will only work for the application that is
+rendering.
+
+  $app->hook(after_render => sub {
+    my ($c, $output, $format) = @_;
+    ...
+  });
+
+Mostly used for post-processing dynamically generated content. (Passed the
+current controller object, a reference to the content and the format)
+
+=item after_dispatch
 
 Emitted in reverse order after a response has been rendered. Note that this
-hook can trigger before C<after_static_dispatch> due to its dynamic nature,
-and with embedded applications will only work for the application rendering
-the response.
+hook can trigger out of order due to its dynamic nature, and with embedded
+applications will only work for the application that is rendering.
 
   $app->hook(after_dispatch => sub {
     my $c = shift;
@@ -500,7 +538,7 @@ the response.
 Useful for rewriting outgoing responses and other post-processing tasks.
 (Passed the current controller object)
 
-=item C<around_dispatch>
+=item around_dispatch
 
 Emitted right before the C<before_dispatch> hook and wraps around the whole
 dispatch process, so you have to manually forward to the next hook if you want
@@ -522,7 +560,7 @@ the default controller object)
 
 =back
 
-=head2 C<plugin>
+=head2 plugin
 
   $app->plugin('some_thing');
   $app->plugin('some_thing', foo => 23);
@@ -534,76 +572,21 @@ the default controller object)
   $app->plugin('MyApp::Plugin::SomeThing', foo => 23);
   $app->plugin('MyApp::Plugin::SomeThing', {foo => 23});
 
-Load a plugin with L<Mojolicious::Plugins/"register_plugin">.
+Load a plugin, for a full list of example plugins included in the
+L<Mojolicious> distribution see L<Mojolicious::Plugins/"PLUGINS">.
 
-These plugins are included in the L<Mojolicious> distribution as examples:
-
-=over 2
-
-=item L<Mojolicious::Plugin::Charset>
-
-Change the application charset.
-
-=item L<Mojolicious::Plugin::Config>
-
-Perl-ish configuration files.
-
-=item L<Mojolicious::Plugin::DefaultHelpers>
-
-General purpose helper collection, loaded automatically.
-
-=item L<Mojolicious::Plugin::EPLRenderer>
-
-Renderer for plain embedded Perl templates, loaded automatically.
-
-=item L<Mojolicious::Plugin::EPRenderer>
-
-Renderer for more sophisiticated embedded Perl templates, loaded
-automatically.
-
-=item L<Mojolicious::Plugin::HeaderCondition>
-
-Route condition for all kinds of headers, loaded automatically.
-
-=item L<Mojolicious::Plugin::JSONConfig>
-
-JSON configuration files.
-
-=item L<Mojolicious::Plugin::Mount>
-
-Mount whole L<Mojolicious> applications.
-
-=item L<Mojolicious::Plugin::PODRenderer>
-
-Renderer for turning POD into HTML and documentation browser for
-L<Mojolicious::Guides>.
-
-=item L<Mojolicious::Plugin::PoweredBy>
-
-Add an C<X-Powered-By> header to outgoing responses, loaded automatically.
-
-=item L<Mojolicious::Plugin::RequestTimer>
-
-Log timing information, loaded automatically.
-
-=item L<Mojolicious::Plugin::TagHelpers>
-
-Template specific helper collection, loaded automatically.
-
-=back
-
-=head2 C<start>
+=head2 start
 
   $app->start;
   $app->start(@ARGV);
 
-Start the command line interface for your application with
-L<Mojolicious::Commands/"start">.
+Start the command line interface for your application, for a full list of
+commands available by default see L<Mojolicious::Commands/"COMMANDS">.
 
   # Always start daemon and ignore @ARGV
   $app->start('daemon', '-l', 'http://*:8080');
 
-=head2 C<startup>
+=head2 startup
 
   $app->startup;
 
@@ -626,26 +609,6 @@ request, response and stash.
 
   $app->log->debug($app->dumper({foo => 'bar'}));
 
-=head1 SUPPORT
-
-=head2 Web
-
-L<http://mojolicio.us>
-
-=head2 IRC
-
-C<#mojo> on C<irc.perl.org>
-
-=head2 Mailing-List
-
-L<http://groups.google.com/group/mojolicious>
-
-=head1 DEVELOPMENT
-
-=head2 Repository
-
-L<http://github.com/kraih/mojo>
-
 =head1 BUNDLED FILES
 
 The L<Mojolicious> distribution includes a few files with different licenses
@@ -653,14 +616,14 @@ that have been bundled for internal use.
 
 =head2 Mojolicious Artwork
 
-  Copyright (C) 2010-2012, Sebastian Riedel.
+  Copyright (C) 2010-2013, Sebastian Riedel.
 
 Licensed under the CC-SA License, Version 3.0
 L<http://creativecommons.org/licenses/by-sa/3.0>.
 
 =head2 jQuery
 
-  Copyright (C) 2011, John Resig.
+  Copyright (C) 2005, 2012 jQuery Foundation, Inc.
 
 Licensed under the MIT License, L<http://creativecommons.org/licenses/MIT>.
 
@@ -810,6 +773,8 @@ James Duncan
 
 Jan Jona Javorsek
 
+Jan Schmidt
+
 Jaroslav Muhin
 
 Jesse Vincent
@@ -940,9 +905,13 @@ Zak B. Elep
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2012, Sebastian Riedel.
+Copyright (C) 2008-2013, Sebastian Riedel.
 
 This program is free software, you can redistribute it and/or modify it under
 the terms of the Artistic License version 2.0.
+
+=head1 SEE ALSO
+
+L<Mojolicious::Guides>, L<http://mojolicio.us>.
 
 =cut

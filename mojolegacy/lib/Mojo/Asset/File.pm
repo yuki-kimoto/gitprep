@@ -5,7 +5,7 @@ use Carp 'croak';
 use Errno 'EEXIST';
 use Fcntl qw(O_CREAT O_EXCL O_RDWR);
 use File::Copy 'move';
-use File::Spec;
+use File::Spec::Functions 'catfile';
 use IO::File;
 use Mojo::Util 'md5_sum';
 
@@ -17,12 +17,12 @@ has handle => sub {
   my $handle = IO::File->new;
   my $path   = $self->path;
   if (defined $path && -f $path) {
-    $handle->open("< $path") or croak qq{Can't open file "$path": $!};
+    $handle->open($path, '<') or croak qq{Can't open file "$path": $!};
     return $handle;
   }
 
   # Open new or temporary file
-  my $base = File::Spec->catfile($self->tmpdir, 'mojo.tmp');
+  my $base = catfile File::Spec::Functions::tmpdir, 'mojo.tmp';
   my $name = defined $path ? $path : $base;
   until ($handle->open($name, O_CREAT | O_EXCL | O_RDWR)) {
     croak qq{Can't open file "$name": $!} if defined $path || $! != $!{EEXIST};
@@ -35,7 +35,7 @@ has handle => sub {
 
   return $handle;
 };
-has tmpdir => sub { $ENV{MOJO_TMPDIR} || File::Spec->tmpdir };
+has tmpdir => sub { $ENV{MOJO_TMPDIR} || File::Spec::Functions::tmpdir };
 
 sub DESTROY {
   my $self = shift;
@@ -59,7 +59,6 @@ sub add_chunk {
 sub contains {
   my ($self, $string) = @_;
 
-  # Seek to start
   my $handle = $self->handle;
   $handle->sysseek($self->start_range, SEEK_SET);
 
@@ -95,12 +94,10 @@ sub contains {
 sub get_chunk {
   my ($self, $start) = @_;
 
-  # Seek to start
   $start += $self->start_range;
   my $handle = $self->handle;
   $handle->sysseek($start, SEEK_SET);
 
-  # Range support
   my $buffer;
   if (defined(my $end = $self->end_range)) {
     my $chunk = $end + 1 - $start;
@@ -165,26 +162,30 @@ Mojo::Asset::File - File storage for HTTP content
 
 L<Mojo::Asset::File> is a file storage backend for HTTP content.
 
+=head1 EVENTS
+
+L<Mojo::Asset::File> inherits all events from L<Mojo::Asset>.
+
 =head1 ATTRIBUTES
 
 L<Mojo::Asset::File> inherits all attributes from L<Mojo::Asset> and
 implements the following new ones.
 
-=head2 C<cleanup>
+=head2 cleanup
 
   my $cleanup = $file->cleanup;
   $file       = $file->cleanup(1);
 
 Delete file automatically once it's not used anymore.
 
-=head2 C<handle>
+=head2 handle
 
   my $handle = $file->handle;
   $file      = $file->handle(IO::File->new);
 
 File handle, created on demand.
 
-=head2 C<path>
+=head2 path
 
   my $path = $file->path;
   $file    = $file->path('/home/sri/foo.txt');
@@ -192,7 +193,7 @@ File handle, created on demand.
 File path used to create C<handle>, can also be automatically generated if
 necessary.
 
-=head2 C<tmpdir>
+=head2 tmpdir
 
   my $tmpdir = $file->tmpdir;
   $file      = $file->tmpdir('/tmp');
@@ -205,45 +206,45 @@ C<MOJO_TMPDIR> environment variable or auto detection.
 L<Mojo::Asset::File> inherits all methods from L<Mojo::Asset> and implements
 the following new ones.
 
-=head2 C<add_chunk>
+=head2 add_chunk
 
   $file = $file->add_chunk('foo bar baz');
 
 Add chunk of data.
 
-=head2 C<contains>
+=head2 contains
 
   my $position = $file->contains('bar');
 
 Check if asset contains a specific string.
 
-=head2 C<get_chunk>
+=head2 get_chunk
 
-  my $chunk = $file->get_chunk($start);
+  my $bytes = $file->get_chunk($start);
 
 Get chunk of data starting from a specific position.
 
-=head2 C<is_file>
+=head2 is_file
 
   my $true = $file->is_file;
 
 True.
 
-=head2 C<move_to>
+=head2 move_to
 
   $file = $file->move_to('/home/sri/bar.txt');
 
 Move asset data into a specific file and disable C<cleanup>.
 
-=head2 C<size>
+=head2 size
 
   my $size = $file->size;
 
 Size of asset data in bytes.
 
-=head2 C<slurp>
+=head2 slurp
 
-  my $string = $file->slurp;
+  my $bytes = $file->slurp;
 
 Read all asset data at once.
 

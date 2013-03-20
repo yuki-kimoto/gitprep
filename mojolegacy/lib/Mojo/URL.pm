@@ -31,7 +31,7 @@ sub authority {
     return $host =~ /[^\x00-\x7f]/ ? $self->ihost($host) : $self->host($host);
   }
 
-  # Format
+  # Build authority
   my $userinfo = $self->userinfo;
   $authority .= url_escape($userinfo, '^A-Za-z0-9\-._~!$&\'()*+,;=:') . '@'
     if $userinfo;
@@ -137,7 +137,6 @@ sub query {
 sub to_abs {
   my $self = shift;
 
-  # Already absolute
   my $abs = $self->clone;
   return $abs if $abs->is_abs;
 
@@ -173,7 +172,6 @@ sub to_abs {
 sub to_rel {
   my $self = shift;
 
-  # Already relative
   my $rel = $self->clone;
   return $rel unless $rel->is_abs;
 
@@ -274,42 +272,42 @@ Resource Locators with support for IDNA and IRIs.
 
 L<Mojo::URL> implements the following attributes.
 
-=head2 C<base>
+=head2 base
 
   my $base = $url->base;
   $url     = $url->base(Mojo::URL->new);
 
 Base of this URL.
 
-=head2 C<fragment>
+=head2 fragment
 
   my $fragment = $url->fragment;
   $url         = $url->fragment('foo');
 
 Fragment part of this URL.
 
-=head2 C<host>
+=head2 host
 
   my $host = $url->host;
   $url     = $url->host('127.0.0.1');
 
 Host part of this URL.
 
-=head2 C<port>
+=head2 port
 
   my $port = $url->port;
   $url     = $url->port(8080);
 
 Port part of this URL.
 
-=head2 C<scheme>
+=head2 scheme
 
   my $scheme = $url->scheme;
   $url       = $url->scheme('http');
 
 Scheme part of this URL.
 
-=head2 C<userinfo>
+=head2 userinfo
 
   my $userinfo = $url->userinfo;
   $url         = $url->userinfo('root:pass%3Bw0rd');
@@ -321,27 +319,27 @@ Userinfo part of this URL.
 L<Mojo::URL> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
-=head2 C<new>
+=head2 new
 
   my $url = Mojo::URL->new;
   my $url = Mojo::URL->new('http://127.0.0.1:3000/foo?f=b&baz=2#foo');
 
 Construct a new L<Mojo::URL> object.
 
-=head2 C<authority>
+=head2 authority
 
   my $authority = $url->authority;
   $url          = $url->authority('root:pass%3Bw0rd@localhost:8080');
 
 Authority part of this URL.
 
-=head2 C<clone>
+=head2 clone
 
   my $url2 = $url->clone;
 
 Clone this URL.
 
-=head2 C<ihost>
+=head2 ihost
 
   my $ihost = $url->ihost;
   $url      = $url->ihost('xn--bcher-kva.ch');
@@ -351,19 +349,19 @@ Host part of this URL in punycode format.
   # "xn--da5b0n.net"
   Mojo::URL->new('http://☃.net')->ihost;
 
-=head2 C<is_abs>
+=head2 is_abs
 
   my $success = $url->is_abs;
 
 Check if URL is absolute.
 
-=head2 C<parse>
+=head2 parse
 
   $url = $url->parse('http://127.0.0.1:3000/foo/bar?fo=o&baz=23#foo');
 
 Parse URL.
 
-=head2 C<path>
+=head2 path
 
   my $path = $url->path;
   $url     = $url->path('/foo/bar');
@@ -382,7 +380,7 @@ defaults to a L<Mojo::Path> object.
   # "http://mojolicio.us/perldoc/Mojo/DOM/HTML"
   Mojo::URL->new('http://mojolicio.us/perldoc/Mojo/')->path('DOM/HTML');
 
-=head2 C<protocol>
+=head2 protocol
 
   my $proto = $url->protocol;
 
@@ -391,7 +389,7 @@ Normalized version of C<scheme>.
   # "http"
   Mojo::URL->new('HtTp://mojolicio.us')->protocol;
 
-=head2 C<query>
+=head2 query
 
   my $query = $url->query;
   $url      = $url->query(replace => 'with');
@@ -419,21 +417,21 @@ Query part of this URL, defaults to a L<Mojo::Parameters> object.
   # "http://mojolicio.us?a=1&b=2&a=2&c=3"
   Mojo::URL->new('http://mojolicio.us?a=1&b=2')->query({a => 2, c => 3});
 
-=head2 C<to_abs>
+=head2 to_abs
 
   my $abs = $url->to_abs;
   my $abs = $url->to_abs(Mojo::URL->new('http://kraih.com/foo'));
 
 Clone relative URL and turn it into an absolute one.
 
-=head2 C<to_rel>
+=head2 to_rel
 
   my $rel = $url->to_rel;
   my $rel = $url->to_rel(Mojo::URL->new('http://kraih.com/foo'));
 
 Clone absolute URL and turn it into a relative one.
 
-=head2 C<to_string>
+=head2 to_string
 
   my $string = $url->to_string;
   my $string = "$url";

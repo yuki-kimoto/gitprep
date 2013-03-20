@@ -15,10 +15,8 @@ EOF
 sub run {
   my ($self, @args) = @_;
 
-  # Options
   GetOptionsFromArray \@args, 'v|verbose' => \my $verbose;
 
-  # Walk and draw
   my $routes = [];
   $self->_walk($_, 0, $routes) for @{$self->app->routes->children};
   $self->_draw($routes, $verbose);
@@ -27,7 +25,7 @@ sub run {
 sub _draw {
   my ($self, $routes, $verbose) = @_;
 
-  # Length
+  # Calculate column widths
   my @length = (0, 0, 0);
   for my $node (@$routes) {
 
@@ -46,7 +44,7 @@ sub _draw {
     $length[2] = $len if $len > $length[2];
   }
 
-  # Draw
+  # Draw all routes
   for my $node (@$routes) {
     my @parts;
 
@@ -75,7 +73,6 @@ sub _draw {
     $format .= '?' if $format && $optional;
     push @parts, $format ? "$regex$format" : $regex if $verbose;
 
-    # Route
     say join('  ', @parts);
   }
 }
@@ -83,12 +80,10 @@ sub _draw {
 sub _walk {
   my ($self, $node, $depth, $routes) = @_;
 
-  # Pattern
   my $prefix = '';
   if (my $i = $depth * 2) { $prefix .= ' ' x $i . '+' }
   push @$routes, [$prefix . ($node->pattern->pattern || '/'), $node];
 
-  # Walk
   $depth++;
   $self->_walk($_, $depth, $routes) for @{$node->children};
   $depth--;
@@ -119,14 +114,14 @@ example for learning to build new commands, you're welcome to fork it.
 L<Mojolicious::Command::routes> inherits all attributes from
 L<Mojolicious::Command> and implements the following new ones.
 
-=head2 C<description>
+=head2 description
 
   my $description = $routes->description;
   $routes         = $routes->description('Foo!');
 
 Short description of this command, used for the command list.
 
-=head2 C<usage>
+=head2 usage
 
   my $usage = $routes->usage;
   $routes   = $routes->usage('Foo!');
@@ -138,7 +133,7 @@ Usage information for this command, used for the help screen.
 L<Mojolicious::Command::routes> inherits all methods from
 L<Mojolicious::Command> and implements the following new ones.
 
-=head2 C<run>
+=head2 run
 
   $routes->run(@ARGV);
 

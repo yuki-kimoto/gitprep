@@ -11,14 +11,9 @@ has usage       => "usage: $0 version\n";
 sub run {
   my $self = shift;
 
-  # EV
   my $ev = eval 'use Mojo::Reactor::EV; 1' ? $EV::VERSION : 'not installed';
-
-  # IPv6
   my $ipv6
     = Mojo::IOLoop::Server::IPV6 ? $IO::Socket::IP::VERSION : 'not installed';
-
-  # TLS
   my $tls
     = Mojo::IOLoop::Server::TLS ? $IO::Socket::SSL::VERSION : 'not installed';
 
@@ -34,13 +29,12 @@ OPTIONAL
 
 EOF
 
-  # Latest version
+  # Check latest version on CPAN
   my $latest = eval {
     my $ua = Mojo::UserAgent->new(max_redirects => 10)->detect_proxy;
     $ua->get('api.metacpan.org/v0/release/Mojolicious')->res->json->{version};
   };
 
-  # Message
   return unless $latest;
   my $msg = 'This version is up to date, have fun!';
   $msg = 'Thanks for testing a development release, you are awesome!'
@@ -76,14 +70,14 @@ example for learning to build new commands, you're welcome to fork it.
 L<Mojolicious::Command::version> inherits all attributes from
 L<Mojolicious::Command> and implements the following new ones.
 
-=head2 C<description>
+=head2 description
 
   my $description = $v->description;
   $v              = $v->description('Foo!');
 
 Short description of this command, used for the command list.
 
-=head2 C<usage>
+=head2 usage
 
   my $usage = $v->usage;
   $v        = $v->usage('Foo!');
@@ -95,7 +89,7 @@ Usage information for this command, used for the help screen.
 L<Mojolicious::Command::version> inherits all methods from
 L<Mojolicious::Command> and implements the following new ones.
 
-=head2 C<run>
+=head2 run
 
   $v->run(@ARGV);
 

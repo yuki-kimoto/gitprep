@@ -5,11 +5,7 @@ use Time::HiRes qw(gettimeofday tv_interval);
 
 sub register {
   my ($self, $app) = @_;
-
-  # Start timer
-  $app->hook(after_static_dispatch => \&_start);
-
-  # End timer
+  $app->hook(before_routes  => \&_start);
   $app->hook(after_dispatch => \&_end);
 }
 
@@ -70,11 +66,11 @@ example for learning to build new plugins, you're welcome to fork it.
 L<Mojolicious::Plugin::RequestTimer> inherits all methods from
 L<Mojolicious::Plugin> and implements the following new ones.
 
-=head2 C<register>
+=head2 register
 
   $plugin->register(Mojolicious->new);
 
-Register plugin hooks in L<Mojolicious> application.
+Register hooks in L<Mojolicious> application.
 
 =head1 SEE ALSO
 

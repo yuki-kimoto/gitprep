@@ -9,27 +9,25 @@ has usage       => <<"EOF";
 usage: $0 daemon [OPTIONS]
 
 These options are available:
-  -b, --backlog <size>         Set listen backlog size, defaults to
-                               SOMAXCONN.
-  -c, --clients <number>       Set maximum number of concurrent clients,
-                               defaults to 1000.
-  -g, --group <name>           Set group name for process.
-  -i, --inactivity <seconds>   Set inactivity timeout, defaults to the value
-                               of MOJO_INACTIVITY_TIMEOUT or 15.
-  -l, --listen <location>      Set one or more locations you want to listen
-                               on, defaults to the value of MOJO_LISTEN or
+  -b, --backlog <size>         Listen backlog size, defaults to SOMAXCONN.
+  -c, --clients <number>       Maximum number of concurrent clients, defaults
+                               to 1000.
+  -g, --group <name>           Group name for process.
+  -i, --inactivity <seconds>   Inactivity timeout, defaults to the value of
+                               MOJO_INACTIVITY_TIMEOUT or 15.
+  -l, --listen <location>      One or more locations you want to listen on,
+                               defaults to the value of MOJO_LISTEN or
                                "http://*:3000".
   -p, --proxy                  Activate reverse proxy support, defaults to
                                the value of MOJO_REVERSE_PROXY.
-  -r, --requests <number>      Set maximum number of requests per keep-alive
+  -r, --requests <number>      Maximum number of requests per keep-alive
                                connection, defaults to 25.
-  -u, --user <name>            Set username for process.
+  -u, --user <name>            Username for process.
 EOF
 
 sub run {
   my ($self, @args) = @_;
 
-  # Options
   my $daemon = Mojo::Server::Daemon->new(app => $self->app);
   GetOptionsFromArray \@args,
     'b|backlog=i'    => sub { $daemon->backlog($_[1]) },
@@ -41,7 +39,6 @@ sub run {
     'r|requests=i' => sub { $daemon->max_requests($_[1]) },
     'u|user=s'     => sub { $daemon->user($_[1]) };
 
-  # Start
   $daemon->listen(\@listen) if @listen;
   $daemon->run;
 }
@@ -72,14 +69,14 @@ example for learning to build new commands, you're welcome to fork it.
 L<Mojolicious::Command::daemon> inherits all attributes from
 L<Mojolicious::Command> and implements the following new ones.
 
-=head2 C<description>
+=head2 description
 
   my $description = $daemon->description;
   $daemon         = $daemon->description('Foo!');
 
 Short description of this command, used for the command list.
 
-=head2 C<usage>
+=head2 usage
 
   my $usage = $daemon->usage;
   $daemon   = $daemon->usage('Foo!');
@@ -91,7 +88,7 @@ Usage information for this command, used for the help screen.
 L<Mojolicious::Command::daemon> inherits all methods from
 L<Mojolicious::Command> and implements the following new ones.
 
-=head2 C<run>
+=head2 run
 
   $daemon->run(@ARGV);
 

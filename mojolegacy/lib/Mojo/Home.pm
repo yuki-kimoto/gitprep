@@ -80,7 +80,13 @@ sub parse {
 sub rel_dir { catdir(@{shift->{parts} || []}, split '/', shift) }
 sub rel_file { catfile(@{shift->{parts} || []}, split '/', shift) }
 
-sub slurp_rel_file { slurp shift->rel_file(@_) }
+# DEPRECATED in Rainbow!
+sub slurp_rel_file {
+  warn <<EOF;
+Mojo::Home->slurp_rel_file is DEPRECATED in favor of Mojo::Util->slurp!!!
+EOF
+  slurp shift->rel_file(@_);
+}
 
 sub to_string { catdir(@{shift->{parts} || []}) }
 
@@ -110,14 +116,14 @@ L<Mojo::Home> is a container for home directories.
 L<Mojo::Home> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
-=head2 C<new>
+=head2 new
 
   my $home = Mojo::Home->new;
   my $home = Mojo::Home->new('/home/sri/myapp');
 
 Construct a new L<Mojo::Home> object.
 
-=head2 C<detect>
+=head2 detect
 
   $home = $home->detect;
   $home = $home->detect('My::App');
@@ -125,13 +131,13 @@ Construct a new L<Mojo::Home> object.
 Detect home directory from the value of the C<MOJO_HOME> environment variable
 or application class.
 
-=head2 C<lib_dir>
+=head2 lib_dir
 
   my $path = $home->lib_dir;
 
 Path to C<lib> directory of application.
 
-=head2 C<list_files>
+=head2 list_files
 
   my $files = $home->list_files;
   my $files = $home->list_files('foo/bar');
@@ -141,40 +147,32 @@ diectory.
 
   $home->rel_file($home->list_files('templates/layouts')->[1]);
 
-=head2 C<mojo_lib_dir>
+=head2 mojo_lib_dir
 
   my $path = $home->mojo_lib_dir;
 
 Path to C<lib> directory in which L<Mojolicious> is installed.
 
-=head2 C<parse>
+=head2 parse
 
   $home = $home->parse('/home/sri/myapp');
 
 Parse home directory.
 
-=head2 C<rel_dir>
+=head2 rel_dir
 
   my $path = $home->rel_dir('foo/bar');
 
 Portably generate an absolute path for a directory relative to the home
 directory.
 
-=head2 C<rel_file>
+=head2 rel_file
 
   my $path = $home->rel_file('foo/bar.html');
 
 Portably generate an absolute path for a file relative to the home directory.
 
-=head2 C<slurp_rel_file>
-
-  my $content = $home->slurp_rel_file('foo/bar.html');
-
-Portably read all data at once from file relative to the home directory.
-
-  my $content = $home->slurp_rel_file($home->list_files('public')->[1]);
-
-=head2 C<to_string>
+=head2 to_string
 
   my $string = $home->to_string;
   my $string = "$home";

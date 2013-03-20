@@ -6,11 +6,8 @@ has 'nph';
 sub run {
   my $self = shift;
 
-  # Environment
   my $tx  = $self->build_tx;
   my $req = $tx->req->parse(\%ENV);
-
-  # Store connection information
   $tx->local_port($ENV{SERVER_PORT})->remote_address($ENV{REMOTE_ADDR});
 
   # Request body
@@ -20,7 +17,7 @@ sub run {
     $req->parse($buffer);
   }
 
-  # Handle
+  # Handle request
   $self->emit(request => $tx);
 
   # Response start line
@@ -48,7 +45,6 @@ sub run {
 sub _write {
   my ($res, $method) = @_;
 
-  # Write chunks to STDOUT
   my $offset = 0;
   while (1) {
 
@@ -58,7 +54,7 @@ sub _write {
     # End of part
     last unless my $len = length $chunk;
 
-    # Part
+    # Make sure we can still write
     $offset += $len;
     return undef unless STDOUT->opened;
     print STDOUT $chunk;
@@ -111,7 +107,7 @@ L<Mojo::Server::CGI> inherits all events from L<Mojo::Server>.
 L<Mojo::Server::CGI> inherits all attributes from L<Mojo::Server> and
 implements the following new ones.
 
-=head2 C<nph>
+=head2 nph
 
   my $nph = $cgi->nph;
   $cgi    = $cgi->nph(1);
@@ -123,7 +119,7 @@ Activate non parsed header mode.
 L<Mojo::Server::CGI> inherits all methods from L<Mojo::Server> and implements
 the following new ones.
 
-=head2 C<run>
+=head2 run
 
   my $status = $cgi->run;
 

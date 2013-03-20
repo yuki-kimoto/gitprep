@@ -43,10 +43,7 @@ sub body {
 sub body_params {
   my $self = shift;
 
-  # Cached
   return $self->{body_params} if $self->{body_params};
-
-  # Charset
   my $params = $self->{body_params} = Mojo::Parameters->new;
   $params->charset($self->content->charset || $self->default_charset);
 
@@ -59,15 +56,9 @@ sub body_params {
   # "multipart/formdata"
   elsif ($type =~ m!multipart/form-data!i) {
     my $formdata = $self->_parse_formdata;
-
-    # Formdata
     for my $data (@$formdata) {
       my ($name, $filename, $value) = @$data;
-
-      # File
       next if defined $filename;
-
-      # Form value
       $params->append($name, $value);
     }
   }
@@ -143,14 +134,9 @@ sub fix_headers {
 sub get_body_chunk {
   my ($self, $offset) = @_;
 
-  # Progress
   $self->emit('progress', 'body', $offset);
-
-  # Chunk
   my $chunk = $self->content->get_body_chunk($offset);
   return $chunk if !defined $chunk || length $chunk;
-
-  # Finish
   $self->finish;
 
   return $chunk;
@@ -197,9 +183,10 @@ sub param { shift->body_params->param(@_) }
 sub parse {
   my ($self, $chunk) = @_;
 
-  # Check message size and add chunk
+  # Check message size
   return $self->error('Maximum message size exceeded', 413)
     if ($self->{raw_size} += length($chunk = defined $chunk ? $chunk : '')) > $self->max_message_size;
+
   $self->{buffer} .= $chunk;
 
   # Start line
@@ -211,7 +198,6 @@ sub parse {
     return $self->error('Maximum line size exceeded', 431)
       if $len > $self->max_line_size;
 
-    # Extract
     $self->{state} = 'content' if $self->extract_start_line(\$self->{buffer});
   }
 
@@ -227,7 +213,6 @@ sub parse {
   return $self->error('Maximum buffer size exceeded', 400)
     if $self->content->is_limit_exceeded;
 
-  # Progress
   return $self->emit('progress')->content->is_finished ? $self->finish : $self;
 }
 
@@ -249,11 +234,7 @@ sub upload {
 sub uploads {
   my $self = shift;
 
-  # Only multipart messages have uploads
   my @uploads;
-  return \@uploads unless $self->is_multipart;
-
-  # Extract formdata
   my $formdata = $self->_parse_formdata;
   for my $data (@$formdata) {
     my ($name, $filename, $part) = @$data;
@@ -280,7 +261,6 @@ sub write_chunk { shift->_write(write_chunk => @_) }
 sub _build {
   my ($self, $method) = @_;
 
-  # Build part from chunks
   my $buffer = '';
   my $offset = 0;
   while (1) {
@@ -291,7 +271,6 @@ sub _build {
     # End of part
     last unless my $len = length $chunk;
 
-    # Part
     $offset += $len;
     $buffer .= $chunk;
   }
@@ -323,37 +302,35 @@ sub _nest {
 sub _parse_formdata {
   my $self = shift;
 
-  # Check content
+  # Check for multipart content
   my @formdata;
   my $content = $self->content;
   return \@formdata unless $content->is_multipart;
   my $charset = $content->charset || $self->default_charset;
 
-  # Walk the tree
+  # Check all parts for form data
   my @parts;
   push @parts, $content;
   while (my $part = shift @parts) {
 
-    # Multipart
+    # Nested multipart content
     if ($part->is_multipart) {
       unshift @parts, @{$part->parts};
       next;
     }
 
-    # Content-Disposition header
+    # Extract information from Content-Disposition header
     my $disposition = $part->headers->content_disposition;
     next unless $disposition;
     my ($name)     = $disposition =~ /[; ]name="?([^";]+)"?/;
     my ($filename) = $disposition =~ /[; ]filename="?([^"]*)"?/;
-    my $value      = $part;
-
-    # Decode
     if ($charset) {
       $name     = do {my $tmp = decode($charset, $name); defined $tmp ? $tmp : $name} if $name;
       $filename = do {my $tmp = decode($charset, $filename); defined $tmp ? $tmp : $filename} if $filename;
     }
 
-    # Form value
+    # Check for file upload
+    my $value = $part;
     unless (defined $filename) {
       $value = $part->asset->slurp;
       $value = do {my $tmp = decode($charset, $value); defined $tmp ? $tmp : $value} if $charset;
@@ -394,9 +371,10 @@ RFC 2616 and RFC 2388.
 
 =head1 EVENTS
 
-L<Mojo::Message> can emit the following events.
+L<Mojo::Message> inherits all events from L<Mojo::EventEmitter> and can emit
+the following new ones.
 
-=head2 C<finish>
+=head2 finish
 
   $msg->on(finish => sub {
     my $msg = shift;
@@ -411,7 +389,7 @@ Emitted after message building or parsing is finished.
     $msg->headers->header('X-Parser-Time' => time - $before);
   });
 
-=head2 C<progress>
+=head2 progress
 
   $msg->on(progress => sub {
     my $msg = shift;
@@ -438,21 +416,21 @@ Emitted when message building or parsing makes progress.
 
 L<Mojo::Message> implements the following attributes.
 
-=head2 C<content>
+=head2 content
 
   my $msg = $msg->content;
   $msg    = $msg->content(Mojo::Content::Single->new);
 
 Message content, defaults to a L<Mojo::Content::Single> object.
 
-=head2 C<default_charset>
+=head2 default_charset
 
   my $charset = $msg->default_charset;
   $msg        = $msg->default_charset('UTF-8');
 
 Default charset used for form data parsing, defaults to C<UTF-8>.
 
-=head2 C<max_line_size>
+=head2 max_line_size
 
   my $size = $msg->max_line_size;
   $msg     = $msg->max_line_size(1024);
@@ -460,7 +438,7 @@ Default charset used for form data parsing, defaults to C<UTF-8>.
 Maximum start line size in bytes, defaults to the value of the
 C<MOJO_MAX_LINE_SIZE> environment variable or C<10240>.
 
-=head2 C<max_message_size>
+=head2 max_message_size
 
   my $size = $msg->max_message_size;
   $msg     = $msg->max_message_size(1024);
@@ -471,7 +449,7 @@ increasing this value can also drastically increase memory usage, should you
 for example attempt to parse an excessively large message body with the
 C<body_params>, C<dom> or C<json> methods.
 
-=head2 C<version>
+=head2 version
 
   my $version = $msg->version;
   $msg        = $msg->version('1.1');
@@ -483,20 +461,20 @@ HTTP version of message, defaults to C<1.1>.
 L<Mojo::Message> inherits all methods from L<Mojo::EventEmitter> and
 implements the following new ones.
 
-=head2 C<body>
+=head2 body
 
-  my $string = $msg->body;
-  $msg       = $msg->body('Hello!');
-  my $cb     = $msg->body(sub {...});
+  my $bytes = $msg->body;
+  $msg      = $msg->body('Hello!');
+  my $cb    = $msg->body(sub {...});
 
 Access C<content> data or replace all subscribers of the C<read> event.
 
   $msg->body(sub {
-    my ($msg, $chunk) = @_;
-    say "Streaming: $chunk";
+    my ($msg, $bytes) = @_;
+    say "Streaming: $bytes";
   });
 
-=head2 C<body_params>
+=head2 body_params
 
   my $params = $msg->body_params;
 
@@ -508,31 +486,31 @@ so it should not be called before the entire message body has been received.
   # Get POST parameter value
   say $msg->body_params->param('foo');
 
-=head2 C<body_size>
+=head2 body_size
 
   my $size = $msg->body_size;
 
 Content size in bytes.
 
-=head2 C<build_body>
+=head2 build_body
 
-  my $string = $msg->build_body;
+  my $bytes = $msg->build_body;
 
 Render whole body.
 
-=head2 C<build_headers>
+=head2 build_headers
 
-  my $string = $msg->build_headers;
+  my $bytes = $msg->build_headers;
 
 Render all headers.
 
-=head2 C<build_start_line>
+=head2 build_start_line
 
-  my $string = $msg->build_start_line;
+  my $bytes = $msg->build_start_line;
 
 Render start line.
 
-=head2 C<cookie>
+=head2 cookie
 
   my $cookie  = $msg->cookie('foo');
   my @cookies = $msg->cookie('foo');
@@ -544,13 +522,13 @@ it should not be called before all headers have been received.
   # Get cookie value
   say $msg->cookie('foo')->value;
 
-=head2 C<cookies>
+=head2 cookies
 
   my $cookies = $msg->cookies;
 
 Access message cookies. Meant to be overloaded in a subclass.
 
-=head2 C<dom>
+=head2 dom
 
   my $dom        = $msg->dom;
   my $collection = $msg->dom('a[href]');
@@ -567,7 +545,7 @@ before the entire message body has been received.
   say $msg->dom->at('title')->text;
   say $msg->dom->html->body->children->pluck('type')->uniq;
 
-=head2 C<error>
+=head2 error
 
   my $err          = $msg->error;
   my ($err, $code) = $msg->error;
@@ -576,93 +554,93 @@ before the entire message body has been received.
 
 Error and code.
 
-=head2 C<extract_start_line>
+=head2 extract_start_line
 
   my $success = $msg->extract_start_line(\$string);
 
 Extract start line from string. Meant to be overloaded in a subclass.
 
-=head2 C<finish>
+=head2 finish
 
   $msg = $msg->finish;
 
 Finish message parser/generator.
 
-=head2 C<fix_headers>
+=head2 fix_headers
 
   $msg = $msg->fix_headers;
 
 Make sure message has all required headers.
 
-=head2 C<get_body_chunk>
+=head2 get_body_chunk
 
-  my $string = $msg->get_body_chunk($offset);
+  my $bytes = $msg->get_body_chunk($offset);
 
 Get a chunk of body data starting from a specific position.
 
-=head2 C<get_header_chunk>
+=head2 get_header_chunk
 
-  my $string = $msg->get_header_chunk($offset);
+  my $bytes = $msg->get_header_chunk($offset);
 
 Get a chunk of header data, starting from a specific position.
 
-=head2 C<get_start_line_chunk>
+=head2 get_start_line_chunk
 
-  my $string = $msg->get_start_line_chunk($offset);
+  my $bytes = $msg->get_start_line_chunk($offset);
 
 Get a chunk of start line data starting from a specific position. Meant to be
 overloaded in a subclass.
 
-=head2 C<has_leftovers>
+=head2 has_leftovers
 
   my $success = $msg->has_leftovers;
 
 Check if there are leftovers.
 
-=head2 C<header_size>
+=head2 header_size
 
   my $size = $msg->header_size;
 
 Size of headers in bytes.
 
-=head2 C<headers>
+=head2 headers
 
   my $headers = $msg->headers;
 
 Message headers, usually a L<Mojo::Headers> object.
 
-=head2 C<is_chunked>
+=head2 is_chunked
 
   my $success = $msg->is_chunked;
 
 Check if content is chunked.
 
-=head2 C<is_dynamic>
+=head2 is_dynamic
 
   my $success = $msg->is_dynamic;
 
 Check if content will be dynamically generated, which prevents C<clone> from
 working.
 
-=head2 C<is_finished>
+=head2 is_finished
 
   my $success = $msg->is_finished;
 
 Check if message parser/generator is finished.
 
-=head2 C<is_limit_exceeded>
+=head2 is_limit_exceeded
 
   my $success = $msg->is_limit_exceeded;
 
 Check if message has exceeded C<max_line_size> or C<max_message_size>.
 
-=head2 C<is_multipart>
+=head2 is_multipart
 
   my $success = $msg->is_multipart;
 
 Check if content is a L<Mojo::Content::MultiPart> object.
 
-=head2 C<json>
+=head2 json
 
   my $hash  = $msg->json;
   my $array = $msg->json;
@@ -677,13 +655,13 @@ it should not be called before the entire message body has been received.
   say $msg->json->{foo}{bar}[23];
   say $msg->json('/foo/bar/23');
 
-=head2 C<leftovers>
+=head2 leftovers
 
   my $bytes = $msg->leftovers;
 
 Get leftover data from content parser.
 
-=head2 C<param>
+=head2 param
 
   my @names = $msg->param;
   my $foo   = $msg->param('foo');
@@ -692,25 +670,25 @@ Get leftover data from content parser.
 Access C<POST> parameters. Note that this method caches all data, so it should
 not be called before the entire message body has been received.
 
-=head2 C<parse>
+=head2 parse
 
   $msg = $msg->parse('HTTP/1.1 200 OK...');
 
 Parse message chunk.
 
-=head2 C<start_line_size>
+=head2 start_line_size
 
   my $size = $msg->start_line_size;
 
 Size of the start line in bytes.
 
-=head2 C<to_string>
+=head2 to_string
 
   my $string = $msg->to_string;
 
 Render whole message.
 
-=head2 C<upload>
+=head2 upload
 
   my $upload  = $msg->upload('foo');
   my @uploads = $msg->upload('foo');
@@ -722,24 +700,24 @@ entire message body has been received.
   # Get content of uploaded file
   say $msg->upload('foo')->asset->slurp;
 
-=head2 C<uploads>
+=head2 uploads
 
   my $uploads = $msg->uploads;
 
 All C<multipart/form-data> file uploads, usually L<Mojo::Upload> objects.
 
-=head2 C<write>
+=head2 write
 
-  $msg = $msg->write('Hello!');
-  $msg = $msg->write('Hello!' => sub {...});
+  $msg = $msg->write($bytes);
+  $msg = $msg->write($bytes => sub {...});
 
 Write dynamic content non-blocking, the optional drain callback will be
 invoked once all data has been written.
 
-=head2 C<write_chunk>
+=head2 write_chunk
 
-  $msg = $msg->write_chunk('Hello!');
-  $msg = $msg->write_chunk('Hello!' => sub {...});
+  $msg = $msg->write_chunk($bytes);
+  $msg = $msg->write_chunk($bytes => sub {...});
 
 Write dynamic content non-blocking with C<chunked> transfer encoding, the
 optional drain callback will be invoked once all data has been written.

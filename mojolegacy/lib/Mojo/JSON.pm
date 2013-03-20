@@ -2,10 +2,13 @@ package Mojo::JSON;
 use Mojo::Base -base;
 
 use B;
+use Exporter 'import';
 use Mojo::Util;
 use Scalar::Util 'blessed';
 
 has 'error';
+
+our @EXPORT_OK = ('j');
 
 # Literal names
 my $FALSE = bless \(my $false = 0), 'Mojo::JSON::_Bool';
@@ -40,7 +43,7 @@ my $WHITESPACE_RE = qr/[\x20\x09\x0a\x0d]*/;
 sub decode {
   my ($self, $bytes) = @_;
 
-  # Cleanup
+  # Clean start
   $self->error(undef);
 
   # Missing input
@@ -99,7 +102,14 @@ sub encode {
 }
 
 sub false {$FALSE}
-sub true  {$TRUE}
+
+sub j {
+  my $d = shift;
+  return __PACKAGE__->new->encode($d) if ref $d eq 'ARRAY' || ref $d eq 'HASH';
+  return __PACKAGE__->new->decode($d);
+}
+
+sub true {$TRUE}
 
 sub _decode_array {
   my @array;
@@ -246,22 +256,14 @@ sub _encode_array {
 
 sub _encode_object {
   my $object = shift;
-
-  # Encode pairs
   my @pairs = map { _encode_string($_) . ':' . _encode_values($object->{$_}) }
     keys %$object;
-
-  # Stringify
   return '{' . join(',', @pairs) . '}';
 }
 
 sub _encode_string {
   my $string = shift;
-
-  # Escape string
   $string =~ s!([\x00-\x1F\x7F\x{2028}\x{2029}\\"/\b\f\n\r\t])!$REVERSE{$1}!gs;
-
-  # Stringify
   return "\"$string\"";
 }
 
@@ -312,7 +314,6 @@ sub _exception {
     $context .= ' at line ' . @lines . ', offset ' . length(pop @lines || '');
   }
 
-  # Throw
   die "$context\n";
 }
 
@@ -328,11 +329,21 @@ Mojo::JSON - Minimalistic JSON
 
 =head1 SYNOPSIS
 
+  # Encode and decode JSON
   use Mojo::JSON;
-
   my $json  = Mojo::JSON->new;
   my $bytes = $json->encode({foo => [1, 2], bar => 'hello!', baz => \1});
   my $hash  = $json->decode($bytes);
+
+  # Check for errors
+  my $json = Mojo::JSON->new;
+  if (defined(my $hash = $json->decode($bytes))) { say $hash->{message} }
+  else { say 'Error: ', $json->error }
+
+  # Use the alternative interface
+  use Mojo::JSON 'j';
+  my $bytes = j({foo => [1, 2], bar => 'hello!', baz => \1});
+  my $hash  = j($bytes);
 
 =head1 DESCRIPTION
 
@@ -359,11 +370,25 @@ Decoding UTF-16 (LE/BE) and UTF-32 (LE/BE) will be handled transparently,
 encoding will only generate UTF-8. The two Unicode whitespace characters
 C<u2028> and C<u2029> will always be escaped to make JSONP easier.
 
+=head1 FUNCTIONS
+
+L<Mojo::JSON> implements the following functions.
+
+=head2 j
+
+  my $bytes = j([1, 2, 3]);
+  my $bytes = j({foo => 'bar'});
+  my $array = j($bytes);
+  my $hash  = j($bytes);
+
+Encode Perl data structure or decode JSON and return C<undef> if decoding
+fails.
+
 =head1 ATTRIBUTES
 
 L<Mojo::JSON> implements the following attributes.
 
-=head2 C<error>
+=head2 error
 
   my $err = $json->error;
   $json   = $json->error('Parser error');
@@ -375,27 +400,28 @@ Parser errors.
 L<Mojo::JSON> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
-=head2 C<decode>
+=head2 decode
 
   my $array = $json->decode($bytes);
   my $hash  = $json->decode($bytes);
 
-Decode JSON.
+Decode JSON to Perl data structure and return C<undef> if decoding fails.
 
-=head2 C<encode>
+=head2 encode
 
+  my $bytes = $json->encode([1, 2, 3]);
   my $bytes = $json->encode({foo => 'bar'});
 
-Encode Perl data structure.
+Encode Perl data structure to JSON.
 
-=head2 C<false>
+=head2 false
 
   my $false = Mojo::JSON->false;
   my $false = $json->false;
 
 False value, used because Perl has no native equivalent.
 
-=head2 C<true>
+=head2 true
 
   my $true = Mojo::JSON->true;
   my $true = $json->true;

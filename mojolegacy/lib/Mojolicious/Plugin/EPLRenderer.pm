@@ -4,12 +4,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::Template;
 use Mojo::Util qw(encode md5_sum);
 
-sub register {
-  my ($self, $app) = @_;
-
-  # Add "epl" handler
-  $app->renderer->add_handler(epl => \&_epl);
-}
+sub register { $_[1]->renderer->add_handler(epl => \&_epl) }
 
 sub _epl {
   my ($renderer, $c, $output, $options) = @_;
@@ -96,7 +91,7 @@ example for learning to build new plugins, you're welcome to fork it.
 L<Mojolicious::Plugin::EPLRenderer> inherits all methods from
 L<Mojolicious::Plugin> and implements the following new ones.
 
-=head2 C<register>
+=head2 register
 
   $plugin->register(Mojolicious->new);
 

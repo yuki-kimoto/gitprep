@@ -1,27 +1,22 @@
 package Mojolicious::Routes::Match;
 use Mojo::Base -base;
 
-use Mojo::Util qw(decode url_unescape);
-
 has captures => sub { {} };
 has [qw(endpoint root)];
 has stack => sub { [] };
 
 sub new {
   my $self = shift->SUPER::new;
-
-  $self->{method} = uc shift;
-  my $path = url_unescape shift;
-  $self->{path} = do { my $tmp = decode('UTF-8', $path); defined $tmp ? $tmp : $path};
+  $self->{method}    = uc shift;
+  $self->{path}      = shift;
   $self->{websocket} = shift;
-
   return $self;
 }
 
 sub match {
   my ($self, $r, $c) = @_;
 
-  # Match
+  # Pattern
   $self->root($r) unless $self->root;
   my $path    = $self->{path};
   my $pattern = $r->pattern;
@@ -120,7 +115,7 @@ sub path_for {
   }
 
   # Find endpoint
-  else { return $name unless $endpoint = $self->root->find($name) }
+  else { return $name unless $endpoint = $self->root->lookup($name) }
 
   # Merge values
   my $captures = $self->captures;
@@ -134,7 +129,6 @@ sub path_for {
 
   # Render
   my $path = $endpoint->render('', \%values);
-  utf8::downgrade $path, 1;
   return wantarray ? ($path, $endpoint->has_websocket) : $path;
 }
 
@@ -170,28 +164,28 @@ structures.
 
 L<Mojolicious::Routes::Match> implements the following attributes.
 
-=head2 C<captures>
+=head2 captures
 
   my $captures = $m->captures;
   $m           = $m->captures({foo => 'bar'});
 
 Captured parameters.
 
-=head2 C<endpoint>
+=head2 endpoint
 
   my $endpoint = $m->endpoint;
   $m           = $m->endpoint(Mojolicious::Routes->new);
 
 The route endpoint that actually matched.
 
-=head2 C<root>
+=head2 root
 
   my $root = $m->root;
   $m       = $m->root($routes);
 
 The root of the route tree.
 
-=head2 C<stack>
+=head2 stack
 
   my $stack = $m->stack;
   $m        = $m->stack([{foo => 'bar'}]);
@@ -201,22 +195,22 @@ Captured parameters with nesting history.
 =head1 METHODS
 
 L<Mojolicious::Routes::Match> inherits all methods from L<Mojo::Base> and
-implements the following ones.
+implements the following new ones.
 
-=head2 C<new>
+=head2 new
 
   my $m = Mojolicious::Routes::Match->new(GET => '/foo');
   my $m = Mojolicious::Routes::Match->new(GET => '/foo', $ws);
 
 Construct a new L<Mojolicious::Routes::Match> object.
 
-=head2 C<match>
+=head2 match
 
   $m->match(Mojolicious::Routes->new, Mojolicious::Controller->new);
 
 Match against a route tree.
 
-=head2 C<path_for>
+=head2 path_for
 
   my $path        = $m->path_for;
   my $path        = $m->path_for(foo => 'bar');

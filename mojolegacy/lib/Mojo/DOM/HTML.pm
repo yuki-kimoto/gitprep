@@ -76,11 +76,9 @@ my %INLINE = map { $_ => 1 } (
 sub parse {
   my ($self, $html) = @_;
 
-  # Try to decode
   my $charset = $self->charset;
   defined ($html = decode($charset, $html)) || return $self->charset(undef) if $charset;
 
-  # Tokenize
   my $tree    = ['root'];
   my $current = $tree;
   while ($html =~ m/\G$TOKEN_RE/gcs) {
@@ -269,14 +267,10 @@ sub _render {
   # Processing instruction
   return "<?" . $tree->[1] . "?>" if $e eq 'pi';
 
-  # Offset
-  my $start = $e eq 'root' ? 1 : 2;
-
   # Start tag
+  my $start = $e eq 'root' ? 1 : 2;
   my $content = '';
   if ($e eq 'tag') {
-
-    # Offset
     $start = 4;
 
     # Open tag
@@ -305,7 +299,7 @@ sub _render {
     $content .= '>';
   }
 
-  # Walk tree
+  # Render whole tree
   $content .= $self->_render($tree->[$_]) for $start .. $#$tree;
 
   # End tag
@@ -362,7 +356,7 @@ sub _start {
     }
   }
 
-  # New
+  # New tag
   my $new = ['tag', $start, $attrs, $$current];
   weaken $new->[3];
   push @$$current, $new;
@@ -397,21 +391,21 @@ L<Mojo::DOM::HTML> is the HTML/XML engine used by L<Mojo::DOM>.
 
 L<Mojo::DOM::HTML> implements the following attributes.
 
-=head2 C<charset>
+=head2 charset
 
   my $charset = $html->charset;
   $html       = $html->charset('UTF-8');
 
 Charset used for decoding and encoding HTML/XML.
 
-=head2 C<tree>
+=head2 tree
 
   my $tree = $html->tree;
   $html    = $html->tree(['root', [qw(text lalala)]]);
 
 Document Object Model.
 
-=head2 C<xml>
+=head2 xml
 
   my $xml = $html->xml;
   $html   = $html->xml(1);
@@ -424,13 +418,13 @@ auto detection based on processing instructions.
 L<Mojo::DOM::HTML> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
-=head2 C<parse>
+=head2 parse
 
   $html = $html->parse('<foo bar="baz">test</foo>');
 
 Parse HTML/XML document.
 
-=head2 C<render>
+=head2 render
 
   my $xml = $html->render;
 

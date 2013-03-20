@@ -71,24 +71,21 @@ sub attrs {
   return $self;
 }
 
-sub charset { shift->_parser(charset => @_) }
+sub charset { shift->_html(charset => @_) }
 
 sub children {
   my ($self, $type) = @_;
 
-  # Walk tree
   my @children;
-  my $tree = $self->tree;
-  my $start = $tree->[0] eq 'root' ? 1 : 4;
-  for my $e (@$tree[$start .. $#$tree]) {
+  my $charset = $self->charset;
+  my $xml     = $self->xml;
+  my $tree    = $self->tree;
+  for my $e (@$tree[($tree->[0] eq 'root' ? 1 : 4) .. $#$tree]) {
 
-    # Make sure child is a tag
+    # Make sure child is the right type
     next unless $e->[0] eq 'tag';
     next if defined $type && $e->[1] ne $type;
-
-    # Add child
-    push @children,
-      $self->new->charset($self->charset)->tree($e)->xml($self->xml);
+    push @children, $self->new->charset($charset)->tree($e)->xml($xml);
   }
 
   return Mojo::Collection->new(@children);
@@ -97,43 +94,31 @@ sub children {
 sub content_xml {
   my $self = shift;
 
-  # Walk tree
-  my $result = '';
-  my $tree   = $self->tree;
-  my $start  = $tree->[0] eq 'root' ? 1 : 4;
-  for my $e (@$tree[$start .. $#$tree]) {
-    $result .= Mojo::DOM::HTML->new(
-      charset => $self->charset,
-      tree    => $e,
-      xml     => $self->xml
-    )->render;
-  }
-
-  return $result;
+  # Render children
+  my $tree    = $self->tree;
+  my $charset = $self->charset;
+  my $xml     = $self->xml;
+  return join '', map {
+    Mojo::DOM::HTML->new(charset => $charset, tree => $_, xml => $xml)->render
+  } @$tree[($tree->[0] eq 'root' ? 1 : 4) .. $#$tree];
 }
 
 sub find {
   my ($self, $selector) = @_;
 
-  # Match selector against tree
-  my $results = Mojo::DOM::CSS->new(tree => $self->tree)->select($selector);
-
-  # Upgrade results
-  @$results
-    = map { $self->new->charset($self->charset)->tree($_)->xml($self->xml) }
-    @$results;
-
-  return Mojo::Collection->new(@$results);
+  my $charset = $self->charset;
+  my $xml     = $self->xml;
+  return Mojo::Collection->new(
+    map { $self->new->charset($charset)->tree($_)->xml($xml) }
+      @{Mojo::DOM::CSS->new(tree => $self->tree)->select($selector)});
 }
 
 sub namespace {
   my $self = shift;
 
-  # Namespace prefix
+  # Extract namespace prefix and search parents
   return '' if (my $current = $self->tree)->[0] eq 'root';
   my $ns = $current->[1] =~ /^(.*?):/ ? "xmlns:$1" : undef;
-
-  # Walk tree
   while ($current) {
     last if $current->[0] eq 'root';
 
@@ -155,11 +140,7 @@ sub next { shift->_sibling(1) }
 
 sub parent {
   my $self = shift;
-
-  # Not a tag
   return undef if (my $tree = $self->tree)->[0] eq 'root';
-
-  # Parent
   return $self->new->charset($self->charset)->tree($tree->[3])
     ->xml($self->xml);
 }
@@ -206,29 +187,15 @@ sub replace {
 
 sub replace_content {
   my ($self, $new) = @_;
-
-  # Parse
-  $new = $self->_parse("$new");
-
-  # Replacements
   my $tree = $self->tree;
-  my @new;
-  for my $e (@$new[1 .. $#$new]) {
-    $e->[3] = $tree if $e->[0] eq 'tag';
-    push @new, $e;
-  }
-
-  # Replace
-  my $start = $tree->[0] eq 'root' ? 1 : 4;
-  splice @$tree, $start, $#$tree, @new;
-
+  splice @$tree, $tree->[0] eq 'root' ? 1 : 4, $#$tree,
+    @{_parent($self->_parse("$new"), $tree)};
   return $self;
 }
 
 sub root {
   my $self = shift;
 
-  # Find root
   my $root = $self->tree;
   while ($root->[0] eq 'tag') {
     last unless my $parent = $root->[3];
@@ -277,7 +244,7 @@ sub text_before {
 
 sub to_xml { shift->[0]->render }
 
-sub tree { shift->_parser(tree => @_) }
+sub tree { shift->_html(tree => @_) }
 
 sub type {
   my ($self, $type) = @_;
@@ -292,18 +259,15 @@ sub type {
   return $self;
 }
 
-sub xml { shift->_parser(xml => @_) }
+sub xml { shift->_html(xml => @_) }
 
 sub _add {
   my ($self, $offset, $new) = @_;
 
-  # Parse
-  $new = $self->_parse("$new");
-
   # Not a tag
   return $self if (my $tree = $self->tree)->[0] eq 'root';
 
-  # Find
+  # Find parent
   my $parent = $tree->[3];
   my $i = $parent->[0] eq 'root' ? 1 : 4;
   for my $e (@$parent[$i .. $#$parent]) {
@@ -311,8 +275,8 @@ sub _add {
     $i++;
   }
 
-  # Add
-  splice @$parent, $i + $offset, 0, @{_parent($new, $parent)};
+  # Add children
+  splice @$parent, $i + $offset, 0, @{_parent($self->_parse("$new"), $parent)};
 
   return $self;
 }
@@ -322,8 +286,17 @@ sub _elements {
   return [@$e[($e->[0] eq 'root' ? 1 : 4) .. $#$e]];
 }
 
+sub _html {
+  my ($self, $method) = (shift, shift);
+  return $self->[0]->$method unless @_;
+  $self->[0]->$method(@_);
+  return $self;
+}
+
 sub _parent {
   my ($children, $parent) = @_;
+
+  # Link parent to children
   my @new;
   for my $e (@$children[1 .. $#$children]) {
     if ($e->[0] eq 'tag') {
@@ -332,6 +305,7 @@ sub _parent {
     }
     push @new, $e;
   }
+
   return \@new;
 }
 
@@ -341,17 +315,10 @@ sub _parse {
     ->parse(shift)->tree;
 }
 
-sub _parser {
-  my ($self, $method) = (shift, shift);
-  return $self->[0]->$method unless @_;
-  $self->[0]->$method(@_);
-  return $self;
-}
-
 sub _sibling {
   my ($self, $next) = @_;
 
-  # Root
+  # Make sure we have a parent
   return undef unless my $parent = $self->parent;
 
   # Find previous or next sibling
@@ -369,7 +336,6 @@ sub _sibling {
 sub _text {
   my ($elements, $recurse, $trim) = @_;
 
-  # Walk tree
   my $text = '';
   for my $e (@$elements) {
     my $type = $e->[0];
@@ -481,14 +447,14 @@ XML detection can also be disabled with the C<xml> method.
 L<Mojo::DOM> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
-=head2 C<new>
+=head2 new
 
   my $dom = Mojo::DOM->new;
   my $dom = Mojo::DOM->new('<foo bar="baz">test</foo>');
 
 Construct a new array-based L<Mojo::DOM> object.
 
-=head2 C<all_text>
+=head2 all_text
 
   my $trimmed   = $dom->all_text;
   my $untrimmed = $dom->all_text(0);
@@ -502,7 +468,7 @@ enabled by default.
   # "foo\nbarbaz\n"
   $dom->parse("<div>foo\n<p>bar</p>baz\n</div>")->div->all_text(0);
 
-=head2 C<append>
+=head2 append
 
   $dom = $dom->append('<p>Hi!</p>');
 
@@ -511,7 +477,7 @@ Append to element.
   # "<div><h1>A</h1><h2>B</h2></div>"
   $dom->parse('<div><h1>A</h1></div>')->at('h1')->append('<h2>B</h2>')->root;
 
-=head2 C<append_content>
+=head2 append_content
 
   $dom = $dom->append_content('<p>Hi!</p>');
 
@@ -520,7 +486,7 @@ Append to element content.
   # "<div><h1>AB</h1></div>"
   $dom->parse('<div><h1>A</h1></div>')->at('h1')->append_content('B')->root;
 
-=head2 C<at>
+=head2 at
 
   my $result = $dom->at('html title');
 
@@ -530,7 +496,7 @@ are supported.
   # Find first element with "svg" namespace definition
   my $namespace = $dom->at('[xmlns\:svg]')->{'xmlns:svg'};
 
-=head2 C<attrs>
+=head2 attrs
 
   my $attrs = $dom->attrs;
   my $foo   = $dom->attrs('foo');
@@ -539,14 +505,14 @@ are supported.
 
 Element attributes.
 
-=head2 C<charset>
+=head2 charset
 
   my $charset = $dom->charset;
   $dom        = $dom->charset('UTF-8');
 
 Charset used for decoding and encoding HTML/XML.
 
-=head2 C<children>
+=head2 children
 
   my $collection = $dom->children;
   my $collection = $dom->children('div');
@@ -557,7 +523,7 @@ similar to C<find>.
   # Show type of random child element
   say $dom->children->shuffle->first->type;
 
-=head2 C<content_xml>
+=head2 content_xml
 
   my $xml = $dom->content_xml;
 
@@ -567,7 +533,7 @@ C<charset> has been defined.
   # "<b>test</b>"
   $dom->parse('<div><b>test</b></div>')->div->content_xml;
 
-=head2 C<find>
+=head2 find
 
   my $collection = $dom->find('html title');
 
@@ -580,7 +546,7 @@ selectors from L<Mojo::DOM::CSS> are supported.
   # Extract information from multiple elements
   my @headers = $dom->find('h1, h2, h3')->pluck('text')->each;
 
-=head2 C<namespace>
+=head2 namespace
 
   my $namespace = $dom->namespace;
 
@@ -592,7 +558,7 @@ Find element namespace.
   # Find namespace for an element that may or may not have a namespace prefix
   my $namespace = $dom->at('svg > circle')->namespace;
 
-=head2 C<next>
+=head2 next
 
   my $sibling = $dom->next;
 
@@ -601,13 +567,13 @@ Next sibling of element.
   # "<h2>B</h2>"
   $dom->parse('<div><h1>A</h1><h2>B</h2></div>')->at('h1')->next;
 
-=head2 C<parent>
+=head2 parent
 
   my $parent = $dom->parent;
 
 Parent of element.
 
-=head2 C<parse>
+=head2 parse
 
   $dom = $dom->parse('<foo bar="baz">test</foo>');
 
@@ -616,7 +582,7 @@ Parse HTML/XML document with L<Mojo::DOM::HTML>.
   # Parse UTF-8 encoded XML
   my $dom = Mojo::DOM->new->charset('UTF-8')->xml(1)->parse($xml);
 
-=head2 C<prepend>
+=head2 prepend
 
   $dom = $dom->prepend('<p>Hi!</p>');
 
@@ -625,7 +591,7 @@ Prepend to element.
   # "<div><h1>A</h1><h2>B</h2></div>"
   $dom->parse('<div><h2>B</h2></div>')->at('h2')->prepend('<h1>A</h1>')->root;
 
-=head2 C<prepend_content>
+=head2 prepend_content
 
   $dom = $dom->prepend_content('<p>Hi!</p>');
 
@@ -634,7 +600,7 @@ Prepend to element content.
   # "<div><h2>AB</h2></div>"
   $dom->parse('<div><h2>B</h2></div>')->at('h2')->prepend_content('A')->root;
 
-=head2 C<previous>
+=head2 previous
 
   my $sibling = $dom->previous;
 
@@ -643,7 +609,7 @@ Previous sibling of element.
   # "<h1>A</h1>"
   $dom->parse('<div><h1>A</h1><h2>B</h2></div>')->at('h2')->previous;
 
-=head2 C<remove>
+=head2 remove
 
   my $old = $dom->remove;
 
@@ -652,7 +618,7 @@ Remove element.
   # "<div></div>"
   $dom->parse('<div><h1>A</h1></div>')->at('h1')->remove->root;
 
-=head2 C<replace>
+=head2 replace
 
   my $old = $dom->replace('<div>test</div>');
 
@@ -664,7 +630,7 @@ Replace element.
   # "<div></div>"
   $dom->parse('<div><h1>A</h1></div>')->at('h1')->replace('')->root;
 
-=head2 C<replace_content>
+=head2 replace_content
 
   $dom = $dom->replace_content('test');
 
@@ -676,13 +642,13 @@ Replace element content.
   # "<div><h1></h1></div>"
   $dom->parse('<div><h1>A</h1></div>')->at('h1')->replace_content('')->root;
 
-=head2 C<root>
+=head2 root
 
   my $root = $dom->root;
 
 Find root node.
 
-=head2 C<text>
+=head2 text
 
   my $trimmed   = $dom->text;
   my $untrimmed = $dom->text(0);
@@ -696,7 +662,7 @@ whitespace trimming is enabled by default.
   # "foo\nbaz\n"
   $dom->parse("<div>foo\n<p>bar</p>baz\n</div>")->div->text(0);
 
-=head2 C<text_after>
+=head2 text_after
 
   my $trimmed   = $dom->text_after;
   my $untrimmed = $dom->text_after(0);
@@ -710,7 +676,7 @@ is enabled by default.
   # "baz\n"
   $dom->parse("<div>foo\n<p>bar</p>baz\n</div>")->div->p->text_after(0);
 
-=head2 C<text_before>
+=head2 text_before
 
   my $trimmed   = $dom->text_before;
   my $untrimmed = $dom->text_before(0);
@@ -724,7 +690,7 @@ is enabled by default.
   # "foo\n"
   $dom->parse("<div>foo\n<p>bar</p>baz\n</div>")->div->p->text_before(0);
 
-=head2 C<to_xml>
+=head2 to_xml
 
   my $xml = $dom->to_xml;
   my $xml = "$dom";
@@ -735,14 +701,14 @@ if a C<charset> has been defined.
   # "<b>test</b>"
   $dom->parse('<div><b>test</b></div>')->div->b->to_xml;
 
-=head2 C<tree>
+=head2 tree
 
   my $tree = $dom->tree;
   $dom     = $dom->tree(['root', [qw(text lalala)]]);
 
 Document Object Model.
 
-=head2 C<type>
+=head2 type
 
   my $type = $dom->type;
   $dom     = $dom->type('div');
@@ -752,7 +718,7 @@ Element type.
   # List types of child elements
   say $dom->children->pluck('type');
 
-=head2 C<xml>
+=head2 xml
 
   my $xml = $dom->xml;
   $dom    = $dom->xml(1);

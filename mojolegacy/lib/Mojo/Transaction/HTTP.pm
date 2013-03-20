@@ -57,7 +57,7 @@ sub server_write { shift->_write(1) }
 sub _body {
   my ($self, $msg, $finish) = @_;
 
-  # Chunk
+  # Prepare chunk
   my $buffer = $msg->get_body_chunk($self->{offset});
   my $written = defined $buffer ? length $buffer : 0;
   $self->{write} = $msg->is_dynamic ? 1 : ($self->{write} - $written);
@@ -80,7 +80,7 @@ sub _body {
 sub _headers {
   my ($self, $msg, $head) = @_;
 
-  # Chunk
+  # Prepare chunk
   my $buffer = $msg->get_header_chunk($self->{offset});
   my $written = defined $buffer ? length $buffer : 0;
   $self->{write}  = $self->{write} - $written;
@@ -107,7 +107,7 @@ sub _headers {
 sub _start_line {
   my ($self, $msg) = @_;
 
-  # Chunk
+  # Prepare chunk
   my $buffer = $msg->get_start_line_chunk($self->{offset});
   my $written = defined $buffer ? length $buffer : 0;
   $self->{write}  = $self->{write} - $written;
@@ -195,7 +195,7 @@ in RFC 2616.
 L<Mojo::Transaction::HTTP> inherits all events from L<Mojo::Transaction> and
 can emit the following new ones.
 
-=head2 C<request>
+=head2 request
 
   $tx->on(request => sub {
     my $tx = shift;
@@ -209,7 +209,7 @@ Emitted when a request is ready and needs to be handled.
     $tx->res->headers->header('X-Bender' => 'Bite my shiny metal ass!');
   });
 
-=head2 C<unexpected>
+=head2 unexpected
 
   $tx->on(unexpected => sub {
     my ($tx, $res) = @_;
@@ -223,7 +223,7 @@ Emitted for unexpected C<1xx> responses that will be ignored.
     $tx->res->on(finish => sub { say 'Followup response is finished.' });
   });
 
-=head2 C<upgrade>
+=head2 upgrade
 
   $tx->on(upgrade => sub {
     my ($tx, $ws) = @_;
@@ -247,33 +247,33 @@ L<Mojo::Transaction::HTTP> inherits all attributes from L<Mojo::Transaction>.
 L<Mojo::Transaction::HTTP> inherits all methods from L<Mojo::Transaction> and
 implements the following new ones.
 
-=head2 C<client_read>
+=head2 client_read
 
-  $tx->client_read($chunk);
+  $tx->client_read($bytes);
 
 Read data client-side, used to implement user agents.
 
-=head2 C<client_write>
+=head2 client_write
 
-  my $chunk = $tx->client_write;
+  my $bytes = $tx->client_write;
 
 Write data client-side, used to implement user agents.
 
-=head2 C<keep_alive>
+=head2 keep_alive
 
   my $success = $tx->keep_alive;
 
 Check if connection can be kept alive.
 
-=head2 C<server_read>
+=head2 server_read
 
-  $tx->server_read($chunk);
+  $tx->server_read($bytes);
 
 Read data server-side, used to implement web servers.
 
-=head2 C<server_write>
+=head2 server_write
 
-  my $chunk = $tx->server_write;
+  my $bytes = $tx->server_write;
 
 Write data server-side, used to implement web servers.
 

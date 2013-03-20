@@ -38,7 +38,6 @@ EOF
 sub run {
   my ($self, @args) = @_;
 
-  # Options
   GetOptionsFromArray \@args,
     'C|charset=s' => \my $charset,
     'c|content=s' => \(my $content = ''),
@@ -46,36 +45,27 @@ sub run {
     'M|method=s'  => \(my $method = 'GET'),
     'r|redirect'  => \my $redirect,
     'v|verbose'   => \my $verbose;
-  $verbose = 1 if $method eq 'HEAD';
 
-  # Headers
-  my %headers;
-  /^\s*([^:]+)\s*:\s*(.+)$/ and $headers{$1} = $2 for @headers;
-
-  # URL and selector
   die $self->usage unless my $url = decode 'UTF-8', do {my $tmp = shift @args; defined $tmp ? $tmp : ''};
   my $selector = shift @args;
 
-  # Fresh user agent
+  # Parse header pairs
+  my %headers;
+  /^\s*([^:]+)\s*:\s*(.+)$/ and $headers{$1} = $2 for @headers;
+
+  # Use global event loop singleton
   my $ua = Mojo::UserAgent->new(ioloop => Mojo::IOLoop->singleton);
   $ua->max_redirects(10) if $redirect;
 
-  # Absolute URL
-  if ($url !~ m!/!) { $ua->detect_proxy }
+  # Detect proxy for absolute URLs
+  if   ($url !~ m!/!) { $ua->detect_proxy }
+  else                { $ua->app($self->app) }
 
-  # Application
-  else { $ua->app($self->app) }
-
-  # Start
+  # Do the real work with "start" event
   my $v = my $buffer = '';
   $ua->on(
     start => sub {
       my $tx = pop;
-
-      # Prepare request information
-      my $req         = $tx->req;
-      my $startline   = $req->build_start_line;
-      my $req_headers = $req->build_headers;
 
       # Verbose callback
       my $v  = $verbose;
@@ -84,22 +74,21 @@ sub run {
 
         # Wait for headers
         return unless $v && $res->headers->is_finished;
+        $v = undef;
 
-        # Request
+        # Show request
+        my $req         = $tx->req;
+        my $startline   = $req->build_start_line;
+        my $req_headers = $req->build_headers;
         warn "$startline$req_headers";
 
-        # Response
+        # Show response
         my $version     = $res->version;
         my $code        = $res->code;
         my $msg         = $res->message;
         my $res_headers = $res->headers->to_string;
         warn "HTTP/$version $code $msg\n$res_headers\n\n";
-
-        # Finished
-        $v = undef;
       };
-
-      # Progress
       $tx->res->on(progress => $cb);
 
       # Stream content
@@ -109,19 +98,16 @@ sub run {
 
           # Ignore intermediate content
           return if $redirect && $res->is_status_class(300);
-
-          # Chunk
           $selector ? ($buffer .= pop) : print(pop);
         }
       );
     }
   );
 
-  # Get
+  # Switch to verbose for HEAD requests
+  $verbose = 1 if $method eq 'HEAD';
   STDOUT->autoflush(1);
   my $tx = $ua->start($ua->build_tx($method, $url, \%headers, $content));
-
-  # Error
   my ($err, $code) = $tx->error;
   $url = encode 'UTF-8', $url;
   warn qq{Problem loading URL "$url". ($err)\n} if $err && !$code;
@@ -151,11 +137,9 @@ sub _say {
 sub _select {
   my ($buffer, $selector, $charset, @args) = @_;
 
-  # Find
   my $dom     = Mojo::DOM->new->charset($charset)->parse($buffer);
   my $results = $dom->find($selector);
 
-  # Commands
   my $finished;
   while (defined(my $command = shift @args)) {
 
@@ -182,7 +166,6 @@ sub _select {
     $finished++;
   }
 
-  # Render
   unless ($finished) { _say($_) for @$results }
 }
 
@@ -211,14 +194,14 @@ example for learning to build new commands, you're welcome to fork it.
 L<Mojolicious::Command::get> performs requests to remote hosts or local
 applications.
 
-=head2 C<description>
+=head2 description
 
   my $description = $get->description;
   $get            = $get->description('Foo!');
 
 Short description of this command, used for the command list.
 
-=head2 C<usage>
+=head2 usage
 
   my $usage = $get->usage;
   $get      = $get->usage('Foo!');
@@ -230,7 +213,7 @@ Usage information for this command, used for the help screen.
 L<Mojolicious::Command::get> inherits all methods from L<Mojolicious::Command>
 and implements the following new ones.
 
-=head2 C<run>
+=head2 run
 
   $get->run(@ARGV);
 

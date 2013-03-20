@@ -88,16 +88,12 @@ sub params {
     # W3C suggests to also accept ";" as a separator
     my $charset = $self->charset;
     for my $pair (split /[\&\;]+/, $string) {
-
-      # Parse
       $pair =~ /^([^=]*)(?:=(.*))?$/;
       my $name  = defined $1 ? $1 : '';
       my $value = defined $2 ? $2 : '';
 
-      # Replace "+" with whitespace
+      # Replace "+" with whitespace, unescape and decode
       s/\+/ /g for $name, $value;
-
-      # Unescape
       $name  = url_unescape $name;
       $name  = do { my $tmp = decode($charset, $name); defined $tmp ? $tmp : $name } if $charset;
       $value = url_unescape $value;
@@ -126,7 +122,6 @@ sub remove {
   my $self = shift;
   my $name = do {my $tmp = shift; defined $tmp ? $tmp : ''};
 
-  # Remove
   my $params = $self->params;
   for (my $i = 0; $i < @$params;) {
     if ($params->[$i] eq $name) { splice @$params, $i, 2 }
@@ -139,7 +134,6 @@ sub remove {
 sub to_hash {
   my $self = shift;
 
-  # Format
   my $params = $self->params;
   my %hash;
   for (my $i = 0; $i < @$params; $i += 2) {
@@ -188,7 +182,6 @@ sub to_string {
     push @pairs, defined $value ? "$name=$value" : $name;
   }
 
-  # Concatenate pairs
   return join $self->pair_separator, @pairs;
 }
 
@@ -218,7 +211,7 @@ L<Mojo::Parameters> is a container for form parameters.
 
 L<Mojo::Parameters> implements the following attributes.
 
-=head2 C<charset>
+=head2 charset
 
   my $charset = $params->charset;
   $params     = $params->charset('UTF-8');
@@ -228,7 +221,7 @@ Charset used for encoding and decoding parameters, defaults to C<UTF-8>.
   # Disable encoding and decoding
   $params->charset(undef);
 
-=head2 C<pair_separator>
+=head2 pair_separator
 
   my $separator = $params->pair_separator;
   $params       = $params->pair_separator(';');
@@ -240,7 +233,7 @@ Separator for parameter pairs, defaults to C<&>.
 L<Mojo::Parameters> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
-=head2 C<new>
+=head2 new
 
   my $params = Mojo::Parameters->new;
   my $params = Mojo::Parameters->new('foo=b%3Bar&baz=23');
@@ -250,7 +243,7 @@ following new ones.
 
 Construct a new L<Mojo::Parameters> object.
 
-=head2 C<append>
+=head2 append
 
   $params = $params->append(foo => 'ba;r');
   $params = $params->append(foo => ['ba;r', 'b;az']);
@@ -267,19 +260,19 @@ Append parameters.
   # "foo=bar&foo=baz&foo=yada&bar=23"
   Mojo::Parameters->new('foo=bar')->append(foo => ['baz', 'yada'], bar => 23);
 
-=head2 C<clone>
+=head2 clone
 
   my $params2 = $params->clone;
 
 Clone parameters.
 
-=head2 C<merge>
+=head2 merge
 
   $params = $params->merge(Mojo::Parameters->new(foo => 'b;ar', baz => 23));
 
 Merge L<Mojo::Parameters> objects.
 
-=head2 C<param>
+=head2 param
 
   my @names = $params->param;
   my $foo   = $params->param('foo');
@@ -289,20 +282,20 @@ Merge L<Mojo::Parameters> objects.
 
 Check and replace parameter values.
 
-=head2 C<params>
+=head2 params
 
   my $array = $params->params;
   $params   = $params->params([foo => 'b;ar', baz => 23]);
 
 Parsed parameters.
 
-=head2 C<parse>
+=head2 parse
 
   $params = $params->parse('foo=b%3Bar&baz=23');
 
 Parse parameters.
 
-=head2 C<remove>
+=head2 remove
 
   $params = $params->remove('foo');
 
@@ -311,7 +304,7 @@ Remove parameters.
   # "bar=yada"
   Mojo::Parameters->new('foo=bar&foo=baz&bar=yada')->remove('foo');
 
-=head2 C<to_hash>
+=head2 to_hash
 
   my $hash = $params->to_hash;
 
@@ -320,7 +313,7 @@ Turn parameters into a hash reference.
   # "baz"
   Mojo::Parameters->new('foo=bar&foo=baz')->to_hash->{foo}[1];
 
-=head2 C<to_string>
+=head2 to_string
 
   my $string = $params->to_string;
   my $string = "$params";

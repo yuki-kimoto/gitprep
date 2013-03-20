@@ -11,8 +11,8 @@ sub register {
   # Auto escape by default to prevent XSS attacks
   my $template = {auto_escape => 1, %{$conf->{template} || {}}};
 
-  # Add "ep" handler
-  $app->renderer->add_handler(
+  # Add "ep" handler and make it the default
+  $app->renderer->default_handler('ep')->add_handler(
     $conf->{name} || 'ep' => sub {
       my ($renderer, $c, $output, $options) = @_;
 
@@ -39,7 +39,7 @@ sub register {
         # Be less relaxed for everything else
         $prepend .= 'use strict;';
 
-        # Stash
+        # Stash values
         $prepend .= 'my $_S = $self->stash;';
         $prepend .= " my \$$_ = \$_S->{'$_'};"
           for grep {/^\w+$/} keys %{$c->stash};
@@ -52,9 +52,6 @@ sub register {
       return $renderer->handlers->{epl}->($renderer, $c, $output, $options);
     }
   );
-
-  # Set default handler
-  $app->renderer->default_handler('ep');
 }
 
 1;
@@ -92,14 +89,14 @@ example for learning to build new plugins, you're welcome to fork it.
 
 L<Mojolicious::Plugin::EPRenderer> supports the following options.
 
-=head2 C<name>
+=head2 name
 
   # Mojolicious::Lite
   plugin EPRenderer => {name => 'foo'};
 
 Handler name, defaults to C<ep>.
 
-=head2 C<template>
+=head2 template
 
   # Mojolicious::Lite
   plugin EPRenderer => {template => {line_start => '.'}};
@@ -111,7 +108,7 @@ Attribute values passed to L<Mojo::Template> object used to render templates.
 L<Mojolicious::Plugin::EPRenderer> inherits all methods from
 L<Mojolicious::Plugin> and implements the following new ones.
 
-=head2 C<register>
+=head2 register
 
   $plugin->register(Mojolicious->new);
   $plugin->register(Mojolicious->new, {name => 'foo'});

@@ -23,7 +23,7 @@ sub body_contains {
 sub body_size {
   my $self = shift;
 
-  # Check for Content-Lenght header
+  # Check for existing Content-Lenght header
   my $content_len = $self->headers->content_length;
   return $content_len if $content_len;
 
@@ -78,7 +78,7 @@ sub get_body_chunk {
   my $len          = $boundary_len - 2;
   return substr "--$boundary\x0d\x0a", $offset if $len > $offset;
 
-  # Parts
+  # Prepare content part by part
   my $parts = $self->parts;
   for (my $i = 0; $i < @$parts; $i++) {
     my $part = $parts->[$i];
@@ -150,8 +150,6 @@ sub _parse_multipart_boundary {
   my $end = "\x0d\x0a--$boundary--";
   if ((index $self->{multipart}, $end) == 0) {
     substr $self->{multipart}, 0, length $end, '';
-
-    # Finished
     $self->{multi_state} = 'finished';
   }
 
@@ -174,7 +172,6 @@ sub _parse_multipart_preamble {
 sub _read {
   my ($self, $chunk) = @_;
 
-  # Parse
   $self->{multipart} .= $chunk;
   my $boundary = $self->boundary;
   until (($self->{multi_state} = defined $self->{multi_state} ? $self->{multi_state} : 'multipart_preamble') eq 'finished') {
@@ -224,7 +221,7 @@ described in RFC 2616.
 L<Mojo::Content::Multipart> inherits all events from L<Mojo::Content> and can
 emit the following new ones.
 
-=head2 C<part>
+=head2 part
 
   $multi->on(part => sub {
     my ($multi, $single) = @_;
@@ -244,7 +241,7 @@ Emitted when a new L<Mojo::Content::Single> part starts.
 L<Mojo::Content::MultiPart> inherits all attributes from L<Mojo::Content> and
 implements the following new ones.
 
-=head2 C<parts>
+=head2 parts
 
   my $parts = $multi->parts;
   $multi    = $multi->parts([]);
@@ -257,44 +254,44 @@ L<Mojo::Content::Single> objects.
 L<Mojo::Content::MultiPart> inherits all methods from L<Mojo::Content> and
 implements the following new ones.
 
-=head2 C<new>
+=head2 new
 
   my $multi = Mojo::Content::MultiPart->new;
 
 Construct a new L<Mojo::Content::MultiPart> object and subscribe to C<read>
 event with default content parser.
 
-=head2 C<body_contains>
+=head2 body_contains
 
   my $success = $multi->body_contains('foobarbaz');
 
 Check if content parts contain a specific string.
 
-=head2 C<body_size>
+=head2 body_size
 
   my $size = $multi->body_size;
 
 Content size in bytes.
 
-=head2 C<build_boundary>
+=head2 build_boundary
 
   my $boundary = $multi->build_boundary;
 
 Generate a suitable boundary for content and add it to C<Content-Type> header.
 
-=head2 C<clone>
+=head2 clone
 
   my $clone = $multi->clone;
 
 Clone content if possible, otherwise return C<undef>.
 
-=head2 C<get_body_chunk>
+=head2 get_body_chunk
 
-  my $chunk = $multi->get_body_chunk(0);
+  my $bytes = $multi->get_body_chunk(0);
 
 Get a chunk of content starting from a specfic position.
 
-=head2 C<is_multipart>
+=head2 is_multipart
 
   my $true = $multi->is_multipart;
 

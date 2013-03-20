@@ -36,13 +36,10 @@ my $TOKEN_RE        = qr/
 sub select {
   my $self = shift;
 
-  # Compile selectors
-  my $pattern = $self->_compile(shift);
-
-  # Walk tree
   my @results;
-  my $tree  = $self->tree;
-  my @queue = ($tree);
+  my $pattern = $self->_compile(shift);
+  my $tree    = $self->tree;
+  my @queue   = ($tree);
   while (my $current = shift @queue) {
     my $type = $current->[0];
 
@@ -123,7 +120,6 @@ sub _combinator {
 sub _compile {
   my ($self, $css) = @_;
 
-  # Tokenize
   my $pattern = [[]];
   while ($css =~ /$TOKEN_RE/g) {
     my ($separator, $element, $pc, $attrs, $combinator)
@@ -321,7 +317,6 @@ sub _regex {
 sub _selector {
   my ($self, $selector, $current) = @_;
 
-  # Selectors
   for my $s (@$selector[1 .. $#$selector]) {
     my $type = $s->[0];
 
@@ -348,7 +343,6 @@ sub _selector {
 sub _sibling {
   my ($self, $selectors, $current, $tree, $immediate) = @_;
 
-  # Find preceding elements
   my $parent = $current->[3];
   my $found;
   my $start = $parent->[0] eq 'root' ? 1 : 4;
@@ -403,77 +397,77 @@ L<Mojo::DOM::CSS> is the CSS selector engine used by L<Mojo::DOM>.
 
 All CSS selectors that make sense for a standalone parser are supported.
 
-=head2 C<*>
+=head2 *
 
 Any element.
 
   my $all = $css->select('*');
 
-=head2 C<E>
+=head2 E
 
 An element of type C<E>.
 
   my $title = $css->select('title');
 
-=head2 C<E[foo]>
+=head2 E[foo]
 
 An C<E> element with a C<foo> attribute.
 
   my $links = $css->select('a[href]');
 
-=head2 C<E[foo="bar"]>
+=head2 E[foo="bar"]
 
 An C<E> element whose C<foo> attribute value is exactly equal to C<bar>.
 
   my $fields = $css->select('input[name="foo"]');
 
-=head2 C<E[foo~="bar"]>
+=head2 E[foo~="bar"]
 
 An C<E> element whose C<foo> attribute value is a list of
 whitespace-separated values, one of which is exactly equal to C<bar>.
 
   my $fields = $css->select('input[name~="foo"]');
 
-=head2 C<E[foo^="bar"]>
+=head2 E[foo^="bar"]
 
 An C<E> element whose C<foo> attribute value begins exactly with the string
 C<bar>.
 
   my $fields = $css->select('input[name^="f"]');
 
-=head2 C<E[foo$="bar"]>
+=head2 E[foo$="bar"]
 
 An C<E> element whose C<foo> attribute value ends exactly with the string
 C<bar>.
 
   my $fields = $css->select('input[name$="o"]');
 
-=head2 C<E[foo*="bar"]>
+=head2 E[foo*="bar"]
 
 An C<E> element whose C<foo> attribute value contains the substring C<bar>.
 
   my $fields = $css->select('input[name*="fo"]');
 
-=head2 C<E:root>
+=head2 E:root
 
 An C<E> element, root of the document.
 
   my $root = $css->select(':root');
 
-=head2 C<E:checked>
+=head2 E:checked
 
 A user interface element C<E> which is checked (for instance a radio-button or
 checkbox).
 
   my $input = $css->select(':checked');
 
-=head2 C<E:empty>
+=head2 E:empty
 
 An C<E> element that has no children (including text nodes).
 
   my $empty = $css->select(':empty');
 
-=head2 C<E:nth-child(n)>
+=head2 E:nth-child(n)
 
 An C<E> element, the C<n-th> child of its parent.
 
@@ -482,7 +476,7 @@ An C<E> element, the C<n-th> child of its parent.
   my $even  = $css->select('div:nth-child(even)');
   my $top3  = $css->select('div:nth-child(-n+3)');
 
-=head2 C<E:nth-last-child(n)>
+=head2 E:nth-last-child(n)
 
 An C<E> element, the C<n-th> child of its parent, counting from the last one.
 
@@ -491,7 +485,7 @@ An C<E> element, the C<n-th> child of its parent, counting from the last one.
   my $even     = $css->select('div:nth-last-child(even)');
   my $bottom3  = $css->select('div:nth-last-child(-n+3)');
 
-=head2 C<E:nth-of-type(n)>
+=head2 E:nth-of-type(n)
 
 An C<E> element, the C<n-th> sibling of its type.
 
@@ -500,7 +494,7 @@ An C<E> element, the C<n-th> sibling of its type.
   my $even  = $css->select('div:nth-of-type(even)');
   my $top3  = $css->select('div:nth-of-type(-n+3)');
 
-=head2 C<E:nth-last-of-type(n)>
+=head2 E:nth-last-of-type(n)
 
 An C<E> element, the C<n-th> sibling of its type, counting from the last one.
 
@@ -509,91 +503,91 @@ An C<E> element, the C<n-th> sibling of its type, counting from the last one.
   my $even     = $css->select('div:nth-last-of-type(even)');
   my $bottom3  = $css->select('div:nth-last-of-type(-n+3)');
 
-=head2 C<E:first-child>
+=head2 E:first-child
 
 An C<E> element, first child of its parent.
 
   my $first = $css->select('div p:first-child');
 
-=head2 C<E:last-child>
+=head2 E:last-child
 
 An C<E> element, last child of its parent.
 
   my $last = $css->select('div p:last-child');
 
-=head2 C<E:first-of-type>
+=head2 E:first-of-type
 
 An C<E> element, first sibling of its type.
 
   my $first = $css->select('div p:first-of-type');
 
-=head2 C<E:last-of-type>
+=head2 E:last-of-type
 
 An C<E> element, last sibling of its type.
 
   my $last = $css->select('div p:last-of-type');
 
-=head2 C<E:only-child>
+=head2 E:only-child
 
 An C<E> element, only child of its parent.
 
   my $lonely = $css->select('div p:only-child');
 
-=head2 C<E:only-of-type>
+=head2 E:only-of-type
 
 An C<E> element, only sibling of its type.
 
   my $lonely = $css->select('div p:only-of-type');
 
-=head2 C<E.warning>
+=head2 E.warning
 
   my $warning = $css->select('div.warning');
 
 An C<E> element whose class is "warning".
 
-=head2 C<E#myid>
+=head2 E#myid
 
   my $foo = $css->select('div#foo');
 
 An C<E> element with C<ID> equal to "myid".
 
-=head2 C<E:not(s)>
+=head2 E:not(s)
 
 An C<E> element that does not match simple selector C<s>.
 
   my $others = $css->select('div p:not(:first-child)');
 
-=head2 C<E F>
+=head2 E F
 
 An C<F> element descendant of an C<E> element.
 
   my $headlines = $css->select('div h1');
 
-=head2 C<E E<gt> F>
+=head2 E E<gt> F
 
 An C<F> element child of an C<E> element.
 
   my $headlines = $css->select('html > body > div > h1');
 
-=head2 C<E + F>
+=head2 E + F
 
 An C<F> element immediately preceded by an C<E> element.
 
   my $second = $css->select('h1 + h2');
 
-=head2 C<E ~ F>
+=head2 E ~ F
 
 An C<F> element preceded by an C<E> element.
 
   my $second = $css->select('h1 ~ h2');
 
-=head2 C<E, F, G>
+=head2 E, F, G
 
 Elements of type C<E>, C<F> and C<G>.
 
   my $headlines = $css->select('h1, h2, h3');
 
-=head2 C<E[foo=bar][bar=baz]>
+=head2 E[foo=bar][bar=baz]
 
 An C<E> element whose attributes match all following attribute selectors.
 
@@ -603,7 +597,7 @@ An C<E> element whose attributes match all following attribute selectors.
 
 L<Mojo::DOM::CSS> implements the following attributes.
 
-=head2 C<tree>
+=head2 tree
 
   my $tree = $css->tree;
   $css     = $css->tree(['root', [qw(text lalala)]]);
@@ -615,7 +609,7 @@ Document Object Model.
 L<Mojo::DOM::CSS> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
-=head2 C<select>
+=head2 select
 
   my $results = $css->select('head > title');
 

@@ -14,17 +14,8 @@ has [qw(conditions shortcuts)] => sub { {} };
 has hidden     => sub { [qw(attr has new tap)] };
 has namespaces => sub { [] };
 
-sub add_condition {
-  my ($self, $name, $cb) = @_;
-  $self->conditions->{$name} = $cb;
-  return $self;
-}
-
-sub add_shortcut {
-  my ($self, $name, $cb) = @_;
-  $self->shortcuts->{$name} = $cb;
-  return $self;
-}
+sub add_condition { shift->_add(conditions => @_) }
+sub add_shortcut  { shift->_add(shortcuts  => @_) }
 
 sub auto_render {
   my ($self, $c) = @_;
@@ -40,7 +31,7 @@ sub dispatch {
   my $req  = $c->req;
   my $path = $c->stash->{path};
   if (defined $path) { $path = "/$path" if $path !~ m!^/! }
-  else               { $path = $req->url->path->to_abs_string }
+  else               { $path = $req->url->path->to_route }
 
   # Prepare match
   my $method = $req->method;
@@ -71,16 +62,22 @@ sub dispatch {
     }
   }
 
-  # No match
-  return undef unless $m && @{$m->stack};
-
   # Dispatch
+  return undef unless $m && @{$m->stack};
   return undef if $self->_walk($c);
   $self->auto_render($c);
   return 1;
 }
 
 sub hide { push @{shift->hidden}, @_ }
+
+sub lookup {
+  my ($self, $name) = @_;
+  my $reverse = $self->{reverse} ||= {};
+  return $reverse->{$name} if exists $reverse->{$name};
+  return undef unless my $route = $self->find($name);
+  return $reverse->{$name} = $route;
+}
 
 # DEPRECATED in Rainbow!
 sub namespace {
@@ -96,6 +93,12 @@ EOF
 
 sub route {
   shift->add_child(Mojolicious::Routes::Route->new(@_))->children->[-1];
+}
+
+sub _add {
+  my ($self, $attr, $name, $cb) = @_;
+  $self->$attr->{$name} = $cb;
+  return $self;
 }
 
 sub _callback {
@@ -217,7 +220,6 @@ sub _method {
 sub _walk {
   my ($self, $c) = @_;
 
-  # Walk the stack
   my $stack   = $c->match->stack;
   my $stash   = $c->stash;
   my $staging = @$stack;
@@ -296,7 +298,7 @@ See L<Mojolicious::Guides::Routing> for more.
 L<Mojolicious::Routes> inherits all attributes from
 L<Mojolicious::Routes::Route> and implements the following new ones.
 
-=head2 C<base_classes>
+=head2 base_classes
 
   my $classes = $r->base_classes;
   $r          = $r->base_classes(['MyApp::Controller']);
@@ -304,7 +306,7 @@ L<Mojolicious::Routes::Route> and implements the following new ones.
 Base classes used to identify controllers, defaults to
 L<Mojolicious::Controller> and L<Mojo>.
 
-=head2 C<cache>
+=head2 cache
 
   my $cache = $r->cache;
   $r        = $r->cache(Mojo::Cache->new);
@@ -314,14 +316,14 @@ Routing cache, defaults to a L<Mojo::Cache> object.
   # Disable caching
   $r->cache(0);
 
-=head2 C<conditions>
+=head2 conditions
 
   my $conditions = $r->conditions;
   $r             = $r->conditions({foo => sub {...}});
 
 Contains all available conditions.
 
-=head2 C<hidden>
+=head2 hidden
 
   my $hidden = $r->hidden;
   $r         = $r->hidden([qw(attr has new)]);
@@ -329,7 +331,7 @@ Contains all available conditions.
 Controller methods and attributes that are hidden from routes, defaults to
 C<attr>, C<has>, C<new> and C<tap>.
 
-=head2 C<namespaces>
+=head2 namespaces
 
   my $namespaces = $r->namespaces;
   $r             = $r->namespaces(['Foo::Bar::Controller']);
@@ -339,7 +341,7 @@ Namespaces to load controllers from.
   # Add another namespace to load controllers from
   push @{$r->namespaces}, 'MyApp::Controller';
 
-=head2 C<shortcuts>
+=head2 shortcuts
 
   my $shortcuts = $r->shortcuts;
   $r            = $r->shortcuts({foo => sub {...}});
@@ -349,39 +351,46 @@ Contains all available shortcuts.
 =head1 METHODS
 
 L<Mojolicious::Routes> inherits all methods from
-L<Mojolicious::Routes::Route> and implements the following ones.
+L<Mojolicious::Routes::Route> and implements the following new ones.
 
-=head2 C<add_condition>
+=head2 add_condition
 
   $r = $r->add_condition(foo => sub {...});
 
 Add a new condition.
 
-=head2 C<add_shortcut>
+=head2 add_shortcut
 
   $r = $r->add_shortcut(foo => sub {...});
 
 Add a new shortcut.
 
-=head2 C<auto_render>
+=head2 auto_render
 
   $r->auto_render(Mojolicious::Controller->new);
 
 Automatic rendering.
 
-=head2 C<dispatch>
+=head2 dispatch
 
   my $success = $r->dispatch(Mojolicious::Controller->new);
 
 Match routes with L<Mojolicious::Routes::Match> and dispatch.
 
-=head2 C<hide>
+=head2 hide
 
   $r = $r->hide(qw(foo bar));
 
 Hide controller methods and attributes from routes.
 
-=head2 C<route>
+=head2 lookup
+
+  my $route = $r->lookup('foo');
+
+Find route by name with L<Mojolicious::Routes::Route/"find"> and cache all
+results for future lookups.
+
+=head2 route
 
   my $route = $r->route;
   my $route = $r->route('/:action');

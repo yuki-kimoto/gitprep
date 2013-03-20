@@ -4,14 +4,9 @@ use Mojo::Base 'Mojolicious::Plugin';
 sub register {
   my ($self, $app) = @_;
 
-  # "headers" condition
   $app->routes->add_condition(headers => \&_headers);
-
-  # "agent" condition
   $app->routes->add_condition(
     agent => sub { _headers(@_[0 .. 2], {'User-Agent' => $_[3]}) });
-
-  # "host" condition
   $app->routes->add_condition(
     host => sub { _check($_[1]->req->url->to_abs->host, $_[3]) });
 }
@@ -77,7 +72,7 @@ example for learning to build new plugins, you're welcome to fork it.
 L<Mojolicious::Plugin::HeaderCondition> inherits all methods from
 L<Mojolicious::Plugin> and implements the following new ones.
 
-=head2 C<register>
+=head2 register
 
   $plugin->register(Mojolicious->new);
 

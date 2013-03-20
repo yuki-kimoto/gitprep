@@ -8,13 +8,12 @@ use Mojo::Util 'url_escape';
 BEGIN {eval {require Pod::Simple::HTML; import Pod::Simple::HTML}}
 BEGIN {eval {require Pod::Simple::Search; import Pod::Simple::Search}}
 
-# Paths
+# Paths to search
 my @PATHS = map { $_, "$_/pods" } @INC;
 
 sub register {
   my ($self, $app, $conf) = @_;
 
-  # Add "pod" handler
   my $preprocess = $conf->{preprocess} || 'ep';
   $app->renderer->add_handler(
     $conf->{name} || 'pod' => sub {
@@ -28,10 +27,9 @@ sub register {
     }
   );
 
-  # Add "pod_to_html" helper
   $app->helper(pod_to_html => sub { shift; b(_pod_to_html(@_)) });
 
-  # Perldoc
+  # Perldoc browser
   return if $conf->{no_perldoc};
   return $app->routes->any(
     '/perldoc/*module' => {module => 'Mojolicious/Guides'} => \&_perldoc);
@@ -40,12 +38,10 @@ sub register {
 sub _perldoc {
   my $self = shift;
 
-  # Find module
+  # Find module or redirect to CPAN
   my $module = $self->param('module');
   $module =~ s!/!::!g;
   my $path = Pod::Simple::Search->new->find($module, @PATHS);
-
-  # Redirect to CPAN
   return $self->redirect_to("http://metacpan.org/module/$module")
     unless $path && -r $path;
 
@@ -120,14 +116,11 @@ sub _pod_to_html {
   # Block
   $pod = $pod->() if ref $pod eq 'CODE';
 
-  # Parser
   my $parser = Pod::Simple::HTML->new;
   $parser->force_title('');
   $parser->html_header_before_title('');
   $parser->html_header_after_title('');
   $parser->html_footer('');
-
-  # Parse
   $parser->output_string(\(my $output));
   return $@ unless eval { $parser->parse_string_document("$pod"); 1 };
 
@@ -170,14 +163,14 @@ you're welcome to fork it.
 
 L<Mojolicious::Plugin::PODRenderer> supports the following options.
 
-=head2 C<name>
+=head2 name
 
   # Mojolicious::Lite
   plugin PODRenderer => {name => 'foo'};
 
 Handler name, defaults to C<pod>.
 
-=head2 C<no_perldoc>
+=head2 no_perldoc
 
   # Mojolicious::Lite
   plugin PODRenderer => {no_perldoc => 1};
@@ -185,7 +178,7 @@ Handler name, defaults to C<pod>.
 Disable L<Mojolicious::Guides> documentation browser that will otherwise be
 available under C</perldoc>.
 
-=head2 C<preprocess>
+=head2 preprocess
 
   # Mojolicious::Lite
   plugin PODRenderer => {preprocess => 'epl'};
@@ -196,7 +189,7 @@ Name of handler used to preprocess POD, defaults to C<ep>.
 
 L<Mojolicious::Plugin::PODRenderer> implements the following helpers.
 
-=head2 C<pod_to_html>
+=head2 pod_to_html
 
   %= pod_to_html '=head2 lalala'
   <%= pod_to_html begin %>=head2 lalala<% end %>
@@ -208,7 +201,7 @@ Render POD to HTML without preprocessing.
 L<Mojolicious::Plugin::PODRenderer> inherits all methods from
 L<Mojolicious::Plugin> and implements the following new ones.
 
-=head2 C<register>
+=head2 register
 
   my $route = $plugin->register(Mojolicious->new);
   my $route = $plugin->register(Mojolicious->new, {name => 'foo'});

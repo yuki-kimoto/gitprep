@@ -1,7 +1,7 @@
 package Mojo::UserAgent::Transactor;
 use Mojo::Base -base;
 
-use File::Spec::Functions 'splitpath';
+use File::Basename 'basename';
 use Mojo::Asset::File;
 use Mojo::Asset::Memory;
 use Mojo::Content::MultiPart;
@@ -31,57 +31,25 @@ sub endpoint {
 }
 
 sub form {
-  my ($self, $url) = (shift, shift);
-
-  # Form
-  my $encoding = shift;
+  my ($self, $url, $encoding) = (shift, shift, shift);
   my $form = ref $encoding ? $encoding : shift;
   $encoding = undef if ref $encoding;
 
-  # Parameters
-  my $params = Mojo::Parameters->new;
-  $params->charset($encoding) if defined $encoding;
-  my $multipart;
-  for my $name (sort keys %$form) {
-    my $value = $form->{$name};
-
-    # Array
-    if (ref $value eq 'ARRAY') { $params->append($name, $_) for @$value }
-
-    # Hash
-    elsif (ref $value eq 'HASH') {
-
-      # Enforce "multipart/form-data"
-      $multipart++;
-
-      # File
-      if (my $file = $value->{file}) {
-        $value->{file} = Mojo::Asset::File->new(path => $file) if !ref $file;
-        $value->{filename} ||= (splitpath($value->{file}->path))[2]
-          if $value->{file}->isa('Mojo::Asset::File');
-      }
-
-      # Memory
-      elsif (defined(my $content = delete $value->{content})) {
-        $value->{file} = Mojo::Asset::Memory->new->add_chunk($content);
-      }
-
-      push @{$params->params}, $name, $value;
-    }
-
-    # Single value
-    else { $params->append($name, $value) }
-  }
-
-  # New transaction
+  # Start with normal POST transaction
   my $tx = $self->tx(POST => $url, @_);
 
-  # Multipart
+  # Check for uploads and force multipart if necessary
+  my $multipart;
+  for my $value (map { ref $_ eq 'ARRAY' ? @$_ : $_ } values %$form) {
+    ++$multipart and last if ref $value eq 'HASH';
+  }
   my $req     = $tx->req;
   my $headers = $req->headers;
   $headers->content_type('multipart/form-data') if $multipart;
+
+  # Multipart
   if ((defined $headers->content_type ? $headers->content_type : '') eq 'multipart/form-data') {
-    my $parts = $self->_multipart($encoding, $params->to_hash);
+    my $parts = $self->_multipart($encoding, $form);
     $req->content(
       Mojo::Content::MultiPart->new(headers => $headers, parts => $parts));
   }
@@ -89,7 +57,9 @@ sub form {
   # Urlencoded
   else {
     $headers->content_type('application/x-www-form-urlencoded');
-    $req->body($params->to_string);
+    my $p = Mojo::Parameters->new(map { $_ => $form->{$_} } sort keys %$form);
+    $p->charset($encoding) if defined $encoding;
+    $req->body($p->to_string);
   }
 
   return $tx;
@@ -203,36 +173,48 @@ sub websocket {
 sub _multipart {
   my ($self, $encoding, $form) = @_;
 
-  # Parts
   my @parts;
   for my $name (sort keys %$form) {
     my $values = $form->{$name};
-    my $part   = Mojo::Content::Single->new;
+    for my $value (ref $values eq 'ARRAY' ? @$values : ($values)) {
+      push @parts, my $part = Mojo::Content::Single->new;
 
-    # File
-    my $filename;
-    my $headers = $part->headers;
-    if (ref $values eq 'HASH') {
-      $filename = delete $values->{filename} || $name;
-      $filename = encode $encoding, $filename if $encoding;
-      push @parts, $part->asset(delete $values->{file});
-      $headers->from_hash($values);
-    }
+      # Upload
+      my $filename;
+      my $headers = $part->headers;
+      if (ref $value eq 'HASH') {
 
-    # Fields
-    else {
-      for my $value (ref $values ? @$values : ($values)) {
-        push @parts, $part = Mojo::Content::Single->new(headers => $headers);
-        $value = encode $encoding, $value if $encoding;
-        $part->asset->add_chunk($value);
+        # File
+        if (my $file = delete $value->{file}) {
+          $file = Mojo::Asset::File->new(path => $file) unless ref $file;
+          $part->asset($file);
+          $value->{filename} ||= basename $file->path
+            if $file->isa('Mojo::Asset::File');
+        }
+
+        # Memory
+        elsif (defined(my $content = delete $value->{content})) {
+          $part->asset(Mojo::Asset::Memory->new->add_chunk($content));
+        }
+
+        # Filename and headers
+        $filename = delete $value->{filename} || $name;
+        $filename = encode $encoding, $filename if $encoding;
+        $headers->from_hash($value);
       }
-    }
 
-    # Content-Disposition
-    $name = encode $encoding, $name if $encoding;
-    my $disposition = qq{form-data; name="$name"};
-    $disposition .= qq{; filename="$filename"} if $filename;
-    $headers->content_disposition($disposition);
+      # Field
+      else {
+        $value = encode $encoding, $value if $encoding;
+        $part->asset(Mojo::Asset::Memory->new->add_chunk($value));
+      }
+
+      # Content-Disposition
+      $name = encode $encoding, $name if $encoding;
+      my $disposition = qq{form-data; name="$name"};
+      $disposition .= qq{; filename="$filename"} if $filename;
+      $headers->content_disposition($disposition);
+    }
   }
 
   return \@parts;
@@ -284,19 +266,21 @@ framework used by L<Mojo::UserAgent>.
 L<Mojo::UserAgent::Transactor> inherits all methods from L<Mojo::Base> and
 implements the following new ones.
 
-=head2 C<endpoint>
+=head2 endpoint
 
   my ($proto, $host, $port) = $t->endpoint(Mojo::Transaction::HTTP->new);
 
 Actual endpoint for transaction.
 
-=head2 C<form>
+=head2 form
 
   my $tx = $t->form('kraih.com' => {a => 'b'});
   my $tx = $t->form('http://kraih.com' => {a => 'b'});
   my $tx = $t->form('http://kraih.com' => {a => [qw(b c d)]});
   my $tx = $t->form('http://kraih.com' => {mytext => {file => '/foo.txt'}});
   my $tx = $t->form('http://kraih.com' => {mytext => {content => 'lalala'}});
+  my $tx = $t->form('http://kraih.com' =>
+    {mytexts => [{content => 'first'}, {content => 'second'}]});
   my $tx = $t->form('http://kraih.com' => {
     myzip => {
       file     => Mojo::Asset::Memory->new->add_chunk('lalala'),
@@ -329,7 +313,7 @@ enforce it by setting the header manually.
     {'Content-Type' => 'multipart/form-data'}
   );
 
-=head2 C<json>
+=head2 json
 
   my $tx = $t->json('kraih.com' => {a => 'b'});
   my $tx = $t->json('http://kraih.com' => [1, 2, 3]);
@@ -343,27 +327,27 @@ with JSON data.
   my $tx = $t->json('mojolicio.us/hello', {hello => 'world'});
   $tx->req->method('PATCH');
 
-=head2 C<peer>
+=head2 peer
 
   my ($proto, $host, $port) = $t->peer(Mojo::Transaction::HTTP->new);
 
 Actual peer for transaction.
 
-=head2 C<proxy_connect>
+=head2 proxy_connect
 
   my $tx = $t->proxy_connect(Mojo::Transaction::HTTP->new);
 
 Build L<Mojo::Transaction::HTTP> proxy connect request for transaction if
 possible.
 
-=head2 C<redirect>
+=head2 redirect
 
   my $tx = $t->redirect(Mojo::Transaction::HTTP->new);
 
 Build L<Mojo::Transaction::HTTP> followup request for C<301>, C<302>, C<303>,
 C<307> or C<308> redirect response if possible.
 
-=head2 C<tx>
+=head2 tx
 
   my $tx = $t->tx(GET  => 'kraih.com');
   my $tx = $t->tx(POST => 'http://kraih.com');
@@ -385,14 +369,14 @@ requests.
   my $tx = $t->tx(GET => 'http://mojolicio.us');
   $tx->connection($sock);
 
-=head2 C<upgrade>
+=head2 upgrade
 
   my $tx = $t->upgrade(Mojo::Transaction::HTTP->new);
 
 Build L<Mojo::Transaction::WebSocket> followup transaction for WebSocket
 handshake if possible.
 
-=head2 C<websocket>
+=head2 websocket
 
   my $tx = $t->websocket('ws://localhost:3000');
   my $tx = $t->websocket('ws://localhost:3000' => {DNT => 1});

@@ -551,7 +551,7 @@ allow running unit tests again.
   use lib 'lib';
   use Mojolicious::Commands;
 
-  # Start commands for application
+  # Start command line interface for application
   Mojolicious::Commands->start_app('MyApp');
 
 =head2 Controller class
@@ -651,7 +651,7 @@ Only a few small details change.
   use FindBin;
   use lib "$FindBin::Bin/../lib";
 
-  # Start commands for application
+  # Start command line interface for application
   require Mojolicious::Commands;
   Mojolicious::Commands->start_app('MyApp');
 
@@ -693,5 +693,12 @@ it!
 You can continue with L<Mojolicious::Guides> now or take a look at the
 L<Mojolicious wiki|http://github.com/kraih/mojo/wiki>, which contains a lot
 more documentation and examples by many different authors.
+
+=head1 SUPPORT
+
+If you have any questions the documentation might not yet answer, don't
+hesitate to ask on the
+L<mailing-list|http://groups.google.com/group/mojolicious> or the official IRC
+channel C<#mojo> on C<irc.perl.org>.
 
 =cut

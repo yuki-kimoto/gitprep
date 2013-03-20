@@ -17,7 +17,6 @@ EOF
 sub run {
   my ($self, @args) = @_;
 
-  # Options
   GetOptionsFromArray \@args, 'v|verbose' => \my $verbose;
   my $code = shift @args || '';
 
@@ -54,14 +53,14 @@ example for learning to build new commands, you're welcome to fork it.
 L<Mojolicious::Command::eval> inherits all attributes from
 L<Mojolicious::Command> and implements the following new ones.
 
-=head2 C<description>
+=head2 description
 
   my $description = $eval->description;
   $eval           = $eval->description('Foo!');
 
 Short description of this command, used for the command list.
 
-=head2 C<usage>
+=head2 usage
 
   my $usage = $eval->usage;
   $eval     = $eval->usage('Foo!');
@@ -73,7 +72,7 @@ Usage information for this command, used for the help screen.
 L<Mojolicious::Command::eval> inherits all methods from
 L<Mojolicious::Command> and implements the following new ones.
 
-=head2 C<run>
+=head2 run
 
   $eval->run(@ARGV);
 

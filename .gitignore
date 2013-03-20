@@ -29,3 +29,4 @@ db/*
 !db/.gitignore
 extlib/*
 rep/*
+gitprep.my.ini

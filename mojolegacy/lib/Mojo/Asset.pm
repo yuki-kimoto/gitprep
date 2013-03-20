@@ -40,18 +40,22 @@ Mojo::Asset - HTTP content storage base class
 
 L<Mojo::Asset> is an abstract base class for HTTP content storage.
 
+=head1 EVENTS
+
+L<Mojo::Asset> inherits all events from L<Mojo::EventEmitter>.
+
 =head1 ATTRIBUTES
 
 L<Mojo::Asset> implements the following attributes.
 
-=head2 C<end_range>
+=head2 end_range
 
   my $end = $asset->end_range;
   $asset  = $asset->end_range(8);
 
 Pretend file ends earlier.
 
-=head2 C<start_range>
+=head2 start_range
 
   my $start = $asset->start_range;
   $asset    = $asset->start_range(0);
@@ -63,53 +67,53 @@ Pretend file starts later.
 L<Mojo::Asset> inherits all methods from L<Mojo::EventEmitter> and implements
 the following new ones.
 
-=head2 C<add_chunk>
+=head2 add_chunk
 
   $asset = $asset->add_chunk('foo bar baz');
 
 Add chunk of data to asset. Meant to be overloaded in a subclass.
 
-=head2 C<contains>
+=head2 contains
 
   my $position = $asset->contains('bar');
 
 Check if asset contains a specific string. Meant to be overloaded in a
 subclass.
 
-=head2 C<get_chunk>
+=head2 get_chunk
 
-  my $chunk = $asset->get_chunk($offset);
+  my $bytes = $asset->get_chunk($offset);
 
 Get chunk of data starting from a specific position. Meant to be overloaded
 in a subclass.
 
-=head2 C<is_file>
+=head2 is_file
 
   my $false = $asset->is_file;
 
 False.
 
-=head2 C<is_range>
+=head2 is_range
 
   my $success = $asset->is_range;
 
 Check if asset has a C<start_range> or C<end_range>.
 
-=head2 C<move_to>
+=head2 move_to
 
   $asset = $asset->move_to('/home/sri/foo.txt');
 
 Move asset data into a specific file. Meant to be overloaded in a subclass.
 
-=head2 C<size>
+=head2 size
 
   my $size = $asset->size;
 
 Size of asset data in bytes. Meant to be overloaded in a subclass.
 
-=head2 C<slurp>
+=head2 slurp
 
-  my $string = $asset->slurp;
+  my $bytes = $asset->slurp;
 
 Read all asset data at once. Meant to be overloaded in a subclass.
 

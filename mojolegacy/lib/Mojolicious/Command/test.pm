@@ -18,28 +18,23 @@ EOF
 sub run {
   my ($self, @args) = @_;
 
-  # Options
   GetOptionsFromArray \@args, 'v|verbose' => sub { $ENV{HARNESS_VERBOSE} = 1 };
 
-  # Search tests
   unless (@args) {
     my @base = splitdir(abs2rel $FindBin::Bin);
 
-    # Test directory in the same directory as "mojo" (t)
+    # "./t"
     my $path = catdir @base, 't';
 
-    # Test dirctory in the directory above "mojo" (../t)
+    # "../t"
     $path = catdir @base, '..', 't' unless -d $path;
     die "Can't find test directory.\n" unless -d $path;
 
-    # List test files
     my $home = Mojo::Home->new($path);
     /\.t$/ and push(@args, $home->rel_file($_)) for @{$home->list_files};
-
     say "Running tests from '", realpath($path), "'.";
   }
 
-  # Run tests
   $ENV{HARNESS_OPTIONS} = defined $ENV{HARNESS_OPTIONS} ? $ENV{HARNESS_OPTIONS} : 'c';
   require Test::Harness;
   Test::Harness::runtests(sort @args);
@@ -70,14 +65,14 @@ example for learning to build new commands, you're welcome to fork it.
 L<Mojolicious::Command::test> inherits all attributes from
 L<Mojolicious::Command> and implements the following new ones.
 
-=head2 C<description>
+=head2 description
 
   my $description = $test->description;
   $test           = $test->description('Foo!');
 
 Short description of this command, used for the command list.
 
-=head2 C<usage>
+=head2 usage
 
   my $usage = $test->usage;
   $test     = $test->usage('Foo!');
@@ -89,7 +84,7 @@ Usage information for this command, used for the help screen.
 L<Mojolicious::Command::test> inherits all methods from
 L<Mojolicious::Command> and implements the following new ones.
 
-=head2 C<run>
+=head2 run
 
   $test->run(@ARGV);
 

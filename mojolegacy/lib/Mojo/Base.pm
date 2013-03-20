@@ -2,8 +2,6 @@ package Mojo::Base;
 
 use strict;
 use warnings;
-
-# Mojo modules are modern!
 use utf8;
 
 # No imports because we get subclassed, a lot!
@@ -16,8 +14,6 @@ use IO::Handle ();
 sub import {
   my $class = shift;
   return unless my $flag = shift;
-
-  # No limits!
   no strict 'refs';
 
   # Base
@@ -37,8 +33,6 @@ sub import {
   if ($flag) {
     my $caller = caller;
     push @{"${caller}::ISA"}, $flag;
-
-    # Can haz?
     *{"${caller}::has"} = sub { attr($caller, @_) };
   }
   
@@ -64,14 +58,12 @@ sub attr {
   my ($class, $attrs, $default) = @_;
   return unless ($class = ref $class || $class) && $attrs;
 
-  # Check default
-  Carp::croak('Default has to be a code reference or constant value')
+  Carp::croak 'Default has to be a code reference or constant value'
     if ref $default && ref $default ne 'CODE';
 
-  # Create attributes
+  # Compile attributes
   for my $attr (@{ref $attrs eq 'ARRAY' ? $attrs : [$attrs]}) {
-    Carp::croak(qq{Attribute "$attr" invalid})
-      unless $attr =~ /^[a-zA-Z_]\w*$/;
+    Carp::croak qq{Attribute "$attr" invalid} unless $attr =~ /^[a-zA-Z_]\w*$/;
 
     # Header (check arguments)
     my $code = "package $class;\nsub $attr {\n  if (\@_ == 1) {\n";
@@ -100,7 +92,7 @@ sub attr {
     # We compile custom attribute code for speed
     no strict 'refs';
     warn "-- Attribute $attr in $class\n$code\n\n" if $ENV{MOJO_BASE_DEBUG};
-    Carp::croak("Mojo::Base error: $@") unless eval "$code;1";
+    Carp::croak "Mojo::Base error: $@" unless eval "$code;1";
   }
 }
 
@@ -184,7 +176,7 @@ All three forms save a lot of typing.
 L<Mojo::Base> exports the following functions if imported with the C<-base>
 flag or a base class.
 
-=head2 C<has>
+=head2 has
 
   has 'name';
   has [qw(name1 name2 name3)];
@@ -199,7 +191,7 @@ Create attributes for hash-based objects, just like the C<attr> method.
 
 L<Mojo::Base> implements the following methods.
 
-=head2 C<new>
+=head2 new
 
   my $object = BaseSubClass->new;
   my $object = BaseSubClass->new(name => 'value');
@@ -208,7 +200,7 @@ L<Mojo::Base> implements the following methods.
 This base class provides a basic constructor for hash-based objects. You can
 pass it either a hash or a hash reference with attribute values.
 
-=head2 C<attr>
+=head2 attr
 
   $object->attr('name');
   BaseSubClass->attr('name');
@@ -225,7 +217,7 @@ be excuted at accessor read time if there's no set value. Accessors can be
 chained, that means they return their invocant when they are called with an
 argument.
 
-=head2 C<tap>
+=head2 tap
 
   $object = $object->tap(sub {...});
 

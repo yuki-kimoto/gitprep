@@ -64,12 +64,20 @@
 
 % layout 'common';
 
+  % my $logined = $api->logined;
+
   %= javascript begin
     $(document).ready(function () {
       var http_rep_url = '<%= url_for("$user/$project.git")->to_abs %>';
       % my $execute_user = getpwuid($>);
       % my $rep = $git->rep($user, $project);
-      var ssh_rep_url = '<%= url_for($rep)->to_abs->scheme('ssh')->userinfo($execute_user)->port('') %>';
+      % my $ssh_port = config->{basic}{ssh_port} || '';
+      
+      var logined = <%= $logined ? 'true' : 'false' %>;
+      var ssh_rep_url = '';
+      if (logined) {
+        ssh_rep_url = '<%= url_for($rep)->to_abs->scheme('ssh')->userinfo($execute_user)->port($ssh_port) %>';
+      }
       
       // Click HTTP button
       $('#btn_http').on('click', function () {
@@ -84,7 +92,6 @@
       });
 
       // Initialize
-      var logined = <%= $api->logined ? 'true' : 'false' %>;
       if (logined) {
         $('#btn_ssh').trigger('click');
       }
@@ -111,7 +118,9 @@
         <div class="input-append" style="margin-top:10px">
           <div class="btn-group" data-toggle="buttons-radio">
             <button class="btn" id="btn_http" style="border-radius:0">HTTP</button>
-            <button class="btn" id="btn_ssh" style="border-radius:0">SSH</button>
+            % if ($logined) {
+              <button class="btn" id="btn_ssh" style="border-radius:0">SSH</button>
+            % }
           </div>
           <input class="span8" id="rep_url" type="text" style="border-radius:0;">
         </div>
@@ -144,7 +153,7 @@
       </div>
       
       % my $url = url_for->to_abs;
-      % my $ssh_port = config->{ssh_port};
+      % my $ssh_port = config->{basic}{ssh_port};
       % my $rep_home = app->git->rep_home;
       % my $ssh_url = 'ssh://kimoto@' . $url->host
       %   . ($ssh_port ? ":$ssh_port" : '') . "$rep_home/$user/$project.git";

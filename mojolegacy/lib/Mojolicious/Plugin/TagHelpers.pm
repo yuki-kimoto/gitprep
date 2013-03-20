@@ -13,57 +13,38 @@ sub register {
     $app->helper("${name}_field" => sub { _input(@_, type => $name) });
   }
 
-  # Add "base_tag" helper
+  # DEPRECATED in Rainbow!
   $app->helper(
-    base_tag => sub { _tag('base', href => shift->req->url->base, @_) });
+    base_tag => sub {
+      warn "base_tag is DEPRECATED!!!\n";
+      _tag('base', href => shift->req->url->base, @_);
+    }
+  );
 
-  # Add "checkbox" helper
   $app->helper(check_box =>
       sub { _input(shift, shift, value => shift, @_, type => 'checkbox') });
-
-  # Add "file_field" helper
   $app->helper(file_field =>
       sub { shift; _tag('input', name => shift, @_, type => 'file') });
 
-  # Add "form_for" helper
-  $app->helper(form_for => \&_form_for);
-
-  # Add "hidden_field" helper
+  $app->helper(form_for     => \&_form_for);
   $app->helper(hidden_field => \&_hidden_field);
-
-  # Add "image" helper
   $app->helper(image => sub { _tag('img', src => shift->url_for(shift), @_) });
-
-  # Add "input_tag" helper
   $app->helper(input_tag => sub { _input(@_) });
-
-  # Add "javascript" helper
   $app->helper(javascript => \&_javascript);
+  $app->helper(link_to    => \&_link_to);
 
-  # Add "link_to" helper
-  $app->helper(link_to => \&_link_to);
-
-  # Add "password_field" helper
   $app->helper(password_field =>
       sub { shift; _tag('input', name => shift, @_, type => 'password') });
-
-  # Add "radio_button" helper
   $app->helper(radio_button =>
       sub { _input(shift, shift, value => shift, @_, type => 'radio') });
 
-  # Add "select_field" helper
-  $app->helper(select_field => \&_select_field);
-
-  # Add "stylesheet" helper
-  $app->helper(stylesheet => \&_stylesheet);
-
-  # Add "submit_button" helper
+  $app->helper(select_field  => \&_select_field);
+  $app->helper(stylesheet    => \&_stylesheet);
   $app->helper(submit_button => \&_submit_button);
 
-  # Add "t" and "tag" helpers
+  # "t" is just a shortcut for the "tag" helper
   $app->helper($_ => sub { shift; _tag(@_) }) for qw(t tag);
 
-  # Add "text_area" helper
   $app->helper(text_area => \&_text_area);
 }
 
@@ -93,14 +74,10 @@ sub _hidden_field {
 
 sub _input {
   my ($self, $name) = (shift, shift);
-
-  # Attributes
   my %attrs = @_ % 2 ? (value => shift, @_) : @_;
 
-  # Values
-  my @values = $self->param($name);
-
   # Special selection value
+  my @values = $self->param($name);
   my $type = $attrs{type} || '';
   if (@values && $type ne 'submit') {
 
@@ -206,10 +183,8 @@ sub _stylesheet {
     $cb = sub { "/*<![CDATA[*/\n" . $old->() . "\n/*]]>*/" }
   }
 
-  # URL
-  my $href = @_ % 2 ? $self->url_for(shift) : undef;
-
   # "link" or "style" tag
+  my $href = @_ % 2 ? $self->url_for(shift) : undef;
   return $href
     ? _tag('link', rel => 'stylesheet', href => $href, media => 'screen', @_)
     : _tag('style', @_, $cb);
@@ -299,15 +274,7 @@ example for learning how to build new plugins, you're welcome to fork it.
 
 L<Mojolicious::Plugin::TagHelpers> implements the following helpers.
 
-=head2 C<base_tag>
-
-  %= base_tag
-
-Generate portable C<base> tag refering to the current base URL.
-
-  <base href="http://localhost/cgi-bin/myapp.pl" />
-
-=head2 C<check_box>
+=head2 check_box
 
   %= check_box employed => 1
   %= check_box employed => 1, id => 'foo'
@@ -318,7 +285,7 @@ picked up and shown as default.
   <input name="employed" type="checkbox" value="1" />
   <input id="foo" name="employed" type="checkbox" value="1" />
 
-=head2 C<color_field>
+=head2 color_field
 
   %= color_field 'background'
   %= color_field background => '#ffffff'
@@ -331,7 +298,7 @@ picked up and shown as default.
   <input name="background" type="color" value="#ffffff" />
   <input id="foo" name="background" type="color" value="#ffffff" />
 
-=head2 C<date_field>
+=head2 date_field
 
   %= date_field 'end'
   %= date_field end => '2012-12-21'
@@ -344,7 +311,7 @@ picked up and shown as default.
   <input name="end" type="date" value="2012-12-21" />
   <input id="foo" name="end" type="date" value="2012-12-21" />
 
-=head2 C<datetime_field>
+=head2 datetime_field
 
   %= datetime_field 'end'
   %= datetime_field end => '2012-12-21T23:59:59Z'
@@ -357,7 +324,7 @@ picked up and shown as default.
   <input name="end" type="datetime" value="2012-12-21T23:59:59Z" />
   <input id="foo" name="end" type="datetime" value="2012-12-21T23:59:59Z" />
 
-=head2 C<email_field>
+=head2 email_field
 
   %= email_field 'notify'
   %= email_field notify => 'nospam@example.com'
@@ -370,7 +337,7 @@ picked up and shown as default.
   <input name="notify" type="email" value="nospam@example.com" />
   <input id="foo" name="notify" type="email" value="nospam@example.com" />
 
-=head2 C<file_field>
+=head2 file_field
 
   %= file_field 'avatar'
   %= file_field 'avatar', id => 'foo'
@@ -380,7 +347,7 @@ Generate file input element.
   <input name="avatar" type="file" />
   <input id="foo" name="avatar" type="file" />
 
-=head2 C<form_for>
+=head2 form_for
 
   %= form_for login => begin
     %= text_field 'first_name'
@@ -419,7 +386,7 @@ but not C<GET>, a C<method> attribute will be automatically added.
     <input value="Ok" type="submit" />
   </form>
 
-=head2 C<hidden_field>
+=head2 hidden_field
 
   %= hidden_field foo => 'bar'
   %= hidden_field foo => 'bar', id => 'bar'
@@ -429,7 +396,7 @@ Generate hidden input element.
   <input name="foo" type="hidden" value="bar" />
   <input id="bar" name="foo" type="hidden" value="bar" />
 
-=head2 C<image>
+=head2 image
 
   %= image '/images/foo.png'
   %= image '/images/foo.png', alt => 'Foo'
@@ -439,7 +406,7 @@ Generate image tag.
   <img src="/images/foo.png" />
   <img alt="Foo" src="/images/foo.png" />
 
-=head2 C<input_tag>
+=head2 input_tag
 
   %= input_tag 'first_name'
   %= input_tag first_name => 'Default name'
@@ -452,7 +419,7 @@ picked up and shown as default.
   <input name="first_name" value="Default name" />
   <input name="employed" type="checkbox" />
 
-=head2 C<javascript>
+=head2 javascript
 
   %= javascript '/script.js'
   %= javascript begin
@@ -466,7 +433,7 @@ Generate portable script tag for C<Javascript> asset.
     var a = 'b';
   ]]></script>
 
-=head2 C<link_to>
+=head2 link_to
 
   %= link_to Home => 'index'
   %= link_to Home => 'index' => {format => 'txt'} => (class => 'links')
@@ -491,7 +458,7 @@ capitalized link target as content.
   <a href="http://mojolicio.us">Mojolicious</a>
   <a href="http://127.0.0.1:3000/current/path?foo=bar">Retry</a>
 
-=head2 C<month_field>
+=head2 month_field
 
   %= month_field 'vacation'
   %= month_field vacation => '2012-12'
@@ -504,7 +471,7 @@ picked up and shown as default.
   <input name="vacation" type="month" value="2012-12" />
   <input id="foo" name="vacation" type="month" value="2012-12" />
 
-=head2 C<number_field>
+=head2 number_field
 
   %= number_field 'age'
   %= number_field age => 25
@@ -517,7 +484,7 @@ picked up and shown as default.
   <input name="age" type="number" value="25" />
   <input id="foo" max="200" min="0" name="age" type="number" value="25" />
 
-=head2 C<password_field>
+=head2 password_field
 
   %= password_field 'pass'
   %= password_field 'pass', id => 'foo'
@@ -527,7 +494,7 @@ Generate password input element.
   <input name="pass" type="password" />
   <input id="foo" name="pass" type="password" />
 
-=head2 C<radio_button>
+=head2 radio_button
 
   %= radio_button country => 'germany'
   %= radio_button country => 'germany', id => 'foo'
@@ -538,7 +505,7 @@ picked up and shown as default.
   <input name="country" type="radio" value="germany" />
   <input id="foo" name="country" type="radio" value="germany" />
 
-=head2 C<range_field>
+=head2 range_field
 
   %= range_field 'age'
   %= range_field age => 25
@@ -551,7 +518,7 @@ picked up and shown as default.
   <input name="age" type="range" value="25" />
   <input id="foo" max="200" min="200" name="age" type="range" value="25" />
 
-=head2 C<search_field>
+=head2 search_field
 
   %= search_field 'q'
   %= search_field q => 'perl'
@@ -564,7 +531,7 @@ picked up and shown as default.
   <input name="q" type="search" value="perl" />
   <input id="foo" name="q" type="search" value="perl" />
 
-=head2 C<select_field>
+=head2 select_field
 
   %= select_field language => [qw(de en)]
   %= select_field language => [qw(de en)], id => 'lang'
@@ -598,7 +565,7 @@ automatically get picked up and shown as default.
     <option value="en">en</option>
   </select>
 
-=head2 C<stylesheet>
+=head2 stylesheet
 
   %= stylesheet '/foo.css'
   %= stylesheet begin
@@ -612,7 +579,7 @@ Generate portable style or link tag for C<CSS> asset.
     body {color: #000}
   ]]></style>
 
-=head2 C<submit_button>
+=head2 submit_button
 
   %= submit_button
   %= submit_button 'Ok!', id => 'foo'
@@ -622,7 +589,7 @@ Generate submit input element.
   <input type="submit" value="Ok" />
   <input id="foo" type="submit" value="Ok!" />
 
-=head2 C<t>
+=head2 t
 
   %=t div => 'some & content'
 
@@ -630,7 +597,7 @@ Alias for C<tag>.
 
   <div>some &amp; content</div>
 
-=head2 C<tag>
+=head2 tag
 
   %= tag 'div'
   %= tag 'div', id => 'foo'
@@ -653,7 +620,7 @@ Very useful for reuse in more specific tag helpers.
 Results are automatically wrapped in L<Mojo::ByteStream> objects to prevent
 accidental double escaping.
 
-=head2 C<tel_field>
+=head2 tel_field
 
   %= tel_field 'work'
   %= tel_field work => '123456789'
@@ -666,7 +633,7 @@ picked up and shown as default.
   <input name="work" type="tel" value="123456789" />
   <input id="foo" name="work" type="tel" value="123456789" />
 
-=head2 C<text_area>
+=head2 text_area
 
   %= text_area 'foo'
   %= text_area 'foo', cols => 40
@@ -685,7 +652,7 @@ up and shown as default.
     Default!
   </textarea>
 
-=head2 C<text_field>
+=head2 text_field
 
   %= text_field 'first_name'
   %= text_field first_name => 'Default name'
@@ -698,7 +665,7 @@ picked up and shown as default.
   <input name="first_name" type="text" value="Default name" />
   <input class="user" name="first_name" type="text" value="Default name" />
 
-=head2 C<time_field>
+=head2 time_field
 
   %= time_field 'start'
   %= time_field start => '23:59:59'
@@ -711,7 +678,7 @@ picked up and shown as default.
   <input name="start" type="time" value="23:59:59" />
   <input id="foo" name="start" type="time" value="23:59:59" />
 
-=head2 C<url_field>
+=head2 url_field
 
   %= url_field 'address'
   %= url_field address => 'http://mojolicio.us'
@@ -724,7 +691,7 @@ picked up and shown as default.
   <input name="address" type="url" value="http://mojolicio.us" />
   <input id="foo" name="address" type="url" value="http://mojolicio.us" />
 
-=head2 C<week_field>
+=head2 week_field
 
   %= week_field 'vacation'
   %= week_field vacation => '2012-W17'
@@ -742,7 +709,7 @@ picked up and shown as default.
 L<Mojolicious::Plugin::TagHelpers> inherits all methods from
 L<Mojolicious::Plugin> and implements the following new ones.
 
-=head2 C<register>
+=head2 register
 
   $plugin->register(Mojolicious->new);
 

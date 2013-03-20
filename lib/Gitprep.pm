@@ -20,9 +20,12 @@ sub startup {
   my $self = shift;
   
   # Config
-  #my $conf_file = $ENV{GITPREP_CONFIG_FILE}
-  #  || $self->home->rel_file('gitprep.conf');
-  #$self->plugin('JSONConfigLoose', {file => $conf_file}) if -f $conf_file;
+  $self->plugin('INIConfig', {ext => 'conf'});
+  
+  # My Config(Development)
+  my $my_conf_file = $self->home->rel_file('gitprep.my.conf');
+  $self->plugin('INIConfig', {file => $my_conf_file}) if -f $my_conf_file;
+  
   my $conf = $self->config;
   $conf->{root} = $self->home->rel_file('rep');
   $conf->{hypnotoad} ||= {listen => ["http://*:10020"]};

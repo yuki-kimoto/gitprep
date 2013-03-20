@@ -6,7 +6,6 @@ use File::Spec::Functions qw(catdir catfile splitdir);
 use Mojo::Exception;
 use Mojo::Util qw(b64_decode class_to_path);
 
-# Cache
 my %CACHE;
 
 sub data {
@@ -34,7 +33,6 @@ sub load {
 sub search {
   my ($self, $namespace) = @_;
 
-  # Check all directories
   my (@modules, %found);
   for my $directory (@INC) {
     next unless -d (my $path = catdir $directory, split(/::|'/, $namespace));
@@ -43,8 +41,6 @@ sub search {
     opendir(my $dir, $path);
     for my $file (grep /\.pm$/, readdir $dir) {
       next if -d catfile splitdir($path), $file;
-
-      # Module found
       my $class = "${namespace}::" . fileparse $file, qr/\.pm/;
       push @modules, $class unless $found{$class}++;
     }
@@ -69,7 +65,7 @@ sub _all {
   # Ignore everything after __END__
   $content =~ s/\n__END__\r?\n.*$/\n/s;
 
-  # Split
+  # Split files
   my @data = split /^@@\s*(.+?)\s*\r?\n/m, $content;
   shift @data;
 
@@ -115,7 +111,7 @@ L<Mojo::Loader> is a class loader and plugin framework.
 L<Mojo::Loader> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
-=head2 C<data>
+=head2 data
 
   my $all   = $loader->data('Foo::Bar');
   my $index = $loader->data('Foo::Bar', 'index.html');
@@ -124,7 +120,7 @@ Extract embedded file from the C<DATA> section of a class.
 
   say for keys %{$loader->data('Foo::Bar')};
 
-=head2 C<load>
+=head2 load
 
   my $e = $loader->load('Foo::Bar');
 
@@ -135,7 +131,7 @@ method to see if they are already loaded.
     die ref $e ? "Exception: $e" : 'Already loaded!';
   }
 
-=head2 C<search>
+=head2 search
 
   my $modules = $loader->search('MyApp::Namespace');
 

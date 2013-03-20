@@ -9,12 +9,14 @@ use Mojo::Base -base;
 #  Bender: You're better off dead, I'm telling you, dude.
 #  Fry: Santa Claus is gunning you down!"
 use Mojo::IOLoop;
+use Mojo::JSON;
+use Mojo::JSON::Pointer;
 use Mojo::Server;
 use Mojo::UserAgent;
 use Mojo::Util qw(decode encode);
 use Test::More ();
 
-has 'tx';
+has [qw(message tx)];
 has ua => sub { Mojo::UserAgent->new->ioloop(Mojo::IOLoop->singleton) };
 
 # Silent or loud tests
@@ -142,12 +144,6 @@ sub json_content_is {
   return $self->_test('is_deeply', $self->tx->res->json, $data, $desc);
 }
 
-sub json_is {
-  my ($self, $p, $data, $desc) = @_;
-  $desc ||= qq{exact match for JSON Pointer "$p"};
-  return $self->_test('is_deeply', $self->tx->res->json($p), $data, $desc);
-}
-
 sub json_has {
   my ($self, $p, $desc) = @_;
   $desc ||= qq{has value for JSON Pointer "$p"};
@@ -162,28 +158,53 @@ sub json_hasnt {
     !Mojo::JSON::Pointer->new->contains($self->tx->res->json, $p), $desc);
 }
 
+sub json_is {
+  my ($self, $p, $data, $desc) = @_;
+  $desc ||= qq{exact match for JSON Pointer "$p"};
+  return $self->_test('is_deeply', $self->tx->res->json($p), $data, $desc);
+}
+
+sub json_message_has {
+  my ($self, $p, $desc) = @_;
+  $desc ||= qq{has value for JSON Pointer "$p"};
+  return $self->_test('ok', $self->_json(contains => $p), $desc);
+}
+
+sub json_message_hasnt {
+  my ($self, $p, $desc) = @_;
+  $desc ||= qq{has no value for JSON Pointer "$p"};
+  return $self->_test('ok', !$self->_json(contains => $p), $desc);
+}
+
+sub json_message_is {
+  my ($self, $p, $data, $desc) = @_;
+  $desc ||= qq{exact match for JSON Pointer "$p"};
+  return $self->_test('is_deeply', $self->_json(get => $p), $data, $desc);
+}
+
 sub message_is {
   my ($self, $value, $desc) = @_;
-  $desc ||= 'exact match for message';
-  return $self->_test('is', $self->_message, $value, $desc);
+  return $self->_message('is', $value, $desc || 'exact match for message');
 }
 
 sub message_isnt {
   my ($self, $value, $desc) = @_;
-  $desc ||= 'no match for message';
-  return $self->_test('isnt', $self->_message, $value, $desc);
+  return $self->_message('isnt', $value, $desc || 'no match for message');
 }
 
 sub message_like {
   my ($self, $regex, $desc) = @_;
-  $desc ||= 'message is similar';
-  return $self->_test('like', $self->_message, $regex, $desc);
+  return $self->_message('like', $regex, $desc || 'message is similar');
+}
+
+sub message_ok {
+  my ($self, $desc) = @_;
+  return $self->_test('ok', !!$self->_wait(1), $desc, 'message received');
 }
 
 sub message_unlike {
   my ($self, $regex, $desc) = @_;
-  $desc ||= 'message is not similar';
-  return $self->_test('unlike', $self->_message, $regex, $desc);
+  return $self->_message('unlike', $regex, $desc || 'message is not similar');
 }
 
 sub options_ok { shift->_request_ok(options => @_) }
@@ -278,7 +299,8 @@ sub websocket_ok {
       my $tx = pop;
       $self->tx($tx);
       $tx->on(finish => sub { $self->{finished} = 1 });
-      $tx->on(message => sub { push @{$self->{messages}}, pop });
+      $tx->on(binary => sub { push @{$self->{messages}}, [binary => pop] });
+      $tx->on(text   => sub { push @{$self->{messages}}, [text   => pop] });
       Mojo::IOLoop->stop;
     }
   );
@@ -295,10 +317,28 @@ sub _get_content {
   return $charset ? decode($charset, $content) : $content;
 }
 
+sub _json {
+  my ($self, $method, $p) = @_;
+  return Mojo::JSON::Pointer->new->$method(
+    Mojo::JSON->new->decode(@{$self->_wait || []}[1]), $p);
+}
+
 sub _message {
-  my $self = shift;
-  Mojo::IOLoop->one_tick while !$self->{finished} && !@{$self->{messages}};
-  return shift @{$self->{messages}};
+  my ($self, $name, $value, $desc) = @_;
+  local $Test::Builder::Level = $Test::Builder::Level + 1;
+  my ($type, $msg) = @{$self->_wait || ['']};
+
+  # Type check
+  if (ref $value eq 'HASH') {
+    my $expect = exists $value->{text} ? 'text' : 'binary';
+    $value = $value->{$expect};
+    $msg = '' unless $type eq $expect;
+  }
+
+  # Decode text frame if there is no type check
+  else { $msg = decode 'UTF-8', $msg if $type eq 'text' }
+
+  return $self->_test($name, defined $msg ? $msg : '', $value, $desc);
 }
 
 sub _request_ok {
@@ -324,6 +364,21 @@ sub _test {
 sub _text {
   return '' unless my $e = shift->tx->res->dom->at(shift);
   return $e->text;
+}
+
+sub _wait {
+  my ($self, $wait) = @_;
+
+  # DEPRECATED in Rainbow!
+  my $new = $self->{new} = defined $self->{new} ? $self->{new} : $wait;
+  warn <<EOF unless $new;
+Testing WebSocket messages without Test::Mojo->message_ok is DEPRECATED!!!
+EOF
+  return $self->message if $new && !$wait;
+
+  # Wait for message
+  Mojo::IOLoop->one_tick while !$self->{finished} && !@{$self->{messages}};
+  return $self->message(shift @{$self->{messages}})->message;
 }
 
 1;
@@ -352,6 +407,7 @@ Test::Mojo - Testing Mojo!
   # WebSocket
   $t->websocket_ok('/echo')
     ->send_ok('hello')
+    ->message_ok
     ->message_is('echo: hello')
     ->finish_ok;
 
@@ -366,7 +422,20 @@ L<Mojo> and L<Mojolicious> applications.
 
 L<Test::Mojo> implements the following attributes.
 
-=head2 C<tx>
+=head2 message
+
+  my $msg = $t->message;
+  $t      = $t->message([text => $bytes]);
+
+Current WebSocket message.
+
+  # Test custom message
+  $t->message([binary => $bytes])
+    ->json_message_has('/foo/bar')
+    ->json_message_hasnt('/bar')
+    ->json_message_is('/foo/baz' => {yada => [1, 2, 3]});
+
+=head2 tx
 
   my $tx = $t->tx;
   $t     = $t->tx(Mojo::Transaction::HTTP->new);
@@ -380,7 +449,7 @@ Current transaction, usually a L<Mojo::Transaction::HTTP> object.
   # Test custom transactions
   $t->tx($t->tx->previous)->status_is(302)->header_like(Location => qr/foo/);
 
-=head2 C<ua>
+=head2 ua
 
   my $ua = $t->ua;
   $t     = $t->ua(Mojo::UserAgent->new);
@@ -404,7 +473,7 @@ User agent used for testing, defaults to a L<Mojo::UserAgent> object.
 L<Test::Mojo> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
 
-=head2 C<new>
+=head2 new
 
   my $t = Test::Mojo->new;
   my $t = Test::Mojo->new('MyApp');
@@ -412,7 +481,7 @@ following new ones.
 
 Construct a new L<Test::Mojo> object.
 
-=head2 C<app>
+=head2 app
 
   my $app = $t->app;
   $t      = $t->app(MyApp->new);
@@ -437,63 +506,63 @@ Access application with L<Mojo::UserAgent/"app">.
   my $stash;
   $t->app->hook(after_dispatch => sub { $stash = shift->stash });
 
-=head2 C<content_is>
+=head2 content_is
 
   $t = $t->content_is('working!');
   $t = $t->content_is('working!', 'right content');
 
 Check response content for exact match.
 
-=head2 C<content_isnt>
+=head2 content_isnt
 
   $t = $t->content_isnt('working!');
   $t = $t->content_isnt('working!', 'different content');
 
 Opposite of C<content_is>.
 
-=head2 C<content_like>
+=head2 content_like
 
   $t = $t->content_like(qr/working!/);
   $t = $t->content_like(qr/working!/, 'right content');
 
 Check response content for similar match.
 
-=head2 C<content_unlike>
+=head2 content_unlike
 
   $t = $t->content_unlike(qr/working!/);
   $t = $t->content_unlike(qr/working!/, 'different content');
 
 Opposite of C<content_like>.
 
-=head2 C<content_type_is>
+=head2 content_type_is
 
   $t = $t->content_type_is('text/html');
   $t = $t->content_type_is('text/html', 'right content type');
 
 Check response C<Content-Type> header for exact match.
 
-=head2 C<content_type_isnt>
+=head2 content_type_isnt
 
   $t = $t->content_type_isnt('text/html');
   $t = $t->content_type_isnt('text/html', 'different content type');
 
 Opposite of C<content_type_is>.
 
-=head2 C<content_type_like>
+=head2 content_type_like
 
   $t = $t->content_type_like(qr/text/);
   $t = $t->content_type_like(qr/text/, 'right content type');
 
 Check response C<Content-Type> header for similar match.
 
-=head2 C<content_type_unlike>
+=head2 content_type_unlike
 
   $t = $t->content_type_unlike(qr/text/);
   $t = $t->content_type_unlike(qr/text/, 'different content type');
 
 Opposite of C<content_type_like>.
 
-=head2 C<delete_ok>
+=head2 delete_ok
 
   $t = $t->delete_ok('/foo');
   $t = $t->delete_ok('/foo' => {DNT => 1} => 'Hi!');
@@ -501,7 +570,7 @@ Opposite of C<content_type_like>.
 Perform a C<DELETE> request and check for transport errors, takes the same
 arguments as L<Mojo::UserAgent/"delete">.
 
-=head2 C<element_exists>
+=head2 element_exists
 
   $t = $t->element_exists('div.foo[x=y]');
   $t = $t->element_exists('html head title', 'has a title');
@@ -509,21 +578,21 @@ arguments as L<Mojo::UserAgent/"delete">.
 Checks for existence of the CSS selectors first matching HTML/XML element with
 L<Mojo::DOM>.
 
-=head2 C<element_exists_not>
+=head2 element_exists_not
 
   $t = $t->element_exists_not('div.foo[x=y]');
   $t = $t->element_exists_not('html head title', 'has no title');
 
 Opposite of C<element_exists>.
 
-=head2 C<finish_ok>
+=head2 finish_ok
 
   $t = $t->finish_ok;
   $t = $t->finish_ok('finished successfully');
 
 Finish C<WebSocket> connection.
 
-=head2 C<get_ok>
+=head2 get_ok
 
   $t = $t->get_ok('/foo');
   $t = $t->get_ok('/foo' => {DNT => 1} => 'Hi!');
@@ -531,7 +600,7 @@ Finish C<WebSocket> connection.
 Perform a C<GET> request and check for transport errors, takes the same
 arguments as L<Mojo::UserAgent/"get">.
 
-=head2 C<head_ok>
+=head2 head_ok
 
   $t = $t->head_ok('/foo');
   $t = $t->head_ok('/foo' => {DNT => 1} => 'Hi!');
@@ -539,35 +608,35 @@ arguments as L<Mojo::UserAgent/"get">.
 Perform a C<HEAD> request and check for transport errors, takes the same
 arguments as L<Mojo::UserAgent/"head">.
 
-=head2 C<header_is>
+=head2 header_is
 
   $t = $t->header_is(Expect => 'fun');
   $t = $t->header_is(Expect => 'fun', 'right header');
 
 Check response header for exact match.
 
-=head2 C<header_isnt>
+=head2 header_isnt
 
   $t = $t->header_isnt(Expect => 'fun');
   $t = $t->header_isnt(Expect => 'fun', 'different header');
 
 Opposite of C<header_is>.
 
-=head2 C<header_like>
+=head2 header_like
 
   $t = $t->header_like(Expect => qr/fun/);
   $t = $t->header_like(Expect => qr/fun/, 'right header');
 
 Check response header for similar match.
 
-=head2 C<header_unlike>
+=head2 header_unlike
 
   $t = $t->header_like(Expect => qr/fun/);
   $t = $t->header_like(Expect => qr/fun/, 'different header');
 
 Opposite of C<header_like>.
 
-=head2 C<json_content_is>
+=head2 json_content_is
 
   $t = $t->json_content_is([1, 2, 3]);
   $t = $t->json_content_is([1, 2, 3], 'right content');
@@ -575,16 +644,7 @@ Opposite of C<header_like>.
 
 Check response content for JSON data.
 
-=head2 C<json_is>
-
-  $t = $t->json_is('/foo' => {bar => [1, 2, 3]});
-  $t = $t->json_is('/foo/bar' => [1, 2, 3]);
-  $t = $t->json_is('/foo/bar/1' => 2, 'right value');
-
-Check the value extracted from JSON response using the given JSON Pointer with
-L<Mojo::JSON::Pointer>.
-
-=head2 C<json_has>
+=head2 json_has
 
   $t = $t->json_has('/foo');
   $t = $t->json_has('/minibar', 'has a minibar');
@@ -592,42 +652,97 @@ L<Mojo::JSON::Pointer>.
 Check if JSON response contains a value that can be identified using the given
 JSON Pointer with L<Mojo::JSON::Pointer>.
 
-=head2 C<json_hasnt>
+=head2 json_hasnt
 
   $t = $t->json_hasnt('/foo');
   $t = $t->json_hasnt('/minibar', 'no minibar');
 
 Opposite of C<json_has>.
 
-=head2 C<message_is>
+=head2 json_is
 
+  $t = $t->json_is('/' => {foo => [1, 2, 3]});
+  $t = $t->json_is('/foo' => [1, 2, 3]);
+  $t = $t->json_is('/foo/1' => 2, 'right value');
+
+Check the value extracted from JSON response using the given JSON Pointer with
+L<Mojo::JSON::Pointer>.
+
+=head2 json_message_has
+
+  $t = $t->json_message_has('/foo');
+  $t = $t->json_message_has('/minibar', 'has a minibar');
+
+Check if JSON WebSocket message contains a value that can be identified using
+the given JSON Pointer with L<Mojo::JSON::Pointer>.
+
+=head2 json_message_hasnt
+
+  $t = $t->json_message_hasnt('/foo');
+  $t = $t->json_message_hasnt('/minibar', 'no minibar');
+
+Opposite of C<json_message_has>.
+
+=head2 json_message_is
+
+  $t = $t->json_message_is('/' => {foo => [1, 2, 3]});
+  $t = $t->json_message_is('/foo' => [1, 2, 3]);
+  $t = $t->json_message_is('/foo/1' => 2, 'right value');
+
+Check the value extracted from JSON WebSocket message using the given JSON
+Pointer with L<Mojo::JSON::Pointer>.
+
+=head2 message_is
+
+  $t = $t->message_is({binary => $bytes});
+  $t = $t->message_is({text   => $bytes});
   $t = $t->message_is('working!');
   $t = $t->message_is('working!', 'right message');
 
 Check WebSocket message for exact match.
 
-=head2 C<message_isnt>
+=head2 message_isnt
 
+  $t = $t->message_isnt({binary => $bytes});
+  $t = $t->message_isnt({text   => $bytes});
   $t = $t->message_isnt('working!');
   $t = $t->message_isnt('working!', 'different message');
 
 Opposite of C<message_is>.
 
-=head2 C<message_like>
+=head2 message_like
 
+  $t = $t->message_like({binary => qr/$bytes/});
+  $t = $t->message_like({text   => qr/$bytes/});
   $t = $t->message_like(qr/working!/);
   $t = $t->message_like(qr/working!/, 'right message');
 
 Check WebSocket message for similar match.
 
-=head2 C<message_unlike>
+=head2 message_ok
 
+  $t = $t->message_ok;
+  $t = $t->message_ok('got a message');
+
+Wait for next WebSocket message to arrive.
+
+  # Wait for message and perform multiple tests on it
+  $t->websocket_ok('/time')
+    ->message_ok
+    ->message_like(qr/\d+/)
+    ->message_unlike(qr/\w+/)
+    ->finish_ok;
+
+=head2 message_unlike
+
+  $t = $t->message_unlike({binary => qr/$bytes/});
+  $t = $t->message_unlike({text   => qr/$bytes/});
   $t = $t->message_unlike(qr/working!/);
   $t = $t->message_unlike(qr/working!/, 'different message');
 
 Opposite of C<message_like>.
 
-=head2 C<options_ok>
+=head2 options_ok
 
   $t = $t->options_ok('/foo');
   $t = $t->options_ok('/foo' => {DNT => 1} => 'Hi!');
@@ -635,7 +750,7 @@ Opposite of C<message_like>.
 Perform a C<OPTIONS> request and check for transport errors, takes the same
 arguments as L<Mojo::UserAgent/"options">.
 
-=head2 C<or>
+=head2 or
 
   $t = $t->or(sub {...});
 
@@ -645,7 +760,7 @@ Invoke callback if previous test failed.
   $t->get_ok('/bad')->or(sub { diag 'Must have been Glen!' })
     ->status_is(200)->or(sub { diag $t->tx->res->dom->at('title')->text });
 
-=head2 C<patch_ok>
+=head2 patch_ok
 
   $t = $t->patch_ok('/foo');
   $t = $t->patch_ok('/foo' => {DNT => 1} => 'Hi!');
@@ -653,7 +768,7 @@ Invoke callback if previous test failed.
 Perform a C<PATCH> request and check for transport errors, takes the same
 arguments as L<Mojo::UserAgent/"patch">.
 
-=head2 C<post_ok>
+=head2 post_ok
 
   $t = $t->post_ok('/foo');
   $t = $t->post_ok('/foo' => {DNT => 1} => 'Hi!');
@@ -661,7 +776,7 @@ arguments as L<Mojo::UserAgent/"patch">.
 Perform a C<POST> request and check for transport errors, takes the same
 arguments as L<Mojo::UserAgent/"post">.
 
-=head2 C<post_form_ok>
+=head2 post_form_ok
 
   $t = $t->post_form_ok('/foo' => {a => 'b'});
   $t = $t->post_form_ok('/foo' => 'UTF-8' => {a => 'b'} => {DNT => 1});
@@ -672,7 +787,7 @@ the same arguments as L<Mojo::UserAgent/"post_form">.
   # Test file upload
   $t->post_form_ok('/upload' => {foo => {content => 'bar'}})->status_is(200);
 
-=head2 C<post_json_ok>
+=head2 post_json_ok
 
   $t = $t->post_json_ok('/foo' => {a => 'b'});
   $t = $t->post_json_ok('/foo' => {a => 'b'} => {DNT => 1});
@@ -685,7 +800,7 @@ the same arguments as L<Mojo::UserAgent/"post_json">.
     ->status_is(200)
     ->json_content_is({bye => 'world'});
 
-=head2 C<put_ok>
+=head2 put_ok
 
   $t = $t->put_ok('/foo');
   $t = $t->put_ok('/foo' => {DNT => 1} => 'Hi!');
@@ -693,7 +808,7 @@ the same arguments as L<Mojo::UserAgent/"post_json">.
 Perform a C<PUT> request and check for transport errors, takes the same
 arguments as L<Mojo::UserAgent/"put">.
 
-=head2 C<request_ok>
+=head2 request_ok
 
   $t = $t->request_ok(Mojo::Transaction::HTTP->new);
   $t = $t->request_ok(Mojo::Transaction::HTTP->new, 'request successful');
@@ -707,37 +822,37 @@ Perform request and check for transport errors.
     ->status_is(200)
     ->json_is('/message' => 'User has been replaced.');
 
-=head2 C<reset_session>
+=head2 reset_session
 
   $t = $t->reset_session;
 
 Reset user agent session.
 
-=head2 C<send_ok>
+=head2 send_ok
 
   $t = $t->send_ok({binary => $bytes});
   $t = $t->send_ok({text   => $bytes});
   $t = $t->send_ok([$fin, $rsv1, $rsv2, $rsv3, $op, $payload]);
-  $t = $t->send_ok('hello');
-  $t = $t->send_ok('hello', 'sent successfully');
+  $t = $t->send_ok($chars);
+  $t = $t->send_ok($chars, 'sent successfully');
 
 Send message or frame via WebSocket.
 
-=head2 C<status_is>
+=head2 status_is
 
   $t = $t->status_is(200);
   $t = $t->status_is(200, 'right status');
 
 Check response status for exact match.
 
-=head2 C<status_isnt>
+=head2 status_isnt
 
   $t = $t->status_isnt(200);
   $t = $t->status_isnt(200, 'different status');
 
 Opposite of C<status_is>.
 
-=head2 C<text_is>
+=head2 text_is
 
   $t = $t->text_is('div.foo[x=y]' => 'Hello!');
   $t = $t->text_is('html head title' => 'Hello!', 'right title');
@@ -745,14 +860,14 @@ Opposite of C<status_is>.
 Checks text content of the CSS selectors first matching HTML/XML element for
 exact match with L<Mojo::DOM>.
 
-=head2 C<text_isnt>
+=head2 text_isnt
 
   $t = $t->text_isnt('div.foo[x=y]' => 'Hello!');
   $t = $t->text_isnt('html head title' => 'Hello!', 'different title');
 
 Opposite of C<text_is>.
 
-=head2 C<text_like>
+=head2 text_like
 
   $t = $t->text_like('div.foo[x=y]' => qr/Hello/);
   $t = $t->text_like('html head title' => qr/Hello/, 'right title');
@@ -760,14 +875,14 @@ Opposite of C<text_is>.
 Checks text content of the CSS selectors first matching HTML/XML element for
 similar match with L<Mojo::DOM>.
 
-=head2 C<text_unlike>
+=head2 text_unlike
 
   $t = $t->text_unlike('div.foo[x=y]' => qr/Hello/);
   $t = $t->text_unlike('html head title' => qr/Hello/, 'different title');
 
 Opposite of C<text_like>.
 
-=head2 C<websocket_ok>
+=head2 websocket_ok
 
   $t = $t->websocket_ok('/echo');
   $t = $t->websocket_ok('/echo' => {DNT => 1});

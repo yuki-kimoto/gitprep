@@ -8,12 +8,8 @@ use Mojo::Util 'encode';
 sub parse {
   my ($self, $content, $file, $conf, $app) = @_;
 
-  # Render
-  $content = $self->render($content, $file, $conf, $app);
-
-  # Parse
   my $json   = Mojo::JSON->new;
-  my $config = $json->decode($content);
+  my $config = $json->decode($self->render($content, $file, $conf, $app));
   my $err    = $json->error;
   die qq{Couldn't parse config "$file": $err} if !$config && $err;
   die qq{Invalid config "$file".} if !$config || ref $config ne 'HASH';
@@ -30,7 +26,7 @@ sub render {
   my $prepend = q[my $app = shift; no strict 'refs'; no warnings 'redefine';];
   $prepend .= q[sub app; *app = sub { $app }; use Mojo::Base -strict;];
 
-  # Render
+  # Render and encode for JSON decoding
   my $mt = Mojo::Template->new($conf->{template} || {})->name($file);
   my $json = $mt->prepend($prepend . $mt->prepend)->render($content, $app);
   return ref $json ? die $json : encode 'UTF-8', $json;
@@ -73,8 +69,7 @@ preprocesses its input with L<Mojo::Template>.
 The application object can be accessed via C<$app> or the C<app> function. You
 can extend the normal config file C<myapp.json> with C<mode> specific ones
 like C<myapp.$mode.json>. A default configuration filename will be generated
-by decamelizing the application class with L<Mojo::Util/"decamelize"> or from
-the application filename.
+from the value of L<Mojolicious/"moniker">.
 
 The code of this plugin is a good example for learning to build new plugins,
 you're welcome to fork it.
@@ -84,7 +79,7 @@ you're welcome to fork it.
 L<Mojolicious::Plugin::JSONConfig> inherits all options from
 L<Mojolicious::Plugin::Config> and supports the following new ones.
 
-=head2 C<template>
+=head2 template
 
   # Mojolicious::Lite
   plugin JSONConfig => {template => {line_start => '.'}};
@@ -97,7 +92,7 @@ configuration files.
 L<Mojolicious::Plugin::JSONConfig> inherits all methods from
 L<Mojolicious::Plugin::Config> and implements the following new ones.
 
-=head2 C<parse>
+=head2 parse
 
   $plugin->parse($content, $file, $conf, $app);
 
@@ -111,14 +106,14 @@ Process content with C<render> and parse it with L<Mojo::JSON>.
     return $hash;
   }
 
-=head2 C<register>
+=head2 register
 
   my $config = $plugin->register(Mojolicious->new);
   my $config = $plugin->register(Mojolicious->new, {file => '/etc/foo.conf'});
 
 Register plugin in L<Mojolicious> application.
 
-=head2 C<render>
+=head2 render
 
   $plugin->render($content, $file, $conf, $app);
 
