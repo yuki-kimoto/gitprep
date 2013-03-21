@@ -2,3 +2,9 @@
 <div class="text-center" style="margin-bottom:10px">
   <a href="https://github.com/yuki-kimoto/gitprep">Gitprep</a>
 </div>
+
+% if (app->mode eq 'development') {
+  <div class="text-center">
+    <a href="<%= url_for('/dbviewer') %>">DBViewer</a>
+  </div>
+% }

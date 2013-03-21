@@ -19,7 +19,7 @@
       <h3>Repositories</h3>
       
       <table class="table">
-        % for my $rep (@$reps) {
+        % for my $rep (sort { $a->{age} <=> $b->{age} } @$reps) {
           <tr>
             % my $pname = $rep->{name};
               <td>

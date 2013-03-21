@@ -58,8 +58,80 @@ sub startup {
     }
   });
   
+  # DBI
+  my $db_file = $self->home->rel_file('db/gitprep.db');
+  my $dbi = DBIx::Custom->connect(
+    dsn => "dbi:SQLite:database=$db_file",
+    connector => 1,
+    option => {sqlite_unicode => 1}
+  );
+  $self->dbi($dbi);
+
+  # Create user table
+  eval {
+    my $sql = <<"EOS";
+create table user (
+  row_id integer primary key autoincrement,
+  id not null unique,
+  config not null
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Create project table
+  eval {
+    my $sql = <<"EOS";
+create table project (
+  row_id integer primary key autoincrement,
+  user_id not null,
+  name not null,
+  config not null,
+  unique(user_id, name)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Model
+  my $models = [
+    {table => 'user', primary_key => 'id'},
+    {table => 'project', primary_key => ['user_id', 'name']}
+  ];
+  $dbi->create_model($_) for @$models;
+
+  # Fiter
+  $dbi->register_filter(json => sub {
+    my $value = shift;
+    
+    if (ref $value) {
+      return decode('UTF-8', Mojo::JSON->new->encode($value));
+    }
+    else {
+      return Mojo::JSON->new->decode(encode('UTF-8', $value));
+    }
+  });
+  
+  # Validator
+  my $validator = Validator::Custom->new;
+  $self->validator($validator);
+  
+  # Helper
+  $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
+  
   # Route
   my $r = $self->routes->route->to('main#');
+  
+  # DBViewer(only development)
+  if ($self->mode eq 'development') {
+    eval {
+      $self->plugin(
+        'DBViewer',
+        dsn => "dbi:SQLite:database=$db_file",
+        route => $r
+      );
+    };
+  }
 
   # Home
   $r->get('/')->to('#home');
@@ -124,49 +196,6 @@ sub startup {
     # Compare
     $r->get('/compare/(#rev1)...(#rev2)')->to('#compare');
   }
-  
-  # DBI
-  my $db_file = $self->home->rel_file('db/gitprep.db');
-  my $dbi = DBIx::Custom->connect(
-    dsn => "dbi:SQLite:database=$db_file",
-    connector => 1,
-    option => {sqlite_unicode => 1}
-  );
-
-  eval {
-  # Create table
-    my $sql = <<"EOS";
-create table user (
-  row_id integer primary key autoincrement,
-  id not null unique,
-  config not null
-);
-EOS
-    $dbi->execute($sql);
-  };
-  $self->dbi($dbi);
-  
-  # Model
-  $dbi->create_model({table => 'user', primary_key => 'id'});
-  
-  # Fiter
-  $dbi->register_filter(json => sub {
-    my $value = shift;
-    
-    if (ref $value) {
-      return decode('UTF-8', Mojo::JSON->new->encode($value));
-    }
-    else {
-      return Mojo::JSON->new->decode(encode('UTF-8', $value));
-    }
-  });
-  
-  # Validator
-  my $validator = Validator::Custom->new;
-  $self->validator($validator);
-  
-  # Helper
-  $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
 }
 
 1;

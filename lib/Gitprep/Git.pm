@@ -5,7 +5,7 @@ use Carp 'croak';
 use File::Find 'find';
 use File::Basename qw/basename dirname/;
 use Fcntl ':mode';
-use File::Path 'mkpath';
+use File::Path qw/mkpath rmtree/;
 use File::Copy 'move';
 
 # Attributes
@@ -198,69 +198,6 @@ sub blob_size_kb {
   return $size_kb;
 }
 
-sub check_head_link {
-  my ($self, $dir) = @_;
-  
-  # Chack head
-  my $head_file = "$dir/HEAD";
-  return ((-e $head_file) ||
-    (-l $head_file && readlink($head_file) =~ /^refs\/heads\//));
-}
-
-sub _cmd {
-  my ($self, $user, $project, @cmd) = @_;
-  
-  my $home = $self->rep_home;
-  
-  my $rep = "$home/$user/$project.git";
-  
-  # Execute git command
-  return ($self->bin, "--git-dir=$rep", @cmd);
-}
-
-sub create_repository {
-  my ($self, $user, $project, $opts) = @_;
-  
-  # Repository
-  my $rep_home = $self->rep_home;
-  my $rep = "$rep_home/$user/$project.git";
-  mkpath $rep;
-    
-  # Git init
-  my @git_init_cmd = $self->_cmd($user, $project, 'init', '--bare');
-  system(@git_init_cmd) == 0
-    or croak "Can't execute git init";
-    
-  # Add git-daemon-export-ok
-  {
-    my $file = "$rep/git-daemon-export-ok";
-    open my $fh, '>', $file
-      or croak "Can't create git-daemon-export-ok: $!"
-  }
-  
-  # HTTP support
-  my @git_update_server_info_cmd = $self->_cmd(
-    $user,
-    $project,
-    '--bare',
-    'update-server-info'
-  );
-  system(@git_update_server_info_cmd) == 0
-    or croak "Can't execute git --bare update-server-info";
-  move("$rep/hooks/post-update.sample", "$rep/hooks/post-update")
-    or croak "Can't move post-update";
-  
-  # Description
-  if (my $description = $opts->{description}) {
-    my $file = "$rep/description";
-    open my $fh, '>', $file
-      or croak "Can't open $file: $!";
-    print $fh $description
-      or croak "Can't write $file: $!";
-    close $fh;
-  }
-}
-
 sub branch_exists {
   my ($self, $user, $project) = @_;
   
@@ -316,31 +253,63 @@ sub branch_commits {
   return $commits;
 }
 
-sub separated_commit {
-  my ($self, $user, $project, $rev1, $rev2) = @_;
+sub check_head_link {
+  my ($self, $dir) = @_;
   
-  # Command "git diff-tree"
-  my @cmd = $self->_cmd(
-    $user,
-    $project,
-    'show-branch',
-    $rev1,
-    $rev2
-  );
-  open my $fh, "-|", @cmd
-    or croak 500, "Open git-show-branch failed";
+  # Chack head
+  my $head_file = "$dir/HEAD";
+  return ((-e $head_file) ||
+    (-l $head_file && readlink($head_file) =~ /^refs\/heads\//));
+}
 
-  my $commits = [];
-  my $start;
-  my @lines = <$fh>;
-  my $last_line = pop @lines;
-  my $commit;
-  if (defined $last_line) {
-      my ($id) = $last_line =~ /^.*?\[(.+)?\]/;
-      $commit = $self->parse_commit($user, $project, $id);
+sub create_repository {
+  my ($self, $user, $project, $opts) = @_;
+
+  my $rep_home = $self->rep_home;
+  my $rep = "$rep_home/$user/$project.git";
+  eval {
+    # Repository
+    mkpath $rep;
+      
+    # Git init
+    my @git_init_cmd = $self->_cmd($user, $project, 'init', '--bare');
+    system(@git_init_cmd) == 0
+      or croak "Can't execute git init";
+      
+    # Add git-daemon-export-ok
+    {
+      my $file = "$rep/git-daemon-export-ok";
+      open my $fh, '>', $file
+        or croak "Can't create git-daemon-export-ok: $!"
+    }
+    
+    # HTTP support
+    my @git_update_server_info_cmd = $self->_cmd(
+      $user,
+      $project,
+      '--bare',
+      'update-server-info'
+    );
+    system(@git_update_server_info_cmd) == 0
+      or croak "Can't execute git --bare update-server-info";
+    move("$rep/hooks/post-update.sample", "$rep/hooks/post-update")
+      or croak "Can't move post-update";
+    
+    # Description
+    if (my $description = $opts->{description}) {
+      my $file = "$rep/description";
+      open my $fh, '>', $file
+        or croak "Can't open $file: $!";
+      print $fh $description
+        or croak "Can't write $file: $!";
+      close $fh;
+    }
+  };
+  if ($@) {
+    my $error = $@;
+    $self->remove_repository($user, $project);
+    die "$error\n";
   }
-
-  return $commit;
 }
 
 sub commits_number {
@@ -361,6 +330,12 @@ sub commits_number {
   }
   
   return $commits_num;
+}
+
+sub exists_repository {
+  my ($self, $user, $project) = @_;
+  
+  return -e $self->rep($user, $project);
 }
 
 sub file_type {
@@ -732,6 +707,7 @@ sub projects {
       $rep->{age} = $activity[0];
       $rep->{age_string} = $activity[1];
     }
+    else { $rep->{age} = 0 }
     
     my $description = $self->description($user, $project) || '';
     $rep->{description} = $self->_chop_str($description, 25, 5);
@@ -1151,6 +1127,16 @@ sub parse_ls_tree_line {
   return \%res;
 }
 
+sub remove_repository {
+  my ($self, $user, $project) = @_;
+
+  my $rep_home = $self->rep_home;
+  croak "Can't remove repository. repositry home is empty"
+    if !defined $rep_home || $rep_home eq '';
+  my $rep = "$rep_home/$user/$project.git";
+  rmtree $rep;
+}
+
 sub search_bin {
   my $self = shift;
   
@@ -1173,6 +1159,33 @@ sub search_bin {
   return $bin if -f $bin;
   
   return;
+}
+
+sub separated_commit {
+  my ($self, $user, $project, $rev1, $rev2) = @_;
+  
+  # Command "git diff-tree"
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'show-branch',
+    $rev1,
+    $rev2
+  );
+  open my $fh, "-|", @cmd
+    or croak 500, "Open git-show-branch failed";
+
+  my $commits = [];
+  my $start;
+  my @lines = <$fh>;
+  my $last_line = pop @lines;
+  my $commit;
+  if (defined $last_line) {
+      my ($id) = $last_line =~ /^.*?\[(.+)?\]/;
+      $commit = $self->parse_commit($user, $project, $id);
+  }
+
+  return $commit;
 }
 
 sub snapshot_name {
@@ -1285,33 +1298,6 @@ sub _chop_str {
   }
 }
 
-sub _mode_str {
-  my $self = shift;
-  my $mode = oct shift;
-
-  # Mode to string
-  if ($self->_s_isgitlink($mode)) { return 'm---------' }
-  elsif (S_ISDIR($mode & S_IFMT)) { return 'drwxr-xr-x' }
-  elsif (S_ISLNK($mode)) { return 'lrwxrwxrwx' }
-  elsif (S_ISREG($mode)) {
-    if ($mode & S_IXUSR) {
-      return '-rwxr-xr-x';
-    } else {
-      return '-rw-r--r--'
-    }
-  } else { return '----------' }
-  
-  return;
-}
-
-sub _s_isgitlink {
-  my ($self, $mode) = @_;
-  
-  # Check if git link
-  my $s_ifgitlink = 0160000;
-  return (($mode & S_IFMT) == $s_ifgitlink)
-}
-
 sub timestamp {
   my ($self, $date) = @_;
   
@@ -1368,6 +1354,44 @@ sub trees {
   $trees = [sort {$b->{type} cmp $a->{type} || $a->{name} cmp $b->{name}} @$trees];
   
   return $trees;
+}
+
+sub _cmd {
+  my ($self, $user, $project, @cmd) = @_;
+  
+  my $home = $self->rep_home;
+  
+  my $rep = "$home/$user/$project.git";
+  
+  # Execute git command
+  return ($self->bin, "--git-dir=$rep", @cmd);
+}
+
+sub _mode_str {
+  my $self = shift;
+  my $mode = oct shift;
+
+  # Mode to string
+  if ($self->_s_isgitlink($mode)) { return 'm---------' }
+  elsif (S_ISDIR($mode & S_IFMT)) { return 'drwxr-xr-x' }
+  elsif (S_ISLNK($mode)) { return 'lrwxrwxrwx' }
+  elsif (S_ISREG($mode)) {
+    if ($mode & S_IXUSR) {
+      return '-rwxr-xr-x';
+    } else {
+      return '-rw-r--r--'
+    }
+  } else { return '----------' }
+  
+  return;
+}
+
+sub _s_isgitlink {
+  my ($self, $mode) = @_;
+  
+  # Check if git link
+  my $s_ifgitlink = 0160000;
+  return (($mode & S_IFMT) == $s_ifgitlink)
 }
 
 sub _slurp {

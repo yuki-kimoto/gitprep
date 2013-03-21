@@ -1,5 +1,5 @@
 <%
-  my $op = param('op');
+  my $op = param('op') || '';
   
   my $errors;
   if ($op eq 'create') {
@@ -8,7 +8,7 @@
     
     # Validation
     my $params = $api->params;
-    my $project_check = sub {
+    my $keyword_check = sub {
       my $value = shift;
       
       return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/
@@ -16,7 +16,7 @@
     my $rule = [
       project => [
         ['not_blank' => 'Repository name is empty'],
-        [$project_check => 'Invalid repository name']
+        [$keyword_check => 'Invalid repository name']
       ],
       description => [
         'any'
@@ -25,20 +25,49 @@
     my $validator = app->validator;
     my $vresult = $validator->validate($params, $rule);
     
+    # Git
+    my $git = app->git;
     if ($vresult->is_ok) {
-      my $user = session('user_id');
+      # Not logined
+      unless ($api->logined) {
+        return $self->render_exception;
+      }
+      
       my $data = $vresult->data;
+      my $user = session('user_id');
       my $project = $data->{project};
       my $description = $data->{description};
-      
-      app->git->create_repository(
-        $user,
-        $project,
-        {description => $description}
-      );
-      
-      $self->redirect_to("/$user/$project");
-      return 1;
+
+      if ($git->exists_repository($user, $project)) {
+        $errors = ['Repositry already exists'];
+      }
+      else {
+        # Create repository
+        eval {
+          $git->create_repository(
+            $user,
+            $project,
+            {description => $description}
+          );
+        };
+        $api->croak($@) if $@;
+        
+        # Create repository data
+        eval {
+          app->dbi->model('project')
+            ->insert({config => '{}'}, id => [$user, $project]);
+        };
+        if ($@) {
+          my $error = $@;
+          $git->remove_repository($user, $project);
+          $api->croak($error);
+        }
+        
+        # Go to user page
+        $self->redirect_to("/$user/$project");
+        
+        return 1;
+      }
     }
     else { $errors = $vresult->messages }
   }
