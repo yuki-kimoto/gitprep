@@ -22,9 +22,16 @@
           <a class="btn" href="#rename">Rename</a>
         </div>
       </div>
+      <div class="padding5 border-gray" style="border-top:none">
+        <div >Description</div>
+        <div>
+          % my $description = $git->description($user, $project);
+          %= text_field 'description' => $description, class => 'span8', style => 'margin-top:9px';
+          <a class="btn" href="#description">Save</a>
+        </div>
+      </div>
       <div class="border-gray padding5" style="border-top:none">
         Default Branch
-        % use D;d my $branches = $git->branches($user, $project);
         % my $branch_names = [map { $_->{name} } @$branches];
         %= select_field 'default_branch' => $branch_names, style => 'margin-top:5px';
       </div>
