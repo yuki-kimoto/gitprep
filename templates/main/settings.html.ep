@@ -1,8 +1,45 @@
 <%
+  my $api = gitprep_api;
+  my $logined = $api->logined;
+  my $user_is_valid = $logined && $user eq session('user_id');
+
   my $git = app->git;
+
+  my $op = param('op') || '';
+  
+  $api->croak("Fobbiden") if !$user_is_valid;
+  
+  if ($op eq 'change_description') {
+    my $description = param('description');
+    $description = '' unless defined $description;
+    
+    $git->description($user, $project, $description);
+    $self->render(json => {ok => 1});
+    return $self->res->body;
+  }
 %>
 
 % layout 'common';
+  
+  %= javascript begin
+  
+    $(document).ready(function () {
+    
+      // Change description
+      $('a[href="#description"]').on('click', function () {
+        var description = $('input[name="description"]').val();
+        var url = "<%= url_for %>?op=change_description&description=" + description;
+        $.post(url, function (result) {
+          if (result.ok) {
+            $('#modal-message').text('Description is changed');
+            $('#success').modal('show');
+          }
+        });
+      });
+      
+    });
+  
+  % end
   
   %= include '/include/header';
   
@@ -32,6 +69,7 @@
       </div>
       <div class="border-gray padding5" style="border-top:none">
         Default Branch
+        % my $branches = $git->branches($user, $project);
         % my $branch_names = [map { $_->{name} } @$branches];
         %= select_field 'default_branch' => $branch_names, style => 'margin-top:5px';
       </div>
@@ -50,4 +88,13 @@
     </div>
   </div>
   
+  <div id="success" class="modal hide">
+    <div class="modal-header">
+      <div id="modal-message" style="font-weight:bold"></div>
+    </div>
+    <div class="modal-body">
+      <button class="btn" data-dismiss="modal" aria-hidden="true">OK</button>
+    </div>
+  </div>
+
   %= include '/include/footer';

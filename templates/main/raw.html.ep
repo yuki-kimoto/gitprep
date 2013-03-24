@@ -63,5 +63,7 @@
   $self->res->headers->content_disposition($content_disposition);
   $self->res->headers->content_type($type);
   
-  return $content;
+  $self->render(text => $content);
+  
+  return $self->res->body;
 %>

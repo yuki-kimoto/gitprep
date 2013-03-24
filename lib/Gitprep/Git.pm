@@ -583,15 +583,24 @@ sub rep {
 }
 
 sub description {
-  my ($self, $user, $project) = @_;
+  my ($self, $user, $project, $description) = @_;
   
   my $rep = $self->rep($user, $project);
-  
-  # Project Description
   my $file = "$rep/description";
-  my $description = $self->_slurp($file) || '';
   
-  return $description;
+  if (defined $description) {
+    # Write description
+    open my $fh, '>',$file
+      or croak "Can't open file $rep: $!";
+    print $fh encode('UTF-8', $description)
+      or croak "Can't write description: $!";
+    close $fh;
+  }
+  else {
+    # Read description
+    my $description = $self->_slurp($file) || '';
+    return $description;
+  }
 }
 
 sub last_activity {
