@@ -14,9 +14,11 @@
 
   # Git
   my $git = app->git;
+
+  # Repository description
+  my $desc = $git->description($user, $project);
   
   # Check exsitence
-  my $desc;
   my $commits_number;
   my $readme;
   if ($git->branch_exists($user, $project)) {
@@ -37,9 +39,6 @@
     
     # Tree
     my $trees = $git->trees($user, $project, $tid, $rev);
-    
-    # Repository description
-    $desc = $git->description($user, $project);
     
     # Commits number
     $commits_number = $git->commits_number($user, $project, $rev);
@@ -105,20 +104,20 @@
   
   <div class="container">
     %= include '/include/project_header';
-    
-    % if ($state eq 'display') {
-      <div class="row">
-        <div class="span10">
-          <h4 style="margin-top:5px">
-            <%= $desc %>
-          </h4>
-        </div>
-        <div class="span2 text-right">
-          % if ($logined && $user eq session('user_id')) {
-            <a class="btn" href="<%= url_for("/$user/$project/settings") %>">Settings</a>
-          % }
-        </div>
+
+    <div class="row">
+      <div class="span10">
+        <h4 style="margin-top:5px">
+          <%= $desc %>
+        </h4>
       </div>
+      <div class="span2 text-right">
+        % if ($logined && $user eq session('user_id')) {
+          <a class="btn" href="<%= url_for("/$user/$project/settings") %>">Settings</a>
+        % }
+      </div>
+    </div>
+    % if ($state eq 'display') {
       <div class="border-gray" style="padding:0 5px;margin-bottom:10px">
         <a class="btn" href="<%= url_for("/$user/$project/archive/master.zip") %>">
           <i class="icon-arrow-down"></i>ZIP
