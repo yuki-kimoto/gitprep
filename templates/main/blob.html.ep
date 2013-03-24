@@ -53,13 +53,6 @@
 
 % layout 'common';
 
-  %= javascript begin
-    $(document).ready(function () {
-      // Google prety print
-      prettyPrint();
-    });
-  % end
-  
   %= include '/include/header';
 
   <div class="container">
@@ -111,4 +104,11 @@
       </pre>
     % }
   </div>
+  
+  %= javascript '/js/google-code-prettify/prettify.js';
+  %= javascript begin
+    // Google prety print
+    prettyPrint();
+  % end
+  
   %= include '/include/footer';

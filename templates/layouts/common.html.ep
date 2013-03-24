@@ -8,7 +8,6 @@
     %= stylesheet '/js/google-code-prettify/prettify.css';
     %= javascript '/js/jquery-1.9.0.min.js';
     %= javascript '/js/bootstrap.js';
-    %= javascript '/js/google-code-prettify/prettify.js';
     
     <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" >
     
