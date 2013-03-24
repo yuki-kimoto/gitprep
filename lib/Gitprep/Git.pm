@@ -461,8 +461,15 @@ sub difftree {
 sub no_merged_branches {
   my ($self, $user, $project) = @_;
   
+  return $self->branches($user, $project, {no_merged => 1});
+}
+
+sub branches {
+  my ($self, $user, $project, $opts) = @_;
+  
   # Command "git branch --no-merged"
-  my @cmd = $self->_cmd($user, $project, 'branch', '--no-merged');
+  my @cmd = $self->_cmd($user, $project, 'branch');
+  push @cmd, , '--no-merged' if $opts->{no_merged};
   open my $fh, '-|', @cmd or return;
   
   my @branch_names

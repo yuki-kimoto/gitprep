@@ -98,7 +98,7 @@
   <div class="border-gray" style="padding-top:15px;padding-left:60px;width:300px;margin-left:auto;margin-right:auto">
     <form action="<%= url_for->query(op => 'login') %>" method="post">
       <div class="control-group">
-        <label class="control-label" for="user-name">user-name</label>
+        <label class="control-label" for="user-name">User name</label>
         <div class="controls">
           <%= input_tag id => $id, type => 'text', placeholder => 'User', id =>'user-name'%>
         </div>

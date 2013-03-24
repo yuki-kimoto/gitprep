@@ -107,10 +107,18 @@
     %= include '/include/project_header';
     
     % if ($state eq 'display') {
-      <h4 style="margin-top:0px">
-        <%= $desc %>
-      </h4>
-      
+      <div class="row">
+        <div class="span10">
+          <h4 style="margin-top:5px">
+            <%= $desc %>
+          </h4>
+        </div>
+        <div class="span2 text-right">
+          % if ($logined && $user eq session('user_id')) {
+            <a class="btn" href="<%= url_for("/$user/$project/settings") %>">Settings</a>
+          % }
+        </div>
+      </div>
       <div class="border-gray" style="padding:0 5px;margin-bottom:10px">
         <a class="btn" href="<%= url_for("/$user/$project/archive/master.zip") %>">
           <i class="icon-arrow-down"></i>ZIP

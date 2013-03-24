@@ -195,6 +195,9 @@ EOS
     
     # Compare
     $r->get('/compare/(#rev1)...(#rev2)')->to('#compare');
+    
+    # Settings
+    $r->get('/settings')->to('#settings');
   }
 }
 

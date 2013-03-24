@@ -1,0 +1,46 @@
+<%
+  my $git = app->git;
+%>
+
+% layout 'common';
+  
+  %= include '/include/header';
+  
+  <div class="container">
+    %= include '/include/project_header';
+    
+    <div style="margin-bottom:20px">
+      <div class="border-gray bk-gray-light" style="padding-left:5px">
+        <h4>
+          Settings
+        </h4>
+      </div>
+      <div class="padding5 border-gray" style="border-top:none">
+        <div >Repository Name</div>
+        <div>
+          %= text_field 'project' => $project, style => 'margin-top:9px';
+          <a class="btn" href="#rename">Rename</a>
+        </div>
+      </div>
+      <div class="border-gray padding5" style="border-top:none">
+        Default Branch
+        % use D;d my $branches = $git->branches($user, $project);
+        % my $branch_names = [map { $_->{name} } @$branches];
+        %= select_field 'default_branch' => $branch_names, style => 'margin-top:5px';
+      </div>
+    </div>
+    
+    <div>
+      <div class="border-gray bk-gray-light" style="background-color:red;padding-left:5px">
+        <h4 style="color:white">Danger Zone</h4>
+      </div>
+      <div class="padding5 border-gray" style="border-top:none">
+        <div><b>Delete this repository</b></div>
+        <span class="muted">
+          Once you delete a repository, there is no going back.
+        </span>
+        <a style="color:red" class="btn" href="#delete">Delete this repository</a>
+    </div>
+  </div>
+  
+  %= include '/include/footer';
