@@ -115,6 +115,18 @@ EOS
   # Validator
   my $validator = Validator::Custom->new;
   $self->validator($validator);
+  $validator->register_constraint(
+    user_name => sub {
+      my $value = shift;
+      
+      return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/
+    },
+    project_name => sub {
+      my $value = shift;
+      
+      return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/
+    }
+  );
   
   # Helper
   $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });

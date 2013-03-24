@@ -15,6 +15,12 @@
         /
         <li><a href="<%= url_for %>"><%= $user %></a></li>
       </ul>
+      % if (my $message = flash('delete_message')) {
+        <div class="alert alert-success">
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+          <strong><%= $message %></strong>
+        </div>
+      % }
 
       <h3>Repositories</h3>
       

@@ -17,13 +17,49 @@
     $self->render(json => {ok => 1});
     return $self->res->body;
   }
+  elsif ($op eq 'delete-project') {
+    my $params = $api->params;
+    
+    my $rule = [
+      user => [
+        'user_name'
+      ],
+      project => [
+        'project_name'
+      ]
+    ];
+    my $vresult = app->validator->validate($params, $rule);
+    
+    if ($vresult->is_ok) {
+      my $data = $vresult->data;
+      my $user = $data->{user};
+      my $project = $data->{project};
+      
+      eval { $git->delete_project($user, $project) };
+      my $error1 = $@;
+      eval { $api->delete_project($user, $project) };
+      my $error2 = $@;
+      
+      if (!$error1 && !$error2) {
+        $self->render(json => {ok => 1});
+      }
+      else {
+        app->log->fatal($error1) if $error1;
+        app->log->fatal($error2) if $error2;
+        $self->render(json => {ok => 0});
+      }
+      return $self->res->body;
+    }
+    else { $api->croak('Invalid') }
+  }
 %>
 
 % layout 'common';
   
   %= javascript begin
-  
+    
     $(document).ready(function () {
+    
       // Change description
       $('a[href="#description"]').on('click', function () {
         var description = $('input[name="description"]').val();
@@ -32,6 +68,38 @@
           if (result.ok) {
             $('#modal-message').text('Description is changed');
             $('#success').modal('show');
+          }
+        });
+      });
+      
+      // Check matching deleted project
+      $('input[name="deleted-project"]').on('keyup', function () {
+        var deleted_project = $(this).val();
+        var project = "<%= $project %>";
+        
+        if (deleted_project == project) {
+          $('#delete').attr('class', 'btn btn-danger')
+            .removeAttr('disabled');
+        }
+        else {
+          $('#delete').attr('class', 'btn btn-danger disabled')
+            .attr('disabled', 'disabled');
+        }
+      });
+      
+      // Delete project
+      $('#delete').on('click', function () {
+        var deleted_project = $('input[name="deleted-project"]').val();
+        var url = "<%= url_for %>";
+        var data = {
+          op : "delete-project",
+          user: "<%= $user %>",
+          project: "<%= $project %>",
+          "deleted-project" : deleted_project,
+        };
+        $.post(url, data, function (result) {
+          if (result.ok) {
+            location.href = "<%= url_for("/$user") %>";
           }
         });
       });
@@ -86,7 +154,9 @@
         <span class="muted">
           Once you delete a repository, there is no going back.
         </span>
-        <a style="color:red" class="btn" href="#delete">Delete this repository</a>
+        <a style="color:red" href="#delete-confirm" role="button" class="btn" data-toggle="modal">
+          Delete this repository
+        </a>
     </div>
   </div>
   
@@ -96,6 +166,31 @@
     </div>
     <div class="modal-body">
       <button class="btn" data-dismiss="modal" aria-hidden="true">OK</button>
+    </div>
+  </div>
+  
+  <div id="delete-confirm" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="delete-confirm-label" aria-hidden="true">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+      <div id="modal-message" style="font-weight:bold">Are you ABSOLUTELY sure?</div>
+    </div>
+    <div class="modal-body">
+      <p>
+        Unexpected bad things will happen if you don't read this.
+      </p>
+      <p>
+        This action <b>CANNOT</b> be undone. This will delete the <b><%= "$user/$project" %></b>
+        repository, wiki, issues, and comments permanently.
+      </p>
+      <p>
+        Please type in the name of the repository(<b><%= $project %></b>) to confirm.
+      </p>
+      %= text_field 'deleted-project', class => 'span5';
+    </div>
+    <div class="modal-footer">
+      <button id="delete" class="btn btn-danger disabled" disabled data-dismiss="modal" aria-hidden="true">
+        I understand the consequences, delete this repository
+      </button>
     </div>
   </div>
 

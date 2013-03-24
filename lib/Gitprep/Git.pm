@@ -332,6 +332,15 @@ sub commits_number {
   return $commits_num;
 }
 
+sub delete_project {
+  my ($self, $user, $project) = @_;
+  
+  croak "Invalid user name or project"
+    unless defined $user && defined $project;
+  my $rep = $self->rep($user, $project);
+  rmtree($rep);
+}
+
 sub exists_repository {
   my ($self, $user, $project) = @_;
   
@@ -574,14 +583,6 @@ sub path_by_id {
   return;
 }
 
-sub rep {
-  my ($self, $user, $project) = @_;
-  
-  my $home = $self->rep_home;
-  
-  return "$home/$user/$project.git";
-}
-
 sub description {
   my ($self, $user, $project, $description) = @_;
   
@@ -671,35 +672,6 @@ sub project_urls {
   return \@urls;
 }
 
-sub references {
-  my ($self, $user, $project, $type) = @_;
-  
-  $type ||= '';
-  
-  # Get references
-  my @cmd = $self->_cmd(
-    $user,
-    $project,
-    'show-ref',
-    '--dereference',
-    ($type ? ('--', "refs/$type") : ())
-  );
-  open my $fh, '-|', @cmd or return;
-  
-  # Parse references
-  my %refs;
-  while (my $line = $self->dec(scalar <$fh>)) {
-    chomp $line;
-    if ($line =~ m!^([0-9a-fA-F]{40})\srefs/($type.*)$!) {
-      if (defined $refs{$1}) { push @{$refs{$1}}, $2 }
-      else { $refs{$1} = [$2] }
-    }
-  }
-  close $fh or return;
-  
-  return \%refs;
-}
-
 sub projects {
   my ($self, $user, $opts) = @_;
   
@@ -732,6 +704,43 @@ sub projects {
   }
   
   return \@reps;
+}
+
+sub references {
+  my ($self, $user, $project, $type) = @_;
+  
+  $type ||= '';
+  
+  # Get references
+  my @cmd = $self->_cmd(
+    $user,
+    $project,
+    'show-ref',
+    '--dereference',
+    ($type ? ('--', "refs/$type") : ())
+  );
+  open my $fh, '-|', @cmd or return;
+  
+  # Parse references
+  my %refs;
+  while (my $line = $self->dec(scalar <$fh>)) {
+    chomp $line;
+    if ($line =~ m!^([0-9a-fA-F]{40})\srefs/($type.*)$!) {
+      if (defined $refs{$1}) { push @{$refs{$1}}, $2 }
+      else { $refs{$1} = [$2] }
+    }
+  }
+  close $fh or return;
+  
+  return \%refs;
+}
+
+sub rep {
+  my ($self, $user, $project) = @_;
+  
+  my $home = $self->rep_home;
+  
+  return "$home/$user/$project.git";
 }
 
 sub short_id {
