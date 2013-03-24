@@ -79,5 +79,19 @@ sub params {
   return \%params;
 }
 
+sub default_branch {
+  my ($self, $user, $project) = @_;
+  
+  my $c = $self->cntl;
+  my $dbi = $c->app->dbi;
+  my $row = $dbi->model('project')
+    ->select('config', id => [$user, $project])->one;
+  return unless $row;
+  
+  my $config = $self->json($row->{config});
+
+  
+  return $config->{default_branch};
+}
 1;
 

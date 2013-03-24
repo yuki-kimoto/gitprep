@@ -24,7 +24,6 @@
   %= javascript begin
   
     $(document).ready(function () {
-    
       // Change description
       $('a[href="#description"]').on('click', function () {
         var description = $('input[name="description"]').val();
@@ -37,6 +36,9 @@
         });
       });
       
+      // Select default branch
+      var default_branch = "<%= $api->default_branch($user, $project) %>";
+      $('select[name="default_branch"]').val(default_branch);
     });
   
   % end

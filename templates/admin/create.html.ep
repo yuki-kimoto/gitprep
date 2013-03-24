@@ -54,8 +54,11 @@
         
         # Create repository data
         eval {
+          my $config = {default_branch => 'master'};
+          my $config_json = $api->json($config);
+          
           app->dbi->model('project')
-            ->insert({config => '{}'}, id => [$user, $project]);
+            ->insert({config => $config_json}, id => [$user, $project]);
         };
         if ($@) {
           my $error = $@;
