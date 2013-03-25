@@ -341,6 +341,27 @@ sub delete_project {
   rmtree($rep);
 }
 
+sub description {
+  my ($self, $user, $project, $description) = @_;
+  
+  my $rep = $self->rep($user, $project);
+  my $file = "$rep/description";
+  
+  if (defined $description) {
+    # Write description
+    open my $fh, '>',$file
+      or croak "Can't open file $rep: $!";
+    print $fh encode('UTF-8', $description)
+      or croak "Can't write description: $!";
+    close $fh;
+  }
+  else {
+    # Read description
+    my $description = $self->_slurp($file) || '';
+    return $description;
+  }
+}
+
 sub exists_repository {
   my ($self, $user, $project) = @_;
   
@@ -583,27 +604,6 @@ sub path_by_id {
   return;
 }
 
-sub description {
-  my ($self, $user, $project, $description) = @_;
-  
-  my $rep = $self->rep($user, $project);
-  my $file = "$rep/description";
-  
-  if (defined $description) {
-    # Write description
-    open my $fh, '>',$file
-      or croak "Can't open file $rep: $!";
-    print $fh encode('UTF-8', $description)
-      or croak "Can't write description: $!";
-    close $fh;
-  }
-  else {
-    # Read description
-    my $description = $self->_slurp($file) || '';
-    return $description;
-  }
-}
-
 sub last_activity {
   my ($self, $user, $project) = @_;
   
@@ -733,6 +733,26 @@ sub references {
   close $fh or return;
   
   return \%refs;
+}
+
+sub rename_project {
+  my ($self, $user, $project, $renamed_project) = @_;
+  
+  croak "Invalid user name or project"
+    unless defined $user && defined $project && defined $renamed_project;
+  my $rep = $self->rep($user, $project);
+  my $renamed_rep = $self->rep($user, $renamed_project);
+  
+  move($rep, $renamed_rep)
+    or croak "Can't move $rep to $renamed_rep: $!";
+}
+
+sub exists_project {
+  my ($self, $user, $project) = @_;
+  
+  my $rep = $self->rep($user, $project);
+  
+  return -e $rep;
 }
 
 sub rep {

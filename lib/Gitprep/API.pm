@@ -101,5 +101,28 @@ sub delete_project {
   my $dbi = $c->app->dbi;
   $dbi->model('project')->delete(id => [$user, $project]);
 }
+
+sub exists_project {
+  my ($self, $user, $project) = @_;
+
+  my $c = $self->cntl;
+  my $dbi = $c->app->dbi;
+  my $row = $dbi->model('project')->select(id => [$user, $project])->one;
+  
+  return $row ? 1 : 0;
+}
+
+sub rename_project {
+  my ($self, $user, $project, $renamed_project) = @_;
+  
+  my $c = $self->cntl;
+  my $dbi = $c->app->dbi;
+  
+  croak "Invalid parameters"
+    unless defined $user && defined $project && defined $renamed_project;
+  
+  $dbi->model('project')->update({name => $renamed_project}, id => [$user, $project]);
+}
+
 1;
 

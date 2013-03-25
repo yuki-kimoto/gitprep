@@ -1,4 +1,6 @@
 <%
+  use Gitprep::RepManager;
+
   my $api = gitprep_api;
   my $logined = $api->logined;
   my $user_is_valid = $logined && $user eq session('user_id');
@@ -9,7 +11,46 @@
   
   $api->croak("Fobbiden") if !$user_is_valid;
   
-  if ($op eq 'change_description') {
+  if ($op eq 'rename-project') {
+  
+    # Validation
+    my $params = $api->params;
+    my $rule = [
+      user => [
+        'user_name'
+      ],
+      project => [
+        'project_name'
+      ],
+      'renamed-project' => [
+        'project_name'
+      ]
+    ];
+    my $vresult = app->validator->validate($params, $rule);
+    
+    if ($vresult->is_ok) {
+      # Valida parameters
+      my $data = $vresult->data;
+      my $user = $data->{user};
+      my $project = $data->{project};
+      my $renamed_project = $data->{'renamed-project'};
+      
+      # Rename
+      my $manager = Gitprep::RepManager->new(c => $self);
+      my $error = $manager->rename_project($user, $project, $renamed_project);
+      if (ref $error) {
+        $self->render(json => {ok => 0, message => $error->{message}});
+      }
+      else {
+        $self->render(json => {ok => 1});
+      }
+      return $self->res->body;
+    }
+    else {
+      $self->render(json => {ok => 0, message => 'Invalid Parameters'});
+    }
+  }
+  elsif ($op eq 'change_description') {
     my $description = param('description');
     $description = '' unless defined $description;
     
@@ -60,6 +101,28 @@
     
     $(document).ready(function () {
     
+      // Rename project name
+      $('#rename').on('click', function () {
+        var renamed_project = $('input[name="renamed-project"]').val();
+        
+        var url = "<%= url_for %>";
+        var data = {
+          op : "rename-project",
+          user: "<%= $user %>",
+          project: "<%= $project %>",
+          'renamed-project': renamed_project
+        };
+        $.post(url, data, function (result) {
+          if (result.ok) {
+            location.href = "<%= url_for("/$user") %>" + '/' + renamed_project;
+          }
+          else {
+            $('#modal-message').text('Rename failed:' + result.message);
+            $('#success').modal('show');
+          }
+        });
+      });
+      
       // Change description
       $('a[href="#description"]').on('click', function () {
         var description = $('input[name="description"]').val();
@@ -125,8 +188,10 @@
       <div class="padding5 border-gray" style="border-top:none">
         <div >Repository Name</div>
         <div>
-          %= text_field 'project' => $project, style => 'margin-top:9px';
-          <a class="btn" href="#rename">Rename</a>
+          %= text_field 'renamed-project' => $project, style => 'margin-top:9px';
+          <a href="#rename-confirm" role="button" class="btn" data-toggle="modal">
+            Rename
+          </a>
         </div>
       </div>
       <div class="padding5 border-gray" style="border-top:none">
@@ -135,6 +200,10 @@
           % my $description = $git->description($user, $project);
           %= text_field 'description' => $description, class => 'span8', style => 'margin-top:9px';
           <a class="btn" href="#description">Save</a>
+        </div>
+        <div id="description-success" class="alert alert-success" style="width:150px;display:none">
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+          Savaed!
         </div>
       </div>
       <div class="border-gray padding5" style="border-top:none">
@@ -168,7 +237,32 @@
       <button class="btn" data-dismiss="modal" aria-hidden="true">OK</button>
     </div>
   </div>
-  
+
+  <div id="rename-confirm" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="rename-confirm-label" aria-hidden="true">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+      <div id="modal-message" style="font-weight:bold">Are you sure you want to rename?</div>
+    </div>
+    <div class="modal-body">
+      <p>
+        Unexpected bad things will happen if you don't read this
+      </p>
+      <ul>
+        <li>
+          We will not set up any redirects from the old location
+        </li>
+        <li>
+          You will need to update your local repositories to point to the new location
+        </li>
+      </ul>
+    </div>
+    <div class="modal-footer">
+      <button id="rename" class="btn" data-dismiss="modal" aria-hidden="true">
+        I understand, rename this repository
+      </button>
+    </div>
+  </div>
+
   <div id="delete-confirm" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="delete-confirm-label" aria-hidden="true">
     <div class="modal-header">
       <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
@@ -193,5 +287,6 @@
       </button>
     </div>
   </div>
+
 
   %= include '/include/footer';
