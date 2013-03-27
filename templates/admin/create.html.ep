@@ -44,7 +44,7 @@
       else {
         # Create repository
         eval {
-          $git->create_repository(
+          app->manager->create_project(
             $user,
             $project,
             {description => $description}

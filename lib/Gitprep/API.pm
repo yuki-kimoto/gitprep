@@ -94,13 +94,5 @@ sub default_branch {
   return $config->{default_branch};
 }
 
-sub delete_project {
-  my ($self, $user, $project) = @_;
-  
-  my $c = $self->cntl;
-  my $dbi = $c->app->dbi;
-  $dbi->model('project')->delete(id => [$user, $project]);
-}
-
 1;
 

@@ -57,8 +57,9 @@
     return $self->res->body;
   }
   elsif ($op eq 'delete-project') {
+  
+    # Validation
     my $params = $api->params;
-    
     my $rule = [
       user => [
         'user_name'
@@ -69,27 +70,26 @@
     ];
     my $vresult = app->validator->validate($params, $rule);
     
+    # Delete project
     if ($vresult->is_ok) {
       my $data = $vresult->data;
       my $user = $data->{user};
       my $project = $data->{project};
       
-      eval { $git->delete_project($user, $project) };
-      my $error1 = $@;
-      eval { $api->delete_project($user, $project) };
-      my $error2 = $@;
-      
-      if (!$error1 && !$error2) {
-        $self->render(json => {ok => 1});
+      eval { app->manager->delete_project($user, $project) };
+      if ($@) {
+        app->log->fatal($@);
+        $self->render(json => {ok => 0, message => 'Internal error'});
       }
       else {
-        app->log->fatal($error1) if $error1;
-        app->log->fatal($error2) if $error2;
-        $self->render(json => {ok => 0});
+        $self->render(json => {ok => 1});
       }
-      return $self->res->body;
     }
-    else { $api->croak('Invalid') }
+    else {
+      $self->render(json => {ok => 0, message => 'Invalid paramter'});
+    }
+    
+    return $self->res->body;
   }
 %>
 
@@ -115,8 +115,8 @@
             location.href = "<%= url_for("/$user") %>" + '/' + renamed_project;
           }
           else {
-            $('#modal-message').text('Rename failed:' + result.message);
-            $('#success').modal('show');
+            $('#modal-message-text').text('Rename failed:' + result.message);
+            $('#modal-message').modal('show');
           }
         });
       });
@@ -127,8 +127,8 @@
         var url = "<%= url_for %>?op=change_description&description=" + description;
         $.post(url, function (result) {
           if (result.ok) {
-            $('#modal-message').text('Description is changed');
-            $('#success').modal('show');
+            $('#modal-message-text').text('Description is changed');
+            $('#modal-message').modal('show');
           }
         });
       });
@@ -161,6 +161,10 @@
         $.post(url, data, function (result) {
           if (result.ok) {
             location.href = "<%= url_for("/$user") %>";
+          }
+          else {
+            $('#modal-message-text').text('Error:' + result.message);
+            $('#modal-message').modal('show');
           }
         });
       });
@@ -227,9 +231,9 @@
     </div>
   </div>
   
-  <div id="success" class="modal hide">
+  <div id="modal-message" class="modal hide">
     <div class="modal-header">
-      <div id="modal-message" style="font-weight:bold"></div>
+      <div id="modal-message-text" style="font-weight:bold"></div>
     </div>
     <div class="modal-body">
       <button class="btn" data-dismiss="modal" aria-hidden="true">OK</button>
@@ -239,7 +243,7 @@
   <div id="rename-confirm" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="rename-confirm-label" aria-hidden="true">
     <div class="modal-header">
       <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-      <div id="modal-message" style="font-weight:bold">Are you sure you want to rename?</div>
+      <div style="font-weight:bold">Are you sure you want to rename?</div>
     </div>
     <div class="modal-body">
       <p>
@@ -264,7 +268,7 @@
   <div id="delete-confirm" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="delete-confirm-label" aria-hidden="true">
     <div class="modal-header">
       <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-      <div id="modal-message" style="font-weight:bold">Are you ABSOLUTELY sure?</div>
+      <div style="font-weight:bold">Are you ABSOLUTELY sure?</div>
     </div>
     <div class="modal-body">
       <p>
