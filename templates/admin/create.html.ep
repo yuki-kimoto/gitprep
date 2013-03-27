@@ -50,26 +50,16 @@
             {description => $description}
           );
         };
-        $api->croak($@) if $@;
         
-        # Create repository data
-        eval {
-          my $config = {default_branch => 'master'};
-          my $config_json = $api->json($config);
-          
-          app->dbi->model('project')
-            ->insert({config => $config_json}, id => [$user, $project]);
-        };
         if ($@) {
-          my $error = $@;
-          $git->remove_repository($user, $project);
-          $api->croak($error);
+          app->log->fatal($@);
+          $errors = ['Internal error'];
+        }
+        else {
+          $self->redirect_to("/$user/$project");
+          return 1;
         }
         
-        # Go to user page
-        $self->redirect_to("/$user/$project");
-        
-        return 1;
       }
     }
     else { $errors = $vresult->messages }

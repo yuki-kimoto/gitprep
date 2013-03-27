@@ -4,10 +4,41 @@ use Mojo::Base -base;
 use Carp 'croak';
 use File::Copy 'move';
 use File::Path qw/mkpath rmtree/;
+use Mojo::JSON;
 
 has 'app';
 
-sub create_repository {
+sub create_project {
+  my ($self, $user, $project, $opts) = @_;
+  
+  my $dbi = $self->app->dbi;
+  
+  # Create project
+  my $error;
+  eval {
+    $dbi->connector->txn(sub {
+      eval { $self->_create_project($user, $project) };
+      croak $error = $@ if $@;
+      eval {$self->_create_rep($user, $project, $opts) };
+      $error->{message} = $@;
+      croak $error = $@ if $@;
+    });
+  };
+  croak $error if $@;
+}
+
+sub _create_project {
+  my ($self, $user, $project) = @_;
+  
+  my $config = {default_branch => 'master'};
+  my $config_json = Mojo::JSON->new->encode($config);
+  $self->app->dbi->model('project')->insert(
+    {config => $config_json},
+    id => [$user, $project]
+  );
+}
+
+sub _create_rep {
   my ($self, $user, $project, $opts) = @_;
   
   my $git = $self->app->git;
@@ -54,8 +85,8 @@ sub create_repository {
   };
   if ($@) {
     my $error = $@;
-    $self->remove_repository($user, $project);
-    die "$error\n";
+    eval { $self->_delete_rep($user, $project) };
+    croak $error;
   }
 }
 
@@ -79,7 +110,6 @@ sub delete_project {
   
   return 1;
 }
-
 
 sub _delete_project {
   my ($self, $user, $project) = @_;
