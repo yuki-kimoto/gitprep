@@ -17,7 +17,7 @@
   my $git = $self->app->git;
 
   # Get blob diff
-  my @cmd = $git->_cmd(
+  my @cmd = $git->cmd(
     $user,
     $project,
     'diff',

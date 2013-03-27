@@ -50,7 +50,7 @@ sub _create_rep {
     mkpath $rep;
       
     # Git init
-    my @git_init_cmd = $git->_cmd($user, $project, 'init', '--bare');
+    my @git_init_cmd = $git->cmd($user, $project, 'init', '--bare');
     system(@git_init_cmd) == 0
       or croak "Can't execute git init";
       
@@ -62,7 +62,7 @@ sub _create_rep {
     }
     
     # HTTP support
-    my @git_update_server_info_cmd = $git->_cmd(
+    my @git_update_server_info_cmd = $git->cmd(
       $user,
       $project,
       '--bare',

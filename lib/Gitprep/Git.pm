@@ -39,7 +39,7 @@ sub authors {
   my ($self, $user, $project, $ref, $file) = @_;
   
   # Command "git log FILE"
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     'log',
@@ -63,7 +63,7 @@ sub blobdiffs {
   my ($self, $user, $project, $from_id, $id, $difftrees) = @_;
   
   my $blobdiffs = [];
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     'diff-tree',
@@ -93,7 +93,7 @@ sub blobdiffs {
     my $file = $diffinfo->{to_file};
     
     # Get blobdiff (command "self diff-tree")
-    my @cmd = $self->_cmd(
+    my @cmd = $self->cmd(
       $user,
       $project,
       'diff-tree',
@@ -133,7 +133,7 @@ sub blob_plain {
   my ($self, $user, $project, $ref, $path) = @_;
   
   # Get blob
-  my @cmd = $self->_cmd($user, $project, 'cat-file', 'blob', "$ref:$path");
+  my @cmd = $self->cmd($user, $project, 'cat-file', 'blob', "$ref:$path");
   open my $fh, "-|", @cmd
     or croak 500, "Open git-cat-file failed";
   local $/;
@@ -180,7 +180,7 @@ sub blob_size_kb {
   my ($self, $user, $project, $rev, $file) = @_;
   
   # Command "git diff-tree"
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     'cat-file',
@@ -203,7 +203,7 @@ sub branch_exists {
   
   my $home = $self->rep_home;
 
-  my @cmd = $self->_cmd($user, $project, 'branch');
+  my @cmd = $self->cmd($user, $project, 'branch');
   open my $fh, "-|", @cmd
     or croak 'git branch failed';
   
@@ -217,7 +217,7 @@ sub branch_commits {
   my ($self, $user, $project, $rev1, $rev2) = @_;
   
   # Get bramcj commits
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     'show-branch',
@@ -266,7 +266,7 @@ sub commits_number {
   my ($self, $user, $project, $ref) = @_;
   
   # Command "git diff-tree"
-  my @cmd = $self->_cmd($user, $project, 'shortlog', '-s', $ref);
+  my @cmd = $self->cmd($user, $project, 'shortlog', '-s', $ref);
   open my $fh, "-|", @cmd
     or croak 500, "Open git-shortlog failed";
   my @commits_infos = map { chomp; $self->dec($_) } <$fh>;
@@ -374,7 +374,7 @@ sub difftree {
   $parent = '--root' unless defined $parent;
 
   # Get diff tree
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     "diff-tree",
@@ -448,7 +448,7 @@ sub branches {
   my ($self, $user, $project, $opts) = @_;
   
   # Command "git branch --no-merged"
-  my @cmd = $self->_cmd($user, $project, 'branch');
+  my @cmd = $self->cmd($user, $project, 'branch');
   push @cmd, , '--no-merged' if $opts->{no_merged};
   open my $fh, '-|', @cmd or return;
   
@@ -474,7 +474,7 @@ sub id_by_path {
   
   # Get blob id or tree id (command "git ls-tree")
   $path =~ s#/+$##;
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     'ls-tree',
@@ -535,7 +535,7 @@ sub path_by_id {
   return unless $hash;
   
   # Command "git ls-tree"
-  my @cmd = $self->_cmd($user, $project, 'ls-tree', '-r', '-t', '-z', $base);
+  my @cmd = $self->cmd($user, $project, 'ls-tree', '-r', '-t', '-z', $base);
   open my $fh, '-|' or return;
 
   # Get path
@@ -558,7 +558,7 @@ sub last_activity {
   my ($self, $user, $project) = @_;
   
   # Command "git for-each-ref"
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     'for-each-ref',
@@ -585,7 +585,7 @@ sub object_type {
   my ($self, $user, $project, $cid) = @_;
   
   # Get object type
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     'cat-file',
@@ -662,7 +662,7 @@ sub references {
   $type ||= '';
   
   # Get references
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     'show-ref',
@@ -716,7 +716,7 @@ sub tags {
   my ($self, $user, $project, $limit) = @_;
   
   # Get tags
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     'for-each-ref',
@@ -794,7 +794,7 @@ sub latest_commit_log {
   my $commit_log = {};
   $file = '' unless defined $file;
   
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     '--no-pager',
@@ -853,7 +853,7 @@ sub parse_commit {
   my ($self, $user, $project, $id) = @_;
   
   # Git rev-list
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     'rev-list',
@@ -974,7 +974,7 @@ sub parse_commits {
   # Get Commits
   $maxcount ||= 1;
   $skip ||= 0;
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     'rev-list',
@@ -1130,7 +1130,7 @@ sub separated_commit {
   my ($self, $user, $project, $rev1, $rev2) = @_;
   
   # Command "git diff-tree"
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     'show-branch',
@@ -1286,7 +1286,7 @@ sub trees {
   # Get tree
   my @entries = ();
   my $show_sizes = 0;
-  my @cmd = $self->_cmd(
+  my @cmd = $self->cmd(
     $user,
     $project,
     'ls-tree',
@@ -1321,7 +1321,7 @@ sub trees {
   return $trees;
 }
 
-sub _cmd {
+sub cmd {
   my ($self, $user, $project, @cmd) = @_;
   
   my $home = $self->rep_home;
