@@ -735,26 +735,6 @@ sub references {
   return \%refs;
 }
 
-sub rename_project {
-  my ($self, $user, $project, $renamed_project) = @_;
-  
-  croak "Invalid user name or project"
-    unless defined $user && defined $project && defined $renamed_project;
-  my $rep = $self->rep($user, $project);
-  my $renamed_rep = $self->rep($user, $renamed_project);
-  
-  move($rep, $renamed_rep)
-    or croak "Can't move $rep to $renamed_rep: $!";
-}
-
-sub exists_project {
-  my ($self, $user, $project) = @_;
-  
-  my $rep = $self->rep($user, $project);
-  
-  return -e $rep;
-}
-
 sub rep {
   my ($self, $user, $project) = @_;
   

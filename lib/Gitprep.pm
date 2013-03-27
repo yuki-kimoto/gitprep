@@ -11,10 +11,13 @@ use Encode qw/encode decode/;
 use Mojo::JSON;
 use Gitprep::API;
 use Carp 'croak';
+use Gitprep::RepManager;
+use Scalar::Util 'weaken';
 
 has 'git';
 has 'dbi';
 has 'validator';
+has 'manager';
 
 sub startup {
   my $self = shift;
@@ -144,6 +147,11 @@ EOS
       );
     };
   }
+  
+  # Repository Manager
+  my $manager = Gitprep::RepManager->new(app => $self);
+  weaken $manager->{app};
+  $self->manager($manager);
 
   # Home
   $r->get('/')->to('#home');

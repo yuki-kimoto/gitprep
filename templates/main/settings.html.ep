@@ -1,6 +1,4 @@
 <%
-  use Gitprep::RepManager;
-
   my $api = gitprep_api;
   my $logined = $api->logined;
   my $user_is_valid = $logined && $user eq session('user_id');
@@ -36,7 +34,7 @@
       my $renamed_project = $data->{'renamed-project'};
       
       # Rename
-      my $manager = Gitprep::RepManager->new(c => $self);
+      my $manager = app->manager;
       my $error = $manager->rename_project($user, $project, $renamed_project);
       if (ref $error) {
         $self->render(json => {ok => 0, message => $error->{message}});

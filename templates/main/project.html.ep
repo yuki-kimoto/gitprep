@@ -153,7 +153,7 @@
         <h3>README</h3>
         <pre><%= $readme %></pre>
       </div>
-    % } elsif ($state eq 'init') {
+    % } elsif ($state eq 'init' && $logined) {
     
       <div class="text-center" style="margin-bottom:10px">
         <b>Create a new repository on the command line</b>
@@ -180,6 +180,10 @@ git push -u origin master</pre>
       <pre style="margin-bottom:30px">
 git remote add origin <%= $ssh_url %>
 git push -u origin master</pre>
+    % } else {
+      <div class="well text-center muted" style="margin-bottom:30px">
+        <b>Repositry is not yet created.</b>
+      </div>
     % }
   </div>
   
