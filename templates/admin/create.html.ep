@@ -20,6 +20,9 @@
       ],
       description => [
         'any'
+      ],
+      readme => {require => 0} => [
+        'any'
       ]
     ];
     my $validator = app->validator;
@@ -37,17 +40,19 @@
       my $user = session('user_id');
       my $project = $data->{project};
       my $description = $data->{description};
-
-      if ($git->exists_repository($user, $project)) {
+      my $readme = $data->{readme};
+      
+      my $manager = app->manager;
+      if ($manager->exists_project($user, $project)) {
         $errors = ['Repositry already exists'];
       }
       else {
         # Create repository
         eval {
-          app->manager->create_project(
+          $manager->create_project(
             $user,
             $project,
-            {description => $description}
+            {description => $description, readme => $readme}
           );
         };
         
@@ -59,7 +64,6 @@
           $self->redirect_to("/$user/$project");
           return 1;
         }
-        
       }
     }
     else { $errors = $vresult->messages }
@@ -85,6 +89,13 @@
 
       <div><b>Description</b> (optional)</div>
       <div><%= input_tag 'description', type => 'text', style => 'width:600px' %></div>
+      
+      <div>
+        <label class="checkbox" style="margin-bottom:0">
+          <%= check_box readme => 1 %><b>Initialize this repository with a README</b>
+        </label>
+      </div>
+      <div class="muted" style="margin-bottom:10px;margin-left:20px">This will allow you to git clone the repository immediately.</div>
 
       <input type="submit" class="btn" value="Create repository">
     </form>

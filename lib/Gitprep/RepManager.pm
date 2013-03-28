@@ -5,6 +5,7 @@ use Carp 'croak';
 use File::Copy 'move';
 use File::Path qw/mkpath rmtree/;
 use Mojo::JSON;
+use File::Temp ();
 
 has 'app';
 
@@ -41,53 +42,110 @@ sub _create_project {
 sub _create_rep {
   my ($self, $user, $project, $opts) = @_;
   
+  # Git
   my $git = $self->app->git;
+  
+  # Create temp repository
+  my $temp_dir =  File::Temp->newdir;
+  my $temp_rep = "$temp_dir/remote.git";
+  mkdir $temp_rep
+    or croak "Can't create directory $temp_rep: $!";
+  
+  # Git init
+  {
+    my @git_init_cmd = $git->cmd_rep($temp_rep, 'init', '--bare');
+    open my $fh, "-|", @git_init_cmd
+      or croak  "Can't execute git init";
+    close $fh;
+  }
+  
+  # Add git-daemon-export-ok
+  {
+    my $file = "$temp_rep/git-daemon-export-ok";
+    open my $fh, '>', $file
+      or croak "Can't create git-daemon-export-ok: $!"
+  }
+  
+  # HTTP support
+  my @git_update_server_info_cmd = $git->cmd_rep(
+    $temp_rep,
+    '--bare',
+    'update-server-info'
+  );
+  system(@git_update_server_info_cmd) == 0
+    or croak "Can't execute git --bare update-server-info";
+  move("$temp_rep/hooks/post-update.sample", "$temp_rep/hooks/post-update")
+    or croak "Can't move post-update";
+  
+  # Description
+  if (my $description = $opts->{description}) {
+    my $file = "$temp_rep/description";
+    open my $fh, '>', $file
+      or croak "Can't open $file: $!";
+    print $fh $description
+      or croak "Can't write $file: $!";
+    close $fh;
+  }
+  
+  # Add README and commit
+  if ($opts->{readme}) {
+    # Create working directory
+    my $temp_dir =  File::Temp->newdir;
+    my $temp_work = "$temp_dir/work.git";
+    mkdir $temp_work
+      or croak "Can't create directory $temp_work: $!";
 
-  my $rep_home = $git->rep_home;
-  my $rep = "$rep_home/$user/$project.git";
-  eval {
-    # Repository
-    mkpath $rep;
-      
     # Git init
-    my @git_init_cmd = $git->cmd($user, $project, 'init', '--bare');
+    my @git_init_cmd = $git->cmd_rep($temp_work, 'init', '-q');
     system(@git_init_cmd) == 0
       or croak "Can't execute git init";
-      
-    # Add git-daemon-export-ok
-    {
-      my $file = "$rep/git-daemon-export-ok";
-      open my $fh, '>', $file
-        or croak "Can't create git-daemon-export-ok: $!"
-    }
     
-    # HTTP support
-    my @git_update_server_info_cmd = $git->cmd(
-      $user,
-      $project,
-      '--bare',
-      'update-server-info'
+    # Add README
+    my $file = "$temp_work/README";
+    open my $fh, '>', $file
+      or croak "Can't create $file: $!";
+    my @git_add_cmd = $git->cmd_rep(
+      $temp_work,
+      "--work-tree=$temp_work",
+      'add',
+      'README'
     );
-    system(@git_update_server_info_cmd) == 0
-      or croak "Can't execute git --bare update-server-info";
-    move("$rep/hooks/post-update.sample", "$rep/hooks/post-update")
-      or croak "Can't move post-update";
+    system(@git_add_cmd) == 0
+      or croak "Can't execute git add";
     
-    # Description
-    if (my $description = $opts->{description}) {
-      my $file = "$rep/description";
-      open my $fh, '>', $file
-        or croak "Can't open $file: $!";
-      print $fh $description
-        or croak "Can't write $file: $!";
-      close $fh;
+    # Commit
+    my @git_commit_cmd = $git->cmd_rep(
+      $temp_work,
+      "--work-tree=$temp_work",
+      'commit',
+      '-q',
+      '-m',
+      'first commit'
+    );
+    system(@git_commit_cmd) == 0
+      or croak "Can't execute git commit";
+    
+    # Push
+    {
+      my @git_push_cmd = $git->cmd_rep(
+        $temp_work,
+        "--work-tree=$temp_work",
+        'push',
+        '-q',
+        $temp_rep,
+        'master'
+      );
+      # (This is bad, but --quiet option can't supress in old git)
+      my $git_push_cmd = join(' ', @git_push_cmd);
+      system("$git_push_cmd 2> /dev/null") == 0
+        or croak "Can't execute git push";
     }
-  };
-  if ($@) {
-    my $error = $@;
-    eval { $self->_delete_rep($user, $project) };
-    croak $error;
   }
+  
+  # Move temp rep to rep
+  my $rep = $git->rep($user, $project);
+  move $temp_rep, $rep
+    or croak "Can't move $temp_rep to $rep: $!";
 }
 
 sub delete_project {
@@ -157,6 +215,8 @@ sub rename_project {
   
   return 1;
 }
+
+sub exists_project { shift->_exists_project(@_) }
 
 sub _exists_project {
   my ($self, $user, $project) = @_;

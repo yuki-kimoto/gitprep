@@ -312,12 +312,6 @@ sub description {
   }
 }
 
-sub exists_repository {
-  my ($self, $user, $project) = @_;
-  
-  return -e $self->rep($user, $project);
-}
-
 sub file_type {
   my ($self, $mode) = @_;
   
@@ -1329,6 +1323,12 @@ sub cmd {
   my $rep = "$home/$user/$project.git";
   
   # Execute git command
+  return $self->cmd_rep($rep, @cmd);
+}
+
+sub cmd_rep {
+  my ($self, $rep, @cmd) = @_;
+  
   return ($self->bin, "--git-dir=$rep", @cmd);
 }
 
