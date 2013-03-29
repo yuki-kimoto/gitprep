@@ -64,3 +64,13 @@ You add **user** and **group** to **hypnotoad** section in **gitprep.conf**.
   ...
   user=gitprep
   group=gitprep
+
+### Developer
+
+If you are developer, you can start application development mode
+
+  ./morbo
+
+You can access the following URL.
+      
+    http://localhost:3000
