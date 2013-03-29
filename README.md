@@ -7,15 +7,17 @@ Github clone. you can install portable github system into unix/linux.
 * Github clone
 * Perl 5.8.7+ only needed
 
-# Unix/Linux
+# Instllation into Unix/Linux system
 
 ## Create gitprep user
+
+At first create **gitprep** user. This is not nesessary, but recommended.
 
     useradd gitprep
     su - gitprep
     cd ~
 
-## Donload
+## Download
 
 Donload zip or tar.gz archive and exapand it and change directory. 
 
@@ -46,7 +48,7 @@ You can stop application by **--stop** option.
 
     ./gitprep --stop
 
-## Operation by root user
+### Operation by root user
 
 If you want to do operation by root user,
 you must do some works for security.
@@ -56,5 +58,3 @@ You add **user** and **group** to **hypnotoad** section in **gitprep.conf**.
   [hypnotoad]
   user=gitprep
   group=gitprep
-
-
