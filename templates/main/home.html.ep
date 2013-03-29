@@ -1,6 +1,11 @@
 <%
   my $api = gitprep_api;
   my $users = $api->users;
+  
+  unless ($api->exists_admin) {
+    $self->redirect_to('/_start');
+    return 1;
+  }
 %>
 
 % layout 'common';

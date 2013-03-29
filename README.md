@@ -61,5 +61,6 @@ you must do some works for security.
 You add **user** and **group** to **hypnotoad** section in **gitprep.conf**.
 
   [hypnotoad]
+  ...
   user=gitprep
   group=gitprep

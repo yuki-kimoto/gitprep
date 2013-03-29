@@ -19,6 +19,19 @@ sub new {
   return $self;
 }
 
+sub exists_admin {
+  my $self = shift;
+ 
+  my $users = $self->cntl->app->dbi->model('user')->select(
+    ['id', 'config'],
+    append => 'order by id'
+  )->filter(config => 'json')->all;
+
+  my $exists = grep { $_->{config}{admin} } @$users;
+  
+  return $exists;
+}
+
 sub root_ns {
   my ($self, $root) = @_;
 
