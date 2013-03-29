@@ -21,9 +21,9 @@ At first create **gitprep** user. This is not nesessary, but recommended.
 
 Download tar.gz archive and exapand it and change directory. 
 
-  curl -kL https://github.com/yuki-kimoto/gitprep/archive/0.01.tar.gz > gitprep-0.01.tar.gz
-  tar xf gitprep-0.01.tar.gz
-  cd gitprep-0.01
+  curl -kL https://github.com/yuki-kimoto/gitprep/archive/0.02.tar.gz > gitprep-0.02.tar.gz
+  tar xf gitprep-0.02.tar.gz
+  cd gitprep-0.02
 
 ## Setup
 
