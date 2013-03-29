@@ -19,13 +19,18 @@ At first create **gitprep** user. This is not nesessary, but recommended.
 
 ## Download
 
-Donload zip or tar.gz archive and exapand it and change directory. 
+Download tar.gz archive and exapand it and change directory. 
+
+  curl -kL https://github.com/yuki-kimoto/gitprep/archive/0.01.tar.gz > gitprep-0.01.tar.gz
+  tar xf gitprep-0.01.tar.gz
+  cd gitprep-0.01
 
 ## Setup
 
 You execute the following command. Needed moudles is installed.
 
-    perl cpanm -L extlib --installdeps .
+    perl cpanm -n -l extlib Module::CoreList
+    perl -Iextlib/lib/perl5 cpanm -n -L extlib --installdeps .
 
 ## Operation
 
