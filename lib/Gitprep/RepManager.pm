@@ -28,11 +28,129 @@ sub create_project {
   croak $error if $@;
 }
 
-sub _create_project {
+sub delete_project {
   my ($self, $user, $project) = @_;
   
+  my $dbi = $self->app->dbi;
+  
+  # Delete project
+  my $error;
+  eval {
+    $dbi->connector->txn(sub {
+      eval { $self->_delete_project($user, $project) };
+      croak $error = $@ if $@;
+      eval {$self->_delete_rep($user, $project) };
+      $error->{message} = $@;
+      croak $error = $@ if $@;
+    });
+  };
+  croak $error if $@;
+  
+  return 1;
+}
+
+sub exists_project { shift->_exists_project(@_) }
+
+sub fork_project {
+  my ($self, $login_user, $user, $project) = @_;
+  
+  my $dbi = $self->app->dbi;
+  
+  my $error;
+  eval {
+    $dbi->connector->txn(sub {
+      
+      # Create project
+      eval {
+        $self->_create_project(
+          $login_user,
+          $project,
+          {
+            forked_user => $user,
+            forked_project => $project
+          }
+        );
+      };
+      croak $error = $@ if $@;
+      
+      # Create repository
+      eval {
+        $self->_fork_rep($user, $project, $login_user, $project);
+      };
+      croak $error = $@ if $@;
+    });
+  };
+  croak $error if $@;
+}
+
+sub _fork_rep {
+  my ($self, $user, $project, $to_user, $to_project) = @_;
+  
+  # Git
+  my $git = $self->app->git;
+  
+  # Create working directory
+  my $temp_dir =  File::Temp->newdir;
+  my $temp_rep = "$temp_dir/temp.git";
+  
+  my $rep = $git->rep($user, $project);
+  
+  my @git_clone_cmd = (
+    $git->bin,
+    'clone',
+    '-q',
+    '--bare',
+    $rep,
+    $temp_rep
+  );
+  system(@git_clone_cmd) == 0
+    or croak "Can't execute git clone";
+  
+  # Move temp rep to rep
+  my $to_rep = $git->rep($to_user, $to_project);
+  move $temp_rep, $to_rep
+    or croak "Can't move $temp_rep to $rep: $!";
+}
+
+
+  
+sub rename_project {
+  my ($self, $user, $project, $renamed_project) = @_;
+  
+  my $git = $self->app->git;
+  my $dbi = $self->app->dbi;
+  
+  my $error = {};
+  
+  if ($self->_exists_project($user, $renamed_project)
+    || $self->_exists_rep($user, $renamed_project))
+  {
+    $error->{message} = 'Already exists';
+    return $error;
+  }
+  else {
+    $dbi->connector->txn(sub {
+      $self->_rename_project($user, $project, $renamed_project);
+      $self->_rename_rep($user, $project, $renamed_project);
+    });
+    if ($@) {
+      $error->{message} = 'Rename failed';
+      return $error;
+    }
+  }
+  
+  return 1;
+}
+
+sub _create_project {
+  my ($self, $user, $project, $opts) = @_;
+  $opts ||= {};
+  
+  # Config
   my $config = {default_branch => 'master'};
   my $config_json = Mojo::JSON->new->encode($config);
+  
+  # Create project
   $self->app->dbi->model('project')->insert(
     {config => $config_json},
     id => [$user, $project]
@@ -91,7 +209,7 @@ sub _create_rep {
   if ($opts->{readme}) {
     # Create working directory
     my $temp_dir =  File::Temp->newdir;
-    my $temp_work = "$temp_dir/work.git";
+    my $temp_work = "$temp_dir/work";
     mkdir $temp_work
       or croak "Can't create directory $temp_work: $!";
 
@@ -148,27 +266,6 @@ sub _create_rep {
     or croak "Can't move $temp_rep to $rep: $!";
 }
 
-sub delete_project {
-  my ($self, $user, $project) = @_;
-  
-  my $dbi = $self->app->dbi;
-  
-  # Delete project
-  my $error;
-  eval {
-    $dbi->connector->txn(sub {
-      eval { $self->_delete_project($user, $project) };
-      croak $error = $@ if $@;
-      eval {$self->_delete_rep($user, $project) };
-      $error->{message} = $@;
-      croak $error = $@ if $@;
-    });
-  };
-  croak $error if $@;
-  
-  return 1;
-}
-
 sub _delete_project {
   my ($self, $user, $project) = @_;
   
@@ -187,36 +284,6 @@ sub _delete_rep {
   croak "Can't remove repository. repository is rest"
     if -e $rep;
 }
-
-sub rename_project {
-  my ($self, $user, $project, $renamed_project) = @_;
-  
-  my $git = $self->app->git;
-  my $dbi = $self->app->dbi;
-  
-  my $error = {};
-  
-  if ($self->_exists_project($user, $renamed_project)
-    || $self->_exists_rep($user, $renamed_project))
-  {
-    $error->{message} = 'Already exists';
-    return $error;
-  }
-  else {
-    $dbi->connector->txn(sub {
-      $self->_rename_project($user, $project, $renamed_project);
-      $self->_rename_rep($user, $project, $renamed_project);
-    });
-    if ($@) {
-      $error->{message} = 'Rename failed';
-      return $error;
-    }
-  }
-  
-  return 1;
-}
-
-sub exists_project { shift->_exists_project(@_) }
 
 sub _exists_project {
   my ($self, $user, $project) = @_;

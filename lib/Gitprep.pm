@@ -218,6 +218,9 @@ EOS
     
     # Settings
     $r->any('/settings')->to('#settings');
+    
+    # Fork
+    $r->any('/fork')->to('#fork');
   }
 }
 

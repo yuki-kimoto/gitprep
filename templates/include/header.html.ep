@@ -15,7 +15,6 @@
             <i class="icon-user"></i><a href="<%= url_for("/$user") %>"><%= $user %></a>
           </div>
           <a class="btn btn-small" href="<%= url_for("/_admin/create") %>">Create a new repo</a>
-          <a class="btn btn-small" href="<%= url_for("/setting/profile") %>">Account setting</a>
           <a class="btn btn-small" href="<%= url_for("/_login?op=logout") %>">Sign out</a>
         </div>
       % } else {

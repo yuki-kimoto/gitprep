@@ -1,0 +1,48 @@
+<%
+  my $api = gitprep_api;
+  my $logined = $api->logined;
+  
+  # Validation
+  my $params = $api->params;
+  my $rule = [
+    user => [
+      'user_name'
+    ],
+    project => [
+      'project_name'
+    ]
+  ];
+  my $vresult = app->validator->validate($params, $rule);
+  
+  # Fork project
+  if ($vresult->is_ok) {
+    unless ($logined) {
+      $self->redirect_to("/$user/$project");
+      return 1;
+    }
+    
+    my $login_user = session('user_id');
+    my $data = $vresult->data;
+    my $user = $data->{user};
+    my $project = $data->{project};
+    
+    if ($login_user eq $user) {
+      $self->redirect_to("/$user/$project");
+      return 1;
+    }
+    
+    eval { app->manager->fork_project($login_user, $user, $project) };
+    if ($@) {
+      $self->render_exception($@);
+      return $self->res->body;
+    }
+    else {
+      $self->redirect_to("/$login_user/$project");
+      return 1;
+    }
+  }
+  else {
+    $self->redirect_to("/$user/$project");
+    return 1;
+  }
+%>
