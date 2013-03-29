@@ -32,6 +32,11 @@ sub startup {
   my $conf = $self->config;
   $conf->{root} = $self->home->rel_file('rep');
   $conf->{hypnotoad} ||= {listen => ["http://*:10020"]};
+  my $listen = $conf->{hypnotoad}{listen} || '';
+  if ($listen ne '' && ref $listen ne 'ARRAY') {
+    $listen = [ split /,/, $listen ];
+  }
+  $conf->{hypnotoad}{listen} = $listen;
   
   # Added public directory
   push @{$self->static->paths}, $conf->{root};
