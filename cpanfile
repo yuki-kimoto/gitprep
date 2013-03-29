@@ -5,3 +5,4 @@ requires 'DBIx::Custom', '== 0.28';
 requires 'Mojolicious::Plugin::INIConfig', '== 0.02';
 requires 'Mojolicious', '== 3.91';
 requires 'Config::Tiny', '== 2.14';
+requires 'Time::HiRes', '== 1.9725';
