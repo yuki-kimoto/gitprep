@@ -1,7 +1,7 @@
 <?php
   # Config
   $setup_dir = getcwd();
-  $app_home_dir = $setup_dir . '/..';
+  $app_home_dir = realpath($setup_dir . '/..');
   $cpanm_path = "$app_home_dir/cpanm";
   putenv("PERL_CPANM_HOME=$setup_dir");
   
@@ -9,9 +9,11 @@
   $op = $_REQUEST['op'];
   
   $current_path = $_SERVER["SCRIPT_NAME"];
+  $app_path = $current_path;
+  $app_path = preg_replace('/\/setup\/setup\.php/', '', $app_path) . '.cgi';
   $output = array('');
   $app_home_dir = getcwd() . '/..';
-  $success = true;
+  $setup_command_success = true;
   
   if($op == 'setup') {
     
@@ -23,14 +25,14 @@
     if ($ret == 0) {
       exec("perl -Iextlib/lib/perl5 cpanm -n -L extlib --installdeps . 2>&1", $output, $ret);
       if ($ret == 0) {
-        $success = true;
+        $setup_command_success = true;
       }
       else {
-        $success = false;
+        $setup_command_success = false;
       }
     }
     else {
-      $success = false;
+      $setup_command_success = false;
     }
   }
 ?>
@@ -46,8 +48,6 @@
     <link rel="stylesheet" href="css/bootstrap-responsive.css" />
   </head>
   <body>
-    <?php echo $cpanm_path ?>
-    
     <div class="container">
       <div class="text-center"><h1>Setup Tool</h1></div>
     </div>
@@ -60,17 +60,18 @@
         </div>
       </form>
       <span class="label">Result</span>
-<pre style="height:300px;overflow:auto;margin-bottom:0;margin-top:0;">
-<?php if (!$success) { ?>
-<span style="color:red">Error</span>
+<pre style="height:300px;overflow:auto;margin-bottom:30px">
+<?php if (!$setup_command_success) { ?>
+<span style="color:red">Error(Setup command failed)</span>
 <?php } ?>
-<?php if ($output) { ?>
+<?php if ($setup_command_success) { ?>
 <?php foreach ($output as $line) { ?>
 <?php echo htmlspecialchars($line) ?>
 
 <?php } ?>
 <?php } ?>
 </pre>
+      <div style="font-size:150%;margin-bottom:30px;">Go to <a href="<?php echo $app_path ?>">Application</a></div>
     </div>
   </body>
 </html>
