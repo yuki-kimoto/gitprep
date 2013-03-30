@@ -68,7 +68,6 @@
     <link rel="stylesheet" href="css/bootstrap-responsive.css" />
   </head>
   <body>
-    <?php echo $script ?>
     <div class="container">
       <div class="text-center"><h1>Setup Tool</h1></div>
     </div>

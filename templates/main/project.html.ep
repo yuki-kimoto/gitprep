@@ -59,6 +59,14 @@
     $state = 'display';
   }
   else { $state = 'init' }
+
+  my $url = url_for->to_abs;
+  $url->base(undef);
+  my $ssh_port = config->{basic}{ssh_port};
+  my $rep_home = app->git->rep_home;
+  my $execute_user = getpwuid($>);
+  my $ssh_rep_url = "ssh://$execute_user\@" . $url->host
+    . ($ssh_port ? ":$ssh_port" : '') . "$rep_home/$user/$project.git";
 %>
 
 % layout 'common';
@@ -68,14 +76,13 @@
   %= javascript begin
     $(document).ready(function () {
       var http_rep_url = '<%= url_for("$user/$project.git")->to_abs %>';
-      % my $execute_user = getpwuid($>);
       % my $rep = $git->rep($user, $project);
       % my $ssh_port = config->{basic}{ssh_port} || '';
       
       var logined = <%= $logined ? 'true' : 'false' %>;
       var ssh_rep_url = '';
       if (logined) {
-        ssh_rep_url = '<%= url_for($rep)->to_abs->scheme('ssh')->userinfo($execute_user)->port($ssh_port) %>';
+        ssh_rep_url = '<%= $ssh_rep_url %>';
       }
       
       // Click HTTP button
@@ -159,18 +166,12 @@
         <b>Create a new repository on the command line</b>
       </div>
       
-      % my $url = url_for->to_abs;
-      % my $ssh_port = config->{basic}{ssh_port};
-      % my $rep_home = app->git->rep_home;
-      % my $ssh_url = 'ssh://kimoto@' . $url->host
-      %   . ($ssh_port ? ":$ssh_port" : '') . "$rep_home/$user/$project.git";
-      
       <pre style="margin-bottom:30px">
 touch README
 git init
 git add README
 git commit -m "first commit"
-git remote add origin <%= $ssh_url %>
+git remote add origin <%= $ssh_rep_url %>
 git push -u origin master</pre>
       
       <div class="text-center" style="margin-bottom:10px">
@@ -178,7 +179,7 @@ git push -u origin master</pre>
       </div>
       
       <pre style="margin-bottom:30px">
-git remote add origin <%= $ssh_url %>
+git remote add origin <%= $ssh_rep_url %>
 git push -u origin master</pre>
     % } else {
       <div class="well text-center muted" style="margin-bottom:30px">
