@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="robots" content="index, nofollow" >
-    <title>Git</title>
+    <title>GitPrep</title>
     %= stylesheet '/css/bootstrap.css', rel => 'stylesheet', media => 'screen';
     %= stylesheet '/js/google-code-prettify/prettify.css';
     %= javascript '/js/jquery-1.9.0.min.js';

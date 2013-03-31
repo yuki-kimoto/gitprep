@@ -1,0 +1,10 @@
+% layout 'common';
+  
+  %= include '/include/header';
+  <div class="container" style="min-heigth:500px">
+    <h3>Admin</h3>
+    <ul class="nav nav-tabs nav-stacked">
+      <li><a href="<%= url_for('/_admin/users') %>">Users</a></li>
+    </ul>
+  </div>
+  %= include '/include/footer';

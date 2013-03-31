@@ -1,14 +1,12 @@
 <%
-  use Gitprep::API;
   use Mojo::Util 'md5_sum';
   
-  my $api = Gitprep::API->new($self);
+  my $api = gitprep_api;
   
   my $op = param('op') || '';
   my $state = 'start';
   
   my $errors;
-  my $users;
   if ($op eq 'create') {
     $state = 'create';
     
@@ -48,34 +46,32 @@
       
       $self->flash(success => 1);
       $self->flash(id => $id);
-      $self->redirect_to('/_admin/user');
+      $self->redirect_to('current');
     }
     else {
       $state = 'error';
       $errors = $vresult->messages;
     }
   }
-  else {
-    $users = $api->users;
-  }
 %>
-
-% layout 'common';
 
 % layout 'common';
 
   %= include '/include/header';
 
-  % my $id = '';
-  % if (flash('success')) {
-    <br>
-    <b><center>Start up success! Please login as admin user.</center></b>
-    % $id = flash('id');
-  % }
+  <div class="container">
+    % my $id = '';
+    % if (flash('success')) {
+      
+      <div class="alert alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        Success: User <b><%= flash('id') %></b> is created.
+      </div>
+    % }
   
     <div class="text-center"><h3>Create User</h3></div>
     <div class="well" style="background-color:white;padding-top:15px;padding-left:60px;width:300px;margin-left:auto;margin-right:auto">
-      <form action="<%= url_for->query(op => 'login') %>" method="post">
+      <form action="<%= url_for->query(op => 'create') %>" method="post">
         <div class="control-group">
           <label class="control-label" for="user-name">User name</label>
           <div class="controls">
@@ -96,15 +92,6 @@
         </div>
       </form>
     </div>
+    <div class="text-center" style="margin-bottom:20px"><big><a href="/_admin/users">See Users</a></big></div>
   </div>
-
-  <div class="container">
-    <div class="text-center"><h3>Users</h3></div>
-    <div class="container">
-      <ul class="nav nav-tabs nav-stacked">
-        % for my $user (@$users) {
-          <li><a href="#"><%= $user->{id} %></a></li>
-        % }
-      </ul>
-    </div>
-  </div>
+  %= include '/include/footer';

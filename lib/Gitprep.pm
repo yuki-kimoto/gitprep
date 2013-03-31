@@ -163,73 +163,78 @@ EOS
   $self->manager($manager);
 
   # Home
-  $r->get('/')->to('#home');
+  $r->get('/')->name('home');
   
   # Start
-  $r->any('/_start')->to('#start');
+  $r->any('/_start')->name('_start');
   
   # Sign in
-  $r->any('/_login')->to('#login');
+  $r->any('/_login')->name('login');
   
   # Admin
-  $r->get('/_admin')->to('#admin');
+  $r->get('/_admin')->name('_admin');
   
   # Admin
   {
-    my $r = $r->route('/_admin')->to('admin#');
-    
-    # Create new repository
-    $r->any('/create')->to('#create');
+    my $r = $r->route('/_admin')->to('_admin#');
+
+    # Users
+    $r->any('/users')->to('#users');
     
     # User
-    $r->any('/user')->to('#user');
+    {
+      my $r = $r->route('/user')->to('_admin-user#');
+      
+      # Create user
+      $r->any('/create')->to('#create');
+    }
   }
 
   # User
-  $r->get('/:user')->to('#user');
+  $r->get('/:user')->name('user');
   
   # Project
   {
     my $r = $r->route('/:user/:project');
-    $r->get('/')->to('#project');
+    $r->get('/')->name('project');
     
     # Commit
-    $r->get('/commit/#diff')->to('#commit');
+    $r->get('/commit/#diff')->name('commit');
     
     # Commits
-    $r->get('/commits/#rev', {id => 'HEAD'})->to('#commits');
-    $r->get('/commits/#rev/(*blob)')->to('#commits');
+    $r->get('/commits/#rev', {id => 'HEAD'})->name('commits');
+    $r->get('/commits/#rev/(*blob)')->name('commits');
     
     # Branches
-    $r->get('/branches')->to('#branches');
+    $r->get('/branches')->name('branches');
 
     # Tags
-    $r->get('/tags')->to('#tags');
+    $r->get('/tags')->name('tags');
 
     # Tree
-    $r->get('/tree/(*object)')->to('#tree');
+    $r->get('/tree/(*object)')->name('tree');
     
     # Blob
-    $r->get('/blob/(*object)')->to('#blob');
+    $r->get('/blob/(*object)')->name('blob');
     
     # Blob diff
-    $r->get('/blobdiff/(#diff)/(*file)')->to('#blobdiff');
+    $r->get('/blobdiff/(#diff)/(*file)')->name('blobdiff');
     
     # Raw
-    $r->get('/raw/(*object)')->to('#raw');
+    $r->get('/raw/(*object)')->name('raw');
     
     # Archive
-    $r->get('/archive/(#rev).tar.gz')->to('#archive', archive_type => 'tar');
-    $r->get('/archive/(#rev).zip')->to('#archive', archive_type => 'zip');
+    $r->get('/archive/(#rev).tar.gz')->name('archive')->to(archive_type => 'tar');
+    $r->get('/archive/(#rev).zip')->name('archive')->to(archive_type => 'zip');
     
     # Compare
-    $r->get('/compare/(#rev1)...(#rev2)')->to('#compare');
+    $r->get('/compare/(#rev1)...(#rev2)')->name('compare');
     
     # Settings
-    $r->any('/settings')->to('#settings');
+    $r->any('/settings')->name('settings');
     
     # Fork
-    $r->any('/fork')->to('#fork');
+    $r->any('/fork')->name('fork');
   }
 }
 
