@@ -42,13 +42,8 @@ sub startup {
   # Git command
   my $git = Gitprep::Git->new;
   my $git_bin = $conf->{basic}{git_bin} ? $conf->{basic}{git_bin} : $git->search_bin;
-  unless ($git_bin) {
-    my $error = "Can't detect git command. set git_bin in gitprep.conf";
-    $self->log->error($error);
-    croak $error;
-  }
   unless (-e $git_bin) {
-    my $error = "$git_bin is not found";
+    my $error = "Can't detect or found git command. set git_bin in gitprep.conf";
     $self->log->error($error);
     croak $error;
   }
