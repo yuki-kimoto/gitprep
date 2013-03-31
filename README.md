@@ -50,7 +50,7 @@ You upload these directory into server document root by FTP.
 
 Access the following URL by browser.
 
-  http://(Your host name)/gitprep/setup/setup.php
+    http://(Your host name)/gitprep/setup/setup.php
 
 And click Setup button once and wail abount 5 minutes.
 
@@ -77,9 +77,9 @@ At first create **gitprep** user. This is not nesessary, but recommended.
 
 Download tar.gz archive and exapand it and change directory. 
 
-  curl -kL https://github.com/yuki-kimoto/gitprep/archivegitprep-0.03.tar.gz > gitprep-0.03.tar.gz
-  tar xf gitprep-0.03.tar.gz
-  cd gitprep-0.03
+    curl -kL https://github.com/yuki-kimoto/gitprep/archivegitprep-0.03.tar.gz > gitprep-0.03.tar.gz
+    tar xf gitprep-0.03.tar.gz
+    cd gitprep-0.03
 
 ## Setup
 
@@ -116,16 +116,16 @@ you must do some works for security.
 
 You add **user** and **group** to **hypnotoad** section in **gitprep.conf**.
 
-  [hypnotoad]
-  ...
-  user=gitprep
-  group=gitprep
+    [hypnotoad]
+    ...
+    user=gitprep
+    group=gitprep
 
 ### Developer
 
 If you are developer, you can start application development mode
 
-  ./morbo
+    ./morbo
 
 You can access the following URL.
       
