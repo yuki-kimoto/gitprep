@@ -17,9 +17,6 @@ BEGIN {
   my $extlib = join('/', @base_dir, 'extlib', 'lib', 'perl5');
   eval 'use lib $mojolegacy, $extlib, $lib';
   croak $@ if $@;
-
-  $DB::single = 1;
-  1;
 }
 
 use Mojolicious::Commands;
@@ -32,4 +29,5 @@ Please visit http://mojolicio.us for detailed installation instructions.
 EOF
 
 # Start commands
+$ENV{MOJO_MODE} = 'production';
 Mojolicious::Commands->start_app('Gitprep');

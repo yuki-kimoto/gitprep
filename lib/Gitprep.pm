@@ -13,6 +13,7 @@ use Gitprep::API;
 use Carp 'croak';
 use Gitprep::RepManager;
 use Scalar::Util 'weaken';
+use Carp 'croak';
 
 has 'git';
 has 'dbi';
@@ -29,8 +30,8 @@ sub startup {
   my $my_conf_file = $self->home->rel_file('gitprep.my.conf');
   $self->plugin('INIConfig', {file => $my_conf_file}) if -f $my_conf_file;
   
+  # Config
   my $conf = $self->config;
-  $conf->{root} = $self->home->rel_file('rep');
   $conf->{hypnotoad} ||= {listen => ["http://*:10020"]};
   my $listen = $conf->{hypnotoad}{listen} || '';
   if ($listen ne '' && ref $listen ne 'ARRAY') {
@@ -38,15 +39,22 @@ sub startup {
   }
   $conf->{hypnotoad}{listen} = $listen;
   
-  # Added public directory
-  push @{$self->static->paths}, $conf->{root};
-  
-  # Git
+  # Git command
   my $git = Gitprep::Git->new;
-  my $git_bin = $conf->{git_bin} ? $conf->{git_bin} : $git->search_bin;
-  die qq/Can't detect git command. set "git_bin" in gitprep.conf/
-    unless $git_bin;
+  my $git_bin = $conf->{basic}{git_bin} ? $conf->{basic}{git_bin} : $git->search_bin;
+  unless ($git_bin) {
+    my $error = "Can't detect git command. set git_bin in gitprep.conf";
+    $self->log->error($error);
+    croak $error;
+  }
+  unless (-e $git_bin) {
+    my $error = "$git_bin is not found";
+    $self->log->error($error);
+    croak $error;
+  }
   $git->bin($git_bin);
+  
+  # Repository home
   my $rep_home = $self->home->rel_file('rep');
   $git->rep_home($rep_home);
   unless (-d $rep_home) {
