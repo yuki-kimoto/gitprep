@@ -4,7 +4,7 @@
 
 <table class="table">
   <tr>
-    <td><a href="/_admin/user">User</a></td>
+    <td><a href="<%= url_for('/_admin/user') %>">User</a></td>
   </tr>
 </table>
 

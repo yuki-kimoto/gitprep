@@ -30,3 +30,5 @@ db/*
 extlib/*
 rep/*
 gitprep.my.ini
+rep/*
+!rep/.gitignore

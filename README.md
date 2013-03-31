@@ -40,7 +40,7 @@ and you must add git command path into config file **gitprep.conf**
 
     [basic]
     ;;; Git command path
-    git_bin=/home/yourname/local/git
+    git_bin=/home/yourname/local/bin/git
 
 ## Upload Server by FTP
 
