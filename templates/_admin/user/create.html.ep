@@ -42,11 +42,16 @@
       $valid_params->{password} = md5_sum $valid_params->{password};
       my $config_json = $api->json($valid_params);
       
-      $self->app->dbi->model('user')->insert({id => $id, config => $config_json});
-      
-      $self->flash(success => 1);
-      $self->flash(id => $id);
-      $self->redirect_to('current');
+      eval { app->manager->create_user($id, {config => $config_json}) };
+      if ($@) {
+        app->log->error($@);
+        $errors = ['Internal Error'];
+      }
+      else {
+        $self->flash(success => 1);
+        $self->flash(id => $id);
+        $self->redirect_to('current');
+      }
     }
     else {
       $state = 'error';
@@ -62,13 +67,21 @@
   <div class="container">
     % my $id = '';
     % if (flash('success')) {
-      
       <div class="alert alert-success">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
         Success: User <b><%= flash('id') %></b> is created.
       </div>
     % }
-  
+    
+    % if ($errors) {
+      <div class="alert">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        % for my $error (@$errors) {
+          <p><%= $error %></p>
+        % }
+      </div>
+    % }
+    
     <div class="text-center"><h3>Create User</h3></div>
     <div class="well" style="background-color:white;padding-top:15px;padding-left:60px;width:300px;margin-left:auto;margin-right:auto">
       <form action="<%= url_for->query(op => 'create') %>" method="post">

@@ -21,7 +21,6 @@ sub create_project {
       eval { $self->_create_project($user, $project) };
       croak $error = $@ if $@;
       eval {$self->_create_rep($user, $project, $opts) };
-      $error->{message} = $@;
       croak $error = $@ if $@;
     });
   };
@@ -40,13 +39,44 @@ sub delete_project {
       eval { $self->_delete_project($user, $project) };
       croak $error = $@ if $@;
       eval {$self->_delete_rep($user, $project) };
-      $error->{message} = $@;
       croak $error = $@ if $@;
     });
   };
   croak $error if $@;
   
   return 1;
+}
+
+sub create_user {
+  my ($self, $user, $data) = @_;
+
+  my $dbi = $self->app->dbi;
+  
+  # Create user
+  my $error;
+  eval {
+    $dbi->connector->txn(sub {
+      eval { $self->_create_db_user($user, $data) };
+      croak $error = $@ if $@;
+      eval {$self->_create_user_dir($user) };
+      croak $error = $@ if $@;
+    });
+  };
+  croak $error if $@;
+}
+
+sub _create_db_user {
+  my ($self, $user, $data) = @_;
+  
+  $self->app->dbi->model('user')->insert($data, id => $user);
+}
+
+sub _create_user_dir {
+  my ($self, $user) = @_;
+
+  my $home = $self->app->git->rep_home;
+  my $user_dir = "$home/$user";
+  mkpath $user_dir;
 }
 
 sub exists_project { shift->_exists_project(@_) }
