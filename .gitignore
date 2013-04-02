@@ -13,8 +13,6 @@ Makefile
 pm_to_blib
 MYMETA.json
 MYMETA.yml
-gitweb.development.conf
-gitweblite.conf
 log/*
 !log/.gitignore
 script/hypnotoad.pid
@@ -29,6 +27,6 @@ db/*
 !db/.gitignore
 extlib/*
 rep/*
-gitprep.my.ini
+gitprep.my.conf
 rep/*
 !rep/.gitignore
