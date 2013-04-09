@@ -49,6 +49,11 @@ sub startup {
     croak $error;
   }
   $git->bin($git_bin);
+
+  # Repository Manager
+  my $manager = Gitprep::RepManager->new(app => $self);
+  weaken $manager->{app};
+  $self->manager($manager);
   
   # Repository home
   my $rep_home = $self->home->rel_file('rep');
@@ -59,18 +64,6 @@ sub startup {
   }
   $self->git($git);
 
-  # Reverse proxy support
-  $ENV{MOJO_REVERSE_PROXY} = 1;
-  $self->hook('before_dispatch' => sub {
-    my $self = shift;
-    
-    if ($self->req->headers->header('X-Forwarded-Host')) {
-      my $prefix = shift @{$self->req->url->path->parts};
-      push @{$self->req->url->base->path->parts}, $prefix
-        if defined $prefix;
-    }
-  });
-  
   # DBI
   my $db_file = $self->home->rel_file('db/gitprep.db');
   my $dbi = DBIx::Custom->connect(
@@ -143,100 +136,83 @@ EOS
   
   # Helper
   $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
-  
-  # Route
-  my $r = $self->routes->route->to('main#');
-  
+
   # DBViewer(only development)
   if ($self->mode eq 'development') {
     eval {
       $self->plugin(
         'DBViewer',
         dsn => "dbi:SQLite:database=$db_file",
-        route => $r
       );
     };
   }
-  
-  # Repository Manager
-  my $manager = Gitprep::RepManager->new(app => $self);
-  weaken $manager->{app};
-  $self->manager($manager);
-
-  # Home
-  $r->get('/')->name('home');
-  
-  # Start
-  $r->any('/_start')->name('_start');
-  
-  # Sign in
-  $r->any('/_login')->name('login');
-  
-  # Admin
-  $r->get('/_admin')->name('_admin');
-  
-  # Admin
-  {
-    my $r = $r->route('/_admin')->to('_admin#');
-
-    # Users
-    $r->any('/users')->to('#users');
     
+  # Auto route
+  $self->plugin('AutoRoute');
+  
+  # User defined Routes
+  {
+    my $r = $self->routes->route->to('main#');
+
     # User
+    $r->get('/:user')->name('user');
+    
+    # Project
     {
-      my $r = $r->route('/user')->to('_admin-user#');
+      my $r = $r->route('/:user/:project');
+      $r->get('/')->name('project');
       
-      # Create user
-      $r->any('/create')->to('#create');
+      # Commit
+      $r->get('/commit/#diff')->name('commit');
+      
+      # Commits
+      $r->get('/commits/#rev', {id => 'HEAD'})->name('commits');
+      $r->get('/commits/#rev/(*blob)')->name('commits');
+      
+      # Branches
+      $r->get('/branches');
+
+      # Tags
+      $r->get('/tags');
+
+      # Tree
+      $r->get('/tree/(*object)')->name('tree');
+      
+      # Blob
+      $r->get('/blob/(*object)')->name('blob');
+      
+      # Blob diff
+      $r->get('/blobdiff/(#diff)/(*file)')->name('blobdiff');
+      
+      # Raw
+      $r->get('/raw/(*object)')->name('raw');
+      
+      # Archive
+      $r->get('/archive/(#rev).tar.gz')->name('archive')->to(archive_type => 'tar');
+      $r->get('/archive/(#rev).zip')->name('archive')->to(archive_type => 'zip');
+      
+      # Compare
+      $r->get('/compare/(#rev1)...(#rev2)')->name('compare');
+      
+      # Settings
+      $r->any('/settings');
+      
+      # Fork
+      $r->any('/fork');
     }
   }
 
-  # User
-  $r->get('/:user')->name('user');
-  
-  # Project
-  {
-    my $r = $r->route('/:user/:project');
-    $r->get('/')->name('project');
+  # Reverse proxy support
+  $ENV{MOJO_REVERSE_PROXY} = 1;
+  $self->hook('before_dispatch' => sub {
+    my $self = shift;
     
-    # Commit
-    $r->get('/commit/#diff')->name('commit');
-    
-    # Commits
-    $r->get('/commits/#rev', {id => 'HEAD'})->name('commits');
-    $r->get('/commits/#rev/(*blob)')->name('commits');
-    
-    # Branches
-    $r->get('/branches')->name('branches');
-
-    # Tags
-    $r->get('/tags')->name('tags');
-
-    # Tree
-    $r->get('/tree/(*object)')->name('tree');
-    
-    # Blob
-    $r->get('/blob/(*object)')->name('blob');
-    
-    # Blob diff
-    $r->get('/blobdiff/(#diff)/(*file)')->name('blobdiff');
-    
-    # Raw
-    $r->get('/raw/(*object)')->name('raw');
-    
-    # Archive
-    $r->get('/archive/(#rev).tar.gz')->name('archive')->to(archive_type => 'tar');
-    $r->get('/archive/(#rev).zip')->name('archive')->to(archive_type => 'zip');
-    
-    # Compare
-    $r->get('/compare/(#rev1)...(#rev2)')->name('compare');
-    
-    # Settings
-    $r->any('/settings')->name('settings');
-    
-    # Fork
-    $r->any('/fork')->name('fork');
-  }
+    if ($self->req->headers->header('X-Forwarded-Host')) {
+      my $prefix = shift @{$self->req->url->path->parts};
+      push @{$self->req->url->base->path->parts}, $prefix
+        if defined $prefix;
+    }
+  });
 }
 
 1;
