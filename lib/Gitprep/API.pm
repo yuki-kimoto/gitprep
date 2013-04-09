@@ -5,11 +5,28 @@ use Carp ();
 use File::Basename ();
 use Mojo::JSON;
 use Encode qw/encode decode/;
+use Digest::MD5 'md5_hex';
 
 sub croak { Carp::croak(@_) }
 sub dirname { File::Basename::dirname(@_) }
 
 has 'cntl';
+
+sub encrypt_password {
+  my ($self, $password) = @_;
+  
+  my $salt;
+  $salt .= int(rand 10) for (1 .. 40);
+  my $password_encryped = md5_hex md5_hex "$salt$password";
+  
+  return ($password_encryped, $salt);
+}
+
+sub check_password {
+  my ($self, $password, $salt, $password_encryped) = @_;
+  
+  return md5_hex md5_hex "$salt$password" eq $password_encryped;
+}
 
 sub new {
   my ($class, $cntl) = @_;

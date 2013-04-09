@@ -1,21 +1,12 @@
 <%
-  use Mojo::Util 'md5_sum';
-  
   my $api = gitprep_api;
   
   my $op = param('op') || '';
-  my $state = 'start';
   
   my $errors;
   if ($op eq 'create') {
-    $state = 'create';
     
-    my $params = {
-      id => scalar param('id'),
-      password => scalar param('password'),
-      password2 => scalar param('password2')
-    };
-    my $id = param('id');
+    my $params = $api->params;
     my $validator = $self->app->validator;
     my $rule = [
       id => [
@@ -37,11 +28,17 @@
     my $vresult = $validator->validate($params, $rule);
     
     if ($vresult->is_ok) {
-      my $valid_params = $vresult->data;
-      my $id = delete $valid_params->{id};
-      $valid_params->{password} = md5_sum $valid_params->{password};
-      my $config_json = $api->json($valid_params);
       
+      # Valid parameters
+      my $params = $vresult->data;
+      my $id = delete $params->{id};
+      my ($password_encrypted, $salt)
+        = $api->encrypt_password($params->{password});
+      $params->{password} = $password_encrypted;
+      $params->{salt} = $salt;
+      my $config_json = $api->json($params);
+      
+      # Create user
       eval { app->manager->create_user($id, {config => $config_json}) };
       if ($@) {
         app->log->error($@);
@@ -53,10 +50,7 @@
         $self->redirect_to('current');
       }
     }
-    else {
-      $state = 'error';
-      $errors = $vresult->messages;
-    }
+    else { $errors = $vresult->messages }
   }
 %>
 

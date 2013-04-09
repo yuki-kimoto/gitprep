@@ -1,32 +1,31 @@
 <%
   use Mojo::JSON ();
   use Encode ();
-  use Gitprep::API;
   use Mojo::Util 'md5_sum';
-
-  my $api = Gitprep::API->new($self);
   
+  # API
+  my $api = gitprep_api;
+  
+  # Operator
   my $op = param('op') || '';
-  my $state = 'start';
   
   # DBI
   my $dbi = $self->app->dbi;
   
+  # Errors
+  my $error;
+  
+  # Login
   if ($op eq 'login') {
-    sleep 2;
-    $state = 'login';
+    sleep 3;
     
-    my $params = {
-      id => scalar param('id'),
-      password => scalar param('password'),
-    };
-    my $id = param('id');
+    # Validation
+    my $params = $api->params;
     my $validator = $self->app->validator;
     my $password_check = sub {
       my $values = shift;
       
       my ($id, $password) = @$values;
-      my $password_md5 = md5_sum $password;
       
       my $config_json
         = $dbi->model('user')->select('config', id => $id)->value;
@@ -35,9 +34,14 @@
       
       my $config = $api->json($config_json);
       
-      return $config->{password} eq $password_md5;
+      my $is_valid = $api->check_password(
+        $password,
+        $config->{salt},
+        $config->{password}
+      );
+      
+      return $is_valid;
     };
-    
     my $rule = [
       id => [
         'any'
@@ -51,36 +55,33 @@
           $password_check
         ]
     ];
-    my $vresult = $validator->validate($params, $rule);
+    my $vresult = $self->app->validator->validate($params, $rule);
     
     if ($vresult->is_ok) {
-      my $valid_params = $vresult->data;
-      my $id = $valid_params->{id};
-      my $password = $valid_params->{password};
-      my $password_md5 = md5_sum $password;
       
+      # Login success
+      my $params = $vresult->data;
+      my $id = $params->{id};
+      my $password = $params->{password};
       my $config_json = $self->app->dbi->model('user')->select('config', id => $id)->value;
       my $config = $api->json($config_json);
+      my $password_encrypted = $config->{password};
       my $admin = $config->{admin};
       session(user_id => $id);
-      session(user_password => $password_md5);
+      session(user_password => $password_encrypted);
       
+      # Go to admin page
       if ($admin) {
         $self->redirect_to('/_admin');
         return 1;
       }
+      # Go to user page
       else {
         $self->redirect_to("/$id");
         return 1;
       }
     }
-    else {
-      $state = 'error';
-    }
-  } elsif ($op eq 'logout') {
-    session(expires => 1);
-    $self->redirect_to('/');
-    return 1;
+    else { $error = 'User name or password is wrong' }
   }
 %>
 
@@ -88,31 +89,46 @@
 
   %= include '/include/header';
 
-  % my $id = '';
-  % if (flash('success')) {
-    <br>
-    <b><center>Start up success! Please login as admin user.</center></b>
-    % $id = flash('id');
-  % }
-  
-  <div class="border-gray" style="padding-top:15px;padding-left:60px;width:300px;margin-left:auto;margin-right:auto">
-    <form action="<%= url_for->query(op => 'login') %>" method="post">
-      <div class="control-group">
-        <label class="control-label" for="user-name">User name</label>
-        <div class="controls">
-          <%= input_tag id => $id, type => 'text', placeholder => 'User', id =>'user-name'%>
-        </div>
+  <div class="container">
+    % my $id = '';
+    % if (flash('admin_user_created')) {
+      % $id = 'admin';
+      <div class="alert alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        Admin user is created. Let's login as admin user.
       </div>
-      <div class="control-group">
-        <label class="control-label" for="input-password">Password</label>
-        <div class="controls">
-          <%= password_field 'password', id => 'input-password', placeholder => 'Password' %>
-        </div>
+    % }
+
+    % if ($error) {
+      <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <div><%= $error %></div>
       </div>
-      <div class="control-group">
-        <div class="controls">
-          <button type="submit" class="btn">Sign in</button>
+    % }
+      
+    <div class="well border-gray"
+      style="background-color:white;padding-top:15px;padding-left:60px;width:300px;margin-left:auto;margin-right:auto"
+    >
+      <form action="<%= url_for->query(op => 'login') %>" method="post">
+        <div class="control-group">
+          <label class="control-label" for="user-name">User name</label>
+          <div class="controls">
+            <%= input_tag id => $id, type => 'text', placeholder => 'User', id =>'user-name'%>
+          </div>
         </div>
-      </div>
-    </form>
+        <div class="control-group">
+          <label class="control-label" for="input-password">Password</label>
+          <div class="controls">
+            <%= password_field 'password', id => 'input-password', placeholder => 'Password' %>
+          </div>
+        </div>
+        <div class="control-group">
+          <div class="controls">
+            <button type="submit" class="btn">Sign in</button>
+          </div>
+        </div>
+      </form>
+    </div>
   </div>
+
+  %= include '/include/footer';

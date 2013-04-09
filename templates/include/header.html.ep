@@ -11,11 +11,14 @@
       % if ($api->logined) {
         <div  style="margin-top:5px">
           <div>
-            % my $user = session('user_id');
+            % my $user = session('user_id') || '';
             <i class="icon-user"></i><a href="<%= url_for("/$user") %>"><%= $user %></a>
           </div>
-          <a class="btn btn-small" href="<%= url_for("/_admin/create") %>">Create a new repo</a>
-          <a class="btn btn-small" href="<%= url_for("/_login?op=logout") %>">Sign out</a>
+          % unless ($user eq 'admin') {
+            <a class="btn btn-small" href="<%= url_for("/_admin/create") %>">Create a new repo</a>
+          % }
+          % my $url = url_with->to_abs;
+          <a class="btn btn-small" href="<%= url_for("/_logout?from=$url") %>">Sign out</a>
         </div>
       % } else {
         <div  style="margin-top:15px">

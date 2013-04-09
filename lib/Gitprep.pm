@@ -150,6 +150,9 @@ EOS
   # Auto route
   $self->plugin('AutoRoute');
   
+  # Reset admin password
+  
+  
   # User defined Routes
   {
     my $r = $self->routes->route->to('main#');
