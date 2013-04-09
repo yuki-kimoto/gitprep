@@ -1,0 +1,14 @@
+#!/bin/env perl
+
+use strict;
+use warnings;
+use FindBin;
+
+my $app_path = "$FindBin::Bin/gitprep";
+
+my $script = <<"EOS";
+#!/bin/sh
+$app_path \$*
+EOS
+
+print $script;

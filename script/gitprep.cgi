@@ -12,10 +12,10 @@ BEGIN {
   my $base_dir_name = $script_name;
   $base_dir_name =~ s/\.cgi$//;
   my @base_dir = (splitdir(dirname __FILE__), $base_dir_name);
-  my $mojolegacy = join('/', @base_dir, 'mojolegacy', 'lib');
+  my $mojo_lib = join('/', @base_dir, 'mojo', 'lib');
   my $lib = join('/', @base_dir, 'lib');
   my $extlib = join('/', @base_dir, 'extlib', 'lib', 'perl5');
-  eval 'use lib $mojolegacy, $extlib, $lib';
+  eval 'use lib $mojo_lib, $extlib, $lib';
   croak $@ if $@;
 }
 

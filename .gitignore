@@ -30,3 +30,8 @@ rep/*
 gitprep.my.conf
 rep/*
 !rep/.gitignore
+setup/log/*
+!setup/log/.gitignore
+setup/latest-build
+setup/work/*
+setup/build.log

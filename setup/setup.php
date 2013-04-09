@@ -1,59 +1,24 @@
 <?php
-  # Config
-  $setup_dir = getcwd();
-  $script_dir = realpath($setup_dir . '/../script');
-  $app_home_dir = realpath($setup_dir . '/..');
-  $cpanm_path = "$app_home_dir/cpanm";
-  putenv("PERL_CPANM_HOME=$setup_dir");
+  ini_set( 'display_errors', 1 );
   
-  # Paramter
-  $op = $_REQUEST['op'];
-  
-  $current_path = $_SERVER["SCRIPT_NAME"];
-  $app_path = $current_path;
-  $app_path = preg_replace('/\/setup\/setup\.php/', '', $app_path) . '.cgi';
-  preg_match("/([0-9a-zA-Z-_]+\.cgi)$/", $app_path, $matches);
-  $script_base_name = $matches[0];
-  $script = "$script_dir/$script_base_name";
-  $to_script = realpath("$app_home_dir/../$script_base_name");
-  $output = array('');
-  $app_home_dir = getcwd() . '/..';
-  $setup_command_success = true;
-  
-  if($op == 'setup') {
+  # Setup directory
+  if ($setup_dir = getcwd()) {
+    # Setup CGI script
+    $setup_cgi_script = "$setup_dir/setup.cgi";
     
-    if (!chdir($app_home_dir)) {
-      throw new Exception("Can't cahgne directory");
-    }
-    exec("perl cpanm -n -l extlib Module::CoreList 2>&1", $output, $ret);
-    
-    $output = array();
-    if ($ret == 0) {
-      exec("perl -Iextlib/lib/perl5 cpanm -n -L extlib --installdeps . 2>&1", $output, $ret);
-      if ($ret == 0) {
-        if (copy($script, $to_script)) {
-          array_push($output, "$script is moved to $to_script");
-          if (chmod($to_script, 0755)) {
-            array_push($output, "change $to_script mode to 755");
-            $setup_command_success = true;
-          }
-          else {
-            array_push($output, "Can't change mode $to_script");
-            $setup_command_success = false;
-          }
-        }
-        else {
-          array_push($output, "Can't move $script to $to_script");
-          $setup_command_success = false;
-        }
-      }
-      else {
-        $setup_command_success = false;
-      }
+    # Chmod Setup CGI script
+    if (chmod($setup_cgi_script, 0755)) {
+      $setup_cgi_url = $_SERVER['PHP_SELF'];
+      $setup_cgi_url = preg_replace('/\.php$/', '.cgi', $setup_cgi_url);
+      header("Location: $setup_cgi_url");
+      exit();
     }
     else {
-      $setup_command_success = false;
+      $error = "Can't $setup_cgi_script mode to 755";
     }
+  }
+  else {
+    $error = "Can't change directory";
   }
 ?>
 
@@ -73,31 +38,10 @@
     </div>
     <hr style="margin-top:0;margin-bottom:0">
     <div class="container">
-      <div class="text-center"><b><h3>Click!</h3></b></div>
-      <form action="<?php echo "$current_path?op=setup" ?>" method="post">
-        <div class="text-center" style="margin-bottom:10px">
-          <input type="submit" style="width:200px;height:50px;font-size:200%" value="Setup">
-        </div>
-      </form>
-
-<?php if ($op == 'setup') { ?>
-      <span class="label">Result</span>
-<pre style="height:300px;overflow:auto;margin-bottom:30px">
-<?php if (!$setup_command_success) { ?>
-<span style="color:red">Error, Setup failed.</span>
-<?php } ?>
-<?php if ($setup_command_success) { ?>
-<?php foreach ($output as $line) { ?>
-<?php echo htmlspecialchars($line) ?>
-
-<?php } ?>
-<?php } ?>
-</pre>
-<?php } ?>
-
-      <?php if ($op == 'setup' && $setup_command_success) { ?>
-        <div style="font-size:150%;margin-bottom:30px;">Go to <a href="<?php echo $app_path ?>">Application</a></div>
-      <?php } ?>
+      <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <?php echo $error ?>
+      </div>
     </div>
   </body>
 </html>
