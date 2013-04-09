@@ -92,7 +92,7 @@ At first create **gitprep** user. This is not nesessary, but recommended.
 
 Download tar.gz archive and exapand it and change directory. 
 
-    curl -kL https://github.com/yuki-kimoto/gitprep/archivegitprep-0.03.tar.gz > gitprep-0.03.tar.gz
+    curl -kL https://github.com/yuki-kimoto/gitprep/archive/0.03.tar.gz > gitprep-0.03.tar.gz
     tar xf gitprep-0.03.tar.gz
     mv gitprep-0.03 gitprep
     cd gitprep
