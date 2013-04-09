@@ -150,12 +150,13 @@ EOS
   # Auto route
   $self->plugin('AutoRoute');
   
-  # Reset admin password
-  
-  
   # User defined Routes
   {
-    my $r = $self->routes->route->to('main#');
+    my $r = $self->routes;
+
+    # Reset admin password
+    $r->any('/reset-password')->name('reset-password')
+      if $conf->{admin}{reset_password};
 
     # User
     $r->get('/:user')->name('user');
@@ -173,10 +174,10 @@ EOS
       $r->get('/commits/#rev/(*blob)')->name('commits');
       
       # Branches
-      $r->get('/branches');
+      $r->get('/branches')->name('branches');
 
       # Tags
-      $r->get('/tags');
+      $r->get('/tags')->name('tags');
 
       # Tree
       $r->get('/tree/(*object)')->name('tree');
@@ -198,10 +199,10 @@ EOS
       $r->get('/compare/(#rev1)...(#rev2)')->name('compare');
       
       # Settings
-      $r->any('/settings');
+      $r->any('/settings')->name('settings');
       
       # Fork
-      $r->any('/fork');
+      $r->any('/fork')->name('fork');
     }
   }
 

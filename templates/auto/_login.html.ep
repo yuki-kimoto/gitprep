@@ -1,8 +1,4 @@
 <%
-  use Mojo::JSON ();
-  use Encode ();
-  use Mojo::Util 'md5_sum';
-  
   # API
   my $api = gitprep_api;
   
