@@ -8,14 +8,28 @@
   %= include '/include/header';
 
   <div class="container">
+    % if (flash('user_deleted')) {
+      <div class="alert alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        Success: User <b><%= flash('user') %></b> is deleted.
+      </div>
+    % }
+    
     <div><h3>Admin Users</h3></div>
     <div style="margin-bottom:10px"><a class="btn" href="/_admin/user/create">Create User</a></div>
     <div class="container">
-      <ul class="nav nav-tabs nav-stacked">
-        % for my $user (@$users) {
-          <li><a href="#"><%= $user->{id} %></a></li>
-        % }
-      </ul>
+        <table class="table">
+            % for my $user (@$users) {
+              <tr>
+                <td>
+                  <a href="#"><%= $user->{id} %></a>
+                </td>
+                <td style="text-align:right">
+                  <a class="btn btn-mini" href="<%= url_for("/_admin/user/delete?user=$user->{id}") %>">Delete</a>
+                </td>
+              </tr>
+            % }
+        </table>
     </div>
   </div>
   <div class="text-center" style="margin-bottom:20px"><big><a href="/_admin">Admin page</a></big></div>

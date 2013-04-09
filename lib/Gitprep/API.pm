@@ -57,6 +57,36 @@ sub root_ns {
   return $root;
 }
 
+sub is_admin {
+  my ($self, $user) = @_;
+  
+  # Controler
+  my $c = $self->cntl;
+  
+  # DBI
+  my $dbi = $c->app->dbi;
+  
+  # Check admin
+  my $row = $dbi->model('user')->select('config', id => $user)->one;
+  return unless $row;
+  my $config = $self->json($row->{config});
+  
+  return $config->{admin};
+}
+
+sub logined_admin {
+  my $self = shift;
+
+  # Controler
+  my $c = $self->cntl;
+  
+  # Check logined as admin
+  my $user = $c->session('user_id');
+  
+  return $self->is_admin($user) && $self->logined;
+}
+
+
 sub json {
   my ($self, $value) = @_;
   
@@ -68,21 +98,8 @@ sub json {
   }
 }
 
-sub users {
-  my $self = shift;
- 
-  my $users = $self->cntl->app->dbi->model('user')->select(
-    ['id', 'config'],
-    append => 'order by id'
-  )->filter(config => 'json')->all;
-
-  @$users = grep { ! $_->{config}{admin} } @$users;
-  
-  return $users;
-}
-
 sub logined {
-  my $self = shift;
+  my ($self, $user) = @_;
   
   my $c = $self->cntl;
   
@@ -97,6 +114,19 @@ sub logined {
   my $config = $self->json($row->{config});
   
   return $password eq $config->{password};
+}
+
+sub users {
+  my $self = shift;
+ 
+  my $users = $self->cntl->app->dbi->model('user')->select(
+    ['id', 'config'],
+    append => 'order by id'
+  )->filter(config => 'json')->all;
+
+  @$users = grep { ! $_->{config}{admin} } @$users;
+  
+  return $users;
 }
 
 sub params {

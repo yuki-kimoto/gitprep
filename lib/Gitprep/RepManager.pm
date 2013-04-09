@@ -27,6 +27,24 @@ sub create_project {
   croak $error if $@;
 }
 
+sub create_user {
+  my ($self, $user, $data) = @_;
+
+  my $dbi = $self->app->dbi;
+  
+  # Create user
+  my $error;
+  eval {
+    $dbi->connector->txn(sub {
+      eval { $self->_create_db_user($user, $data) };
+      croak $error = $@ if $@;
+      eval {$self->_create_user_dir($user) };
+      croak $error = $@ if $@;
+    });
+  };
+  croak $error if $@;
+}
+
 sub delete_project {
   my ($self, $user, $project) = @_;
   
@@ -47,22 +65,38 @@ sub delete_project {
   return 1;
 }
 
-sub create_user {
-  my ($self, $user, $data) = @_;
-
+sub delete_user {
+  my ($self, $user) = @_;
+  
   my $dbi = $self->app->dbi;
   
-  # Create user
+  # Delete user
   my $error;
   eval {
     $dbi->connector->txn(sub {
-      eval { $self->_create_db_user($user, $data) };
+      eval { $self->_delete_db_user($user) };
       croak $error = $@ if $@;
-      eval {$self->_create_user_dir($user) };
+      eval {$self->_delete_user_dir($user) };
       croak $error = $@ if $@;
     });
   };
   croak $error if $@;
+  
+  return 1;
+}
+
+sub _delete_db_user {
+  my ($self, $user) = @_;
+  
+  $self->app->dbi->model('user')->delete(id => $user);
+}
+
+sub _delete_user_dir {
+  my ($self, $user) = @_;
+
+  my $home = $self->app->git->rep_home;
+  my $user_dir = "$home/$user";
+  rmtree $user_dir;
 }
 
 sub _create_db_user {

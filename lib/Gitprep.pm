@@ -146,13 +146,34 @@ EOS
       );
     };
   }
-    
+  
+  # Routes
+  my $r = $self->routes;
+  
   # Auto route
-  $self->plugin('AutoRoute');
+  {
+    my $r = $r->under(sub {
+      my $self = shift;
+      
+      my $api = $self->gitprep_api;
+      
+      # Admin page authentication
+      {
+        my $path = $self->req->url->path->parts->[0] || '';
+
+        if ($path eq '_admin' && !$api->logined_admin) {
+          $self->redirect_to('/');
+          return;
+        }
+      }
+      
+      return 1; 
+    });
+    $self->plugin('AutoRoute', route => $r);
+  }
   
   # User defined Routes
   {
-    my $r = $self->routes;
 
     # Reset admin password
     $r->any('/reset-password')->name('reset-password')
