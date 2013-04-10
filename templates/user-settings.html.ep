@@ -1,0 +1,19 @@
+% layout 'common';
+  
+  %= include '/include/header';
+  
+  <div class="container">
+    <ul class="breadcrumb" style="margin-top:10px">
+      <li><a href="<%= url_for('/') %>">Home</a></li>
+      /
+      <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
+    </ul>
+    <h4>
+      User Account Settings
+    </h4>
+    <div style="margin-bottom:30px">
+      <a class="btn" href="<%= url_for("/reset-password")->query(user => $user) %>">Reset Password</a>
+    </div>
+  </div>
+  
+  %= include '/include/footer';

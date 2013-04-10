@@ -21,7 +21,7 @@
       return 1;
     }
     
-    my $login_user = session('user_id');
+    my $login_user = session('user');
     my $data = $vresult->data;
     my $user = $data->{user};
     my $project = $data->{project};

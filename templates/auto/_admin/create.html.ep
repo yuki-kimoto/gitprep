@@ -37,7 +37,7 @@
       }
       
       my $data = $vresult->data;
-      my $user = session('user_id');
+      my $user = session('user');
       my $project = $data->{project};
       my $description = $data->{description};
       my $readme = $data->{readme};

@@ -174,17 +174,21 @@ EOS
   
   # User defined Routes
   {
-
-    # Reset admin password
-    $r->any('/reset-password')->name('reset-password')
-      if $conf->{admin}{reset_password};
-
     # User
-    $r->get('/:user')->name('user');
+    my $r = $r->route('/:user');
+    {
+      # Home
+      $r->get('/')->name('user');
+      
+      # Settings
+      $r->get('/_settings')->name('user-settings');
+    }
     
     # Project
     {
-      my $r = $r->route('/:user/:project');
+      my $r = $r->route('/:project');
+      
+      # Home
       $r->get('/')->name('project');
       
       # Commit
@@ -220,7 +224,7 @@ EOS
       $r->get('/compare/(#rev1)...(#rev2)')->name('compare');
       
       # Settings
-      $r->any('/settings')->name('settings');
+      $r->any('/settings')->name('project-settings');
       
       # Fork
       $r->any('/fork')->name('fork');

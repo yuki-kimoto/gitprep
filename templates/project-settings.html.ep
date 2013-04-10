@@ -1,7 +1,7 @@
 <%
   my $api = gitprep_api;
   my $logined = $api->logined;
-  my $user_is_valid = $logined && $user eq session('user_id');
+  my $user_is_valid = $logined && $user eq session('user');
 
   my $git = app->git;
 

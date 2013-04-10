@@ -119,7 +119,7 @@
         </h4>
       </div>
       <div class="span2 text-right">
-        % if ($logined && $user eq session('user_id')) {
+        % if ($logined && $user eq session('user')) {
           <a class="btn" href="<%= url_for("/$user/$project/settings") %>">Settings</a>
         % }
       </div>

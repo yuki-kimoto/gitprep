@@ -12,6 +12,21 @@ sub dirname { File::Basename::dirname(@_) }
 
 has 'cntl';
 
+sub admin_user {
+  my $self = shift;
+  
+  # DBI
+  my $dbi = $self->cntl->app->dbi;
+  
+  # Admin user
+  my $users = $dbi->model('user')->select->filter('config' => 'json')->all;
+  for my $user (@$users) {
+    return $user->{id} if $user->{config}{admin};
+  }
+  
+  return;
+}
+
 sub encrypt_password {
   my ($self, $password) = @_;
   
@@ -81,7 +96,7 @@ sub logined_admin {
   my $c = $self->cntl;
   
   # Check logined as admin
-  my $user = $c->session('user_id');
+  my $user = $c->session('user');
   
   return $self->is_admin($user) && $self->logined;
 }
@@ -99,17 +114,17 @@ sub json {
 }
 
 sub logined {
-  my ($self, $user) = @_;
+  my $self = shift;
   
   my $c = $self->cntl;
   
   my $dbi = $c->app->dbi;
   
-  my $id = $c->session('user_id');
-  my $password = $c->session('user_password');
+  my $user = $c->session('user');
+  my $password = $c->session('password');
   return unless defined $password;
   
-  my $row = $dbi->model('user')->select('config', id => $id)->one;
+  my $row = $dbi->model('user')->select('config', id => $user)->one;
   return unless $row;
   my $config = $self->json($row->{config});
   

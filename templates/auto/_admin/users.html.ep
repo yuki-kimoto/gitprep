@@ -18,18 +18,20 @@
     <div><h3>Admin Users</h3></div>
     <div style="margin-bottom:10px"><a class="btn" href="/_admin/user/create">Create User</a></div>
     <div class="container">
-        <table class="table">
-            % for my $user (@$users) {
-              <tr>
-                <td>
-                  <a href="#"><%= $user->{id} %></a>
-                </td>
-                <td style="text-align:right">
-                  <a class="btn btn-mini" href="<%= url_for("/_admin/user/delete?user=$user->{id}") %>">Delete</a>
-                </td>
-              </tr>
-            % }
-        </table>
+      <table class="table">
+        % for my $user (@$users) {
+          % my $uid = $user->{id};
+          <tr>
+            <td>
+              <a href="#"><%= $uid %></a>
+            </td>
+            <td style="text-align:right">
+              <a class="btn btn-mini" href="<%= url_for("/reset-password?user=$uid") %>">Reset Password</a>
+              <a class="btn btn-mini" href="<%= url_for("/_admin/user/delete?user=$uid") %>">Delete</a>
+            </td>
+          </tr>
+        % }
+      </table>
     </div>
   </div>
   <div class="text-center" style="margin-bottom:20px"><big><a href="/_admin">Admin page</a></big></div>

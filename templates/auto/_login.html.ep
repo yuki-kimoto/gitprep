@@ -63,8 +63,8 @@
       my $config = $api->json($config_json);
       my $password_encrypted = $config->{password};
       my $admin = $config->{admin};
-      session(user_id => $id);
-      session(user_password => $password_encrypted);
+      session(user => $id);
+      session(password => $password_encrypted);
       
       # Go to admin page
       if ($admin) {
