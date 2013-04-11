@@ -37,6 +37,7 @@
       return $self->res->body;
     }
     else {
+      flash('original_project', "$user/$project");
       $self->redirect_to("/$login_user/$project");
       return 1;
     }

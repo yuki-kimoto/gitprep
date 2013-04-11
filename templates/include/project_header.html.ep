@@ -1,6 +1,8 @@
 <%
   my $api = gitprep_api;
   my $logined = $api->logined;
+  my $current_user = session('user');
+  my $user = stash('user');
 %>
 
 <div class="row">
@@ -14,10 +16,10 @@
     </ul>
   </div>
   <div class="span1">
-    % if ($logined) {
+    % if ($logined && $current_user ne $user ) {
       <a href="<%= url_for("/$user/$project/fork") %>" class="btn">Fork</a>
     % } else {
-      <a href="#" class="btn disabled">Fork</a>
+      <btn class="btn disabled" disabled>Fork</a>
     % }
   </div>
 </div>

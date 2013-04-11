@@ -160,7 +160,7 @@
         };
         $.post(url, data, function (result) {
           if (result.ok) {
-            location.href = "<%= url_for("/$user") %>";
+            location.href = "<%= url_for("/$user")->query(deleted_project => $project) %>";
           }
           else {
             $('#modal-message-text').text('Error:' + result.message);
