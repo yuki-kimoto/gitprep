@@ -72,32 +72,9 @@ sub startup {
     option => {sqlite_unicode => 1}
   );
   $self->dbi($dbi);
-
-  # Create user table
-  eval {
-    my $sql = <<"EOS";
-create table user (
-  row_id integer primary key autoincrement,
-  id not null unique,
-  config not null
-);
-EOS
-    $dbi->execute($sql);
-  };
   
-  # Create project table
-  eval {
-    my $sql = <<"EOS";
-create table project (
-  row_id integer primary key autoincrement,
-  user_id not null,
-  name not null,
-  config not null,
-  unique(user_id, name)
-);
-EOS
-    $dbi->execute($sql);
-  };
+  # Setup database
+  $self->manager->setup_database;
   
   # Model
   my $models = [

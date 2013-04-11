@@ -234,6 +234,70 @@ sub rename_project {
   return 1;
 }
 
+sub setup_database {
+  my $self = shift;
+  
+  my $dbi = $self->app->dbi;
+  
+  # Create user table
+  eval {
+    my $sql = <<"EOS";
+create table user (
+  row_id integer primary key autoincrement,
+  id not null unique,
+);
+EOS
+    $dbi->execute($sql);
+  };
+
+  # Create usert columns
+  my $user_columns = [
+    "config not null default ''",
+    "tab_index not null default ''"
+  ];
+  for my $column (@$user_columns) {
+    eval { $dbi->execute("alter table user add column $column") };
+  }
+  
+  # Check user table
+  eval { $dbi->select(['config', 'tab_index'], table => 'user') };
+  if ($@) {
+    my $error = "Can't create user table properly";
+    $self->app->log->error($error);
+    croak $error;
+  }
+  
+  # Create project table
+  eval {
+    my $sql = <<"EOS";
+create table project (
+  row_id integer primary key autoincrement,
+  user_id not null,
+  name not null,
+  unique(user_id, name)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Create Project columns
+  my $project_columns = [
+    "config not null default ''",
+    "tab_index not null default ''"
+  ];
+  for my $column (@$project_columns) {
+    eval { $dbi->execute("alter table project add column $column") };
+  }
+
+  # Check project table
+  eval { $dbi->select(['config', 'tab_index'], table => 'project') };
+  if ($@) {
+    my $error = "Can't create project table properly";
+    $self->app->log->error($error);
+    croak $error;
+  }
+}
+
 sub _create_project {
   my ($self, $user, $project, $new_config) = @_;
   $new_config ||= {};
