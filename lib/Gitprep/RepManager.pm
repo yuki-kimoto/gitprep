@@ -85,6 +85,34 @@ sub delete_user {
   return 1;
 }
 
+sub original_project {
+  my ($self, $user, $project) = @_;
+  
+  my $dbi = $self->app->dbi;
+  
+  my $config = $dbi->model('project')
+    ->select('config', id => [$user, $project])
+    ->filter(config => 'json')
+    ->value;
+  return unless $config;
+  
+  return $config->{original_project};
+}
+
+sub original_user {
+  my ($self, $user, $project) = @_;
+  
+  my $dbi = $self->app->dbi;
+  
+  my $config = $dbi->model('project')
+    ->select('config', id => [$user, $project])
+    ->filter(config => 'json')
+    ->value;
+  return unless $config;
+  
+  return $config->{original_user};
+}
+
 sub _delete_db_user {
   my ($self, $user) = @_;
   
@@ -130,8 +158,8 @@ sub fork_project {
           $login_user,
           $project,
           {
-            forked_user => $user,
-            forked_project => $project
+            original_user => $user,
+            original_project => $project
           }
         );
       };
@@ -207,11 +235,12 @@ sub rename_project {
 }
 
 sub _create_project {
-  my ($self, $user, $project, $opts) = @_;
-  $opts ||= {};
+  my ($self, $user, $project, $new_config) = @_;
+  $new_config ||= {};
   
   # Config
   my $config = {default_branch => 'master'};
+  $config = {%$config, %$new_config};
   my $config_json = Mojo::JSON->new->encode($config);
   
   # Create project

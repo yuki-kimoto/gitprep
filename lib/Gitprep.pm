@@ -137,18 +137,18 @@ EOS
   # Helper
   $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
 
+  # Routes
+  my $r = $self->routes;
+
   # DBViewer(only development)
   if ($self->mode eq 'development') {
     eval {
       $self->plugin(
         'DBViewer',
-        dsn => "dbi:SQLite:database=$db_file",
+        dsn => "dbi:SQLite:database=$db_file"
       );
     };
   }
-  
-  # Routes
-  my $r = $self->routes;
   
   # Auto route
   {
@@ -171,7 +171,7 @@ EOS
     });
     $self->plugin('AutoRoute', route => $r);
   }
-  
+
   # User defined Routes
   {
     # User

@@ -1,7 +1,7 @@
 package Mojolicious::Plugin::AutoRoute;
 use Mojo::Base 'Mojolicious::Plugin';
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 sub register {
   my ($self, $app, $conf) = @_;
@@ -14,8 +14,10 @@ sub register {
   $top_dir =~ s#^/##;
   $top_dir =~ s#/$##;
   
+  my $condition_name = "__auto_route_plugin_${top_dir}_file_exists";
+  
   # Condition
-  $app->routes->add_condition(__auto_route_plugin_file_exists => sub {
+  $app->routes->add_condition($condition_name => sub {
     my ($r, $c, $captures, $pattern) = @_;
     
     my $path = $captures->{__auto_route_plugin_path};
@@ -35,12 +37,12 @@ sub register {
   
   # Index
   $r->route('/')
-    ->over('__auto_route_plugin_file_exists')
+    ->over($condition_name)
     ->to(cb => sub { shift->render("/$top_dir/index") });
   
   # Route
   $r->route('/(*__auto_route_plugin_path)')
-    ->over('__auto_route_plugin_file_exists')
+    ->over($condition_name)
     ->to(cb => sub {
       my $c = shift;
       
