@@ -1,0 +1,31 @@
+<%
+  my $state;
+
+  # API
+  my $api = gitprep_api;
+  
+  # Members
+  my $members = app->manager->members($user, $project);
+%>
+
+% layout 'common';
+
+  %= include '/include/header';
+  
+  <div class="container" style="min-heigth:500px">
+    <h3>Members of the <%= $project %> Network</h3>
+    <ul class="unstyled">
+      % for my $member (@$members) {
+        <li>
+          <a href="<%= url_for("/$member->{id}") %>">
+            <%= $member->{id} %>
+          </a>
+          /
+          <a href="<%= url_for("/$member->{id}/$project") %>">
+            <%= $project %>
+          </a>
+        </li>
+      % }
+    </ul>
+  </div>
+  %= include '/include/footer';

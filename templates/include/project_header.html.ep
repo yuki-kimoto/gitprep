@@ -8,7 +8,7 @@
 %>
 
 <div class="row">
-  <div class="span11">
+  <div class="span10">
     <ul class="breadcrumb">
       <li><a href="<%= url_for('/') %>">Home</a></li>
       /
@@ -26,7 +26,8 @@
       % }
     </ul>
   </div>
-  <div class="span1">
+  <div class="span2">
+    <a class="btn" href="<%= url_for("/$user/$project/network") %>" >Network</a>
     % if ($logined && $current_user ne $user ) {
       <a href="<%= url_for("/$user/$project/fork") %>" class="btn">Fork</a>
     % } else {

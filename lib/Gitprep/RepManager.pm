@@ -9,6 +9,61 @@ use File::Temp ();
 
 has 'app';
 
+sub create_tab_index {
+  my ($self, $tab_index_values) = @_;
+
+  my $tab_index = "\t";
+  
+  # Check config
+  for my $key (keys %$tab_index_values) {
+    my $value = $tab_index_values->{$key};
+    croak "Can't contain tab string in tab_index"
+      if $key =~ /\t/;
+    $tab_index .= "$key:$value\t";
+  }
+  
+  return $tab_index;
+}
+
+sub members {
+  my ($self, $user, $project) = @_;
+  
+  # DBI
+  my $dbi = $self->app->dbi;
+  
+  # Where
+  my $where = $dbi->where;
+  $where->clause(['and', (':tab_index{like}') x 2]);
+  $where->param({
+    tab_index => ["%\toriginal_user:$user%", "%\toriginal_project:$project%"]
+  });
+  
+  # Rows
+  my $members = $self->app->dbi
+    ->model('project')
+    ->select('user_id as id', where => $where)
+    ->all;
+  
+  return $members;
+}
+
+sub parse_tab_index {
+  my ($self, $tab_index) = @_;
+  
+  my $tab_index_values = {};
+  
+  $tab_index =~ s/^\t//;
+  $tab_index =~ s/\t$//;
+  
+  my @kvs = split /\t/, $tab_index;
+  for my $kv (@kvs) {
+    my ($key, $value) = split /:/, $kv, 2;
+    $tab_index_values->{$key} = $value;
+  }
+  
+  return $tab_index_values;
+}
+
 sub create_project {
   my ($self, $user, $project, $opts) = @_;
   
@@ -307,9 +362,19 @@ sub _create_project {
   $config = {%$config, %$new_config};
   my $config_json = Mojo::JSON->new->encode($config);
   
+  my $tab_index_values = {};
+  $tab_index_values->{original_user} = $config->{original_user}
+    if defined $config->{original_user};
+  $tab_index_values->{original_project} = $config->{original_project}
+    if defined $config->{original_project};
+  my $tab_index = $self->create_tab_index($tab_index_values) || '';
+  
   # Create project
   $self->app->dbi->model('project')->insert(
-    {config => $config_json},
+    {
+      config => $config_json,
+      tab_index => $tab_index
+    },
     id => [$user, $project]
   );
 }

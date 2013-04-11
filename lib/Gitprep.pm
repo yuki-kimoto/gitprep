@@ -205,6 +205,9 @@ sub startup {
       
       # Fork
       $r->any('/fork')->name('fork');
+
+      # Fork
+      $r->get('/network')->name('network');
     }
   }
 
