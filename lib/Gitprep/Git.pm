@@ -830,8 +830,8 @@ sub parse_blobdiff_lines {
   
   # Parse
   my @lines;
-  my $delete_count_rest;
-  my $add_count_rest;
+  my $next_before_line_num;
+  my $next_after_line_num;
   for my $line (@$lines) {
     chomp $line;
     
@@ -839,17 +839,32 @@ sub parse_blobdiff_lines {
     my $before_line_num;
     my $after_line_num;
     
-    if ($line =~ /^diff \-\-git /) { $class = 'header' }
-    elsif ($line =~ /^\@\@/) { $class = 'chunk_header' }
-    elsif ($line =~ /^\- /) { $class = 'from_file' }
-    elsif ($line =~ /^\+ /) { $class = 'to_file' }
+    if ($line =~ /^\@\@\s-(\d+),\d+\s\+(\d+),\d+/) {
+      $next_before_line_num = $1;
+      $next_after_line_num = $2;
+      
+      $before_line_num = '...';
+      $after_line_num = '...';
+      
+      $class = 'chunk_header';
+    }
+    elsif ($line =~ /^\- /) {
+      $class = 'from_file';
+      $before_line_num = $next_before_line_num--;
+      $after_line_num = '';
+    }
+    elsif ($line =~ /^\+ /) {
+      $class = 'to_file';
+      $before_line_num = '';
+      $after_line_num = $next_after_line_num--;
+    }
     elsif ($line =~ /^Binary files/) { $class = 'binary_file' }
-    elsif ($line =~ /^deleted/
-      || $line =~ /^index /
-      || $line =~ /^--- /
-      || $line =~ /^\+\+\+ /
-    ) { next }
-    else { $class = 'diff' }
+    elsif ($line =~ /^ /) {
+      $class = 'diff';
+      $before_line_num = $next_before_line_num--;
+      $after_line_num = $next_after_line_num--;
+    }
+    else { next }
     
     my $line_data = {
       value => $line,
