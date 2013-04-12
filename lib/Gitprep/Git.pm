@@ -957,13 +957,8 @@ sub parse_commit_text {
   $commit{age} = $age;
   $commit{age_string} = $self->_age_string($age);
   my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($commit{committer_epoch});
-  if ($age > 60*60*24*7*2) {
-    $commit{age_string_date} = sprintf '%4i-%02u-%02i', 1900 + $year, $mon+1, $mday;
-    $commit{age_string_age} = $commit{age_string};
-  } else {
-    $commit{age_string_date} = $commit{age_string};
-    $commit{age_string_age} = sprintf '%4i-%02u-%02i', 1900 + $year, $mon+1, $mday;
-  }
+  $commit{age_string_date} = sprintf '%4i-%02u-%02i', 1900 + $year, $mon+1, $mday;
+  $commit{age_string_age} = $commit{age_string};
   return \%commit;
 }
 
