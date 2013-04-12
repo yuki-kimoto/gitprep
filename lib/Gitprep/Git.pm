@@ -831,7 +831,6 @@ sub parse_blobdiff_lines {
   # Parse
   my @lines;
   for my $line (@$lines_raw) {
-    $line = $self->dec($line);
     chomp $line;
     my $class;
     
@@ -841,6 +840,28 @@ sub parse_blobdiff_lines {
     elsif ($line =~ /^\-/) { $class = 'diff from_file' }
     elsif ($line =~ /^\@\@/) { $class = 'diff chunk_header' }
     elsif ($line =~ /^Binary files/) { $class = 'diff binary_file' }
+    else { $class = 'diff' }
+    push @lines, {value => $line, class => $class};
+  }
+  
+  return \@lines;
+}
+
+sub parse_blobdiff_lines {
+  my ($self, $lines_raw) = @_;
+  
+  # Parse
+  my @lines;
+  for my $line (@$lines_raw) {
+    chomp $line;
+    my $class;
+    
+    if ($line =~ /^diff \-\-git /) { $class = 'header' }
+    elsif ($line =~ /^index /) { $class = 'extended_header' }
+    elsif ($line =~ /^\+/) { $class = 'to_file' }
+    elsif ($line =~ /^\-/) { $class = 'from_file' }
+    elsif ($line =~ /^\@\@/) { $class = 'chunk_header' }
+    elsif ($line =~ /^Binary files/) { $class = 'binary_file' }
     else { $class = 'diff' }
     push @lines, {value => $line, class => $class};
   }

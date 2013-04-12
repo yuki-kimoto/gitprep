@@ -1,10 +1,10 @@
-<div>
+<div class="border-gray" style="margin-bottom:20px;">
   % my $start;
   % for my $line (@$lines) {
     % my $class = $line->{class};
     % my $value = $line->{value};
     % unless ($start) {
-      % if ($class eq 'diff header') {
+      % if ($class eq 'header') {
         % $start = 1;
       % }
       % else { next }
@@ -13,8 +13,8 @@
     % next if $value =~ /^--- /;
     % next if $value =~ /^\+\+\+ /;
     % my $status = stash('status') || '';
-    % if ($class eq 'diff header') {
-      <div class="border-gray padding5 bk-gray-light" style="margin-top:20px;">
+    % if ($class eq 'header') {
+      <div class="border-bottom-gray padding5 bk-gray-light">
         <div class="row">
           <div class="span8" style="padding-top:6px">
             <%= $file %>
@@ -26,7 +26,7 @@
           </div>
         </div>
       </div>
-    % } elsif ($class eq 'diff binary_file') {
+    % } elsif ($class eq 'binary_file') {
       Binary files
       <a href="<%= url_for("/$user/$project/blob/$from_id/$file") %>">a/<%= $file %></a>
       and
@@ -43,7 +43,7 @@
       % } else {
         % $bk_color = '';
       % }
-      <div style="padding-left:5px;background-color:<%= $bk_color %>;border-left:1px solid #ccc;border-right:1px #ccc solid">
+      <div style="padding-left:5px;background-color:<%= $bk_color %>;">
         <%= $value %>
       </div>
     % }
