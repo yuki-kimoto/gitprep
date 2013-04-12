@@ -29,7 +29,7 @@
       return unless $config_json;
       
       my $config = $api->json($config_json);
-      
+
       my $is_valid = $api->check_password(
         $password,
         $config->{salt},
