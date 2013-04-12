@@ -1,6 +1,6 @@
 % use File::Basename 'basename';
 <%
-  my $operation = stash('operation') // 'tree';
+  my $operation = stash('operation') || 'tree';
   unless ($operation eq 'commits' || $operation eq 'tree') {
     $operation = 'tree';
   }
