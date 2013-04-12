@@ -810,7 +810,12 @@ sub latest_commit_log {
     $commit_log->{commit} = $1;
     $commit_log->{author} = $2;
     $commit_log->{author_date} = $3;
-    $commit_log->{comment} = substr($4, 0, 60) . '...';
+    my $comment = $4;
+    my $comment_short
+      = length $comment > 60
+      ? substr($comment, 0, 60) . '...'
+      : $comment;
+    $commit_log->{comment} = $comment_short;
   }
   
   $commit_log->{author_date} =~ s/,.*$//;
