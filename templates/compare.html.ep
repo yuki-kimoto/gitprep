@@ -9,7 +9,6 @@
   my $rev1 = param('rev1');
   my $rev2 = param('rev2');
   my $page = param('page') || 0;
-  my $root_ns = $api->root_ns(config->{root});
   
   # Git
   my $git = $self->app->git;
@@ -57,124 +56,7 @@
 %>
 
 % layout 'common';
-  %= include '/css/common';
-  
-  %= stylesheet begin
-    /* Title */
-    h2 {
-      font-size:150%;
-      padding-bottom:5px;
-    }
-    
-    /* Compare header */
-    .compare_header {
-      border-bottom:1px solid #ccc;
-      padding-bottom:10px;
-      margin-bottom:10px;
-      overflow:hidden;
-    }
-    .compare_header .cdate {
-      color:#999;
-      float:left;
-    }
-    .compare_header .ctarget {
-      float:right;
-    }
-    
-    /* Compare tabs */
-    .compare_tabs {
-      margin-top:7px;
-      margin-bottom:10px;
-      height:30px;
-      overflow:hidden;
-    }
-    .compare_tabs .ctop {
-      text-align:right;
-      overflow:hidden;
-      height:27px;
-    }
-    .compare_tabs .ctop li {
-      float:left;
-      padding:5px 10px;
-      height:27px;
-    }
-    .compare_tabs .cbottom {
-      border-top:1px solid #E5E5E5;
-      margin-top:-1px;
-    }
-    .compare_tabs a {
-      color:#666;
-    }
-    .compare_tabs .ccount {
-      display:inline-block;
-      font-weight:normal;
-      border:1px solid #CCC;
-      background-color:#EEE;
-      padding:2px;
-      padding-left:5px;
-      padding-right:5px;
-      border-radius:9px;
-      font-size:75%;
-    }
-    
-    .compare_tabs .ccommits {
-      border:1px solid #E5E5E5;
-      border-bottom:none;
-      background-color:white;
-      font-weight:bold;
-    }
-    .compare_tabs .ccommits a {
-      color:#333;
-    }
-    
-    /* Commits number */
-    .commits_number {
-      color:#333;
-      padding-bottom:10px;
-    }
-    
-    /* Commits header */
-    .commits {
-      margin-bottom:15px;
-    }
-    .commits .cdate {
-      background-color:#F3F3F3;
-      border:1px solid #ccc;
-      padding:7px;
-    }
-    .commits .cbody  {
-      width:100%;
-      text-align:left;
-    }
-    .commits .crecord {
-      border:1px solid #ccc;
-      border-top:none;
-    }
-    .commits td {
-      padding:7px;
-    }
-    .commits .cauthor {
-      width:80px;
-    }
-    .commits .ccomment {
-      
-    }
-    .commits .ccomment a {
-      color:#999;
-    }
-    .commits .cid {
-      width:1%;
-    }
-    .commits .cid a {
-      color:#4183C4;
-    }
-    
-    /* Files changed */
-    .files_changed_panel {
-      display:none;
-    }
-  % end
-  
+
   %= javascript begin
     $(document).ready(function () {
       $('#compare-tab a').on('click', function () {
