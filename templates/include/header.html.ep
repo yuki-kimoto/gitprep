@@ -15,7 +15,7 @@
             <i class="icon-user"></i><a href="<%= url_for("/$user") %>"><%= $user %></a>
           </div>
           % unless ($user eq 'admin') {
-            <a class="btn btn-small" href="<%= url_for("/_admin/create") %>">Create a new repo</a>
+            <a class="btn btn-small" href="<%= url_for("/_new") %>">Create a new repo</a>
             <a class="btn btn-small" href="<%= url_for("/$user/_settings") %>">Account Settings</a>
           % }
           % my $url = url_with->to_abs;
