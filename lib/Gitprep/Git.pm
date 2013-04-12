@@ -826,44 +826,38 @@ sub latest_commit_log {
 }
 
 sub parse_blobdiff_lines {
-  my ($self, $lines_raw) = @_;
+  my ($self, $lines) = @_;
   
   # Parse
   my @lines;
-  for my $line (@$lines_raw) {
+  my $delete_count_rest;
+  my $add_count_rest;
+  for my $line (@$lines) {
     chomp $line;
-    my $class;
     
-    if ($line =~ /^diff \-\-git /) { $class = 'diff header' }
-    elsif ($line =~ /^index /) { $class = 'diff extended_header' }
-    elsif ($line =~ /^\+/) { $class = 'diff to_file' }
-    elsif ($line =~ /^\-/) { $class = 'diff from_file' }
-    elsif ($line =~ /^\@\@/) { $class = 'diff chunk_header' }
-    elsif ($line =~ /^Binary files/) { $class = 'diff binary_file' }
-    else { $class = 'diff' }
-    push @lines, {value => $line, class => $class};
-  }
-  
-  return \@lines;
-}
-
-sub parse_blobdiff_lines {
-  my ($self, $lines_raw) = @_;
-  
-  # Parse
-  my @lines;
-  for my $line (@$lines_raw) {
-    chomp $line;
     my $class;
+    my $before_line_num;
+    my $after_line_num;
     
     if ($line =~ /^diff \-\-git /) { $class = 'header' }
-    elsif ($line =~ /^index /) { $class = 'extended_header' }
-    elsif ($line =~ /^\+/) { $class = 'to_file' }
-    elsif ($line =~ /^\-/) { $class = 'from_file' }
     elsif ($line =~ /^\@\@/) { $class = 'chunk_header' }
+    elsif ($line =~ /^\- /) { $class = 'from_file' }
+    elsif ($line =~ /^\+ /) { $class = 'to_file' }
     elsif ($line =~ /^Binary files/) { $class = 'binary_file' }
+    elsif ($line =~ /^deleted/
+      || $line =~ /^index /
+      || $line =~ /^--- /
+      || $line =~ /^\+\+\+ /
+    ) { next }
     else { $class = 'diff' }
-    push @lines, {value => $line, class => $class};
+    
+    my $line_data = {
+      value => $line,
+      class => $class,
+      before_line_num => $before_line_num,
+      after_line_num => $after_line_num
+    };
+    push @lines, $line_data;
   }
   
   return \@lines;

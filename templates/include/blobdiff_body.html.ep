@@ -1,17 +1,7 @@
 <div class="border-gray" style="margin-bottom:20px;">
-  % my $start;
   % for my $line (@$lines) {
     % my $class = $line->{class};
     % my $value = $line->{value};
-    % unless ($start) {
-      % if ($class eq 'header') {
-        % $start = 1;
-      % }
-      % else { next }
-    % }
-    % next if $value =~ /^index /;
-    % next if $value =~ /^--- /;
-    % next if $value =~ /^\+\+\+ /;
     % my $status = stash('status') || '';
     % if ($class eq 'header') {
       <div class="border-bottom-gray padding5 bk-gray-light">
