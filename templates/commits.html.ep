@@ -59,7 +59,7 @@
         % }
       </b>
     </div>
-
+    
     % for my $date (reverse sort keys %$commits_date) {
       <div style="margin-bottom:20px">
         % my $commits = $commits_date->{$date};
@@ -85,7 +85,7 @@
           <div class="padding5 border-gray" style="border-top:none">
             <div class="row">
               <div class="span8 muted">
-                yuki-kimoto authored 7 days ago
+                <%= $commit->{author_name} %> authored 7 days ago
               </div>
               <div class="span3 offset1-mini text-right">
                 <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
