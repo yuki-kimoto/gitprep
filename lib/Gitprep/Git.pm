@@ -839,7 +839,7 @@ sub parse_blobdiff_lines {
     my $before_line_num;
     my $after_line_num;
     
-    if ($line =~ /^\@\@\s-(\d+),\d+\s\+(\d+),\d+/) {
+    if ($line =~ /^@@\s-(\d+),\d+\s\+(\d+),\d+/) {
       $next_before_line_num = $1;
       $next_after_line_num = $2;
       
@@ -848,21 +848,22 @@ sub parse_blobdiff_lines {
       
       $class = 'chunk_header';
     }
-    elsif ($line =~ /^\- /) {
+    elsif ($line =~ /^\+\+\+/ || $line =~ /^---/) { next }
+    elsif ($line =~ /^\-/) {
       $class = 'from_file';
-      $before_line_num = $next_before_line_num--;
+      $before_line_num = $next_before_line_num++;
       $after_line_num = '';
     }
-    elsif ($line =~ /^\+ /) {
+    elsif ($line =~ /^\+/) {
       $class = 'to_file';
       $before_line_num = '';
-      $after_line_num = $next_after_line_num--;
+      $after_line_num = $next_after_line_num++;
     }
     elsif ($line =~ /^Binary files/) { $class = 'binary_file' }
     elsif ($line =~ /^ /) {
       $class = 'diff';
-      $before_line_num = $next_before_line_num--;
-      $after_line_num = $next_after_line_num--;
+      $before_line_num = $next_before_line_num++;
+      $after_line_num = $next_after_line_num++;
     }
     else { next }
     

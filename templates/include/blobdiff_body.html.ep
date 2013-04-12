@@ -1,41 +1,62 @@
 <div class="border-gray" style="margin-bottom:20px;">
-    <div class="border-bottom-gray padding5 bk-gray-light">
-      <div class="row">
-        <div class="span8" style="padding-top:6px">
-          <%= $file %>
-        </div>
-        <div class="span3 offset1-mini text-right">
-          <a class="btn" href="<%= url_for("/$user/$project/blob/$id/$file") %>">
-            View file @ <%= substr($id, 0, 7) %>
-          </a>
-        </div>
+  <div class="border-bottom-gray padding5 bk-gray-light">
+    <div class="row">
+      <div class="span8" style="padding-top:6px">
+        <%= $file %>
+      </div>
+      <div class="span3 offset1-mini text-right">
+        <a class="btn" href="<%= url_for("/$user/$project/blob/$id/$file") %>">
+          View file @ <%= substr($id, 0, 7) %>
+        </a>
       </div>
     </div>
-  % for my $line (@$lines) {
-    % my $class = $line->{class};
-    % my $value = $line->{value};
-    % my $status = stash('status') || '';
-    % if ($class eq 'binary_file') {
-      Binary files
-      <a href="<%= url_for("/$user/$project/blob/$from_id/$file") %>">a/<%= $file %></a>
-      and
-      <a href="<%= url_for("/$user/$project/blob/$id/$file") %>">b/<%= $file %></a>
-      differ
-    % } else {
-      % my $bk_color;
-      % if ($value =~ /^@@ /) {
-        % $bk_color = '#eef';
-      % } elsif ($value =~ /^\+/) {
-        % $bk_color = '#ddffdd';
-      % } elsif ($value =~ /^-/) {
-        % $bk_color = '#ffdddd';
+  </div>
+  <table>
+    % for my $line (@$lines) {
+      % my $class = $line->{class};
+      % my $value = $line->{value};
+      % my $status = stash('status') || '';
+      % if ($class eq 'binary_file') {
+        Binary files
+        <a href="<%= url_for("/$user/$project/blob/$from_id/$file") %>">a/<%= $file %></a>
+        and
+        <a href="<%= url_for("/$user/$project/blob/$id/$file") %>">b/<%= $file %></a>
+        differ
+        % last;
       % } else {
-        % $bk_color = '';
+        <%
+          my $bk_color_line = '';
+          my $bk_color = '';
+          my $border_color;
+          if ($value =~ /^@/) {
+            $bk_color_line = '#f3f3ff';
+            $border_color = '#e4e4ff';
+            $bk_color = '#f8f8ff';
+          } elsif ($value =~ /^\+/) {
+            $bk_color_line = '#ceffce';
+            $border_color = '#b4e2b4';
+            $bk_color = '#dfd';
+          } elsif ($value =~ /^-/) {
+            $bk_color_line = '#f7c8c8';
+            $border_color = '#e9aeae';
+            $bk_color = '#fdd';
+          } else {
+            $border_color = '#e5e5e5';
+          }
+        %>
+        <tr>
+          <td style="color:#aaa;padding-left:7px;border-right:1px <%= $border_color %> solid;background-color:<%= $bk_color_line %>;">
+            <%= $line->{before_line_num} %>
+          </td>
+          <td style="color:#aaa;padding-left:7px;border-right:1px <%= $border_color %> solid;background-color:<%= $bk_color_line %>;">
+            <%= $line->{after_line_num} %>
+          </td>
+          <td style="width:100%;padding-left:7px;background-color:<%= $bk_color %>;">
+            <%= $value %>
+          </td>
+        </tr>
       % }
-      <div style="padding-left:5px;background-color:<%= $bk_color %>;">
-        <%= $value %>
-      </div>
     % }
-  % }
+  </table>
 </div>
 <div class="vspace20"></div>
