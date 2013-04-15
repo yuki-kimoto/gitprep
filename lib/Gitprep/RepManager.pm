@@ -517,9 +517,6 @@ sub _rename_project {
     my $original_project = $config->{original_project};
     $original_project = '' unless defined $original_project;
     
-    #use D;d [$config, $original_user, $user];
-    #use D;d [$config, $original_project, $project];
-    
     if ($original_user eq $user
       && $original_project eq $project)
     {
