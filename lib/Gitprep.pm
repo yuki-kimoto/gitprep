@@ -56,7 +56,7 @@ sub startup {
   $self->manager($manager);
   
   # Repository home
-  my $rep_home = $self->home->rel_file('rep');
+  my $rep_home = $self->home->rel_file('data/rep');
   $git->rep_home($rep_home);
   unless (-d $rep_home) {
     mkdir $rep_home
@@ -65,7 +65,7 @@ sub startup {
   $self->git($git);
 
   # DBI
-  my $db_file = $self->home->rel_file('db/gitprep.db');
+  my $db_file = $self->home->rel_file('data/gitprep.db');
   my $dbi = DBIx::Custom->connect(
     dsn => "dbi:SQLite:database=$db_file",
     connector => 1,
