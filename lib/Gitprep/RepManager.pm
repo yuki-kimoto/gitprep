@@ -507,11 +507,21 @@ sub _rename_project {
   my $row_ids = $dbi->model('project')->select('row_id')->values;
   for my $row_id (@$row_ids) {
     my $config = $dbi->model('project')
+      ->select('config', where => {row_id => $row_id})
       ->filter(config => 'json')
-      ->select('config', where => {row_id => $row_id});
+      ->value;
     
-    if ($config->{orginal_user} eq $user
-      && $config->{original_project} eq $project)
+    my $original_user = $config->{original_user};
+    $original_user = '' unless defined $original_user;
+
+    my $original_project = $config->{original_project};
+    $original_project = '' unless defined $original_project;
+    
+    #use D;d [$config, $original_user, $user];
+    #use D;d [$config, $original_project, $project];
+    
+    if ($original_user eq $user
+      && $original_project eq $project)
     {
       $config->{original_project} = $renamed_project;
       $dbi->model('project')->update(

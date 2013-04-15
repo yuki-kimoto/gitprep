@@ -21,8 +21,8 @@
             <%= $member->{id} %>
           </a>
           /
-          <a href="<%= url_for("/$member->{id}/$project") %>">
-            <%= $project %>
+          <a href="<%= url_for("/$member->{id}/$member->{project}") %>">
+            <%= $member->{project} %>
           </a>
         </li>
       % }
