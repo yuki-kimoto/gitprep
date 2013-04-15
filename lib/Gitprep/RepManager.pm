@@ -9,59 +9,34 @@ use File::Temp ();
 
 has 'app';
 
-sub create_tab_index {
-  my ($self, $tab_index_values) = @_;
-
-  my $tab_index = "\t";
-  
-  # Check config
-  for my $key (keys %$tab_index_values) {
-    my $value = $tab_index_values->{$key};
-    croak "Can't contain tab string in tab_index"
-      if $key =~ /\t/;
-    $tab_index .= "$key:$value\t";
-  }
-  
-  return $tab_index;
-}
-
 sub members {
-  my ($self, $user, $project) = @_;
+  my ($self, $user, $project_name) = @_;
   
   # DBI
   my $dbi = $self->app->dbi;
   
-  # Where
-  my $where = $dbi->where;
-  $where->clause(['and', (':tab_index{like}') x 2]);
-  $where->param({
-    tab_index => ["%\toriginal_user:$user%", "%\toriginal_project:$project%"]
-  });
-  
-  # Rows
-  my $members = $self->app->dbi
+  # Projects
+  my $projects = $self->app->dbi
     ->model('project')
-    ->select('user_id as id', where => $where)
+    ->select(['user_id', 'name', 'config'])
+    ->filter(config => 'json')
     ->all;
   
-  return $members;
-}
-
-sub parse_tab_index {
-  my ($self, $tab_index) = @_;
-  
-  my $tab_index_values = {};
-  
-  $tab_index =~ s/^\t//;
-  $tab_index =~ s/\t$//;
-  
-  my @kvs = split /\t/, $tab_index;
-  for my $kv (@kvs) {
-    my ($key, $value) = split /:/, $kv, 2;
-    $tab_index_values->{$key} = $value;
+  # Members
+  my $members = [];
+  for my $project (@$projects) {
+    $project->{config}{original_user} = ''
+      unless defined $project->{config}{original_user};
+    
+    $project->{config}{original_project} = ''
+      unless defined $project->{config}{original_project};
+    
+    push @$members, {id => $project->{user_id}, project => $project->{name}}
+      if $project->{config}{original_user} eq $user
+        && $project->{config}{original_project} eq $project_name;
   }
-  
-  return $tab_index_values;
+
+  return $members;
 }
 
 sub create_project {
@@ -308,14 +283,13 @@ EOS
   # Create usert columns
   my $user_columns = [
     "config not null default ''",
-    "tab_index not null default ''"
   ];
   for my $column (@$user_columns) {
     eval { $dbi->execute("alter table user add column $column") };
   }
   
   # Check user table
-  eval { $dbi->select(['config', 'tab_index'], table => 'user') };
+  eval { $dbi->select(['config'], table => 'user') };
   if ($@) {
     my $error = "Can't create user table properly";
     $self->app->log->error($error);
@@ -338,14 +312,13 @@ EOS
   # Create Project columns
   my $project_columns = [
     "config not null default ''",
-    "tab_index not null default ''"
   ];
   for my $column (@$project_columns) {
     eval { $dbi->execute("alter table project add column $column") };
   }
 
   # Check project table
-  eval { $dbi->select(['config', 'tab_index'], table => 'project') };
+  eval { $dbi->select(['config'], table => 'project') };
   if ($@) {
     my $error = "Can't create project table properly";
     $self->app->log->error($error);
@@ -362,18 +335,10 @@ sub _create_project {
   $config = {%$config, %$new_config};
   my $config_json = Mojo::JSON->new->encode($config);
   
-  my $tab_index_values = {};
-  $tab_index_values->{original_user} = $config->{original_user}
-    if defined $config->{original_user};
-  $tab_index_values->{original_project} = $config->{original_project}
-    if defined $config->{original_project};
-  my $tab_index = $self->create_tab_index($tab_index_values) || '';
-  
   # Create project
   $self->app->dbi->model('project')->insert(
     {
       config => $config_json,
-      tab_index => $tab_index
     },
     id => [$user, $project]
   );
@@ -532,7 +497,30 @@ sub _rename_project {
   croak "Invalid parameters"
     unless defined $user && defined $project && defined $renamed_project;
   
-  $dbi->model('project')->update({name => $renamed_project}, id => [$user, $project]);
+  # Rename project
+  $dbi->model('project')->update(
+    {name => $renamed_project},
+    id => [$user, $project]
+  );
+  
+  # Rename related project
+  my $row_ids = $dbi->model('project')->select('row_id')->values;
+  for my $row_id (@$row_ids) {
+    my $config = $dbi->model('project')
+      ->filter(config => 'json')
+      ->select('config', where => {row_id => $row_id});
+    
+    if ($config->{orginal_user} eq $user
+      && $config->{original_project} eq $project)
+    {
+      $config->{original_project} = $renamed_project;
+      $dbi->model('project')->update(
+        {config => $config},
+        where => {row_id => $row_id},
+        filter => {config => 'json'}
+      );
+    }
+  }
 }
 
 sub _rename_rep {
