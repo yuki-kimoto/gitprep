@@ -49,6 +49,9 @@ sub startup {
     croak $error;
   }
   $git->bin($git_bin);
+  
+  # Added public path
+  push @{$self->static->paths}, $self->home->rel_file('data/rep');
 
   # Repository Manager
   my $manager = Gitprep::RepManager->new(app => $self);
