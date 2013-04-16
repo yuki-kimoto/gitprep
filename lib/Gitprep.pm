@@ -209,8 +209,15 @@ sub startup {
       # Fork
       $r->any('/fork')->name('fork');
 
-      # Fork
+      # Network
       $r->get('/network')->name('network');
+
+      # Network Branches
+      $r->get('/network/branches/:member_id/:member_project')->name('network_branches');
+
+      # Network Graph
+      $r->get('/network/graph')->name('network_graph');
+
     }
   }
 

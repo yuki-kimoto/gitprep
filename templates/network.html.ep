@@ -1,11 +1,20 @@
 <%
-  my $state;
-
   # API
   my $api = gitprep_api;
   
+  # Branches
+  my $branches = [map { $_->{name} } @{app->git->branches($user, $project)}];
+  
   # Members
   my $members = app->manager->members($user, $project);
+  
+  # Members branches
+  for my $member (@$members) {
+    my $branches = [
+      map { $_->{name} } @{app->git->branches($member->{id}, $member->{project})}
+    ];
+    $member->{branches} = $branches;
+  }
 %>
 
 % layout 'common';
@@ -14,18 +23,39 @@
   
   <div class="container" style="min-heigth:500px">
     <h3>Members of the <%= $project %> Network</h3>
-    <ul class="unstyled">
+    <table class="table" style="font-size:130%">
       % for my $member (@$members) {
-        <li>
-          <a href="<%= url_for("/$member->{id}") %>">
-            <%= $member->{id} %>
-          </a>
-          /
-          <a href="<%= url_for("/$member->{id}/$member->{project}") %>">
-            <%= $member->{project} %>
-          </a>
-        </li>
+        <form action="<%= url_for("/$user/$project/network/graph") %>" method="get">
+          % my $mid = $member->{id};
+          % my $mproject = $member->{project};
+          % my $mbranches = $member->{branches};
+          <tr>
+            <td>
+              <a href="<%= url_for("/$mid") %>">
+                <%= $mid %>
+              </a>
+              <span>/</span>
+              <a href="<%= url_for("/$mid/$mproject") %>">
+                <%= $mproject %>
+              </a>
+              <span>/</span>
+              %= select_field 'remote_branch' => $mbranches, style => 'margin-top:5px;margin-bottom:7px;width:150px';
+              <span>
+                <i class="icon-resize-horizontal" style="margin-left:10px;margin-right:10px"></i>
+                my
+                %= select_field 'branch' => $branches, style => 'margin-top:5px;width:150px';
+              </span>
+            </td>
+            <td style="text-align:right">
+              <input class="btn" type="submit" value="Graph" style="margin-top:5px">
+            </td>
+          </tr>
+          %= hidden_field user => $user;
+          %= hidden_field project => $project;
+          %= hidden_field remote_user => $mid;
+          %= hidden_field remote_project => $mproject;
+        </form>
       % }
-    </ul>
+    </table>
   </div>
   %= include '/include/footer';
