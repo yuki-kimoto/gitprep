@@ -39,7 +39,9 @@
   my $commits_number = $git->commits_number($user, $project, $rev);
   
   # README
-  my $readme = $git->blob_plain($user, $project, $rev, 'README');
+  my $readme;
+  eval { $readme = $git->blob_plain($user, $project, $rev, 'README') };
+  $readme = '' if $@;
   
   # Variable for included templates
   stash(
