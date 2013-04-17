@@ -23,17 +23,15 @@
       
       my ($id, $password) = @$values;
       
-      my $config_json
-        = $dbi->model('user')->select('config', id => $id)->value;
+      my $row
+        = $dbi->model('user')->select(['password', 'salt'], id => $id)->one;
       
-      return unless $config_json;
-      
-      my $config = $api->json($config_json);
+      return unless defined $password;
 
       my $is_valid = $api->check_password(
         $password,
-        $config->{salt},
-        $config->{password}
+        $row->{salt},
+        $row->{password}
       );
       
       return $is_valid;
@@ -59,10 +57,9 @@
       my $params = $vresult->data;
       my $id = $params->{id};
       my $password = $params->{password};
-      my $config_json = $self->app->dbi->model('user')->select('config', id => $id)->value;
-      my $config = $api->json($config_json);
-      my $password_encrypted = $config->{password};
-      my $admin = $config->{admin};
+      my $row = $self->app->dbi->model('user')->select(['admin', 'password'], id => $id)->one;
+      my $password_encrypted = $row->{password};
+      my $admin = $row->{admin};
       session(user => $id);
       session(password => $password_encrypted);
       

@@ -3,7 +3,6 @@ use Mojo::Base -base;
 
 use Carp ();
 use File::Basename ();
-use Mojo::JSON;
 use Encode qw/encode decode/;
 use Digest::MD5 'md5_hex';
 
@@ -12,19 +11,16 @@ sub dirname { File::Basename::dirname(@_) }
 
 has 'cntl';
 
+sub app { shift->cntl->app }
+
 sub admin_user {
   my $self = shift;
   
-  # DBI
-  my $dbi = $self->cntl->app->dbi;
-  
   # Admin user
-  my $users = $dbi->model('user')->select->filter('config' => 'json')->all;
-  for my $user (@$users) {
-    return $user->{id} if $user->{config}{admin};
-  }
+  my $admin_user = $self->app->dbi->model('user')
+    ->select('id', where => {admin => 1})->value;
   
-  return;
+  return $admin_user;
 }
 
 sub encrypt_password {
@@ -54,14 +50,10 @@ sub new {
 sub exists_admin {
   my $self = shift;
  
-  my $users = $self->cntl->app->dbi->model('user')->select(
-    ['id', 'config'],
-    append => 'order by id'
-  )->filter(config => 'json')->all;
+  my $row = $self->app->dbi->model('user')
+    ->select(where => {admin => 1})->one;
 
-  my $exists = grep { $_->{config}{admin} } @$users;
-  
-  return $exists;
+  return $row ? 1 : 0;;
 }
 
 sub root_ns {
@@ -75,18 +67,11 @@ sub root_ns {
 sub is_admin {
   my ($self, $user) = @_;
   
-  # Controler
-  my $c = $self->cntl;
-  
-  # DBI
-  my $dbi = $c->app->dbi;
-  
   # Check admin
-  my $row = $dbi->model('user')->select('config', id => $user)->one;
-  return unless $row;
-  my $config = $self->json($row->{config});
+  my $is_admin = $self->app->dbi->model('user')
+    ->select('admin', id => $user)->value;
   
-  return $config->{admin};
+  return $is_admin;
 }
 
 sub logined_admin {
@@ -101,18 +86,6 @@ sub logined_admin {
   return $self->is_admin($user) && $self->logined;
 }
 
-
-sub json {
-  my ($self, $value) = @_;
-  
-  if (ref $value) {
-    return decode('UTF-8', Mojo::JSON->new->encode($value));
-  }
-  else {
-    return Mojo::JSON->new->decode(encode('UTF-8', $value));
-  }
-}
-
 sub logined {
   my $self = shift;
   
@@ -124,22 +97,21 @@ sub logined {
   my $password = $c->session('password');
   return unless defined $password;
   
-  my $row = $dbi->model('user')->select('config', id => $user)->one;
-  return unless $row;
-  my $config = $self->json($row->{config});
+  my $correct_password
+    = $dbi->model('user')->select('password', id => $user)->value;
+  return unless defined $correct_password;
   
-  return $password eq $config->{password};
+  return $password eq $correct_password;
 }
 
 sub users {
   my $self = shift;
  
-  my $users = $self->cntl->app->dbi->model('user')->select(
-    ['id', 'config'],
+  my $users = $self->app->dbi->model('user')->select(
+    'id',
+    where => [':admin{<>}',{admin => 1}],
     append => 'order by id'
-  )->filter(config => 'json')->all;
-
-  @$users = grep { ! $_->{config}{admin} } @$users;
+  )->all;
   
   return $users;
 }
@@ -157,16 +129,11 @@ sub params {
 sub default_branch {
   my ($self, $user, $project) = @_;
   
-  my $c = $self->cntl;
-  my $dbi = $c->app->dbi;
-  my $row = $dbi->model('project')
-    ->select('config', id => [$user, $project])->one;
-  return unless $row;
+  my $default_branch = $self->app->dbi->model('project')
+    ->select('default_branch', id => [$user, $project])
+    ->value;
   
-  my $config = $self->json($row->{config});
-
-  
-  return $config->{default_branch};
+  return $default_branch;
 }
 
 1;

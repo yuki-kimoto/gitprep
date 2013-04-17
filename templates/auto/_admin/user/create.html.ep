@@ -37,10 +37,9 @@
         = $api->encrypt_password($params->{password});
       $params->{password} = $password_encrypted;
       $params->{salt} = $salt;
-      my $config_json = $api->json($params);
       
       # Create user
-      eval { app->manager->create_user($id, {config => $config_json}) };
+      eval { app->manager->create_user($id, $params) };
       if ($@) {
         app->log->error($@);
         $errors = ['Internal Error'];

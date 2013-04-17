@@ -4,8 +4,8 @@ use Mojo::Base -base;
 use Carp 'croak';
 use File::Copy 'move';
 use File::Path qw/mkpath rmtree/;
-use Mojo::JSON;
 use File::Temp ();
+use Encode 'encode';
 
 has 'app';
 
@@ -18,22 +18,21 @@ sub members {
   # Projects
   my $projects = $self->app->dbi
     ->model('project')
-    ->select(['user_id', 'name', 'config'])
-    ->filter(config => 'json')
+    ->select([qw/user_id name original_user original_project/])
     ->all;
   
   # Members
   my $members = [];
   for my $project (@$projects) {
-    $project->{config}{original_user} = ''
-      unless defined $project->{config}{original_user};
+    $project->{original_user} = ''
+      unless defined $project->{original_user};
     
-    $project->{config}{original_project} = ''
-      unless defined $project->{config}{original_project};
+    $project->{original_project} = ''
+      unless defined $project->{original_project};
     
     push @$members, {id => $project->{user_id}, project => $project->{name}}
-      if $project->{config}{original_user} eq $user
-        && $project->{config}{original_project} eq $project_name;
+      if $project->{original_user} eq $user
+        && $project->{original_project} eq $project_name;
   }
 
   return $members;
@@ -120,13 +119,12 @@ sub original_project {
   
   my $dbi = $self->app->dbi;
   
-  my $config = $dbi->model('project')
-    ->select('config', id => [$user, $project])
-    ->filter(config => 'json')
+  my $original_project = $dbi->model('project')
+    ->select('original_project', id => [$user, $project])
     ->value;
-  return unless $config;
+  return unless defined $original_project;
   
-  return $config->{original_project};
+  return $original_project;
 }
 
 sub original_user {
@@ -134,13 +132,12 @@ sub original_user {
   
   my $dbi = $self->app->dbi;
   
-  my $config = $dbi->model('project')
-    ->select('config', id => [$user, $project])
-    ->filter(config => 'json')
+  my $original_user = $dbi->model('project')
+    ->select('original_user', id => [$user, $project])
     ->value;
-  return unless $config;
+  return unless defined $original_user;
   
-  return $config->{original_user};
+  return $original_user;
 }
 
 sub _delete_db_user {
@@ -305,7 +302,7 @@ sub setup_database {
     my $sql = <<"EOS";
 create table user (
   row_id integer primary key autoincrement,
-  id not null unique,
+  id not null unique default ''
 );
 EOS
     $dbi->execute($sql);
@@ -313,16 +310,18 @@ EOS
 
   # Create usert columns
   my $user_columns = [
-    "config not null default ''",
+    "admin not null default '0'",
+    "password not null default ''",
+    "salt not null default ''"
   ];
   for my $column (@$user_columns) {
     eval { $dbi->execute("alter table user add column $column") };
   }
   
   # Check user table
-  eval { $dbi->select(['config'], table => 'user') };
+  eval { $dbi->select([qw/row_id id admin password salt/], table => 'user') };
   if ($@) {
-    my $error = "Can't create user table properly";
+    my $error = "Can't create user table properly: $@";
     $self->app->log->error($error);
     croak $error;
   }
@@ -342,37 +341,29 @@ EOS
   
   # Create Project columns
   my $project_columns = [
-    "config not null default ''",
+    "default_branch not null default 'master'",
+    "original_user not null default ''",
+    "original_project not null default ''"
   ];
   for my $column (@$project_columns) {
     eval { $dbi->execute("alter table project add column $column") };
   }
 
   # Check project table
-  eval { $dbi->select(['config'], table => 'project') };
+  eval { $dbi->select([qw/default_branch original_user original_project/], table => 'project') };
   if ($@) {
-    my $error = "Can't create project table properly";
+    my $error = "Can't create project table properly: $@";
     $self->app->log->error($error);
     croak $error;
   }
 }
 
 sub _create_project {
-  my ($self, $user, $project, $new_config) = @_;
-  $new_config ||= {};
-  
-  # Config
-  my $config = {default_branch => 'master'};
-  $config = {%$config, %$new_config};
-  my $config_json = Mojo::JSON->new->encode($config);
+  my ($self, $user, $project, $params) = @_;
+  $params ||= {};
   
   # Create project
-  $self->app->dbi->model('project')->insert(
-    {
-      config => $config_json,
-    },
-    id => [$user, $project]
-  );
+  $self->app->dbi->model('project')->insert($params, id => [$user, $project]);
 }
 
 sub _create_rep {
@@ -418,7 +409,7 @@ sub _create_rep {
     my $file = "$temp_rep/description";
     open my $fh, '>', $file
       or croak "Can't open $file: $!";
-    print $fh $description
+    print $fh encode('UTF-8', $description)
       or croak "Can't write $file: $!";
     close $fh;
   }
@@ -535,30 +526,11 @@ sub _rename_project {
   );
   
   # Rename related project
-  my $row_ids = $dbi->model('project')->select('row_id')->values;
-  for my $row_id (@$row_ids) {
-    my $config = $dbi->model('project')
-      ->select('config', where => {row_id => $row_id})
-      ->filter(config => 'json')
-      ->value;
-    
-    my $original_user = $config->{original_user};
-    $original_user = '' unless defined $original_user;
+  $dbi->model('project')->update(
+    {original_project => $renamed_project},
+    where => {original_user => $user, original_project => $project},
+  );
 
-    my $original_project = $config->{original_project};
-    $original_project = '' unless defined $original_project;
-    
-    if ($original_user eq $user
-      && $original_project eq $project)
-    {
-      $config->{original_project} = $renamed_project;
-      $dbi->model('project')->update(
-        {config => $config},
-        where => {row_id => $row_id},
-        filter => {config => 'json'}
-      );
-    }
-  }
 }
 
 sub _rename_rep {

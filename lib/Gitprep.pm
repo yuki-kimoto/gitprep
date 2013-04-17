@@ -8,7 +8,6 @@ use Gitprep::Git;
 use DBIx::Custom;
 use Validator::Custom;
 use Encode qw/encode decode/;
-use Mojo::JSON;
 use Gitprep::API;
 use Carp 'croak';
 use Gitprep::RepManager;
@@ -86,18 +85,6 @@ sub startup {
   ];
   $dbi->create_model($_) for @$models;
 
-  # Fiter
-  $dbi->register_filter(json => sub {
-    my $value = shift;
-    
-    if (ref $value) {
-      return decode('UTF-8', Mojo::JSON->new->encode($value));
-    }
-    else {
-      return Mojo::JSON->new->decode(encode('UTF-8', $value));
-    }
-  });
-  
   # Validator
   my $validator = Validator::Custom->new;
   $self->validator($validator);

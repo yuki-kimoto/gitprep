@@ -212,6 +212,7 @@
         Default Branch
         % my $branches = $git->branches($user, $project);
         % my $branch_names = [map { $_->{name} } @$branches];
+        % push @$branch_names, 'master' unless @$branch_names;
         %= select_field 'default_branch' => $branch_names, style => 'margin-top:5px';
       </div>
     </div>

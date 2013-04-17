@@ -26,7 +26,7 @@
               <a href="#"><%= $uid %></a>
             </td>
             <td style="text-align:right">
-              <a class="btn btn-mini" href="<%= url_for("/reset-password?user=$uid") %>">Reset Password</a>
+              <a class="btn btn-mini" href="<%= url_for('/reset-password')->query(user => $uid, mode => 'admin') %>">Reset Password</a>
               <a class="btn btn-mini" href="<%= url_for("/_admin/user/delete?user=$uid") %>">Delete</a>
             </td>
           </tr>

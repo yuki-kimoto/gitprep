@@ -1,6 +1,4 @@
 <%
-  use Mojo::Util 'md5_sum';
-  
   # API
   my $api = gitprep_api;
   
@@ -15,9 +13,7 @@
     
     # Check existence admin user
     my $admin_user = app->dbi->model('user')->select(id => 'admin')->one;
-    if ($admin_user) {
-      $errors = ['admin user already exists'];
-    }
+    if (defined $admin_user) { $errors = ['admin user already exists'] }
     else {
       # Validation
       my $params = $api->params;
@@ -39,16 +35,15 @@
         
         # Valida parameters
         my $params = $vresult->data;
-        my $id = 'admin';
+        my $user = 'admin';
         $params->{admin} = 1;
         my ($password_encryped, $salt)
           = $api->encrypt_password($params->{password});
         $params->{password} = $password_encryped;
         $params->{salt} = $salt;
-        my $config_json = $api->json($params);
         
         # Create admin user
-        $self->app->dbi->model('user')->insert({id => $id, config => $config_json});
+        $self->app->dbi->model('user')->insert($params, id => $user);
         
         # Redirect
         $self->flash(admin_user_created => 1);
