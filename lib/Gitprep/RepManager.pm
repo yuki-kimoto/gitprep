@@ -122,7 +122,7 @@ sub original_project {
   my $original_project = $dbi->model('project')
     ->select('original_project', id => [$user, $project])
     ->value;
-  return unless defined $original_project;
+  return unless defined $original_project && length $original_project;
   
   return $original_project;
 }
@@ -135,7 +135,7 @@ sub original_user {
   my $original_user = $dbi->model('project')
     ->select('original_user', id => [$user, $project])
     ->value;
-  return unless defined $original_user;
+  return unless defined $original_user && length $original_user;
   
   return $original_user;
 }
@@ -530,7 +530,6 @@ sub _rename_project {
     {original_project => $renamed_project},
     where => {original_user => $user, original_project => $project},
   );
-
 }
 
 sub _rename_rep {
