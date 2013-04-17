@@ -2,6 +2,11 @@
 
 Github clone. you can install portable github system into unix/linux.
 
+# Caution
+
+This application is not yet released.
+Features will be changed without warnings.
+
 # Features
 
 * Github clone

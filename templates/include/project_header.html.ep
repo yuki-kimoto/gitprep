@@ -5,6 +5,7 @@
   my $user = stash('user');
   my $original_user = app->manager->original_user($user, $project);
   my $original_project = app->manager->original_project($user, $project);
+  
 %>
 
 <div class="row">

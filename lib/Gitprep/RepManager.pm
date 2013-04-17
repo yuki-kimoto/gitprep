@@ -214,9 +214,7 @@ sub _fork_rep {
   # Create working directory
   my $temp_dir =  File::Temp->newdir;
   my $temp_rep = "$temp_dir/temp.git";
-  
   my $rep = $git->rep($user, $project);
-  
   my @git_clone_cmd = (
     $git->bin,
     'clone',
@@ -228,14 +226,47 @@ sub _fork_rep {
   system(@git_clone_cmd) == 0
     or croak "Can't execute git clone";
   
+  # Add remote branch
+  {
+    my @git_remote_cmd = $git->cmd(
+      $user,
+      $project,
+      'remote'
+    );
+    open my $fh, "-|",  @git_remote_cmd
+      or croak  "Can't execute git remote";
+    
+    my $exists;
+    while (my $remote = $git->dec(scalar <$fh>)) {
+      chomp $remote;
+      if ($remote eq $to_user) {
+        $exists = 1;
+        last;
+      }
+    }
+    close $fh;
+    
+    unless ($exists) {
+      my $rep_home = $git->rep_home;
+      my @git_remote_add_cmd = $git->cmd(
+        $user,
+        $project,
+        'remote',
+        'add',
+        $to_user,
+        "file://$rep_home/$to_user/$to_project.git"
+      );
+      system(@git_remote_add_cmd) == 0
+        or croak "Can't execute remote add";
+    }
+  }
+
   # Move temp rep to rep
   my $to_rep = $git->rep($to_user, $to_project);
   move $temp_rep, $to_rep
     or croak "Can't move $temp_rep to $rep: $!";
 }
 
-
-  
 sub rename_project {
   my ($self, $user, $project, $renamed_project) = @_;
   
