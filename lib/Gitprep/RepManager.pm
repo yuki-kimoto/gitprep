@@ -331,6 +331,46 @@ EOS
     $self->app->log->error($error);
     croak $error;
   }
+
+  # Create number table
+  eval {
+    my $sql = <<"EOS";
+create table number (
+  row_id integer primary key autoincrement,
+  key not null unique
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Create number columns
+  my $number_columns = [
+    "value integer not null default '0'"
+  ];
+  for my $column (@$number_columns) {
+    eval { $dbi->execute("alter table number add column $column") };
+  }
+
+  # Check number table
+  eval { $dbi->select([qw/row_id key value/], table => 'number') };
+  if ($@) {
+    my $error = "Can't create number table properly: $@";
+    $self->app->log->error($error);
+    croak $error;
+  }
+  
+  # Original project id numbert
+  eval { $dbi->insert({key => 'original_pid'}, table => 'number') };
+  my $original_pid = $dbi->select(
+    'key',
+    table => 'number',
+    where => {key => 'original_pid'}
+  )->value;
+  unless (defined $original_pid) {
+    my $error = "Can't create original_pid row in number table";
+    $self->app->log->error($error);
+    croak $error;
+  }
 }
 
 sub _create_project {
