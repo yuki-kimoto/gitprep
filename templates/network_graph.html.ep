@@ -6,17 +6,59 @@
   my $remote_project = param('remote_project');
   my $remote_branch = param('remote_branch');
   
-  my $logs = app->git->logs($user, $project, $branch);
-  my $remote_logs = app->git->logs(
+  my $commits = app->git->parse_commits($user, $project, $branch, 100);
+  my $remote_commits = app->git->parse_commits(
     $remote_user,
     $remote_project,
-    $remote_branch
+    $remote_branch,
+    100
   );
+  use D;d $commits;
 %>
 
-layout 'common';
-
-  % for my $log (@$logs) {
-    %= $log->{hash};
-    %= $log->{message};
-  % }
+% layout 'common';
+  %= include 'include/header';
+  
+  <div class="container">
+    <div style="margin-bottom:10px">
+      <span style="color:blue"><b><big><%= "$user/$project/$branch" %></big></b></span>
+      <i class="icon-resize-horizontal"></i>
+      <span style="color:green"><b><big><%= "$remote_user/$remote_project/$remote_branch" %></big></b></span>
+    </div>
+    <div class="well" style="width:800px;overflow:auto;padding-left:10px;padding-right:10px">
+      <table>
+        <tr>
+          % for (my $i = 0; $i < @$commits; $i++) {
+            % my $commit = $commits->[$i];
+            <td>
+              <a style="color:blue" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>" title="<%= $commit->{title} %>">●</a>
+            </td>
+            <td>
+              % if ($i == @$commits - 1) {
+                &nbsp;
+              % } else {
+                -
+              % }
+            </td>
+          % }
+        </tr>
+        <tr>
+          % for (my $i = 0; $i < @$remote_commits; $i++) {
+            % my $commit = $remote_commits->[$i];
+            <td>
+              <a style="color:green" href="<%= url_for("/$remote_user/$remote_project/commit/$commit->{id}") %>" title="<%= $commit->{title} %>">●</a>
+            </td>
+            <td>
+              % if ($i == @$commits - 1) {
+                &nbsp;
+              % } else {
+                -
+              % }
+            </td>
+          % }
+        </tr>
+      </table>
+    </div>
+  </div>
+  
+  %= include '/include/footer';

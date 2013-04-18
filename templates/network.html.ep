@@ -25,8 +25,9 @@
   %= javascript begin
     $(document).ready(function () {
       // Update user and project hidden field
-      $('select[name="branch"]').on('change', function () {
-        $('input[name="branch"]').val($(this).val());
+      $('[type="submit"]').on('click', function () {
+        $('input[name="branch"]').val($('select[name="branch"]').val());
+        return true;
       });
     });
   % end
