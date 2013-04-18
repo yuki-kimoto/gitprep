@@ -20,30 +20,34 @@ sub default_branch {
 }
 
 sub members {
-  my ($self, $user, $project_name) = @_;
+  my ($self, $user, $project) = @_;
   
   # DBI
   my $dbi = $self->app->dbi;
   
-  # Projects
-  my $projects = $self->app->dbi
-    ->model('project')
-    ->select([qw/user_id name original_user original_project/])
-    ->all;
+  # Original project id
+  my $original_pid = $dbi->model('project')
+    ->select('original_pid', id => [$user, $project])->value;
   
   # Members
-  my $members = [];
-  for my $project (@$projects) {
-    $project->{original_user} = ''
-      unless defined $project->{original_user};
-    
-    $project->{original_project} = ''
-      unless defined $project->{original_project};
-    
-    push @$members, {id => $project->{user_id}, project => $project->{name}}
-      if $project->{original_user} eq $user
-        && $project->{original_project} eq $project_name;
-  }
+  my $members = $dbi->model('project')->select(
+    ['user_id as id', 'name as project'],
+    where => [
+      ['and',
+        ':original_pid{=}',
+        ['or', ':user_id{<>}', ':name{<>}']
+      ],
+      {
+        original_pid => $original_pid,
+        user_id => $user,
+        name => $project
+      }
+    ],
+    append => 'order by user_id, name'
+  )->all;
+  
+  warn $dbi->last_sql;
+  use D;d $members;
 
   return $members;
 }
