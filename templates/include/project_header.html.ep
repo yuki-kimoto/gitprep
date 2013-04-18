@@ -5,17 +5,16 @@
   my $user = stash('user');
   my $original_user = app->manager->original_user($user, $project);
   my $original_project = app->manager->original_project($user, $project);
-  
 %>
 
 <div class="row">
-  <div class="span10">
+  <div class="span9">
     <ul class="breadcrumb">
-      <li><a href="<%= url_for('/') %>">Home</a></li>
+      <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>
       /
       <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
       /
-      <li><a href="<%= url_for("/$user/$project") %>"><%= $project %></a></li>
+      <li><b><a href="<%= url_for("/$user/$project") %>"><%= $project %></a></b></li>
       
       % if (defined $original_project) {
         (
@@ -27,12 +26,17 @@
       % }
     </ul>
   </div>
-  <div class="span2">
+  <div class="span3">
     <a class="btn" href="<%= url_for("/$user/$project/network") %>" >Network</a>
     % if ($logined && $current_user ne $user ) {
       <a href="<%= url_for("/$user/$project/fork") %>" class="btn">Fork</a>
     % } else {
-      <btn class="btn disabled" disabled>Fork</a>
+      <button class="btn disabled" disabled>Fork</button>
+    % }
+    % if ($logined && $user eq session('user')) {
+      <a class="btn" href="<%= url_for("/$user/$project/settings") %>">Settings</a>
+    % } else {
+      <button class="btn disabled" disabled>Settings</button>
     % }
   </div>
 </div>

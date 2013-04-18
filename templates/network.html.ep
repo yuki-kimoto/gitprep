@@ -15,46 +15,66 @@
     ];
     $member->{branches} = $branches;
   }
+  
+  # Default branch
+  my $default_branch = app->manager->default_branch($user, $project);
 %>
 
 % layout 'common';
 
+  %= javascript begin
+    $(document).ready(function () {
+      // Update user and project hidden field
+      $('select[name="branch"]').on('change', function () {
+        $('input[name="branch"]').val($(this).val());
+      });
+    });
+  % end
+  
   %= include '/include/header';
   
   <div class="container" style="min-heigth:500px">
     <h3>Members of the <%= $project %> Network</h3>
     <div style="padding-left:10px">
       <%= "$user / $project" %> /
+      % param('branch', $default_branch);
       %= select_field 'branch' => $branches, style => 'margin-top:5px;width:150px';
     </div>
-    <table class="table" style="font-size:130%">
-      % for my $member (@$members) {
-        <form action="<%= url_for("/$user/$project/network/graph") %>" method="get">
-          % my $mid = $member->{id};
-          % my $mproject = $member->{project};
-          % my $mbranches = $member->{branches};
-          <tr>
-            <td>
-              <a href="<%= url_for("/$mid") %>">
-                <%= $mid %>
-              </a>
-              <span>/</span>
-              <a href="<%= url_for("/$mid/$mproject") %>">
-                <%= $mproject %>
-              </a>
-              <span>/</span>
-              %= select_field 'remote_branch' => $mbranches, style => 'margin-top:5px;margin-bottom:7px;width:150px';
-            </td>
-            <td style="text-align:right">
-              <input class="btn" type="submit" value="Compare" style="margin-top:5px">
-            </td>
-          </tr>
-          %= hidden_field user => $user;
-          %= hidden_field project => $project;
-          %= hidden_field remote_user => $mid;
-          %= hidden_field remote_project => $mproject;
-        </form>
-      % }
-    </table>
+    % if (@$members) {
+      <table class="table" style="font-size:130%">
+        % for my $member (@$members) {
+          <form action="<%= url_for("/$user/$project/network/graph") %>" method="get">
+            % my $mid = $member->{id};
+            % my $mproject = $member->{project};
+            % my $mbranches = $member->{branches};
+            <tr>
+              <td>
+                <a href="<%= url_for("/$mid") %>">
+                  <%= $mid %>
+                </a>
+                <span>/</span>
+                <a href="<%= url_for("/$mid/$mproject") %>">
+                  <%= $mproject %>
+                </a>
+                <span>/</span>
+                %= select_field 'remote_branch' => $mbranches, style => 'margin-top:5px;margin-bottom:7px;width:150px';
+              </td>
+              <td style="text-align:right">
+                <input class="btn" type="submit" value="Compare" style="margin-top:5px">
+              </td>
+            </tr>
+            %= hidden_field user => $user;
+            %= hidden_field project => $project;
+            %= hidden_field remote_user => $mid;
+            %= hidden_field remote_project => $mproject;
+            %= hidden_field 'branch' => $default_branch;
+          </form>
+        % }
+      </table>
+    % } else {
+      <div class="well">
+        No Members.
+      </div>
+    % }
   </div>
   %= include '/include/footer';

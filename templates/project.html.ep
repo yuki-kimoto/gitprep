@@ -126,11 +126,6 @@
           <%= $desc %>
         </h4>
       </div>
-      <div class="span2 text-right">
-        % if ($logined && $user eq session('user')) {
-          <a class="btn" href="<%= url_for("/$user/$project/settings") %>">Settings</a>
-        % }
-      </div>
     </div>
     % if ($state eq 'display') {
       <div class="border-gray" style="padding:0 5px;margin-bottom:10px">

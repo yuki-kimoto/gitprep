@@ -380,7 +380,9 @@ sub _create_rep {
     or croak "Can't move post-update";
   
   # Description
-  if (my $description = $opts->{description}) {
+  {
+    my $description = $opts->{description};
+    $description = '' unless defined $description;
     my $file = "$temp_rep/description";
     open my $fh, '>', $file
       or croak "Can't open $file: $!";
