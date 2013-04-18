@@ -13,7 +13,42 @@
     $remote_branch,
     100
   );
-  use D;d $commits;
+  
+  my $merged_commits_h = {};
+  for my $commit (@$commits) {
+    my $id = $commit->{id};
+    $merged_commits_h->{$id} ||= {};
+    $merged_commits_h->{$id}{age} = $commit->{age};
+    $merged_commits_h->{$id}{title} = $commit->{title};
+  }
+  for my $commit (@$remote_commits) {
+    my $id = $commit->{id};
+    if ($merged_commits_h->{$id}) {
+      $merged_commits_h->{$id}{same} = 1;
+    }
+    else {
+      $merged_commits_h->{$id} ||= {};
+      $merged_commits_h->{$id}{age} = $commit->{age};
+      $merged_commits_h->{$id}{title} = $commit->{title};
+      $merged_commits_h->{$id}{remote} = 1;
+    }
+  }
+  
+  my $merged_commits = [];
+  for my $id (
+    sort { $merged_commits_h->{$b}{age} <=> $merged_commits_h->{$a}{age}}
+    keys %$merged_commits_h)
+  {
+    my $commit = {%{$merged_commits_h->{$id}}};
+    $commit->{id} = $id;
+    push @$merged_commits, $commit;
+  }
+
+  if (@$merged_commits >= 100) {
+    my $delete_count = @$merged_commits - 100;
+    splice @$merged_commits, 0, $delete_count;
+  }
+  
 %>
 
 % layout 'common';
@@ -28,33 +63,38 @@
     <div class="well" style="width:800px;overflow:auto;padding-left:10px;padding-right:10px">
       <table>
         <tr>
-          % for (my $i = 0; $i < @$commits; $i++) {
-            % my $commit = $commits->[$i];
-            <td>
-              <a style="color:blue" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>" title="<%= $commit->{title} %>">●</a>
-            </td>
-            <td>
-              % if ($i == @$commits - 1) {
-                &nbsp;
-              % } else {
-                -
-              % }
-            </td>
+          % for (my $i = 0; $i < @$merged_commits; $i++) {
+            % my $commit = $merged_commits->[$i];
+            % my $color = $commit->{same} ? 'gray' : 'blue';
+            % unless ($commit->{remote}) {
+              <td>
+                <a style="color:<%= $color %>" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>" title="<%= $commit->{title} %>">●</a>
+              </td>
+              <td>
+                % if ($i == @$commits - 1) {
+                  &nbsp;
+                % } else {
+                  -
+                % }
+              </td>
+            % }
           % }
         </tr>
         <tr>
-          % for (my $i = 0; $i < @$remote_commits; $i++) {
-            % my $commit = $remote_commits->[$i];
-            <td>
-              <a style="color:green" href="<%= url_for("/$remote_user/$remote_project/commit/$commit->{id}") %>" title="<%= $commit->{title} %>">●</a>
-            </td>
-            <td>
-              % if ($i == @$commits - 1) {
-                &nbsp;
-              % } else {
-                -
-              % }
-            </td>
+          % for (my $i = 0; $i < @$merged_commits; $i++) {
+            % my $commit = $merged_commits->[$i];
+            % if ($commit->{remote}) {
+              <td>
+                <a style="color:green" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>" title="<%= $commit->{title} %>">●</a>
+              </td>
+              <td>
+                % if ($i == @$commits - 1) {
+                  &nbsp;
+                % } else {
+                  -
+                % }
+              </td>
+            % }
           % }
         </tr>
       </table>
