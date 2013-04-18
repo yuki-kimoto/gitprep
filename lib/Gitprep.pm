@@ -71,7 +71,7 @@ sub startup {
   my $dbi = DBIx::Custom->connect(
     dsn => "dbi:SQLite:database=$db_file",
     connector => 1,
-    option => {sqlite_unicode => 1}
+    option => {sqlite_unicode => 1, sqlite_use_immediate_transaction => 1}
   );
   $self->dbi($dbi);
   
@@ -81,7 +81,8 @@ sub startup {
   # Model
   my $models = [
     {table => 'user', primary_key => 'id'},
-    {table => 'project', primary_key => ['user_id', 'name']}
+    {table => 'project', primary_key => ['user_id', 'name']},
+    {table => 'number', primary_key => 'key'}
   ];
   $dbi->create_model($_) for @$models;
 

@@ -181,22 +181,32 @@ sub _create_user_dir {
 sub exists_project { shift->_exists_project(@_) }
 
 sub fork_project {
-  my ($self, $login_user, $user, $project) = @_;
+  my ($self, $user, $original_user, $project) = @_;
   
+  # DBI
   my $dbi = $self->app->dbi;
   
+  # Fork project
   my $error;
   eval {
     $dbi->connector->txn(sub {
       
+      # Original project id
+      my $original_pid = $dbi->model('project')
+        ->select('original_pid', id => [$original_user, $project])->value;
+      
+      croak "Can't get original project id"
+        unless defined $original_pid && $original_pid > 0;
+      
       # Create project
       eval {
         $self->_create_project(
-          $login_user,
+          $user,
           $project,
           {
-            original_user => $user,
-            original_project => $project
+            original_user => $original_user,
+            original_project => $project,
+            original_pid => $original_pid
           }
         );
       };
@@ -204,7 +214,7 @@ sub fork_project {
       
       # Create repository
       eval {
-        $self->_fork_rep($user, $project, $login_user, $project);
+        $self->_fork_rep($original_user, $project, $user, $project);
       };
       croak $error = $@ if $@;
     });
@@ -318,14 +328,15 @@ EOS
   my $project_columns = [
     "default_branch not null default 'master'",
     "original_user not null default ''",
-    "original_project not null default ''"
+    "original_project not null default ''",
+    "original_pid integer not null default 0"
   ];
   for my $column (@$project_columns) {
     eval { $dbi->execute("alter table project add column $column") };
   }
 
   # Check project table
-  eval { $dbi->select([qw/default_branch original_user original_project/], table => 'project') };
+  eval { $dbi->select([qw/default_branch original_user original_project original_pid/], table => 'project') };
   if ($@) {
     my $error = "Can't create project table properly: $@";
     $self->app->log->error($error);
@@ -377,8 +388,19 @@ sub _create_project {
   my ($self, $user, $project, $params) = @_;
   $params ||= {};
   
+  # DBI
+  my $dbi = $self->app->dbi;
+  
   # Create project
-  $self->app->dbi->model('project')->insert($params, id => [$user, $project]);
+  $dbi->connector->txn(sub {
+    unless (defined $params->{original_pid}) {
+      my $number = $dbi->model('number')->select('value', where => {key => 'original_pid'})->value;
+      $number++;
+      $dbi->model('number')->update({value => $number}, where => {key => 'original_pid'});
+      $params->{original_pid} = $number;
+    }
+    $dbi->model('project')->insert($params, id => [$user, $project]);
+  });
 }
 
 sub _create_rep {
