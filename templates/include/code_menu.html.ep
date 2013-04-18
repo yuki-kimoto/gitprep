@@ -2,10 +2,12 @@
   my $tags_count = stash('tags_count') || 0;
   my $branches_count = stash('branches_count') || 0;
   my $display = stash('display') || '';
+  my $rev = stash('rev');
+  $rev = app->manager->default_branch($user, $project);
 %>
 
 <ul class="nav nav-tabs" style="margin-bottom:10px">
-  % if (defined(my $rev = stash('rev'))) {
+  % if (defined $rev) {
     <li style="padding-right:10px">
       <button class="btn">
         <i class="icon-share-alt"></i><span class="muted">branch</span> <b><%= $rev %></b>
@@ -16,7 +18,7 @@
     <a href="<%= url_for("/$user/$project") %>">Files</a>
   </li>
   <li class="<%= $display eq 'commits' ? 'active' : '' %>">
-    <a href="<%= url_for("/$user/$project/commits/master") %>">Commits</a>
+    <a href="<%= url_for("/$user/$project/commits/$rev") %>">Commits</a>
   </li>
   <li class="<%= $display eq 'branches' ? 'active' : '' %>">
     <a href="<%= url_for("/$user/$project/branches") %>">

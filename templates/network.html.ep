@@ -23,6 +23,10 @@
   
   <div class="container" style="min-heigth:500px">
     <h3>Members of the <%= $project %> Network</h3>
+    <div style="padding-left:10px">
+      <%= "$user / $project" %> /
+      %= select_field 'branch' => $branches, style => 'margin-top:5px;width:150px';
+    </div>
     <table class="table" style="font-size:130%">
       % for my $member (@$members) {
         <form action="<%= url_for("/$user/$project/network/graph") %>" method="get">
@@ -40,14 +44,9 @@
               </a>
               <span>/</span>
               %= select_field 'remote_branch' => $mbranches, style => 'margin-top:5px;margin-bottom:7px;width:150px';
-              <span>
-                <i class="icon-resize-horizontal" style="margin-left:10px;margin-right:10px"></i>
-                my
-                %= select_field 'branch' => $branches, style => 'margin-top:5px;width:150px';
-              </span>
             </td>
             <td style="text-align:right">
-              <input class="btn" type="submit" value="Graph" style="margin-top:5px">
+              <input class="btn" type="submit" value="Compare" style="margin-top:5px">
             </td>
           </tr>
           %= hidden_field user => $user;
