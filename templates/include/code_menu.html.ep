@@ -4,6 +4,8 @@
   my $display = stash('display') || '';
   my $rev = stash('rev');
   $rev = app->manager->default_branch($user, $project);
+  my $no_merged_branch = app->git->no_merged_branches($user, $project);
+  my $tags = app->git->tags($user, $project);
 %>
 
 <ul class="nav nav-tabs" style="margin-bottom:10px">
@@ -23,17 +25,13 @@
   <li class="<%= $display eq 'branches' ? 'active' : '' %>">
     <a href="<%= url_for("/$user/$project/branches") %>">
       Branches
-      % if ($display eq 'branches') {
-        <span class="badge"><%= $branches_count %></span>
-      % }
+      <span class="badge"><%= @$no_merged_branch || 0 %></span>
     </a>
   </li>
   <li class="<%= $display eq 'tags' ? 'active' : '' %>">
     <a href="<%= url_for("/$user/$project/tags") %>">
       Tags
-      % if ($display eq 'tags') {
-        <span class="badge"><%= $tags_count %></span>
-      % }
+      <span class="badge"><%= @$tags || 0 %></span>
     </a>
   </li>
 </ul>
