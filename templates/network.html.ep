@@ -60,7 +60,7 @@
                 %= select_field 'remote_branch' => $mbranches, style => 'margin-top:5px;margin-bottom:7px;width:150px';
               </td>
               <td style="text-align:right">
-                <input class="btn" type="submit" value="Compare" style="margin-top:5px">
+                <input class="btn" type="submit" value="Graph" style="margin-top:5px">
               </td>
             </tr>
             %= hidden_field user => $user;

@@ -1,1 +1,22 @@
-aaaa
+<%
+  my $user = param('user');
+  my $project = param('project');
+  my $branch = param('branch');
+  my $remote_user = param('remote_user');
+  my $remote_project = param('remote_project');
+  my $remote_branch = param('remote_branch');
+  
+  my $logs = app->git->logs($user, $project, $branch);
+  my $remote_logs = app->git->logs(
+    $remote_user,
+    $remote_project,
+    $remote_branch
+  );
+%>
+
+layout 'common';
+
+  % for my $log (@$logs) {
+    %= $log->{hash};
+    %= $log->{message};
+  % }

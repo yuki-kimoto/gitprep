@@ -767,6 +767,39 @@ sub tags {
   return \@tags;
 }
 
+sub logs {
+  my ($self, $user, $project, $branch) = @_;
+
+  # Get bramcj commits
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    '--no-pager',
+    'log',
+    '-n',
+    '100',
+    '--pretty=format:%H %s',
+    $branch
+  );
+  open my $fh, "-|", @cmd
+    or croak "Open git log failed: @cmd";
+  
+  my $logs = [];
+  while (my $line = $self->dec(scalar <$fh>)) {
+    chomp $line;
+    
+    warn $line;
+    
+    my ($hash, $message) = $line =~ /^(.*?) (.+)/;
+    
+    push @$logs, {hash => $hash, message => $message};
+  }
+  
+  close $fh or croak 'Reading git log failed';
+  
+  return $logs;
+}
+
 sub is_deleted {
   my ($self, $diffinfo) = @_;
   
