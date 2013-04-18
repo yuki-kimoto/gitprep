@@ -20,17 +20,18 @@
     $merged_commits_h->{$id} ||= {};
     $merged_commits_h->{$id}{age} = $commit->{age};
     $merged_commits_h->{$id}{title} = $commit->{title};
+    $merged_commits_h->{$id}{type} = 'local';
   }
   for my $commit (@$remote_commits) {
     my $id = $commit->{id};
     if ($merged_commits_h->{$id}) {
-      $merged_commits_h->{$id}{same} = 1;
+      $merged_commits_h->{$id}{type} = 'same';
     }
     else {
       $merged_commits_h->{$id} ||= {};
       $merged_commits_h->{$id}{age} = $commit->{age};
       $merged_commits_h->{$id}{title} = $commit->{title};
-      $merged_commits_h->{$id}{remote} = 1;
+      $merged_commits_h->{$id}{type} = 'remote';
     }
   }
   
@@ -43,60 +44,48 @@
     $commit->{id} = $id;
     push @$merged_commits, $commit;
   }
-
-  if (@$merged_commits >= 100) {
-    my $delete_count = @$merged_commits - 100;
-    splice @$merged_commits, 0, $delete_count;
-  }
-  
 %>
 
 % layout 'common';
   %= include 'include/header';
   
+  %= javascript begin
+    $('document').ready(function () {
+      // Scroll to right
+      $('#graph').scrollLeft(1000);
+    });
+  % end
+  
   <div class="container">
+    <h3>Graph</h3>
     <div style="margin-bottom:10px">
       <span style="color:blue"><b><big><%= "$user/$project/$branch" %></big></b></span>
       <i class="icon-resize-horizontal"></i>
       <span style="color:green"><b><big><%= "$remote_user/$remote_project/$remote_branch" %></big></b></span>
+      (Compared 100 commits)
     </div>
-    <div class="well" style="width:800px;overflow:auto;padding-left:10px;padding-right:10px">
+    <div id="graph" class="well" style="width:800px;overflow:auto;padding-left:10px;padding-right:10px">
       <table>
-        <tr>
-          % for (my $i = 0; $i < @$merged_commits; $i++) {
-            % my $commit = $merged_commits->[$i];
-            % my $color = $commit->{same} ? 'gray' : 'blue';
-            % unless ($commit->{remote}) {
-              <td>
-                <a style="color:<%= $color %>" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>" title="<%= $commit->{title} %>">●</a>
-              </td>
-              <td>
-                % if ($i == @$commits - 1) {
-                  &nbsp;
-                % } else {
-                  -
-                % }
-              </td>
+        % for my $type (qw/local same remote/) {
+          <tr style="height:40px">
+            % for (my $i = 0; $i < @$merged_commits; $i++) {
+              % my $commit = $merged_commits->[$i];
+              % my $color
+              %   = $type eq 'local' ? 'blue'
+              %   : $type eq 'same' ? 'gray'
+              %   : 'green';
+
+              % if ($commit->{type} eq $type) {
+                <td>
+                  <a style="color:<%= $color %>" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>" title="<%= $commit->{title} %>">●</a>
+                </td>
+              % } else {
+                <td></td>
+              % }
+              <td style="color:#ddd">-</td>
             % }
-          % }
-        </tr>
-        <tr>
-          % for (my $i = 0; $i < @$merged_commits; $i++) {
-            % my $commit = $merged_commits->[$i];
-            % if ($commit->{remote}) {
-              <td>
-                <a style="color:green" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>" title="<%= $commit->{title} %>">●</a>
-              </td>
-              <td>
-                % if ($i == @$commits - 1) {
-                  &nbsp;
-                % } else {
-                  -
-                % }
-              </td>
-            % }
-          % }
-        </tr>
+          </tr>
+        % }
       </table>
     </div>
   </div>
