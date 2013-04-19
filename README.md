@@ -30,15 +30,15 @@ so you will find sutable server easily.
 
 You donwload gitprep.
 
-https://github.com/yuki-kimoto/gitprep/archive/0.03.zip
+https://github.com/yuki-kimoto/gitprep/archive/latest.zip
 
 You expand zip file. You see the following directory.
 
-    gitprep-0.03
+    gitprep-latest
 
-Rename this gitprep-0.03 to gitprep.
+Rename this gitprep-latest to gitprep.
 
-    gitprep-0.03 -> gitprep
+    gitprep-latest -> gitprep
 
 ## Configuration
 
@@ -97,9 +97,9 @@ At first create **gitprep** user. This is not nesessary, but recommended.
 
 Download tar.gz archive and exapand it and change directory. 
 
-    curl -kL https://github.com/yuki-kimoto/gitprep/archive/0.03.tar.gz > gitprep-0.03.tar.gz
-    tar xf gitprep-0.03.tar.gz
-    mv gitprep-0.03 gitprep
+    curl -kL https://github.com/yuki-kimoto/gitprep/archive/latest.tar.gz > gitprep-latest.tar.gz
+    tar xf gitprep-latest.tar.gz
+    mv gitprep-latest gitprep
     cd gitprep
 
 ## Setup

@@ -75,6 +75,16 @@ sub startup {
   );
   $self->dbi($dbi);
   
+  # Change database file permision
+  if (my $user = $self->config->{hypnotoad}{user}) {
+    my $uid = (getpwnam $user)[2];
+    chown $uid, -1, $db_file;
+  }
+  if (my $group = $self->config->{hypnotoad}{group}) {
+    my $gid = (getgrnam $group)[2];
+    chown -1, $gid, $db_file;
+  }
+  
   # Setup database
   $self->manager->setup_database;
   
