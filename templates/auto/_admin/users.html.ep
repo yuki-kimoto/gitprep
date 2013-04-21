@@ -16,7 +16,7 @@
     % }
     
     <div><h3>Admin Users</h3></div>
-    <div style="margin-bottom:10px"><a class="btn" href="/_admin/user/create">Create User</a></div>
+    <div style="margin-bottom:10px"><a class="btn" href="<%= url_for('/_admin/user/create') %>">Create User</a></div>
     <div class="container">
       <table class="table">
         % for my $user (@$users) {
@@ -34,6 +34,6 @@
       </table>
     </div>
   </div>
-  <div class="text-center" style="margin-bottom:20px"><big><a href="/_admin">Admin page</a></big></div>
+  <div class="text-center" style="margin-bottom:20px"><big><a href="<%= url_for('/_admin') %>">Admin page</a></big></div>
   
   %= include '/include/footer';
