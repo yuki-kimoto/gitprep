@@ -232,25 +232,19 @@ sub _fork_rep {
   # Git
   my $git = $self->app->git;
   
-  # Create working directory
-  my $temp_dir =  File::Temp->newdir;
-  my $temp_rep = "$temp_dir/temp.git";
+  # Git clone
   my $rep = $git->rep($user, $project);
+  my $to_rep = $git->rep($to_user, $to_project);
   my @git_clone_cmd = (
     $git->bin,
     'clone',
     '-q',
     '--bare',
     $rep,
-    $temp_rep
+    $to_rep
   );
   system(@git_clone_cmd) == 0
     or croak "Can't execute git clone";
-  
-  # Move temp rep to rep
-  my $to_rep = $git->rep($to_user, $to_project);
-  move $temp_rep, $to_rep
-    or croak "Can't move $temp_rep to $rep: $!";
 }
 
 sub rename_project {
@@ -413,109 +407,109 @@ sub _create_rep {
   # Git
   my $git = $self->app->git;
   
-  # Create temp repository
-  my $temp_dir =  File::Temp->newdir;
-  my $temp_rep = "$temp_dir/remote.git";
-  mkdir $temp_rep
-    or croak "Can't create directory $temp_rep: $!";
-  
-  # Git init
-  {
-    my @git_init_cmd = $git->cmd_rep($temp_rep, 'init', '--bare');
-    open my $fh, "-|", @git_init_cmd
-      or croak  "Can't execute git init";
-    close $fh;
-  }
-  
-  # Add git-daemon-export-ok
-  {
-    my $file = "$temp_rep/git-daemon-export-ok";
-    open my $fh, '>', $file
-      or croak "Can't create git-daemon-export-ok: $!"
-  }
-  
-  # HTTP support
-  my @git_update_server_info_cmd = $git->cmd_rep(
-    $temp_rep,
-    '--bare',
-    'update-server-info'
-  );
-  system(@git_update_server_info_cmd) == 0
-    or croak "Can't execute git --bare update-server-info";
-  move("$temp_rep/hooks/post-update.sample", "$temp_rep/hooks/post-update")
-    or croak "Can't move post-update";
-  
-  # Description
-  {
-    my $description = $opts->{description};
-    $description = '' unless defined $description;
-    my $file = "$temp_rep/description";
-    open my $fh, '>', $file
-      or croak "Can't open $file: $!";
-    print $fh encode('UTF-8', $description)
-      or croak "Can't write $file: $!";
-    close $fh;
-  }
-  
-  # Add README and commit
-  if ($opts->{readme}) {
-    # Create working directory
-    my $temp_dir =  File::Temp->newdir;
-    my $temp_work = "$temp_dir/work";
-    mkdir $temp_work
-      or croak "Can't create directory $temp_work: $!";
+  # Create repository directory
+  my $rep = $git->rep($user, $project);
+  mkdir $rep
+    or croak "Can't create directory $rep: $!";
 
+  eval {
     # Git init
-    my @git_init_cmd = $git->cmd_rep($temp_work, 'init', '-q');
-    system(@git_init_cmd) == 0
-      or croak "Can't execute git init";
-    
-    # Add README
-    my $file = "$temp_work/README";
-    open my $fh, '>', $file
-      or croak "Can't create $file: $!";
-    my @git_add_cmd = $git->cmd_rep(
-      $temp_work,
-      "--work-tree=$temp_work",
-      'add',
-      'README'
-    );
-    system(@git_add_cmd) == 0
-      or croak "Can't execute git add";
-    
-    # Commit
-    my @git_commit_cmd = $git->cmd_rep(
-      $temp_work,
-      "--work-tree=$temp_work",
-      'commit',
-      '-q',
-      '-m',
-      'first commit'
-    );
-    system(@git_commit_cmd) == 0
-      or croak "Can't execute git commit";
-    
-    # Push
     {
-      my @git_push_cmd = $git->cmd_rep(
+      my @git_init_cmd = $git->cmd_rep($rep, 'init', '--bare');
+      open my $fh, "-|", @git_init_cmd
+        or croak  "Can't execute git init";
+      close $fh;
+    }
+    
+    # Add git-daemon-export-ok
+    {
+      my $file = "$rep/git-daemon-export-ok";
+      open my $fh, '>', $file
+        or croak "Can't create git-daemon-export-ok: $!"
+    }
+    
+    # HTTP support
+    my @git_update_server_info_cmd = $git->cmd_rep(
+      $rep,
+      '--bare',
+      'update-server-info'
+    );
+    system(@git_update_server_info_cmd) == 0
+      or croak "Can't execute git --bare update-server-info";
+    move("$rep/hooks/post-update.sample", "$rep/hooks/post-update")
+      or croak "Can't move post-update";
+    
+    # Description
+    {
+      my $description = $opts->{description};
+      $description = '' unless defined $description;
+      my $file = "$rep/description";
+      open my $fh, '>', $file
+        or croak "Can't open $file: $!";
+      print $fh encode('UTF-8', $description)
+        or croak "Can't write $file: $!";
+      close $fh;
+    }
+    
+    # Add README and commit
+    if ($opts->{readme}) {
+      # Create working directory
+      my $temp_dir =  File::Temp->newdir;
+      my $temp_work = "$temp_dir/work";
+      mkdir $temp_work
+        or croak "Can't create directory $temp_work: $!";
+
+      # Git init
+      my @git_init_cmd = $git->cmd_rep($temp_work, 'init', '-q');
+      system(@git_init_cmd) == 0
+        or croak "Can't execute git init";
+      
+      # Add README
+      my $file = "$temp_work/README";
+      open my $fh, '>', $file
+        or croak "Can't create $file: $!";
+      my @git_add_cmd = $git->cmd_rep(
         $temp_work,
         "--work-tree=$temp_work",
-        'push',
-        '-q',
-        $temp_rep,
-        'master'
+        'add',
+        'README'
       );
-      # (This is bad, but --quiet option can't supress in old git)
-      my $git_push_cmd = join(' ', @git_push_cmd);
-      system("$git_push_cmd 2> /dev/null") == 0
-        or croak "Can't execute git push";
+      system(@git_add_cmd) == 0
+        or croak "Can't execute git add";
+      
+      # Commit
+      my @git_commit_cmd = $git->cmd_rep(
+        $temp_work,
+        "--work-tree=$temp_work",
+        'commit',
+        '-q',
+        '-m',
+        'first commit'
+      );
+      system(@git_commit_cmd) == 0
+        or croak "Can't execute git commit";
+      
+      # Push
+      {
+        my @git_push_cmd = $git->cmd_rep(
+          $temp_work,
+          "--work-tree=$temp_work",
+          'push',
+          '-q',
+          $rep,
+          'master'
+        );
+        # (This is bad, but --quiet option can't supress in old git)
+        my $git_push_cmd = join(' ', @git_push_cmd);
+        system("$git_push_cmd 2> /dev/null") == 0
+          or croak "Can't execute git push";
+      }
     }
+  };
+  if ($@) {
+    rmtree $rep;
+    croak $@;
   }
-  
-  # Move temp rep to rep
-  my $rep = $git->rep($user, $project);
-  move $temp_rep, $rep
-    or croak "Can't move $temp_rep to $rep: $!";
 }
 
 sub _delete_project {
