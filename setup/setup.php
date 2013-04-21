@@ -25,21 +25,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
-    <title>Setup Tool</title>
-    <script src="js/jquery-1.9.0.min.js"></script>
-    <script src="js/bootstrap.js"></script>
-    <link rel="stylesheet" href="css/bootstrap.css" />
-    <link rel="stylesheet" href="css/bootstrap-responsive.css" />
+    <title>Setup</title>
   </head>
   <body>
     <div class="container">
-      <div class="text-center"><h1>Setup Tool</h1></div>
+      <div class="text-center"><h1>Setup</h1></div>
     </div>
     <hr style="margin-top:0;margin-bottom:0">
     <div class="container">
-      <div class="alert alert-error">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      <div style="color:red">
         <?php echo $error ?>
       </div>
     </div>
