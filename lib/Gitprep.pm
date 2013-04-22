@@ -214,18 +214,22 @@ sub startup {
       $r->get('/network/graph')->name('network_graph');
     }
   }
-
+  
   # Reverse proxy support
-  $ENV{MOJO_REVERSE_PROXY} = 1;
-  $self->hook('before_dispatch' => sub {
-    my $self = shift;
-    
-    if ($self->req->headers->header('X-Forwarded-Host')) {
-      my $prefix = shift @{$self->req->url->path->parts};
-      push @{$self->req->url->base->path->parts}, $prefix
-        if defined $prefix;
+  my $reverse_proxy_on = $self->config->{reverse_proxy}{on};
+  my $path_depth = $self->config->{reverse_proxy}{path_depth};
+  if ($reverse_proxy_on) {
+    $ENV{MOJO_REVERSE_PROXY} = 1;
+    if ($path_depth) {
+      $self->hook('before_dispatch' => sub {
+        my $self = shift;
+        for (1 .. $path_depth) {
+          my $prefix = shift @{$self->req->url->path->parts};
+          push @{$self->req->url->base->path->parts}, $prefix;
+        }
+      });
     }
-  });
+  }
 }
 
 1;
