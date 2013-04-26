@@ -34,6 +34,14 @@
   # Get blob diffs
   my $blobdiffs = $git->blobdiffs($user, $project, $from_id, $id, $difftrees);
   
+  # Branches
+  my $branch_refs = $git->references($user, $project, 'heads') || [];
+  my $branches = $branch_refs->{$commit->{id}} || [];
+  
+  # Tags
+  my $tag_refs = $git->references($user, $project, 'tags');
+  my $tags = $tag_refs->{$commit->{id}};
+  
   # Global variable for included template
   stash(
     from_id => $from_id,
@@ -60,7 +68,6 @@
               <%
                 my $title_short = $commit->{title_short};
                 $title_short =~ s/\.\.\.\s*$//;
-                use D;d $title_short;
                 my $title_tail = $commit->{title};
                 $title_tail =~ s/^\Q$title_short//;
                 $title_tail =~ s/^\s+//;
@@ -77,11 +84,26 @@
         </div>
       </div>
       % if (@{$commit->{comment}} > 1) {
-        <div style="padding-left:15px">
+        <div class="border-bottom-gray" style="padding-left:15px;padding-bottom:5px">
           % for (my $i = 1; $i < @{$commit->{comment}}; $i++) {
             <div>
               <%= $commit->{comment}[$i] %>
             </div>
+          % }
+        </div>
+      % }
+      % if (@$branches || @$tags) {
+        <div class="broder-top-gray">
+          % for my $branch (@$branches) {
+            <span style="padding-left:5px">
+              <i class="icon-share-alt"></i><a href="<%= url_for("/$user/$project/commit/$branch") %>"><%= $branch %></a>
+            </span>
+          % }
+          
+          % for my $tag (@$tags) {
+            <span style="padding-left:5px">
+              <i class="icon-tag"></i><a href="<%= url_for("/$user/$project/commit/$tag") %>"><%= $tag %></a>
+            </span>
           % }
         </div>
       % }

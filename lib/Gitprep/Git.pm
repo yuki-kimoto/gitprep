@@ -486,6 +486,41 @@ sub id_by_path {
   return $id;
 }
 
+sub references {
+  my ($self, $user, $project, $type) = @_;
+  
+  $type ||= '';
+  
+  # Branches or tags
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'show-ref',
+    '--dereference',
+    (
+      $type eq 'heads' ? ('--heads') :
+      $type eq 'tags' ? ('--tags') :
+      ()
+    )
+  );
+  
+  open my $fh, '-|', @cmd
+    or croak "Can't execute git show-ref";
+  
+  # Parse references
+  my %refs;
+  while (my $line = $self->dec(scalar <$fh>)) {
+    chomp $line;
+    if ($line =~ m!^([0-9a-fA-F]{40})\srefs/$type/(.*)$!) {
+      if (defined $refs{$1}) { push @{$refs{$1}}, $2 }
+      else { $refs{$1} = [$2] }
+    }
+  }
+  close $fh or croak "Can't read git show-ref";
+  
+  return \%refs;
+}
+
 sub root_ns {
   my ($self, $root) = @_;
 
@@ -648,35 +683,6 @@ sub projects {
   }
   
   return \@reps;
-}
-
-sub references {
-  my ($self, $user, $project, $type) = @_;
-  
-  $type ||= '';
-  
-  # Get references
-  my @cmd = $self->cmd(
-    $user,
-    $project,
-    'show-ref',
-    '--dereference',
-    ($type ? ('--', "refs/$type") : ())
-  );
-  open my $fh, '-|', @cmd or return;
-  
-  # Parse references
-  my %refs;
-  while (my $line = $self->dec(scalar <$fh>)) {
-    chomp $line;
-    if ($line =~ m!^([0-9a-fA-F]{40})\srefs/($type.*)$!) {
-      if (defined $refs{$1}) { push @{$refs{$1}}, $2 }
-      else { $refs{$1} = [$2] }
-    }
-  }
-  close $fh or return;
-  
-  return \%refs;
 }
 
 sub rep {
