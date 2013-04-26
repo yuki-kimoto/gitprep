@@ -35,12 +35,12 @@
   my $blobdiffs = $git->blobdiffs($user, $project, $from_id, $id, $difftrees);
   
   # Branches
-  my $branch_refs = $git->references($user, $project, 'heads') || [];
+  my $branch_refs = $git->references($user, $project, 'heads');
   my $branches = $branch_refs->{$commit->{id}} || [];
   
   # Tags
   my $tag_refs = $git->references($user, $project, 'tags');
-  my $tags = $tag_refs->{$commit->{id}};
+  my $tags = $tag_refs->{$commit->{id}} || [];
   
   # Global variable for included template
   stash(
@@ -93,7 +93,7 @@
         </div>
       % }
       % if (@$branches || @$tags) {
-        <div class="broder-top-gray">
+        <div class="broder-top-gray" style="padding-top:7px">
           % for my $branch (@$branches) {
             <span style="padding-left:5px">
               <i class="icon-share-alt"></i><a href="<%= url_for("/$user/$project/commit/$branch") %>"><%= $branch %></a>
