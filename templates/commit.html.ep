@@ -50,60 +50,70 @@
     %= include '/include/project_header';
     %= include '/include/code_menu', display => 'commits';
 
-    <div class="bk-blue-light padding5 border-gray" style="border-bottom:none">
+    <div class="bk-blue-light border-gray" style="border-bottom:none;padding:10px;border-top-left-radius:5px;border-top-right-radius:5px">
       <div class="row">
-        <div class="span8">
-          <b>
-            <big>
-              <%= $commit->{title_short} %>
-              % unless ($commit->{title_short} eq $commit->{title}) {
-                ...
-              % }
-            </big>
-          </b>
-          % for (my $i = 0; $i < @{$commit->{comment}}; $i++) {
-            % my $comment = $commit->{comment}[$i];
-            % if ($i == 0) {
-              % $comment =~ s/^\Q$commit->{title_short}//;
+       <div class="span10">
+          <big>
+            % if ($commit->{title_short} eq $commit->{title}) {
+              <b><%= $commit->{title_short} %></b>;
+            % } else {
+              <%
+                my $title_short = $commit->{title_short};
+                $title_short =~ s/\.\.\.\s*$//;
+                use D;d $title_short;
+                my $title_tail = $commit->{title};
+                $title_tail =~ s/^\Q$title_short//;
+                $title_tail =~ s/^\s+//;
+              %>
+              <p style="margin-bottom:2px;"><b><%= $title_short %>...</b></p>
+              <p style="margin-top:2px;margin-bottom:15px;">...<%= $title_tail %></p>
             % }
-            % if ($comment ne '') {
-              <div>
-                <%= $comment %>
-              </div>
-            % }
-          % }
+          </big>
         </div>
-        <div class="span3 offset1-mini text-right">
+        <div class="text-right">
           <a class="btn btn-primary" href="<%= url_for("/$user/$project/tree/$commit->{id}") %>">
             Browse code
           </a>
         </div>
       </div>
-    </div>
-    <div class="border-gray padding5" style="border-bottom:none">
-      <span><%= $commit->{author_name} %></span>
-      <span class="muted">authored <%= $commit->{age_string_age} %></span>
-    </div>
-    <div class="border-gray padding5" style="padding-top:0;border-top:none;margin-bottom:20px">
-      % my $parent = $commit->{parent};
-      % my $parents = $commit->{parents};
-      
-      % if (!defined $parent) {
-        0 <span class="muted">parent</span>
-      % } elsif (@$parents == 1) {
-        1 <span class="muted">parent</span>
-        <a class="font-black" href="<%= url_for("/$user/$project/commit/$parent") %>">
-          <%= substr($parent, 0, 7) %>
-        </a>
-      % } else {
-        <%= @$parents %> <span class="muted">parents</span>:
-        % for my $parent (@$parents) {
-          <a class="font-black" href="<%= url_for("/$user/$project/commit/$parent") %>">
-            <%= substr($parent, 0, 7) %>
-          </a>
-        % }
+      % if (@{$commit->{comment}} > 1) {
+        <div style="padding-left:15px">
+          % for (my $i = 1; $i < @{$commit->{comment}}; $i++) {
+            <div>
+              <%= $commit->{comment}[$i] %>
+            </div>
+          % }
+        </div>
       % }
-      <span class="muted">commit</span> <%= $commit->{id} %>
+    </div>
+    <div class="border-gray" style="border-bottom-left-radius:5px;border-bottom-right-radius:5px">
+      <div class="row">
+        <div class="span4 padding5">
+          <span><b><%= $commit->{author_name} %></b></span>
+          <span class="muted">authored <%= $commit->{age_string_age} %></span>
+        </div>
+        <div class="span7 padding5 text-right" style="margin-left:75px">
+          % my $parent = $commit->{parent};
+          % my $parents = $commit->{parents};
+          
+          % if (!defined $parent) {
+            0 <span class="muted">parent</span>
+          % } elsif (@$parents == 1) {
+            1 <span class="muted">parent</span>
+            <a class="font-black" href="<%= url_for("/$user/$project/commit/$parent") %>">
+              <%= substr($parent, 0, 7) %>
+            </a>
+          % } else {
+            <%= @$parents %> <span class="muted">parents</span>:
+            % for my $parent (@$parents) {
+              <a class="font-black" href="<%= url_for("/$user/$project/commit/$parent") %>">
+                <%= substr($parent, 0, 7) %>
+              </a>
+            % }
+          % }
+          <span class="muted">commit</span> <%= $commit->{id} %>
+        </div>
+      </div>
     </div>
     
     <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
