@@ -2,155 +2,151 @@
   
   % my $has_header = @$difftrees && @$parents > 1 && stash('action') eq 'commitdiff';
   % if ($has_header) {
-    <thead>
-      <tr>
-        <th></th>
-        % for (my $i = 0; $i < @$parents; $i++) {
-          % my $parent = $parents->[$i];
-          % my $from_id = $parent;
-          <th>
-            <a href="<%= url_for("/$user/$project/commit/$from_id..$id") %>"
-                title="commitdiff to parent number <%= $i + 1 %> <%= substr($from_id, 0, 7) %>">
-              <%= $i + 1 %>
-            </a>
-          </th>
-        % }
-      </tr>
-    </thead>
+    <tr>
+      <th></th>
+      % for (my $i = 0; $i < @$parents; $i++) {
+        % my $parent = $parents->[$i];
+        % my $from_id = $parent;
+        <th>
+          <a href="<%= url_for("/$user/$project/commit/$from_id..$id") %>"
+              title="commitdiff to parent number <%= $i + 1 %> <%= substr($from_id, 0, 7) %>">
+            <%= $i + 1 %>
+          </a>
+        </th>
+      % }
+    </tr>
   % }
-  <tbody>
     % my $toggle = 0;
     % for my $difftree (@$difftrees) {
     
-      <tr>
-        % if (exists $difftree->{'nparents'}) {
-          % my $file = $difftree->{to_file};
-          
-          % if ($difftree->{is_deleted}) {
-            <td>
-              <%= $file %>
-            </td>
-          % } else {
-            <td>
-              <a href="<%= url_for("/$user/$project/blob/$id/$file") %>">
-                <%= $file %>
-              </a>
-            </td>
-          % }
-
-          % my $not_deleted = 0;
-          % for (my $i = 0; $i < $difftree->{'nparents'}; $i++) {
-            % my $from_id = $parents->[$i];
-            % my $from_bid = $difftree->{'from_id'}[$i];
-            % my $from_file = $difftree->{'from_file'}[$i];
-            % $from_file = $file unless defined $from_file;
-            % my $status = $difftree->{'status'}[$i];
-            % $not_deleted ||= ($status ne 'D');
-
-            % if ($status eq 'A') {
-              <td> | </td>
-            % } elsif ($status eq 'D') {
-              <td>
-                % my $blobdiff_url = url_for("/$user/$project/blobdiff/$from_id..$id/$file");
-                % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
-
-                <a href="<%= $blobdiff_url %>">
-                  blob<%= $i + 1 %>
-                </a>
-                |
-              </td>
-            % } else {
-              % if ($difftree->{'to_id'} eq $from_bid) {
-                <td>
-              % } else {
-                <td>
-              % }
-                % my $blobdiff_url = url_for("/$user/$project/blobdiff/$from_id..$id/$file");
-              % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
-              
-              <a href="<%= $blobdiff_url %>">
-                diff<%= $i + 1 %>
-              </a>
-              | </td>
-            % }
-          % }
-
+    <tr>
+      % if (exists $difftree->{'nparents'}) {
+        % my $file = $difftree->{to_file};
+        
+        % if ($difftree->{is_deleted}) {
           <td>
-            % if ($not_deleted) {
-              % my $from_file = $difftree->{from_file};
-                % my $blobdiff_url = url_for("/$user/$project/blobdiff/$from_id..$id/$file");
-              % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
-
-              <a href="<%= $blobdiff_url %>">
-                blob
-              </a>
-            % }
+            <%= $file %>
           </td>
         % } else {
-          % my $status = $difftree->{status};
-          % my $file = $difftree->{to_file};
-          % my $file_type = $difftree->{to_file_type};
-          % my $mode = $difftree->{to_mode};
-          % my $mode_str = $difftree->{to_mode_str};
-          % my $mode_oct = $difftree->{to_mode_oct};
-          % my $from_file = $difftree->{from_file};
-          % my $from_file_type = $difftree->{from_file_type};
-          % my $from_mode = $difftree->{from_mode};
-          % my $from_mode_str = $difftree->{from_mode_str};
-          % my $from_mode_oct = $difftree->{from_mode_oct};
           <td>
-            % if ($status eq 'A') {
-              <span class="file-add">+</span>
-            % } elsif ($status eq 'D') {
-              <span class="file-del">-</span>
-            % } elsif ($status eq 'M' || $status eq 'T') {
-              % if ($from_mode != $mode) {
-                <span>
-                  [
-                    changed
-                    % if ($from_file_type ne $file_type) {
-                      from <%= $from_file_type %> to <%= $file_type %>
-                    % }
-                    % if (($from_mode_oct & 0777) != ($mode_oct & 0777)) {
-                      % if ($from_mode_str && $mode_str) {
-                        mode: <%= $from_mode_str %>-><%= $mode_str %>
-                      % } elsif ($mode_str) {
-                        mode: <%= $mode_str %>
-                      % }
-                    % }
-                  ]
-                </span>
-              % }
-            % } elsif ($status eq 'R' || $status eq 'C') {
-              % my $status_name = $status eq 'R' ? 'moved' : 'copied';
+            <a href="<%= url_for("/$user/$project/blob/$id/$file") %>">
+              <%= $file %>
+            </a>
+          </td>
+        % }
 
-              % my $mode_change = "";
-              % if ($difftree->{'from_mode'} != $difftree->{'to_mode'}) {
-                % $mode_change = sprintf(", mode: %04o", oct $difftree->{to_mode} & 0777);
-              % }
-              
+        % my $not_deleted = 0;
+        % for (my $i = 0; $i < $difftree->{'nparents'}; $i++) {
+          % my $from_id = $parents->[$i];
+          % my $from_bid = $difftree->{'from_id'}[$i];
+          % my $from_file = $difftree->{'from_file'}[$i];
+          % $from_file = $file unless defined $from_file;
+          % my $status = $difftree->{'status'}[$i];
+          % $not_deleted ||= ($status ne 'D');
+
+          % if ($status eq 'A') {
+            <td> | </td>
+          % } elsif ($status eq 'D') {
+            <td>
+              % my $blobdiff_url = url_for("/$user/$project/blobdiff/$from_id..$id/$file");
+              % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
+
+              <a href="<%= $blobdiff_url %>">
+                blob<%= $i + 1 %>
+              </a>
+              |
+            </td>
+          % } else {
+            % if ($difftree->{'to_id'} eq $from_bid) {
+              <td>
+            % } else {
+              <td>
+            % }
+              % my $blobdiff_url = url_for("/$user/$project/blobdiff/$from_id..$id/$file");
+            % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
+            
+            <a href="<%= $blobdiff_url %>">
+              diff<%= $i + 1 %>
+            </a>
+            | </td>
+          % }
+        % }
+
+        <td>
+          % if ($not_deleted) {
+            % my $from_file = $difftree->{from_file};
+              % my $blobdiff_url = url_for("/$user/$project/blobdiff/$from_id..$id/$file");
+            % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
+
+            <a href="<%= $blobdiff_url %>">
+              blob
+            </a>
+          % }
+        </td>
+      % } else {
+        % my $status = $difftree->{status};
+        % my $file = $difftree->{to_file};
+        % my $file_type = $difftree->{to_file_type};
+        % my $mode = $difftree->{to_mode};
+        % my $mode_str = $difftree->{to_mode_str};
+        % my $mode_oct = $difftree->{to_mode_oct};
+        % my $from_file = $difftree->{from_file};
+        % my $from_file_type = $difftree->{from_file_type};
+        % my $from_mode = $difftree->{from_mode};
+        % my $from_mode_str = $difftree->{from_mode_str};
+        % my $from_mode_oct = $difftree->{from_mode_oct};
+        <td>
+          % if ($status eq 'A') {
+            <span class="file-add">+</span>
+          % } elsif ($status eq 'D') {
+            <span class="file-del">-</span>
+          % } elsif ($status eq 'M' || $status eq 'T') {
+            % if ($from_mode != $mode) {
               <span>
                 [
-                  <%= $status_name %> from
-                % my $blobdiff_url = url_for("/$user/$project/blobdiff/$from_id..$id/$file");
-                  % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
-                  <a href="<%= $blobdiff_url %>">
-                    <%= $difftree->{from_file} %></a>
-                  with <%= $difftree->{similarity} %>%
-                  <%= $mode_change %>
+                  changed
+                  % if ($from_file_type ne $file_type) {
+                    from <%= $from_file_type %> to <%= $file_type %>
+                  % }
+                  % if (($from_mode_oct & 0777) != ($mode_oct & 0777)) {
+                    % if ($from_mode_str && $mode_str) {
+                      mode: <%= $from_mode_str %>-><%= $mode_str %>
+                    % } elsif ($mode_str) {
+                      mode: <%= $mode_str %>
+                    % }
+                  % }
                 ]
               </span>
             % }
-          </td>
-          <td>
-            % if ($status eq 'D') {
-              <span class="muted" style="margin-left:5px"><%= $file %></a>
-            % } else {
-              <sapn style="color:blue;margin-left:5px"><%= $file %></span>
+          % } elsif ($status eq 'R' || $status eq 'C') {
+            % my $status_name = $status eq 'R' ? 'moved' : 'copied';
+
+            % my $mode_change = "";
+            % if ($difftree->{'from_mode'} != $difftree->{'to_mode'}) {
+              % $mode_change = sprintf(", mode: %04o", oct $difftree->{to_mode} & 0777);
             % }
-          </td>
-        % }
-      </tr>
-    </tbody>
+            
+            <span>
+              [
+                <%= $status_name %> from
+              % my $blobdiff_url = url_for("/$user/$project/blobdiff/$from_id..$id/$file");
+                % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
+                <a href="<%= $blobdiff_url %>">
+                  <%= $difftree->{from_file} %></a>
+                with <%= $difftree->{similarity} %>%
+                <%= $mode_change %>
+              ]
+            </span>
+          % }
+        </td>
+        <td>
+          % if ($status eq 'D') {
+            <span class="muted" style="margin-left:5px"><%= $file %></a>
+          % } else {
+            <sapn style="color:blue;margin-left:5px"><%= $file %></span>
+          % }
+        </td>
+      % }
+    </tr>
   % }
 </table>

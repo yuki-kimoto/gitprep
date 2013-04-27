@@ -61,6 +61,27 @@
 %>
 
 % layout 'common';
+
+  %= javascript begin
+    $(document).ready(function () {
+    
+      // Diff Stats Button
+      var difftree_show = false;
+      var original_diff_stats_btn_text = $('#diff-stats-btn').text();
+      
+      $('#diff-stats-btn').on('click', function () {
+        if (difftree_show) {
+          $(this).text(original_diff_stats_btn_text);
+          $('#difftree').css('display', 'none');
+        }
+        else {
+          $(this).text('Hide Diff Stats');
+          $('#difftree').css('display', 'block');
+        }
+        difftree_show = !difftree_show;
+      });
+    });
+  % end
   
   %= include '/include/header', title => 'Commit diff';
 
@@ -148,12 +169,18 @@
       </div>
     </div>
 
-    <div style="margin-bottom:5px">
-      Showing <b><%= @$difftrees %> changed files</b>
+    <div class="row" style="margin-bottom:10px">
+      <div class="span8" style="padding-top:5px">
+        Showing <b><%= @$difftrees %> changed files</b>
+      </div>
+      <div class="text-right">
+        <button id="diff-stats-btn" class="btn">Show Diff Stats</button>
+      </div>
     </div>
-    <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
-      difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project %>
-    
+    <div id="difftree" style="display:none">
+      <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
+        difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project %>
+    </div>
     <div>
       % for my $file (sort keys %$difftrees_h) {
         % my $blob_diff = $blobdiffs_h->{$file};
@@ -168,7 +195,7 @@
           <div class="border-gray bk-gray-light" style="border-bottom:none;padding:10px">
             <%= $file %>
           </div>
-          <div class="border-gray" style="padding:10px">
+          <div class="border-gray" style="padding:10px;margin-bottom:30px">
             No changes. Empty file is added.
           </div>
         % }
