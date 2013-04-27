@@ -14,8 +14,7 @@ my $t = Test::Mojo->new($app);
 my $user = 'kimoto';
 my $project = 'gitprep_t';
 
-# First commit
-subtest 'first commit' => sub {
+subtest 'Commit page - first commit' => sub {
   # Page access
   $t->get_ok("/$user/$project/commit/4b0e81c462088b16fefbe545e00b993fd7e6f884");
   
@@ -23,6 +22,19 @@ subtest 'first commit' => sub {
   $t->content_like(qr/first commit/);
   
   # Parent not eixsts
-  $t->content_like(qr/0 <span class="muted">parent/);
+  $t->content_like(qr/0 <span .*?>parent/);
+  
+  # Commit id
+  $t->content_like(qr/4b0e81c462088b16fefbe545e00b993fd7e6f884/);
+  
+  # Author
+  $t->content_like(qr/Yuki Kimoto/);
+  
+  # File change count
+  $t->content_like(qr/1 changed files/);
+  
+  # Added README
+  $t->content_like(qr/class="file-add".*?README/s);
+  
 };
 
