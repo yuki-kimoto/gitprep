@@ -32,7 +32,7 @@
   );
   
   # Get blob diffs
-  my $blobdiffs = $git->blobdiffs($user, $project, $from_id, $id, $difftrees);
+  my $blobdiffs = $git->blobdiffs($user, $project, $from_id, $id, $difftrees) || [];
   
   # Branches
   my $branch_refs = $git->references($user, $project, 'heads');
@@ -48,6 +48,8 @@
     id => $id,
     commit => $commit
   );
+  
+  use D;d $commit;
 %>
 
 % layout 'common';

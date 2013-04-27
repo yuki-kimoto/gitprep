@@ -62,6 +62,8 @@ sub authors {
 sub blobdiffs {
   my ($self, $user, $project, $from_id, $id, $difftrees) = @_;
   
+  return unless defined $from_id;
+  
   my $blobdiffs = [];
   my @cmd = $self->cmd(
     $user,
@@ -505,7 +507,7 @@ sub references {
   );
   
   open my $fh, '-|', @cmd
-    or croak "Can't execute git show-ref";
+    or return;
   
   # Parse references
   my %refs;
@@ -516,7 +518,7 @@ sub references {
       else { $refs{$1} = [$2] }
     }
   }
-  close $fh or croak "Can't read git show-ref";
+  close $fh or return;
   
   return \%refs;
 }
@@ -1218,7 +1220,7 @@ sub _age_string {
   my ($self, $age) = @_;
   my $age_str;
 
-  if ($age > 60*60*24*365*2) {
+  if ($age > 60 * 60 * 24 * 365 * 2) {
     $age_str = (int $age/60/60/24/365);
     $age_str .= ' years ago';
   } elsif ($age > 60*60*24*(365/12)*2) {
