@@ -16,9 +16,10 @@
       % }
     </tr>
   % }
-    % my $toggle = 0;
-    % for my $difftree (@$difftrees) {
-    
+  
+  % my $toggle = 0;
+  % my $num = 0;
+  % for my $difftree (@$difftrees) {
     <tr>
       % if (exists $difftree->{'nparents'}) {
         % my $file = $difftree->{to_file};
@@ -101,6 +102,7 @@
           % } elsif ($status eq 'D') {
             <span class="file-del">-</span>
           % } elsif ($status eq 'M' || $status eq 'T') {
+            <span class="file-modified">●</span>
             % if ($from_mode != $mode) {
               <span>
                 [
@@ -140,13 +142,10 @@
           % }
         </td>
         <td>
-          % if ($status eq 'D') {
-            <span class="muted" style="margin-left:5px"><%= $file %></a>
-          % } else {
-            <sapn style="color:blue;margin-left:5px"><%= $file %></span>
-          % }
+          <a style="margin-left:5px" href="<%= url_for->fragment("diff-$num") %>"><%= $file %></a>
         </td>
       % }
     </tr>
+    % $num++;
   % }
 </table>

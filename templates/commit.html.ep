@@ -181,8 +181,9 @@
       <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
         difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project %>
     </div>
-    <div>
-      % for my $file (sort keys %$difftrees_h) {
+    % my $num = 0;
+    % for my $file (sort keys %$difftrees_h) {
+      <div id="diff-<%= $num %>">
         % my $blob_diff = $blobdiffs_h->{$file};
         % if ($blob_diff) {
           % my $lines = $blob_diff->{lines};
@@ -199,8 +200,9 @@
             No changes. Empty file is added.
           </div>
         % }
-      % }
-    </div>
+      </div>
+      % $num++;
+    % }
   </div>
   
   %= include '/include/footer';
