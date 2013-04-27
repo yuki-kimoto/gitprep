@@ -997,7 +997,6 @@ sub parse_commit_text {
   $commit{age_string} = $self->_age_string($age);
   my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($commit{committer_epoch});
   $commit{age_string_date} = sprintf '%4i-%02u-%02i', 1900 + $year, $mon+1, $mday;
-  $commit{age_string_age} = $commit{age_string};
   return \%commit;
 }
 
