@@ -127,6 +127,9 @@
         % }
       </div>
       <div class="tab-pane" id="file-changed">
+        <div style="margin-bottom:5px">
+          Showing <b><%= @$difftrees %> changed files</b>
+        </div>
         <div>
           <%= include '/include/difftree', id => $end_commit->{id}, from_id => $start_commit->{id},
             difftrees => $difftrees, parents => [], project_ns => $project %>

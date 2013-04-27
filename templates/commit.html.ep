@@ -30,9 +30,19 @@
     $commit->{parent},
     $commit->{parents}
   );
+  my $difftrees_h = {};
+  for my $difftree (@$difftrees) {
+    my $file = $difftree->{file};
+    $difftrees_h->{$file} = $difftree;
+  }
   
   # Get blob diffs
   my $blobdiffs = $git->blobdiffs($user, $project, $from_id, $id, $difftrees) || [];
+  my $blobdiffs_h = {};
+  for my $blobdiff (@$blobdiffs) {
+    my $file = $blobdiff->{file};
+    $blobdiffs_h->{$file} = $blobdiff;
+  }
   
   # Branches
   my $branch_refs = $git->references($user, $project, 'heads');
@@ -108,7 +118,7 @@
         </div>
       % }
     </div>
-    <div class="border-gray" style="border-bottom-left-radius:5px;border-bottom-right-radius:5px">
+    <div class="border-gray" style="border-bottom-left-radius:5px;border-bottom-right-radius:5px;margin-bottom:10px;">
       <div class="row">
         <div class="span4 padding5">
           <span><b><%= $commit->{author_name} %></b></span>
@@ -137,21 +147,31 @@
         </div>
       </div>
     </div>
-    
+
+    <div style="margin-bottom:5px">
+      Showing <b><%= @$difftrees %> changed files</b>
+    </div>
     <%= include '/include/difftree', id => $commit->{id}, from_id => $commit->{parent},
       difftrees => $difftrees, parents => $commit->{parents}, project_ns => $project %>
     
     <div>
-      % for (my $i = 0; $i < @$blobdiffs; $i++) {
-        % my $blob_diff = $blobdiffs->[$i];
-        <div>
+      % for my $file (sort keys %$difftrees_h) {
+        % my $blob_diff = $blobdiffs_h->{$file};
+        % if ($blob_diff) {
           % my $lines = $blob_diff->{lines};
           % my $file = $blob_diff->{file};
           % my $from_file = $blob_diff->{from_file};
           % $from_file = $file unless defined $from_file;
           % my $status = $blob_diff->{status};
           %= include '/include/blobdiff_body', file => $file, from_file => $from_file, status => $status, lines => $blob_diff->{lines}, project_ns => $project;
-        </div>
+        % } else {
+          <div class="border-gray bk-gray-light" style="border-bottom:none;padding:10px">
+            <%= $file %>
+          </div>
+          <div class="border-gray" style="padding:10px">
+            No changes. Empty file is added.
+          </div>
+        % }
       % }
     </div>
   </div>

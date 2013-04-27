@@ -1,6 +1,3 @@
-<div>
-  Showing <b><%= @$difftrees %> changed files</b>
-</div>
 <table style="margin-bottom:10px">
   
   % my $has_header = @$difftrees && @$parents > 1 && stash('action') eq 'commitdiff';

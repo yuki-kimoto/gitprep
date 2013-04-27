@@ -14,7 +14,8 @@ my $t = Test::Mojo->new($app);
 my $user = 'kimoto';
 my $project = 'gitprep_t';
 
-subtest 'Commit page - first commit' => sub {
+diag 'Commit page - first commit';
+{
   # Page access
   $t->get_ok("/$user/$project/commit/4b0e81c462088b16fefbe545e00b993fd7e6f884");
   
@@ -36,5 +37,7 @@ subtest 'Commit page - first commit' => sub {
   # Added README
   $t->content_like(qr/class="file-add".*?README/s);
   
+  # Empty file is added
+  $t->content_like(qr/No changes/);
 };
 
