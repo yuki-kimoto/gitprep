@@ -16,6 +16,13 @@ my $project = 'gitprep_t';
 
 # First commit
 subtest 'first commit' => sub {
+  # Page access
   $t->get_ok("/$user/$project/commit/4b0e81c462088b16fefbe545e00b993fd7e6f884");
+  
+  # Commit message
+  $t->content_like(qr/first commit/);
+  
+  # Parent not eixsts
+  $t->content_like(qr/0 <span class="muted">parent/);
 };
 
