@@ -48,8 +48,6 @@
     id => $id,
     commit => $commit
   );
-  
-  use D;d $commit;
 %>
 
 % layout 'common';
