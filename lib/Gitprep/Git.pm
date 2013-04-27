@@ -1220,25 +1220,25 @@ sub _age_string {
   my ($self, $age) = @_;
   my $age_str;
 
-  if ($age > 60 * 60 * 24 * 365 * 2) {
+  if ($age > 60 * 60 * 24 * 365) {
     $age_str = (int $age/60/60/24/365);
     $age_str .= ' years ago';
-  } elsif ($age > 60*60*24*(365/12)*2) {
+  } elsif ($age > 60*60*24*(365/12)) {
     $age_str = int $age/60/60/24/(365/12);
     $age_str .= ' months ago';
-  } elsif ($age > 60*60*24*7*2) {
+  } elsif ($age > 60*60*24*7) {
     $age_str = int $age/60/60/24/7;
     $age_str .= ' weeks ago';
-  } elsif ($age > 60*60*24*2) {
+  } elsif ($age > 60*60*24) {
     $age_str = int $age/60/60/24;
     $age_str .= ' days ago';
-  } elsif ($age > 60*60*2) {
+  } elsif ($age > 60*60) {
     $age_str = int $age/60/60;
     $age_str .= ' hours ago';
-  } elsif ($age > 60*2) {
+  } elsif ($age > 60) {
     $age_str = int $age/60;
     $age_str .= ' min ago';
-  } elsif ($age > 2) {
+  } elsif ($age > 1) {
     $age_str = int $age;
     $age_str .= ' sec ago';
   } else {
