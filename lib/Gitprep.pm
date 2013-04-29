@@ -183,16 +183,16 @@ sub startup {
       $r->get('/tags')->name('tags');
 
       # Tree
-      $r->get('/tree/(*object)')->name('tree');
+      $r->get('/tree/:rev/(*dir)', {dir => undef})->name('tree');
       
       # Blob
-      $r->get('/blob/(*object)')->name('blob');
+      $r->get('/blob/:rev/(*file)', {file => undef})->name('blob');
       
       # Blob diff
       $r->get('/blobdiff/(#diff)/(*file)')->name('blobdiff');
       
       # Raw
-      $r->get('/raw/(*object)')->name('raw');
+      $r->get('/raw/:rev/(*file)', {file => undef})->name('raw');
       
       # Archive
       $r->get('/archive/(#rev).tar.gz')->name('archive')->to(archive_type => 'tar');

@@ -31,7 +31,7 @@
 
   # End commit
   my $end_commit = $git->parse_commit($user, $project, $rev2)
-    or $api->croak('Unknown commit object');
+    or $api->croak('Unknown commit revision');
   
   # Diff tree
   my $difftrees = $git->difftree(

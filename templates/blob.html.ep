@@ -1,29 +1,27 @@
 <%
   # API
-  my $api = Gitprep::API->new($self);
+  my $api = gitprep_api;
   
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $object = param('object');
+  my $rev = param('rev');
+  my $file = param('file');
 
   # Git
   my $git = $self->app->git;
-  
-  # Revision and blob
-  my ($rev, $blob) = @{$git->parse_object($user, $project, $object)};
 
   # Commit log
-  my $commit_log = $git->latest_commit_log($user, $project, $rev, $blob);
+  my $commit_log = $git->latest_commit_log($user, $project, $rev, $file);
 
   # Commit
   my $commit = $git->parse_commit($user, $project, $rev);
   
   # Authors
-  my $authors = $git->authors($user, $project, $rev, $blob);
+  my $authors = $git->authors($user, $project, $rev, $file);
   
   # Blob content
-  my $bid = $git->id_by_path($user, $project, $rev, $blob, 'blob')
+  my $bid = $git->id_by_path($user, $project, $rev, $file, 'blob')
     or $api->croak('Cannot find file');
   my @cmd = $git->cmd(
     $user,
@@ -33,11 +31,11 @@
     $bid
   );
   open my $fh, '-|', @cmd
-    or $api->croak(qq/Couldn't cat "$blob", "$bid"/);
+    or $api->croak(qq/Couldn't cat "$file", "$bid"/);
   
   # Blob info
-  my $blob_size = $git->blob_size_kb($user, $project, $rev, $blob);
-  my $mimetype = $git->blob_mimetype($fh, $blob);
+  my $file_size = $git->blob_size_kb($user, $project, $rev, $file);
+  my $mimetype = $git->blob_mimetype($fh, $file);
 
   # Parse line
   my $lines =[];
@@ -58,7 +56,7 @@
   <div class="container">
     %= include '/include/project_header';
     %= include '/include/code_menu', display => 'files';
-    %= include '/include/page_path', type => 'blob', Path => $blob;
+    %= include '/include/page_path', type => 'blob', Path => $file;
         
     <div class="border-gray" style="margin-bottom:20px">
       <div class="bk-blue-light padding5">
@@ -80,20 +78,20 @@
           <span style="color:gray">|</span>
           <%= @$lines %> lines
           <span style="color:gray">|</span>
-          <%= $blob_size %>kb
+          <%= $file_size %>kb
         </div>
         <div class="span4 offset1-mini text-right">
-          <a class="btn" href="<%= url_for("/$user/$project/raw/$rev/$blob") %>">Raw</a><a class="btn" href="<%= url_for("/$user/$project/commits/$rev/$blob") %>">History</a>
+          <a class="btn" href="<%= url_for("/$user/$project/raw/$rev/$file") %>">Raw</a><a class="btn" href="<%= url_for("/$user/$project/commits/$rev/$file") %>">History</a>
         </div>
       </div>
     </div>
     % if ($mimetype =~ m#^image/#) {
       <div>
         <img type="<%= $mimetype %>
-          % if (defined $blob) {
-            alt="<%= $blob %>" title="<%= $blob %>"
+          % if (defined $file) {
+            alt="<%= $file %>" title="<%= $file %>"
           % }
-          src="<%= url_for("/$user/$project/raw/$rev/$blob") %>"
+          src="<%= url_for("/$user/$project/raw/$rev/$file") %>"
         />
       </div>
     % } else {

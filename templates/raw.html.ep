@@ -5,19 +5,17 @@
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $object = param('object');
+  my $rev = param('rev');
+  my $file = param('file');
 
   # Git
   my $git = $self->app->git;
-  
-  # Id and file
-  my ($rev, $blob) = @{$git->parse_object($user, $project, $object)};
 
   # Commit
-  my $commit_log = $git->latest_commit_log($user, $project, $rev, $blob);
+  my $commit_log = $git->latest_commit_log($user, $project, $rev, $file);
   
   # Blob content
-  my $bid = $git->id_by_path($user, $project, $rev, $blob, 'blob')
+  my $bid = $git->id_by_path($user, $project, $rev, $file, 'blob')
     or $api->croak('Cannot find file');
   my @cmd = $git->cmd(
     $user,
@@ -27,7 +25,7 @@
     $bid
   );
   open my $fh, '-|', @cmd
-    or $api->croak(qq/Couldn't cat "$blob", "$bid"/);
+    or $api->croak(qq/Couldn't cat "$file", "$bid"/);
   
   # Blob plain
   my $commit;
@@ -35,7 +33,7 @@
   my $lines =[];
   
   # Content type
-  my $type = $git->blob_contenttype($fh, $blob);
+  my $type = $git->blob_contenttype($fh, $file);
 
   # Convert text/* content type to text/plain
   if ($self->config('prevent_xss') &&
@@ -48,16 +46,16 @@
   }
 
   # File name
-  my $blob_name = $rev;
-  if (defined $blob) { $blob_name = $blob }
-  elsif ($type =~ m/^text\//) { $blob_name .= '.txt' }
+  my $file_name = $rev;
+  if (defined $file) { $file_name = $file }
+  elsif ($type =~ m/^text\//) { $file_name .= '.txt' }
   
   # Content
   my $content = do { local $/; <$fh> };
   my $sandbox = $self->config('prevent_xss') &&
     $type !~ m#^(?:text/[a-z]+|image/(?:gif|png|jpeg))(?:[ ;]|$)#;
   my $content_disposition = $sandbox ? 'attachment' : 'inline';
-  $content_disposition .= "; filename=$blob_name";
+  $content_disposition .= "; filename=$file_name";
   
   # Render
   $self->res->headers->content_disposition($content_disposition);

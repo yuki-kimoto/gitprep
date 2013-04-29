@@ -1,3 +1,7 @@
+<%
+  my $dir = stash('dir');
+%>
+
 %= stylesheet begin
   /* Source tree */
   .tree {
@@ -96,9 +100,9 @@
   <div class="padding5 border-bottom-gray">
     <div class="row">
       <div class="span8">
-        <b><%= $latest_commit_log->{author} %></b>
+        <b><%= $commit->{author} %></b>
         <span class="muted">
-          authored <%= $latest_commit_log->{author_date} %>
+          authored <%= $commit->{author_date} %>
         </span>
       </div>
       <div class="span3 offset1-mini text-right">

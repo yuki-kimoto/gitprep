@@ -5,35 +5,19 @@
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $object ||= param('object') || 'master';
+  my $rev = param('rev');
+  my $dir = param('dir');
 
   # Git
   my $git = app->git;
-
-  # Id and directory
-  my ($rev, $dir) = @{$git->parse_object($user, $project, $object)};
   
   # Tree id
   my $commit = $git->parse_commit($user, $project, $rev);
-  my $tid;
   my $top;
-  if (defined $dir && $dir ne '') {
-    $tid = $git->id_by_path($user, $project, $rev, $dir, 'tree');
-  }
-  else {
-    $top = 1;
-    $tid = $commit->{tree};
-  }
-  $self->render_not_found unless defined $tid;
-  
-  # Commit log
-  my $latest_commit_log = $git->latest_commit_log($user, $project, $rev);
+  $top = 1 unless defined $dir && $dir ne '';
 
   # Tree
-  my $trees = $git->trees($user, $project, $tid, $rev, $dir);
-  
-  # Repository description
-  my $desc = $git->description($user, $project);
+  my $trees = $git->trees($user, $project, $rev, $dir);
   
   # Commits number
   my $commits_number = $git->commits_number($user, $project, $rev);
@@ -47,7 +31,6 @@
   stash(
     rev => $rev,
     commit => $commit,
-    latest_commit_log => $latest_commit_log,
     trees => $trees,
     dir => $dir,
     title => "$project/$dir at $rev - $user/$project"

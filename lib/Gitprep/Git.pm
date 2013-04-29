@@ -36,7 +36,7 @@ sub dec {
 }
 
 sub authors {
-  my ($self, $user, $project, $ref, $file) = @_;
+  my ($self, $user, $project, $rev, $file) = @_;
   
   # Command "git log FILE"
   my @cmd = $self->cmd(
@@ -44,7 +44,7 @@ sub authors {
     $project,
     'log',
     '--format=%an',
-    $ref,
+    $rev,
     '--',
     $file
   );
@@ -132,10 +132,10 @@ sub blobdiffs {
 }
 
 sub blob_plain {
-  my ($self, $user, $project, $ref, $path) = @_;
+  my ($self, $user, $project, $rev, $path) = @_;
   
   # Get blob
-  my @cmd = $self->cmd($user, $project, 'cat-file', 'blob', "$ref:$path");
+  my @cmd = $self->cmd($user, $project, 'cat-file', 'blob', "$rev:$path");
   open my $fh, "-|", @cmd
     or croak 500, "Open git-cat-file failed";
   local $/;
@@ -466,7 +466,7 @@ sub branches {
 }
 
 sub id_by_path {
-  my ($self, $user, $project, $commit_id, $path, $type) = @_;
+  my ($self, $user, $project, $rev, $path, $type) = @_;
   
   # Get blob id or tree id (command "git ls-tree")
   $path =~ s#/+$##;
@@ -474,7 +474,7 @@ sub id_by_path {
     $user,
     $project,
     'ls-tree',
-    $commit_id,
+    $rev,
     '--',
     $path
   );
@@ -529,34 +529,6 @@ sub root_ns {
   $root =~ s/^\///;
   
   return $root;
-}
-
-sub parse_object {
-  my ($self, $user, $project, $id_path) = @_;
-  
-  # Parse id and path
-  my $refs = $self->references($user, $project);
-  my $id;
-  my $path;
-  for my $rs (values %$refs) {
-    for my $ref (@$rs) {
-      $ref =~ s#^heads/##;
-      $ref =~ s#^tags/##;
-      if ($id_path =~ s#^\Q$ref(/|$)##) {
-        $id = $ref;
-        $path = $id_path;
-        last;
-      }      
-    }
-  }
-  unless (defined $id) {
-    if ($id_path =~ s#(^[^/]+)(/|$)##) {
-      $id = $1;
-      $path = $id_path;
-    }
-  }
-  
-  return [$id, $path];
 }
 
 sub path_by_id {
@@ -791,7 +763,7 @@ sub id_set_multi {
 }
 
 sub latest_commit_log {
-  my ($self, $user, $project, $ref, $file) = @_;
+  my ($self, $user, $project, $rev, $file) = @_;
   
   my $commit_log = {};
   $file = '' unless defined $file;
@@ -804,7 +776,7 @@ sub latest_commit_log {
     '-n',
     '1',
     '--pretty=format:%H - %an - %ar : %s', 
-    $ref,
+    $rev,
     '--',
     $file
   );
@@ -1313,9 +1285,18 @@ sub timestamp {
 }
 
 sub trees {
-  my ($self, $user, $project, $tid, $ref, $dir) = @_;
+  my ($self, $user, $project, $rev, $dir) = @_;
+  $dir = '' unless defined $dir;
   
   # Get tree
+  my $tid;
+  if (defined $dir && $dir ne '') {
+    $tid = $self->id_by_path($user, $project, $rev, $dir, 'tree');
+  }
+  else {
+    my $commit = $self->parse_commit($user, $project, $rev);
+    $tid = $commit->{tree};
+  }
   my @entries = ();
   my $show_sizes = 0;
   my @cmd = $self->cmd(
@@ -1343,7 +1324,7 @@ sub trees {
     
     # Commit log
     my $name = defined $dir && $dir ne '' ? "$dir/$tree->{name}" : $tree->{name};
-    my $commit_log = $self->latest_commit_log($user, $project, $ref, $name);
+    my $commit_log = $self->latest_commit_log($user, $project, $rev, $name);
     $tree = {%$tree, %$commit_log};
     
     push @$trees, $tree;
