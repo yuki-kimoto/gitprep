@@ -2,146 +2,61 @@
   my $dir = stash('dir');
 %>
 
-%= stylesheet begin
-  /* Source tree */
-  .tree {
-    width:100%;
-    margin:5px auto;
-    border:2px solid gray;
-  }
-  .tree_header {
-    background-color: #E0FFFF;
-    border-bottom: 1px solid gray;
-    padding: 8px;
-    padding-left:6px;
-  }
-  .tree_header a {
-    text-decoration:none;
-    color:black;
-  }
-  .tree_header a:hover {
-    text-decoration:underline;
-    color:black;
-  }
-  .tree_header2 {
-    padding:5px;
-    padding-left:3px;
-    border-bottom:1px solid gray;
-  }
-  .tree_header2_left {
-    width:700px;
-    float:left;
-  }
-  .tree_header2_left_right {
-    color:gray;
-  }
-  .tree_header2_right {
-    text-align:right;
-    font-size:90%;
-    color:gray;
-  }
-  .tree_header2_right a {
-    color:gray;
-    text-decoration:none;
-  }
-  .tree_header2_right a:hover {
-    color:gray;
-    text-decoration:underline;
-  }
-  
-  .tree_body {
-    font-size:80%;
-    width: 100%;
-    background-color:#F8F8FF;
-    padding:0;
-  }
-  .tree_body td {
-    border-bottom:1px solid #DCDCDC;
-    padding:5px;
-    padding-top:9px;
-    padding-bottom:9px;
-  }
-  .tree_td_blob a {
-    background-image:url(<%= url_for('/image/file_min.png') %>);
-    text-decoration:none;
-    background-repeat:no-repeat;
-    padding-left:25px;
-    color:#4183C4;
-  }
-  .tree_td_blob a:hover{
-    text-decoration:underline;
-  }
-  .tree_td_dir a {
-    background-image:url(<%= url_for('/image/folder_min.png') %>);
-    text-decoration:none;
-    background-repeat:no-repeat; 
-    padding-left:25px;
-    color:#4183C4;
-  }
-  .tree_td_dir a:hover{
-    text-decoration:underline;
-  }
-  .tree_td_commit a {
-    text-decoration:none;
-    color:black;
-  }
-  .tree_td_commit a:hover {
-    text-decoration:underline;
-    color:black;
-  }
-% end
-
-<div class="border-gray border-bottom-none" style="margin-bottom:10px">
-  <div class="padding5 bk-blue-light border-bottom-gray">
-    <a href="<%= url_for("/$user/$project/commit/$rev") %>">
+<div style="margin-bottom:10px">
+  <div class="bk-blue-light border-blue radius-top" style="padding:5px">
+    <a style="color:#333" href="<%= url_for("/$user/$project/commit/$rev") %>">
       <%= $commit->{title} %>
     </a>
   </div>
-  <div class="padding5 border-bottom-gray">
-    <div class="row">
+  <div class="border-blue" style="padding:5px;border-top:none">
+    <div class="row" style="font-size:12px">
       <div class="span8">
-        <b><%= $commit->{author} %></b>
+        <a style="color:#333" href="#" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></a>
         <span class="muted">
           authored <%= $commit->{author_date} %>
         </span>
       </div>
-      <div class="span3 offset1-mini text-right">
-        <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+      <div class="text-right">
+        <a class="muted" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
           latest commit <%= substr($commit->{id}, 0, 10) %>
         </a>
      </div>
    </div>
   </div>
   % for (my $i = 0; $i <@$trees; $i++) {
-    <div class="border-bottom-gray padding5" style="font-size:90%">
-      <div class="row">
-        % my $tree = $trees->[$i];
-        % my $type = $tree->{type};
-        % my $name = $tree->{name};
-        
-        <div class="span3" style="width:170px">
-          % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
-          % if ($type eq 'blob') {
-            % my $file = defined $dir && $dir ne '' ? "$dir/$name" : $name;
-            <i class="icon-file"></i>
-            <a href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
-              <%= $name %>
+    % my $last = $i == @$trees - 1;
+    <div class="border-gray <%= $last ? 'radius-bottom' : '' %>" style="padding:5px;font-size:90%;border-top:none;#eee;background:#f8f8f8;<%= $last ? '' : 'border-bottom:1px solid #eee;' %>">
+      <div>
+        <div class="row">
+          % my $tree = $trees->[$i];
+          % my $type = $tree->{type};
+          % my $name = $tree->{name};
+          % my $commit = $tree->{commit};
+          
+          <div class="span3" style="width:170px">
+            % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
+            % if ($type eq 'blob') {
+              % my $file = defined $dir && $dir ne '' ? "$dir/$name" : $name;
+              <i class="icon-file"></i>
+              <a href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
+                <%= $name %>
+              </a>
+            % } elsif ($tree) {
+              <i class="icon-folder-open"></i>
+              <a href="<%= url_for("/$user/$project/tree/$rev/$child_dir") %>">
+                <%= $name %>
+              </a>
+            % }
+          </div>
+          <div class="span2" style="width:100px">
+            <%= $commit->{age_string} %>
+          </div>
+          <div class="span6" style="width:610px">
+            <a class="font-black" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+              <%= $commit->{title_short} %>
             </a>
-          % } elsif ($tree) {
-            <i class="icon-folder-open"></i>
-            <a href="<%= url_for("/$user/$project/tree/$rev/$child_dir") %>">
-              <%= $name %>
-            </a>
-          % }
-        </div>
-        <div class="span2" style="width:100px">
-          <%= $tree->{author_date} %>
-        </div>
-        <div class="span6" style="width:610px">
-          <a class="font-black" href="<%= url_for("/$user/$project/commit/$tree->{commit}") %>">
-            <%= $tree->{comment} %>
-          </a>
-          [<%= $tree->{author} %>]
+            [<a href="#" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></a>]
+          </div>
         </div>
       </div>
     </div>

@@ -105,15 +105,11 @@
     
     %= include '/include/project_header';
 
-    <div class="row">
-      <div class="span10">
-        <h4 style="margin-top:5px">
-          <%= $desc %>
-        </h4>
-      </div>
-    </div>
+    <h3 style="margin:20px 0px 20px 0;font-size:16px;line-height:0">
+      <%= $desc %>
+    </h3>
     % if ($state eq 'display') {
-      <div class="border-gray" style="padding:0 5px;margin-bottom:10px">
+      <div class="border-gray radius" style="padding:0 5px;margin-bottom:10px">
         <a class="btn" href="<%= url_for("/$user/$project/archive/master.zip") %>">
           <i class="icon-arrow-down"></i>ZIP
         </a>
@@ -131,11 +127,11 @@
       
       %= include '/include/code_menu', display => 'files';
       
-      <div class="row">
+      <div class="row" style="font-size:17px;margin-bottom:10px">
         <div class="span6">
           <a href="<%= url_for %>"><%= $project %></a>
         </div>
-        <div class="span6 text-right">
+        <div class="text-right">
           <a href="<%= url_for("/$user/$project/commits/master") %>">
             <%= $commits_number %> commits
           </a>
@@ -145,7 +141,7 @@
       %= include '/include/tree';
       
       <div>
-        <h3>README</h3>
+        <h3 style="font-size:20px">README</h3>
         <pre><%= $readme %></pre>
       </div>
     % } elsif ($state eq 'init' && $logined) {

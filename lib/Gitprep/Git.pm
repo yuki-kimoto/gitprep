@@ -805,6 +805,39 @@ sub latest_commit_log {
   return $commit_log;
 }
 
+sub last_change_commit {
+  my ($self, $user, $project, $rev, $file) = @_;
+  
+  my $commit_log = {};
+  $file = '' unless defined $file;
+  
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    '--no-pager',
+    'log',
+    '-n',
+    '1',
+    '--pretty=format:%H', 
+    $rev,
+    '--',
+    $file
+  );
+  open my $fh, '-|', @cmd
+    or croak 'Open git-log failed';
+  
+  local $/;
+  my $commit_log_text = $self->dec(scalar <$fh>);
+  
+  my $commit;
+  if ($commit_log_text =~ /^([0-9a-zA-Z]+)/) {
+    my $rev = $1;
+    $commit = $self->parse_commit($user, $project, $rev);
+  }
+  
+  return $commit;
+}
+
 sub parse_blobdiff_lines {
   my ($self, $lines) = @_;
   
@@ -1323,9 +1356,9 @@ sub trees {
     $tree->{mode_str} = $self->_mode_str($tree->{mode});
     
     # Commit log
-    my $name = defined $dir && $dir ne '' ? "$dir/$tree->{name}" : $tree->{name};
-    my $commit_log = $self->latest_commit_log($user, $project, $rev, $name);
-    $tree = {%$tree, %$commit_log};
+    my $path = defined $dir && $dir ne '' ? "$dir/$tree->{name}" : $tree->{name};
+    my $commit = $self->last_change_commit($user, $project, $rev, $path);
+    $tree->{commit} = $commit;
     
     push @$trees, $tree;
   }
