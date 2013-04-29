@@ -3,17 +3,14 @@
 
   # API
   my $api = gitprep_api;
-  
-  # Default revision
-  my $rev = 'master';
+
+  # Git
+  my $git = app->git;
   
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $object ||= param('object') || 'master/';
-
-  # Git
-  my $git = app->git;
+  my $rev = app->manager->default_branch($user, $project);
 
   # Repository description
   my $desc = $git->description($user, $project);
@@ -23,7 +20,7 @@
   my $readme;
   if ($git->branch_exists($user, $project)) {
     # Id and directory
-    my ($id, $dir) = @{$git->parse_object($user, $project, $object)};
+    my ($id, $dir) = @{$git->parse_object($user, $project, "$rev/")};
     
     # Tree id
     my $tid;

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="robots" content="index, nofollow" >
     <title>GitPrep</title>
-    %= stylesheet '/css/bootstrap.css';
+    %= stylesheet '/css/bootstrap.css', rel => 'stylesheet', media => 'screen';
     %= stylesheet '/js/google-code-prettify/prettify.css';
     %= stylesheet '/css/common.css';
     %= javascript '/js/jquery-1.9.0.min.js';

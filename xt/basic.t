@@ -39,5 +39,13 @@ diag 'Commit page - first commit';
   
   # Empty file is added
   $t->content_like(qr/No changes/);
-};
+}
 
+diag 'Commits page';
+{
+  # Page access
+  $t->get_ok("/$user/$project/commits/master");
+  
+  # Date
+  $t->content_like(qr/\d{4}-\d{2}-\d{3}/);
+}
