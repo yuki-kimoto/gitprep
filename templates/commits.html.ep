@@ -45,55 +45,55 @@
     %= include '/include/project_header';
     %= include '/include/code_menu', display => 'commits';
         
-    <div>
-      <b>
-        % if (defined $blob) {
-          History for
-          %= include '/include/page_path', type => 'blob', Path => $blob, operation => 'commits';
-        % } else {
-          <a class="ubar" href="<%= url_for("/$user/$project") %>">
-            <%= $project %>
-          </a>
-          /
-          Commit History
-        % }
-      </b>
+    <div style="font-size:18px;margin-top:20px;margin-bottom:15px">
+      % if (defined $blob) {
+        History for
+        %= include '/include/page_path', type => 'blob', Path => $blob, operation => 'commits';
+      % } else {
+        <a class="ubar" href="<%= url_for("/$user/$project") %>">
+          <%= $project %>
+        </a>
+        /
+        <span class="muted">Commit History</span>
+      % }
     </div>
     
     % for my $date (reverse sort keys %$commits_date) {
       <div style="margin-bottom:20px">
         % my $commits = $commits_date->{$date};
         
-        <div class="padding5 bk-blue-light border-gray" style="border-bottom:none">
+        <div class="bk-blue-light border-blue radius-top" style="padding:5px 8px;color:#3a505b">
           <b><%= $date %></b>
         </div>
+        % my $num = 0;
         % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
-          <div class="padding5 border-gray" style="padding-bottom:0;border-top:none;border-bottom:none">
+          <div class="border-gray" style="font-size:14px;padding-bottom:0;border-top:none;border-bottom:none;padding:5px 5px 1px 5px">
             <div class="row">
               <div class="span8">
                 <a class="font-black" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                   <b><%= $commit->{title_short} %></b>
                 </a>
               </div>
-              <div class="span3 offset1-mini text-right">
-                <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+              <div class="text-right">
+                <a class="btn" style="padding:0px 10px;color:#3a505b;font-size:12px" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                   <%= substr($commit->{id}, 0, 10) %>
+                  <i class="icon-circle-arrow-right"></i>
                 </a>
               </div>
             </div>
           </div>
-          <div class="padding5 border-gray" style="border-top:none">
+          <div class="border-blue <%= $num eq @$commits - 1 ? 'radius-bottom' : '' %>" style="font-size:12px;border-top:none; padding:1px 5px 5px 5px">
             <div class="row">
-              <div class="span8 muted">
-                <%= $commit->{author_name} %> authored 7 days ago
+              <div class="span8">
+                <%= $commit->{author_name} %> <span class="muted"><%= $commit->{age_string} %></span>
               </div>
-              <div class="span3 offset1-mini text-right">
-                <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                  Browse code
+              <div class="text-right">
+                <a class="muted" style="padding-right:18px;font-weight:bold" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">                  Browse code
                 </a>
               </div>
             </div>
           </div>
+          % $num++;
         % }
       </div>
     % }
