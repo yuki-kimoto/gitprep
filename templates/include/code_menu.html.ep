@@ -12,8 +12,8 @@
 <ul class="nav nav-tabs" style="margin-bottom:20px">
   % if (defined $rev) {
     <li style="padding-right:10px">
-      <button class="btn">
-        <i class="icon-share-alt"></i><span class="muted">branch</span> <b><%= $rev %></b>
+      <button class="btn" style="font-size:13px;padding:2px 10px;margin-top:5px;margin-right:6px">
+        <i class="icon-share-alt"></i><span class="muted">branch:</span> <b><%= $rev %></b>
       </button>
     </li>
   % }

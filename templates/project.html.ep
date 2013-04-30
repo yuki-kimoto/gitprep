@@ -91,6 +91,18 @@
       else {
         $('#btn_http').trigger('click');
       }
+      
+      // URL is automatically selected
+      var url_selected_count = 0;
+      $('#rep_url').on('mouseup', function () {
+        if (url_selected_count == 0) {
+          $(this).select();
+        }
+        url_selected_count += 1;
+      });
+      $('#rep_url').on('blur', function () {
+        url_selected_count = 0;
+      });
     });
   % end
   
@@ -110,20 +122,20 @@
       <%= $desc %>
     </h3>
     % if ($state eq 'display') {
-      <div class="border-gray radius" style="padding:0 5px;margin-bottom:10px">
-        <a class="btn" href="<%= url_for("/$user/$project/archive/master.zip") %>">
+      <div class="border-gray radius" style="padding:0 3px;margin-bottom:10px;">
+        <a class="btn" style="padding:3px 6px;margin-left:10px" href="<%= url_for("/$user/$project/archive/master.zip") %>">
           <i class="icon-arrow-down"></i>ZIP
         </a>
         <div class="input-append" style="margin-top:10px">
           <div class="btn-group" data-toggle="buttons-radio">
-            <button class="btn" id="btn_http" style="border-radius:0">HTTP</button>
+            <button class="btn" id="btn_http" style="margin-left:5px;padding:3px 6px;border-top-right-radius:0px; border-bottom-right-radius:0px">HTTP</button>
             % if ($logined) {
-              <button class="btn" id="btn_ssh" style="border-radius:0">SSH</button>
+              <button class="btn" id="btn_ssh" style="padding:3px 7px;border-radius:0">SSH</button>
             % }
           </div>
-          <input class="span8" id="rep_url" type="text" style="border-radius:0;">
+          <input id="rep_url" type="text" style="width:635px;border-radius:0;padding:3px 7px;border-top-right-radius:3px;border-bottom-right-radius:3px">
         </div>
-        <b><span id="access"></span></b> access
+        <span style="color:#666;font-size:12px"><b><span id="access"></span></b> access</span>
       </div>
       
       %= include '/include/code_menu', display => 'files';
