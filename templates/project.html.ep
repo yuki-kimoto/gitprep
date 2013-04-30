@@ -32,7 +32,6 @@
     
     # README
     eval { $readme = $git->blob_plain($user, $project, $rev, 'README') };
-    $readme = '' if $@;
     
     # Variable for included template
     stash(
