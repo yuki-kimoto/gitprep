@@ -49,7 +49,7 @@
   stash(id => $rev, project => $project);
 %>
 
-% layout 'common';
+% layout 'common' , stylesheets => ['/js/google-code-prettify/prettify.css'];
 
   %= include '/include/header';
 

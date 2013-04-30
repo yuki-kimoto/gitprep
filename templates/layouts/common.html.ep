@@ -1,18 +1,26 @@
+<%
+  my $stylesheets = stash('stylesheets') || [];
+%>
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8">
     <meta name="robots" content="index, nofollow" >
     <title>GitPrep</title>
-    %= stylesheet '/css/bootstrap.css', rel => 'stylesheet', media => 'screen';
-    %= stylesheet '/js/google-code-prettify/prettify.css';
-    %= stylesheet '/css/common.css';
+    %= stylesheet '/css/bootstrap.min.css', rel => 'stylesheet', media => 'screen';
+    % for my $stylesheet (@$stylesheets) {
+      %= stylesheet $stylesheet;
+    % }
     %= javascript '/js/jquery-1.9.0.min.js';
-    %= javascript '/js/bootstrap.js';
+    %= javascript '/js/bootstrap.min.js';
     
     <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" >
   </head>
   <body>
+    %= stylesheet begin
+      %= include '/css/common';
+    % end
+
     %= content;
   </body>
 </html>
