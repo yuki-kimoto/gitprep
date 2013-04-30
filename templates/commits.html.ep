@@ -17,7 +17,7 @@
   
   # Commits
   my $page_count = 30;
-  my $commits = $git->parse_commits(
+  my $commits = $git->get_commits(
     $user,
     $project,
     $commit->{id},

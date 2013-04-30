@@ -6,8 +6,8 @@
   my $remote_project = param('remote_project');
   my $remote_branch = param('remote_branch');
   
-  my $commits = app->git->parse_commits($user, $project, $branch, 100);
-  my $remote_commits = app->git->parse_commits(
+  my $commits = app->git->get_commits($user, $project, $branch, 100);
+  my $remote_commits = app->git->get_commits(
     $remote_user,
     $remote_project,
     $remote_branch,

@@ -1005,7 +1005,7 @@ sub parse_commit_text {
   return \%commit;
 }
 
-sub parse_commits {
+sub get_commits {
   my ($self, $user, $project, $cid, $maxcount, $skip, $file, @args) = @_;
 
   # Get Commits
