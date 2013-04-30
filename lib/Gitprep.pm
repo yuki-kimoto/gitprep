@@ -1,7 +1,7 @@
 use 5.008007;
 package Gitprep;
 
-our $VERSION = '0.01';
+our $VERSION = '0.03';
 
 use Mojo::Base 'Mojolicious';
 use Gitprep::Git;
