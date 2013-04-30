@@ -6,6 +6,13 @@ use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 
 use Test::Mojo;
+
+# Test DB
+$ENV{GITPREP_DB_FILE} = "$FindBin::Bin/basic.db";
+
+# Test Repository home
+$ENV{GITPREP_REP_HOME} = "$FindBin::Bin/../../gitprep_t_rep_home";
+
 use Gitprep;
 
 my $app = Gitprep->new;
@@ -14,7 +21,50 @@ my $t = Test::Mojo->new($app);
 my $user = 'kimoto';
 my $project = 'gitprep_t';
 
-diag 'Commit page - first commit';
+note 'Home page';
+{
+  # Page access
+  $t->get_ok('/');
+  
+  # Title
+  $t->content_like(qr/GitPrep/);
+  $t->content_like(qr/Users/);
+  
+  # User link
+  $t->content_like(qr#/$user#);
+}
+
+note 'Projects page';
+{
+  # Page access
+  $t->get_ok("/$user");
+  
+  # Title
+  $t->content_like(qr/Repositories/);
+  
+  # project link
+  $t->content_like(qr#/$user/$project#);
+}
+
+note 'Project page';
+{
+  # Page access
+  $t->get_ok("/$user/$project");
+  
+  # Description
+  $t->content_like(qr/gitprep test repository/);
+  
+  # README
+  $t->content_like(qr/README/);
+  
+  # tree directory link
+  $t->content_like(qr#/$user/$project/tree/master/dir#);
+
+  # tree file link
+  $t->content_like(qr#/$user/$project/blob/master/README#);
+}
+
+note 'Commit page - first commit';
 {
   # Page access
   $t->get_ok("/$user/$project/commit/4b0e81c462088b16fefbe545e00b993fd7e6f884");
@@ -41,11 +91,11 @@ diag 'Commit page - first commit';
   $t->content_like(qr/No changes/);
 }
 
-diag 'Commits page';
+note 'Commits page';
 {
   # Page access
   $t->get_ok("/$user/$project/commits/master");
   
   # Date
-  $t->content_like(qr/\d{4}-\d{2}-\d{3}/);
+  $t->content_like(qr/\d{4}-\d{2}-\d{2}/);
 }

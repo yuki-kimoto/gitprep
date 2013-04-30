@@ -49,16 +49,14 @@ sub startup {
   }
   $git->bin($git_bin);
   
-  # Added public path
-  push @{$self->static->paths}, $self->home->rel_file('data/rep');
-
   # Repository Manager
   my $manager = Gitprep::RepManager->new(app => $self);
   weaken $manager->{app};
   $self->manager($manager);
   
   # Repository home
-  my $rep_home = $self->home->rel_file('data/rep');
+  my $rep_home = $ENV{GITPREP_REP_HOME}
+    || $self->home->rel_file('data/rep');
   $git->rep_home($rep_home);
   unless (-d $rep_home) {
     mkdir $rep_home
@@ -66,8 +64,12 @@ sub startup {
   }
   $self->git($git);
 
+  # Added public path
+  push @{$self->static->paths}, $rep_home;
+
   # DBI
-  my $db_file = $self->home->rel_file('data/gitprep.db');
+  my $db_file = $ENV{GITPREP_DB_FILE}
+    || $self->home->rel_file('data/gitprep.db');
   my $dbi = DBIx::Custom->connect(
     dsn => "dbi:SQLite:database=$db_file",
     connector => 1,
