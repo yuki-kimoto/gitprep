@@ -9,7 +9,7 @@
   my $tags = app->git->tags($user, $project);
 %>
 
-<ul class="nav nav-tabs" style="margin-bottom:10px">
+<ul class="nav nav-tabs" style="margin-bottom:20px">
   % if (defined $rev) {
     <li style="padding-right:10px">
       <button class="btn">

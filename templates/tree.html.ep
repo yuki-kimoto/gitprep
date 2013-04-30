@@ -33,7 +33,8 @@
     commit => $commit,
     trees => $trees,
     dir => $dir,
-    title => "$project/$dir at $rev - $user/$project"
+    title => "$project/$dir at $rev - $user/$project",
+    readme => $readme
   );
 %>
 
@@ -48,10 +49,7 @@
     %= include '/include/tree';
 
     % if ($top) {
-      <div>
-        <h3>README</h3>
-        <pre><%= $readme %></pre>
-      </div>
+      %= include '/include/readme';
     % }
   </div>
   

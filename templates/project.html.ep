@@ -39,7 +39,8 @@
       commit => $commit,
       trees => $trees,
       rev => $rev,
-      title => "$user/$project"
+      title => "$user/$project",
+      readme => $readme
     );
     
     $state = 'display';
@@ -127,7 +128,7 @@
       
       %= include '/include/code_menu', display => 'files';
       
-      <div class="row" style="font-size:17px;margin-bottom:10px">
+      <div class="row" style="font-size:18px;margin-bottom:10px">
         <div class="span6">
           <a href="<%= url_for %>"><%= $project %></a>
         </div>
@@ -138,12 +139,12 @@
         </div>
       </div>
       
-      %= include '/include/tree';
-      
-      <div>
-        <h3 style="font-size:20px">README</h3>
-        <pre><%= $readme %></pre>
+      <div style="margin-bottom:30px">
+        %= include '/include/tree';
       </div>
+      
+      %= include '/include/readme';
+      
     % } elsif ($state eq 'init' && $logined) {
     
       <div class="text-center" style="margin-bottom:10px">
@@ -166,7 +167,7 @@ git push -u origin master</pre>
 git remote add origin <%= $ssh_rep_url %>
 git push -u origin master</pre>
     % } else {
-      <div class="well text-center muted" style="margin-bottom:30px">
+      <div class="well text-center muted" style="background:white;margin-bottom:30px">
         <b>Repositry is not yet created.</b>
       </div>
     % }
