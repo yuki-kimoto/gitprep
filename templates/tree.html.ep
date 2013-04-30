@@ -48,7 +48,7 @@
     %= include '/include/page_path', type => 'tree', Path => $dir;
     %= include '/include/tree';
 
-    % if ($top) {
+    % if ($top && defined $readme) {
       %= include '/include/readme';
     % }
   </div>

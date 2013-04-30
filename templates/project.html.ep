@@ -155,7 +155,9 @@
         %= include '/include/tree';
       </div>
       
-      %= include '/include/readme';
+      % if (defined $readme) {
+        %= include '/include/readme';
+      % }
       
     % } elsif ($state eq 'init' && $logined) {
     
