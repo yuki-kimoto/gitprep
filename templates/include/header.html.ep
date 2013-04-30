@@ -23,7 +23,7 @@
         </div>
       % } else {
         <div  style="margin-top:15px">
-          <a class="btn btn-primary" href="<%= url_for('/_login') %>">Sing in</a>
+          <a class="btn btn-primary" href="<%= url_for('/_login') %>">Sign in</a>
         </div>
       % }
     </div>
