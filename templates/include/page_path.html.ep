@@ -6,31 +6,34 @@
   }
   
   my $rev = stash('id') || stash('rev');
+  my $prefix = stash('prefix');
 %>
 
-<div style="margin-bottom:10px">
-  <big>
-    <a href="<%= url_for("/$user/$project" . ($operation eq 'commits' ? '/commits' : '')) %>">
-      <b><%= $project %></b>
-    </a> /
-    % my @parts = split('/', $Path);
-    % my $path;
-    % for (my $i = 0; $i < @parts; $i++) {
-      % my $part = $parts[$i];
-      % $path .= "$part";
-      
-      % if ($type eq 'blob' && $i == @parts - 1) {
-        <b><%= $part %></b>
-      % } else {
-        <a href=
-            "<%= url_for("/$user/$project/$operation/$rev/$path") %>">
-          <%= $part %>
-        </a>
-        % $path .= '/';
-      % }
-      % unless ($type eq 'blob' && $i == @parts - 1) {
-        /
-      % }
+<div style="margin-bottom:10px;font-size:16px">
+  % if ($prefix) {
+    <span class="muted">History for</span>
+  % }
+
+  <a href="<%= url_for("/$user/$project" . ($operation eq 'commits' ? '/commits' : '')) %>">
+    <b><%= $project %></b>
+  </a> /
+  % my @parts = split('/', $Path);
+  % my $path;
+  % for (my $i = 0; $i < @parts; $i++) {
+    % my $part = $parts[$i];
+    % $path .= $part;
+    
+    % if ($type eq 'blob' && $i == @parts - 1) {
+      <b><%= $part %></b>
+    % } else {
+      <a href=
+          "<%= url_for("/$user/$project/$operation/$rev/$path") %>">
+        <%= $part %>
+      </a>
+      % $path .= '/';
     % }
-  </big>
+    % unless ($type eq 'blob' && $i == @parts - 1) {
+      /
+    % }
+  % }
 </div>

@@ -7,7 +7,7 @@
   my $original_project = app->manager->original_project($user, $project);
 %>
 
-<div class="row">
+<div class="row" style="margin-bottom:10px">
   <div class="span9">
     <ul class="breadcrumb" style="margin:0">
       <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>

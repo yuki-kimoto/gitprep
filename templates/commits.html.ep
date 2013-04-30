@@ -45,10 +45,9 @@
     %= include '/include/project_header';
     %= include '/include/code_menu', display => 'commits';
         
-    <div style="font-size:18px;margin-top:20px;margin-bottom:15px">
+    <div style="margin-top:20px;margin-bottom:15px">
       % if (defined $blob) {
-        History for
-        %= include '/include/page_path', type => 'blob', Path => $blob, operation => 'commits';
+        %= include '/include/page_path', type => 'blob', Path => $blob, operation => 'commits', prefix => 'History for';
       % } else {
         <a class="ubar" href="<%= url_for("/$user/$project") %>">
           <%= $project %>
@@ -75,7 +74,7 @@
                 </a>
               </div>
               <div class="text-right">
-                <a class="btn" style="padding:0px 10px;color:#3a505b;font-size:12px" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                <a class="btn" style="width:90px;padding:0px 10px;color:#3a505b;font-size:12px" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                   <%= substr($commit->{id}, 0, 10) %>
                   <i class="icon-circle-arrow-right"></i>
                 </a>
@@ -98,7 +97,7 @@
       </div>
     % }
 
-    <ul class="pager">
+    <ul class="pager" style="text-align:left">
       % if ($page == 0) {
         <li class="disabled">&laquo; Newer</li>
       % } else {
