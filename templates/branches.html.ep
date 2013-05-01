@@ -12,7 +12,7 @@
   # Default branch
   my $default_branch = {};
   $default_branch->{name} = app->manager->default_branch($user, $project);
-  $default_branch->{commit} = $git->parse_commit($user, $project, $default_branch->{name});
+  $default_branch->{commit} = $git->get_commit($user, $project, $default_branch->{name});
   
   # No merged branches
   my $branches  = $git->no_merged_branches($user, $project);

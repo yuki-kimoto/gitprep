@@ -13,7 +13,7 @@
   my $git = $self->app->git;
   
   # Commit
-  my $commit = $git->parse_commit($user, $project, $rev);
+  my $commit = $git->get_commit($user, $project, $rev);
   
   # Commits
   my $page_count = 30;

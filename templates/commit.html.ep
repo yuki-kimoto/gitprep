@@ -12,7 +12,7 @@
   my $git = app->git;
   
   # Commit
-  my $commit = $git->parse_commit($user, $project, $id)
+  my $commit = $git->get_commit($user, $project, $id)
     or $api->croak('Unknown commit object');
   my $author_date
     = $git->parse_date($commit->{author_epoch}, $commit->{author_tz});

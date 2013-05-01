@@ -30,7 +30,7 @@
   my $start_commit = $git->separated_commit($user, $project, $rev1, $rev2);
 
   # End commit
-  my $end_commit = $git->parse_commit($user, $project, $rev2)
+  my $end_commit = $git->get_commit($user, $project, $rev2)
     or $api->croak('Unknown commit revision');
   
   # Diff tree

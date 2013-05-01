@@ -239,7 +239,7 @@ sub branch_commits {
       
       next unless $id =~ /^\Q$rev2\E\^?$/ || $id =~ /^\Q$rev2\E^[0-9]+$/;
       
-      my $commit = $self->parse_commit($user, $project, $id);
+      my $commit = $self->get_commit($user, $project, $id);
       
       push @$commits, $commit;
     }
@@ -457,7 +457,7 @@ sub branches {
   for my $branch_name (@branch_names) {
     my $branch = {};
     $branch->{name} = $branch_name;
-    my $commit = $self->parse_commit($user, $project, $branch_name);
+    my $commit = $self->get_commit($user, $project, $branch_name);
     $branch->{commit} = $commit;
     push @$branches, $branch;
   }
@@ -832,7 +832,7 @@ sub last_change_commit {
   my $commit;
   if ($commit_log_text =~ /^([0-9a-zA-Z]+)/) {
     my $rev = $1;
-    $commit = $self->parse_commit($user, $project, $rev);
+    $commit = $self->get_commit($user, $project, $rev);
   }
   
   return $commit;
@@ -892,7 +892,7 @@ sub parse_blobdiff_lines {
   return \@lines;
 }
 
-sub parse_commit {
+sub get_commit {
   my ($self, $user, $project, $id) = @_;
   
   # Git rev-list
@@ -1184,7 +1184,7 @@ sub separated_commit {
   my $commit;
   if (defined $last_line) {
       my ($id) = $last_line =~ /^.*?\[(.+)?\]/;
-      $commit = $self->parse_commit($user, $project, $id);
+      $commit = $self->get_commit($user, $project, $id);
   }
 
   return $commit;
@@ -1327,7 +1327,7 @@ sub trees {
     $tid = $self->id_by_path($user, $project, $rev, $dir, 'tree');
   }
   else {
-    my $commit = $self->parse_commit($user, $project, $rev);
+    my $commit = $self->get_commit($user, $project, $rev);
     $tid = $commit->{tree};
   }
   my @entries = ();

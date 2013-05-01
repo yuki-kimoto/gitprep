@@ -22,7 +22,7 @@
     # Directory
     
     # Commit
-    my $commit = $git->parse_commit($user, $project, $rev);
+    my $commit = $git->get_commit($user, $project, $rev);
     
     # Tree
     my $trees = $git->trees($user, $project, $rev);

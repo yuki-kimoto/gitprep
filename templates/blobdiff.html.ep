@@ -39,7 +39,7 @@
   my $lines = $git->parse_blobdiff_lines(\@lines);
   
   # Commit
-  my $commit = $git->parse_commit($user, $project, $id);
+  my $commit = $git->get_commit($user, $project, $id);
   
   # Variables for included templates
   stash(

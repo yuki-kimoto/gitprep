@@ -15,7 +15,7 @@
   my $commit_log = $git->latest_commit_log($user, $project, $rev, $file);
 
   # Commit
-  my $commit = $git->parse_commit($user, $project, $rev);
+  my $commit = $git->get_commit($user, $project, $rev);
   
   # Authors
   my $authors = $git->authors($user, $project, $rev, $file);

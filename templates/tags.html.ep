@@ -12,7 +12,7 @@
   # Ref names
   my $tags  = $git->tags($user, $project);
   for my $tag (@$tags) {
-    $tag->{commit} = $git->parse_commit($user, $project, $tag->{name});
+    $tag->{commit} = $git->get_commit($user, $project, $tag->{name});
   }
 %>
 

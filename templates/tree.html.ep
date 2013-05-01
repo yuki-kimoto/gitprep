@@ -12,7 +12,7 @@
   my $git = app->git;
   
   # Tree id
-  my $commit = $git->parse_commit($user, $project, $rev);
+  my $commit = $git->get_commit($user, $project, $rev);
   my $top;
   $top = 1 unless defined $dir && $dir ne '';
 
