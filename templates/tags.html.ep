@@ -5,19 +5,21 @@
   # Parameters
   my $user = param('user');
   my $project = param('project');
+  my $page = param('page') || 1;
   
   # Git
   my $git = $self->app->git;
   
   # Ref names
-  my $tags  = $git->tags($user, $project);
-  @$tags = sort {
-    $b->{commit}{age_string_date} cmp $a->{commit}{age_string_date}
-    || $b->{name} cmp $a->{name}
-  } @$tags;
-  for my $tag (@$tags) {
-    $tag->{commit} = $git->get_commit($user, $project, $tag->{name});
-  }
+  my $limit = app->config->{basic}{tags_limit};
+  my $page_count = 10;
+  my $tags = $git->tags(
+    $user,
+    $project,
+    $limit,
+    $page_count,
+    $page_count * ($page - 1)
+  );
 %>
 
 % layout 'common';
@@ -31,7 +33,6 @@
     <h3 style="font-size:20px">Tags</h3>
     
     % if (@$tags) {
-      % use D;d $tags;
       <div style="margin-bottom:30px">
         % for (my $i = 0; $i < @$tags; $i++) {
           % my $tag = $tags->[$i];
@@ -70,6 +71,25 @@
             </div>
           </div>
         % }
+
+        <ul class="pager" style="text-align:left">
+          % if ($page == 1) {
+            <li class="disabled">&laquo; Newer</li>
+          % } else {
+            % my $newer_page = $page - 1;
+            <li class="disable">
+              <a href="<%= url_for("/$user/$project/tags?page=$newer_page") %>">&laquo; Newer</a>
+            </li>
+          % }
+          % if (@$tags < $page_count) {
+            <li class="disabled">Older &raquo;</li>
+          % } else {
+            % my $older_page = $page + 1;
+            <li>
+              <a href="<%= url_for("/$user/$project/tags?page=$older_page") %>">Older &raquo;</a>
+            </li>
+          % }
+        </ul>
       </div>
     % } else {
       <div class="well">

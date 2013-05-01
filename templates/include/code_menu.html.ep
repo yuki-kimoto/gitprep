@@ -1,12 +1,10 @@
 <%
-  my $tags_count = stash('tags_count') || 0;
-  my $branches_count = stash('branches_count') || 0;
   my $display = stash('display') || '';
   my $rev = stash('rev');
   $rev = app->manager->default_branch($user, $project)
     unless defined $rev;
-  my $no_merged_branch = app->git->no_merged_branches($user, $project);
-  my $tags = app->git->tags($user, $project);
+  my $branches_count = @{app->git->no_merged_branches($user, $project)};
+  my $tags_count = app->git->tags_count($user, $project);
 %>
 
 <ul class="nav nav-tabs" style="margin-bottom:20px">
@@ -38,13 +36,13 @@
   <li class="<%= $display eq 'branches' ? 'active' : '' %>">
     <a href="<%= url_for("/$user/$project/branches") %>">
       Branches
-      <span class="badge"><%= @$no_merged_branch || 0 %></span>
+      <span class="badge"><%= $branches_count %></span>
     </a>
   </li>
   <li class="<%= $display eq 'tags' ? 'active' : '' %>">
     <a href="<%= url_for("/$user/$project/tags") %>">
       Tags
-      <span class="badge"><%= @$tags || 0 %></span>
+      <span class="badge"><%= $tags_count > 999 ? '999+' : $tags_count %></span>
     </a>
   </li>
 </ul>

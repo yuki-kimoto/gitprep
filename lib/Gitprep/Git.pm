@@ -686,8 +686,33 @@ sub tag {
   return;
 }
 
+sub tags_count {
+  my ($self, $user, $project) = @_;
+  
+  my $limit = 1000;
+  
+  # Get tags
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'for-each-ref',
+    ($limit ? '--count='.($limit+1) : ()),
+    'refs/tags'
+  );
+  open my $fh, '-|', @cmd or return;
+  
+  # Tags count
+  my @lines = <$fh>;
+  
+  return scalar @lines;
+}
+
 sub tags {
-  my ($self, $user, $project, $limit) = @_;
+  my ($self, $user, $project, $limit, $count, $offset) = @_;
+  
+  $limit ||= 1000;
+  $count ||= 50;
+  $offset ||= 0;
   
   # Get tags
   my @cmd = $self->cmd(
@@ -702,46 +727,55 @@ sub tags {
   );
   open my $fh, '-|', @cmd or return;
   
+  
   # Parse Tags
   my @tags;
+  my $line_num = 1;
   while (my $line = $self->dec(scalar <$fh>)) {
     
-    my %tag;
-
-    chomp $line;
-    my ($refinfo, $creatorinfo) = split(/\0/, $line);
-    my ($id, $type, $name, $refid, $reftype, $title) = split(' ', $refinfo, 6);
-    my ($creator, $epoch, $tz) =
-      ($creatorinfo =~ /^(.*) ([0-9]+) (.*)$/);
-    $tag{fullname} = $name;
-    $name =~ s!^refs/tags/!!;
-
-    $tag{type} = $type;
-    $tag{id} = $id;
-    $tag{name} = $name;
-    if ($type eq 'tag') {
-      $tag{subject} = $title;
-      $tag{reftype} = $reftype;
-      $tag{refid}   = $refid;
-    } else {
-      $tag{reftype} = $type;
-      $tag{refid}   = $id;
-    }
-
-    if ($type eq 'tag' || $type eq 'commit') {
-      $tag{epoch} = $epoch;
-      if ($epoch) {
-        $tag{age} = $self->_age_string(time - $tag{epoch});
-      } else {
-        $tag{age} = 'unknown';
-      }
-    }
+    if ($line_num > $offset && $line_num < $offset + $count + 1) {
     
-    $tag{comment_short} = $self->_chop_str($tag{subject}, 30, 5)
-      if $tag{subject};
+      my %tag;
 
-    push @tags, \%tag;
+      chomp $line;
+      my ($refinfo, $creatorinfo) = split(/\0/, $line);
+      my ($id, $type, $name, $refid, $reftype, $title) = split(' ', $refinfo, 6);
+      my ($creator, $epoch, $tz) =
+        ($creatorinfo =~ /^(.*) ([0-9]+) (.*)$/);
+      $tag{fullname} = $name;
+      $name =~ s!^refs/tags/!!;
+
+      $tag{type} = $type;
+      $tag{id} = $id;
+      $tag{name} = $name;
+      if ($type eq 'tag') {
+        $tag{subject} = $title;
+        $tag{reftype} = $reftype;
+        $tag{refid}   = $refid;
+      } else {
+        $tag{reftype} = $type;
+        $tag{refid}   = $id;
+      }
+
+      if ($type eq 'tag' || $type eq 'commit') {
+        $tag{epoch} = $epoch;
+        if ($epoch) {
+          $tag{age} = $self->_age_string(time - $tag{epoch});
+        } else {
+          $tag{age} = 'unknown';
+        }
+      }
+      
+      $tag{comment_short} = $self->_chop_str($tag{subject}, 30, 5)
+        if $tag{subject};
+
+      $tag{commit} = $self->get_commit($user, $project, $name);
+
+      push @tags, \%tag;
+    }
+    $line_num++;
   }
+  
   close $fh;
 
   return \@tags;
