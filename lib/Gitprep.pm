@@ -10,7 +10,7 @@ use Validator::Custom;
 use Encode qw/encode decode/;
 use Gitprep::API;
 use Carp 'croak';
-use Gitprep::RepManager;
+use Gitprep::Manager;
 use Scalar::Util 'weaken';
 use Carp 'croak';
 
@@ -50,7 +50,7 @@ sub startup {
   $git->bin($git_bin);
   
   # Repository Manager
-  my $manager = Gitprep::RepManager->new(app => $self);
+  my $manager = Gitprep::Manager->new(app => $self);
   weaken $manager->{app};
   $self->manager($manager);
   
