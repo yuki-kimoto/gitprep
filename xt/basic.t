@@ -99,3 +99,21 @@ note 'Commits page';
   # Date
   $t->content_like(qr/\d{4}-\d{2}-\d{2}/);
 }
+
+note 'Tags page';
+{
+  # Page access
+  $t->get_ok("/$user/$project/tags");
+  
+  # Tree link
+  $t->content_like(qr#/$user/$project/tree/t1#);
+  
+  # Commit link
+  $t->content_like(qr#/$user/$project/commit/15ea9d711617abda5eed7b4173a3349d30bca959#);
+
+  # Zip link
+  $t->content_like(qr#/$user/$project/archive/t1.zip#);
+  
+  # Tar.gz link
+  $t->content_like(qr#/$user/$project/archive/t1.tar.gz#);
+}
