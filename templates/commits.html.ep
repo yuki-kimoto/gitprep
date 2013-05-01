@@ -49,11 +49,13 @@
       % if (defined $blob) {
         %= include '/include/page_path', type => 'blob', Path => $blob, operation => 'commits', prefix => 'History for';
       % } else {
-        <a class="ubar" href="<%= url_for("/$user/$project") %>">
-          <%= $project %>
-        </a>
-        /
-        <span class="muted">Commit History</span>
+        <div style="font-size:18px">
+          <a class="ubar" href="<%= url_for("/$user/$project") %>">
+            <%= $project %>
+          </a>
+          /
+          <span class="muted">Commit History</span>
+        </div>
       % }
     </div>
     
