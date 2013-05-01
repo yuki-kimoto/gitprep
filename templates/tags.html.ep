@@ -11,6 +11,10 @@
   
   # Ref names
   my $tags  = $git->tags($user, $project);
+  @$tags = sort {
+    $b->{commit}{age_string_date} cmp $a->{commit}{age_string_date}
+    || $b->{name} cmp $a->{name}
+  } @$tags;
   for my $tag (@$tags) {
     $tag->{commit} = $git->get_commit($user, $project, $tag->{name});
   }
@@ -24,43 +28,54 @@
     %= include '/include/project_header';
     %= include '/include/code_menu', display => 'tags', tags_count => scalar @$tags;
     
-    <div>
-      % if (@$tags) {
+    <h3 style="font-size:20px">Tags</h3>
+    
+    % if (@$tags) {
+      % use D;d $tags;
+      <div style="margin-bottom:30px">
         % for (my $i = 0; $i < @$tags; $i++) {
           % my $tag = $tags->[$i];
           % my $name = $tag->{name};
           % my $tag_class = $i == @$tags - 1 ? 'tag tag_last' : 'tag';
-          <div class="padding5 border-bottom-gray">
+          <div class="border-gray" style="padding:7px 5px;border-left:none;border-right:none;border-bottom:none;">
             <div class="row">
-              <div class="span2">
-                <a class="font-black" href="<%= url_for("/$user/$project/tree/$name") %>">
-                  <b><%= $name %></b>
-                </a>
+              <div class="span3">
+                <a class="muted" href="<%= url_for("/$user/$project/tree/$name") %>" title="<%= $tag->{commit}{age_string_date} %>"><%= $tag->{commit}{age_string} %></a>
               </div>
-              <div class="span9 ofsset1-mini">
-                % my $commit_id = $tag->{commit}{id};
-                <a class="muted" href="<%= url_for("/$user/$project/commit/$commit_id") %>">
-                  <i class="icon-share-alt"></i>
-                  <%= substr($commit_id, 0, 7) %>
-                </a>
-                <a class="muted" href="<%= url_for("/$user/$project/archive/$name.zip") %>">
-                  <i class="icon-file"></i>
-                  zip
-                </a>
-                <a class="muted" href="<%= url_for("/$user/$project/archive/$name.tar.gz") %>">
-                  <i class="icon-file"></i>
-                  tar.gz
-                </a>
+              <div class="span8">
+                <div>
+                  <a class="font-black" href="<%= url_for("/$user/$project/tree/$name") %>">
+                    <b><%= $name %></b>
+                    % if (defined $tag->{comment_short}) {
+                      - <span style="color:#333"><%= $tag->{comment_short} %></span>
+                    % }
+                  </a>
+                </div>
+                <div>
+                  % my $commit_id = $tag->{commit}{id};
+                  <a class="muted" href="<%= url_for("/$user/$project/commit/$commit_id") %>">
+                    <i class="icon-share-alt"></i>
+                    <%= substr($commit_id, 0, 7) %>
+                  </a>
+                  <a class="muted" href="<%= url_for("/$user/$project/archive/$name.zip") %>">
+                    <i class="icon-file"></i>
+                    zip
+                  </a>
+                  <a class="muted" href="<%= url_for("/$user/$project/archive/$name.tar.gz") %>">
+                    <i class="icon-file"></i>
+                    tar.gz
+                  </a>
+                </div>
               </div>
             </div>
           </div>
         % }
-      % } else {
-        <div class="well">
-          No Tags.
-        </div>
-      % }
-    </div>
+      </div>
+    % } else {
+      <div class="well">
+        No Tags.
+      </div>
+    % }
   </div>
   
   %= include '/include/footer';
