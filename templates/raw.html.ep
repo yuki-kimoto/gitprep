@@ -17,6 +17,7 @@
   # Blob content
   my $bid = $git->id_by_path($user, $project, $rev, $file, 'blob')
     or $api->croak('Cannot find file');
+  
   my @cmd = $git->cmd(
     $user,
     $project,
@@ -33,7 +34,7 @@
   my $lines =[];
   
   # Content type
-  my $type = $git->blob_contenttype($fh, $file);
+  my $type = $git->blob_contenttype($user, $project, $rev, $file);
 
   # Convert text/* content type to text/plain
   if ($self->config('prevent_xss') &&
@@ -60,7 +61,8 @@
   # Render
   $self->res->headers->content_disposition($content_disposition);
   $self->res->headers->content_type($type);
-  
+    use D;d $type;
+
   $self->render(text => $content);
   
   return $self->res->body;

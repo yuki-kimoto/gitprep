@@ -20,31 +20,15 @@
   # Authors
   my $authors = $git->authors($user, $project, $rev, $file);
   
-  # Blob content
-  my $bid = $git->id_by_path($user, $project, $rev, $file, 'blob')
-    or $api->croak('Cannot find file');
-  my @cmd = $git->cmd(
-    $user,
-    $project,
-    'cat-file',
-    'blob',
-    $bid
-  );
-  open my $fh, '-|', @cmd
-    or $api->croak(qq/Couldn't cat "$file", "$bid"/);
-  
-  # Blob info
-  my $file_size = $git->blob_size_kb($user, $project, $rev, $file);
-  my $mimetype = $git->blob_mimetype($fh, $file);
+  # Blob lines
+  my $lines = $git->blob($user, $project, $rev, $file);
 
-  # Parse line
-  my $lines =[];
-  while (my $line = $git->dec(scalar <$fh>)) {
-    chomp $line;
-    $line = $git->_tab_to_space($line);
-    push @$lines, $line;
-  }
+  # File size
+  my $file_size = $git->blob_size_kb($user, $project, $rev, $file);
   
+  # MIME type
+  my $mimetype = $git->blob_mimetype($user, $project, $rev, $file);
+
   # Variables for included template
   stash(id => $rev, project => $project);
 %>

@@ -72,7 +72,6 @@
             </div>
           </div>
         % }
-        % use D;d [$page_count, $tags_count];
         % if ($tags_count > $page_count) {
           <ul class="pager" style="text-align:left">
             % if ($page == 1) {
