@@ -12,9 +12,6 @@ sub raw {
 
   # Git
   my $git = $self->app->git;
-
-  # Commit
-  my $commit_log = $git->latest_commit_log($user, $project, $rev, $file);
   
   # Blob raw
   my $blob_raw = $git->blob_raw($user, $project, $rev, $file);

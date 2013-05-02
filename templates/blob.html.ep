@@ -11,11 +11,8 @@
   # Git
   my $git = $self->app->git;
 
-  # Commit log
-  my $commit_log = $git->latest_commit_log($user, $project, $rev, $file);
-
   # Commit
-  my $commit = $git->get_commit($user, $project, $rev);
+  my $commit = $git->last_change_commit($user, $project, $rev, $file);
   
   # Authors
   my $authors = $git->authors($user, $project, $rev, $file);
@@ -25,6 +22,10 @@
 
   # File size
   my $file_size = $git->blob_size_kb($user, $project, $rev, $file);
+  
+  # File mode
+  my $mode = $git->blob_mode($user, $project, $rev, $file);
+  my $file_type = $git->file_type_long($mode);
   
   # MIME type
   my $mimetype = $git->blob_mimetype($user, $project, $rev, $file);
@@ -43,28 +44,29 @@
     %= include '/include/page_path', type => 'blob', Path => $file;
         
     <div class="border-gray" style="margin-bottom:20px">
-      <div class="bk-blue-light padding5">
-        <%= $commit_log->{author} %>
-        <span class="muted"><%= $commit_log->{author_date} %></span>
-        <a href="<%= url_for("/$user/$project/commit/$rev") %>">
+      <div class="bk-blue-light" style="padding:5px">
+        <a style="color:#333;font-weight:bold" href="#" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></a>
+        <span class="muted" title="<%= $commit->{age_string_date} %>"><%= $commit->{age_string} %></span>
+        <a style="color:#666" href="<%= url_for("/$user/$project/commit/$rev") %>">
           <%= $commit->{title} %>
         </a>
       </div>
-      <div class="padding5">
-        <%= @$authors %> contributor
+      <div style="padding:5px">
+        <b><%= @$authors %></b> <span class="muted">contributor</span>
       </div>
     </div>
 
-    <div class="border-gray bk-gray-light padding5">
+    <div class="border-gray bk-gray-light" style="padding:5px">
       <div class="row">
         <div class="span7" style="padding-top:5px">
           <i class="icon-file icon-white"></i>
-          <span style="color:gray">|</span>
+          <%= $file_type %>
+          <span class="muted">|</span>
           <%= @$lines %> lines
-          <span style="color:gray">|</span>
+          <span class="muted">|</span>
           <%= $file_size %>kb
         </div>
-        <div class="span4 offset1-mini text-right">
+        <div class="text-right">
           <a class="btn" href="<%= url_for("/$user/$project/raw/$rev/$file") %>">Raw</a><a class="btn" href="<%= url_for("/$user/$project/commits/$rev/$file") %>">History</a>
         </div>
       </div>

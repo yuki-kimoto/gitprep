@@ -339,15 +339,6 @@ sub commits_number {
   return $commits_num;
 }
 
-sub delete_project {
-  my ($self, $user, $project) = @_;
-  
-  croak "Invalid user name or project"
-    unless defined $user && defined $project;
-  my $rep = $self->rep($user, $project);
-  rmtree($rep);
-}
-
 sub description {
   my ($self, $user, $project, $description) = @_;
   
@@ -367,6 +358,28 @@ sub description {
     my $description = $self->_slurp($file) || '';
     return $description;
   }
+}
+
+sub blob_mode {
+  my ($self, $user, $project, $rev, $file) = @_;
+  
+  # Mode
+  $file =~ s#/+$##;
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'ls-tree',
+    $rev,
+    '--',
+    $file
+  );
+  open my $fh, '-|', @cmd
+    or croak 'Open git-ls-tree failed';
+  my $line = $self->_dec(scalar <$fh>);
+  close $fh or return;
+  my ($mode) = ($line || '') =~ m/^([0-9]+) /;
+  
+  return $mode;
 }
 
 sub file_type {
@@ -390,11 +403,11 @@ sub file_type_long {
   # File type
   if ($mode !~ m/^[0-7]+$/) { return $mode }
   else { $mode = oct $mode }
-  if (S_ISGITLINK($mode)) { return 'submodule' }
+  if ($self->_s_isgitlink($mode)) { return 'submodule' }
   elsif (S_ISDIR($mode & S_IFMT)) { return 'directory' }
   elsif (S_ISLNK($mode)) { return 'symlink' }
   elsif (S_ISREG($mode)) {
-    if ($mode & S_IXUSR) { return 'executable' }
+    if ($mode & S_IXUSR) { return 'executable file' }
     else { return 'file' }
   }
   else { return 'unknown' }
@@ -594,13 +607,13 @@ sub path_by_id {
   
   # Command "git ls-tree"
   my @cmd = $self->cmd($user, $project, 'ls-tree', '-r', '-t', '-z', $base);
-  open my $fh, '-|' or return;
+  open my $fh, '-|', @cmd or return;
 
   # Get path
   local $/ = "\0";
   while (my $line = <$fh>) {
-    $line = d$line;
     chomp $line;
+    $line = $self->_dec($line);
 
     if ($line =~ m/(?:[0-9]+) (?:.+) $hash\t(.+)$/) {
       close $fh;
@@ -849,49 +862,6 @@ sub id_set_multi {
   if (!exists $cid->{$key}) { $cid->{$key} = $value }
   elsif (!ref $cid->{$key}) { $cid->{$key} = [ $cid->{$key}, $value ] }
   else { push @{$cid->{$key}}, $value }
-}
-
-sub latest_commit_log {
-  my ($self, $user, $project, $rev, $file) = @_;
-  
-  my $commit_log = {};
-  $file = '' unless defined $file;
-  
-  my @cmd = $self->cmd(
-    $user,
-    $project,
-    '--no-pager',
-    'log',
-    '-n',
-    '1',
-    '--pretty=format:%H - %an - %ar : %s', 
-    $rev,
-    '--',
-    $file
-  );
-  open my $fh, '-|', @cmd
-    or croak 'Open git-log failed';
-  
-  local $/;
-  my $commit_log_text = $self->_dec(scalar <$fh>);
-
-  if ($commit_log_text =~ /^([0-9a-zA-Z]+) - (.+) - (.+?) : (.+)/) {
-    $commit_log->{commit} = $1;
-    $commit_log->{author} = $2;
-    $commit_log->{author_date} = $3;
-    my $comment = $4;
-    my $comment_short
-      = length $comment > 60
-      ? substr($comment, 0, 60) . '...'
-      : $comment;
-    $commit_log->{comment} = $comment_short;
-  }
-  
-  $commit_log->{author_date} =~ s/,.*$//;
-  $commit_log->{author_date} =~ s/ +ago.*$//;
-  $commit_log->{author_date} .= ' ago';
-  
-  return $commit_log;
 }
 
 sub last_change_commit {
