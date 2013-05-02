@@ -172,6 +172,21 @@ sub blob_plain {
   return $content;
 }
 
+sub blob_raw {
+  my ($self, $user, $project, $rev, $path) = @_;
+  
+  # Get blob raw
+  my @cmd = $self->cmd($user, $project, 'cat-file', 'blob', "$rev:$path");
+  open my $fh, "-|", @cmd
+    or croak 500, "Open git-cat-file failed";
+  local $/;
+  my $blob_raw = scalar <$fh>;
+
+  close $fh or croak 'Reading git-shortlog failed';
+  
+  return $blob_raw;
+}
+
 sub blob_mimetype {
   my ($self, $user, $project, $rev, $file) = @_;
   

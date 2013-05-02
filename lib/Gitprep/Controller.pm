@@ -1,12 +1,14 @@
-<%
-  # API
-  my $api = gitprep_api;
+package Gitprep::Controller;
+use Mojo::Base 'Mojolicious::Controller';
+
+sub raw {
+  my $self = shift;
   
   # Parameters
-  my $user = param('user');
-  my $project = param('project');
-  my $rev = param('rev');
-  my $file = param('file');
+  my $user = $self->param('user');
+  my $project = $self->param('project');
+  my $rev = $self->param('rev');
+  my $file = $self->param('file');
 
   # Git
   my $git = $self->app->git;
@@ -14,32 +16,16 @@
   # Commit
   my $commit_log = $git->latest_commit_log($user, $project, $rev, $file);
   
-  # Blob content
-  my $bid = $git->id_by_path($user, $project, $rev, $file, 'blob')
-    or $api->croak('Cannot find file');
-  
-  my @cmd = $git->cmd(
-    $user,
-    $project,
-    'cat-file',
-    'blob',
-    $bid
-  );
-  open my $fh, '-|', @cmd
-    or $api->croak(qq/Couldn't cat "$file", "$bid"/);
-  
-  # Blob plain
-  my $commit;
-  my $mimetype;
-  my $lines =[];
+  # Blob raw
+  my $blob_raw = $git->blob_raw($user, $project, $rev, $file);
   
   # Content type
   my $type = $git->blob_contenttype($user, $project, $rev, $file);
 
   # Convert text/* content type to text/plain
-  if ($self->config('prevent_xss') &&
+  if ($self->app->config->{basic}{prevent_xss} &&
     ($type =~ m#^text/[a-z]+\b(.*)$# ||
-    ($type =~ m#^[a-z]+/[a-z]\+xml\b(.*)$# && -T $fh)))
+    ($type =~ m#^[a-z]+/[a-z]\+xml\b(.*)$#)))
   {
     my $rest = $1;
     $rest = defined $rest ? $rest : '';
@@ -51,19 +37,18 @@
   if (defined $file) { $file_name = $file }
   elsif ($type =~ m/^text\//) { $file_name .= '.txt' }
   
-  # Content
-  my $content = do { local $/; <$fh> };
-  my $sandbox = $self->config('prevent_xss') &&
+  # Content disposition
+  my $sandbox = $self->app->config->{basic}{prevent_xss} &&
     $type !~ m#^(?:text/[a-z]+|image/(?:gif|png|jpeg))(?:[ ;]|$)#;
   my $content_disposition = $sandbox ? 'attachment' : 'inline';
   $content_disposition .= "; filename=$file_name";
   
-  # Render
+  # Response
   $self->res->headers->content_disposition($content_disposition);
   $self->res->headers->content_type($type);
-    use D;d $type;
-
-  $self->render(text => $content);
   
-  return $self->res->body;
-%>
+  $self->render(data => $blob_raw);
+}
+
+1;
+

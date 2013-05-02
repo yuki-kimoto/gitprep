@@ -1,9 +1,11 @@
 use Test::More 'no_plan';
 
 use FindBin;
+use utf8;
 use lib "$FindBin::Bin/../mojo/lib";
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
+use Encode qw/encode decode/;
 
 use Test::Mojo;
 
@@ -119,4 +121,24 @@ note 'Tags page';
   
   # Tar.gz link
   $t->content_like(qr#/$user/$project/archive/t1.tar.gz#);
+}
+
+note 'blob page';
+{
+  # Page access
+  $t->get_ok("/$user/$project/blob/b9f0f107672b910a44d22d4623ce7445d40565aa/a_renamed.txt");
+  
+  # Content
+  $t->content_like(qr/あああ/);
+}
+
+note 'raw page';
+{
+  # Page access
+  $t->get_ok("/$user/$project/raw/b9f0f107672b910a44d22d4623ce7445d40565aa/a_renamed.txt");
+  
+  # Content
+  my $content_binary = $t->tx->res->body;
+  my $content = decode('UTF-8', $content_binary);
+  like($content, qr/あああ/);
 }

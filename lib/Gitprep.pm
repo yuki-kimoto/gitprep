@@ -194,7 +194,7 @@ sub startup {
       $r->get('/blobdiff/(#diff)/(*file)')->name('blobdiff');
       
       # Raw
-      $r->get('/raw/:rev/(*file)', {file => undef})->name('raw');
+      $r->get('/raw/:rev/(*file)', {file => undef})->to('controller#raw');
       
       # Archive
       $r->get('/archive/(#rev).tar.gz')->name('archive')->to(archive_type => 'tar');
