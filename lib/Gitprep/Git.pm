@@ -250,7 +250,9 @@ sub blob_size_kb {
   chomp $size;
   close $fh or croak 'Reading cat-file failed';
   
-  my $size_kb = sprintf('%.3f', $size / 1024);
+  my $size_kb = sprintf('%.3f', $size / 1000);
+  
+  $size_kb =~ s/0+$//;
   
   return $size_kb;
 }

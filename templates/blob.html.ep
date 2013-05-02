@@ -81,11 +81,7 @@
         />
       </div>
     % } else {
-      <pre class="prettyprint linenums">
-        % for my $line (@$lines) {
-%= $line;
-        % }
-      </pre>
+      <pre class="prettyprint linenums"><% for my $line (@$lines) { %><%= "$line\n" %><% } %></pre>
     % }
   </div>
   
