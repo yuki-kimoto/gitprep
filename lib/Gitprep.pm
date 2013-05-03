@@ -197,8 +197,8 @@ sub startup {
       $r->get('/raw/:rev/(*file)', {file => undef})->to('controller#raw');
       
       # Archive
-      $r->get('/archive/(#rev).tar.gz')->name('archive')->to(archive_type => 'tar');
-      $r->get('/archive/(#rev).zip')->name('archive')->to(archive_type => 'zip');
+      $r->get('/archive/(:rev).(tar.gz')->name('archive')->to(archive_type => 'tar');
+      $r->get('/archive/(:rev).zip')->name('archive')->to(archive_type => 'zip');
       
       # Compare
       $r->get('/compare/(#rev1)...(#rev2)')->name('compare');

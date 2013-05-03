@@ -99,13 +99,13 @@
         % for my $date (reverse sort keys %$commits_date) {
           % my $commits = $commits_date->{$date};
           
-          <div class="bk-gray-light border-gray padding5" style="border-bottom:none">
+          <div class="bk-gray-light border-gray" style="padding:5px;border-bottom:none">
             <%= $date %>
           </div>
           
           <div style="margin-bottom:20px">
             % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
-              <div class="border-gray padding5">
+              <div class="border-gray" style="padding:5px">
                 <div class="row">
                   <div class="span2">
                     <%= $commit->{author_name} %>

@@ -504,35 +504,64 @@ sub difftree {
   return $diffs;
 }
 
-sub no_merged_branches {
-  my ($self, $user, $project) = @_;
-  
-  return $self->branches($user, $project, {no_merged => 1});
-}
-
 sub branches {
   my ($self, $user, $project, $opts) = @_;
   
-  # Command "git branch --no-merged"
+  # No merged branches
+  my $no_merged_branches_h = {};
+  {
+    my @cmd = $self->cmd($user, $project, 'branch');
+    push @cmd, , '--no-merged';
+    open my $fh, '-|', @cmd or return;
+    
+    while (my $branch_name = $self->_dec(scalar <$fh>)) {
+      $branch_name =~ s/^\*//;
+      $branch_name =~ s/^\s*//;
+      $branch_name =~ s/\s*$//;
+      $no_merged_branches_h->{$branch_name} = 1;
+    }
+  }
+  
+  # All branches
   my @cmd = $self->cmd($user, $project, 'branch');
-  push @cmd, , '--no-merged' if $opts->{no_merged};
   open my $fh, '-|', @cmd or return;
-  
-  my @branch_names
-    = map { s/^\*//; s/^\s*//; s/\s*$//; $self->_dec($_) } <$fh>;
-  close $fh or croak qq/Can't open "git branch"/;
-  
-  # Branches
   my $branches = [];
-  for my $branch_name (@branch_names) {
+  while (my $branch_name = $self->_dec(scalar <$fh>)) {
+    $branch_name =~ s/^\*//;
+    $branch_name =~ s/^\s*//;
+    $branch_name =~ s/\s*$//;
+    
     my $branch = {};
     $branch->{name} = $branch_name;
     my $commit = $self->get_commit($user, $project, $branch_name);
     $branch->{commit} = $commit;
+    $branch->{no_merged} = 1 if $no_merged_branches_h->{$branch_name};
     push @$branches, $branch;
   }
   
   return $branches;
+}
+
+sub branches_count {
+  my ($self, $user, $project) = @_;
+  
+  my @cmd = $self->cmd($user, $project, 'branch');
+  open my $fh, '-|', @cmd or return;
+  my @branches = <$fh>;
+  my $branches_count = @branches;
+  
+  return $branches_count;
+}
+
+sub no_merged_branches_count {
+  my ($self, $user, $project) = @_;
+  
+  my @cmd = $self->cmd($user, $project, 'branch', '--no-merged');
+  open my $fh, '-|', @cmd or return;
+  my @branches = <$fh>;
+  my $branches_count = @branches;
+  
+  return $branches_count;
 }
 
 sub id_by_path {

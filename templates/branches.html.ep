@@ -15,10 +15,38 @@
   $default_branch->{commit} = $git->get_commit($user, $project, $default_branch->{name});
   
   # No merged branches
-  my $branches  = $git->no_merged_branches($user, $project);
+  my $branches  = $git->branches($user, $project);
+  my $branches_count = $git->branches_count($user, $project);
+  my $no_merged_branches_count = $git->no_merged_branches_count($user, $project);
+  my $merged_branches_count = $branches_count - $no_merged_branches_count - 1;
 %>
 
 % layout 'common';
+
+  %= javascript begin
+    $('document').ready(function () {
+      
+      // Swich merged branch or not merged branch
+      var display_no_merged = true;
+      $('#toggle-branch').on('click', function () {
+        if (display_no_merged) {
+          $(this).text('View unmerged branches');
+          $('#no-merged-branch-message').hide();
+          $('#merged-branch-message').show();
+          $('.no-merged-branch').css('display', 'none');
+          $('.merged-branch').css('display', 'inline');
+        }
+        else {
+          $(this).text('View merged branches');
+          $('#no-merged-branch-message').show();
+          $('#merged-branch-message').hide();
+          $('.no-merged-branch').css('display', 'inline');
+          $('.merged-branch').css('display', 'none');
+        }
+        display_no_merged = !display_no_merged;
+      });
+    });
+  % end
   
   %= include '/include/header';
   
@@ -29,7 +57,15 @@
     <h3>Branches</h3>
     
     <div class="muted">
-      Showing <%= @$branches %> branches not merged into master
+      Showing
+      <span id="no-merged-branch-message">
+         <%= $no_merged_branches_count %> branches not merged
+      </span>
+      <span style="display:none" id="merged-branch-message">
+        <%= $merged_branches_count %> branches merged
+      </span>
+      into <%= $default_branch->{name} %>.
+      <a id="toggle-branch" href="#">View merged branches</a>
     </div>
     <div class="bk-black" style="padding:5px">
       <div class="row">
@@ -48,7 +84,7 @@
             </span>
           </div>
         </div>
-        <div class="span3 offset1-mini text-right font-white" style="padding-top:10px">
+        <div class="text-right font-white" style="padding-top:10px">
           Base branch
         </div>
       </div>
@@ -57,7 +93,7 @@
       % my $branch = $branches->[$i];
       % my $bname = $branch->{name};
       % next if $bname eq $default_branch->{name};
-      <div class="border-bottom-gray" style="padding:5px">
+      <div class="<%= $branch->{no_merged} ? 'no-merged-branch' : 'merged-branch' %> border-bottom-gray" style="padding:5px">
         <div class="row">
           <div class="span8">
             <div>

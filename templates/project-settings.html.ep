@@ -2,6 +2,7 @@
   my $api = gitprep_api;
   my $logined = $api->logined;
   my $user_is_valid = $logined && $user eq session('user');
+  my $default_branch = app->manager->default_branch($user, $project);
 
   my $git = app->git;
 
@@ -212,7 +213,7 @@
         Default Branch
         % my $branches = $git->branches($user, $project);
         % my $branch_names = [map { $_->{name} } @$branches];
-        % push @$branch_names, 'master' unless @$branch_names;
+        % push @$branch_names, $default_branch->{name} unless @$branch_names;
         %= select_field 'default_branch' => $branch_names, style => 'margin-top:5px';
       </div>
     </div>

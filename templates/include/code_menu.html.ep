@@ -3,7 +3,7 @@
   my $rev = stash('rev');
   $rev = app->manager->default_branch($user, $project)
     unless defined $rev;
-  my $branches_count = @{app->git->no_merged_branches($user, $project)};
+  my $branches_count = app->git->branches_count($user, $project);
   my $tags_count = app->git->tags_count($user, $project);
 %>
 

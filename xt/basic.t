@@ -169,3 +169,14 @@ note 'raw page';
   my $content = decode('UTF-8', $content_binary);
   like($content, qr/あああ/);
 }
+
+note 'Aarchive';
+{
+  # Archive zip
+  $t->get_ok("/$user/$project/archive/t1.zip");
+  $t->content_type_is('application/zip');
+  
+  # Archice tar.gz
+  $t->get_ok("/$user/$project/archive/t1.tar.gz");
+  $t->content_type_is('application/x-tar');
+}
