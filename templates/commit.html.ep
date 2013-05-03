@@ -33,7 +33,7 @@
   my $difftrees_h = {};
   for my $difftree (@$difftrees) {
     my $file = $difftree->{file};
-    $difftrees_h->{$file} = $difftree;
+    $difftrees_h->{$file} = $difftree if defined $file;
   }
   
   # Get blob diffs
@@ -143,7 +143,7 @@
       <div class="row">
         <div class="span4 padding5">
           <span><b><%= $commit->{author_name} %></b></span>
-          <span class="muted">authored <%= $commit->{age_string} %></span>
+          <span class="muted">authored <span title="<%= $commit->{age_string_datetime} %>"><%= $commit->{age_string} %></span>
         </div>
         <div class="span7 padding5 text-right" style="margin-left:75px">
           % my $parent = $commit->{parent};

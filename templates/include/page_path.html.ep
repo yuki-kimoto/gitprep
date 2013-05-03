@@ -16,24 +16,28 @@
 
   <a href="<%= url_for("/$user/$project" . ($operation eq 'commits' ? '/commits' : '')) %>">
     <b><%= $project %></b>
-  </a> /
-  % my @parts = split('/', $Path);
-  % my $path;
-  % for (my $i = 0; $i < @parts; $i++) {
-    % my $part = $parts[$i];
-    % $path .= $part;
-    
-    % if ($type eq 'blob' && $i == @parts - 1) {
-      <b><%= $part %></b>
-    % } else {
-      <a href=
-          "<%= url_for("/$user/$project/$operation/$rev/$path") %>">
-        <%= $part %>
-      </a>
-      % $path .= '/';
-    % }
-    % unless ($type eq 'blob' && $i == @parts - 1) {
-      /
+  </a>
+  
+  % if (defined $Path) {
+    /
+    % my @parts = split('/', $Path);
+    % my $path;
+    % for (my $i = 0; $i < @parts; $i++) {
+      % my $part = $parts[$i];
+      % $path .= $part;
+      
+      % if ($type eq 'blob' && $i == @parts - 1) {
+        <b><%= $part %></b>
+      % } else {
+        <a href=
+            "<%= url_for("/$user/$project/$operation/$rev/$path") %>">
+          <%= $part %>
+        </a>
+        % $path .= '/';
+      % }
+      % unless ($type eq 'blob' && $i == @parts - 1) {
+        /
+      % }
     % }
   % }
 </div>

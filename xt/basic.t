@@ -77,6 +77,9 @@ note 'Commit page - first commit';
   # Commit message
   $t->content_like(qr/first commit/);
   
+  # Commit datetime
+  $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
+  
   # Parent not eixsts
   $t->content_like(qr/0 <span .*?>parent/);
   
@@ -101,8 +104,8 @@ note 'Commits page';
   # Page access
   $t->get_ok("/$user/$project/commits/master");
   
-  # Date
-  $t->content_like(qr/\d{4}-\d{2}-\d{2}/);
+  # Commit date time
+  $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
 }
 
 note 'Tags page';
@@ -126,10 +129,31 @@ note 'Tags page';
   $t->content_like(qr#/$user/$project/archive/t1.tar.gz#);
 }
 
-note 'blob page';
+note 'Tree page';
+{
+  # Page access
+  $t->get_ok("/$user/$project/tree/e891266d8aeab864c8eb36b7115416710b2cdc2e");
+  
+  # Commit datetime
+  $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
+  
+  # README
+  $t->content_like(qr/README.*bbb/s);
+  
+  # tree directory link
+  $t->content_like(qr#/$user/$project/tree/e891266d8aeab864c8eb36b7115416710b2cdc2e/dir#);
+
+  # tree file link
+  $t->content_like(qr#/$user/$project/blob/e891266d8aeab864c8eb36b7115416710b2cdc2e/README#);
+}
+
+note 'Blob page';
 {
   # Page access
   $t->get_ok("/$user/$project/blob/b9f0f107672b910a44d22d4623ce7445d40565aa/a_renamed.txt");
+  
+  # Commit datetime
+  $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
   
   # Content
   $t->content_like(qr/あああ/);

@@ -32,7 +32,6 @@
     commit => $commit,
     trees => $trees,
     dir => $dir,
-    title => "$project/$dir at $rev - $user/$project",
     readme => $readme
   );
 %>
