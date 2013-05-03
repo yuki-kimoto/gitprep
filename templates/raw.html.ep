@@ -1,17 +1,12 @@
-package Gitprep::Controller;
-use Mojo::Base 'Mojolicious::Controller';
-
-sub raw {
-  my $self = shift;
-  
+<%
   # Parameters
-  my $user = $self->param('user');
-  my $project = $self->param('project');
-  my $rev = $self->param('rev');
-  my $file = $self->param('file');
+  my $user = param('user');
+  my $project = param('project');
+  my $rev = param('rev');
+  my $file = param('file');
 
   # Git
-  my $git = $self->app->git;
+  my $git = app->git;
   
   # Blob raw
   my $blob_raw = $git->blob_raw($user, $project, $rev, $file);
@@ -20,7 +15,7 @@ sub raw {
   my $type = $git->blob_contenttype($user, $project, $rev, $file);
 
   # Convert text/* content type to text/plain
-  if ($self->app->config->{basic}{prevent_xss} &&
+  if (app->config->{basic}{prevent_xss} &&
     ($type =~ m#^text/[a-z]+\b(.*)$# ||
     ($type =~ m#^[a-z]+/[a-z]\+xml\b(.*)$#)))
   {
@@ -35,17 +30,18 @@ sub raw {
   elsif ($type =~ m/^text\//) { $file_name .= '.txt' }
   
   # Content disposition
-  my $sandbox = $self->app->config->{basic}{prevent_xss} &&
+  my $sandbox = app->config->{basic}{prevent_xss} &&
     $type !~ m#^(?:text/[a-z]+|image/(?:gif|png|jpeg))(?:[ ;]|$)#;
   my $content_disposition = $sandbox ? 'attachment' : 'inline';
   $content_disposition .= "; filename=$file_name";
   
   # Response
+  $self->res->code(200);
   $self->res->headers->content_disposition($content_disposition);
   $self->res->headers->content_type($type);
+  $self->res->body($blob_raw);
+  $self->rendered;
+  $self->stash->{'mojo.routed'} = 1;
   
-  $self->render(data => $blob_raw);
-}
-
-1;
-
+  return;
+%>
