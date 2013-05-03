@@ -1062,7 +1062,10 @@ sub parse_commit_text {
   $commit{age} = $age;
   $commit{age_string} = $self->_age_string($age);
   my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($commit{committer_epoch});
-  $commit{age_string_date} = sprintf '%4i-%02u-%02i', 1900 + $year, $mon+1, $mday;
+  $commit{age_string_date} = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
+  $commit{age_string_datetime} = sprintf '%4d-%02d-%02d %02d:%02d:%02d',
+    1900 + $year, $mon + 1, $mday, $hour, $min, $sec;
+  
   return \%commit;
 }
 
@@ -1285,25 +1288,25 @@ sub _age_string {
   my ($self, $age) = @_;
   my $age_str;
 
-  if ($age > 60 * 60 * 24 * 365) {
+  if ($age >= 60 * 60 * 24 * 365) {
     $age_str = (int $age/60/60/24/365);
     $age_str .= ' years ago';
-  } elsif ($age > 60*60*24*(365/12)) {
+  } elsif ($age >= 60 * 60 * 24 * (365/12)) {
     $age_str = int $age/60/60/24/(365/12);
     $age_str .= ' months ago';
-  } elsif ($age > 60*60*24*7) {
+  } elsif ($age >= 60 * 60 * 24 * 7) {
     $age_str = int $age/60/60/24/7;
     $age_str .= ' weeks ago';
-  } elsif ($age > 60*60*24) {
+  } elsif ($age >= 60 * 60 * 24) {
     $age_str = int $age/60/60/24;
     $age_str .= ' days ago';
-  } elsif ($age > 60*60) {
-    $age_str = int $age/60/60;
+  } elsif ($age >= 60 * 60) {
+    $age_str = int $age / 60 / 60;
     $age_str .= ' hours ago';
-  } elsif ($age > 60) {
+  } elsif ($age >= 60) {
     $age_str = int $age/60;
     $age_str .= ' min ago';
-  } elsif ($age > 1) {
+  } elsif ($age >= 1) {
     $age_str = int $age;
     $age_str .= ' sec ago';
   } else {

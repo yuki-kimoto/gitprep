@@ -56,6 +56,9 @@ note 'Project page';
   # Description
   $t->content_like(qr/gitprep test repository/);
   
+  # Commit datetime
+  $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
+  
   # README
   $t->content_like(qr/README/);
   
