@@ -29,7 +29,7 @@
 
   <div class="container">
     %= include '/include/project_header';
-    %= include '/include/code_menu', display => 'tags', tags_count => scalar @$tags;
+    %= include '/include/code_menu', display => 'tags';
     
     <h3 style="font-size:20px">Tags</h3>
     
@@ -42,7 +42,7 @@
           <div class="border-gray" style="padding:7px 5px;border-left:none;border-right:none;border-bottom:none;">
             <div class="row">
               <div class="span3">
-                <a class="muted" href="<%= url_for("/$user/$project/tree/$name") %>" title="<%= $tag->{commit}{age_string_date} %>"><%= $tag->{commit}{age_string} %></a>
+                <span class="muted" href="<%= url_for("/$user/$project/tree/$name") %>" title="<%= $tag->{commit}{age_string_datetime} %>"><%= $tag->{commit}{age_string} %></span>
               </div>
               <div class="span8">
                 <div>

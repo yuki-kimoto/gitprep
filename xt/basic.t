@@ -113,8 +113,8 @@ note 'Tags page';
   # Page access
   $t->get_ok("/$user/$project/tags");
   
-  # Date
-  $t->content_like(qr/\d{4}-\d{2}-\d{2}/);
+  # Commit datetime
+  $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
   
   # Tree link
   $t->content_like(qr#/$user/$project/tree/t1#);

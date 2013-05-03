@@ -11,7 +11,7 @@
   <div class="border-blue" style="padding:5px;border-top:none">
     <div class="row" style="font-size:12px">
       <div class="span8">
-        <a style="color:#333" href="#" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></a>
+        <span style="color:#333" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>
         <span class="muted">
           authored <span title="<%= $commit->{age_string_datetime} %>"><%= $commit->{age_string} %></span>
         </span>
@@ -55,7 +55,7 @@
             <a class="font-black" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
               <%= $commit->{title_short} %>
             </a>
-            [<a href="#" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></a>]
+            [<span style="color:#4183c4" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>]
           </div>
         </div>
       </div>

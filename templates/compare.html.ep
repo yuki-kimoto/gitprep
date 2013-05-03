@@ -74,9 +74,9 @@
     <h2>Compare View</h2>
     <div class="row">
       <div class="span8 muted" style="padding-top:9px">
-        Last commit <%= $commits->[0]{age_string} %>
+        Last commit <span title="<%= $commits->[0]{age_string_datetime} %>"><%= $commits->[0]{age_string} %></span>
       </div>
-      <div class="span4 text-right">
+      <div class="text-right">
         <button class="btn"><%= $rev1 %></button>
         ...
         <button class="btn"><%= $rev2 %></button>

@@ -24,14 +24,14 @@
   
   <div class="container">
     %= include '/include/project_header';
-    %= include '/include/code_menu', display => 'branches', branches_count => scalar @$branches;
+    %= include '/include/code_menu', display => 'branches';
     
     <h3>Branches</h3>
     
     <div class="muted">
       Showing <%= @$branches %> branches not merged into master
     </div>
-    <div class="bk-black padding5">
+    <div class="bk-black" style="padding:5px">
       <div class="row">
         <div class="span8">
           <div class="font-white">
@@ -39,9 +39,13 @@
           </div>
           <div class="muted">
             Last updated
-            <%= $default_branch->{commit}{age_string} %>
+            <span title="<%= $default_branch->{commit}{age_string_datetime} %>">
+              <%= $default_branch->{commit}{age_string} %>
+            </span>
             by
-            <%= $default_branch->{commit}{author_name} %>
+            <span title="<%= $default_branch->{commit}{author_email} %>">
+              <%= $default_branch->{commit}{author_name} %>
+            </span>
           </div>
         </div>
         <div class="span3 offset1-mini text-right font-white" style="padding-top:10px">
@@ -53,7 +57,7 @@
       % my $branch = $branches->[$i];
       % my $bname = $branch->{name};
       % next if $bname eq $default_branch->{name};
-      <div class="padding5 border-bottom-gray">
+      <div class="border-bottom-gray" style="padding:5px">
         <div class="row">
           <div class="span8">
             <div>
@@ -63,12 +67,16 @@
             </div>
             <div class="muted">
               Last updated
-              <%= $branch->{commit}{age_string} %>
+              <span title="<%= $branch->{commit}{age_string_datetime} %>">
+                <%= $branch->{commit}{age_string} %>
+              </span>
               by
-              <%= $branch->{commit}{author_name} %>
+              <span title="<%= $branch->{commit}{author_email} %>">
+                <%= $branch->{commit}{author_name} %>
+              </span>
             </div>
           </div>
-          <div class="span3 offset1-mini text-right" style="padding-top:5px">
+          <div class="text-right" style="padding-top:5px">
             <a class="btn" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname") %>">
               Compare
             </a>
