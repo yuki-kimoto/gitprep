@@ -1,17 +1,17 @@
-<div class="border-gray" style="margin-bottom:20px;">
-  <div class="border-bottom-gray padding5 bk-gray-light">
+<div style="margin-bottom:20px;">
+  <div class="border-gray bk-gray-light" style="padding:5px">
     <div class="row">
       <div class="span8" style="padding-top:6px">
         <%= $file %>
       </div>
-      <div class="span3 offset1-mini text-right">
+      <div class="text-right">
         <a class="btn" href="<%= url_for("/$user/$project/blob/$id/$file") %>">
           View file @ <%= substr($id, 0, 7) %>
         </a>
       </div>
     </div>
   </div>
-  <table>
+  <table class="border-gray" style="border-top:none">
     % for my $line (@$lines) {
       % my $class = $line->{class};
       % my $value = $line->{value};
@@ -44,15 +44,15 @@
             $border_color = '#e5e5e5';
           }
         %>
-        <tr>
-          <td style="color:#aaa;padding-left:7px;border-right:1px <%= $border_color %> solid;background-color:<%= $bk_color_line %>;">
+        <tr >
+          <td style="font-size:12px;color:#aaa;padding:0 7px;border-right:1px <%= $border_color %> solid;background-color:<%= $bk_color_line %>;">
             <%= $line->{before_line_num} %>
           </td>
-          <td style="color:#aaa;padding-left:7px;border-right:1px <%= $border_color %> solid;background-color:<%= $bk_color_line %>;">
+          <td style="font-size:12px;color:#aaa;padding:0 7px;border-right:1px <%= $border_color %> solid;background-color:<%= $bk_color_line %>;">
             <%= $line->{after_line_num} %>
           </td>
           <td style="width:100%;padding-left:7px;background-color:<%= $bk_color %>;">
-            <%= $value %>
+            <pre style="border:none;background:none;padding:0;margin:0"><%= $value %></pre>
           </td>
         </tr>
       % }
