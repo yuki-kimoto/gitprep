@@ -87,21 +87,30 @@ sub logined_admin {
 }
 
 sub logined {
-  my $self = shift;
+  my ($self, $user) = @_;
   
   my $c = $self->cntl;
   
   my $dbi = $c->app->dbi;
   
-  my $user = $c->session('user');
+  my $current_user = $c->session('user');
   my $password = $c->session('password');
   return unless defined $password;
   
   my $correct_password
-    = $dbi->model('user')->select('password', id => $user)->value;
+    = $dbi->model('user')->select('password', id => $current_user)->value;
   return unless defined $correct_password;
   
-  return $password eq $correct_password;
+  my $logined;
+  
+  if (defined $user) {
+    $logined = $user eq $current_user && $password eq $correct_password;
+  }
+  else {
+    $logined = $password eq $correct_password
+  }
+  
+  return $logined;
 }
 
 sub users {

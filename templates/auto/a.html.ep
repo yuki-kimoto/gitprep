@@ -1,8 +1,0 @@
-    <%
-      use Encode 'encode';
-      
-      $self->res->headers->content_type('text/plain;charset=UTF-8');
-      $self->res->body(encode('UTF-8', 'あ'));
-      $self->rendered;
-      return;
-    %>

@@ -36,12 +36,10 @@
   $content_disposition .= "; filename=$file_name";
   
   # Response
-  $self->res->code(200);
   $self->res->headers->content_disposition($content_disposition);
   $self->res->headers->content_type($type);
-  $self->res->body($blob_raw);
-  $self->rendered;
-  $self->stash->{'mojo.routed'} = 1;
+  $self->render(data => $blob_raw);
+  $self->finish_rendering;
   
   return;
 %>

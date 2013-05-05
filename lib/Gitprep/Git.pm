@@ -172,21 +172,6 @@ sub blob_plain {
   return $content;
 }
 
-sub blob_raw {
-  my ($self, $user, $project, $rev, $path) = @_;
-  
-  # Get blob raw
-  my @cmd = $self->cmd($user, $project, 'cat-file', 'blob', "$rev:$path");
-  open my $fh, "-|", @cmd
-    or croak 500, "Open git-cat-file failed";
-  local $/;
-  my $blob_raw = scalar <$fh>;
-
-  close $fh or croak 'Reading git-shortlog failed';
-  
-  return $blob_raw;
-}
-
 sub blob_mimetype {
   my ($self, $user, $project, $rev, $file) = @_;
   
@@ -231,6 +216,43 @@ sub blob_contenttype {
   }
 
   return $type;
+}
+
+sub blob_mode {
+  my ($self, $user, $project, $rev, $file) = @_;
+  
+  # Mode
+  $file =~ s#/+$##;
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'ls-tree',
+    $rev,
+    '--',
+    $file
+  );
+  open my $fh, '-|', @cmd
+    or croak 'Open git-ls-tree failed';
+  my $line = $self->_dec(scalar <$fh>);
+  close $fh or return;
+  my ($mode) = ($line || '') =~ m/^([0-9]+) /;
+  
+  return $mode;
+}
+
+sub blob_raw {
+  my ($self, $user, $project, $rev, $path) = @_;
+  
+  # Get blob raw
+  my @cmd = $self->cmd($user, $project, 'cat-file', 'blob', "$rev:$path");
+  open my $fh, "-|", @cmd
+    or croak 500, "Open git-cat-file failed";
+  local $/;
+  my $blob_raw = scalar <$fh>;
+
+  close $fh or croak 'Reading git-shortlog failed';
+  
+  return $blob_raw;
 }
 
 sub blob_size_kb {
@@ -341,6 +363,28 @@ sub commits_number {
   return $commits_num;
 }
 
+sub delete_branch {
+  my ($self, $user, $project, $branch) = @_;
+  
+  my $branches = $self->branches($user, $project);
+  my $exists;
+  for my $b (@$branches) {
+    if ($branch eq $b->{name}) {
+      $exists = 1;
+      next;
+    }
+  }
+  
+  if ($exists) {
+    my @cmd = $self->cmd($user, $project, 'branch', '-D', $branch);
+    system(@cmd) == 0
+      or croak "Branch deleting failed. Can't delete branch $branch";
+  }
+  else {
+    croak "Branch deleteting failed.. branchg $branch is not exists";
+  }
+}
+
 sub description {
   my ($self, $user, $project, $description) = @_;
   
@@ -360,77 +404,6 @@ sub description {
     my $description = $self->_slurp($file) || '';
     return $description;
   }
-}
-
-sub blob_mode {
-  my ($self, $user, $project, $rev, $file) = @_;
-  
-  # Mode
-  $file =~ s#/+$##;
-  my @cmd = $self->cmd(
-    $user,
-    $project,
-    'ls-tree',
-    $rev,
-    '--',
-    $file
-  );
-  open my $fh, '-|', @cmd
-    or croak 'Open git-ls-tree failed';
-  my $line = $self->_dec(scalar <$fh>);
-  close $fh or return;
-  my ($mode) = ($line || '') =~ m/^([0-9]+) /;
-  
-  return $mode;
-}
-
-sub file_type {
-  my ($self, $mode) = @_;
-  
-  # File type
-  if ($mode !~ m/^[0-7]+$/) { return $mode }
-  else { $mode = oct $mode }
-  if ($self->_s_isgitlink($mode)) { return 'submodule' }
-  elsif (S_ISDIR($mode & S_IFMT)) { return 'directory' }
-  elsif (S_ISLNK($mode)) { return 'symlink' }
-  elsif (S_ISREG($mode)) { return 'file' }
-  else { return 'unknown' }
-  
-  return
-}
-
-sub file_type_long {
-  my ($self, $mode) = @_;
-  
-  # File type
-  if ($mode !~ m/^[0-7]+$/) { return $mode }
-  else { $mode = oct $mode }
-  if ($self->_s_isgitlink($mode)) { return 'submodule' }
-  elsif (S_ISDIR($mode & S_IFMT)) { return 'directory' }
-  elsif (S_ISLNK($mode)) { return 'symlink' }
-  elsif (S_ISREG($mode)) {
-    if ($mode & S_IXUSR) { return 'executable file' }
-    else { return 'file' }
-  }
-  else { return 'unknown' }
-  
-  return;
-}
-
-sub fill_from_file_info {
-  my ($self, $user, $project, $diff, $parents) = @_;
-  
-  # Fill file info
-  $diff->{from_file} = [];
-  $diff->{from_file}[$diff->{nparents} - 1] = undef;
-  for (my $i = 0; $i < $diff->{nparents}; $i++) {
-    if ($diff->{status}[$i] eq 'R' || $diff->{status}[$i] eq 'C') {
-      $diff->{from_file}[$i] =
-        $self->path_by_id($user, $project, $parents->[$i], $diff->{from_id}[$i]);
-    }
-  }
-
-  return $diff;
 }
 
 sub difftree {
@@ -502,6 +475,55 @@ sub difftree {
   }
   
   return $diffs;
+}
+
+sub file_type {
+  my ($self, $mode) = @_;
+  
+  # File type
+  if ($mode !~ m/^[0-7]+$/) { return $mode }
+  else { $mode = oct $mode }
+  if ($self->_s_isgitlink($mode)) { return 'submodule' }
+  elsif (S_ISDIR($mode & S_IFMT)) { return 'directory' }
+  elsif (S_ISLNK($mode)) { return 'symlink' }
+  elsif (S_ISREG($mode)) { return 'file' }
+  else { return 'unknown' }
+  
+  return
+}
+
+sub file_type_long {
+  my ($self, $mode) = @_;
+  
+  # File type
+  if ($mode !~ m/^[0-7]+$/) { return $mode }
+  else { $mode = oct $mode }
+  if ($self->_s_isgitlink($mode)) { return 'submodule' }
+  elsif (S_ISDIR($mode & S_IFMT)) { return 'directory' }
+  elsif (S_ISLNK($mode)) { return 'symlink' }
+  elsif (S_ISREG($mode)) {
+    if ($mode & S_IXUSR) { return 'executable file' }
+    else { return 'file' }
+  }
+  else { return 'unknown' }
+  
+  return;
+}
+
+sub fill_from_file_info {
+  my ($self, $user, $project, $diff, $parents) = @_;
+  
+  # Fill file info
+  $diff->{from_file} = [];
+  $diff->{from_file}[$diff->{nparents} - 1] = undef;
+  for (my $i = 0; $i < $diff->{nparents}; $i++) {
+    if ($diff->{status}[$i] eq 'R' || $diff->{status}[$i] eq 'C') {
+      $diff->{from_file}[$i] =
+        $self->path_by_id($user, $project, $parents->[$i], $diff->{from_id}[$i]);
+    }
+  }
+
+  return $diff;
 }
 
 sub branches {

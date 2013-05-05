@@ -7,6 +7,10 @@
   my $errors;
   if ($op eq 'delete') {
 
+    unless ($api->logined) {
+      return $self->render_exception;
+    }
+
     # Validation
     my $params = $api->params;
     my $validator = $self->app->validator;

@@ -68,7 +68,7 @@
     % }
     
     % if ($errors) {
-      <div class="alert">
+      <div class="alert alert-error">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
         % for my $error (@$errors) {
           <p><%= $error %></p>

@@ -116,7 +116,15 @@ sub startup {
   
   # Helper
   $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
-
+  $self->helper(finish_rendering => sub {
+    my $self = shift;
+    
+    $self->stash->{'mojo.routed'} = 1;
+    $self->rendered;
+    
+    return $self;
+  });
+  
   # Routes
   my $r = $self->routes;
 
@@ -179,7 +187,7 @@ sub startup {
       $r->get('/commits/#rev/(*blob)')->name('commits');
       
       # Branches
-      $r->get('/branches')->name('branches');
+      $r->any('/branches')->name('branches');
 
       # Tags
       $r->get('/tags')->name('tags');
