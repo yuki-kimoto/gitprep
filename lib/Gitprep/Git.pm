@@ -334,6 +334,28 @@ sub branch_commits {
   return $commits;
 }
 
+sub branch_status {
+  my ($self, $user, $project, $branch1, $branch2) = @_;
+  
+  my $status = {ahead => 0, behind => 0};
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'rev-list',
+    '--left-right',
+    "$branch1...$branch2"
+  );
+  open my $fh, '-|', @cmd
+    or croak "Can't get branch status: @cmd";
+  
+  while (my $line = <$fh>) {
+    if ($line =~ /^</) { $status->{behind}++ }
+    elsif ($line =~ /^>/) { $status->{ahead}++ }
+  }
+  
+  return $status;
+}
+
 sub check_head_link {
   my ($self, $dir) = @_;
   
@@ -560,6 +582,8 @@ sub branches {
     $branch->{no_merged} = 1 if $no_merged_branches_h->{$branch_name};
     push @$branches, $branch;
   }
+  
+  @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
   
   return $branches;
 }
