@@ -5,7 +5,7 @@
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $op = param('op');
+  my $op = param('op') || '';
   
   # Git
   my $git = $self->app->git;
@@ -100,13 +100,13 @@
           $('#no-merged-branch-message').hide();
           $('#merged-branch-message').show();
           $('.no-merged-branch').css('display', 'none');
-          $('.merged-branch').css('display', 'inline');
+          $('.merged-branch').css('display', 'block');
         }
         else {
           $(this).text('View merged branches');
           $('#no-merged-branch-message').show();
           $('#merged-branch-message').hide();
-          $('.no-merged-branch').css('display', 'inline');
+          $('.no-merged-branch').css('display', 'block');
           $('.merged-branch').css('display', 'none');
         }
         display_no_merged = !display_no_merged;
@@ -140,9 +140,9 @@
     %= include '/include/project_header';
     %= include '/include/code_menu', display => 'branches';
     
-    <h3>Branches</h3>
+    <h3 style="font-size:19px">Branches</h3>
     
-    <div class="muted">
+    <div style="margin-bottom:10px">
       Showing
       <span id="no-merged-branch-message">
          <%= $no_merged_branches_count %> branches not merged
@@ -153,24 +153,24 @@
       into <%= $default_branch->{name} %>.
       <a id="toggle-branch" href="#">View merged branches</a>
     </div>
-    <div class="bk-black" style="padding:5px">
+    <div class="bk-black" style="padding:5px 10px">
       <div class="row">
-        <div class="span8">
-          <div class="font-white">
+        <div class="span8" style="line-height:1.2em">
+          <div style="color:white;font-size:16px;">
             <b><%= $default_branch->{name} %></b>
           </div>
-          <div class="muted">
+          <div class="muted" style="font-size:12px">
             Last updated
             <span title="<%= $default_branch->{commit}{age_string_datetime} %>">
               <%= $default_branch->{commit}{age_string} %>
             </span>
             by
-            <span title="<%= $default_branch->{commit}{author_email} %>">
+            <span title="<%= $default_branch->{commit}{author_email} %>" style="color:white">
               <%= $default_branch->{commit}{author_name} %>
             </span>
           </div>
         </div>
-        <div class="text-right font-white" style="padding-top:10px">
+        <div class="text-right font-white" style="padding-top:6px">
           Base branch
         </div>
       </div>
@@ -179,15 +179,15 @@
       % my $branch = $branches->[$i];
       % my $bname = $branch->{name};
       % next if $bname eq $default_branch->{name};
-      <div class="<%= $branch->{no_merged} ? 'no-merged-branch' : 'merged-branch' %> border-bottom-gray" style="padding:5px">
+      <div class="<%= $branch->{no_merged} ? 'no-merged-branch' : 'merged-branch' %> border-bottom-gray" style="padding:10px 0px 5px 0px;<%= $branch->{no_merged} ? '' : 'display:none' %>">
         <div class="row">
-          <div class="span8">
-            <div>
+          <div class="span8" style="line-height:1.2em">
+            <div style="font-size:16px;">
               <a href="<%= url_for("/$user/$project/tree/$bname") %>">
-                <%= $bname %>
+                <b><%= $bname %></b>
               </a>
             </div>
-            <div class="muted">
+            <div style="font-size:12px">
               Last updated
               <span title="<%= $branch->{commit}{age_string_datetime} %>">
                 <%= $branch->{commit}{age_string} %>
@@ -198,7 +198,7 @@
               </span>
             </div>
           </div>
-          <div class="text-right" style="padding-top:5px">
+          <div class="text-right" style="padding-top:0px">
             % if ($api->logined($user)) {
               <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
                 <input type="submit" class="btn delete-branch" style="color:#900;" value="Delete branch">
