@@ -221,7 +221,6 @@
               </tr>
               <tr>
                 <td style="width:100px">
-                  % warn $branch->{status}{behind} / $behind_max;
                   <div style="margin-left:auto;margin-right:0;background:#b2d0dd;width:<%= $behind_max != 0 ? 100 * ($branch->{status}{behind} / $behind_max) : 0 %>%;height:8px"></div>
                 </td>
                 <td style="background:#333">

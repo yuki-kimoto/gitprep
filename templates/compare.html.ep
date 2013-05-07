@@ -106,7 +106,7 @@
           % for my $date (reverse sort keys %$commits_date) {
             % my $commits = $commits_date->{$date};
             
-            <div class="bk-gray-light border-gray" style="padding:5px;border-bottom:none">
+            <div class="bk-gray-light border-gray" style="padding:5px;">
               <%= $date %>
             </div>
             
@@ -144,9 +144,10 @@
           </div>
           <div>
             <div>
+              % my $num = 0;
               % for (my $i = 0; $i < @$blobdiffs; $i++) {
                 % my $blobdiff = $blobdiffs->[$i];
-                <div class="patch" id="<%= $i + 1 %>">
+                <div id="diff-<%= $i %>" >
                   % my $lines = $blobdiff->{lines};
                   % my $file = $blobdiff->{file};
                   % my $from_file = $blobdiff->{from_file};

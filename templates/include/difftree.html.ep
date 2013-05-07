@@ -1,33 +1,44 @@
 %= stylesheet begin
   .file-add {
-    margin-left:3px;
-    padding:1px;
-    line-height:10px;
-    display:inline-block;
     color:#32CD32;
     border:2px #32CD32 solid;
+    margin-left:3px;
     font-weight:bold;
+    line-height:0;
+    display:table-cell;
+    text-align:center;
+    vertical-align:middle;
+    width:9px;
+    height:9px;
+    font-size:13px;
   }
 
   .file-del {
-    margin-left:3px;
-    padding:1px;
-    line-height:10px;
-    display:inline-block;
     color:red;
     border:2px red solid;
+    margin-left:3px;
     font-weight:bold;
+    line-height:0;
+    display:table-cell;
+    text-align:center;
+    vertical-align:middle;
+    width:9px;
+    height:9px;
+    font-size:15px;
   }
 
   .file-modified {
-    margin-left:3px;
-    padding:1px;
-    line-height:10px;
-    display:inline-block;
     color:#A9A9A9;
     border:2px #A9A9A9 solid;
+    margin-left:3px;
     font-weight:bold;
-    font-size:90%;
+    line-height:0;
+    display:table-cell;
+    text-align:center;
+    vertical-align:middle;
+    width:9px;
+    height:9px;
+    font-size:13px;
   }
 % end
   
@@ -131,11 +142,11 @@
         % my $from_mode_oct = $difftree->{from_mode_oct};
         <td>
           % if ($status eq 'A') {
-            <span class="file-add">+</span>
+            <div class="file-add">+</div>
           % } elsif ($status eq 'D') {
-            <span class="file-del">-</span>
+            <div class="file-del">-</div>
           % } elsif ($status eq 'M' || $status eq 'T') {
-            <span class="file-modified">●</span>
+            <div class="file-modified">●</div>
             % if ($from_mode != $mode) {
               <span>
                 [

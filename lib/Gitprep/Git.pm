@@ -64,6 +64,7 @@ sub blobdiffs {
   
   return unless defined $from_id;
   
+  # Files changing infomation
   my $blobdiffs = [];
   my @cmd = $self->cmd(
     $user,
