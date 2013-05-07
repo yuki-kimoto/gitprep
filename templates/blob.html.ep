@@ -72,7 +72,7 @@
       </div>
     </div>
     % if ($mimetype =~ m#^image/#) {
-      <div>
+      <div style="background:#ddd;text-align:center;padding-top:30px;padding-bottom:30px;margin-bottom:30px">
         <img type="<%= $mimetype %>
           % if (defined $file) {
             alt="<%= $file %>" title="<%= $file %>"

@@ -26,11 +26,18 @@
       % my $class = $line->{class};
       % my $value = $line->{value};
       % if ($class eq 'binary_file') {
-        Binary files
-        <a href="<%= url_for("/$user/$project/blob/$from_id/$file") %>">a/<%= $file %></a>
-        and
-        <a href="<%= url_for("/$user/$project/blob/$id/$file") %>">b/<%= $file %></a>
-        differ
+        <div class="border-gray" style="border-top:none;background:#ddd;text-align:center;padding-top:30px;padding-bottom:30px">
+          % if ($status ne 'A') {
+            <a href="<%= url_for("/$user/$project/blob/$from_id/$file") %>">
+              <img src="<%= url_for("/$user/$project/raw/$from_id/$file") %>" style="border:1px solid red;padding:1px;margin-right:20px">
+            </a>
+          % }
+          % if ($status ne 'D') {
+            <a href="<%= url_for("/$user/$project/blob/$id/$file") %>">
+              <img src="<%= url_for("/$user/$project/raw/$id/$file") %>" style="border:1px solid green;padding:1px;margin-left:20px">
+            </a>
+          % }
+        </div>
         % last;
       % } else {
         <%
