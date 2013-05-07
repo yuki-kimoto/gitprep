@@ -1,8 +1,3 @@
-/* Offset */
-.offset1-mini {
-  margin-left: 88px;
-}
-
 /* Font color */
 .font-black {
   color: #333;
@@ -22,40 +17,6 @@
   background-color:#eee;
 }
 
-/* Padding */
-.vpadding5 {
-  padding-top:5px;
-  padding-bottom:5px;
-}
-.padding5 {
-  padding:5px;
-}      
-/* space */
-.space5 {
-  display:inline-block;
-  width:5px;
-}
-
-/* Vritical space */
-.vspace5 {
-  margin-top:5px;
-}
-.vspace10 {
-  margin-top:10px;
-}
-.vspace15 {
-  margin-top:15px;
-}
-.vspace20 {
-  margin-top:20px;
-}
-.vspace25 {
-  margin-top:25px;
-}
-.vspace30 {
-  margin-top:30px;
-}
-
 /* Border radius */
 .radius-top {
   border-top-left-radius:4px;
@@ -72,9 +33,6 @@
 }
 
 /* Border */
-.border-bottom-none {
-  border-bottom:none;
-}
 .border-gray {
   border:1px solid #ccc;
 }
@@ -84,60 +42,7 @@
 .border-bottom-gray {
   border-bottom:1px solid #ccc;
 }
-.border-3-gray {
-  border-left:1px solid #ccc;
-  border-bottom:1px solid #ccc;
-  border-right:1px solid #ccc;
-}
-
-.corner-left-none {
-  border-top-left-radius:0;
-  border-bottom-left-radius:0;
-  margin-left:0;
-}
-.corner-right-none {
-  border-top-right-radius:0;
-  border-bottom-right-radius:0;
-  margin-right:0;
-}
 
 .border-blue {
   border:1px solid #c5d5dd;
 }
-
-.border-blue-light {
-  
-}
-
-/* Commit page */
-
-  .file-add {
-    margin-left:3px;
-    padding:1px;
-    line-height:10px;
-    display:inline-block;
-    color:#32CD32;
-    border:2px #32CD32 solid;
-    font-weight:bold;
-  }
-
-  .file-del {
-    margin-left:3px;
-    padding:1px;
-    line-height:10px;
-    display:inline-block;
-    color:red;
-    border:2px red solid;
-    font-weight:bold;
-  }
-
-  .file-modified {
-    margin-left:3px;
-    padding:1px;
-    line-height:10px;
-    display:inline-block;
-    color:#A9A9A9;
-    border:2px #A9A9A9 solid;
-    font-weight:bold;
-    font-size:90%;
-  }

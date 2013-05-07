@@ -334,6 +334,31 @@ sub branch_commits {
   return $commits;
 }
 
+sub branch_diff {
+  my ($self, $user, $project, $branch1, $branch2) = @_;
+  
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'rev-list',
+    '--left-right',
+    "$branch1...$branch2"
+  );
+  open my $fh, '-|', @cmd
+    or croak "Can't get branch status: @cmd";
+  
+  my $commits = [];
+  while (my $line = <$fh>) {
+    if ($line =~ /^>(.+)\s/) {
+      my $commit_id = $1;
+      my $commit = $self->get_commit($user, $project, $commit_id);
+      push @$commits, $commit;
+    }
+  }
+  
+  return $commits;
+}
+
 sub branch_status {
   my ($self, $user, $project, $branch1, $branch2) = @_;
   

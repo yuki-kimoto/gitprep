@@ -1,3 +1,36 @@
+%= stylesheet begin
+  .file-add {
+    margin-left:3px;
+    padding:1px;
+    line-height:10px;
+    display:inline-block;
+    color:#32CD32;
+    border:2px #32CD32 solid;
+    font-weight:bold;
+  }
+
+  .file-del {
+    margin-left:3px;
+    padding:1px;
+    line-height:10px;
+    display:inline-block;
+    color:red;
+    border:2px red solid;
+    font-weight:bold;
+  }
+
+  .file-modified {
+    margin-left:3px;
+    padding:1px;
+    line-height:10px;
+    display:inline-block;
+    color:#A9A9A9;
+    border:2px #A9A9A9 solid;
+    font-weight:bold;
+    font-size:90%;
+  }
+% end
+  
 <table style="margin-bottom:10px">
   
   % my $has_header = @$difftrees && @$parents > 1 && stash('action') eq 'commitdiff';

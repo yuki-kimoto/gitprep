@@ -188,7 +188,7 @@
           Settings
         </h4>
       </div>
-      <div class="padding5 border-gray" style="border-top:none">
+      <div class="border-gray" style="padding:5px;border-top:none">
         <div >Repository Name</div>
         <div>
           %= text_field 'renamed-project' => $project, style => 'margin-top:9px';
@@ -197,7 +197,7 @@
           </a>
         </div>
       </div>
-      <div class="padding5 border-gray" style="border-top:none">
+      <div class="border-gray" style="padding:5px;border-top:none">
         <div >Description</div>
         <div>
           % my $description = $git->description($user, $project);
@@ -209,7 +209,7 @@
           Savaed!
         </div>
       </div>
-      <div class="border-gray padding5" style="border-top:none">
+      <div class="border-gray" style="padding:5px;border-top:none">
         Default Branch
         % my $branches = $git->branches($user, $project);
         % my $branch_names = [map { $_->{name} } @$branches];
@@ -222,7 +222,7 @@
       <div class="border-gray bk-gray-light" style="background-color:red;padding-left:5px">
         <h4 style="color:white">Danger Zone</h4>
       </div>
-      <div class="padding5 border-gray" style="border-top:none">
+      <div class="border-gray" style="padding:5px;border-top:none">
         <div><b>Delete this repository</b></div>
         <span class="muted">
           Once you delete a repository, there is no going back.
@@ -291,6 +291,5 @@
       </button>
     </div>
   </div>
-
 
   %= include '/include/footer';

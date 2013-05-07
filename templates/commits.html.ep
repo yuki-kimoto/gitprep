@@ -86,7 +86,7 @@
           <div class="border-blue <%= $num eq @$commits - 1 ? 'radius-bottom' : '' %>" style="font-size:12px;border-top:none; padding:1px 5px 5px 5px">
             <div class="row">
               <div class="span8">
-                <%= $commit->{author_name} %> <span class="muted" title="<%= $commit->{age_string_datetime} %>"><%= $commit->{age_string} %></span>
+                <span title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span> <span class="muted" title="<%= $commit->{age_string_datetime} %>"><%= $commit->{age_string} %></span>
               </div>
               <div class="text-right">
                 <a class="muted" style="padding-right:18px;font-weight:bold" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">                  Browse code

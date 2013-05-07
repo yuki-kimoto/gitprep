@@ -5,7 +5,6 @@
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $rev = param('rev');
   my $rev1 = param('rev1');
   my $rev2 = param('rev2');
   my $page = param('page') || 0;
@@ -14,7 +13,8 @@
   my $git = $self->app->git;
   
   # Commits
-  my $commits = $git->branch_commits($user, $project, $rev1, $rev2);
+  my $commits = $git->branch_diff($user, $project, $rev1, $rev2);
+  
   my $commits_count = @$commits;
   my $commits_date = {};
   my $authors = {};
@@ -72,84 +72,102 @@
     %= include '/include/code_menu', display => 'files';
     
     <h2>Compare View</h2>
-    <div class="row">
-      <div class="span8 muted" style="padding-top:9px">
-        Last commit <span title="<%= $commits->[0]{age_string_datetime} %>"><%= $commits->[0]{age_string} %></span>
-      </div>
-      <div class="text-right">
-        <button class="btn"><%= $rev1 %></button>
-        ...
-        <button class="btn"><%= $rev2 %></button>
+    <div class="well" style="padding:9px 10px 9px 10px;margin-bottom:5px">
+      <div class="row">
+        <div class="span3">
+          <div class="radius" style="display:inline-block;background:#add8e6;padding:2px 12px;margin-right:5px"><%= $rev1 %></div>
+          ...
+          <div class="radius" style="display:inline-block;background:#add8e6;padding:2px 12px;margin-left:5px"><%= $rev2 %></div>
+        </div>
+        <!--
+        <div class="text-right">
+          <button class="btn" style="padding:2px 10px">Edit</button>
+        </div>
+        -->
       </div>
     </div>
+    <div style="margin-bottom:20px">From here you can compare two points in history. You can even compare tag names and commits.</div>
     
     <hr style="margin-top:5px">
 
-    <ul class="nav nav-tabs" id="compare-tab">
-      <li class="active"><a href="#commits" data-toggle="tab">Commits</a></li>
-      <li><a href="#file-changed" data-toggle="tab">Files Changed</a></li>
-    </ul>
+    % if (keys %$commits_date) {
 
-    <div class="tab-content">
-      <div class="tab-pane active" id="commits">
-        <div>
-          Showing <%= @$commits %> commits by <%= $authors_count %> author.
-        </div>
+      <ul class="nav nav-tabs" id="compare-tab">
+        <li class="active"><a href="#commits" data-toggle="tab">Commits</a></li>
+        <li><a href="#file-changed" data-toggle="tab">Files Changed</a></li>
+      </ul>
 
-        % for my $date (reverse sort keys %$commits_date) {
-          % my $commits = $commits_date->{$date};
-          
-          <div class="bk-gray-light border-gray" style="padding:5px;border-bottom:none">
-            <%= $date %>
+      <div class="tab-content">
+        <div class="tab-pane active" id="commits">
+          <div>
+            Showing <%= @$commits %> commits by <%= $authors_count %> author.
           </div>
-          
-          <div style="margin-bottom:20px">
-            % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
-              <div class="border-gray" style="padding:5px">
-                <div class="row">
-                  <div class="span2">
-                    <%= $commit->{author_name} %>
-                  </div>
-                  <div class="span2">
-                    <a class="muted" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                      <%= $commit->{title_short} %>
-                    </a>
-                  </div>
-                  <div class="span7 text-right">
-                    <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                      <%= substr($commit->{id}, 0, 7) %>
-                    </a>
+
+          % for my $date (reverse sort keys %$commits_date) {
+            % my $commits = $commits_date->{$date};
+            
+            <div class="bk-gray-light border-gray" style="padding:5px;border-bottom:none">
+              <%= $date %>
+            </div>
+            
+            <div style="margin-bottom:20px">
+              % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
+                <div class="border-gray" style="padding:5px;border-top:none">
+                  <div class="row">
+                    <div class="span2">
+                      <span title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>
+                    </div>
+                    <div class="span7">
+                      <a style="color:#333" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                        <%= $commit->{title_short} %>
+                      </a>
+                    </div>
+                    <div class="span2 text-right" style="margin-left:80px">
+                      <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                        <%= substr($commit->{id}, 0, 7) %>
+                      </a>
+                    </div>
                   </div>
                 </div>
-              </div>
-            % }
+              % }
+            </div>
+          % }
+        </div>
+        
+        <div class="tab-pane" id="file-changed">
+          <div style="margin-bottom:5px">
+            Showing <b><%= @$difftrees %> changed files</b>
           </div>
-        % }
-      </div>
-      <div class="tab-pane" id="file-changed">
-        <div style="margin-bottom:5px">
-          Showing <b><%= @$difftrees %> changed files</b>
-        </div>
-        <div>
-          <%= include '/include/difftree', id => $end_commit->{id}, from_id => $start_commit->{id},
-            difftrees => $difftrees, parents => [], project_ns => $project %>
-        </div>
-        <div>
           <div>
-            % for (my $i = 0; $i < @$blobdiffs; $i++) {
-              % my $blobdiff = $blobdiffs->[$i];
-              <div class="patch" id="<%= $i + 1 %>">
-                % my $lines = $blobdiff->{lines};
-                % my $file = $blobdiff->{file};
-                % my $from_file = $blobdiff->{from_file};
-                % $from_file = $file unless defined $from_file;
-                % my $status = $blobdiff->{status};
-                %= include '/include/blobdiff_body', file => $file, from_file => $from_file, status => $status, lines => $blobdiff->{lines}, project_ns => $project, from_id => $start_commit->{id}, id => $end_commit->{id};
-              </div>
-            % }
+            <%= include '/include/difftree', id => $end_commit->{id}, from_id => $start_commit->{id},
+              difftrees => $difftrees, parents => [], project_ns => $project %>
+          </div>
+          <div>
+            <div>
+              % for (my $i = 0; $i < @$blobdiffs; $i++) {
+                % my $blobdiff = $blobdiffs->[$i];
+                <div class="patch" id="<%= $i + 1 %>">
+                  % my $lines = $blobdiff->{lines};
+                  % my $file = $blobdiff->{file};
+                  % my $from_file = $blobdiff->{from_file};
+                  % $from_file = $file unless defined $from_file;
+                  % my $status = $blobdiff->{status};
+                  %= include '/include/blobdiff_body', file => $file, from_file => $from_file, status => $status, lines => $blobdiff->{lines}, project_ns => $project, from_id => $start_commit->{id}, id => $end_commit->{id};
+                </div>
+              % }
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    % } else {
+      <div class="well" style="padding:35px">
+        <div class="text-center" style="margin-bottom:15px"><b>There isn't anything to compare.</b></div>
+
+        <div class="text-center muted">
+          <b><%= $rev1 %></b> is up to date with all commits from <b><%= $rev2 %></b>.
+          Try <a href="<%= url_for("/$user/$project/compare/$rev2...$rev1") %>">switching the base</a> for your comparison.
+        </div>
+      </div>
+    % }
   </div>
   %= include '/include/footer';
