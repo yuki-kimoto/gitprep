@@ -222,6 +222,9 @@ sub startup {
 
       # Network Graph
       $r->get('/network/graph')->name('network_graph');
+      
+      # Get branches and tags
+      $r->get('/api/revs')->name('api_revs');
     }
   }
   
