@@ -66,6 +66,17 @@
       $('#compare-tab a').on('click', function () {
         $(this).tab('show');
       });
+      
+      $('#base-branch-btn').on('click', function () {
+        $('#base-branch-popup')
+          .css('display', 'block')
+          .css('top', '40px')
+          .css('left', '10px')
+        ;
+      });
+      $('#base-branch-close').on('click', function () {
+        $('#base-branch-popup').css('display', 'none');
+      });
     });
   % end
 
@@ -76,14 +87,14 @@
     %= include '/include/code_menu', display => 'files';
     
     <h2>Compare View</h2>
-    <div class="well" style="padding:9px 10px 9px 10px;margin-bottom:5px">
+    <div class="well" style="padding:9px 10px 9px 10px;margin-bottom:5px;position:relative">
       <div class="row">
         <div class="span3">
-          <button class="btn" style="padding:2px 10px">
+          <button id="base-branch-btn" class="btn" style="padding:2px 10px">
             <%= $rev1 %>
           </button>
           ...
-          <button class="btn" style="padding:2px 10px">
+          <button id="compare-branch-btn" class="btn" style="padding:2px 10px">
             <%= $rev2 %>
           </button>
         </div>
@@ -91,35 +102,36 @@
           <button class="btn" style="padding:2px 10px">Edit</button>
         </div>
       </div>
-    </div>
-    <div id="base-branch-select" style="width:330px">
-      <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
-        <div class="row">
-          <div class="span3">
-            <b>Choose a base branch</b>
-          </div>
-          <div class="text-right">
-            <i class="icon-remove-circle"></i>
+
+      <div id="base-branch-popup" style="display:none;width:330px;position:absolute">
+        <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
+          <div class="row">
+            <div class="span3">
+              <b>Choose a base branch</b>
+            </div>
+            <div class="text-right">
+              <i id="base-branch-close" class="icon-remove-circle"></i>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="border-gray" style="background:#F5F5F5;border-top:none;border-bottom:none;text-align:center;padding:10px 0">
-        %= text_field 'base-branch', style => 'margin-bottom:0;width:270px', placeholder => 'Branch, tag, commit, or history marker';
-      </div>
-      <div style="max-height:500px;overflow:auto;">
-      <ul class="nav nav-tabs nav-stacked">
-        % for (my $i = 0; $i < @$branches; $i++) {
-          % my $branch = $branches->[$i];
-            <li>
-              <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= url_for("/$user/$project/compare/$branch->{name}...$rev2") %>">
-                <%= $branch->{name} %>
-              </a>
-            </li>
-        % }
-      </ul>
+        <div class="border-gray" style="background:#F5F5F5;border-top:none;border-bottom:none;text-align:center;padding:10px 0">
+          %= text_field 'base-branch', style => 'margin-bottom:0;width:270px', placeholder => 'Branch, tag, commit, or history marker';
+        </div>
+        <div style="background:white;max-height:500px;overflow:auto;">
+        <ul class="nav nav-tabs nav-stacked">
+          % for (my $i = 0; $i < @$branches; $i++) {
+            % my $branch = $branches->[$i];
+              <li>
+                <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= url_for("/$user/$project/compare/$branch->{name}...$rev2") %>">
+                  <%= $branch->{name} %>
+                </a>
+              </li>
+          % }
+        </ul>
+        </div>
       </div>
     </div>
-    
+
     <div style="margin-bottom:20px">From here you can compare two points in history. You can even compare tag names and commits.</div>
     
     <hr style="margin-top:5px">
