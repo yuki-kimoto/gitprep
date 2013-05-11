@@ -17,7 +17,6 @@
   
   # Check exsitence
   my $commits_number;
-  my $readme;
   if ($git->branch_exists($user, $project)) {
     # Directory
     
@@ -30,16 +29,12 @@
     # Commits number
     $commits_number = $git->commits_number($user, $project, $rev);
     
-    # README
-    eval { $readme = $git->blob_plain($user, $project, $rev, 'README') };
-    
     # Variable for included template
     stash(
       commit => $commit,
       trees => $trees,
       rev => $rev,
       title => "$user/$project",
-      readme => $readme
     );
     
     $state = 'display';
@@ -154,9 +149,7 @@
         %= include '/include/tree';
       </div>
       
-      % if (defined $readme) {
-        %= include '/include/readme';
-      % }
+      %= include '/include/readme';
       
     % } elsif ($state eq 'init' && $logined) {
     

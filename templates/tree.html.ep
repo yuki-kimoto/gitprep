@@ -22,17 +22,12 @@
   # Commits number
   my $commits_number = $git->commits_number($user, $project, $rev);
   
-  # README
-  my $readme;
-  eval { $readme = $git->blob_plain($user, $project, $rev, 'README') };
-  
   # Variable for included templates
   stash(
     rev => $rev,
     commit => $commit,
     trees => $trees,
     dir => $dir,
-    readme => $readme
   );
 %>
 
@@ -46,9 +41,7 @@
     %= include '/include/page_path', type => 'tree', Path => $dir;
     %= include '/include/tree';
 
-    % if ($top && defined $readme) {
-      %= include '/include/readme';
-    % }
+    %= include '/include/readme';
   </div>
   
   %= include '/include/footer';
