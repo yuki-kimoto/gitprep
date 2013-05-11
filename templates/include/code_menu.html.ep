@@ -1,10 +1,9 @@
 <%
   my $display = stash('display') || '';
   my $rev = stash('rev');
-  $rev = app->manager->default_branch($user, $project)
-    unless defined $rev;
   my $branches = stash('branches');
   my $branches_count = app->git->branches_count($user, $project);
+  my $default_branch_name = app->manager->default_branch($user, $project);
   my $tags_count = app->git->tags_count($user, $project);
 %>
 
@@ -12,14 +11,11 @@
   $(document).ready(function () {
   
     % if ($display eq 'files' || $display eq 'commits') {
+      % my $type = $display eq 'files' ? 'tree' : 'commits';
+      
       // Switch branches and tags
       var revs_init = false;
       $('#rev-btn').on('click', function () {
-        $('#rev-popup')
-          .css('display', 'block')
-          .css('top', '40px')
-          .css('left', '0px')
-        ;
         
         if (!revs_init) {
           $.get('<%= url_for("/$user/$project/api/revs") %>', function (result) {
@@ -36,7 +32,7 @@
               for (var i = 0; i < branch_names.length; i++) {
                 var branch_name = branch_names[i];
                 $('#branch-names-list').append(
-                  '<li><a ' + style + ' href="<%= url_for("/$user/$project/tree/") %>' + branch_name + '">' + branch_name + '</a></li>'
+                  '<li><a ' + style + ' href="<%= url_for("/$user/$project/$type/") %>' + branch_name + '">' + branch_name + '</a></li>'
                 );
               }
             }
@@ -50,12 +46,24 @@
               for (var i = 0; i < tag_names.length; i++) {
                 var tag_name = tag_names[i];
                 $('#tag-names-list').append(
-                  '<li><a ' + style + ' href="<%= url_for("/$user/$project/tree/") %>' + tag_name + '">' + tag_name + '</a></li>'
+                  '<li><a ' + style + ' href="<%= url_for("/$user/$project/$type/") %>' + tag_name + '">' + tag_name + '</a></li>'
                 );
               }
             }
+            $('#rev-popup')
+              .css('display', 'block')
+              .css('top', '40px')
+              .css('left', '0px')
+            ;
           });
           revs_init = true;
+        }
+        else {
+          $('#rev-popup')
+            .css('display', 'block')
+            .css('top', '40px')
+            .css('left', '0px')
+          ;
         }
       });
 
@@ -106,7 +114,11 @@
       </li>
     % }
     <li class="<%= $display eq 'files' ? 'active' : '' %>">
-      <a href="<%= url_for("/$user/$project") %>">Files</a>
+      % if ($rev eq $default_branch_name) {
+        <a href="<%= url_for("/$user/$project") %>">Files</a>
+      % } else {
+        <a href="<%= url_for("/$user/$project/tree/$rev") %>">Files</a>
+      % }
     </li>
     <li class="<%= $display eq 'commits' ? 'active' : '' %>">
       <a href="<%= url_for("/$user/$project/commits/$rev") %>">Commits</a>

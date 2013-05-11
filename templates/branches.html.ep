@@ -18,6 +18,7 @@
   my $branches;
   my $branches_count;
   my $no_merged_branches_count;
+  my $base_branch_name;
   my $merged_branches_count;
   my $max;
   
@@ -78,7 +79,7 @@
   # List
   else {
     # Default branch
-    my $base_branch_name = stash('base_branch') || app->manager->default_branch($user, $project);
+    $base_branch_name = stash('base_branch') || app->manager->default_branch($user, $project);
     $base_branch = $git->branch($user, $project, $base_branch_name);
     
     # No merged branches
@@ -93,6 +94,9 @@
     $no_merged_branches_count = $git->no_merged_branches_count($user, $project);
     $merged_branches_count = $branches_count - $no_merged_branches_count - 1;
   }
+  
+  # Global variable
+  stash(rev => $base_branch_name);
 %>
 
 % layout 'common';
