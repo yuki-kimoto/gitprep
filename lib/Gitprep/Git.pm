@@ -597,21 +597,31 @@ sub branches {
   open my $fh, '-|', @cmd or return;
   my $branches = [];
   while (my $branch_name = $self->_dec(scalar <$fh>)) {
-    $branch_name =~ s/^\*//;
-    $branch_name =~ s/^\s*//;
-    $branch_name =~ s/\s*$//;
     
-    my $branch = {};
-    $branch->{name} = $branch_name;
-    my $commit = $self->get_commit($user, $project, $branch_name);
-    $branch->{commit} = $commit;
+    my $branch = $self->branch($user, $project, $branch_name);
     $branch->{no_merged} = 1 if $no_merged_branches_h->{$branch_name};
+
     push @$branches, $branch;
   }
   
   @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
   
   return $branches;
+}
+
+sub branch {
+  my ($self, $user, $project, $branch_name) = @_;
+
+  $branch_name =~ s/^\*//;
+  $branch_name =~ s/^\s*//;
+  $branch_name =~ s/\s*$//;
+  
+  my $branch = {};
+  $branch->{name} = $branch_name;
+  my $commit = $self->get_commit($user, $project, $branch_name);
+  $branch->{commit} = $commit;
+
+  return $branch;
 }
 
 sub branches_count {

@@ -187,7 +187,7 @@ sub startup {
       $r->get('/commits/#rev/(*blob)')->name('commits');
       
       # Branches
-      $r->any('/branches')->name('branches');
+      $r->any('/branches/:base_branch', {base_branch => undef})->name('branches');
 
       # Tags
       $r->get('/tags')->name('tags');

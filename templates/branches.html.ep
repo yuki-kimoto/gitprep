@@ -12,15 +12,14 @@
   my $git = $self->app->git;
 
   # Default branch
-  my $default_branch = {};
+  my $base_branch;
   
   # Branch
   my $branches;
   my $branches_count;
   my $no_merged_branches_count;
   my $merged_branches_count;
-  my $ahead_max;
-  my $behind_max;
+  my $max;
   
   # Delete
   my $errors;
@@ -79,17 +78,16 @@
   # List
   else {
     # Default branch
-    $default_branch->{name} = app->manager->default_branch($user, $project);
-    $default_branch->{commit} = $git->get_commit($user, $project, $default_branch->{name});
+    my $base_branch_name = stash('base_branch') || app->manager->default_branch($user, $project);
+    $base_branch = $git->branch($user, $project, $base_branch_name);
     
     # No merged branches
-    $branches  = $git->branches($user, $project);
-    $ahead_max = 0;
-    $behind_max = 0;
+    $branches = $git->branches($user, $project);
+    $max = 0;
     for my $branch (@$branches) {
-      $branch->{status} = $git->branch_status($user, $project, $default_branch->{name}, $branch->{name});
-      $ahead_max = $branch->{status}{ahead} if $ahead_max < $branch->{status}{ahead};
-      $behind_max = $branch->{status}{behind} if $behind_max < $branch->{status}{behind};
+      $branch->{status} = $git->branch_status($user, $project, $base_branch->{name}, $branch->{name});
+      $max = $branch->{status}{ahead} if $max < $branch->{status}{ahead};
+      $max = $branch->{status}{behind} if $max < $branch->{status}{behind};
     }
     $branches_count = $git->branches_count($user, $project);
     $no_merged_branches_count = $git->no_merged_branches_count($user, $project);
@@ -148,7 +146,7 @@
     % }
     
     %= include '/include/project_header';
-    %= include '/include/code_menu', display => 'branches';
+    %= include '/include/code_menu', display => 'branches', branches => $branches;
     
     <h3 style="font-size:19px">Branches</h3>
     
@@ -160,23 +158,23 @@
       <span style="display:none" id="merged-branch-message">
         <%= $merged_branches_count %> branches merged
       </span>
-      into <%= $default_branch->{name} %>.
+      into <%= $base_branch->{name} %>.
       <a id="toggle-branch" href="#">View merged branches</a>
     </div>
     <div class="bk-black" style="padding:5px 10px">
       <div class="row">
         <div class="span8" style="line-height:1.2em">
           <div style="color:white;font-size:16px;">
-            <b><%= $default_branch->{name} %></b>
+            <b><%= $base_branch->{name} %></b>
           </div>
           <div class="muted" style="font-size:12px">
             Last updated
-            <span title="<%= $default_branch->{commit}{age_string_datetime} %>">
-              <%= $default_branch->{commit}{age_string} %>
+            <span title="<%= $base_branch->{commit}{age_string_datetime} %>">
+              <%= $base_branch->{commit}{age_string} %>
             </span>
             by
-            <span title="<%= $default_branch->{commit}{author_email} %>" style="color:white">
-              <%= $default_branch->{commit}{author_name} %>
+            <span title="<%= $base_branch->{commit}{author_email} %>" style="color:white">
+              <%= $base_branch->{commit}{author_name} %>
             </span>
           </div>
         </div>
@@ -188,7 +186,7 @@
     % for (my $i = 0; $i < @$branches; $i++) {
       % my $branch = $branches->[$i];
       % my $bname = $branch->{name};
-      % next if $bname eq $default_branch->{name};
+      % next if $bname eq $base_branch->{name};
       <div class="<%= $branch->{no_merged} ? 'no-merged-branch' : 'merged-branch' %> border-bottom-gray" style="padding:10px 0px 5px 0px;<%= $branch->{no_merged} ? '' : 'display:none' %>">
         <div class="row">
           <div class="span5" style="line-height:1.2em">
@@ -221,12 +219,12 @@
               </tr>
               <tr>
                 <td style="width:100px">
-                  <div style="margin-left:auto;margin-right:0;background:#b2d0dd;width:<%= $behind_max != 0 ? 100 * ($branch->{status}{behind} / $behind_max) : 0 %>%;height:8px"></div>
+                  <div style="margin-left:auto;margin-right:0;background:#b2d0dd;width:<%= $max != 0 ? 100 * ($branch->{status}{behind} / $max) : 0 %>%;height:8px"></div>
                 </td>
                 <td style="background:#333">
                 </td>
                 <td style="width:100px">
-                  <div style="background:#b2d0dd;width:<%= $ahead_max != 0 ? 100 * ($branch->{status}{ahead} / $ahead_max) : 0 %>%;height:8px"></div>
+                  <div style="background:#b2d0dd;width:<%= $max != 0 ? 100 * ($branch->{status}{ahead} / $max) : 0 %>%;height:8px"></div>
                 </td>
               </tr>
               <tr>
@@ -247,7 +245,7 @@
                 %= hidden_field branch => $bname;
               </form>
             % }
-            <a class="btn" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname") %>">
+            <a class="btn" href="<%= url_for("/$user/$project/compare/$base_branch->{name}...$bname") %>">
               Compare
             </a>
           </div>
