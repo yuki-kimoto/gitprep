@@ -1,12 +1,12 @@
 <%
+  # Git
+  my $git = app->git;
+
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $rev = param('rev');
-  my $file = param('file');
-
-  # Git
-  my $git = app->git;
+  my $rev_file = param('rev_file');
+  my ($rev, $file) = $git->parse_rev_path($user, $project, $rev_file);
   
   # Blob raw
   my $blob_raw = $git->blob_raw($user, $project, $rev, $file);

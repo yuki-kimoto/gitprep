@@ -1,15 +1,15 @@
 <%
   # API
   my $api = gitprep_api;
+
+  # Git
+  my $git = app->git;
   
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $rev = param('rev');
-  my $dir = param('dir');
-
-  # Git
-  my $git = app->git;
+  my $rev_dir = param('rev_dir');
+  my ($rev, $dir) = $git->parse_rev_path($user, $project, $rev_dir);
   
   # Tree id
   my $commit = $git->get_commit($user, $project, $rev);
@@ -24,10 +24,10 @@
   
   # Variable for included templates
   stash(
-    rev => $rev,
     commit => $commit,
     trees => $trees,
-    dir => $dir,
+    rev => $rev,
+    dir => $dir
   );
 %>
 

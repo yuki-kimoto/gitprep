@@ -1,6 +1,7 @@
 <%
   my $display = stash('display') || '';
   my $rev = stash('rev');
+  $rev = '' unless defined $rev;
   my $branches = stash('branches');
   my $branches_count = app->git->branches_count($user, $project);
   my $default_branch_name = app->manager->default_branch($user, $project);
@@ -98,7 +99,7 @@
       <%
         my $title;
         my $rev_short;
-        if (length $rev == 40) {
+        if (defined $rev && length $rev == 40) {
           $title = 'tree';
           $rev_short = substr($rev, 0, 10);
         }

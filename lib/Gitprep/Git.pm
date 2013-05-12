@@ -35,6 +35,54 @@ sub _dec {
   return $@ ? $str : $new_str;
 }
 
+sub parse_rev_path {
+  my ($self, $user, $project, $rev_path) = @_;
+  
+  # References
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'show-ref',
+    '--dereference'
+  );
+  open my $fh, '-|', @cmd
+    or return;
+  my $refs = [];
+  while (my $line = $self->_dec(scalar <$fh>)) {
+    chomp $line;
+    if ($line =~ m!^[0-9a-fA-F]{40}\s(refs/((?:heads|tags)/(.*)))$!) {
+      push @$refs, $1, $2, $3;
+    }
+  }
+  close $fh or return;
+  
+  @$refs = sort {
+    my @a_match = $a =~ /(\/)/g;
+    my @b_match = $b =~ /(\/)/g;
+    scalar @b_match <=> scalar @a_match;
+  } @$refs;
+  
+  for my $ref (@$refs) {
+    $rev_path =~ m#/$#;
+    if ($rev_path =~ m#^(\Q$ref\E)/(.+)#) {
+      my $rev = $1;
+      my $path = $2;
+      return ($rev, $path);
+    }
+    elsif ($rev_path eq $ref) {
+      return ($rev_path, '');
+    }
+  }
+  
+  if ($rev_path) {
+    my ($rev, $path) = split /\//, $rev_path, 2;
+    $path = '' unless defined $path;
+    return ($rev, $path);
+  }
+
+  return;
+}
+
 sub authors {
   my ($self, $user, $project, $rev, $file) = @_;
   
@@ -692,9 +740,10 @@ sub references {
   
   # Parse references
   my %refs;
+  my $type_re = $type ? $type : '(?:heads|tags)';
   while (my $line = $self->_dec(scalar <$fh>)) {
     chomp $line;
-    if ($line =~ m!^([0-9a-fA-F]{40})\srefs/$type/(.*)$!) {
+    if ($line =~ m!^([0-9a-fA-F]{40})\srefs/$type_re/(.*)$!) {
       if (defined $refs{$1}) { push @{$refs{$1}}, $2 }
       else { $refs{$1} = [$2] }
     }
@@ -1196,7 +1245,7 @@ sub get_commits {
     ('--skip=' . $skip),
     $cid,
     '--',
-    (defined $file ? ($file) : ())
+    (defined $file && length $file ? ($file) : ())
   );
   open my $fh, '-|', @cmd
     or croak 'Open git-rev-list failed';

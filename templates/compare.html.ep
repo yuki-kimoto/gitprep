@@ -113,7 +113,7 @@
     <h2>Compare View</h2>
     <div class="well" style="padding:9px 10px 9px 10px;margin-bottom:5px;position:relative">
       <div class="row">
-        <div class="span3">
+        <div class="span8">
           <button id="base-branch-btn" class="btn" style="padding:2px 10px">
             <%= $rev1 %>
           </button>

@@ -2,15 +2,15 @@
   # API
   my $api = gitprep_api;
 
+  # Git
+  my $git = $self->app->git;
+
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $rev = param('rev');
-  my $blob = param('blob');
+  my $rev_file = param('rev_file');
+  my ($rev, $file) = $git->parse_rev_path($user, $project, $rev_file);
   my $page = param('page') || 0;
-  
-  # Git
-  my $git = $self->app->git;
   
   # Commit
   my $commit = $git->get_commit($user, $project, $rev);
@@ -23,7 +23,7 @@
     $commit->{id},
     $page_count,
     $page_count * $page,
-    $blob
+    $file
   );
   my $commits_count = @$commits;
   my $commits_date = {};
@@ -34,7 +34,7 @@
   }
   
   # Global variable
-  stash(user => $user, project => $project);
+  stash(user => $user, project => $project, rev => $rev);
 %>
 
 % layout 'common';
@@ -46,8 +46,8 @@
     %= include '/include/code_menu', display => 'commits';
         
     <div style="margin-top:20px;margin-bottom:15px">
-      % if (defined $blob) {
-        %= include '/include/page_path', type => 'blob', Path => $blob, operation => 'commits', prefix => 'History for';
+      % if (defined $file) {
+        %= include '/include/page_path', type => 'blob', Path => $file, operation => 'commits', prefix => 'History for';
       % } else {
         <div style="font-size:18px">
           <a class="ubar" href="<%= url_for("/$user/$project") %>">

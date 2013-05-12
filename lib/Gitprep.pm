@@ -180,36 +180,32 @@ sub startup {
       $r->get('/')->name('project');
       
       # Commit
-      $r->get('/commit/#diff')->name('commit');
+      $r->get('/commit/*diff')->name('commit');
       
       # Commits
-      $r->get('/commits/#rev', {id => 'HEAD'})->name('commits');
-      $r->get('/commits/#rev/(*blob)')->name('commits');
+      $r->get('/commits/*rev_file', {file => undef})->name('commits');
       
       # Branches
-      $r->any('/branches/:base_branch', {base_branch => undef})->name('branches');
+      $r->any('/branches/*base_branch', {base_branch => undef})->name('branches');
 
       # Tags
       $r->get('/tags')->name('tags');
 
       # Tree
-      $r->get('/tree/:rev/(*dir)', {dir => undef})->name('tree');
+      $r->get('/tree/*rev_dir', {dir => undef})->name('tree');
       
       # Blob
-      $r->get('/blob/:rev/(*file)', {file => undef})->name('blob');
-      
-      # Blob diff
-      $r->get('/blobdiff/(#diff)/(*file)')->name('blobdiff');
+      $r->get('/blob/*rev_file', {file => undef})->name('blob');
       
       # Raw
-      $r->get('/raw/:rev/(*file)', {file => undef})->name('raw');
+      $r->get('/raw/*rev_file', {file => undef})->name('raw');
       
       # Archive
-      $r->get('/archive/(:rev).(tar.gz')->name('archive')->to(archive_type => 'tar');
-      $r->get('/archive/(:rev).zip')->name('archive')->to(archive_type => 'zip');
+      $r->get('/archive/(*rev).tar.gz')->name('archive')->to(archive_type => 'tar');
+      $r->get('/archive/(*rev).zip')->name('archive')->to(archive_type => 'zip');
       
       # Compare
-      $r->get('/compare/(#rev1)...(#rev2)')->name('compare');
+      $r->get('/compare/(*rev1)...(*rev2)')->name('compare');
       
       # Settings
       $r->any('/settings')->name('project-settings');

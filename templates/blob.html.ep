@@ -1,15 +1,15 @@
 <%
   # API
   my $api = gitprep_api;
+
+  # Git
+  my $git = $self->app->git;
   
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $rev = param('rev');
-  my $file = param('file');
-
-  # Git
-  my $git = $self->app->git;
+  my $rev_file = param('rev_file');
+  my ($rev, $file) = $git->parse_rev_path($user, $project, $rev_file);
 
   # Commit
   my $commit = $git->last_change_commit($user, $project, $rev, $file);
@@ -31,7 +31,7 @@
   my $mimetype = $git->blob_mimetype($user, $project, $rev, $file);
 
   # Variables for included template
-  stash(id => $rev, project => $project);
+  stash(id => $rev, project => $project, rev => $rev);
 %>
 
 % layout 'common' , stylesheets => ['/js/google-code-prettify/prettify.css'];
