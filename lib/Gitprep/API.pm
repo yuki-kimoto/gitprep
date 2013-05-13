@@ -1,7 +1,6 @@
 package Gitprep::API;
 use Mojo::Base -base;
 
-use Encode qw/encode decode/;
 use Digest::MD5 'md5_hex';
 
 has 'cntl';
