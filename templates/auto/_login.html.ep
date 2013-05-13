@@ -100,7 +100,7 @@
     % }
       
     <div class="well border-gray"
-      style="background-color:white;padding-top:15px;padding-left:60px;width:300px;margin-left:auto;margin-right:auto"
+      style="background:white;padding-top:15px;padding-left:60px;width:300px;margin-left:auto;margin-right:auto"
     >
       <form action="<%= url_for->query(op => 'login') %>" method="post">
         <div class="control-group">

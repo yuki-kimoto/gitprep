@@ -61,13 +61,13 @@
           }
         %>
         <tr >
-          <td style="font-size:12px;color:#aaa;padding:0 7px;border-right:1px <%= $border_color %> solid;background-color:<%= $bk_color_line %>;">
+          <td style="font-size:12px;color:#aaa;padding:0 7px;border-right:1px <%= $border_color %> solid;background:<%= $bk_color_line %>;">
             <%= $line->{before_line_num} %>
           </td>
-          <td style="font-size:12px;color:#aaa;padding:0 7px;border-right:1px <%= $border_color %> solid;background-color:<%= $bk_color_line %>;">
+          <td style="font-size:12px;color:#aaa;padding:0 7px;border-right:1px <%= $border_color %> solid;background:<%= $bk_color_line %>;">
             <%= $line->{after_line_num} %>
           </td>
-          <td style="width:100%;padding-left:7px;background-color:<%= $bk_color %>;">
+          <td style="width:100%;padding-left:7px;background:<%= $bk_color %>;">
             <pre style="border:none;background:none;padding:0;margin:0"><%= $value %></pre>
           </td>
         </tr>

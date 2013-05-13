@@ -80,7 +80,7 @@
     % }
     
     <div class="text-center"><h3>Delete User</h3></div>
-    <div class="well" style="background-color:white;padding-top:15px;padding-left:60px;width:300px;margin-left:auto;margin-right:auto">
+    <div class="well" style="background:white;padding-top:15px;padding-left:60px;width:300px;margin-left:auto;margin-right:auto">
       <form action="<%= url_for->query(op => 'delete') %>" method="post">
         <div class="control-group">
           <label class="control-label" for="user-name">User name</label>

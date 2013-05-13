@@ -219,7 +219,7 @@
     </div>
     
     <div>
-      <div class="border-gray bk-gray-light" style="background-color:red;padding-left:5px">
+      <div class="border-gray bk-gray-light" style="background:red;padding-left:5px">
         <h4 style="color:white">Danger Zone</h4>
       </div>
       <div class="border-gray" style="padding:5px;border-top:none">

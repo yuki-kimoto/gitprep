@@ -8,13 +8,13 @@
 
 /* Background color */
 .bk-blue-light {
-  background-color:#E6F1F6;
+  background:#E6F1F6;
 }
 .bk-black {
-  background-color:black;
+  background:black;
 }
 .bk-gray-light {
-  background-color:#eee;
+  background:#eee;
 }
 
 /* Border radius */
