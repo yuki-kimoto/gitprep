@@ -302,3 +302,12 @@ note 'Compare page';
   $t->content_like(qr#renamed dir/a\.txt to dir/b\.txt and added text#);
 
 }
+
+note 'API References';
+{
+  # Page access (branch name)
+  $t->get_ok("/$user/$project/api/revs");
+  my $content = $t->tx->res->body;
+  like($content, qr/branch_names/);
+  like($content, qr/tag_names/);
+}

@@ -18,7 +18,8 @@
   if ($vresult->is_ok) {
     unless ($logined) {
       $self->redirect_to("/$user/$project");
-      return 1;
+      $self->finish_rendering;
+      return;
     }
     
     my $login_user = session('user');
@@ -28,22 +29,35 @@
     
     if ($login_user eq $user) {
       $self->redirect_to("/$user/$project");
-      return 1;
+      $self->finish_rendering;
+      return;
     }
     
-    eval { app->manager->fork_project($login_user, $user, $project) };
-    if ($@) {
-      $self->render_exception($@);
-      return $self->res->body;
-    }
-    else {
-      flash('original_project', "$user/$project");
+    # Already exists
+    if (app->manager->exists_project($login_user, $project)) {
       $self->redirect_to("/$login_user/$project");
-      return 1;
+      $self->finish_rendering;
+      return;
+    }
+    # Fork
+    else {
+      eval { app->manager->fork_project($login_user, $user, $project) };
+      if ($@) {
+        $self->render_exception($@);
+        $self->finish_rendering;
+        return;
+      }
+      else {
+        flash('original_project', "$user/$project");
+        $self->redirect_to("/$login_user/$project");
+        $self->finish_rendering;
+        return;
+      }
     }
   }
   else {
     $self->redirect_to("/$user/$project");
-    return 1;
+    $self->finish_rendering;
+    return;
   }
 %>
