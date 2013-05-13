@@ -117,6 +117,7 @@ note 'Commits page';
   {
     # Page access
     $t->get_ok("/$user/$project/commits/master");
+    $t->content_like(qr/Commit History/);
     
     # Commit date time
     $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
@@ -133,6 +134,7 @@ note 'History page';
   {
     # Page access
     $t->get_ok("/$user/$project/commits/b1/README");
+    $t->content_like(qr/History for/);
     
     # Content
     $t->content_like(qr/first commit/);

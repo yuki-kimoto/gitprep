@@ -46,7 +46,7 @@
     %= include '/include/code_menu', display => 'commits';
         
     <div style="margin-top:20px;margin-bottom:15px">
-      % if (defined $file) {
+      % if (defined $file && length $file) {
         %= include '/include/page_path', type => 'blob', Path => $file, operation => 'commits', prefix => 'History for';
       % } else {
         <div style="font-size:18px">
