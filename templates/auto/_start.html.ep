@@ -12,7 +12,7 @@
     sleep 3;
     
     # Check existence admin user
-    my $admin_user = app->dbi->model('user')->select(id => 'admin')->one;
+    my $admin_user = app->manager->admin_user;
     if (defined $admin_user) { $errors = ['admin user already exists'] }
     else {
       # Validation

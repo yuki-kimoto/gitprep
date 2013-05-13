@@ -1,27 +1,12 @@
 package Gitprep::API;
 use Mojo::Base -base;
 
-use Carp ();
-use File::Basename ();
 use Encode qw/encode decode/;
 use Digest::MD5 'md5_hex';
-
-sub croak { Carp::croak(@_) }
-sub dirname { File::Basename::dirname(@_) }
 
 has 'cntl';
 
 sub app { shift->cntl->app }
-
-sub admin_user {
-  my $self = shift;
-  
-  # Admin user
-  my $admin_user = $self->app->dbi->model('user')
-    ->select('id', where => {admin => 1})->value;
-  
-  return $admin_user;
-}
 
 sub encrypt_password {
   my ($self, $password) = @_;
@@ -47,33 +32,6 @@ sub new {
   return $self;
 }
 
-sub exists_admin {
-  my $self = shift;
- 
-  my $row = $self->app->dbi->model('user')
-    ->select(where => {admin => 1})->one;
-
-  return $row ? 1 : 0;;
-}
-
-sub root_ns {
-  my ($self, $root) = @_;
-
-  $root =~ s/^\///;
-  
-  return $root;
-}
-
-sub is_admin {
-  my ($self, $user) = @_;
-  
-  # Check admin
-  my $is_admin = $self->app->dbi->model('user')
-    ->select('admin', id => $user)->value;
-  
-  return $is_admin;
-}
-
 sub logined_admin {
   my $self = shift;
 
@@ -83,7 +41,7 @@ sub logined_admin {
   # Check logined as admin
   my $user = $c->session('user');
   
-  return $self->is_admin($user) && $self->logined;
+  return $self->app->manager->is_admin($user) && $self->logined($user);
 }
 
 sub logined {
@@ -113,18 +71,6 @@ sub logined {
   return $logined;
 }
 
-sub users {
-  my $self = shift;
- 
-  my $users = $self->app->dbi->model('user')->select(
-    'id',
-    where => [':admin{<>}',{admin => 1}],
-    append => 'order by id'
-  )->all;
-  
-  return $users;
-}
-
 sub params {
   my $self = shift;
   
@@ -133,16 +79,6 @@ sub params {
   my %params = map { $_ => $c->param($_) } $c->param;
   
   return \%params;
-}
-
-sub default_branch {
-  my ($self, $user, $project) = @_;
-  
-  my $default_branch = $self->app->dbi->model('project')
-    ->select('default_branch', id => [$user, $project])
-    ->value;
-  
-  return $default_branch;
 }
 
 1;

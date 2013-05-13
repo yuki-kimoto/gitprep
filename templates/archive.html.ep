@@ -27,8 +27,11 @@
 
   # Object type
   my $type = $git->object_type($user, $project, "$rev^{}");
-  if (!$type) { $api->croak('Object does not exist') }
-  elsif ($type eq 'blob') { $api->croak('Object is not a tree-ish') }
+  if (!$type || $type eq 'blob') {
+    $self->render_not_found;
+    $self->finish_rendering;
+    return;
+  }
   
   my $name = "$project-$rev";
   my $file = "$name.$ext";
@@ -52,8 +55,13 @@
   }
   $file =~ s/(["\\])/\\$1/g;
 
-  open my $fh, '-|', $cmd
-    or $api->croak('Execute git-archive failed');
+  my $success = open my $fh, '-|', $cmd;
+  
+  unless ($success) {
+    $self->render_exeption;
+    $self->finish_rendering;
+    return;
+  }
   
   # Write chunk
   $self->res->headers->content_type($content_type);

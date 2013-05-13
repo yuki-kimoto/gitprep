@@ -12,8 +12,12 @@
   my $git = app->git;
   
   # Commit
-  my $commit = $git->get_commit($user, $project, $id)
-    or $api->croak('Unknown commit object');
+  my $commit = $git->get_commit($user, $project, $id);
+  unless ($commit) {
+    $self->render_not_found;
+    $self->finish_rendering;
+    return;
+  }
   my $author_date
     = $git->parse_date($commit->{author_epoch}, $commit->{author_tz});
   my $committer_date

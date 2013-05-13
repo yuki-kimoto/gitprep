@@ -9,6 +9,25 @@ use Encode 'encode';
 
 has 'app';
 
+sub admin_user {
+  my $self = shift;
+  
+  # Admin user
+  my $admin_user = $self->app->dbi->model('user')
+    ->select('id', where => {admin => 1})->value;
+  
+  return $admin_user;
+}
+
+sub exists_admin {
+  my $self = shift;
+ 
+  my $row = $self->app->dbi->model('user')
+    ->select(where => {admin => 1})->one;
+
+  return $row ? 1 : 0;;
+}
+
 sub default_branch {
   my ($self, $user, $project) = @_;
   
@@ -17,6 +36,16 @@ sub default_branch {
     ->value;
   
   return $default_branch;
+}
+
+sub is_admin {
+  my ($self, $user) = @_;
+  
+  # Check admin
+  my $is_admin = $self->app->dbi->model('user')
+    ->select('admin', id => $user)->value;
+  
+  return $is_admin;
 }
 
 sub members {
@@ -149,6 +178,18 @@ sub original_user {
   return unless defined $original_user && length $original_user;
   
   return $original_user;
+}
+
+sub users {
+  my $self = shift;
+ 
+  my $users = $self->app->dbi->model('user')->select(
+    'id',
+    where => [':admin{<>}',{admin => 1}],
+    append => 'order by id'
+  )->all;
+  
+  return $users;
 }
 
 sub _delete_db_user {

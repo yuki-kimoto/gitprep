@@ -8,7 +8,11 @@
 
   my $op = param('op') || '';
   
-  $api->croak("Fobbiden") if !$user_is_valid;
+  unless ($user_is_valid) {
+    $self->render_exception('Forbidden');
+    $self->res->code(403);
+    return;
+  }
   
   if ($op eq 'rename-project') {
   

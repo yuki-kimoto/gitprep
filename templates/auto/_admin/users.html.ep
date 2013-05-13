@@ -1,6 +1,5 @@
 <%
-  my $api = gitprep_api;
-  my $users = $api->users;
+  my $users = app->manager->users;
 %>
 
 % layout 'common';

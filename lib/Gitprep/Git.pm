@@ -753,14 +753,6 @@ sub references {
   return \%refs;
 }
 
-sub root_ns {
-  my ($self, $root) = @_;
-
-  $root =~ s/^\///;
-  
-  return $root;
-}
-
 sub path_by_id {
   my ($self, $user, $project, $base, $hash) = @_;
   
@@ -1133,6 +1125,7 @@ sub get_commit {
   # Parse commit
   local $/ = "\0";
   my $content = $self->_dec(scalar <$fh>);
+  return unless defined $content;
   my $commit = $self->parse_commit_text($content, 1);
   close $fh;
 

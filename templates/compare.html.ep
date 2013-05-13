@@ -29,8 +29,13 @@
   my $start_commit = $git->separated_commit($user, $project, $rev1, $rev2);
 
   # End commit
-  my $end_commit = $git->get_commit($user, $project, $rev2)
-    or $api->croak('Unknown commit revision');
+  my $end_commit = $git->get_commit($user, $project, $rev2);
+  
+  if (!$start_commit || !$end_commit) {
+    $self->render_not_found;
+    $self->finish_rendering;
+    return;
+  }
   
   # Diff tree
   my $difftrees = $git->difftree(

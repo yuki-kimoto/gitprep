@@ -1,8 +1,8 @@
 <%
   my $api = gitprep_api;
-  my $users = $api->users;
+  my $users = app->manager->users;
   
-  unless ($api->exists_admin) {
+  unless (app->manager->exists_admin) {
     $self->redirect_to('/_start');
     return 1;
   }
