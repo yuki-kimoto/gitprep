@@ -189,7 +189,7 @@ sub startup {
       $r->any('/branches/*base_branch', {base_branch => undef})->name('branches');
 
       # Tags
-      $r->get('/tags')->name('tags');
+      $r->get('/tags');
 
       # Tree
       $r->get('/tree/*rev_dir', {dir => undef})->name('tree');
@@ -201,26 +201,26 @@ sub startup {
       $r->get('/raw/*rev_file', {file => undef})->name('raw');
       
       # Archive
-      $r->get('/archive/(*rev).tar.gz')->name('archive')->to(archive_type => 'tar');
-      $r->get('/archive/(*rev).zip')->name('archive')->to(archive_type => 'zip');
+      $r->get('/archive/(*rev).tar.gz')->to(archive_type => 'tar')->name('archive');
+      $r->get('/archive/(*rev).zip')->to(archive_type => 'zip')->name('archive');
       
       # Compare
       $r->get('/compare/(*rev1)...(*rev2)')->name('compare');
       
       # Settings
-      $r->any('/settings')->name('project-settings');
+      $r->any('/settings');
       
       # Fork
-      $r->any('/fork')->name('fork');
+      $r->any('/fork');
 
       # Network
-      $r->get('/network')->name('network');
+      $r->get('/network');
 
       # Network Graph
-      $r->get('/network/graph')->name('network_graph');
+      $r->get('/network/graph/(*rev1)...(*rev2_abs)')->name('network/graph');
       
       # Get branches and tags
-      $r->get('/api/revs')->name('api_revs');
+      $r->get('/api/revs')->name('api/revs');
     }
   }
   

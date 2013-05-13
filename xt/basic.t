@@ -311,3 +311,10 @@ note 'API References';
   like($content, qr/branch_names/);
   like($content, qr/tag_names/);
 }
+
+note 'Network page';
+{
+  # Page access
+  $t->get_ok("/$user/$project/network");
+  $t->content_like(qr/Network/);
+}

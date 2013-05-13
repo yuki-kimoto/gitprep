@@ -1,10 +1,9 @@
 <%
   my $user = param('user');
   my $project = param('project');
-  my $branch = param('branch');
-  my $remote_user = param('remote_user');
-  my $remote_project = param('remote_project');
-  my $remote_branch = param('remote_branch');
+  my $branch = param('rev1');
+  my $rev2_abs = param('rev2_abs');
+  my ($remote_user, $remote_project, $remote_branch) = split /\//, $rev2_abs, 3;
   
   my $commits = app->git->get_commits($user, $project, $branch, 100);
   my $remote_commits = app->git->get_commits(
@@ -19,6 +18,7 @@
     my $id = $commit->{id};
     $merged_commits_h->{$id} ||= {};
     $merged_commits_h->{$id}{age} = $commit->{age};
+    $merged_commits_h->{$id}{age_string_date} = $commit->{age_string_date};
     $merged_commits_h->{$id}{title} = $commit->{title};
     $merged_commits_h->{$id}{type} = 'local';
   }
@@ -30,6 +30,7 @@
     else {
       $merged_commits_h->{$id} ||= {};
       $merged_commits_h->{$id}{age} = $commit->{age};
+      $merged_commits_h->{$id}{age_string_date} = $commit->{age_string_date};
       $merged_commits_h->{$id}{title} = $commit->{title};
       $merged_commits_h->{$id}{type} = 'remote';
     }
@@ -58,11 +59,9 @@
   
   <div class="container">
     <h3>Graph</h3>
+    <div style="margin-bottom:20px">Compare 100 commits.</div>
     <div style="margin-bottom:10px">
-      <span style="color:blue"><b><big><%= "$user/$project/$branch" %></big></b></span>
-      <i class="icon-resize-horizontal"></i>
-      <span style="color:green"><b><big><%= "$remote_user/$remote_project/$remote_branch" %></big></b></span>
-      (Compared 100 commits)
+      <span style="color:blue;font-size:22px"><b><%= "$user / $project / $branch" %></big></span>
     </div>
     <div id="graph" class="well" style="width:800px;overflow:auto;padding-left:10px;padding-right:10px">
       <table>
@@ -77,7 +76,7 @@
 
               % if ($commit->{type} eq $type) {
                 <td>
-                  <a style="color:<%= $color %>" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>" title="<%= $commit->{title} %>">●</a>
+                  <a style="color:<%= $color %>" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>" title="<%= "$commit->{title}($commit->{age_string_date})" %>">●</a>
                 </td>
               % } else {
                 <td></td>
@@ -87,6 +86,9 @@
           </tr>
         % }
       </table>
+    </div>
+    <div style="margin-bottom:30px">
+      <span style="color:green;font-size:18px"><b><big><%= "$remote_user / $remote_project / $remote_branch" %></big></b></span>
     </div>
   </div>
   
