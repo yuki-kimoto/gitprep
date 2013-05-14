@@ -2,13 +2,17 @@
   use Mojo::ByteStream ();
   
   # README
-  my $readme;
-  eval { $readme = app->git->blob_plain($user, $project, $rev, 'README') };
-  my $readme_e = Mojo::ByteStream->new($readme)->xml_escape->to_string;
-  $readme_e =~ s#(^|\s)(http(?:s)?://.+?)($|\s)#$1<a href="$2">$2</a>$3#msg;
+  my $lines;
+  eval { $lines = app->git->blob($user, $project, $rev, 'README') };
+  my $readme_e;
+  if ($lines) {
+    my $readme = join "\n", @$lines;
+    $readme_e = Mojo::ByteStream->new($readme)->xml_escape->to_string;
+    $readme_e =~ s#(^|\s)(http(?:s)?://.+?)($|\s)#$1<a href="$2">$2</a>$3#msg;
+  }
 %>
 
-% if (defined $readme) {
+% if (defined $readme_e) {
   <div class="border-gray bk-gray-light" style="border-radius:1px;font-size:17px;padding:10px">
     <i class="icon-book" style="margin-top:2px"></i> README
   </div>

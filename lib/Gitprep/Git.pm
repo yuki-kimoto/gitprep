@@ -133,20 +133,20 @@ sub blob_diffs {
 sub blob {
   my ($self, $user, $project, $rev, $file) = @_;
   
-  # Blob content
-  my $bid = $self->path_to_id($user, $project, $rev, $file, 'blob')
+  # Blob
+  my $hash = $self->path_to_hash($user, $project, $rev, $file, 'blob')
     or croak 'Cannot find file';
   my @cmd = $self->cmd(
     $user,
     $project,
     'cat-file',
     'blob',
-    $bid
+    $hash
   );
   open my $fh, '-|', @cmd
-    or croak "Can't cat $file, $bid";
+    or croak "Can't cat $file, $hash";
   
-  # Parse lines
+  # Format lines
   my $lines =[];
   while (my $line = $self->_dec(scalar <$fh>)) {
     chomp $line;
@@ -157,25 +157,11 @@ sub blob {
   return $lines;
 }
 
-sub blob_plain {
-  my ($self, $user, $project, $rev, $path) = @_;
-  
-  # Get blob
-  my @cmd = $self->cmd($user, $project, 'cat-file', 'blob', "$rev:$path");
-  open my $fh, "-|", @cmd
-    or croak 500, "Open git-cat-file failed";
-  local $/;
-  my $content = $self->_dec(scalar <$fh>);
-  close $fh or croak 'Reading git-shortlog failed';
-  
-  return $content;
-}
-
 sub blob_mimetype {
   my ($self, $user, $project, $rev, $file) = @_;
   
   # Blob content
-  my $bid = $self->path_to_id($user, $project, $rev, $file, 'blob')
+  my $bid = $self->path_to_hash($user, $project, $rev, $file, 'blob')
     or croak 'Cannot find file';
   my @cmd = $self->cmd(
     $user,
@@ -633,7 +619,7 @@ sub branches_count {
   return $branches_count;
 }
 
-sub path_to_id {
+sub path_to_hash {
   my ($self, $user, $project, $rev, $path, $type) = @_;
   
   # Get blob id or tree id (command "git ls-tree")
@@ -1543,7 +1529,7 @@ sub trees {
   # Get tree
   my $tid;
   if (defined $dir && $dir ne '') {
-    $tid = $self->path_to_id($user, $project, $rev, $dir, 'tree');
+    $tid = $self->path_to_hash($user, $project, $rev, $dir, 'tree');
   }
   else {
     my $commit = $self->get_commit($user, $project, $rev);
