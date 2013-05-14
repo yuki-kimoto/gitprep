@@ -56,7 +56,7 @@ sub authors {
 }
 
 sub blob_diffs {
-  my ($self, $user, $project, $rev1, $rev2, $difftrees) = @_;
+  my ($self, $user, $project, $rev1, $rev2, $diff_trees) = @_;
   
   return unless defined $rev1 && defined $rev2;
   
@@ -75,21 +75,21 @@ sub blob_diffs {
   );
   open my $fh, '-|', @cmd
     or croak('Open self-diff-tree failed');
-  my @file_info_raws;
+  my @diff_tree;
   while (my $line = $self->_dec(scalar <$fh>)) {
     chomp $line;
-    push @file_info_raws, $line if $line =~ /^:/;
+    push @diff_tree, $line if $line =~ /^:/;
     last if $line =~ /^\n/;
   }
   close $fh;
   
   # Blob diffs
   my $blob_diffs = [];
-  for my $line (@file_info_raws) {
+  for my $line (@diff_tree) {
   
     # File information
     chomp $line;
-    my $diffinfo = $self->parse_difftree_raw_line($line);
+    my $diffinfo = $self->parse_diff_tree_raw_line($line);
     my $from_file = $diffinfo->{from_file};
     my $file = $diffinfo->{to_file};
     
@@ -118,9 +118,9 @@ sub blob_diffs {
     };
     
     # Status
-    for my $difftree (@$difftrees) {
-      if ($difftree->{to_file} eq $file) {
-        $blob_diff->{status} = $difftree->{status};
+    for my $diff_tree (@$diff_trees) {
+      if ($diff_tree->{to_file} eq $file) {
+        $blob_diff->{status} = $diff_tree->{status};
         last;
       }
     }
@@ -452,7 +452,7 @@ sub description {
   }
 }
 
-sub difftree {
+sub diff_tree {
   my ($self, $user, $project, $cid, $parent, $parents) = @_;
   
   # Root
@@ -472,14 +472,14 @@ sub difftree {
   );
   open my $fh, "-|", @cmd
     or croak 500, "Open git-diff-tree failed";
-  my @difftree = map { chomp; $self->_dec($_) } <$fh>;
+  my @diff_tree = map { chomp; $self->_dec($_) } <$fh>;
   close $fh or croak 'Reading git-diff-tree failed';
   
   # Parse "git diff-tree" output
   my $diffs = [];
   my @parents = @$parents;
-  for my $line (@difftree) {
-    my $diff = $self->parsed_difftree_line($line);
+  for my $line (@diff_tree) {
+    my $diff = $self->parsed_diff_tree_line($line);
     
     # Parent are more than one
     if (exists $diff->{nparents}) {
@@ -1288,15 +1288,15 @@ sub parse_date {
   return \%date;
 }
 
-sub parsed_difftree_line {
+sub parsed_diff_tree_line {
   my ($self, $line) = @_;
   
   return $line if ref $line eq 'HASH';
 
-  return $self->parse_difftree_raw_line($line);
+  return $self->parse_diff_tree_raw_line($line);
 }
 
-sub parse_difftree_raw_line {
+sub parse_diff_tree_raw_line {
   my ($self, $line) = @_;
 
   my %res;
