@@ -267,56 +267,15 @@ sub blob_size {
 sub exists_branch {
   my ($self, $user, $project) = @_;
   
+  # Exists branch
   my $home = $self->rep_home;
-
   my @cmd = $self->cmd($user, $project, 'branch');
   open my $fh, "-|", @cmd
     or croak 'git branch failed';
-  
   local $/;
   my $branches = <$fh>;
   
-  return $branches eq '' ? 0 : 1;
-}
-
-sub branch_commits {
-  my ($self, $user, $project, $rev1, $rev2) = @_;
-  
-  # Get bramcj commits
-  my @cmd = $self->cmd(
-    $user,
-    $project,
-    'show-branch',
-    $rev1,
-    $rev2
-  );
-  open my $fh, "-|", @cmd
-    or croak 500, "Open git-show-branch failed";
-
-  my $commits = [];
-  my $start;
-  while (my $line = <$fh>) {
-    chomp $line;
-    
-    if ($start) {
-      my ($id) = $line =~ /^.*?\[(.+)?\]/;
-      
-      next unless $id =~ /^\Q$rev2\E\^?$/ || $id =~ /^\Q$rev2\E^[0-9]+$/;
-      
-      my $commit = $self->get_commit($user, $project, $id);
-      
-      push @$commits, $commit;
-    }
-    else {
-      if ($line =~ /^-/) {
-        $start = 1;
-      }
-    }
-  }
-  
-  close $fh or croak 'Reading git-show-branch failed';
-  
-  return $commits;
+  return $branches ne '' ? 1 : 0;
 }
 
 sub branch_diff {
