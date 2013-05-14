@@ -89,7 +89,7 @@ sub blob_diffs {
   
     # File information
     chomp $line;
-    my $diffinfo = $self->parse_diff_tree_raw_line($line);
+    my $diffinfo = $self->parse_diff_tree_line($line);
     my $from_file = $diffinfo->{from_file};
     my $file = $diffinfo->{to_file};
     
@@ -107,10 +107,10 @@ sub blob_diffs {
       (defined $from_file ? $from_file : ()),
       $file
     );
-    open my $fh_blob_diff, '-|', @cmd
+    open my $fh, '-|', @cmd
       or croak('Open self-diff-tree failed');
-    my @lines = map { $self->_dec($_) } <$fh_blob_diff>;
-    close $fh_blob_diff;
+    my @lines = map { $self->_dec($_) } <$fh>;
+    close $fh;
     my $blob_diff = {
       file => $file,
       from_file => $from_file,
@@ -134,7 +134,7 @@ sub blob {
   my ($self, $user, $project, $rev, $file) = @_;
   
   # Blob content
-  my $bid = $self->id_by_path($user, $project, $rev, $file, 'blob')
+  my $bid = $self->path_to_id($user, $project, $rev, $file, 'blob')
     or croak 'Cannot find file';
   my @cmd = $self->cmd(
     $user,
@@ -175,7 +175,7 @@ sub blob_mimetype {
   my ($self, $user, $project, $rev, $file) = @_;
   
   # Blob content
-  my $bid = $self->id_by_path($user, $project, $rev, $file, 'blob')
+  my $bid = $self->path_to_id($user, $project, $rev, $file, 'blob')
     or croak 'Cannot find file';
   my @cmd = $self->cmd(
     $user,
@@ -633,7 +633,7 @@ sub branches_count {
   return $branches_count;
 }
 
-sub id_by_path {
+sub path_to_id {
   my ($self, $user, $project, $rev, $path, $type) = @_;
   
   # Get blob id or tree id (command "git ls-tree")
@@ -1293,10 +1293,10 @@ sub parsed_diff_tree_line {
   
   return $line if ref $line eq 'HASH';
 
-  return $self->parse_diff_tree_raw_line($line);
+  return $self->parse_diff_tree_line($line);
 }
 
-sub parse_diff_tree_raw_line {
+sub parse_diff_tree_line {
   my ($self, $line) = @_;
 
   my %res;
@@ -1543,7 +1543,7 @@ sub trees {
   # Get tree
   my $tid;
   if (defined $dir && $dir ne '') {
-    $tid = $self->id_by_path($user, $project, $rev, $dir, 'tree');
+    $tid = $self->path_to_id($user, $project, $rev, $dir, 'tree');
   }
   else {
     my $commit = $self->get_commit($user, $project, $rev);
