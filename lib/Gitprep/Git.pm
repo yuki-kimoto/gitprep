@@ -157,21 +157,21 @@ sub blob {
   return $lines;
 }
 
-sub blob_mimetype {
+sub blob_mime_type {
   my ($self, $user, $project, $rev, $file) = @_;
   
-  # Blob content
-  my $bid = $self->path_to_hash($user, $project, $rev, $file, 'blob')
+  # Blob
+  my $hash = $self->path_to_hash($user, $project, $rev, $file, 'blob')
     or croak 'Cannot find file';
   my @cmd = $self->cmd(
     $user,
     $project,
     'cat-file',
     'blob',
-    $bid
+    $hash
   );
   open my $fh, '-|', @cmd
-    or croak "Can't cat $file, $bid";
+    or croak "Can't cat $file, $hash";
 
   return 'text/plain' unless $fh;
   
@@ -191,11 +191,11 @@ sub blob_mimetype {
   return;
 }
 
-sub blob_contenttype {
+sub blob_content_type {
   my ($self, $user, $project, $rev, $file) = @_;
   
   # Content type
-  my $type = $self->blob_mimetype($user, $project, $rev, $file);
+  my $type = $self->blob_mime_type($user, $project, $rev, $file);
   if ($type eq 'text/plain') {
     $type .= "; charset=" . $self->encoding;
   }

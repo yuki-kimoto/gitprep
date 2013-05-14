@@ -28,7 +28,7 @@
   my $file_type = $git->file_type_long($mode);
   
   # MIME type
-  my $mimetype = $git->blob_mimetype($user, $project, $rev, $file);
+  my $mime_type = $git->blob_mime_type($user, $project, $rev, $file);
 
   # Variables for included template
   stash(id => $rev, project => $project, rev => $rev);
@@ -71,9 +71,9 @@
         </div>
       </div>
     </div>
-    % if ($mimetype =~ m#^image/#) {
+    % if ($mime_type =~ m#^image/#) {
       <div style="background:#ddd;text-align:center;padding-top:30px;padding-bottom:30px;margin-bottom:30px">
-        <img type="<%= $mimetype %>
+        <img type="<%= $mime_type %>
           % if (defined $file) {
             alt="<%= $file %>" title="<%= $file %>"
           % }
