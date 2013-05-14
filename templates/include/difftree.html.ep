@@ -93,10 +93,7 @@
             <td> | </td>
           % } elsif ($status eq 'D') {
             <td>
-              % my $blobdiff_url = url_for("/$user/$project/blobdiff/$from_id..$id/$file");
-              % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
-
-              <a href="<%= $blobdiff_url %>">
+              <a href="#">
                 blob<%= $i + 1 %>
               </a>
               |
@@ -107,10 +104,8 @@
             % } else {
               <td>
             % }
-              % my $blobdiff_url = url_for("/$user/$project/blobdiff/$from_id..$id/$file");
-            % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
             
-            <a href="<%= $blobdiff_url %>">
+            <a href="#">
               diff<%= $i + 1 %>
             </a>
             | </td>
@@ -120,10 +115,7 @@
         <td>
           % if ($not_deleted) {
             % my $from_file = $difftree->{from_file};
-              % my $blobdiff_url = url_for("/$user/$project/blobdiff/$from_id..$id/$file");
-            % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
-
-            <a href="<%= $blobdiff_url %>">
+            <a href="#">
               blob
             </a>
           % }
@@ -175,10 +167,7 @@
             <span>
               [
                 <%= $status_name %> from
-              % my $blobdiff_url = url_for("/$user/$project/blobdiff/$from_id..$id/$file");
-                % $blobdiff_url->query('from-file' => $from_file) if $file ne $from_file;
-                <a href="<%= $blobdiff_url %>">
-                  <%= $difftree->{from_file} %></a>
+                <a href="#"><%= $difftree->{from_file} %></a>
                 with <%= $difftree->{similarity} %>%
                 <%= $mode_change %>
               ]
