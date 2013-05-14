@@ -55,7 +55,7 @@ sub authors {
   return [sort keys %$authors];
 }
 
-sub blobdiffs {
+sub blob_diffs {
   my ($self, $user, $project, $rev1, $rev2, $difftrees) = @_;
   
   return unless defined $rev1 && defined $rev2;
@@ -84,7 +84,7 @@ sub blobdiffs {
   close $fh;
   
   # Blob diffs
-  my $blobdiffs = [];
+  my $blob_diffs = [];
   for my $line (@file_info_raws) {
   
     # File information
@@ -107,27 +107,27 @@ sub blobdiffs {
       (defined $from_file ? $from_file : ()),
       $file
     );
-    open my $fh_blobdiff, '-|', @cmd
+    open my $fh_blob_diff, '-|', @cmd
       or croak('Open self-diff-tree failed');
-    my @lines = map { $self->_dec($_) } <$fh_blobdiff>;
-    close $fh_blobdiff;
-    my $blobdiff = {
+    my @lines = map { $self->_dec($_) } <$fh_blob_diff>;
+    close $fh_blob_diff;
+    my $blob_diff = {
       file => $file,
       from_file => $from_file,
-      lines => $self->parse_blobdiff_lines(\@lines)
+      lines => $self->parse_blob_diff_lines(\@lines)
     };
     
     # Status
     for my $difftree (@$difftrees) {
       if ($difftree->{to_file} eq $file) {
-        $blobdiff->{status} = $difftree->{status};
+        $blob_diff->{status} = $difftree->{status};
         last;
       }
     }
-    push @$blobdiffs, $blobdiff;
+    push @$blob_diffs, $blob_diff;
   }
   
-  return $blobdiffs;
+  return $blob_diffs;
 }
 
 sub blob {
@@ -1050,7 +1050,7 @@ sub last_change_commit {
   return $commit;
 }
 
-sub parse_blobdiff_lines {
+sub parse_blob_diff_lines {
   my ($self, $lines) = @_;
   
   # Parse
