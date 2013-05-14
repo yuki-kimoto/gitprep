@@ -1,23 +1,22 @@
 use 5.008007;
 package Gitprep;
-
 use Mojo::Base 'Mojolicious';
-use Gitprep::Git;
+
+use Carp 'croak';
 use DBIx::Custom;
-use Validator::Custom;
 use Encode qw/encode decode/;
 use Gitprep::API;
-use Carp 'croak';
+use Gitprep::Git;
 use Gitprep::Manager;
 use Scalar::Util 'weaken';
-use Carp 'croak';
+use Validator::Custom;
 
 our $VERSION = '0.04';
 
-has 'git';
 has 'dbi';
-has 'validator';
+has 'git';
 has 'manager';
+has 'validator';
 
 sub startup {
   my $self = shift;

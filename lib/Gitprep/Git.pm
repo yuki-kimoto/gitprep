@@ -2,91 +2,39 @@ package Gitprep::Git;
 use Mojo::Base -base;
 
 use Carp 'croak';
-use File::Find 'find';
-use File::Basename qw/basename dirname/;
+use Encode qw/encode decode/;
 use Fcntl ':mode';
-use File::Path qw/mkpath rmtree/;
+use File::Basename qw/basename dirname/;
 use File::Copy 'move';
+use File::Find 'find';
+use File::Path qw/mkpath rmtree/;
 
 # Attributes
 has 'bin';
+has encoding => 'UTF-8';
 has 'rep_home';
-has 'encoding' => 'UTF-8';
 has text_exts => sub { ['txt'] };
 
-# Encode
-use Encode qw/encode decode/;
-sub _enc {
-  my ($self, $str) = @_;
+sub cmd {
+  my ($self, $user, $project, @cmd) = @_;
   
-  my $enc = $self->encoding;
+  # Git command
+  my $home = $self->rep_home;
+  my $rep = "$home/$user/$project.git";
   
-  return encode($enc, $str);
+  return $self->cmd_rep($rep, @cmd);
 }
 
-sub _dec {
-  my ($self, $str) = @_;
+sub cmd_rep {
+  my ($self, $rep, @cmd) = @_;
   
-  my $enc = $self->encoding;
-  
-  my $new_str;
-  eval { $new_str = decode($enc, $str) };
-  
-  return $@ ? $str : $new_str;
-}
-
-sub parse_rev_path {
-  my ($self, $user, $project, $rev_path) = @_;
-  
-  # References
-  my @cmd = $self->cmd(
-    $user,
-    $project,
-    'show-ref',
-    '--dereference'
-  );
-  open my $fh, '-|', @cmd
-    or return;
-  my $refs = [];
-  while (my $line = $self->_dec(scalar <$fh>)) {
-    chomp $line;
-    if ($line =~ m!^[0-9a-fA-F]{40}\s(refs/((?:heads|tags)/(.*)))$!) {
-      push @$refs, $1, $2, $3;
-    }
-  }
-  close $fh or return;
-  
-  @$refs = sort {
-    my @a_match = $a =~ /(\/)/g;
-    my @b_match = $b =~ /(\/)/g;
-    scalar @b_match <=> scalar @a_match;
-  } @$refs;
-  
-  for my $ref (@$refs) {
-    $rev_path =~ m#/$#;
-    if ($rev_path =~ m#^(\Q$ref\E)/(.+)#) {
-      my $rev = $1;
-      my $path = $2;
-      return ($rev, $path);
-    }
-    elsif ($rev_path eq $ref) {
-      return ($rev_path, '');
-    }
-  }
-  
-  if ($rev_path) {
-    my ($rev, $path) = split /\//, $rev_path, 2;
-    $path = '' unless defined $path;
-    return ($rev, $path);
-  }
-
-  return;
+  return ($self->bin, "--git-dir=$rep", @cmd);
 }
 
 sub authors {
   my ($self, $user, $project, $rev, $file) = @_;
   
-  # Command "git log FILE"
+  # Authors
   my @cmd = $self->cmd(
     $user,
     $project,
@@ -108,12 +56,11 @@ sub authors {
 }
 
 sub blobdiffs {
-  my ($self, $user, $project, $from_id, $id, $difftrees) = @_;
+  my ($self, $user, $project, $rev1, $rev2, $difftrees) = @_;
   
-  return unless defined $from_id;
+  return unless defined $rev1 && defined $rev2;
   
-  # Files changing infomation
-  my $blobdiffs = [];
+  # Diff tree
   my @cmd = $self->cmd(
     $user,
     $project,
@@ -122,8 +69,8 @@ sub blobdiffs {
     '-M',
     '--no-commit-id',
     '--patch-with-raw',
-    $from_id,
-    $id,
+    $rev1,
+    $rev2,
     '--'
   );
   open my $fh, '-|', @cmd
@@ -135,15 +82,18 @@ sub blobdiffs {
     last if $line =~ /^\n/;
   }
   close $fh;
+  
+  # Blob diffs
+  my $blobdiffs = [];
   for my $line (@file_info_raws) {
   
-    # Parse line
+    # File information
     chomp $line;
     my $diffinfo = $self->parse_difftree_raw_line($line);
     my $from_file = $diffinfo->{from_file};
     my $file = $diffinfo->{to_file};
     
-    # Get blobdiff (command "self diff-tree")
+    # Blob diff
     my @cmd = $self->cmd(
       $user,
       $project,
@@ -151,8 +101,8 @@ sub blobdiffs {
       '-r',
       '-M',
       '-p',
-      $from_id,
-      $id,
+      $rev1,
+      $rev2,
       '--',
       (defined $from_file ? $from_file : ()),
       $file
@@ -683,17 +633,6 @@ sub branches_count {
   return $branches_count;
 }
 
-sub no_merged_branches_count {
-  my ($self, $user, $project) = @_;
-  
-  my @cmd = $self->cmd($user, $project, 'branch', '--no-merged');
-  open my $fh, '-|', @cmd or return;
-  my @branches = <$fh>;
-  my $branches_count = @branches;
-  
-  return $branches_count;
-}
-
 sub id_by_path {
   my ($self, $user, $project, $rev, $path, $type) = @_;
   
@@ -717,40 +656,43 @@ sub id_by_path {
   return $id;
 }
 
-sub references {
-  my ($self, $user, $project, $type) = @_;
+
+sub last_activity {
+  my ($self, $user, $project) = @_;
   
-  $type ||= '';
-  
-  # Branches or tags
+  # Command "git for-each-ref"
   my @cmd = $self->cmd(
     $user,
     $project,
-    'show-ref',
-    '--dereference',
-    (
-      $type eq 'heads' ? ('--heads') :
-      $type eq 'tags' ? ('--tags') :
-      ()
-    )
+    'for-each-ref',
+    '--format=%(committer)',
+    '--sort=-committerdate',
+    '--count=1', 'refs/heads'
   );
-  
-  open my $fh, '-|', @cmd
-    or return;
-  
-  # Parse references
-  my %refs;
-  my $type_re = $type ? $type : '(?:heads|tags)';
-  while (my $line = $self->_dec(scalar <$fh>)) {
-    chomp $line;
-    if ($line =~ m!^([0-9a-fA-F]{40})\srefs/$type_re/(.*)$!) {
-      if (defined $refs{$1}) { push @{$refs{$1}}, $2 }
-      else { $refs{$1} = [$2] }
-    }
-  }
+  open my $fh, '-|', @cmd or return;
+  my $most_recent = $self->_dec(scalar <$fh>);
   close $fh or return;
   
-  return \%refs;
+  # Parse most recent
+  if (defined $most_recent &&
+      $most_recent =~ / (\d+) [-+][01]\d\d\d$/) {
+    my $timestamp = $1;
+    my $age = time - $timestamp;
+    return ($age, $self->_age_string($age));
+  }
+  
+  return;
+}
+
+sub no_merged_branches_count {
+  my ($self, $user, $project) = @_;
+  
+  my @cmd = $self->cmd($user, $project, 'branch', '--no-merged');
+  open my $fh, '-|', @cmd or return;
+  my @branches = <$fh>;
+  my $branches_count = @branches;
+  
+  return $branches_count;
 }
 
 sub path_by_id {
@@ -779,30 +721,51 @@ sub path_by_id {
   return;
 }
 
-sub last_activity {
-  my ($self, $user, $project) = @_;
+sub parse_rev_path {
+  my ($self, $user, $project, $rev_path) = @_;
   
-  # Command "git for-each-ref"
+  # References
   my @cmd = $self->cmd(
     $user,
     $project,
-    'for-each-ref',
-    '--format=%(committer)',
-    '--sort=-committerdate',
-    '--count=1', 'refs/heads'
+    'show-ref',
+    '--dereference'
   );
-  open my $fh, '-|', @cmd or return;
-  my $most_recent = $self->_dec(scalar <$fh>);
+  open my $fh, '-|', @cmd
+    or return;
+  my $refs = [];
+  while (my $line = $self->_dec(scalar <$fh>)) {
+    chomp $line;
+    if ($line =~ m!^[0-9a-fA-F]{40}\s(refs/((?:heads|tags)/(.*)))$!) {
+      push @$refs, $1, $2, $3;
+    }
+  }
   close $fh or return;
   
-  # Parse most recent
-  if (defined $most_recent &&
-      $most_recent =~ / (\d+) [-+][01]\d\d\d$/) {
-    my $timestamp = $1;
-    my $age = time - $timestamp;
-    return ($age, $self->_age_string($age));
+  @$refs = sort {
+    my @a_match = $a =~ /(\/)/g;
+    my @b_match = $b =~ /(\/)/g;
+    scalar @b_match <=> scalar @a_match;
+  } @$refs;
+  
+  for my $ref (@$refs) {
+    $rev_path =~ m#/$#;
+    if ($rev_path =~ m#^(\Q$ref\E)/(.+)#) {
+      my $rev = $1;
+      my $path = $2;
+      return ($rev, $path);
+    }
+    elsif ($rev_path eq $ref) {
+      return ($rev_path, '');
+    }
   }
   
+  if ($rev_path) {
+    my ($rev, $path) = split /\//, $rev_path, 2;
+    $path = '' unless defined $path;
+    return ($rev, $path);
+  }
+
   return;
 }
 
@@ -879,6 +842,42 @@ sub projects {
   }
   
   return \@reps;
+}
+
+sub references {
+  my ($self, $user, $project, $type) = @_;
+  
+  $type ||= '';
+  
+  # Branches or tags
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'show-ref',
+    '--dereference',
+    (
+      $type eq 'heads' ? ('--heads') :
+      $type eq 'tags' ? ('--tags') :
+      ()
+    )
+  );
+  
+  open my $fh, '-|', @cmd
+    or return;
+  
+  # Parse references
+  my %refs;
+  my $type_re = $type ? $type : '(?:heads|tags)';
+  while (my $line = $self->_dec(scalar <$fh>)) {
+    chomp $line;
+    if ($line =~ m!^([0-9a-fA-F]{40})\srefs/$type_re/(.*)$!) {
+      if (defined $refs{$1}) { push @{$refs{$1}}, $2 }
+      else { $refs{$1} = [$2] }
+    }
+  }
+  close $fh or return;
+  
+  return \%refs;
 }
 
 sub rep {
@@ -1587,21 +1586,23 @@ sub trees {
   return $trees;
 }
 
-sub cmd {
-  my ($self, $user, $project, @cmd) = @_;
+sub _dec {
+  my ($self, $str) = @_;
   
-  my $home = $self->rep_home;
+  my $enc = $self->encoding;
   
-  my $rep = "$home/$user/$project.git";
+  my $new_str;
+  eval { $new_str = decode($enc, $str) };
   
-  # Execute git command
-  return $self->cmd_rep($rep, @cmd);
+  return $@ ? $str : $new_str;
 }
 
-sub cmd_rep {
-  my ($self, $rep, @cmd) = @_;
+sub _enc {
+  my ($self, $str) = @_;
   
-  return ($self->bin, "--git-dir=$rep", @cmd);
+  my $enc = $self->encoding;
+  
+  return encode($enc, $str);
 }
 
 sub _mode_str {
