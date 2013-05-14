@@ -206,7 +206,7 @@ sub blob_content_type {
 sub blob_mode {
   my ($self, $user, $project, $rev, $file) = @_;
   
-  # Mode
+  # Blob mode
   $file =~ s#/+$##;
   my @cmd = $self->cmd(
     $user,
@@ -228,7 +228,7 @@ sub blob_mode {
 sub blob_raw {
   my ($self, $user, $project, $rev, $path) = @_;
   
-  # Get blob raw
+  # Blob raw
   my @cmd = $self->cmd($user, $project, 'cat-file', 'blob', "$rev:$path");
   open my $fh, "-|", @cmd
     or croak 500, "Open git-cat-file failed";
@@ -240,10 +240,10 @@ sub blob_raw {
   return $blob_raw;
 }
 
-sub blob_size_kb {
+sub blob_size {
   my ($self, $user, $project, $rev, $file) = @_;
   
-  # Command "git diff-tree"
+  # Blob size(KB)
   my @cmd = $self->cmd(
     $user,
     $project,
@@ -257,14 +257,14 @@ sub blob_size_kb {
   chomp $size;
   close $fh or croak 'Reading cat-file failed';
   
-  my $size_kb = sprintf('%.3f', $size / 1000);
+  # Format
+  my $size_f = sprintf('%.3f', $size / 1000);
+  $size_f =~ s/0+$//;
   
-  $size_kb =~ s/0+$//;
-  
-  return $size_kb;
+  return $size_f;
 }
 
-sub branch_exists {
+sub exists_branch {
   my ($self, $user, $project) = @_;
   
   my $home = $self->rep_home;

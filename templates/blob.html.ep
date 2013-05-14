@@ -21,7 +21,7 @@
   my $lines = $git->blob($user, $project, $rev, $file);
 
   # File size
-  my $file_size = $git->blob_size_kb($user, $project, $rev, $file);
+  my $file_size = $git->blob_size($user, $project, $rev, $file);
   
   # File mode
   my $mode = $git->blob_mode($user, $project, $rev, $file);

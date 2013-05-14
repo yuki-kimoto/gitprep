@@ -17,9 +17,7 @@
   
   # Check exsitence
   my $commits_number;
-  if ($git->branch_exists($user, $project)) {
-    # Directory
-    
+  if ($git->exists_branch($user, $project)) {
     # Commit
     my $commit = $git->get_commit($user, $project, $rev);
     
