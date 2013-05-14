@@ -15,6 +15,89 @@ has encoding => 'UTF-8';
 has 'rep_home';
 has text_exts => sub { ['txt'] };
 
+sub branch {
+  my ($self, $user, $project, $branch_name) = @_;
+  
+  # Branch
+  $branch_name =~ s/^\*//;
+  $branch_name =~ s/^\s*//;
+  $branch_name =~ s/\s*$//;
+  my $branch = {};
+  $branch->{name} = $branch_name;
+  my $commit = $self->get_commit($user, $project, $branch_name);
+  $branch->{commit} = $commit;
+
+  return $branch;
+}
+
+sub branch_status {
+  my ($self, $user, $project, $branch1, $branch2) = @_;
+  
+  # Branch status
+  my $status = {ahead => 0, behind => 0};
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'rev-list',
+    '--left-right',
+    "$branch1...$branch2"
+  );
+  open my $fh, '-|', @cmd
+    or croak "Can't get branch status: @cmd";
+  while (my $line = <$fh>) {
+    if ($line =~ /^</) { $status->{behind}++ }
+    elsif ($line =~ /^>/) { $status->{ahead}++ }
+  }
+  
+  return $status;
+}
+
+sub branches {
+  my ($self, $user, $project, $opts) = @_;
+  
+  # No merged branches
+  my $no_merged_branches_h = {};
+  {
+    my @cmd = $self->cmd($user, $project, 'branch');
+    push @cmd, , '--no-merged';
+    open my $fh, '-|', @cmd or return;
+    
+    while (my $branch_name = $self->_dec(scalar <$fh>)) {
+      $branch_name =~ s/^\*//;
+      $branch_name =~ s/^\s*//;
+      $branch_name =~ s/\s*$//;
+      $no_merged_branches_h->{$branch_name} = 1;
+    }
+  }
+  
+  # Branches
+  my @cmd = $self->cmd($user, $project, 'branch');
+  open my $fh, '-|', @cmd or return;
+  my $branches = [];
+  while (my $branch_name = $self->_dec(scalar <$fh>)) {
+    
+    # Branch
+    my $branch = $self->branch($user, $project, $branch_name);
+    $branch->{no_merged} = 1 if $no_merged_branches_h->{$branch_name};
+    push @$branches, $branch;
+  }
+  @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
+  
+  return $branches;
+}
+
+sub branches_count {
+  my ($self, $user, $project) = @_;
+  
+  # Branches count
+  my @cmd = $self->cmd($user, $project, 'branch');
+  open my $fh, '-|', @cmd or return;
+  my @branches = <$fh>;
+  my $branches_count = @branches;
+  
+  return $branches_count;
+}
+
 sub cmd {
   my ($self, $user, $project, @cmd) = @_;
   
@@ -264,67 +347,6 @@ sub blob_size {
   return $size_f;
 }
 
-sub exists_branch {
-  my ($self, $user, $project) = @_;
-  
-  # Exists branch
-  my $home = $self->rep_home;
-  my @cmd = $self->cmd($user, $project, 'branch');
-  open my $fh, "-|", @cmd
-    or croak 'git branch failed';
-  local $/;
-  my $branches = <$fh>;
-  
-  return $branches ne '' ? 1 : 0;
-}
-
-sub branch_diff {
-  my ($self, $user, $project, $branch1, $branch2) = @_;
-  
-  my @cmd = $self->cmd(
-    $user,
-    $project,
-    'rev-list',
-    '--left-right',
-    "$branch1...$branch2"
-  );
-  open my $fh, '-|', @cmd
-    or croak "Can't get branch status: @cmd";
-  
-  my $commits = [];
-  while (my $line = <$fh>) {
-    if ($line =~ /^>(.+)\s/) {
-      my $commit_id = $1;
-      my $commit = $self->get_commit($user, $project, $commit_id);
-      push @$commits, $commit;
-    }
-  }
-  
-  return $commits;
-}
-
-sub branch_status {
-  my ($self, $user, $project, $branch1, $branch2) = @_;
-  
-  my $status = {ahead => 0, behind => 0};
-  my @cmd = $self->cmd(
-    $user,
-    $project,
-    'rev-list',
-    '--left-right',
-    "$branch1...$branch2"
-  );
-  open my $fh, '-|', @cmd
-    or croak "Can't get branch status: @cmd";
-  
-  while (my $line = <$fh>) {
-    if ($line =~ /^</) { $status->{behind}++ }
-    elsif ($line =~ /^>/) { $status->{ahead}++ }
-  }
-  
-  return $status;
-}
-
 sub check_head_link {
   my ($self, $dir) = @_;
   
@@ -352,6 +374,20 @@ sub commits_number {
   }
   
   return $commits_num;
+}
+
+sub exists_branch {
+  my ($self, $user, $project) = @_;
+  
+  # Exists branch
+  my $home = $self->rep_home;
+  my @cmd = $self->cmd($user, $project, 'branch');
+  open my $fh, "-|", @cmd
+    or croak 'git branch failed';
+  local $/;
+  my $branches = <$fh>;
+  
+  return $branches ne '' ? 1 : 0;
 }
 
 sub delete_branch {
@@ -486,7 +522,7 @@ sub file_type {
 sub file_type_long {
   my ($self, $mode) = @_;
   
-  # File type
+  # File type long
   if ($mode !~ m/^[0-7]+$/) { return $mode }
   else { $mode = oct $mode }
   if ($self->_s_isgitlink($mode)) { return 'submodule' }
@@ -517,65 +553,29 @@ sub fill_from_file_info {
   return $diff;
 }
 
-sub branches {
-  my ($self, $user, $project, $opts) = @_;
+sub forward_commits {
+  my ($self, $user, $project, $rev1, $rev2) = @_;
   
-  # No merged branches
-  my $no_merged_branches_h = {};
-  {
-    my @cmd = $self->cmd($user, $project, 'branch');
-    push @cmd, , '--no-merged';
-    open my $fh, '-|', @cmd or return;
-    
-    while (my $branch_name = $self->_dec(scalar <$fh>)) {
-      $branch_name =~ s/^\*//;
-      $branch_name =~ s/^\s*//;
-      $branch_name =~ s/\s*$//;
-      $no_merged_branches_h->{$branch_name} = 1;
+  # Forwarding commits
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'rev-list',
+    '--left-right',
+    "$rev1...$rev2"
+  );
+  open my $fh, '-|', @cmd
+    or croak "Can't get info: @cmd";
+  my $commits = [];
+  while (my $line = <$fh>) {
+    if ($line =~ /^>(.+)\s/) {
+      my $rev = $1;
+      my $commit = $self->get_commit($user, $project, $rev);
+      push @$commits, $commit;
     }
   }
   
-  # All branches
-  my @cmd = $self->cmd($user, $project, 'branch');
-  open my $fh, '-|', @cmd or return;
-  my $branches = [];
-  while (my $branch_name = $self->_dec(scalar <$fh>)) {
-    
-    my $branch = $self->branch($user, $project, $branch_name);
-    $branch->{no_merged} = 1 if $no_merged_branches_h->{$branch_name};
-
-    push @$branches, $branch;
-  }
-  
-  @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
-  
-  return $branches;
-}
-
-sub branch {
-  my ($self, $user, $project, $branch_name) = @_;
-
-  $branch_name =~ s/^\*//;
-  $branch_name =~ s/^\s*//;
-  $branch_name =~ s/\s*$//;
-  
-  my $branch = {};
-  $branch->{name} = $branch_name;
-  my $commit = $self->get_commit($user, $project, $branch_name);
-  $branch->{commit} = $commit;
-
-  return $branch;
-}
-
-sub branches_count {
-  my ($self, $user, $project) = @_;
-  
-  my @cmd = $self->cmd($user, $project, 'branch');
-  open my $fh, '-|', @cmd or return;
-  my @branches = <$fh>;
-  my $branches_count = @branches;
-  
-  return $branches_count;
+  return $commits;
 }
 
 sub path_to_hash {

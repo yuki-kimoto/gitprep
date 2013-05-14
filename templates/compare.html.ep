@@ -13,7 +13,7 @@
   my $git = $self->app->git;
   
   # Commits
-  my $commits = $git->branch_diff($user, $project, $rev1, $rev2);
+  my $commits = $git->forward_commits($user, $project, $rev1, $rev2);
   my $commits_count = @$commits;
   my $commits_date = {};
   my $authors = {};
