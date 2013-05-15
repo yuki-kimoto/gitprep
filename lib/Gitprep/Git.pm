@@ -428,6 +428,7 @@ sub description {
   }
   else {
     # Read description
+    return unless -f $file;
     my $description = $self->_slurp($file) || '';
     return $description;
   }

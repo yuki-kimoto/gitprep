@@ -61,7 +61,7 @@
               <td class="muted">
                 % if ($rep->{none}) {
                   <span style="color:red">Repository not exists</span>
-                  <a class="btn btn-mini">Delete</a>
+                  <a href="<%= "/$user/$rep->{name}/settings" %>" class="btn btn-mini">Settings</a>
                 % } else {
                   <%= $age ? "last updated $age" : 'new repository' %>
                 % }

@@ -205,6 +205,7 @@
         <div >Description</div>
         <div>
           % my $description = $git->description($user, $project);
+          % $description = '' unless defined $description;
           %= text_field 'description' => $description, class => 'span8', style => 'margin-top:9px';
           <a class="btn" href="#description">Save</a>
         </div>
