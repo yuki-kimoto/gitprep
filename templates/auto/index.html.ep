@@ -1,10 +1,13 @@
 <%
-  my $api = gitprep_api;
-  my $users = app->manager->users;
+  # Users
+  my $manager = app->manager;
+  my $users = $manager->users;
   
-  unless (app->manager->exists_admin) {
+  # Goto Start page
+  unless (defined $manager->admin_id) {
     $self->redirect_to('/_start');
-    return 1;
+    $self->finish_rendering;
+    return;
   }
 %>
 
@@ -15,9 +18,10 @@
     <h3>Users</h3>
     <ul class="nav nav-tabs nav-stacked">
       % for my $user (@$users) {
+        % my $uid = $user->{id};
         <li>
-          <a href="<%= url_for("/$user->{id}") %>">
-            <%= $user->{id} %>
+          <a href="<%= url_for("/$uid") %>">
+            <%= $uid %>
           </a>
         </li>
       % }

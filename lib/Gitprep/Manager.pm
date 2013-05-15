@@ -2,14 +2,14 @@ package Gitprep::Manager;
 use Mojo::Base -base;
 
 use Carp 'croak';
+use Encode 'encode';
 use File::Copy 'move';
 use File::Path qw/mkpath rmtree/;
 use File::Temp ();
-use Encode 'encode';
 
 has 'app';
 
-sub admin_user {
+sub admin_id {
   my $self = shift;
   
   # Admin user
@@ -19,18 +19,10 @@ sub admin_user {
   return $admin_user;
 }
 
-sub exists_admin {
-  my $self = shift;
- 
-  my $row = $self->app->dbi->model('user')
-    ->select(where => {admin => 1})->one;
-
-  return $row ? 1 : 0;;
-}
-
 sub default_branch {
   my ($self, $user, $project) = @_;
   
+  # Default branch
   my $default_branch = $self->app->dbi->model('project')
     ->select('default_branch', id => [$user, $project])
     ->value;
@@ -81,9 +73,8 @@ sub members {
 sub create_project {
   my ($self, $user, $project, $opts) = @_;
   
-  my $dbi = $self->app->dbi;
-  
   # Create project
+  my $dbi = $self->app->dbi;
   my $error;
   eval {
     $dbi->connector->txn(sub {
@@ -99,9 +90,8 @@ sub create_project {
 sub create_user {
   my ($self, $user, $data) = @_;
 
-  my $dbi = $self->app->dbi;
-  
   # Create user
+  my $dbi = $self->app->dbi;
   my $error;
   eval {
     $dbi->connector->txn(sub {
@@ -117,9 +107,8 @@ sub create_user {
 sub delete_project {
   my ($self, $user, $project) = @_;
   
-  my $dbi = $self->app->dbi;
-  
   # Delete project
+  my $dbi = $self->app->dbi;
   my $error;
   eval {
     $dbi->connector->txn(sub {
@@ -130,16 +119,13 @@ sub delete_project {
     });
   };
   croak $error if $@;
-  
-  return 1;
 }
 
 sub delete_user {
   my ($self, $user) = @_;
   
-  my $dbi = $self->app->dbi;
-  
   # Delete user
+  my $dbi = $self->app->dbi;
   my $error;
   eval {
     $dbi->connector->txn(sub {
@@ -150,16 +136,13 @@ sub delete_user {
     });
   };
   croak $error if $@;
-  
-  return 1;
 }
 
 sub original_project {
   my ($self, $user, $project) = @_;
   
-  my $dbi = $self->app->dbi;
-  
-  my $original_project = $dbi->model('project')
+  # Original project
+  my $original_project =  $self->app->dbi->model('project')
     ->select('original_project', id => [$user, $project])
     ->value;
   return unless defined $original_project && length $original_project;
@@ -170,9 +153,8 @@ sub original_project {
 sub original_user {
   my ($self, $user, $project) = @_;
   
-  my $dbi = $self->app->dbi;
-  
-  my $original_user = $dbi->model('project')
+  # Orginal user
+  my $original_user = $self->app->dbi->model('project')
     ->select('original_user', id => [$user, $project])
     ->value;
   return unless defined $original_user && length $original_user;
@@ -182,7 +164,8 @@ sub original_user {
 
 sub users {
   my $self = shift;
- 
+  
+  # Users
   my $users = $self->app->dbi->model('user')->select(
     'id',
     where => [':admin{<>}',{admin => 1}],
@@ -195,32 +178,34 @@ sub users {
 sub _delete_db_user {
   my ($self, $user) = @_;
   
+  # Delete database user
   $self->app->dbi->model('user')->delete(id => $user);
 }
 
 sub _delete_user_dir {
   my ($self, $user) = @_;
-
-  my $home = $self->app->git->rep_home;
-  my $user_dir = "$home/$user";
+  
+  # Delete user directory
+  my $rep_home = $self->app->git->rep_home;
+  my $user_dir = "$rep_home/$user";
   rmtree $user_dir;
 }
 
 sub _create_db_user {
   my ($self, $user, $data) = @_;
   
+  # Create database user
   $self->app->dbi->model('user')->insert($data, id => $user);
 }
 
 sub _create_user_dir {
   my ($self, $user) = @_;
-
-  my $home = $self->app->git->rep_home;
-  my $user_dir = "$home/$user";
+  
+  # Create user directory
+  my $rep_home = $self->app->git->rep_home;
+  my $user_dir = "$rep_home/$user";
   mkpath $user_dir;
 }
-
-sub exists_project { shift->_exists_project(@_) }
 
 sub fork_project {
   my ($self, $user, $original_user, $project) = @_;
@@ -293,7 +278,7 @@ sub rename_project {
   
   my $error = {};
   
-  if ($self->_exists_project($user, $renamed_project)
+  if ($self->exists_project($user, $renamed_project)
     || $self->_exists_rep($user, $renamed_project))
   {
     $error->{message} = 'Already exists';
@@ -569,7 +554,7 @@ sub _delete_rep {
     if -e $rep;
 }
 
-sub _exists_project {
+sub exists_project {
   my ($self, $user, $project) = @_;
 
   my $dbi = $self->app->dbi;

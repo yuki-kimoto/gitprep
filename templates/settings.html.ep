@@ -175,7 +175,7 @@
       });
       
       // Select default branch
-      var default_branch = "<%= $api->default_branch($user, $project) %>";
+      var default_branch = "<%= app->manager->default_branch($user, $project) %>";
       $('select[name="default_branch"]').val(default_branch);
     });
   
