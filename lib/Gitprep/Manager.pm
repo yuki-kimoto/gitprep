@@ -363,10 +363,8 @@ sub _create_project {
   my ($self, $user, $project, $params) = @_;
   $params ||= {};
   
-  # DBI
-  my $dbi = $self->app->dbi;
-  
   # Create project
+  my $dbi = $self->app->dbi;
   $dbi->connector->txn(sub {
     unless (defined $params->{original_pid}) {
       my $number = $dbi->model('number')->select('value', where => {key => 'original_pid'})->value;
@@ -381,10 +379,8 @@ sub _create_project {
 sub _create_rep {
   my ($self, $user, $project, $opts) = @_;
   
-  # Git
-  my $git = $self->app->git;
-  
   # Create repository directory
+  my $git = $self->app->git;
   my $rep = $git->rep($user, $project);
   mkdir $rep
     or croak "Can't create directory $rep: $!";
@@ -524,6 +520,7 @@ sub _delete_user_dir {
 sub _delete_project {
   my ($self, $user, $project) = @_;
   
+  # Delete project
   my $dbi = $self->app->dbi;
   $dbi->model('project')->delete(id => [$user, $project]);
 }
@@ -531,6 +528,7 @@ sub _delete_project {
 sub _delete_rep {
   my ($self, $user, $project) = @_;
 
+  # Delete repository
   my $rep_home = $self->app->git->rep_home;
   croak "Can't remove repository. repositry home is empty"
     if !defined $rep_home || $rep_home eq '';
@@ -542,7 +540,8 @@ sub _delete_rep {
 
 sub exists_project {
   my ($self, $user, $project) = @_;
-
+  
+  # Exists project
   my $dbi = $self->app->dbi;
   my $row = $dbi->model('project')->select(id => [$user, $project])->one;
   
@@ -552,6 +551,7 @@ sub exists_project {
 sub _exists_rep {
   my ($self, $user, $project) = @_;
   
+  # Exists repository
   my $rep = $self->app->git->rep($user, $project);
   
   return -e $rep;
@@ -560,7 +560,7 @@ sub _exists_rep {
 sub _fork_rep {
   my ($self, $user, $project, $to_user, $to_project) = @_;
   
-  # Git clone
+  # Fork repository
   my $git = $self->app->git;
   my $rep = $git->rep($user, $project);
   my $to_rep = $git->rep($to_user, $to_project);
@@ -579,12 +579,12 @@ sub _fork_rep {
 sub _rename_project {
   my ($self, $user, $project, $renamed_project) = @_;
   
-  my $dbi = $self->app->dbi;
-  
+  # Check arguments
   croak "Invalid parameters"
     unless defined $user && defined $project && defined $renamed_project;
   
   # Rename project
+  my $dbi = $self->app->dbi;
   $dbi->model('project')->update(
     {name => $renamed_project},
     id => [$user, $project]
@@ -600,11 +600,13 @@ sub _rename_project {
 sub _rename_rep {
   my ($self, $user, $project, $renamed_project) = @_;
   
+  # Check arguments
   croak "Invalid user name or project"
     unless defined $user && defined $project && defined $renamed_project;
+
+  # Rename repository
   my $rep = $self->app->git->rep($user, $project);
   my $renamed_rep = $self->app->git->rep($user, $renamed_project);
-  
   move($rep, $renamed_rep)
     or croak "Can't move $rep to $renamed_rep: $!";
 }
