@@ -30,6 +30,46 @@ sub default_branch {
   return $default_branch;
 }
 
+sub fork_project {
+  my ($self, $user, $original_user, $project) = @_;
+  
+  # Fork project
+  my $dbi = $self->app->dbi;
+  my $error;
+  eval {
+    $dbi->connector->txn(sub {
+      
+      # Original project id
+      my $original_pid = $dbi->model('project')
+        ->select('original_pid', id => [$original_user, $project])->value;
+      
+      croak "Can't get original project id"
+        unless defined $original_pid && $original_pid > 0;
+      
+      # Create project
+      eval {
+        $self->_create_project(
+          $user,
+          $project,
+          {
+            original_user => $original_user,
+            original_project => $project,
+            original_pid => $original_pid
+          }
+        );
+      };
+      croak $error = $@ if $@;
+      
+      # Create repository
+      eval {
+        $self->_fork_rep($original_user, $project, $user, $project);
+      };
+      croak $error = $@ if $@;
+    });
+  };
+  croak $error if $@;
+}
+
 sub is_admin {
   my ($self, $user) = @_;
   
@@ -162,12 +202,23 @@ sub original_user {
   return $original_user;
 }
 
+sub projects {
+  my ($self, $user) = @_;
+
+  # Projects
+  my $projects = $self->app->dbi->model('project')->select(
+    where => {user_id => $user},
+    append => 'order by name'
+  )->all;
+  
+  return $projects;
+}
+
 sub users {
   my $self = shift;
   
   # Users
   my $users = $self->app->dbi->model('user')->select(
-    'id',
     where => [':admin{<>}',{admin => 1}],
     append => 'order by id'
   )->all;
@@ -175,119 +226,22 @@ sub users {
   return $users;
 }
 
-sub _delete_db_user {
-  my ($self, $user) = @_;
-  
-  # Delete database user
-  $self->app->dbi->model('user')->delete(id => $user);
-}
-
-sub _delete_user_dir {
-  my ($self, $user) = @_;
-  
-  # Delete user directory
-  my $rep_home = $self->app->git->rep_home;
-  my $user_dir = "$rep_home/$user";
-  rmtree $user_dir;
-}
-
-sub _create_db_user {
-  my ($self, $user, $data) = @_;
-  
-  # Create database user
-  $self->app->dbi->model('user')->insert($data, id => $user);
-}
-
-sub _create_user_dir {
-  my ($self, $user) = @_;
-  
-  # Create user directory
-  my $rep_home = $self->app->git->rep_home;
-  my $user_dir = "$rep_home/$user";
-  mkpath $user_dir;
-}
-
-sub fork_project {
-  my ($self, $user, $original_user, $project) = @_;
-  
-  # DBI
-  my $dbi = $self->app->dbi;
-  
-  # Fork project
-  my $error;
-  eval {
-    $dbi->connector->txn(sub {
-      
-      # Original project id
-      my $original_pid = $dbi->model('project')
-        ->select('original_pid', id => [$original_user, $project])->value;
-      
-      croak "Can't get original project id"
-        unless defined $original_pid && $original_pid > 0;
-      
-      # Create project
-      eval {
-        $self->_create_project(
-          $user,
-          $project,
-          {
-            original_user => $original_user,
-            original_project => $project,
-            original_pid => $original_pid
-          }
-        );
-      };
-      croak $error = $@ if $@;
-      
-      # Create repository
-      eval {
-        $self->_fork_rep($original_user, $project, $user, $project);
-      };
-      croak $error = $@ if $@;
-    });
-  };
-  croak $error if $@;
-}
-
-sub _fork_rep {
-  my ($self, $user, $project, $to_user, $to_project) = @_;
-  
-  # Git
-  my $git = $self->app->git;
-  
-  # Git clone
-  my $rep = $git->rep($user, $project);
-  my $to_rep = $git->rep($to_user, $to_project);
-  my @git_clone_cmd = (
-    $git->bin,
-    'clone',
-    '-q',
-    '--bare',
-    $rep,
-    $to_rep
-  );
-  system(@git_clone_cmd) == 0
-    or croak "Can't execute git clone";
-}
-
 sub rename_project {
-  my ($self, $user, $project, $renamed_project) = @_;
+  my ($self, $user, $project, $to_project) = @_;
   
+  # Rename project
   my $git = $self->app->git;
   my $dbi = $self->app->dbi;
-  
   my $error = {};
-  
-  if ($self->exists_project($user, $renamed_project)
-    || $self->_exists_rep($user, $renamed_project))
+  if ($self->exists_project($user, $to_project))
   {
     $error->{message} = 'Already exists';
     return $error;
   }
   else {
     $dbi->connector->txn(sub {
-      $self->_rename_project($user, $project, $renamed_project);
-      $self->_rename_rep($user, $project, $renamed_project);
+      $self->_rename_project($user, $project, $to_project);
+      $self->_rename_rep($user, $project, $to_project);
     });
     if ($@) {
       $error->{message} = 'Rename failed';
@@ -535,6 +489,38 @@ sub _create_rep {
   }
 }
 
+sub _create_db_user {
+  my ($self, $user, $data) = @_;
+  
+  # Create database user
+  $self->app->dbi->model('user')->insert($data, id => $user);
+}
+
+sub _create_user_dir {
+  my ($self, $user) = @_;
+  
+  # Create user directory
+  my $rep_home = $self->app->git->rep_home;
+  my $user_dir = "$rep_home/$user";
+  mkpath $user_dir;
+}
+
+sub _delete_db_user {
+  my ($self, $user) = @_;
+  
+  # Delete database user
+  $self->app->dbi->model('user')->delete(id => $user);
+}
+
+sub _delete_user_dir {
+  my ($self, $user) = @_;
+  
+  # Delete user directory
+  my $rep_home = $self->app->git->rep_home;
+  my $user_dir = "$rep_home/$user";
+  rmtree $user_dir;
+}
+
 sub _delete_project {
   my ($self, $user, $project) = @_;
   
@@ -569,6 +555,25 @@ sub _exists_rep {
   my $rep = $self->app->git->rep($user, $project);
   
   return -e $rep;
+}
+
+sub _fork_rep {
+  my ($self, $user, $project, $to_user, $to_project) = @_;
+  
+  # Git clone
+  my $git = $self->app->git;
+  my $rep = $git->rep($user, $project);
+  my $to_rep = $git->rep($to_user, $to_project);
+  my @cmd = (
+    $git->bin,
+    'clone',
+    '-q',
+    '--bare',
+    $rep,
+    $to_rep
+  );
+  system(@cmd) == 0
+    or croak "Can't fork repository: @cmd";
 }
 
 sub _rename_project {

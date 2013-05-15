@@ -3,13 +3,20 @@
   if (my $deleted_project = param('deleted_project')) {
     flash('deleted_project', $deleted_project);
     $self->redirect_to('current');
-    return 1;
+    $self->finish_rendering;
+    return;
   }
   
   my $user = param('user');
   
   # Projects
-  my $reps = app->git->projects($user);
+  my $projects = app->manager->projects($user);
+  my $reps = [];
+  for my $project (@$projects) {
+    my $rep = app->git->repository($user, $project->{name}) || {none => 1};
+    $rep->{name} = $project->{name};
+    push $reps, $rep;
+  }
 %>
 
 % layout 'common';
@@ -51,7 +58,14 @@
                 <%= $rep->{description} %>
               </td>
               % my $age = $rep->{age_string};
-              <td class="muted"><%= $age ? "last updated $age" : 'new repository' %></td>
+              <td class="muted">
+                % if ($rep->{none}) {
+                  <span style="color:red">Repository not exists</span>
+                  <a class="btn btn-mini">Delete</a>
+                % } else {
+                  <%= $age ? "last updated $age" : 'new repository' %>
+                % }
+              </td>
             </div>
           </tr>
         % }

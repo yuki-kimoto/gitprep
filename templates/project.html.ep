@@ -109,7 +109,7 @@
     % }
     
     %= include '/include/project_header';
-
+    
     <h3 style="margin:20px 0px 20px 0;font-size:16px;line-height:0">
       <%= $desc %>
     </h3>

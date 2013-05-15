@@ -755,38 +755,24 @@ sub project_urls {
   return \@urls;
 }
 
-sub projects {
-  my ($self, $user, $opts) = @_;
+sub repository {
+  my ($self, $user, $project) = @_;
+
+  return unless -d $self->rep($user, $project);
   
-  my $home = $self->rep_home;
-  my $dir = "$home/$user";
-  
-  # Repositories
-  opendir my $dh, $self->_enc($dir)
-    or croak qq/Can't open directory $dir: $!/;
-  my @reps;
-  while (my $rep_name = readdir $dh) {
-    next unless $rep_name =~ /\.git$/;
-    my $project = $rep_name;
-    $project =~ s/\.git$//;
-    my $rep_path = "$home/$user/$rep_name";
-    my @activity = $self->last_activity($user, $project);
-    
-    my $rep = {};
-    $rep->{name} = $project;
-    if (@activity) {
-      $rep->{age} = $activity[0];
-      $rep->{age_string} = $activity[1];
-    }
-    else { $rep->{age} = 0 }
-    
-    my $description = $self->description($user, $project) || '';
-    $rep->{description} = $self->_chop_str($description, 25, 5);
-    
-    push @reps, $rep;
+
+  my $rep = {};
+  my @activity = $self->last_activity($user, $project);
+  if (@activity) {
+    $rep->{age} = $activity[0];
+    $rep->{age_string} = $activity[1];
   }
+  else { $rep->{age} = 0 }
   
-  return \@reps;
+  my $description = $self->description($user, $project) || '';
+  $rep->{description} = $self->_chop_str($description, 25, 5);
+  
+  return $rep;
 }
 
 sub references {
