@@ -4,7 +4,7 @@
   my $users = $manager->users;
   
   # Goto Start page
-  unless (defined $manager->admin_id) {
+  unless (defined $manager->admin_user) {
     $self->redirect_to('/_start');
     $self->finish_rendering;
     return;

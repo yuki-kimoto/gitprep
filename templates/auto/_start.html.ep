@@ -9,24 +9,24 @@
   if ($op eq 'create') {
     
     # Sleep to protect password atack
-    sleep 3;
+    sleep 3 unless $ENV{GITPREP_TEST};
     
     # Check existence admin user
     my $admin_user = app->manager->admin_user;
-    if (defined $admin_user) { $errors = ['admin user already exists'] }
+    if (defined $admin_user) { $errors = ['admin user already exists.'] }
     else {
       # Validation
       my $params = $api->params;
       my $rule = [
         password => [
-          ['not_blank' => 'Password is emplty'],
+          ['not_blank' => 'Password is empty.'],
           ['ascii' => 'Password contain invalid character.'],
           [{'length' => {max => 20}} => 'Password is too long.']
         ],
         {password_check => [qw/password password2/]}
           => {copy => 0}
           => [
-            ['duplication' => "Two password don't match"]
+            ['duplication' => "Two password don't match."]
           ]
       ];
       my $vresult = $self->app->validator->validate($params, $rule);

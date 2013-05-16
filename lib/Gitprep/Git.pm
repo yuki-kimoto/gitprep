@@ -1576,6 +1576,20 @@ sub _slurp {
   return $content;
 }
 
+sub _tab_to_space {
+  my ($self, $line) = @_;
+  
+  # Tab to space
+  while ((my $pos = index($line, "\t")) != -1) {
+    if (my $count = (2 - ($pos % 2))) {
+      my $spaces = ' ' x $count;
+      $line =~ s/\t/$spaces/;
+    }
+  }
+
+  return $line;
+}
+
 sub _unquote {
   my ($self, $str) = @_;
   
@@ -1606,20 +1620,6 @@ sub _unquote {
   }
   
   return $str;
-}
-
-sub _tab_to_space {
-  my ($self, $line) = @_;
-  
-  # Tab to space
-  while ((my $pos = index($line, "\t")) != -1) {
-    if (my $count = (2 - ($pos % 2))) {
-      my $spaces = ' ' x $count;
-      $line =~ s/\t/$spaces/;
-    }
-  }
-
-  return $line;
 }
 
 1;

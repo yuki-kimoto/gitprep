@@ -9,12 +9,12 @@ use File::Temp ();
 
 has 'app';
 
-sub admin_id {
+sub admin_user {
   my $self = shift;
   
   # Admin user
   my $admin_user = $self->app->dbi->model('user')
-    ->select('id', where => {admin => 1})->value;
+    ->select(where => {admin => 1})->one;
   
   return $admin_user;
 }
