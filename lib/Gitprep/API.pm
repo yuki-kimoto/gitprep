@@ -20,6 +20,8 @@ sub encrypt_password {
 sub check_password {
   my ($self, $password, $salt, $password_encrypted) = @_;
   
+  return unless defined $password && $salt && $password_encrypted;
+  
   return md5_hex(md5_hex "$salt$password") eq $password_encrypted;
 }
 

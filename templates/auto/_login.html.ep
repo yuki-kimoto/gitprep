@@ -13,7 +13,8 @@
   
   # Login
   if ($op eq 'login') {
-    sleep 3;
+  
+    sleep 3 unless $ENV{GITPREP_TEST};
     
     # Validation
     my $params = $api->params;

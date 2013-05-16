@@ -20,7 +20,7 @@ my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/admin";
 use Gitprep;
 
 
-note '_start page';
+note 'Start page';
 {
   unlink $db_file;
 
@@ -63,5 +63,46 @@ note '_start page';
   $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'})
     ->content_like(qr/Admin user already exists/);
   ;
+}
 
+note 'Login as admin user';
+{
+  unlink $db_file;
+
+  my $app = Gitprep->new;
+  my $t = Test::Mojo->new($app);
+  $t->ua->max_redirects(3);
+
+  # Create admin user
+  $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'})
+    ->content_like(qr/Login Page/);
+  ;
+  
+  # Page access
+  $t->get_ok('/_login')->content_like(qr/Login Page/);
+  
+  # Login fail
+  $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'b'})
+    ->content_like(qr/User name or password is wrong/)
+  ;
+
+  # Login success
+  $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'a'})
+    ->content_like(qr/Admin/)
+  ;
+  
+  note 'Admin page';
+  {
+    $t->post_ok('/_admin')->content_like(qr/Admin/);
+  }
+  
+  note 'Admin User page';
+  {
+    $t->post_ok('/_admin/users')->content_like(qr/Admin Users/);
+  }
+
+  note 'Create User page';
+  {
+    $t->post_ok('/_admin/user/create')->content_like(qr/Create User/);
+  }
 }
