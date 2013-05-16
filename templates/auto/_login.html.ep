@@ -80,6 +80,8 @@
 
 % layout 'common';
 
+  <!-- Login Page -->
+  
   %= include '/include/header';
 
   <div class="container">

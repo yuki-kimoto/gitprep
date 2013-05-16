@@ -28,3 +28,4 @@ setup/log/*
 setup/latest-build
 setup/work/*
 setup/build.log
+xt/admin.db

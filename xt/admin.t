@@ -19,12 +19,15 @@ my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/admin";
 
 use Gitprep;
 
-my $app = Gitprep->new;
-my $t = Test::Mojo->new($app);
-$t->ua->max_redirects(3);
 
 note '_start page';
 {
+  unlink $db_file;
+
+  my $app = Gitprep->new;
+  my $t = Test::Mojo->new($app);
+  $t->ua->max_redirects(3);
+
   # Redirect to _start page
   $t->get_ok('/')->content_like(qr/Create Admin User/);
 
@@ -35,4 +38,30 @@ note '_start page';
   $t->post_ok('/_start?op=create', form => {password => ''})
     ->content_like(qr/Password is empty/)
   ;
+  
+  # Password contains invalid character
+  $t->post_ok('/_start?op=create', form => {password => "\t"})
+    ->content_like(qr/Password contains invalid character/)
+  ;
+
+  # Password contains invalid character
+  $t->post_ok('/_start?op=create', form => {password => 'a' x 21})
+    ->content_like(qr/Password is too long/)
+  ;
+
+  # Two password don't match
+  $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'b'})
+    ->content_like(qr/Two password/)
+  ;
+  
+  # Create admin user
+  $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'})
+    ->content_like(qr/Login Page/);
+  ;
+
+  # Admin user already exists
+  $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'})
+    ->content_like(qr/Admin user already exists/);
+  ;
+
 }

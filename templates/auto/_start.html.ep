@@ -13,14 +13,14 @@
     
     # Check existence admin user
     my $admin_user = app->manager->admin_user;
-    if (defined $admin_user) { $errors = ['admin user already exists.'] }
+    if (defined $admin_user) { $errors = ['Admin user already exists.'] }
     else {
       # Validation
       my $params = $api->params;
       my $rule = [
         password => [
           ['not_blank' => 'Password is empty.'],
-          ['ascii' => 'Password contain invalid character.'],
+          ['ascii' => 'Password contains invalid character.'],
           [{'length' => {max => 20}} => 'Password is too long.']
         ],
         {password_check => [qw/password password2/]}
@@ -48,6 +48,8 @@
         # Redirect
         $self->flash(admin_user_created => 1);
         $self->redirect_to('/_login');
+        $self->finish_rendering;
+        return;
       }
       else { $errors = $vresult->messages }
     }
