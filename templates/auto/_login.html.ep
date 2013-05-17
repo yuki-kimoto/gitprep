@@ -95,6 +95,15 @@
       </div>
     % }
 
+    % if (my $messages = flash('messages')) {
+      <div class="alert alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        % for my $message (@$messages) {
+          <p><%= $message %></p>
+        % }
+      </div>
+    % }
+    
     % if ($error) {
       <div class="alert alert-error">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
