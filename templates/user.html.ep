@@ -15,7 +15,7 @@
   for my $project (@$projects) {
     my $rep = app->git->repository($user, $project->{name}) || {none => 1};
     $rep->{name} = $project->{name};
-    push $reps, $rep;
+    push @$reps, $rep;
   }
 %>
 
