@@ -103,6 +103,44 @@ note 'Login as admin user';
 
   note 'Create User page';
   {
-    $t->post_ok('/_admin/user/create')->content_like(qr/Create User/);
+    # Page access
+    $t->get_ok('/_admin/user/create')->content_like(qr/Create User/);
+    
+    # User name is empty
+    $t->post_ok('/_admin/user/create?op=create', form => {id => ''})
+      ->content_like(qr/User name is empty/);
+
+    # User name contain invalid character
+    $t->post_ok('/_admin/user/create?op=create', form => {id => '&'})
+      ->content_like(qr/User name contain invalid character/);
+
+    # User name is too long
+    $t->post_ok('/_admin/user/create?op=create', form => {id => 'a' x 21})
+      ->content_like(qr/User name is too long/);
+
+    # Password is empty
+    $t->post_ok('/_admin/user/create?op=create', form => {id => 'a', password => ''})
+      ->content_like(qr/Password is empty/);
+
+    # Password contain invalid character
+    $t->post_ok('/_admin/user/create?op=create', form => {id => 'a', password => "\t"})
+      ->content_like(qr/Password contain invalid character/);
+
+    # Password contain invalid character
+    $t->post_ok('/_admin/user/create?op=create', form => {id => 'a', password => 'a' x 21})
+      ->content_like(qr/Password is too long/);
+
+    # Password contain invalid character
+    $t->post_ok('/_admin/user/create?op=create', form => {id => 'a', password => 'a', password2 => 'b'})
+      ->content_like(qr/Two password/);
+    
+    # Create user
+    $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', password => 'a', password2 => 'a'})
+      ->content_like(qr/Success.*created/);
+    
+    # Admin Users page
+    $t->get_ok('/_admin/users')
+      ->content_like(qr/Admin Users/)
+      ->content_like(qr/kimoto/);
   }
 }

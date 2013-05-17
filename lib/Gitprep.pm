@@ -111,22 +111,7 @@ sub startup {
     }
   );
   
-  # Helper
-  {
-    # API
-    $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
-    
-    # Finish rendering
-    $self->helper(finish_rendering => sub {
-      my $self = shift;
-      
-      $self->stash->{'mojo.routed'} = 1;
-      $self->rendered;
-      
-      return $self;
-    });
-  }
-  
+
   # Routes
   {
     my $r = $self->routes;
@@ -226,6 +211,22 @@ sub startup {
         $r->get('/api/revs')->name('api/revs');
       }
     }
+  }
+
+  # Helper
+  {
+    # API
+    $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
+    
+    # Finish rendering
+    $self->helper(finish_rendering => sub {
+      my $self = shift;
+      
+      $self->stash->{'mojo.routed'} = 1;
+      $self->rendered;
+      
+      return $self;
+    });
   }
   
   # Reverse proxy support
