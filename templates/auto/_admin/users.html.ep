@@ -11,8 +11,6 @@
     my $rule = [
       user => [
         ['not_blank' => 'User name is empty.'],
-        [{'regex' => qr/^[a-zA-Z0-9_]+$/} => 'User name contains invalid character.'],
-        [{'length' => {max => 20}} => 'User name is too long.']
       ]
     ];
     my $vresult = $validator->validate($params, $rule);
@@ -24,14 +22,21 @@
       my $user = $params->{user};
       
       # Delete user
-      eval { app->manager->delete_user($user) };
+      my $count;
+      eval { $count = app->manager->delete_user($user) };
       if ($@) {
-        app->log->error($@);
+        app->log->error("/_admin/users?op=delete: $@");
+        $errors = ['Internal Error'];
+      }
+      elsif ($count == 0) {
+        app->log->error("/_admin/users?op=delete: User $user not exists");
         $errors = ['Internal Error'];
       }
       else {
-        $self->flash(message => "User $user is deleted");
+        $self->flash(message => "User $user is deleted.");
         $self->redirect_to('current');
+        $self->finish_rendering;
+        return;
       }
     }
     else { $errors = $vresult->messages }

@@ -98,7 +98,7 @@ note 'Login as admin user';
   
   note 'Admin User page';
   {
-    $t->post_ok('/_admin/users')->content_like(qr/Admin Users/);
+    $t->get_ok('/_admin/users')->content_like(qr/Admin Users/);
   }
 
   note 'Create User page';
@@ -176,7 +176,26 @@ note 'Login as admin user';
     $t->post_ok('/reset-password?user=kimoto&op=reset', form => {password => 'a', password2 => 'a'})
       ->content_like(qr/Success.*changed/)
     ;
-    
-    
+  }
+
+  note 'Delete user';
+  {
+    # Create user
+    $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto-tmp', password => 'a', password2 => 'a'})
+      ->content_like(qr/kimoto-tmp/);
+    $t->get_ok('/_admin/users')
+      ->content_like(qr/kimoto-tmp/);
+
+    # User not exists
+    $t->post_ok('/_admin/users?op=delete', form => {user => 'kimoto-notting'})
+      ->content_like(qr/Internal/);
+
+    # User not exists
+    $t->post_ok('/_admin/users?op=delete', form => {user => 'kimoto-tmp'})
+      ->content_like(qr/User.*deleted/);
+    $t->get_ok('/_admin/users')
+      ->content_unlike(qr/kimoto-tmp/);
+
+    ;
   }
 }

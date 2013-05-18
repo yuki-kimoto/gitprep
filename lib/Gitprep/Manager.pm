@@ -167,15 +167,18 @@ sub delete_user {
   # Delete user
   my $dbi = $self->app->dbi;
   my $error;
+  my $count;
   eval {
     $dbi->connector->txn(sub {
-      eval { $self->_delete_db_user($user) };
+      eval { $count = $self->_delete_db_user($user) };
       croak $error = $@ if $@;
       eval {$self->_delete_user_dir($user) };
       croak $error = $@ if $@;
     });
   };
   croak $error if $@;
+  
+  return $count;
 }
 
 sub original_project {
@@ -505,7 +508,9 @@ sub _delete_db_user {
   my ($self, $user) = @_;
   
   # Delete database user
-  $self->app->dbi->model('user')->delete(id => $user);
+  my $count = $self->app->dbi->model('user')->delete(id => $user);
+  
+  return $count;
 }
 
 sub _delete_user_dir {
