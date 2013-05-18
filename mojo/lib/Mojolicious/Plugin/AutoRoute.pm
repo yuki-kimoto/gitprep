@@ -1,7 +1,7 @@
 package Mojolicious::Plugin::AutoRoute;
 use Mojo::Base 'Mojolicious::Plugin';
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 sub register {
   my ($self, $app, $conf) = @_;
@@ -38,7 +38,7 @@ sub register {
   # Index
   $r->route('/')
     ->over($condition_name)
-    ->to(cb => sub { shift->render("/$top_dir/index") });
+    ->to(cb => sub { shift->render("/$top_dir/index", 'mojo.maybe' => 1) });
   
   # Route
   $r->route('/(*__auto_route_plugin_path)')
@@ -48,8 +48,18 @@ sub register {
       
       my $path = $c->stash('__auto_route_plugin_path');
       
-      $c->render("/$top_dir/$path");
+      $c->render("/$top_dir/$path", 'mojo.maybe' => 1);
     });
+  
+  # Finish rendering Helper
+  $app->helper(finish_rendering => sub {
+    my $self = shift;
+    
+    $self->stash->{'mojo.routed'} = 1;
+    $self->rendered;
+    
+    return $self;
+  });
 }
 
 1;
@@ -88,7 +98,7 @@ You only put file into C<auto> directory.
 
 =head1 OPTIONS
 
-=head2 C<route>
+=head2 route
 
   route => $route;
 
@@ -96,7 +106,7 @@ You can set parent route if you need.
 This is L<Mojolicious::Routes> object.
 Default is C<$app->routes>.
 
-=head2 C<top_dir>
+=head2 top_dir
 
   top_dir => 'myauto'
 
@@ -107,7 +117,34 @@ Top directory. default is C<auto>.
 L<Mojolicious::Plugin::AutoRoute> inherits all methods from
 L<Mojolicious::Plugin> and implements the following new ones.
 
-=head2 C<register>
+=head1 HELPER
+
+=head2 finish_rendering
+
+You can render data, json, not found and exeption from template
+using C<finish_rendering> helper.
+
+  @@ index.html.ep
+  $self->render(data => 'foo');
+  $self->finish_rendering;
+  return;
+
+  @@ index.html.ep
+  $self->render(json => {foo => 1});
+  $self->finish_rendering;
+  return;
+
+  @@ index.html.ep
+  $self->render_not_found;
+  $self->finish_rendering;
+  return;
+
+  @@ index.html.ep
+  $self->render_exception;
+  $self->finish_rendering;
+  return;
+
+=head2 register
 
   $plugin->register($app);
 

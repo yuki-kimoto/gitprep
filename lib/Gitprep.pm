@@ -113,6 +113,12 @@ sub startup {
   
 
   # Routes
+  sub template {
+    my $template = shift;
+    
+    return (cb => sub { shift->render($template, , 'mojo.maybe' => 1)});
+  }
+  
   {
     my $r = $self->routes;
 
@@ -154,10 +160,10 @@ sub startup {
       my $r = $r->route('/:user');
       {
         # Home
-        $r->get('/')->name('user');
+        $r->get('/')->to(template '/user');
         
         # Settings
-        $r->get('/_settings')->name('user-settings');
+        $r->get('/_settings')->to(template '/user-settings');
       }
       
       # Project
@@ -165,50 +171,50 @@ sub startup {
         my $r = $r->route('/:project');
         
         # Home
-        $r->get('/')->name('project');
+        $r->get('/')->to(template '/project');
         
         # Commit
-        $r->get('/commit/*diff')->name('commit');
+        $r->get('/commit/*diff')->to(template '/commit');
         
         # Commits
-        $r->get('/commits/*rev_file', {file => undef})->name('commits');
+        $r->get('/commits/*rev_file', {file => undef})->to(template '/commits');
         
         # Branches
-        $r->any('/branches/*base_branch', {base_branch => undef})->name('branches');
+        $r->any('/branches/*base_branch', {base_branch => undef})->to(template '/branches');
 
         # Tags
         $r->get('/tags');
 
         # Tree
-        $r->get('/tree/*rev_dir', {dir => undef})->name('tree');
+        $r->get('/tree/*rev_dir', {dir => undef})->to(template '/tree');
         
         # Blob
-        $r->get('/blob/*rev_file', {file => undef})->name('blob');
+        $r->get('/blob/*rev_file', {file => undef})->to(template '/blob');
         
         # Raw
-        $r->get('/raw/*rev_file', {file => undef})->name('raw');
+        $r->get('/raw/*rev_file', {file => undef})->to(template '/raw');
         
         # Archive
-        $r->get('/archive/(*rev).tar.gz')->to(archive_type => 'tar')->name('archive');
-        $r->get('/archive/(*rev).zip')->to(archive_type => 'zip')->name('archive');
+        $r->get('/archive/(*rev).tar.gz')->to(archive_type => 'tar')->to(template '/archive');
+        $r->get('/archive/(*rev).zip')->to(archive_type => 'zip')->to(template '/archive');
         
         # Compare
-        $r->get('/compare/(*rev1)...(*rev2)')->name('compare');
+        $r->get('/compare/(*rev1)...(*rev2)')->to(template '/compare');
         
         # Settings
-        $r->any('/settings');
+        $r->any('/settings')->to(template '/settings');
         
         # Fork
-        $r->any('/fork');
+        $r->any('/fork')->to(template '/fork');
 
         # Network
-        $r->get('/network');
+        $r->get('/network')->to(template '/network');
 
         # Network Graph
-        $r->get('/network/graph/(*rev1)...(*rev2_abs)')->name('network/graph');
+        $r->get('/network/graph/(*rev1)...(*rev2_abs)')->to(template '/network/graph');
         
         # Get branches and tags
-        $r->get('/api/revs')->name('api/revs');
+        $r->get('/api/revs')->to(template '/api/revs');
       }
     }
   }
@@ -217,16 +223,6 @@ sub startup {
   {
     # API
     $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
-    
-    # Finish rendering
-    $self->helper(finish_rendering => sub {
-      my $self = shift;
-      
-      $self->stash->{'mojo.routed'} = 1;
-      $self->rendered;
-      
-      return $self;
-    });
   }
   
   # Reverse proxy support
