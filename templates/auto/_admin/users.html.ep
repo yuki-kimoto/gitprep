@@ -1,16 +1,86 @@
 <%
+  my $op = param('op') || '';
+  my $api = gitprep_api;
+  
+  my $errors;
+  if ($op eq 'delete' && lc $self->req->method eq 'post') {
+
+    # Validation
+    my $params = $api->params;
+    my $validator = $self->app->validator;
+    my $rule = [
+      user => [
+        ['not_blank' => 'User name is empty.'],
+        [{'regex' => qr/^[a-zA-Z0-9_]+$/} => 'User name contains invalid character.'],
+        [{'length' => {max => 20}} => 'User name is too long.']
+      ]
+    ];
+    my $vresult = $validator->validate($params, $rule);
+    
+    if ($vresult->is_ok) {
+      
+      # Valid parameters
+      my $params = $vresult->data;
+      my $user = $params->{user};
+      
+      # Delete user
+      eval { app->manager->delete_user($user) };
+      if ($@) {
+        app->log->error($@);
+        $errors = ['Internal Error'];
+      }
+      else {
+        $self->flash(message => "User $user is deleted");
+        $self->redirect_to('current');
+      }
+    }
+    else { $errors = $vresult->messages }
+  }
+  
   my $users = app->manager->users;
 %>
 
 % layout 'common';
 
+  %= javascript begin
+    $(document).ready(function () {
+      
+      // Confirm delete
+      $('.delete-btn').on('click', function () {
+        var user = $(this).attr('user');
+        
+        var input = window.prompt(
+          'Are you really delete user "' + user
+          + '". User and user\'s all repositories are deleted. Please input user name.'
+        );
+        
+        if (user === input) {
+          return true;
+        }
+        else {
+          return false;
+        }
+      });
+    });
+  % end
+
   %= include '/include/header';
 
   <div class="container">
-    % if (flash('user_deleted')) {
+
+    % if (my $message = flash('message')) {
       <div class="alert alert-success">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
-        Success: User <b><%= flash('user') %></b> is deleted.
+        %= $message;
+      </div>
+    % }
+    
+    % if ($errors) {
+      <div class="alert">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        % for my $error (@$errors) {
+          <p><%= $error %></p>
+        % }
       </div>
     % }
     
@@ -25,8 +95,11 @@
               <a href="#"><%= $uid %></a>
             </td>
             <td style="text-align:right">
-              <a class="btn btn-mini" href="<%= url_for('/reset-password')->query(user => $uid, mode => 'admin') %>">Reset Password</a>
-              <a class="btn btn-mini" href="<%= url_for("/_admin/user/delete?user=$uid") %>">Delete</a>
+              <a class="btn btn-mini" href="<%= url_for('/reset-password')->query(user => $uid) %>">Reset Password</a>
+              <form style="display:inline-block" action="<%= url_for->query(op => 'delete') %>" method="post">
+                %= hidden_field user => $uid;
+                <input type="submit" class="btn btn-mini delete-btn" user="<%= $uid %>" value="Delete">
+              </form>
             </td>
           </tr>
         % }
@@ -36,3 +109,4 @@
   <div class="text-center" style="margin-bottom:20px"><big><a href="<%= url_for('/_admin') %>">Admin page</a></big></div>
   
   %= include '/include/footer';
+  

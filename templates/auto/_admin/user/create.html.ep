@@ -99,6 +99,6 @@
         </div>
       </form>
     </div>
-    <div class="text-center" style="margin-bottom:20px"><big><a href="<%= url_for('/_admin/users') %>">See Users</a></big></div>
+    <div class="text-center" style="margin-bottom:20px"><big><a href="<%= url_for('/_admin/users') %>">Users</a></big></div>
   </div>
   %= include '/include/footer';

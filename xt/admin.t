@@ -137,10 +137,46 @@ note 'Login as admin user';
     # Create user
     $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', password => 'a', password2 => 'a'})
       ->content_like(qr/Success.*created/);
+  }
     
-    # Admin Users page
-    $t->get_ok('/_admin/users')
-      ->content_like(qr/Admin Users/)
-      ->content_like(qr/kimoto/);
+  note 'Admin Users page';
+  $t->get_ok('/_admin/users')
+    ->content_like(qr/Admin Users/)
+    ->content_like(qr/kimoto/);
+  
+  note 'Reset password page';
+  {
+    # Page access
+    $t->get_ok('/reset-password?user=kimoto')
+      ->content_like(qr/Reset Password/)
+      ->content_like(qr/kimoto/)
+    ;
+    
+    # Password is empty
+    $t->post_ok('/reset-password?user=kimoto&op=reset', form => {password => ''})
+      ->content_like(qr/Password is empty/)
+    ;
+
+    # Password contains invalid character
+    $t->post_ok('/reset-password?user=kimoto&op=reset', form => {password => "\t"})
+      ->content_like(qr/Password contains invalid character/)
+    ;
+
+    # Password is too long
+    $t->post_ok('/reset-password?user=kimoto&op=reset', form => {password => 'a' x 21})
+      ->content_like(qr/Password is too long/)
+    ;
+    
+    # Two password don't match
+    $t->post_ok('/reset-password?user=kimoto&op=reset', form => {password => 'a', password2 => 'b'})
+      ->content_like(qr/Two password/)
+    ;
+
+    # Reset password
+    $t->post_ok('/reset-password?user=kimoto&op=reset', form => {password => 'a', password2 => 'a'})
+      ->content_like(qr/Success.*changed/)
+    ;
+    
+    
   }
 }
