@@ -65,7 +65,7 @@ note 'Start page';
   ;
 }
 
-note 'Login as admin user';
+note 'Admin pages';
 {
   unlink $db_file;
 
@@ -198,4 +198,73 @@ note 'Login as admin user';
 
     ;
   }
+  
+  note 'logout';
+  $t->get_ok('/_logout')
+    ->get_ok('/_admin')
+    ->content_like(qr/Users/);
+}
+
+note 'Reset password';
+{
+  unlink $db_file;
+
+  my $app = Gitprep->new;
+  my $t = Test::Mojo->new($app);
+  $t->ua->max_redirects(3);
+
+  # Create admin user
+  $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'})
+    ->content_like(qr/Login Page/);
+  ;
+
+  # Not loing user can't access
+  $t->get_ok('/reset-password')
+    ->content_like(qr/Users/);
+
+  # Cnahge password(reset_password conf on)
+  $app->config->{admin}{reset_password} = 1;
+  $t->get_ok('/reset-password')
+    ->content_like(qr/Reset Password/);
+  $t->post_ok('/reset-password?op=reset', form => {password => 'b', password2 => 'b'})
+    ->content_like(qr/Success.*changed/)
+  ;
+  $app->config->{admin}{reset_password} = 0;
+
+  # Login success
+  $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'b'})
+    ->content_like(qr/Admin/)
+  ;
+  
+  # Create user
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto1', password => 'a', password2 => 'a'})
+    ->content_like(qr/kimoto1/);
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', password => 'a', password2 => 'a'})
+    ->content_like(qr/kimoto2/);
+  
+  # Logout
+  $t->get_ok('/_logout');
+  
+  # Login as kimoto
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto1', password => 'a'});
+  $t->get_ok('/')->content_like(qr/kimoto1/);
+
+  # Don't change other user password
+  $t->get_ok('/reset-password?user=kimoto2')
+    ->content_like(qr/Users/)
+  ;
+  $t->post_ok('/reset-password?user=kimoto2&op=reset', form => {password => 'b', password2 => 'b'})
+    ->content_like(qr/Users/)
+  ;
+
+  # Reset password
+  $t->get_ok('/reset-password?user=kimoto1')
+    ->content_like(qr/Reset Password/)
+  ;
+  $t->post_ok('/reset-password?user=kimoto1&op=reset', form => {password => 'b', password2 => 'b'});
+  
+  # Login as kimoto
+  $t->get_ok('/_logout');
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto1', password => 'b'});
+  $t->get_ok('/')->content_like(qr/kimoto1/);
 }
