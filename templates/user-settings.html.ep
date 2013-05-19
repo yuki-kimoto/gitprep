@@ -1,3 +1,19 @@
+<%
+  # API
+  my $api = gitprep_api;
+  
+  # Parameters
+  my $op = param('op') || '';
+  my $user = param('user') || '';
+  
+  # Authentication
+  unless ($api->logined($user)) {
+    $self->redirect_to('/');
+    $self->finish_rendering;
+    return;
+  }
+%>
+
 % layout 'common';
   
   %= include '/include/header';

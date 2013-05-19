@@ -1,5 +1,15 @@
 <%
+  # API
+  my $api = gitprep_api;
+
   my $op = param('op') || '';
+
+  # Authentication
+  unless ($api->logined) {
+    $self->redirect_to('/');
+    $self->finish_rendering;
+    return;
+  }
   
   my $errors;
   if ($op eq 'create') {
@@ -8,15 +18,10 @@
     
     # Validation
     my $params = $api->params;
-    my $keyword_check = sub {
-      my $value = shift;
-      
-      return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/
-    };
     my $rule = [
       project => [
         ['not_blank' => 'Repository name is empty'],
-        [$keyword_check => 'Invalid repository name']
+        ['project_name' => 'Invalid repository name']
       ],
       description => [
         'any'
@@ -62,7 +67,8 @@
         }
         else {
           $self->redirect_to("/$user/$project");
-          return 1;
+          $self->finish_rendering;
+          return;
         }
       }
     }

@@ -1,19 +1,20 @@
 <%
+  # API
   my $api = gitprep_api;
-  my $logined = $api->logined;
-  my $user_is_valid = $logined && $user eq session('user');
-  my $default_branch_name = app->manager->default_branch($user, $project);
-
-  my $git = app->git;
-
-  my $op = param('op') || '';
   
-  unless ($user_is_valid) {
-    $self->render_exception('Forbidden');
-    $self->res->code(403);
+  # Parameters
+  my $op = param('op') || '';
+  my $user = param('user') || '';
+  
+  # Authentication
+  unless ($api->logined($user)) {
+    $self->redirect_to('/');
+    $self->finish_rendering;
     return;
   }
   
+  # Rename project
+  my $git = app->git;
   if ($op eq 'rename-project') {
   
     # Validation
@@ -53,6 +54,8 @@
       $self->render(json => {ok => 0, message => 'Invalid Parameters'});
     }
   }
+  
+  # Change description
   elsif ($op eq 'change_description') {
     my $description = param('description');
     $description = '' unless defined $description;
@@ -61,6 +64,8 @@
     $self->render(json => {ok => 1});
     return $self->res->body;
   }
+  
+  # Delete project
   elsif ($op eq 'delete-project') {
   
     # Validation
@@ -218,7 +223,7 @@
         Default Branch
         % my $branches = $git->branches($user, $project);
         % my $branch_names = [map { $_->{name} } @$branches];
-        % push @$branch_names, $default_branch_name unless @$branch_names;
+        % push @$branch_names, app->manager->default_branch($user, $project) unless @$branch_names;
         %= select_field 'default_branch' => $branch_names, style => 'margin-top:5px';
       </div>
     </div>

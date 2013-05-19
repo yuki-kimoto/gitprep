@@ -5,6 +5,7 @@ use utf8;
 use lib "$FindBin::Bin/../mojo/lib";
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
+use File::Path 'rmtree';
 use Encode qw/encode decode/;
 
 use Test::Mojo;
@@ -268,3 +269,71 @@ note 'Reset password';
   $t->post_ok('/_login?op=login', form => {id => 'kimoto1', password => 'b'});
   $t->get_ok('/')->content_like(qr/kimoto1/);
 }
+
+note 'User Account Settings';
+{
+  unlink $db_file;
+  rmtree $rep_home;
+
+  my $app = Gitprep->new;
+  my $t = Test::Mojo->new($app);
+  $t->ua->max_redirects(3);
+
+  # Create admin user
+  $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'})
+    ->content_like(qr/Login Page/);
+  ;
+
+  # Login as admin
+  $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'a'});
+
+  # Create user
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto1', password => 'a', password2 => 'a'})
+    ->content_like(qr/kimoto1/);
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', password => 'a', password2 => 'a'})
+    ->content_like(qr/kimoto2/);
+  
+  # Login as kimoto1
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto1', password => 'a'});
+
+  # User account settings
+  $t->get_ok('/kimoto1/_settings')
+    ->content_like(qr/User Account Settings/)
+  ;
+  
+  # Other user can't access
+  $t->get_ok('/kimoto2/_settings')
+    ->content_like(qr/Users/)
+  ;
+  
+  note 'Create repository';
+  {
+    # Create repository page
+    $t->get_ok('/_new')
+      ->content_like(qr/Create repository/)
+    ;
+    
+    # Not logined user can't access
+    $t->get_ok('/_logout');
+    $t->get_ok('/_new')
+      ->content_like(qr/Users/)
+    ;
+    $t->post_ok('/_login?op=login', form => {id => 'kimoto1', password => 'a'});
+    
+    # Create repository
+    $t->post_ok('/_new?op=create', form => {project => 't1', description => 'Hello'})
+      ->content_like(qr/Create a new repository on the command line/)
+      ->content_like(qr/t1\.git/)
+      ->content_like(qr/Hello/)
+    ;
+
+    # Create repository(with readme)
+    $t->post_ok('/_new?op=create', form => {project => 't2', description => 'Hello', readme => 1})
+      ->content_like(qr/first commit/)
+      ->content_like(qr/t2\.git/)
+      ->content_like(qr/README/)
+    ;    
+  }
+}
+
+
