@@ -116,7 +116,7 @@ sub startup {
   sub template {
     my $template = shift;
     
-    return (cb => sub { shift->render($template, , 'mojo.maybe' => 1)});
+    return sub { shift->render($template, , 'mojo.maybe' => 1) };
   }
   
   {
@@ -160,10 +160,10 @@ sub startup {
       my $r = $r->route('/:user');
       {
         # Home
-        $r->get('/')->to(template '/user');
+        $r->get('/' => template '/user');
         
         # Settings
-        $r->get('/_settings')->to(template '/user-settings');
+        $r->get('/_settings' => template '/user-settings');
       }
       
       # Project
@@ -171,50 +171,50 @@ sub startup {
         my $r = $r->route('/:project');
         
         # Home
-        $r->get('/')->to(template '/project');
+        $r->get('/' => template '/project');
         
         # Commit
-        $r->get('/commit/*diff')->to(template '/commit');
+        $r->get('/commit/*diff' => template '/commit');
         
         # Commits
-        $r->get('/commits/*rev_file', {file => undef})->to(template '/commits');
+        $r->get('/commits/*rev_file', {file => undef} => template '/commits');
         
         # Branches
-        $r->any('/branches/*base_branch', {base_branch => undef})->to(template '/branches');
+        $r->any('/branches/*base_branch', {base_branch => undef} => template '/branches');
 
         # Tags
-        $r->get('/tags');
+        $r->get('/tags' => template '/tags');
 
         # Tree
-        $r->get('/tree/*rev_dir', {dir => undef})->to(template '/tree');
+        $r->get('/tree/*rev_dir' => template '/tree');
         
         # Blob
-        $r->get('/blob/*rev_file', {file => undef})->to(template '/blob');
+        $r->get('/blob/*rev_file' => template '/blob');
         
         # Raw
-        $r->get('/raw/*rev_file', {file => undef})->to(template '/raw');
+        $r->get('/raw/*rev_file' => template '/raw');
         
         # Archive
-        $r->get('/archive/(*rev).tar.gz')->to(archive_type => 'tar')->to(template '/archive');
-        $r->get('/archive/(*rev).zip')->to(archive_type => 'zip')->to(template '/archive');
+        $r->get('/archive/(*rev).tar.gz' => template '/archive')->to(archive_type => 'tar');
+        $r->get('/archive/(*rev).zip' => template '/archive')->to(archive_type => 'zip' );
         
         # Compare
-        $r->get('/compare/(*rev1)...(*rev2)')->to(template '/compare');
+        $r->get('/compare/(*rev1)...(*rev2)' => template '/compare');
         
         # Settings
-        $r->any('/settings')->to(template '/settings');
+        $r->any('/settings' => template '/settings');
         
         # Fork
-        $r->any('/fork')->to(template '/fork');
+        $r->any('/fork' => template '/fork');
 
         # Network
-        $r->get('/network')->to(template '/network');
+        $r->get('/network' => template '/network');
 
         # Network Graph
-        $r->get('/network/graph/(*rev1)...(*rev2_abs)')->to(template '/network/graph');
+        $r->get('/network/graph/(*rev1)...(*rev2_abs)' => template '/network/graph');
         
         # Get branches and tags
-        $r->get('/api/revs')->to(template '/api/revs');
+        $r->get('/api/revs' => template '/api/revs');
       }
     }
   }
