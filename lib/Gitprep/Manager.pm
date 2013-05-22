@@ -20,14 +20,24 @@ sub admin_user {
 }
 
 sub default_branch {
-  my ($self, $user, $project) = @_;
+  my ($self, $user, $project, $default_branch) = @_;
   
-  # Default branch
-  my $default_branch = $self->app->dbi->model('project')
-    ->select('default_branch', id => [$user, $project])
-    ->value;
-  
-  return $default_branch;
+  # Set default branch
+  my $dbi = $self->app->dbi;
+  if (defined $default_branch) {
+    $dbi->model('project')->update(
+      {default_branch => $default_branch},
+      id => [$user, $project]
+    );
+  }
+  else {
+    # Get default branch
+    my $default_branch = $dbi->model('project')
+      ->select('default_branch', id => [$user, $project])
+      ->value;
+    
+    return $default_branch;
+  }
 }
 
 sub fork_project {
@@ -541,8 +551,6 @@ sub exists_project {
   # Exists project
   my $dbi = $self->app->dbi;
   my $row = $dbi->model('project')->select(id => [$user, $project])->one;
-  
-  use D;d $row;
   
   return $row ? 1 : 0;
 }

@@ -68,11 +68,27 @@
     
     eval { $git->description($user, $project, $description) };
     if ($@) {
-      app->log->error("/settings?op=change-description: $@");
+      app->log->error("/$user/$project/settings?op=description: $@");
       $errors = ['Internal Error'];
     }
     else {
       flash(message => 'Description is saved.');
+      $self->redirect_to('current');
+      $self->finish_rendering;
+      return;
+    }
+  }
+  
+  # Change default branch
+  elsif ($op eq 'default-branch' && $post) {
+    my $default_branch = param('default-branch');
+    eval { app->manager->default_branch($user, $project, $default_branch) };
+    if ($@) {
+      app->log->error("/$user/$project/settings?op=default-branch: $@");
+      $errors = ['Internal Error'];
+    }
+    else {
+      flash(message => "Default branch is changed to $default_branch.");
       $self->redirect_to('current');
       $self->finish_rendering;
       return;
@@ -128,6 +144,11 @@
         $('#form-rename-project').submit();
       });
       
+      // Select default branch
+      $('[name=default-branch]').on('change', function () {
+        $('#form-default-branch').submit();
+      });
+
       // Check matching deleted project
       $('input[name="deleted-project"]').on('keyup', function () {
         var deleted_project = $(this).val();
@@ -142,7 +163,7 @@
             .attr('disabled', 'disabled');
         }
       });
-      
+            
       // Delete project
       $('#delete').on('click', function () {
         var deleted_project = $('input[name="deleted-project"]').val();
@@ -163,10 +184,6 @@
           }
         });
       });
-      
-      // Select default branch
-      var default_branch = "<%= app->manager->default_branch($user, $project) %>";
-      $('select[name="default_branch"]').val(default_branch);
     });
   
   % end
@@ -207,11 +224,15 @@
         </form>
       </div>
       <div class="border-gray" style="padding:5px;border-top:none">
-        Default Branch
-        % my $branches = $git->branches($user, $project);
-        % my $branch_names = [map { $_->{name} } @$branches];
-        % push @$branch_names, app->manager->default_branch($user, $project) unless @$branch_names;
-        %= select_field 'default_branch' => $branch_names, style => 'margin-top:5px';
+        <form id="form-default-branch" action="<%= url_for->query(op => 'default-branch') %>" method="post" style="margin-bottom:0px">
+          Default Branch
+          % my $branches = $git->branches($user, $project);
+          % my $branch_names = [map { $_->{name} } @$branches];
+          % my $default_branch = app->manager->default_branch($user, $project);
+          % push @$branch_names,  unless @$branch_names;
+          % param('default-branch', $default_branch);
+          %= select_field 'default-branch' => $branch_names, style => 'margin-top:5px';
+        </form>
       </div>
     </div>
     
