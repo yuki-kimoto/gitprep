@@ -332,7 +332,17 @@ note 'User Account Settings';
       ->content_like(qr/first commit/)
       ->content_like(qr/t2\.git/)
       ->content_like(qr/README/)
-    ;    
+    ;
+    
+    # Settings page(don't has README)
+    $t->get_ok('/kimoto1/t1/settings')
+      ->content_like(qr/Settings/)
+    ;
+    
+    # Settings page(has README)
+    $t->get_ok('/kimoto1/t2/settings')
+      ->content_like(qr/Settings/)
+    ;
   }
 }
 

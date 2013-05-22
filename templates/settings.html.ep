@@ -15,7 +15,9 @@
   
   # Rename project
   my $git = app->git;
-  if ($op eq 'rename-project') {
+  my $errors;
+  my $post = lc $self->req->method eq 'post';
+  if ($op eq 'rename-project' && $post) {
   
     # Validation
     my $params = $api->params;
@@ -26,7 +28,7 @@
       project => [
         'project_name'
       ],
-      'renamed-project' => [
+      'to-project' => [
         'project_name'
       ]
     ];
@@ -37,36 +39,48 @@
       my $data = $vresult->data;
       my $user = $data->{user};
       my $project = $data->{project};
-      my $renamed_project = $data->{'renamed-project'};
+      my $to_project = $data->{'to-project'};
       
       # Rename
-      my $manager = app->manager;
-      my $error = $manager->rename_project($user, $project, $renamed_project);
-      if (ref $error) {
-        $self->render(json => {ok => 0, message => $error->{message}});
+      if (app->manager->exists_project($user, $to_project)) {
+        $errors = ["$to_project is already exists"];
       }
       else {
-        $self->render(json => {ok => 1});
+        eval { app->manager->rename_project($user, $project, $to_project) };
+        if ($@) {
+          $errors = ['Internal Error'];
+        }
+        else {
+          flash(message => "Repository name is renamed to $to_project");
+          $self->redirect_to("/$user/$to_project/settings");
+          $self->finish_rendering;
+          return;
+        }
       }
-      return $self->res->body;
     }
-    else {
-      $self->render(json => {ok => 0, message => 'Invalid Parameters'});
-    }
+    else { $errors = $vresult->messages }
   }
   
   # Change description
-  elsif ($op eq 'change_description') {
+  elsif ($op eq 'change-description' && $post) {
     my $description = param('description');
     $description = '' unless defined $description;
     
-    $git->description($user, $project, $description);
-    $self->render(json => {ok => 1});
-    return $self->res->body;
+    eval { $git->description($user, $project, $description) };
+    if ($@) {
+      app->log->error("/settings?op=change-description: $@");
+      $errors = ['Internal Error'];
+    }
+    else {
+      flash(message => 'Description is saved.');
+      $self->redirect_to('current');
+      $self->finish_rendering;
+      return;
+    }
   }
   
   # Delete project
-  elsif ($op eq 'delete-project') {
+  elsif ($op eq 'delete-project' && $post) {
   
     # Validation
     my $params = $api->params;
@@ -109,38 +123,9 @@
     
     $(document).ready(function () {
     
-      // Rename project name
+      // Rename project
       $('#rename').on('click', function () {
-        var renamed_project = $('input[name="renamed-project"]').val();
-        
-        var url = "<%= url_for %>";
-        var data = {
-          op : "rename-project",
-          user: "<%= $user %>",
-          project: "<%= $project %>",
-          'renamed-project': renamed_project
-        };
-        $.post(url, data, function (result) {
-          if (result.ok) {
-            location.href = "<%= url_for("/$user") %>" + '/' + renamed_project;
-          }
-          else {
-            $('#modal-message-text').text('Rename failed:' + result.message);
-            $('#modal-message').modal('show');
-          }
-        });
-      });
-      
-      // Change description
-      $('a[href="#description"]').on('click', function () {
-        var description = $('input[name="description"]').val();
-        var url = "<%= url_for %>?op=change_description&description=" + description;
-        $.post(url, function (result) {
-          if (result.ok) {
-            $('#modal-message-text').text('Description is changed');
-            $('#modal-message').modal('show');
-          }
-        });
+        $('#form-rename-project').submit();
       });
       
       // Check matching deleted project
@@ -189,6 +174,8 @@
   %= include '/include/header';
   
   <div class="container">
+    %= include '/include/errors', errors => $errors;
+    %= include '/include/message', message => flash('message');
     %= include '/include/project_header';
     
     <div style="margin-bottom:20px">
@@ -198,26 +185,26 @@
         </h4>
       </div>
       <div class="border-gray" style="padding:5px;border-top:none">
-        <div >Repository Name</div>
-        <div>
-          %= text_field 'renamed-project' => $project, style => 'margin-top:9px';
-          <a href="#rename-confirm" role="button" class="btn" data-toggle="modal">
-            Rename
-          </a>
-        </div>
+        <form id="form-rename-project" action="<%= url_for->query(op => 'rename-project') %>" method="post" style="margin-bottom:0px">
+          <div >Repository Name</div>
+          <div>
+            %= text_field 'to-project' => $project, style => 'margin-top:9px';
+            <a href="#rename-confirm" role="button" class="btn" data-toggle="modal">
+              Rename
+            </a>
+          </div>
+        </form>
       </div>
       <div class="border-gray" style="padding:5px;border-top:none">
-        <div >Description</div>
-        <div>
-          % my $description = $git->description($user, $project);
-          % $description = '' unless defined $description;
-          %= text_field 'description' => $description, class => 'span8', style => 'margin-top:9px';
-          <a class="btn" href="#description">Save</a>
-        </div>
-        <div id="description-success" class="alert alert-success" style="width:150px;display:none">
-          <button type="button" class="close" data-dismiss="alert">&times;</button>
-          Savaed!
-        </div>
+        <form action="<%= url_for->query(op => 'change-description') %>" method="post" style="margin-bottom:0px">
+          <div >Description</div>
+          <div>
+            % my $description = $git->description($user, $project);
+            % $description = '' unless defined $description;
+            %= text_field 'description' => $description, class => 'span8', style => 'margin-top:9px';
+            <input type="submit" class="btn" value="Save">
+          </div>
+        </form>
       </div>
       <div class="border-gray" style="padding:5px;border-top:none">
         Default Branch

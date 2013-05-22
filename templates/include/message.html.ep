@@ -1,0 +1,9 @@
+<%
+  my $message = stash('message');
+%>
+% if (defined $message) {
+  <div class="alert alert-success">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <p><%= $message %></p>
+  </div>
+% }

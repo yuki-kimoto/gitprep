@@ -235,24 +235,16 @@ sub rename_project {
   # Rename project
   my $git = $self->app->git;
   my $dbi = $self->app->dbi;
-  my $error = {};
-  if ($self->exists_project($user, $to_project))
-  {
-    $error->{message} = 'Already exists';
-    return $error;
-  }
-  else {
+  my $error;
+  eval {
     $dbi->connector->txn(sub {
-      $self->_rename_project($user, $project, $to_project);
-      $self->_rename_rep($user, $project, $to_project);
+      eval { $self->_rename_project($user, $project, $to_project) };
+      croak $error = $@ if $@;
+      eval { $self->_rename_rep($user, $project, $to_project) };
+      croak $error = $@ if $@;
     });
-    if ($@) {
-      $error->{message} = 'Rename failed';
-      return $error;
-    }
-  }
-  
-  return 1;
+  };
+  croak $error if $error;
 }
 
 sub setup_database {
@@ -549,6 +541,8 @@ sub exists_project {
   # Exists project
   my $dbi = $self->app->dbi;
   my $row = $dbi->model('project')->select(id => [$user, $project])->one;
+  
+  use D;d $row;
   
   return $row ? 1 : 0;
 }
