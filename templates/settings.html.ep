@@ -118,18 +118,17 @@
       
       eval { app->manager->delete_project($user, $project) };
       if ($@) {
-        app->log->fatal($@);
-        $self->render(json => {ok => 0, message => 'Internal error'});
+        app->log->error("/$user/$project/settings:$@");
+        $errors = ['Internal Error'];
       }
       else {
-        $self->render(json => {ok => 1});
+        flash(message => "Repository $project is deleted.");
+        $self->redirect_to("/$user");
+        $self->finish_rendering;
+        return;
       }
     }
-    else {
-      $self->render(json => {ok => 0, message => 'Invalid paramter'});
-    }
-    
-    return $self->res->body;
+    else { $errors = $vresult->messages }
   }
 %>
 
@@ -166,26 +165,9 @@
             
       // Delete project
       $('#delete').on('click', function () {
-        var deleted_project = $('input[name="deleted-project"]').val();
-        var url = "<%= url_for %>";
-        var data = {
-          op : "delete-project",
-          user: "<%= $user %>",
-          project: "<%= $project %>",
-          "deleted-project" : deleted_project,
-        };
-        $.post(url, data, function (result) {
-          if (result.ok) {
-            location.href = "<%= url_for("/$user")->query(deleted_project => $project) %>";
-          }
-          else {
-            $('#modal-message-text').text('Error:' + result.message);
-            $('#modal-message').modal('show');
-          }
-        });
+        $('#form-delete-project').submit();
       });
     });
-  
   % end
   
   %= include '/include/header';
@@ -229,7 +211,7 @@
           % my $branches = $git->branches($user, $project);
           % my $branch_names = [map { $_->{name} } @$branches];
           % my $default_branch = app->manager->default_branch($user, $project);
-          % push @$branch_names,  unless @$branch_names;
+          % push @$branch_names, $default_branch unless @$branch_names;
           % param('default-branch', $default_branch);
           %= select_field 'default-branch' => $branch_names, style => 'margin-top:5px';
         </form>
@@ -241,13 +223,18 @@
         <h4 style="color:white">Danger Zone</h4>
       </div>
       <div class="border-gray" style="padding:5px;border-top:none">
-        <div><b>Delete this repository</b></div>
-        <span class="muted">
-          Once you delete a repository, there is no going back.
-        </span>
-        <a style="color:red" href="#delete-confirm" role="button" class="btn" data-toggle="modal">
-          Delete this repository
-        </a>
+        <form id="form-delete-project" action="<%= url_for->query(op => 'delete-project') %>" method="post">
+          <div><b>Delete this repository</b></div>
+          <span class="muted">
+            Once you delete a repository, there is no going back.
+          </span>
+          <a style="color:red" href="#delete-confirm" role="button" class="btn" data-toggle="modal">
+            Delete this repository
+          </a>
+          %= hidden_field user => $user;
+          %= hidden_field project => $project;
+        </form>
+      </div>
     </div>
   </div>
   

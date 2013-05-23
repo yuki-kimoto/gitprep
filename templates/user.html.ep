@@ -24,24 +24,13 @@
 
   <div class="container">
     <div>
-      % if (my $deleted_project = flash('deleted_project')) {
-        <div class="alert alert-success">
-          <button type="button" class="close" data-dismiss="alert">&times;</button>
-          Repository <%= $deleted_project %> is deleted.
-        </div>
-      % }
-    
+      %= include '/include/message', message => flash('message');
+      
       <ul class="breadcrumb" style="margin-top:10px">
         <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>
         /
         <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
       </ul>
-      % if (my $message = flash('delete_message')) {
-        <div class="alert alert-success">
-          <button type="button" class="close" data-dismiss="alert">&times;</button>
-          <strong><%= $message %></strong>
-        </div>
-      % }
 
       <h3>Repositories</h3>
       
