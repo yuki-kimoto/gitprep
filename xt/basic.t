@@ -318,3 +318,14 @@ note 'Network page';
   $t->get_ok("/$user/$project/network");
   $t->content_like(qr/Network/);
 }
+
+note 'README';
+{
+  # Links
+  $t->get_ok("/$user/$project/tree/84199670c2f8e51f87b05b336020bde968975498");
+  $t->content_like(qr#<a href="http://foo1">http://foo1</a>#);
+  $t->content_like(qr#<a href="https://foo2">https://foo2</a>#);
+  $t->content_like(qr#<a href="http://foo3">http://foo3</a>#);
+  $t->content_like(qr#<a href="http://foo4">http://foo4</a>#);
+  $t->content_like(qr#<a href="http://foo5">http://foo5</a>#);
+}
