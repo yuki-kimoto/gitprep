@@ -178,12 +178,12 @@
     %= include '/include/project_header';
     
     <div style="margin-bottom:20px">
-      <div class="border-gray bk-gray-light" style="padding-left:5px">
+      <div class="border-gray bk-gray-light radius-top" style="padding-left:5px">
         <h4>
           Settings
         </h4>
       </div>
-      <div class="border-gray" style="padding:5px;border-top:none">
+      <div class="border-gray" style="padding:5px 10px;border-top:none">
         <form id="form-rename-project" action="<%= url_for->query(op => 'rename-project') %>" method="post" style="margin-bottom:0px">
           <div >Repository Name</div>
           <div>
@@ -194,7 +194,7 @@
           </div>
         </form>
       </div>
-      <div class="border-gray" style="padding:5px;border-top:none">
+      <div class="border-gray" style="padding:5px 10px;border-top:none">
         <form action="<%= url_for->query(op => 'change-description') %>" method="post" style="margin-bottom:0px">
           <div >Description</div>
           <div>
@@ -205,7 +205,7 @@
           </div>
         </form>
       </div>
-      <div class="border-gray" style="padding:5px;border-top:none">
+      <div class="border-gray radius-bottom" style="padding:5px 10px;border-top:none;">
         <form id="form-default-branch" action="<%= url_for->query(op => 'default-branch') %>" method="post" style="margin-bottom:0px">
           Default Branch
           % my $branches = $git->branches($user, $project);
@@ -218,11 +218,11 @@
       </div>
     </div>
     
-    <div>
-      <div class="border-gray bk-gray-light" style="background:red;padding-left:5px">
+    <div style="margin-bottom:30px">
+      <div class="border-gray bk-gray-light radius-top" style="background:red;padding-left:5px">
         <h4 style="color:white">Danger Zone</h4>
       </div>
-      <div class="border-gray" style="padding:5px;border-top:none">
+      <div class="border-gray radius-bottom" style="padding:5px 10px;border-top:none">
         <form id="form-delete-project" action="<%= url_for->query(op => 'delete-project') %>" method="post">
           <div><b>Delete this repository</b></div>
           <span class="muted">
