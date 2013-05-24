@@ -13,10 +13,10 @@ use Test::Mojo;
 $ENV{GITPREP_TEST} = 1;
 
 # Test DB
-my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/admin.db";
+my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/user.db";
 
 # Test Repository home
-my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/admin";
+my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/user";
 
 use Gitprep;
 
