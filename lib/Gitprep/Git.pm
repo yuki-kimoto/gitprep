@@ -52,16 +52,16 @@ sub branch_status {
   return $status;
 }
 
-sub branches {
-  my ($self, $user, $project, $opts) = @_;
+sub no_merged_branch_h {
+  my ($self, $user, $project) = @_;
   
   # No merged branches
   my $no_merged_branches_h = {};
   {
-    my @cmd = $self->cmd($user, $project, 'branch');
-    push @cmd, , '--no-merged';
-    open my $fh, '-|', @cmd or return;
+    my $rep = $self->rep($user, $project);
     
+    my @cmd = $self->cmd($user, $project, 'branch', '--no-merged');
+    open my $fh, '-|', @cmd or return;
     while (my $branch_name = $self->_dec(scalar <$fh>)) {
       $branch_name =~ s/^\*//;
       $branch_name =~ s/^\s*//;
@@ -70,11 +70,23 @@ sub branches {
     }
   }
   
+  return $no_merged_branches_h;
+}
+
+sub branches {
+  my ($self, $user, $project) = @_;
+  
   # Branches
   my @cmd = $self->cmd($user, $project, 'branch');
   open my $fh, '-|', @cmd or return;
   my $branches = [];
+  my $start;
+  my $no_merged_branches_h;
   while (my $branch_name = $self->_dec(scalar <$fh>)) {
+    
+    # No merged branch
+    $no_merged_branches_h = $self->no_merged_branch_h($user, $project)
+      unless $start++;
     
     # Branch
     my $branch = $self->branch($user, $project, $branch_name);

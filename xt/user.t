@@ -309,15 +309,31 @@ note 'User Account Settings';
     $t->content_like(qr/first commit/);
     $t->content_like(qr/t2\.git/);
     $t->content_like(qr/README/);
-    
+
     # Settings page(don't has README)
     $t->get_ok('/kimoto1/t1/settings');
     $t->content_like(qr/Settings/);
-    
+
     # Settings page(has README)
     $t->get_ok('/kimoto1/t2/settings');
     $t->content_like(qr/Settings/);
   }
   
   note 'Project settings';
+  {
+    note 'Rename project';
+    {
+      # Empty
+      $t->post_ok('/kimoto1/t2/settings?op=rename-project', form => {});
+      $t->content_like(qr/Repository name is empty/);
+      
+      # Invalid character
+      $t->post_ok('/kimoto1/t2/settings?op=rename-project', form => {'to-project' => '&'});
+      $t->content_like(qr/Repository name contains invalid charactor/);
+      
+      # Rename project
+      $t->post_ok('/kimoto1/t2/settings?op=rename-project', form => {'to-project' => 't3'});
+      $t->content_like(qr/Repository name is renamed to t3/);
+    }
+  }
 }

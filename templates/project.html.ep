@@ -11,6 +11,12 @@
   my $user = param('user');
   my $project = param('project');
   my $rev = app->manager->default_branch($user, $project);
+  
+  unless (app->manager->exists_project($user, $project)) {
+    $self->render_not_found;
+    $self->finish_rendering;
+    return;
+  }
 
   # Repository description
   my $desc = $git->description($user, $project);

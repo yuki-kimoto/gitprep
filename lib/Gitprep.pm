@@ -156,8 +156,10 @@ sub startup {
 
     # Custom routes
     {
+      my $id_re = qr/[a-zA-Z0-9_-]+/;
+      
       # User
-      my $r = $r->route('/:user');
+      my $r = $r->route('/:user', user => $id_re);
       {
         # Home
         $r->get('/' => template '/user');
@@ -168,7 +170,7 @@ sub startup {
       
       # Project
       {
-        my $r = $r->route('/:project');
+        my $r = $r->route('/:project', project => $id_re);
         
         # Home
         $r->get('/' => template '/project');

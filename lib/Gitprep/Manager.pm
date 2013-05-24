@@ -555,6 +555,15 @@ sub exists_project {
   return $row ? 1 : 0;
 }
 
+sub exists_user {
+  my ($self, $user) = @_;
+  
+  # Exists project
+  my $row = $self->app->dbi->model('user')->select(id => $user)->one;
+  
+  return $row ? 1 : 0;
+}
+
 sub _exists_rep {
   my ($self, $user, $project) = @_;
   
@@ -587,7 +596,7 @@ sub _rename_project {
   my ($self, $user, $project, $renamed_project) = @_;
   
   # Check arguments
-  croak "Invalid parameters"
+  croak "Invalid parameters(_rename_project)"
     unless defined $user && defined $project && defined $renamed_project;
   
   # Rename project

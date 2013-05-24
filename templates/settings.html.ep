@@ -22,14 +22,9 @@
     # Validation
     my $params = $api->params;
     my $rule = [
-      user => [
-        'user_name'
-      ],
-      project => [
-        'project_name'
-      ],
       'to-project' => [
-        'project_name'
+        ['not_blank' => 'Repository name is empty.'],
+        ['project_name' => 'Repository name contains invalid charactor.']
       ]
     ];
     my $vresult = app->validator->validate($params, $rule);
@@ -37,8 +32,6 @@
     if ($vresult->is_ok) {
       # Valida parameters
       my $data = $vresult->data;
-      my $user = $data->{user};
-      my $project = $data->{project};
       my $to_project = $data->{'to-project'};
       
       # Rename
@@ -48,6 +41,7 @@
       else {
         eval { app->manager->rename_project($user, $project, $to_project) };
         if ($@) {
+          app->log->error($@);
           $errors = ['Internal Error'];
         }
         else {
