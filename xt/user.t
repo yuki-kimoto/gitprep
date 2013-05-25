@@ -1,4 +1,6 @@
 use Test::More 'no_plan';
+use strict;
+use warnings;
 
 use FindBin;
 use utf8;
@@ -334,6 +336,16 @@ note 'User Account Settings';
       # Rename project
       $t->post_ok('/kimoto1/t2/settings?op=rename-project', form => {'to-project' => 't3'});
       $t->content_like(qr/Repository name is renamed to t3/);
+      $t->post_ok('/kimoto1/t3/settings?op=rename-project', form => {'to-project' => 't2'});
+      $t->content_like(qr/Repository name is renamed to t2/);
+    }
+    
+    note 'Change description';
+    {
+      # Change description
+      $t->post_ok("/kimoto1/t1/settings?op=change-description", form => {description => 'あああ'});
+      $t->content_like(qr/Description is saved/);
+      #$t->content_like(qr/あああ/);
     }
   }
 }
