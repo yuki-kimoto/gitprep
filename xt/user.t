@@ -305,6 +305,8 @@ note 'User Account Settings';
     $t->content_like(qr/Create a new repository on the command line/);
     $t->content_like(qr/t1\.git/);
     $t->content_like(qr/Hello/);
+    ok(-f "$rep_home/kimoto1/t1.git/git-daemon-export-ok");
+    ok(-f "$rep_home/kimoto1/t1.git/hooks/post-update");
 
     # Create repository(with readme)
     $t->post_ok('/_new?op=create', form => {project => 't2', description => 'Hello', readme => 1});
