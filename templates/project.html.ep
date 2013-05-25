@@ -107,10 +107,12 @@
   %= include '/include/header';
   
   <div class="container">
+    %= include '/include/message', message => flash('message');
+    
     % if (my $original_project = flash('original_project')) {
       <div class="alert alert-success">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
-        Repository is forked from <%= $original_project %>.
+        
       </div>
     % }
     

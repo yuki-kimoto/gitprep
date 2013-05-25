@@ -367,10 +367,35 @@ note 'User Account Settings';
     
     note 'Delete project';
     {
-      $t->post_ok('/kimoto1/t2/settings?op=delete-project');
-      $t->content_like(qr/Repository t2 is deleted/);
+      $t->post_ok('/kimoto1/t1/settings?op=delete-project');
+      $t->content_like(qr/Repository t1 is deleted/);
       $t->get_ok('/kimoto1');
-      $t->content_unlike(qr/t2/);
+      $t->content_unlike(qr/t1/);
     }
   }
+}
+
+note 'fork';
+{
+  my $app = Gitprep->new;
+  my $t = Test::Mojo->new($app);
+  $t->ua->max_redirects(3);
+  
+  # Don't logind
+  $t->get_ok("/kimoto1/t2/fork");
+  $t->content_like(qr/Users/);
+
+  # Login as kimoto2
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto2', password => 'a'});
+  
+  # Fork kimoto1/t2
+  $t->get_ok("/kimoto1/t2/fork");
+  $t->content_like(qr#Repository is forked from /kimoto1/t2#);
+  
+  # Fork kimoto1/t2 again
+  $t->get_ok("/kimoto1/t2/fork");
+  $t->content_like(qr/forked from/);
+  $t->content_like(qr#kimoto1/t2#);
+  $t->content_unlike(qr/Repository is forked from/);
+  
 }

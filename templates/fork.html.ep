@@ -1,62 +1,36 @@
 <%
+  # API
   my $api = gitprep_api;
-  my $logined = $api->logined;
   
-  # Validation
-  my $params = $api->params;
-  my $rule = [
-    user => [
-      'user_name'
-    ],
-    project => [
-      'project_name'
-    ]
-  ];
-  my $vresult = app->validator->validate($params, $rule);
+  # Paramters
+  my $user = param('user');
+  my $project = param('project');
+  my $current_user = session('user');
   
-  # Fork project
-  if ($vresult->is_ok) {
-    unless ($logined) {
-      $self->redirect_to("/$user/$project");
-      $self->finish_rendering;
-      return;
-    }
-    
-    my $login_user = session('user');
-    my $data = $vresult->data;
-    my $user = $data->{user};
-    my $project = $data->{project};
-    
-    if ($login_user eq $user) {
-      $self->redirect_to("/$user/$project");
-      $self->finish_rendering;
-      return;
-    }
-    
-    # Already exists
-    if (app->manager->exists_project($login_user, $project)) {
-      $self->redirect_to("/$login_user/$project");
-      $self->finish_rendering;
-      return;
-    }
-    # Fork
-    else {
-      eval { app->manager->fork_project($login_user, $user, $project) };
-      if ($@) {
-        $self->render_exception($@);
-        $self->finish_rendering;
-        return;
-      }
-      else {
-        flash('original_project', "$user/$project");
-        $self->redirect_to("/$login_user/$project");
-        $self->finish_rendering;
-        return;
-      }
-    }
+  # Can fork?
+  unless ($api->logined) {
+    $self->redirect_to('/');
+    $self->finish_rendering;
+    return;
   }
+  
+  # Repository is already exists
+  if (app->manager->exists_project($current_user, $project)) {
+    $self->redirect_to("/$current_user/$project");
+    $self->finish_rendering;
+    return;
+  }
+  # Fork
   else {
-    $self->redirect_to("/$user/$project");
+    eval { app->manager->fork_project($current_user, $user, $project) };
+    if ($@) {
+      $self->render_exception('Internal Error');
+      app->log->error("/$user/$project/fork: $@");
+    }
+    else {
+      flash(message => "Repository is forked from /$user/$project.");
+      $self->redirect_to("/$current_user/$project");
+    }
     $self->finish_rendering;
     return;
   }
