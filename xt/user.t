@@ -362,5 +362,13 @@ note 'User Account Settings';
       $t->post_ok("/kimoto1/t2/settings?op=default-branch", form => {'default-branch' => 'b1'});
       $t->content_like(qr/Default branch is changed to b1/);
     }
+    
+    note 'Delete project';
+    {
+      $t->post_ok('/kimoto1/t2/settings?op=delete-project');
+      $t->content_like(qr/Repository t2 is deleted/);
+      $t->get_ok('/kimoto1');
+      $t->content_unlike(qr/t2/);
+    }
   }
 }

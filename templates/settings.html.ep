@@ -91,38 +91,21 @@
   
   # Delete project
   elsif ($op eq 'delete-project' && $post) {
-  
-    # Validation
-    my $params = $api->params;
-    my $rule = [
-      user => [
-        'user_name'
-      ],
-      project => [
-        'project_name'
-      ]
-    ];
-    my $vresult = app->validator->validate($params, $rule);
     
-    # Delete project
-    if ($vresult->is_ok) {
-      my $data = $vresult->data;
-      my $user = $data->{user};
-      my $project = $data->{project};
-      
-      eval { app->manager->delete_project($user, $project) };
-      if ($@) {
-        app->log->error("/$user/$project/settings:$@");
-        $errors = ['Internal Error'];
-      }
-      else {
-        flash(message => "Repository $project is deleted.");
-        $self->redirect_to("/$user");
-        $self->finish_rendering;
-        return;
-      }
+    my $user = param('user');
+    my $project = param('project');
+    
+    eval { app->manager->delete_project($user, $project) };
+    if ($@) {
+      app->log->error("/$user/$project/settings:$@");
+      $errors = ['Internal Error'];
     }
-    else { $errors = $vresult->messages }
+    else {
+      flash(message => "Repository $project is deleted.");
+      $self->redirect_to("/$user");
+      $self->finish_rendering;
+      return;
+    }
   }
 %>
 
