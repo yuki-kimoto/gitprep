@@ -344,10 +344,15 @@ note 'User Account Settings';
     
     note 'Change description';
     {
-      # Change description
+      # Change description(t1)
       $t->post_ok("/kimoto1/t1/settings?op=change-description", form => {description => 'あああ'});
       $t->content_like(qr/Description is saved/);
       $t->content_like(qr/あああ/);
+
+      # Change description(t2)
+      $t->post_ok("/kimoto1/t2/settings?op=change-description", form => {description => 'いいい'});
+      $t->content_like(qr/Description is saved/);
+      $t->content_like(qr/いいい/);
     }
     
     note 'Change default branch';
@@ -391,11 +396,11 @@ note 'fork';
   # Fork kimoto1/t2
   $t->get_ok("/kimoto1/t2/fork");
   $t->content_like(qr#Repository is forked from /kimoto1/t2#);
+  $t->content_like(qr/いいい/);
   
   # Fork kimoto1/t2 again
   $t->get_ok("/kimoto1/t2/fork");
   $t->content_like(qr/forked from/);
   $t->content_like(qr#kimoto1/t2#);
   $t->content_unlike(qr/Repository is forked from/);
-  
 }

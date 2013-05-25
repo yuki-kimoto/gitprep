@@ -3,7 +3,7 @@ use Mojo::Base -base;
 
 use Carp 'croak';
 use Encode 'encode';
-use File::Copy 'move';
+use File::Copy qw/move copy/;
 use File::Path qw/mkpath rmtree/;
 use File::Temp ();
 
@@ -589,7 +589,11 @@ sub _fork_rep {
     $to_rep
   );
   system(@cmd) == 0
-    or croak "Can't fork repository: @cmd";
+    or croak "Can't fork repository(_fork_rep): @cmd";
+  
+  # Copy description
+  copy "$rep/description", "$to_rep/description"
+    or croak "Can't copy description file(_fork_rep)";
 }
 
 sub _rename_project {
