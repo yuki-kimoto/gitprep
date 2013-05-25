@@ -345,7 +345,22 @@ note 'User Account Settings';
       # Change description
       $t->post_ok("/kimoto1/t1/settings?op=change-description", form => {description => 'あああ'});
       $t->content_like(qr/Description is saved/);
-      #$t->content_like(qr/あああ/);
+      $t->content_like(qr/あああ/);
+    }
+    
+    note 'Change default branch';
+    {
+      # Default branch default
+      $t->get_ok('/kimoto1/t1/settings');
+      $t->content_like(qr/master/);
+      
+      # Change default branch
+      my $cmd = "git --git-dir=$rep_home/kimoto1/t2.git branch b1";
+      system($cmd) == 0 or die "Can't execute git branch";
+      $t->get_ok('/kimoto1/t2/settings');
+      $t->content_like(qr/b1/);
+      $t->post_ok("/kimoto1/t2/settings?op=default-branch", form => {'default-branch' => 'b1'});
+      $t->content_like(qr/Default branch is changed to b1/);
     }
   }
 }
