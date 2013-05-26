@@ -43,30 +43,34 @@
   <div class="container" style="min-heigth:500px">
     <h3>Members of the <%= $project %> Network</h3>
     <div class="well" style="padding:5px 10px 0 10px;margin-bottom:20px">
-      <%= "$user / $project" %> /
+      <span class="label label-info">My branch</span>
+      <a href="<%= url_for("/$user") %>"><%= $user %></a>
+      <span>/</span>
+      <a href="<%= url_for("/$user/$project") %>"><%= $project %></a>
+      <span>/</span>
       % param('branch', $default_branch);
       %= select_field 'branch' => $branches, style => 'margin-top:5px;width:150px';
-      <span class="label label-info">My branch</span>
     </div>
     <div style="margin-bottom:30px">
       % if (@$members) {
         % for my $member (@$members) {
-          <div class="border-gray" name="remote" class="row" style="font-size:18px;border-top:none;border-left:none;border-right:none;padding-bottom:10px">
+          <div class="row" name="remote" style="font-size:18px;">
             % my $mid = $member->{id};
             % my $mproject = $member->{project};
             % my $mbranches = $member->{branches};
-            <div class="span8">
+            <div class="span8" style="padding-left:5px">
+              <span class="label label-success">Member branch</span>
               <a name="remote-member" href="<%= url_for("/$mid") %>"><%= $mid %></a>
               <span>/</span>
               <a name="remote-project" href="<%= url_for("/$mid/$mproject") %>"><%= $mproject %></a>
               <span>/</span>
               %= select_field 'remote-branch' => $mbranches, style => 'margin-top:5px;margin-bottom:7px;width:150px';
-              <span class="label label-success">Member branch</span>
             </div>
-            <div style="text-align:right">
+            <div class="text-right">
               <button name="remote-btn" class="btn" style="margin-top:5px">Compare</button>
             </div>
           </div>
+          <hr style="margin:0">
         % }
       % } else {
         <div class="well">
