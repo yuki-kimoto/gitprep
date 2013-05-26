@@ -63,7 +63,6 @@ sub fork_project {
           $project,
           {
             original_user => $original_user,
-            original_project => $project,
             original_pid => $original_pid
           }
         );
@@ -194,10 +193,24 @@ sub delete_user {
 sub original_project {
   my ($self, $user, $project) = @_;
   
+  # Original project id
+  my $dbi = $self->app->dbi;
+  my $row = $dbi->model('project')->select(
+    ['original_user', 'original_pid'],
+    id => [$user, $project]
+  )->one;
+  
+  croak "No original project" unless $row;
+  
   # Original project
-  my $original_project =  $self->app->dbi->model('project')
-    ->select('original_project', id => [$user, $project])
-    ->value;
+  my $original_project = $dbi->model('project')->select(
+    'name',
+    where => {
+      user_id => $row->{original_user},
+      original_pid => $row->{original_pid}
+    }
+  )->value;
+  
   return unless defined $original_project && length $original_project;
   
   return $original_project;
@@ -308,7 +321,6 @@ EOS
   my $project_columns = [
     "default_branch not null default 'master'",
     "original_user not null default ''",
-    "original_project not null default ''",
     "original_pid integer not null default 0"
   ];
   for my $column (@$project_columns) {
@@ -316,7 +328,7 @@ EOS
   }
 
   # Check project table
-  eval { $dbi->select([qw/default_branch original_user original_project original_pid/], table => 'project') };
+  eval { $dbi->select([qw/default_branch original_user original_pid/], table => 'project') };
   if ($@) {
     my $error = "Can't create project table properly: $@";
     $self->app->log->error($error);
@@ -608,12 +620,6 @@ sub _rename_project {
   $dbi->model('project')->update(
     {name => $renamed_project},
     id => [$user, $project]
-  );
-  
-  # Rename related project
-  $dbi->model('project')->update(
-    {original_project => $renamed_project},
-    where => {original_user => $user, original_project => $project},
   );
 }
 

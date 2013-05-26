@@ -108,14 +108,6 @@
   
   <div class="container">
     %= include '/include/message', message => flash('message');
-    
-    % if (my $original_project = flash('original_project')) {
-      <div class="alert alert-success">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        
-      </div>
-    % }
-    
     %= include '/include/project_header';
     
     <h3 style="margin:20px 0px 20px 0;font-size:16px;line-height:0">
