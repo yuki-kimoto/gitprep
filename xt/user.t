@@ -22,6 +22,11 @@ my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/user";
 
 use Gitprep;
 
+# For perl 5.8
+{
+  no warnings 'redefine';
+  sub note { print STDERR "# $_[0]\n" unless $ENV{HARNESS_ACTIVE} }
+}
 
 note 'Start page';
 {

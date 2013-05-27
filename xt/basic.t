@@ -23,6 +23,12 @@ my $t = Test::Mojo->new($app);
 my $user = 'kimoto';
 my $project = 'gitprep_t';
 
+# For perl 5.8
+{
+  no warnings 'redefine';
+  sub note { print STDERR "# $_[0]\n" unless $ENV{HARNESS_ACTIVE} }
+}
+
 note 'Home page';
 {
   # Page access
