@@ -83,6 +83,9 @@ sub branches {
   my $start;
   my $no_merged_branches_h;
   while (my $branch_name = $self->_dec(scalar <$fh>)) {
+    $branch_name =~ s/^\*//;
+    $branch_name =~ s/^\s*//;
+    $branch_name =~ s/\s*$//;
     
     # No merged branch
     $no_merged_branches_h = $self->no_merged_branch_h($user, $project)
@@ -94,6 +97,7 @@ sub branches {
     push @$branches, $branch;
   }
   @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
+  
   
   return $branches;
 }

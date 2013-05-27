@@ -335,3 +335,17 @@ note 'README';
   $t->content_like(qr#<a href="http://foo4">http://foo4</a>#);
   $t->content_like(qr#<a href="http://foo5">http://foo5</a>#);
 }
+
+note 'Branches';
+{
+  # Page access
+  $t->get_ok("/$user/$project/branches");
+  $t->content_like(qr/Branches/);
+  
+  # No merged branch
+  $t->content_like(qr/no-merged-branch.*?no_merged/s);
+  
+  # Marged branch
+  $t->content_like(qr/"merged-branch.*?b2/s);
+  
+}
