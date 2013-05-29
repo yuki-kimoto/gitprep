@@ -420,6 +420,11 @@ note 'Delete branch';
   $t->get_ok("/kimoto1/t2/branches");
   $t->content_like(qr/Branches/);
   $t->content_unlike(qr/Delete branch/);
+  
+  # Can't delete branch when no login
+  $t->post_ok('/kimoto1/t2/branches?op=delete', form => {branch => 'tmp_branch'})
+    ->content_like(qr/Users/);
+  
 
   # Login as kimoto1
   $t->post_ok('/_login?op=login', form => {id => 'kimoto1', password => 'a'});
