@@ -409,3 +409,29 @@ note 'fork';
   $t->content_like(qr#kimoto1/t2#);
   $t->content_unlike(qr/Repository is forked from/);
 }
+
+note 'Delete branch';
+{
+  my $app = Gitprep->new;
+  my $t = Test::Mojo->new($app);
+  $t->ua->max_redirects(3);
+  
+  # No delete branch button
+  $t->get_ok("/kimoto1/t2/branches");
+  $t->content_like(qr/Branches/);
+  $t->content_unlike(qr/Delete branch/);
+
+  # Login as kimoto1
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto1', password => 'a'});
+  my $cmd = "git --git-dir=$rep_home/kimoto1/t2.git branch tmp_branch";
+  system($cmd) == 0 or die "Can't execute git branch";
+  $t->get_ok("/kimoto1/t2/branches");
+  $t->content_like(qr/Delete branch/);
+  $t->content_like(qr/tmp_branch/);
+  
+  # Delete branch
+  $t->post_ok('/kimoto1/t2/branches?op=delete', form => {branch => 'tmp_branch'});
+  $t->content_like(qr/Branch tmp_branch is deleted/);
+  $t->get_ok('/kimoto1/t2/branches');
+  $t->content_unlike(qr/tmp_branch/);
+}

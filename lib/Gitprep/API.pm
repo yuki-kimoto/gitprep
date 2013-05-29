@@ -77,7 +77,16 @@ sub params {
   
   my $c = $self->cntl;
   
-  my %params = map { $_ => $c->param($_) } $c->param;
+  my %params;
+  for my $name ($c->param) {
+    my @values = $c->param($name);
+    if (@values > 1) {
+      $params{$name} = \@values;
+    }
+    elsif (@values) {
+      $params{$name} = $values[0];
+    }
+  }
   
   return \%params;
 }

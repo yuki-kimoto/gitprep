@@ -11,89 +11,63 @@
   # Git
   my $git = $self->app->git;
 
-  # Default branch
-  my $base_branch;
-  
-  # Branch
-  my $branches;
-  my $branches_count;
-  my $no_merged_branches_count;
-  my $base_branch_name;
-  my $merged_branches_count;
-  my $max;
-  
   # Delete
   my $errors;
-  if ($op eq 'delete') {
+  if ($op eq 'delete' && lc $self->req->method eq 'post') {
+    
+    # Forbbiden
+    unless ($api->logined($user)) {
+      $self->redirect_to('/');
+      $self->finish_rendering;
+      return;    
+    }
 
     # Validation
     my $params = $api->params;
     my $validator = $self->app->validator;
     my $rule = [
-      user => [
-        ['not_blank' => 'User name is empty.']
-      ],
-      project => [
-        ['not_blank' => 'Repository name is empty']
-      ],
       branch => [
-        ['not_blank' => 'Branch name is empty']
+        [not_blank => 'Branch name is empty']
       ]
     ];
     my $vresult = $validator->validate($params, $rule);
 
     if ($vresult->is_ok) {
-      
       # Valid parameters
       my $params = $vresult->data;
-      my $user = $params->{user};
-      my $project = $params->{project};
       my $branch = $params->{branch};
       
       # Delete branch
-      if ($api->logined($user)) {
-      
-        # Delete user
-        eval { $git->delete_branch($user, $project, $branch) };
-        if ($@) {
-          app->log->error($@);
-          $errors = ['Internal Error'];
-        }
-        else {
-          $self->flash(branch_deleted => 1);
-          $self->flash(branch => $branch);
-          $self->redirect_to;
-          $self->finish_rendering;
-          return;
-        }
+      eval { $git->delete_branch($user, $project, $branch) };
+      if ($@) {
+        app->log->error(url_with . ":$@");
+        $errors = ['Internal Error'];
       }
-      # Forbidden
       else {
-        $self->res->code('403');
+        $self->flash(message => "Branch $branch is deleted.");
+        $self->redirect_to;
         $self->finish_rendering;
         return;
       }
     }
     else { $errors = $vresult->messages }
   }
-  # List
-  else {
-    # Default branch
-    $base_branch_name = stash('base_branch') || app->manager->default_branch($user, $project);
-    $base_branch = $git->branch($user, $project, $base_branch_name);
-    
-    # No merged branches
-    $branches = $git->branches($user, $project);
-    $max = 0;
-    for my $branch (@$branches) {
-      $branch->{status} = $git->branch_status($user, $project, $base_branch->{name}, $branch->{name});
-      $max = $branch->{status}{ahead} if $max < $branch->{status}{ahead};
-      $max = $branch->{status}{behind} if $max < $branch->{status}{behind};
-    }
-    $branches_count = $git->branches_count($user, $project);
-    $no_merged_branches_count = $git->no_merged_branches_count($user, $project);
-    $merged_branches_count = $branches_count - $no_merged_branches_count - 1;
+  
+  # Default branch
+  my $base_branch_name = param('base_branch') || app->manager->default_branch($user, $project);
+  my $base_branch = $git->branch($user, $project, $base_branch_name);
+  
+  # No merged branches
+  my $branches = $git->branches($user, $project);
+  my $max = 0;
+  for my $branch (@$branches) {
+    $branch->{status} = $git->branch_status($user, $project, $base_branch->{name}, $branch->{name});
+    $max = $branch->{status}{ahead} if $max < $branch->{status}{ahead};
+    $max = $branch->{status}{behind} if $max < $branch->{status}{behind};
   }
+  my $branches_count = $git->branches_count($user, $project);
+  my $no_merged_branches_count = $git->no_merged_branches_count($user, $project);
+  my $merged_branches_count = $branches_count - $no_merged_branches_count - 1;
   
   # Global variable
   stash(rev => $base_branch_name);
@@ -139,15 +113,8 @@
   %= include '/include/header';
   
   <div class="container" style="padding-bottom:30px">
-
-    % if ($errors) {
-      <div class="alert alert-error">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        % for my $error (@$errors) {
-          <p><%= $error %></p>
-        % }
-      </div>
-    % }
+    %= include '/include/errors', errors => $errors;
+    %= include '/include/message', message => flash('message');
     
     %= include '/include/project_header';
     %= include '/include/code_menu', display => 'branches', branches => $branches;
