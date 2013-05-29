@@ -410,6 +410,25 @@ note 'fork';
   $t->content_unlike(qr/Repository is forked from/);
 }
 
+note 'Network';
+{
+  my $app = Gitprep->new;
+  my $t = Test::Mojo->new($app);
+  $t->ua->max_redirects(3);
+
+  $t->get_ok("/kimoto1/t2/network");
+  $t->content_like(qr/Members of the t2/);
+  $t->content_like(qr/My branch.*kimoto1.*t2.*master/s);
+  $t->content_like(qr/Member branch.*kimoto2.*t2.*master/s);
+  
+  note 'Graph';
+  {
+    $t->get_ok("/kimoto1/t2/network/graph/master...kimoto2/t2/master");
+    $t->content_like(qr/Graph/);
+    $t->content_like(qr/first commit/);
+  }
+}
+
 note 'Delete branch';
 {
   my $app = Gitprep->new;
