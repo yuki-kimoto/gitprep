@@ -347,5 +347,12 @@ note 'Branches';
   
   # Marged branch
   $t->content_like(qr/"merged-branch.*?b2/s);
-  
+}
+
+note 'Compare';
+{
+  # Page access
+  $t->get_ok("/$user/$project/compare/master...no_merged");
+  $t->content_like(qr/branch change/);
+  $t->content_like(qr#http://foo5branch change#);
 }
