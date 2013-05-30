@@ -8,6 +8,7 @@ use File::Basename qw/basename dirname/;
 use File::Copy 'move';
 use File::Find 'find';
 use File::Path qw/mkpath rmtree/;
+use POSIX 'floor';
 
 # Attributes
 has 'bin';
@@ -210,19 +211,27 @@ sub blob_diffs {
       or croak('Open self-diff-tree failed');
     my @lines = map { $self->_dec($_) } <$fh>;
     close $fh;
+    my ($lines, $diff_info) = $self->parse_blob_diff_lines(\@lines);
     my $blob_diff = {
       file => $file,
       from_file => $from_file,
-      lines => $self->parse_blob_diff_lines(\@lines)
+      lines => $lines,
+      add_line_count => $diff_info->{add_line_count},
+      delete_line_count => $diff_info->{delete_line_count}
     };
     
-    # Status
+    # Diff tree info
     for my $diff_tree (@$diff_trees) {
       if ($diff_tree->{to_file} eq $file) {
         $blob_diff->{status} = $diff_tree->{status};
+        $diff_tree->{add_line_count} = $diff_info->{add_line_count};
+        $diff_tree->{delete_line_count} = $diff_info->{delete_line_count};
+        $diff_tree->{add_block_count} = $diff_info->{add_block_count};
+        $diff_tree->{delete_block_count} = $diff_info->{delete_block_count};
         last;
       }
     }
+    
     push @$blob_diffs, $blob_diff;
   }
   
@@ -452,6 +461,8 @@ sub description {
 
 sub diff_tree {
   my ($self, $user, $project, $cid, $parent, $parents) = @_;
+  
+  $parents = [] unless $parents;
   
   # Root
   $parent = '--root' unless defined $parent;
@@ -1005,6 +1016,8 @@ sub parse_blob_diff_lines {
   my @lines;
   my $next_before_line_num;
   my $next_after_line_num;
+  my $add_line_count = 0;
+  my $delete_line_count = 0;
   for my $line (@$lines) {
     chomp $line;
     
@@ -1026,11 +1039,13 @@ sub parse_blob_diff_lines {
       $class = 'from_file';
       $before_line_num = $next_before_line_num++;
       $after_line_num = '';
+      $delete_line_count++;
     }
     elsif ($line =~ /^\+/) {
       $class = 'to_file';
       $before_line_num = '';
       $after_line_num = $next_after_line_num++;
+      $add_line_count++;
     }
     elsif ($line =~ /^Binary files/) { $class = 'binary_file' }
     elsif ($line =~ /^ /) {
@@ -1049,7 +1064,24 @@ sub parse_blob_diff_lines {
     push @lines, $line_data;
   }
   
-  return \@lines;
+  # Diff info
+  my $diff_line_count = $add_line_count + $delete_line_count;
+  my $add_block_count
+    = $diff_line_count == 0
+    ? 0
+    : floor(($add_line_count * 5) / $diff_line_count);
+  my $delete_block_count
+    = $diff_line_count == 0
+    ? 0
+    : floor(($delete_line_count * 5) / $diff_line_count);
+  
+  my $diff_info = {
+    add_line_count => $add_line_count,
+    delete_line_count => $delete_line_count,
+    add_block_count => $add_block_count,
+    delete_block_count => $delete_block_count
+  };
+  return (\@lines, $diff_info);
 }
 
 sub get_commit {

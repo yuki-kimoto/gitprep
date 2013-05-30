@@ -1,0 +1,27 @@
+<%
+  my $diff_tree = stash('diff_tree');
+  my $fragment = stash('fragment');
+  my $add_line_count = $diff_tree->{add_line_count} || 0;
+  my $delete_line_count = $diff_tree->{delete_line_count} || 0;
+  my $diff_line_count = $add_line_count + $delete_line_count;
+  my $diff_count_text = "$add_line_count additions";
+  $diff_count_text .= " & $delete_line_count deletions" if $delete_line_count > 0;
+  my $tag = $fragment ? 'a' : 'span';
+  my $add_block_count = $diff_tree->{add_block_count} || 0;
+  my $delete_block_count = $diff_tree->{delete_block_count} || 0;
+%>
+
+
+<<%= $tag %> title="<%= $diff_count_text %>" style="text-decoration:none;color:#666" href="#<%= $fragment %>"><%= $diff_line_count %></<%= $tag %>>
+
+<<%= $tag %> title="<%= $diff_count_text %>" style="text-decoration:none;display:inline-block;overflow:none;" href="#<%= $fragment %>">
+  % for (my $i = 0; $i < $add_block_count; $i++) {
+    <div style="display:inline-block;background:#6cc644;width:8px;height:9px;float:left;margin:1px"></div>
+  % }
+  % for (my $i = 0; $i < $delete_block_count; $i++) {
+    <div style="display:inline-block;background:#bd2c00;width:8px;height:9px;float:left;margin:1px"></div>
+  % }
+  % for (my $i = 0; $i < 5 - $add_block_count - $delete_block_count; $i++) {
+    <div style="display:inline-block;background:#eee;width:8px;height:9px;float:left;margin:1px"></div>
+  % }
+</<%= $tag %>>

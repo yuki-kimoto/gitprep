@@ -1,11 +1,15 @@
 <%
   my $status = stash('status') || '';
+  my $diff_tree = stash('diff_tree');
 %>
 
 <div style="margin-bottom:20px;">
   <div class="border-gray bk-gray-light" style="padding:5px">
     <div class="row">
-      <div class="span8" style="padding-top:6px">
+      <div class="span8" style="padding-top:3px">
+        <div class="radius-top radius-bottom" style="padding:1px 3px;margin-right:5px;border:1px solid #ccc;display:inline-block;background:#f7f7f7">
+          %= include '/include/diff_status_bar', diff_tree => $diff_tree;
+        </div>
         <%= $file %>
       </div>
       <div class="text-right">

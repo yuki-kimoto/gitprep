@@ -77,6 +77,7 @@ note 'Project page';
 
 note 'Commit page';
 {
+  note 'first commit';
   {
     # Page access
     $t->get_ok("/$user/$project/commit/4b0e81c462088b16fefbe545e00b993fd7e6f884");
@@ -105,17 +106,20 @@ note 'Commit page';
     # Empty file is added
     $t->content_like(qr/No changes/);
   }
+  
+  note 'Branch name';
   {
     # Page access (branch name)
     $t->get_ok("/$user/$project/commit/b1");
     $t->content_like(qr/\+bbb/);
-  }
-  {
+
     # Page access (branch name long)
     $t->get_ok("/$user/$project/commit/refs/heads/b1");
     $t->content_like(qr/\+bbb/);
     $t->content_like(qr#refs/heads/b1#);
   }
+  
+  
 }
 
 note 'Commits page';

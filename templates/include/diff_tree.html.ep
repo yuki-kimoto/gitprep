@@ -1,3 +1,7 @@
+<%
+  my $parents = stash('parents') || [];
+%>
+
 %= stylesheet begin
   .file-add {
     color:#32CD32;
@@ -28,8 +32,8 @@
   }
 
   .file-modified {
-    color:#A9A9A9;
-    border:2px #A9A9A9 solid;
+    color:#DAA520;
+    border:2px #DAA520 solid;
     margin-left:3px;
     font-weight:bold;
     line-height:0;
@@ -38,11 +42,11 @@
     vertical-align:middle;
     width:9px;
     height:9px;
-    font-size:13px;
+    font-size:11px;
   }
 % end
   
-<table style="margin-bottom:10px">
+<table style="margin-bottom:10px;width:100%">
   
   % my $has_header = @$diff_trees && @$parents > 1 && stash('action') eq 'commitdiff';
   % if ($has_header) {
@@ -64,7 +68,7 @@
   % my $toggle = 0;
   % my $num = 0;
   % for my $diff_tree (@$diff_trees) {
-    <tr>
+    <tr style="<%= $num + 1 ne @$diff_trees ? 'border-bottom:1px #ddd solid' : '' %>">
       % if (exists $diff_tree->{'nparents'}) {
         % my $file = $diff_tree->{to_file};
         
@@ -132,7 +136,7 @@
         % my $from_mode = $diff_tree->{from_mode};
         % my $from_mode_str = $diff_tree->{from_mode_str};
         % my $from_mode_oct = $diff_tree->{from_mode_oct};
-        <td>
+        <td style="padding:7px 0; width:12px">
           % if ($status eq 'A') {
             <div class="file-add">+</div>
           % } elsif ($status eq 'D') {
@@ -175,7 +179,10 @@
           % }
         </td>
         <td>
-          <a style="margin-left:5px" href="<%= url_for->fragment("diff-$num") %>"><%= $file %></a>
+          <a style="margin-left:5px" href="#<%= "diff-$num" %>"><%= $file %></a>
+        </td>
+        <td style="text-align:right">
+          %= include '/include/diff_status_bar', diff_tree => $diff_tree, fragment => "diff-$num";
         </td>
       % }
     </tr>

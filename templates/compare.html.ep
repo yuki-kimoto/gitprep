@@ -37,30 +37,15 @@
     return;
   }
   
-  # Diff tree
-  my $diff_trees = $git->diff_tree(
-    $user,
-    $project,
-    $end_commit->{id},
-    $start_commit->{id},
-    []
-  );
-  
-  # Get blob diffs (command "git diff-tree")
-  my $blob_diffs = $git->blob_diffs(
-    $user,
-    $project,
-    $start_commit->{id},
-    $end_commit->{id},
-    $diff_trees
-  );
-  
   # Branches
   my $branches = $git->branches($user, $project);
   @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
   
   # Global variables
-  stash(user => $user, project => $project);
+  stash(
+    id => $end_commit->{id},
+    from_id => $start_commit->{id},
+  );
 %>
 
 % layout 'common';
@@ -239,29 +224,7 @@
         </div>
         
         <div class="tab-pane" id="file-changed">
-          <div style="margin-bottom:5px">
-            Showing <b><%= @$diff_trees %> changed files</b>
-          </div>
-          <div>
-            <%= include '/include/diff_tree', id => $end_commit->{id}, from_id => $start_commit->{id},
-              diff_trees => $diff_trees, parents => [], project_ns => $project %>
-          </div>
-          <div>
-            <div>
-              % my $num = 0;
-              % for (my $i = 0; $i < @$blob_diffs; $i++) {
-                % my $blob_diff = $blob_diffs->[$i];
-                <div id="diff-<%= $i %>" >
-                  % my $lines = $blob_diff->{lines};
-                  % my $file = $blob_diff->{file};
-                  % my $from_file = $blob_diff->{from_file};
-                  % $from_file = $file unless defined $from_file;
-                  % my $status = $blob_diff->{status};
-                  %= include '/include/blob_diff_body', file => $file, from_file => $from_file, status => $status, lines => $blob_diff->{lines}, project_ns => $project, from_id => $start_commit->{id}, id => $end_commit->{id};
-                </div>
-              % }
-            </div>
-          </div>
+          %= include '/include/commit_body';
         </div>
       </div>
     % } else {

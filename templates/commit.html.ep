@@ -26,28 +26,6 @@
   $commit->{committer_date} = $git->timestamp($committer_date);
   $from_id = $commit->{parent} unless defined $from_id;
 
-  # Diff tree
-  my $diff_trees = $git->diff_tree(
-    $user,
-    $project,
-    $id,
-    $commit->{parent},
-    $commit->{parents}
-  );
-  my $diff_trees_h = {};
-  for my $diff_tree (@$diff_trees) {
-    my $file = $diff_tree->{file};
-    $diff_trees_h->{$file} = $diff_tree if defined $file;
-  }
-  
-  # Get blob diffs
-  my $blob_diffs = $git->blob_diffs($user, $project, $from_id, $id, $diff_trees) || [];
-  my $blob_diffs_h = {};
-  for my $blob_diff (@$blob_diffs) {
-    my $file = $blob_diff->{file};
-    $blob_diffs_h->{$file} = $blob_diff;
-  }
-  
   # Branches
   my $branch_refs = $git->references($user, $project, 'heads');
   my $branches = $branch_refs->{$commit->{id}} || [];
@@ -58,36 +36,16 @@
   
   # Global variable for included template
   stash(
-    from_id => $from_id,
     id => $id,
+    from_id => $from_id,
     rev => $id,
-    commit => $commit
+    commit => $commit,
+    parents => $commit->{parents}
   );
 %>
 
 % layout 'common';
-  
-  %= javascript begin
-    $(document).ready(function () {
-    
-      // Diff Stats Button
-      var diff_tree_show = false;
-      var original_diff_stats_btn_text = $('#diff-stats-btn').text();
-      
-      $('#diff-stats-btn').on('click', function () {
-        if (diff_tree_show) {
-          $(this).text(original_diff_stats_btn_text);
-          $('#diff_tree').css('display', 'none');
-        }
-        else {
-          $(this).text('Hide Diff Stats');
-          $('#diff_tree').css('display', 'block');
-        }
-        diff_tree_show = !diff_tree_show;
-      });
-    });
-  % end
-  
+
   %= include '/include/header', title => 'Commit diff';
 
   <div class="container">
@@ -173,41 +131,7 @@
         </div>
       </div>
     </div>
-
-    <div class="row" style="margin-bottom:10px">
-      <div class="span8" style="padding-top:5px">
-        Showing <b><%= @$diff_trees %> changed files</b>
-      </div>
-      <div class="text-right">
-        <button id="diff-stats-btn" class="btn">Show Diff Stats</button>
-      </div>
-    </div>
-    <div id="diff_tree" style="display:none">
-      <%= include '/include/diff_tree', id => $commit->{id}, from_id => $commit->{parent},
-        diff_trees => $diff_trees, parents => $commit->{parents}, project_ns => $project %>
-    </div>
-    % my $num = 0;
-    % for my $file (sort keys %$diff_trees_h) {
-      <div id="diff-<%= $num %>">
-        % my $blob_diff = $blob_diffs_h->{$file};
-        % if ($blob_diff) {
-          % my $lines = $blob_diff->{lines};
-          % my $file = $blob_diff->{file};
-          % my $from_file = $blob_diff->{from_file};
-          % $from_file = $file unless defined $from_file;
-          % my $status = $blob_diff->{status};
-          %= include '/include/blob_diff_body', file => $file, from_file => $from_file, status => $status, lines => $blob_diff->{lines}, project_ns => $project;
-        % } else {
-          <div class="border-gray bk-gray-light" style="border-bottom:none;padding:10px">
-            <%= $file %>
-          </div>
-          <div class="border-gray" style="padding:10px;margin-bottom:30px">
-            No changes. Empty file is added.
-          </div>
-        % }
-      </div>
-      % $num++;
-    % }
-  </div>
+  
+  %= include '/include/commit_body';
   
   %= include '/include/footer';
