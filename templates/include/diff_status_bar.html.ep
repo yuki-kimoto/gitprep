@@ -9,6 +9,15 @@
   my $tag = $fragment ? 'a' : 'span';
   my $add_block_count = $diff_tree->{add_block_count} || 0;
   my $delete_block_count = $diff_tree->{delete_block_count} || 0;
+  
+  if ($diff_tree->{status} eq 'A') {
+    $add_block_count = 5;
+    $delete_block_count = 0;
+  }
+  if ($diff_tree->{status} eq 'D') {
+    $add_block_count = 0;
+    $delete_block_count = 5;
+  }
 %>
 
 
