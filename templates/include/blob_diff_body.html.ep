@@ -1,6 +1,6 @@
 <%
-  my $rev = stash('id');
-  my $from_rev = stash('from_id');
+  my $rev = stash('rev');
+  my $from_rev = stash('from_rev');
   my $status = stash('status') || '';
   my $diff_tree = stash('diff_tree');
 %>
@@ -16,8 +16,8 @@
       </div>
       <div class="text-right">
         % if ($status eq 'D') {
-          <a class="btn" href="<%= url_for("/$user/$project/blob/$from_id/$file") %>">
-            View file @ <%= substr($from_id, 0, 7) %>
+          <a class="btn" href="<%= url_for("/$user/$project/blob/$from_rev/$file") %>">
+            View file @ <%= substr($from_rev, 0, 7) %>
           </a>
         % } else {
           <a class="btn" href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
@@ -34,8 +34,8 @@
       % if ($class eq 'binary_file') {
         <div class="border-gray" style="border-top:none;background:#ddd;text-align:center;padding-top:30px;padding-bottom:30px">
           % if ($status ne 'A') {
-            <a href="<%= url_for("/$user/$project/blob/$from_id/$file") %>">
-              <img src="<%= url_for("/$user/$project/raw/$from_id/$file") %>" style="border:1px solid red;padding:1px;margin-right:20px">
+            <a href="<%= url_for("/$user/$project/blob/$from_rev/$file") %>">
+              <img src="<%= url_for("/$user/$project/raw/$from_rev/$file") %>" style="border:1px solid red;padding:1px;margin-right:20px">
             </a>
           % }
           % if ($status ne 'D') {

@@ -1,7 +1,7 @@
 <%
   # Parameters
-  my $id = stash('id');
-  my $from_id = stash('from_id');
+  my $rev = stash('rev');
+  my $from_rev = stash('from_rev');
   my $parents = stash('parents');
   
   # Git
@@ -11,8 +11,8 @@
   my $diff_trees = $git->diff_tree(
     $user,
     $project,
-    $id,
-    $from_id,
+    $rev,
+    $from_rev,
     $parents
   );
   my $diff_trees_h = {};
@@ -22,7 +22,7 @@
   }
   
   # Get blob diffs
-  my $blob_diffs = $git->blob_diffs($user, $project, $from_id, $id, $diff_trees) || [];
+  my $blob_diffs = $git->blob_diffs($user, $project, $from_rev, $rev, $diff_trees) || [];
   my $blob_diffs_h = {};
   for my $blob_diff (@$blob_diffs) {
     my $file = $blob_diff->{file};
@@ -60,7 +60,7 @@
   </div>
 </div>
 <div id="diff_tree" style="display:none">
-  <%= include '/include/diff_tree', id => $id, from_id => $from_id,
+  <%= include '/include/diff_tree', id => $rev, from_id => $from_rev,
     diff_trees => $diff_trees, parents => $parents %>
 </div>
 % my $num = 0;

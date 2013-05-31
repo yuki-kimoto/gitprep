@@ -5,14 +5,14 @@
   # Paramters
   my $project = param('project');
   my $diff = param('diff');
-  my ($from_id, $id) = $diff =~ /(.+)\.\.(.+)/;
-  $id = $diff unless defined $id;
+  my ($from_rev, $rev) = $diff =~ /(.+)\.\.(.+)/;
+  $rev = $diff unless defined $rev;
   
   # Git
   my $git = app->git;
   
   # Commit
-  my $commit = $git->get_commit($user, $project, $id);
+  my $commit = $git->get_commit($user, $project, $rev);
   unless ($commit) {
     $self->render_not_found;
     $self->finish_rendering;
@@ -24,7 +24,7 @@
     = $git->parse_date($commit->{committer_epoch}, $commit->{committer_tz});
   $commit->{author_date} = $git->timestamp($author_date);
   $commit->{committer_date} = $git->timestamp($committer_date);
-  $from_id = $commit->{parent} unless defined $from_id;
+  $from_rev = $commit->{parent} unless defined $from_rev;
 
   # Branches
   my $branch_refs = $git->references($user, $project, 'heads');
@@ -36,9 +36,8 @@
   
   # Global variable for included template
   stash(
-    id => $id,
-    from_id => $from_id,
-    rev => $id,
+    rev => $rev,
+    from_rev => $from_rev,
     commit => $commit,
     parents => $commit->{parents}
   );
