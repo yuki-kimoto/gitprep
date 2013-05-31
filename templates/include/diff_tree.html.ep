@@ -1,4 +1,6 @@
 <%
+  my $rev = stash('id');
+  my $from_rev = stash('from_id');
   my $parents = stash('parents') || [];
 %>
 
