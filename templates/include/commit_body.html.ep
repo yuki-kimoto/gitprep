@@ -24,9 +24,13 @@
   # Get blob diffs
   my $blob_diffs = $git->blob_diffs($user, $project, $from_rev, $rev, $diff_trees) || [];
   my $blob_diffs_h = {};
+  my $total_add_line_count = 0;
+  my $total_delete_line_count = 0;
   for my $blob_diff (@$blob_diffs) {
     my $file = $blob_diff->{file};
     $blob_diffs_h->{$file} = $blob_diff;
+    $total_add_line_count += $blob_diff->{add_line_count};
+    $total_delete_line_count += $blob_diff->{delete_line_count};
   }
 %>
 
@@ -54,6 +58,18 @@
 <div class="row" style="margin-bottom:10px">
   <div class="span8" style="padding-top:5px">
     Showing <b><%= @$diff_trees %> changed files</b>
+    % if ($total_add_line_count || $total_delete_line_count) {
+      with
+    % }
+    % if ($total_add_line_count) {
+      <b><%= $total_add_line_count %> additions</b>
+    % }
+    % if ($total_add_line_count && $total_delete_line_count) {
+      and
+    % }
+    % if ($total_delete_line_count) {
+      <b><%= $total_delete_line_count %> deletions</b>
+    % }
   </div>
   <div class="text-right">
     <button id="diff-stats-btn" class="btn">Show Diff Stats</button>
