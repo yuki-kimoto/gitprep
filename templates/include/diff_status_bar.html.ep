@@ -4,8 +4,14 @@
   my $add_line_count = $diff_tree->{add_line_count} || 0;
   my $delete_line_count = $diff_tree->{delete_line_count} || 0;
   my $diff_line_count = $add_line_count + $delete_line_count;
-  my $diff_count_text = "$add_line_count additions";
-  $diff_count_text .= " & $delete_line_count deletions" if $delete_line_count > 0;
+  my $diff_count_text;
+  if ($diff_tree->{status} eq 'A' && $add_line_count == 0) {
+    $diff_count_text = 'Empty file added';
+  }
+  else {
+    $diff_count_text = "$add_line_count additions";
+    $diff_count_text .= " & $delete_line_count deletions" if $delete_line_count > 0;
+  }
   my $tag = $fragment ? 'a' : 'span';
   my $add_block_count = $diff_tree->{add_block_count} || 0;
   my $delete_block_count = $diff_tree->{delete_block_count} || 0;
