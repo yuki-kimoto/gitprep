@@ -15,9 +15,11 @@
     $from_rev,
     $parents
   );
+
   my $diff_trees_h = {};
   for my $diff_tree (@$diff_trees) {
-    my $file = $diff_tree->{file};
+    my $file = $diff_tree->{to_file};
+    $file = $diff_tree->{from_file} unless defined $file;
     $diff_trees_h->{$file} = $diff_tree if defined $file;
   }
   
@@ -75,7 +77,6 @@
 % for my $file (sort keys %$diff_trees_h) {
   <div id="diff-<%= $num %>">
     % my $blob_diff = $blob_diffs_h->{$file};
-    % $blob_diff ||= {status => 'A', file => $file};
     %= include '/include/blob_diff_body', blob_diff => $blob_diff, diff_tree => $diff_trees_h->{$file};
   </div>
   % $num++;

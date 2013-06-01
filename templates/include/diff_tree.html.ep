@@ -46,6 +46,20 @@
     height:9px;
     font-size:11px;
   }
+
+  .file-renamed {
+    color:#677a85;
+    border:2px #677a85 solid;
+    margin-left:3px;
+    font-weight:bold;
+    line-height:0;
+    display:table-cell;
+    text-align:center;
+    vertical-align:middle;
+    width:9px;
+    height:9px;
+    font-size:7px;
+  }
 % end
   
 <table style="margin-bottom:10px;width:100%">
@@ -138,13 +152,13 @@
         % my $from_mode = $diff_tree->{from_mode};
         % my $from_mode_str = $diff_tree->{from_mode_str};
         % my $from_mode_oct = $diff_tree->{from_mode_oct};
-        <td style="padding:7px 0; width:12px">
+        <td style="padding:7px 5px 7px 0; width:12px">
           % if ($status eq 'A') {
-            <div class="file-add">+</div>
+            <div class="file-add" title="added">+</div>
           % } elsif ($status eq 'D') {
-            <div class="file-del">-</div>
+            <div class="file-del" title="deleted">-</div>
           % } elsif ($status eq 'M' || $status eq 'T') {
-            <div class="file-modified">●</div>
+            <div class="file-modified" title="modified">●</div>
             % if ($from_mode != $mode) {
               <span>
                 [
@@ -162,26 +176,29 @@
                 ]
               </span>
             % }
+          % } elsif ($status eq 'R') {
+            <div class="file-renamed" title="renamed">▶</div>
+          % } elsif ($status eq 'C') {
+            <div class="file-copied" title="copied">→</div>
+          % }
+        </td>
+        <td>
+          % if ($status eq 'A' || $status eq 'M' || $status eq 'D') {
+            <a style="margin-left:5px" href="#<%= "diff-$num" %>"><%= $file %></a>
+          % } elsif ($status eq 'T') {
+            
           % } elsif ($status eq 'R' || $status eq 'C') {
-            % my $status_name = $status eq 'R' ? 'moved' : 'copied';
-
-            % my $mode_change = "";
+            % my $mode_change;
             % if ($diff_tree->{'from_mode'} != $diff_tree->{'to_mode'}) {
               % $mode_change = sprintf(", mode: %04o", oct $diff_tree->{to_mode} & 0777);
             % }
             
-            <span>
-              [
-                <%= $status_name %> from
-                <a href="#"><%= $diff_tree->{from_file} %></a>
-                with <%= $diff_tree->{similarity} %>%
-                <%= $mode_change %>
-              ]
-            </span>
+            <a href="#<%= "diff-$num" %>"><%= $diff_tree->{from_file} %> → <%= $file %></a>
+            % unless ($diff_tree->{similarity} == 100) {
+              with <%= $diff_tree->{similarity} %>
+            % }
+            <%= $mode_change || '' %>
           % }
-        </td>
-        <td>
-          <a style="margin-left:5px" href="#<%= "diff-$num" %>"><%= $file %></a>
         </td>
         <td style="text-align:right">
           %= include '/include/diff_status_bar', diff_tree => $diff_tree, fragment => "diff-$num";

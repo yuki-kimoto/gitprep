@@ -3,11 +3,12 @@
   my $from_rev = stash('from_rev');
   my $diff_tree = stash('diff_tree');
   my $blob_diff = stash('blob_diff');
-  my $lines = $blob_diff->{lines};
+  my $lines = $blob_diff->{lines} || [];
   my $file = $blob_diff->{file};
+  $file = '' unless defined $file;
   my $from_file = $blob_diff->{from_file};
   $from_file = $file unless defined $from_file;
-  my $status = $blob_diff->{status};
+  my $status = $blob_diff->{status} || '';
 %>
 
   <div style="margin-bottom:20px;">
@@ -33,7 +34,7 @@
       </div>
     </div>
     <table class="border-gray" style="border-top:none">
-      % if ($lines) {
+      % if (@$lines) {
         % for my $line (@$lines) {
           % my $class = $line->{class};
           % my $value = $line->{value};
@@ -87,7 +88,11 @@
         % }
       % } else {
         <div class="border-gray" style="padding:10px;margin-bottom:30px;border-top:none">
-          No changes.
+          % if ($status eq 'R') {
+            File renamed without changes.
+          % } else {
+            No changes.
+          % }
         </div>
       % }
     </table>

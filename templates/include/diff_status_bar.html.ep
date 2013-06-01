@@ -5,8 +5,12 @@
   my $delete_line_count = $diff_tree->{delete_line_count} || 0;
   my $diff_line_count = $add_line_count + $delete_line_count;
   my $diff_count_text;
-  if ($diff_tree->{status} eq 'A' && $add_line_count == 0) {
+  my $status = $diff_tree->{status};
+  if ($status eq 'A' && $add_line_count == 0) {
     $diff_count_text = 'Empty file added';
+  }
+  elsif ($diff_tree->{status} eq 'R' && $add_line_count == 0 && $delete_line_count == 0) {
+    $diff_count_text = 'Empty file renamed';
   }
   else {
     $diff_count_text = "$add_line_count additions";
@@ -19,6 +23,9 @@
   if ($diff_tree->{status} eq 'A') {
     $add_block_count = 5;
     $delete_block_count = 0;
+  }
+  elsif ($diff_tree->{status} eq 'R' && $add_line_count == 0 && $delete_line_count == 0) {
+    $add_block_count = 5;
   }
   if ($diff_tree->{status} eq 'D') {
     $add_block_count = 0;
