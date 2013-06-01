@@ -118,7 +118,11 @@ note 'Commit page';
     $t->content_like(qr/class="file-renamed"/);
   }
   
-
+  note 'add text';
+  {
+    $t->get_ok("/$user/$project/commit/da5b854b760351adc58d24d121070e729e80534d");
+    $t->content_like(qr/\+aaa/);
+  }
   
   note 'Branch name';
   {
