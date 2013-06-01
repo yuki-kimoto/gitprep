@@ -3,12 +3,14 @@
   my $from_rev = stash('from_rev');
   my $diff_tree = stash('diff_tree');
   my $blob_diff = stash('blob_diff');
+  my $from_mode_str = $diff_tree->{from_mode_str};
+  my $to_mode_str = $diff_tree->{to_mode_str};
   my $lines = $blob_diff->{lines} || [];
   my $file = $blob_diff->{file};
   $file = '' unless defined $file;
   my $from_file = $blob_diff->{from_file};
   $from_file = $file unless defined $from_file;
-  my $status = $blob_diff->{status} || '';
+  my $status = $diff_tree->{status} || '';
 %>
 
   <div style="margin-bottom:20px;">
@@ -19,6 +21,9 @@
             %= include '/include/diff_status_bar', diff_tree => $diff_tree;
           </div>
           <%= $file %>
+          % if ($status ne 'A' && $status ne 'D' && $from_mode_str ne $to_mode_str) {
+            <%= "100$from_mode_str → 100$to_mode_str" %>
+          % }
         </div>
         <div class="text-right">
           % if ($status eq 'D') {
@@ -90,8 +95,10 @@
         <div class="border-gray" style="padding:10px;margin-bottom:30px;border-top:none">
           % if ($status eq 'R') {
             File renamed without changes.
-          % } else {
-            No changes.
+          % } elsif ($status eq 'A' || $status eq 'D') {
+             No changes.
+          % } elsif ($from_mode_str ne $to_mode_str) {
+            File mode changed.
           % }
         </div>
       % }

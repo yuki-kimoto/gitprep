@@ -105,7 +105,6 @@ note 'Commit page';
     
     # Empty file is added
     $t->content_like(qr/No changes/);
-    $t->content_like(qr/Empty file added/);
     $t->content_like(qr/class="file-add"/);
   }
   
