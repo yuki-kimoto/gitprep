@@ -112,6 +112,7 @@ note 'Commit page';
   note 'rename';
   {
     $t->get_ok("/$user/$project/commit/15ea9d711617abda5eed7b4173a3349d30bca959");
+    $t->content_like(qr#1 <span class="muted">parent</span>.*1b59896#s);
     $t->content_like(qr/File renamed without changes/);
     $t->content_like(qr/a.txt → a_renamed.txt/);
     $t->content_like(qr/class="file-renamed"/);
