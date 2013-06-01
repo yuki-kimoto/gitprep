@@ -1,7 +1,6 @@
 <%
   my $rev = stash('rev');
   my $from_rev = stash('from_rev');
-  my $parents = stash('parents') || [];
 %>
 
 %= stylesheet begin
@@ -64,124 +63,50 @@
   
 <table style="margin-bottom:10px;width:100%">
   
-  % my $has_header = @$diff_trees && @$parents > 1 && stash('action') eq 'commitdiff';
-  % if ($has_header) {
-    <tr>
-      <th></th>
-      % for (my $i = 0; $i < @$parents; $i++) {
-        % my $parent = $parents->[$i];
-        % my $from_id = $parent;
-        <th>
-          <a href="<%= url_for("/$user/$project/commit/$from_id..$id") %>"
-              title="commitdiff to parent number <%= $i + 1 %> <%= substr($from_id, 0, 7) %>">
-            <%= $i + 1 %>
-          </a>
-        </th>
-      % }
-    </tr>
-  % }
-  
   % my $toggle = 0;
   % my $num = 0;
   % for my $diff_tree (@$diff_trees) {
     <tr style="<%= $num + 1 ne @$diff_trees ? 'border-bottom:1px #ddd solid' : '' %>">
-      % if (exists $diff_tree->{'nparents'}) {
-        % my $file = $diff_tree->{to_file};
-        
-        % if ($diff_tree->{is_deleted}) {
-          <td>
-            <%= $file %>
-          </td>
-        % } else {
-          <td>
-            <a href="<%= url_for("/$user/$project/blob/$id/$file") %>">
-              <%= $file %>
-            </a>
-          </td>
+      % my $status = $diff_tree->{status};
+      % my $file = $diff_tree->{to_file};
+      % my $file_type = $diff_tree->{to_file_type};
+      % my $mode = $diff_tree->{to_mode};
+      % my $mode_str = $diff_tree->{to_mode_str};
+      % my $mode_oct = $diff_tree->{to_mode_oct};
+      % my $from_file = $diff_tree->{from_file};
+      % my $from_mode_str = $diff_tree->{from_mode_str};
+      <td style="padding:7px 5px 7px 0; width:12px">
+        % if ($status eq 'A') {
+          <div class="file-add" title="added">+</div>
+        % } elsif ($status eq 'D') {
+          <div class="file-del" title="deleted">-</div>
+        % } elsif ($status eq 'M' || $status eq 'T') {
+          <div class="file-modified" title="modified">●</div>
+        % } elsif ($status eq 'R') {
+          <div class="file-renamed" title="renamed">▶</div>
+        % } elsif ($status eq 'C') {
+          <div class="file-copied" title="copied">→</div>
         % }
-
-        % my $not_deleted = 0;
-        % for (my $i = 0; $i < $diff_tree->{'nparents'}; $i++) {
-          % my $from_id = $parents->[$i];
-          % my $from_bid = $diff_tree->{'from_id'}[$i];
-          % my $from_file = $diff_tree->{'from_file'}[$i];
-          % $from_file = $file unless defined $from_file;
-          % my $status = $diff_tree->{'status'}[$i];
-          % $not_deleted ||= ($status ne 'D');
-
-          % if ($status eq 'A') {
-            <td> | </td>
-          % } elsif ($status eq 'D') {
-            <td>
-              <a href="#">
-                blob<%= $i + 1 %>
-              </a>
-              |
-            </td>
-          % } else {
-            % if ($diff_tree->{'to_id'} eq $from_bid) {
-              <td>
-            % } else {
-              <td>
-            % }
-            
-            <a href="#">
-              diff<%= $i + 1 %>
-            </a>
-            | </td>
+      </td>
+      <td>
+        % if ($status eq 'A' || $status eq 'M' || $status eq 'D') {
+          <a style="margin-left:5px" href="#<%= "diff-$num" %>"><%= $file %></a>
+        % } elsif ($status eq 'T') {
+          
+        % } elsif ($status eq 'R' || $status eq 'C') {
+          
+          <a href="#<%= "diff-$num" %>"><%= $diff_tree->{from_file} %> → <%= $file %></a>
+          % unless ($diff_tree->{similarity} == 100) {
+            with <%= $diff_tree->{similarity} %>
           % }
         % }
-
-        <td>
-          % if ($not_deleted) {
-            % my $from_file = $diff_tree->{from_file};
-            <a href="#">
-              blob
-            </a>
-          % }
-        </td>
-      % } else {
-        % my $status = $diff_tree->{status};
-        % my $file = $diff_tree->{to_file};
-        % my $file_type = $diff_tree->{to_file_type};
-        % my $mode = $diff_tree->{to_mode};
-        % my $mode_str = $diff_tree->{to_mode_str};
-        % my $mode_oct = $diff_tree->{to_mode_oct};
-        % my $from_file = $diff_tree->{from_file};
-        % my $from_mode_str = $diff_tree->{from_mode_str};
-        <td style="padding:7px 5px 7px 0; width:12px">
-          % if ($status eq 'A') {
-            <div class="file-add" title="added">+</div>
-          % } elsif ($status eq 'D') {
-            <div class="file-del" title="deleted">-</div>
-          % } elsif ($status eq 'M' || $status eq 'T') {
-            <div class="file-modified" title="modified">●</div>
-          % } elsif ($status eq 'R') {
-            <div class="file-renamed" title="renamed">▶</div>
-          % } elsif ($status eq 'C') {
-            <div class="file-copied" title="copied">→</div>
-          % }
-        </td>
-        <td>
-          % if ($status eq 'A' || $status eq 'M' || $status eq 'D') {
-            <a style="margin-left:5px" href="#<%= "diff-$num" %>"><%= $file %></a>
-          % } elsif ($status eq 'T') {
-            
-          % } elsif ($status eq 'R' || $status eq 'C') {
-            
-            <a href="#<%= "diff-$num" %>"><%= $diff_tree->{from_file} %> → <%= $file %></a>
-            % unless ($diff_tree->{similarity} == 100) {
-              with <%= $diff_tree->{similarity} %>
-            % }
-          % }
-          % if ($status ne 'A' && $status ne 'D' && $from_mode_str ne $mode_str) {
-            <%= "100$from_mode_str → 100$mode_str" %>
-          % }
-        </td>
-        <td style="text-align:right">
-          %= include '/include/diff_status_bar', diff_tree => $diff_tree, fragment => "diff-$num";
-        </td>
-      % }
+        % if ($status ne 'A' && $status ne 'D' && $from_mode_str ne $mode_str) {
+          <%= "100$from_mode_str → 100$mode_str" %>
+        % }
+      </td>
+      <td style="text-align:right">
+        %= include '/include/diff_status_bar', diff_tree => $diff_tree, fragment => "diff-$num";
+      </td>
     </tr>
     % $num++;
   % }

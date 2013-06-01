@@ -1,6 +1,7 @@
 <%
   my $rev = stash('rev');
   my $from_rev = stash('from_rev');
+  
   my $diff_tree = stash('diff_tree');
   my $blob_diff = stash('blob_diff');
   my $from_mode_str = $diff_tree->{from_mode_str};

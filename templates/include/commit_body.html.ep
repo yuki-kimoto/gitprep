@@ -2,7 +2,6 @@
   # Parameters
   my $rev = stash('rev');
   my $from_rev = stash('from_rev');
-  my $parents = stash('parents');
   
   # Git
   my $git = app->git;
@@ -13,7 +12,6 @@
     $project,
     $rev,
     $from_rev,
-    $parents
   );
 
   my $diff_trees_h = {};
@@ -71,7 +69,7 @@
 </div>
 <div id="diff_tree" style="display:none">
   <%= include '/include/diff_tree', id => $rev, from_id => $from_rev,
-    diff_trees => $diff_trees, parents => $parents %>
+    diff_trees => $diff_trees %>
 </div>
 % my $num = 0;
 % for my $file (sort keys %$diff_trees_h) {

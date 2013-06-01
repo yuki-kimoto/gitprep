@@ -462,9 +462,7 @@ sub description {
 }
 
 sub diff_tree {
-  my ($self, $user, $project, $cid, $parent, $parents) = @_;
-  
-  $parents = [] unless $parents;
+  my ($self, $user, $project, $rev, $parent) = @_;
   
   # Root
   $parent = '--root' unless defined $parent;
@@ -477,8 +475,8 @@ sub diff_tree {
     '-r',
     '--no-commit-id',
     '-M',
-    (@$parents <= 1 ? $parent : '-c'),
-    $cid,
+    $parent,
+    $rev,
     '--'
   );
   open my $fh, "-|", @cmd
@@ -488,47 +486,34 @@ sub diff_tree {
   
   # Parse "git diff-tree" output
   my $diffs = [];
-  my @parents = @$parents;
   for my $line (@diff_tree) {
     my $diff = $self->parsed_diff_tree_line($line);
     
-    # Parent are more than one
-    if (exists $diff->{nparents}) {
-
-      $self->fill_from_file_info($user, $project, $diff, $parents)
-        unless exists $diff->{from_file};
-      $diff->{is_deleted} = 1 if $self->is_deleted($diff);
-      push @$diffs, $diff;
+    my ($to_mode_oct, $to_mode_str, $to_file_type);
+    my ($from_mode_oct, $from_mode_str, $from_file_type);
+    if ($diff->{to_mode} ne ('0' x 6)) {
+      $to_mode_oct = oct $diff->{to_mode};
+      if (S_ISREG($to_mode_oct)) { # only for regular file
+        $to_mode_str = sprintf('%04o', $to_mode_oct & 0777); # permission bits
+      }
+      $to_file_type = $self->file_type($diff->{to_mode});
+    }
+    if ($diff->{from_mode} ne ('0' x 6)) {
+      $from_mode_oct = oct $diff->{from_mode};
+      if (S_ISREG($from_mode_oct)) { # only for regular file
+        $from_mode_str = sprintf('%04o', $from_mode_oct & 0777); # permission bits
+      }
+      $from_file_type = $self->file_type($diff->{from_mode});
     }
     
-    # Parent is single
-    else {
-      my ($to_mode_oct, $to_mode_str, $to_file_type);
-      my ($from_mode_oct, $from_mode_str, $from_file_type);
-      if ($diff->{to_mode} ne ('0' x 6)) {
-        $to_mode_oct = oct $diff->{to_mode};
-        if (S_ISREG($to_mode_oct)) { # only for regular file
-          $to_mode_str = sprintf('%04o', $to_mode_oct & 0777); # permission bits
-        }
-        $to_file_type = $self->file_type($diff->{to_mode});
-      }
-      if ($diff->{from_mode} ne ('0' x 6)) {
-        $from_mode_oct = oct $diff->{from_mode};
-        if (S_ISREG($from_mode_oct)) { # only for regular file
-          $from_mode_str = sprintf('%04o', $from_mode_oct & 0777); # permission bits
-        }
-        $from_file_type = $self->file_type($diff->{from_mode});
-      }
-      
-      $diff->{to_mode_str} = $to_mode_str;
-      $diff->{to_mode_oct} = $to_mode_oct;
-      $diff->{to_file_type} = $to_file_type;
-      $diff->{from_mode_str} = $from_mode_str;
-      $diff->{from_mode_oct} = $from_mode_oct;
-      $diff->{from_file_type} = $from_file_type;
+    $diff->{to_mode_str} = $to_mode_str;
+    $diff->{to_mode_oct} = $to_mode_oct;
+    $diff->{to_file_type} = $to_file_type;
+    $diff->{from_mode_str} = $from_mode_str;
+    $diff->{from_mode_oct} = $from_mode_oct;
+    $diff->{from_file_type} = $from_file_type;
 
-      push @$diffs, $diff;
-    }
+    push @$diffs, $diff;
   }
   
   return $diffs;
@@ -565,22 +550,6 @@ sub file_type_long {
   else { return 'unknown' }
   
   return;
-}
-
-sub fill_from_file_info {
-  my ($self, $user, $project, $diff, $parents) = @_;
-  
-  # Fill file info
-  $diff->{from_file} = [];
-  $diff->{from_file}[$diff->{nparents} - 1] = undef;
-  for (my $i = 0; $i < $diff->{nparents}; $i++) {
-    if ($diff->{status}[$i] eq 'R' || $diff->{status}[$i] eq 'C') {
-      $diff->{from_file}[$i] =
-        $self->path_by_id($user, $project, $parents->[$i], $diff->{from_id}[$i]);
-    }
-  }
-
-  return $diff;
 }
 
 sub forward_commits {
@@ -745,7 +714,7 @@ sub parse_rev_path {
 }
 
 sub object_type {
-  my ($self, $user, $project, $cid) = @_;
+  my ($self, $user, $project, $rev) = @_;
   
   # Get object type
   my @cmd = $self->cmd(
@@ -753,7 +722,7 @@ sub object_type {
     $project,
     'cat-file',
     '-t',
-    $cid
+    $rev
   );
   open my $fh, '-|', @cmd  or return;
   my $type = $self->_dec(scalar <$fh>);
@@ -971,11 +940,11 @@ sub is_deleted {
 }
 
 sub id_set_multi {
-  my ($self, $cid, $key, $value) = @_;
+  my ($self, $rev, $key, $value) = @_;
 
-  if (!exists $cid->{$key}) { $cid->{$key} = $value }
-  elsif (!ref $cid->{$key}) { $cid->{$key} = [ $cid->{$key}, $value ] }
-  else { push @{$cid->{$key}}, $value }
+  if (!exists $rev->{$key}) { $rev->{$key} = $value }
+  elsif (!ref $rev->{$key}) { $rev->{$key} = [ $rev->{$key}, $value ] }
+  else { push @{$rev->{$key}}, $value }
 }
 
 sub last_change_commit {
@@ -1209,7 +1178,7 @@ sub parse_commit_text {
 }
 
 sub get_commits {
-  my ($self, $user, $project, $cid, $maxcount, $skip, $file, @args) = @_;
+  my ($self, $user, $project, $rev, $maxcount, $skip, $file, @args) = @_;
 
   # Get Commits
   $maxcount ||= 1;
@@ -1222,7 +1191,7 @@ sub get_commits {
     @args,
     ('--max-count=' . $maxcount),
     ('--skip=' . $skip),
-    $cid,
+    $rev,
     '--',
     (defined $file && length $file ? ($file) : ())
   );
@@ -1394,7 +1363,7 @@ sub separated_commit {
 }
 
 sub snapshot_name {
-  my ($self, $project, $cid) = @_;
+  my ($self, $project, $rev) = @_;
 
   my $name = $project;
   $name =~ s,([^/])/*\.git$,$1,;
@@ -1402,19 +1371,19 @@ sub snapshot_name {
   # sanitize name
   $name =~ s/[[:cntrl:]]/?/g;
 
-  my $ver = $cid;
-  if ($cid =~ /^[0-9a-fA-F]+$/) {
-    my $full_hash = $self->id($project, $cid);
-    if ($full_hash =~ /^$cid/ && length($cid) > 7) {
-      $ver = $self->short_id($project, $cid);
+  my $ver = $rev;
+  if ($rev =~ /^[0-9a-fA-F]+$/) {
+    my $full_hash = $self->id($project, $rev);
+    if ($full_hash =~ /^$rev/ && length($rev) > 7) {
+      $ver = $self->short_id($project, $rev);
     }
-  } elsif ($cid =~ m!^refs/tags/(.*)$!) {
+  } elsif ($rev =~ m!^refs/tags/(.*)$!) {
     $ver = $1;
   } else {
-    if ($cid =~ m!^refs/(?:heads|remotes)/(.*)$!) {
+    if ($rev =~ m!^refs/(?:heads|remotes)/(.*)$!) {
       $ver = $1;
     }
-    $ver .= '-' . $self->short_id($project, $cid);
+    $ver .= '-' . $self->short_id($project, $rev);
   }
   $ver =~ s!/!.!g;
 
