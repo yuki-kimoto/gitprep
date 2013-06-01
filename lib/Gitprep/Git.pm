@@ -1023,7 +1023,6 @@ sub parse_blob_diff_lines {
   my $add_line_count = 0;
   my $delete_line_count = 0;
   for my $line (@$lines) {
-    warn $line;
     
     chomp $line;
     
