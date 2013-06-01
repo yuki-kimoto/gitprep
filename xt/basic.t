@@ -120,7 +120,21 @@ note 'Commit page';
   note 'add text';
   {
     $t->get_ok("/$user/$project/commit/da5b854b760351adc58d24d121070e729e80534d");
+    $t->content_like(qr/\@\@/);
     $t->content_like(qr/\+aaa/);
+  }
+  
+  note 'added aaa to a_renamed.txt for merge commit';
+  {
+    $t->get_ok("/$user/$project/commit/da5b854b760351adc58d24d121070e729e80534d");
+    $t->content_like(qr/\@\@/);
+  }
+  
+  note 'add image data';
+  {
+    $t->get_ok("/$user/$project/commit/0b6eca6a28538b1226961ca7655d2662f3522652");
+    $t->content_like(qr/BIN/);
+    $t->content_like(qr#/raw/0b6eca6a28538b1226961ca7655d2662f3522652/sample.png#);
   }
   
   note 'Branch name';

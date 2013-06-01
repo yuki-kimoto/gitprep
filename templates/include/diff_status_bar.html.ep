@@ -27,7 +27,7 @@
 %>
 
 
-<<%= $tag %> title="<%= $diff_count_text %>" style="text-decoration:none;color:#666" href="#<%= $fragment %>"><%= $diff_line_count %></<%= $tag %>>
+<<%= $tag %> title="<%= $diff_count_text %>" style="text-decoration:none;color:#666" href="#<%= $fragment %>"><%= $diff_tree->{binary} ? 'BIN' : $diff_line_count %></<%= $tag %>>
 
 <<%= $tag %> title="<%= $diff_count_text %>" style="text-decoration:none;display:inline-block;overflow:none;" href="#<%= $fragment %>">
   % for (my $i = 0; $i < $add_block_count; $i++) {

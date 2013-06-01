@@ -217,7 +217,8 @@ sub blob_diffs {
       from_file => $from_file,
       lines => $lines,
       add_line_count => $diff_info->{add_line_count},
-      delete_line_count => $diff_info->{delete_line_count}
+      delete_line_count => $diff_info->{delete_line_count},
+      binary => $diff_info->{binary}
     };
     
     # Diff tree info
@@ -228,6 +229,7 @@ sub blob_diffs {
         $diff_tree->{delete_line_count} = $diff_info->{delete_line_count};
         $diff_tree->{add_block_count} = $diff_info->{add_block_count};
         $diff_tree->{delete_block_count} = $diff_info->{delete_block_count};
+        $diff_tree->{binary} = $diff_info->{binary};
         last;
       }
     }
@@ -1011,7 +1013,9 @@ sub last_change_commit {
 
 sub parse_blob_diff_lines {
   my ($self, $lines) = @_;
-  
+
+  my $diff_info = {};
+
   # Parse
   my @lines;
   my $next_before_line_num;
@@ -1019,13 +1023,15 @@ sub parse_blob_diff_lines {
   my $add_line_count = 0;
   my $delete_line_count = 0;
   for my $line (@$lines) {
+    warn $line;
+    
     chomp $line;
     
     my $class;
     my $before_line_num;
     my $after_line_num;
     
-    if ($line =~ /^@@\s-(\d+),\d+\s\+(\d+),\d+/) {
+    if ($line =~ /^@@\s-(\d+)(?:,\d+)?\s\+(\d+)/) {
       $next_before_line_num = $1;
       $next_after_line_num = $2;
       
@@ -1047,7 +1053,10 @@ sub parse_blob_diff_lines {
       $after_line_num = $next_after_line_num++;
       $add_line_count++;
     }
-    elsif ($line =~ /^Binary files/) { $class = 'binary_file' }
+    elsif ($line =~ /^Binary files/) {
+      $class = 'binary_file';
+      $diff_info->{binary} = 1;
+    }
     elsif ($line =~ /^ /) {
       $class = 'diff';
       $before_line_num = $next_before_line_num++;
@@ -1075,12 +1084,11 @@ sub parse_blob_diff_lines {
     ? 0
     : floor(($delete_line_count * 5) / $diff_line_count);
   
-  my $diff_info = {
-    add_line_count => $add_line_count,
-    delete_line_count => $delete_line_count,
-    add_block_count => $add_block_count,
-    delete_block_count => $delete_block_count
-  };
+  $diff_info->{add_line_count} = $add_line_count;
+  $diff_info->{delete_line_count} = $delete_line_count;
+  $diff_info->{add_block_count} = $add_block_count;
+  $diff_info->{delete_block_count} = $delete_block_count;
+  
   return (\@lines, $diff_info);
 }
 
