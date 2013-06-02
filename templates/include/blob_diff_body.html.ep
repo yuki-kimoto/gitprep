@@ -21,7 +21,11 @@
           <div class="radius-top radius-bottom" style="padding:1px 3px;margin-right:5px;border:1px solid #ccc;display:inline-block;background:#f7f7f7">
             %= include '/include/diff_status_bar', diff_tree => $diff_tree;
           </div>
-          <%= $file %>
+          % if ($status eq 'R' || $status eq 'C') {
+            <%= $from_file %> → <%= $file %>
+          % } else {
+            <%= $file %>
+          % }
           % if ($status ne 'A' && $status ne 'D' && $from_mode_str ne $to_mode_str) {
             <%= "100$from_mode_str → 100$to_mode_str" %>
           % }
