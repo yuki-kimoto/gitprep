@@ -284,7 +284,14 @@ note 'Blob page';
     
     # Content
     $t->content_like(qr/bbb/);
-  }}
+  }
+  
+  note 'blob binary';
+  {
+    $t->get_ok("/$user/$project/blob/ed7b91659762fa612563f0595f3faca6aecfcfa0/sample.bin");
+    $t->content_like(qr/View raw/);
+  }
+}
 
 note 'raw page';
 {

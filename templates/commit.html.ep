@@ -110,7 +110,6 @@
         <div class="span7 text-right" style="padding:5px;margin-left:75px">
           % my $parents = $commit->{parents};
           
-          
           % if (@$parents == 0) {
             <div>
               0 <span class="muted" style="padding-right:10px">parent</span>
