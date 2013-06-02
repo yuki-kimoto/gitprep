@@ -137,6 +137,18 @@ note 'Commit page';
     $t->content_like(qr#/raw/0b6eca6a28538b1226961ca7655d2662f3522652/sample.png#);
   }
   
+  note 'binary data';
+  {
+    $t->get_ok("/$user/$project/commit/ed7b91659762fa612563f0595f3faca6aecfcfa0");
+    $t->content_like(qr/Binary file not shown/);
+  }
+  
+  note 'binary data rename';
+  {
+    $t->get_ok("/$user/$project/commit/3c617100f8e6d8ffe11d6c14ddf7b3646a198269");
+    $t->content_like(qr/File renamed without changes/);
+  }
+  
   note 'Branch name';
   {
     # Page access (branch name)

@@ -266,6 +266,14 @@ sub blob {
   return $lines;
 }
 
+sub blob_is_image {
+  my ($self, $user, $project, $rev, $file) = @_;
+  
+  my $mime_type = $self->blob_mime_type($user, $project, $rev, $file);
+  
+  return ($mime_type || '') =~ m#^image/#;
+}
+
 sub blob_mime_type {
   my ($self, $user, $project, $rev, $file) = @_;
   
