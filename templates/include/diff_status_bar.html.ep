@@ -24,6 +24,13 @@
     $add_block_count = 0;
     $delete_block_count = 5;
   }
+  
+  if ($add_line_count == 1) {
+    $add_block_count = 1;
+  }
+  if ($delete_line_count == 1) {
+    $delete_block_count = 1;
+  }
 %>
 
 
