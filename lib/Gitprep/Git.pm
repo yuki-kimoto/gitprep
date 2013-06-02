@@ -260,7 +260,6 @@ sub blob {
   my $lines =[];
   while (my $line = $self->_dec(scalar <$fh>)) {
     chomp $line;
-    $line = $self->_tab_to_space($line);
     push @$lines, $line;
   }
   
@@ -1598,20 +1597,6 @@ sub _slurp {
   close $fh;
   
   return $content;
-}
-
-sub _tab_to_space {
-  my ($self, $line) = @_;
-  
-  # Tab to space
-  while ((my $pos = index($line, "\t")) != -1) {
-    if (my $count = (2 - ($pos % 2))) {
-      my $spaces = ' ' x $count;
-      $line =~ s/\t/$spaces/;
-    }
-  }
-
-  return $line;
 }
 
 sub _unquote {

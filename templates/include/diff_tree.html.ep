@@ -96,9 +96,6 @@
         % } elsif ($status eq 'R' || $status eq 'C') {
           
           <a href="#<%= "diff-$num" %>"><%= $diff_tree->{from_file} %> → <%= $file %></a>
-          % unless ($diff_tree->{similarity} == 100) {
-            with <%= $diff_tree->{similarity} %>
-          % }
         % }
         % if ($status ne 'A' && $status ne 'D' && $from_mode_str ne $mode_str) {
           <%= "100$from_mode_str → 100$mode_str" %>

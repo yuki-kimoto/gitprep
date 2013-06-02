@@ -6,7 +6,7 @@
   my $diff_line_count = $add_line_count + $delete_line_count;
   my $diff_count_text;
   my $status = $diff_tree->{status};
-
+  
   $diff_count_text = "$add_line_count additions";
   $diff_count_text .= " & $delete_line_count deletions" if $delete_line_count > 0;
   my $tag = $fragment ? 'a' : 'span';
@@ -25,11 +25,12 @@
     $delete_block_count = 5;
   }
   
-  if ($add_line_count == 1) {
-    $add_block_count = 1;
+  if ($diff_line_count <= 5) {
+    $add_block_count = $add_line_count;
+    $delete_block_count = $delete_line_count;
   }
-  if ($delete_line_count == 1) {
-    $delete_block_count = 1;
+  if ($diff_tree->{binary}) {
+    $add_block_count = 5;
   }
 %>
 
