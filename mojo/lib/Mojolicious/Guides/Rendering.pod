@@ -66,7 +66,7 @@ start characters.
   % Perl code line, treated as "<% line =%>"
   %= Perl expression line, treated as "<%= line %>"
   %== Perl expression line, treated as "<%== line %>"
-  %# Comment line, treated as "<%# line =%>"
+  %# Comment line, useful for debugging
   %% Replaced with "%", useful for generating templates
 
 Tags and lines work pretty much the same, but depending on context one will
@@ -196,17 +196,17 @@ too.
 
 =head2 Rendering text
 
-Perl characters can be rendered with the C<text> stash value, the given
+Characters can be rendered to bytes with the C<text> stash value, the given
 content will be automatically encoded to bytes.
 
   $self->render(text => 'Hello Wörld!');
 
 =head2 Rendering data
 
-Raw bytes can be rendered with the C<data> stash value, no encoding will be
+Bytes can be rendered with the C<data> stash value, no encoding will be
 performed.
 
-  $self->render(data => $octets);
+  $self->render(data => $bytes);
 
 =head2 Rendering JSON
 
@@ -217,10 +217,16 @@ renderer which get directly encoded to JSON.
 
 =head2 Partial rendering
 
-Sometimes you might want to access the rendered result, for example to
-generate emails, this can be done using the C<partial> stash value.
+Sometimes you might want to use the rendered result directly instead of
+generating a response, for example to send emails, this can be done using the
+C<partial> stash value.
 
   my $html = $self->render('mail', partial => 1);
+
+No encoding will be performed, making it easy to reuse the result in other
+templates or to generate binary data.
+
+  $self->render(data => $self->render('pdf_invoice', partial => 1));
 
 =head2 Status code
 
@@ -328,10 +334,10 @@ used or an empty C<204> response rendered automatically.
 
 By now you've probably already encountered the built-in 404 (Not Found) and
 500 (Server Error) pages, that get rendered automatically when you make a
-mistake. Especially during development they can be a great help, the methods
+mistake. Especially during development they can be a great help, you can
+render them manually with the methods
 L<Mojolicious::Controller/"render_exception"> and
-L<Mojolicious::Controller/"render_not_found"> can be used to render them
-manually.
+L<Mojolicious::Controller/"render_not_found">.
 
   use Mojolicious::Lite;
   use Scalar::Util 'looks_like_number';
@@ -348,7 +354,7 @@ manually.
     return $self->render_exception('Division by zero!') if $divisor == 0;
 
     # 200
-    $self->render_text($dividend / $divisor);
+    $self->render(text => $dividend / $divisor);
   };
 
   app->start;
@@ -363,7 +369,12 @@ templates.
   <!DOCTYPE html>
   <html>
     <head><title>Server error</title></head>
-    <body><%= $exception %></body>
+    <body>
+      <h1>Exception</h1>
+      <p><%= $exception->message %></p>
+      <h1>Stash</h1>
+      <pre><%= dumper $snapshot %></pre>
+    </body>
   </html>
 
 =head2 Helpers
@@ -580,18 +591,6 @@ template with named blocks that child templates can override.
 
 This chain could go on and on to allow a very high level of template reuse.
 
-=head2 Memorizing template blocks
-
-Compiled templates are always cached in memory, but with the helper
-L<Mojolicious::Plugin::DefaultHelpers/"memorize"> you can go one step further
-and prevent template blocks from getting executed more than once.
-
-  @@ cached.html.ep
-  % use Time::Piece;
-  %= memorize begin
-    This template was compiled at <%= localtime->hms %>.
-  % end
-
 =head2 Adding helpers
 
 Adding and redefining helpers is very easy, you can use them to do pretty much
@@ -600,8 +599,8 @@ everything.
   use Mojolicious::Lite;
 
   helper debug => sub {
-    my ($self, $string) = @_;
-    $self->app->log->debug($string);
+    my ($self, $str) = @_;
+    $self->app->log->debug($str);
   };
 
   get '/' => sub {
@@ -654,8 +653,8 @@ applications, plugins make that very simple.
   sub register {
     my ($self, $app) = @_;
     $app->helper(debug => sub {
-      my ($self, $string) = @_;
-      $self->app->log->debug($string);
+      my ($self, $str) = @_;
+      $self->app->log->debug($str);
     });
   }
 
@@ -670,7 +669,7 @@ The C<register> method will be called when you load the plugin.
   get '/' => sub {
     my $self = shift;
     $self->debug('It works.');
-    $self->render_text('Hello.');
+    $self->render(text => 'Hello.');
   };
 
   app->start;
@@ -681,7 +680,7 @@ generated.
   $ mojo generate plugin DebugHelper
 
 And if you have a C<PAUSE> account (which can be requested at
-L<http://pause.perl.org>), you are only a few commands away from relasing it
+L<http://pause.perl.org>), you are only a few commands away from releasing it
 to CPAN.
 
   $ perl Makefile.PL

@@ -6,7 +6,7 @@ use Mojo::Cache;
 use Mojo::JSON;
 use Mojo::Home;
 use Mojo::Loader;
-use Mojo::Util qw(encode slurp);
+use Mojo::Util qw(decamelize encode slurp);
 
 has cache   => sub { Mojo::Cache->new };
 has classes => sub { ['main'] };
@@ -24,13 +24,10 @@ my %TEMPLATES = map { $_ => slurp $HOME->rel_file($_) } @{$HOME->list_files};
 
 sub new {
   my $self = shift->SUPER::new(@_);
-
-  $self->add_handler(
-    json => sub { ${$_[2]} = Mojo::JSON->new->encode($_[3]->{json}) });
-  $self->add_handler(data => sub { ${$_[2]} = $_[3]->{data} });
-  $self->add_handler(text => sub { ${$_[2]} = $_[3]->{text} });
-
-  return $self;
+  $self->add_handler(data => sub { ${$_[2]} = $_[3]{data} });
+  $self->add_handler(text => sub { ${$_[2]} = $_[3]{text} });
+  return $self->add_handler(
+    json => sub { ${$_[2]} = Mojo::JSON->new->encode($_[3]{json}) });
 }
 
 sub add_handler { shift->_add(handlers => @_) }
@@ -66,69 +63,56 @@ sub render {
   # Merge stash and arguments
   @{$stash}{keys %$args} = values %$args;
 
-  # Extract important stash values
   my $options = {
     encoding => $self->encoding,
     handler  => $stash->{handler},
     template => delete $stash->{template}
   };
-  my $data   = delete $stash->{data};
-  my $format = $options->{format} = $stash->{format} || $self->default_format;
   my $inline = $options->{inline} = delete $stash->{inline};
-  my $json   = delete $stash->{json};
-  my $text   = delete $stash->{text};
   $options->{handler} = defined $options->{handler} ? $options->{handler} : $self->default_handler if defined $inline;
-
-  # Text
-  my $output;
-  my $content = $stash->{'mojo.content'} ||= {};
-  if (defined $text) {
-    $self->handlers->{text}->($self, $c, \$output, {text => $text});
-    $content->{content} = $output
-      if ($c->stash->{extends} || $c->stash->{layout});
-  }
+  $options->{format} = $stash->{format} || $self->default_format;
 
   # Data
-  elsif (defined $data) {
+  my $output;
+  if (defined(my $data = delete $stash->{data})) {
     $self->handlers->{data}->($self, $c, \$output, {data => $data});
-    $content->{content} = $output
-      if ($c->stash->{extends} || $c->stash->{layout});
+    return $output, $options->{format};
   }
 
   # JSON
-  elsif (defined $json) {
+  elsif (my $json = delete $stash->{json}) {
     $self->handlers->{json}->($self, $c, \$output, {json => $json});
-    $format = 'json';
-    $content->{content} = $output
-      if ($c->stash->{extends} || $c->stash->{layout});
+    return $output, 'json';
+  }
+
+  # Text
+  elsif (defined(my $text = delete $stash->{text})) {
+    $self->handlers->{text}->($self, $c, \$output, {text => $text});
   }
 
   # Template or templateless handler
   else {
-    return undef unless $self->_render_template($c, \$output, $options);
+    $options->{template} ||= $self->_generate_template($c);
+    return unless $self->_render_template($c, \$output, $options);
+  }
+
+  # Extends
+  my $content = $stash->{'mojo.content'} ||= {};
+  local $content->{content} = $output if $stash->{extends} || $stash->{layout};
+  while ((my $extends = $self->_extends($stash)) && !defined $inline) {
+    $options->{handler}  = $stash->{handler};
+    $options->{format}   = $stash->{format} || $self->default_format;
+    $options->{template} = $extends;
+    $self->_render_template($c, \$output, $options);
     $content->{content} = $output
-      if ($c->stash->{extends} || $c->stash->{layout});
+      if $content->{content} !~ /\S/ && $output =~ /\S/;
   }
 
-  # Extendable content
-  if (!$json && !defined $data) {
+  # Encoding
+  $output = encode $options->{encoding}, $output
+    if !$partial && $options->{encoding} && $output;
 
-    # Extends
-    while ((my $extends = $self->_extends($c)) && !defined $inline) {
-      $options->{handler}  = $stash->{handler};
-      $options->{format}   = $stash->{format} || $self->default_format;
-      $options->{template} = $extends;
-      $self->_render_template($c, \$output, $options);
-      $content->{content} = $output
-        if $content->{content} !~ /\S/ && $output =~ /\S/;
-    }
-
-    # Encoding
-    $output = encode $options->{encoding}, $output
-      if !$partial && $options->{encoding} && $output;
-  }
-
-  return $output, $format;
+  return $output, $options->{format};
 }
 
 sub template_name {
@@ -187,11 +171,25 @@ sub _detect_handler {
 }
 
 sub _extends {
-  my ($self, $c) = @_;
-  my $stash  = $c->stash;
+  my ($self, $stash) = @_;
   my $layout = delete $stash->{layout};
   $stash->{extends} ||= join('/', 'layouts', $layout) if $layout;
   return delete $stash->{extends};
+}
+
+sub _generate_template {
+  my ($self, $c) = @_;
+
+  # Normal default template
+  my $stash      = $c->stash;
+  my $controller = $stash->{controller};
+  my $action     = $stash->{action};
+  return join '/', split(/-/, decamelize($controller)), $action
+    if $controller && $action;
+
+  # Try the route name if we don't have controller and action
+  return undef unless my $endpoint = $c->match->endpoint;
+  return $endpoint->name;
 }
 
 sub _render_template {

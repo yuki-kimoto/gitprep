@@ -29,21 +29,18 @@ sub add {
   my ($self, $name) = (shift, shift);
 
   # Make sure we have a normal case entry for name
-  my $lcname = lc $name;
-  $self->{normalcase}{$lcname} = $self->{normalcase}{$lcname} ? $self->{normalcase}{$lcname} : $name unless $NORMALCASE{$lcname};
+  my $key = lc $name;
+  $self->{normalcase}{$key} = defined $self->{normalcase}{$key} ? $self->{normalcase}{$key} : $name unless $NORMALCASE{$key};
 
   # Add lines
-  push @{$self->{headers}{$lcname}}, map { ref $_ eq 'ARRAY' ? $_ : [$_] } @_;
+  push @{$self->{headers}{$key}}, map { ref $_ eq 'ARRAY' ? $_ : [$_] } @_;
 
   return $self;
 }
 
 sub clone {
-  my $self  = shift;
-  my $clone = $self->new;
-  $clone->{headers}{$_} = [@{$self->{headers}{$_}}]
-    for keys %{$self->{headers}};
-  return $clone;
+  my $self = shift;
+  return $self->new->from_hash($self->to_hash(1));
 }
 
 sub from_hash {
@@ -102,10 +99,10 @@ sub parse {
     }
 
     # New header
-    if ($line =~ /^(\S+)\s*:\s*(.*)$/) { push @$headers, $1, $2 }
+    if ($line =~ /^(\S+)\s*:\s*(.*)$/) { push @$headers, $1, [$2] }
 
     # Multiline
-    elsif (@$headers && $line =~ s/^\s+//) { $headers->[-1] .= " $line" }
+    elsif (@$headers && $line =~ s/^\s+//) { push @{$headers->[-1]}, $line }
 
     # Empty line
     else {
@@ -132,30 +129,16 @@ sub remove {
 
 sub to_hash {
   my ($self, $multi) = @_;
-
   my %hash;
-  for my $header (@{$self->names}) {
-    my @headers = $self->header($header);
-
-    # Multi line
-    if ($multi) { $hash{$header} = [@headers] }
-
-    # Flat
-    else {
-
-      # Turn single value arrays into strings
-      @$_ == 1 and $_ = $_->[0] for @headers;
-      $hash{$header} = @headers > 1 ? [@headers] : $headers[0];
-    }
-  }
-
+  $hash{$_} = $multi ? [$self->header($_)] : scalar $self->header($_)
+    for @{$self->names};
   return \%hash;
 }
 
 sub to_string {
   my $self = shift;
 
-  # Format multiline values
+  # Make sure multiline values are formatted correctly
   my @headers;
   for my $name (@{$self->names}) {
     push @headers, "$name: " . join("\x0d\x0a ", @$_) for $self->header($name);
@@ -201,7 +184,7 @@ L<Mojo::Headers> implements the following attributes.
   $headers = $headers->max_line_size(1024);
 
 Maximum header line size in bytes, defaults to the value of the
-C<MOJO_MAX_LINE_SIZE> environment variable or C<10240>.
+MOJO_MAX_LINE_SIZE environment variable or C<10240>.
 
 =head1 METHODS
 
@@ -245,9 +228,11 @@ Shortcut for the C<Accept-Ranges> header.
 
 =head2 add
 
-  $headers = $headers->add('Content-Type', 'text/plain');
+  $headers = $headers->add(Foo => 'one value');
+  $headers = $headers->add(Foo => 'first value', 'second value');
+  $headers = $headers->add(Foo => ['first line', 'second line']);
 
-Add one or more header lines.
+Add one or more header values with one or more lines.
 
 =head2 authorization
 
@@ -359,13 +344,15 @@ Shortcut for the C<Expires> header.
   $headers = $headers->from_hash({'Content-Type' => 'text/html'});
   $headers = $headers->from_hash({});
 
-Parse headers from a hash reference.
+Parse headers from a hash reference, an empty hash removes all headers.
 
 =head2 header
 
-  my $string = $headers->header('Content-Type');
-  my @lines  = $headers->header('Content-Type');
-  $headers   = $headers->header('Content-Type' => 'text/plain');
+  my $value  = $headers->header('Foo');
+  my @values = $headers->header('Foo');
+  $headers   = $headers->header(Foo => 'one value');
+  $headers   = $headers->header(Foo => 'first value', 'second value');
+  $headers   = $headers->header(Foo => ['first line', 'second line']);
 
 Get or replace the current header values.
 
@@ -466,14 +453,14 @@ Shortcut for the C<Range> header.
 =head2 referrer
 
   my $referrer = $headers->referrer;
-  $headers     = $headers->referrer('http://mojolicio.us');
+  $headers     = $headers->referrer('http://example.com');
 
 Shortcut for the C<Referer> header, there was a typo in RFC 2068 which
 resulted in C<Referer> becoming an official header.
 
 =head2 remove
 
-  $headers = $headers->remove('Content-Type');
+  $headers = $headers->remove('Foo');
 
 Remove a header.
 
@@ -500,8 +487,8 @@ Shortcut for the C<Sec-WebSocket-Key> header from RFC 6455.
 
 =head2 sec_websocket_protocol
 
-  my $protocol = $headers->sec_websocket_protocol;
-  $headers     = $headers->sec_websocket_protocol('sample');
+  my $proto = $headers->sec_websocket_protocol;
+  $headers  = $headers->sec_websocket_protocol('sample');
 
 Shortcut for the C<Sec-WebSocket-Protocol> header from RFC 6455.
 
@@ -545,14 +532,14 @@ Shortcut for the C<TE> header.
   my $single = $headers->to_hash;
   my $multi  = $headers->to_hash(1);
 
-Turn headers into hash reference, nested array references to represent multi
-line values are disabled by default.
+Turn headers into hash reference, nested array references to represent
+multiline values are disabled by default.
 
   say $headers->to_hash->{DNT};
 
 =head2 to_string
 
-  my $string = $headers->to_string;
+  my $str = $headers->to_string;
 
 Turn headers into a string, suitable for HTTP messages.
 

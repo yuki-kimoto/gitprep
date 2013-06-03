@@ -101,8 +101,7 @@ Renderer for plain embedded Perl templates, loaded automatically.
 
 =item L<Mojolicious::Plugin::EPRenderer>
 
-Renderer for more sophisiticated embedded Perl templates, loaded
-automatically.
+Renderer for more sophisticated embedded Perl templates, loaded automatically.
 
 =item L<Mojolicious::Plugin::HeaderCondition>
 
@@ -120,14 +119,6 @@ Mount whole L<Mojolicious> applications.
 
 Renderer for turning POD into HTML and documentation browser for
 L<Mojolicious::Guides>.
-
-=item L<Mojolicious::Plugin::PoweredBy>
-
-Add an C<X-Powered-By> header to outgoing responses, loaded automatically.
-
-=item L<Mojolicious::Plugin::RequestTimer>
-
-Log timing information, loaded automatically.
 
 =item L<Mojolicious::Plugin::TagHelpers>
 

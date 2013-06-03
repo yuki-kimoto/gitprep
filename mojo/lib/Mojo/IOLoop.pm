@@ -9,9 +9,8 @@ use Mojo::IOLoop::Delay;
 use Mojo::IOLoop::Server;
 use Mojo::IOLoop::Stream;
 use Mojo::Reactor::Poll;
-use Mojo::Util 'md5_sum';
+use Mojo::Util qw(md5_sum steady_time);
 use Scalar::Util 'weaken';
-use Time::HiRes 'time';
 
 use constant DEBUG => $ENV{MOJO_IOLOOP_DEBUG} || 0;
 
@@ -39,9 +38,6 @@ sub acceptor {
   # Find acceptor for id
   return $self->{acceptors}{$acceptor} unless ref $acceptor;
 
-  # Make sure connection manager is running
-  $self->_manager;
-
   # Connect acceptor with reactor
   my $id = $self->_id;
   $self->{acceptors}{$id} = $acceptor;
@@ -58,8 +54,8 @@ sub client {
   my ($self, $cb) = (shift, pop);
   $self = $self->singleton unless ref $self;
 
-  # Make sure connection manager is running
-  $self->_manager;
+  # Make sure timers are running
+  $self->_timers;
 
   my $id     = $self->_id;
   my $c      = $self->{connections}{$id} ||= {};
@@ -117,7 +113,8 @@ sub recurring {
 sub remove {
   my ($self, $id) = @_;
   $self = $self->singleton unless ref $self;
-  if (my $c = $self->{connections}{$id}) { return $c->{finish} = 1 }
+  my $c = $self->{connections}{$id};
+  if ($c && (my $stream = $c->{stream})) { return $stream->close_gracefully }
   $self->_remove($id);
 }
 
@@ -182,18 +179,20 @@ sub timer {
 sub _accepting {
   my $self = shift;
 
-  # Check connection limit
-  return if $self->{accepting};
+  # Check if we have acceptors
   my $acceptors = $self->{acceptors} ||= {};
-  return unless keys %$acceptors;
+  return $self->_remove(delete $self->{accept}) unless keys %$acceptors;
+
+  # Check connection limit
   my $i   = keys %{$self->{connections}};
   my $max = $self->max_connections;
   return unless $i < $max;
 
   # Acquire accept mutex
   if (my $cb = $self->lock) { return unless $self->$cb(!$i) }
+  $self->_remove(delete $self->{accept});
 
-  # Check if multi-accept is desirable and start accepting
+  # Check if multi-accept is desirable
   my $multi = $self->multi_accept;
   $_->multi_accept($max < $multi ? 1 : $multi)->start for values %$acceptors;
   $self->{accepting}++;
@@ -202,37 +201,16 @@ sub _accepting {
 sub _id {
   my $self = shift;
   my $id;
-  do { $id = md5_sum('c' . time . rand 999) }
+  do { $id = md5_sum('c' . steady_time . rand 999) }
     while $self->{connections}{$id} || $self->{acceptors}{$id};
   return $id;
 }
 
-sub _manage {
-  my $self = shift;
-
-  # Try to acquire accept mutex
-  $self->_accepting;
-
-  # Close connections gracefully
-  my $connections = $self->{connections} ||= {};
-  while (my ($id, $c) = each %$connections) {
-    $self->_remove($id)
-      if $c->{finish} && (!$c->{stream} || !$c->{stream}->is_writing);
-  }
-
-  # Graceful stop
-  $self->_remove(delete $self->{manager})
-    unless keys %$connections || keys %{$self->{acceptors}};
-  $self->stop if $self->max_connections == 0 && keys %$connections == 0;
-}
-
-sub _manager {
-  my $self = shift;
-  $self->{manager} ||= $self->recurring($self->accept_interval => \&_manage);
-}
-
 sub _not_accepting {
   my $self = shift;
+
+  # Make sure timers are running
+  $self->_timers;
 
   # Release accept mutex
   return unless delete $self->{accepting};
@@ -250,31 +228,40 @@ sub _remove {
   return if $reactor->remove($id);
 
   # Acceptor
-  if (delete $self->{acceptors}{$id}) { delete $self->{accepting} }
+  if (delete $self->{acceptors}{$id}) { $self->_not_accepting }
 
-  # Connection (stream needs to be deleted first)
-  else {
-    delete(($self->{connections}{$id} || {})->{stream});
-    delete $self->{connections}{$id};
-  }
+  # Connection
+  else { delete $self->{connections}{$id} }
+}
+
+sub _stop {
+  my $self = shift;
+  return      if keys %{$self->{connections}};
+  $self->stop if $self->max_connections == 0;
+  return      if keys %{$self->{acceptors}};
+  $self->{$_} && $self->_remove(delete $self->{$_}) for qw(accept stop);
 }
 
 sub _stream {
   my ($self, $stream, $id) = @_;
 
-  # Make sure connection manager is running
-  $self->_manager;
+  # Make sure timers are running
+  $self->_timers;
 
   # Connect stream with reactor
   $self->{connections}{$id}{stream} = $stream;
   weaken $stream->reactor($self->reactor)->{reactor};
-
-  # Start streaming
   weaken $self;
-  $stream->on(close => sub { $self->{connections}{$id}{finish} = 1 });
+  $stream->on(close => sub { $self && $self->_remove($id) });
   $stream->start;
 
   return $id;
+}
+
+sub _timers {
+  my $self = shift;
+  $self->{accept} ||= $self->recurring($self->accept_interval => \&_accepting);
+  $self->{stop} ||= $self->recurring(1 => \&_stop);
 }
 
 1;
@@ -334,12 +321,14 @@ solid and scalable non-blocking TCP clients and servers.
 
 Optional modules L<EV> (4.0+), L<IO::Socket::IP> (0.16+) and
 L<IO::Socket::SSL> (1.75+) are supported transparently, and used if installed.
-Individual features can also be disabled with the C<MOJO_NO_IPV6> and
-C<MOJO_NO_TLS> environment variables.
+Individual features can also be disabled with the MOJO_NO_IPV6 and MOJO_NO_TLS
+environment variables.
 
-A TLS certificate and key are also built right in, to make writing test
-servers as easy as possible. Also note that for convenience the C<PIPE> signal
-will be set to C<IGNORE> when L<Mojo::IOLoop> is loaded.
+The event loop will be resilient to time jumps if a monotonic clock is
+available through L<Time::HiRes>. A TLS certificate and key are also built
+right in, to make writing test servers as easy as possible. Also note that for
+convenience the C<PIPE> signal will be set to C<IGNORE> when L<Mojo::IOLoop>
+is loaded.
 
 See L<Mojolicious::Guides::Cookbook> for more.
 
@@ -352,9 +341,9 @@ L<Mojo::IOLoop> implements the following attributes.
   my $interval = $loop->accept_interval;
   $loop        = $loop->accept_interval(0.5);
 
-Interval in seconds for trying to reacquire the accept mutex and connection
-management, defaults to C<0.025>. Note that changing this value can affect
-performance and idle CPU usage.
+Interval in seconds for trying to reacquire the accept mutex, defaults to
+C<0.025>. Note that changing this value can affect performance and idle CPU
+usage.
 
 =head2 lock
 
@@ -462,17 +451,17 @@ L<Mojo::IOLoop::Client/"connect">.
   my $delay = $loop->delay(sub {...});
   my $delay = $loop->delay(sub {...}, sub {...});
 
-Get L<Mojo::IOLoop::Delay> object to control the flow of events. A single
-callback will be treated as a subscriber to the C<finish> event, and multiple
-ones as a chain of steps.
+Get L<Mojo::IOLoop::Delay> object to manage callbacks and control the flow of
+events. A single callback will be treated as a subscriber to the C<finish>
+event, and multiple ones as a chain of steps.
 
   # Synchronize multiple events
   my $delay = Mojo::IOLoop->delay(sub { say 'BOOM!' });
   for my $i (1 .. 10) {
-    $delay->begin;
+    my $end = $delay->begin;
     Mojo::IOLoop->timer($i => sub {
       say 10 - $i;
-      $delay->end;
+      $end->();
     });
   }
 
@@ -614,7 +603,7 @@ seconds.
 
 =head1 DEBUGGING
 
-You can set the C<MOJO_IOLOOP_DEBUG> environment variable to get some advanced
+You can set the MOJO_IOLOOP_DEBUG environment variable to get some advanced
 diagnostics information printed to C<STDERR>.
 
   MOJO_IOLOOP_DEBUG=1

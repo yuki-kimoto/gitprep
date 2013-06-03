@@ -11,8 +11,8 @@ These options are available for all commands:
     -h, --help          Get more information on a specific command.
         --home <path>   Path to your applications home directory, defaults to
                         the value of MOJO_HOME or auto detection.
-    -m, --mode <name>   Run mode of your application, defaults to the value
-                        of MOJO_MODE or "development".
+    -m, --mode <name>   Run mode of your application, defaults to the value of
+                        MOJO_MODE/PLACK_ENV or "development".
 
 See '$0 help COMMAND' for more information on a specific command.
 EOF
@@ -103,17 +103,6 @@ sub run {
   return print $self->hint;
 }
 
-# DEPRECATED in Rainbow!
-sub start {
-  warn <<EOF;
-Mojolicious::Commands->start is DEPRECATED in favor of
-Mojolicious::Commands->start_app!!!
-EOF
-  my $self = shift;
-  return $self->start_app($ENV{MOJO_APP} => @_) if $ENV{MOJO_APP};
-  return $self->new->app->start(@_);
-}
-
 sub start_app {
   my $self = shift;
   return Mojo::Server->new->build_app(shift)->start(@_);
@@ -179,7 +168,7 @@ Upload files to CPAN.
 
   $ ./myapp.pl daemon
 
-Start application with standalone HTTP and WebSocket server server.
+Start application with standalone HTTP and WebSocket server.
 
 =head2 eval
 
@@ -320,7 +309,7 @@ Try to detect environment.
   $commands->run(@ARGV);
 
 Load and run commands. Automatic deployment environment detection can be
-disabled with the C<MOJO_NO_DETECT> environment variable.
+disabled with the MOJO_NO_DETECT environment variable.
 
 =head2 start_app
 

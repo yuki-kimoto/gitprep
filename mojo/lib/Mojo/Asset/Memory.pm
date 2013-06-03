@@ -21,26 +21,26 @@ sub add_chunk {
 }
 
 sub contains {
-  my ($self, $string) = @_;
+  my ($self, $str) = @_;
 
   my $start = $self->start_range;
-  my $pos = index $self->{content}, $string, $start;
+  my $pos = index $self->{content}, $str, $start;
   $pos -= $start if $start && $pos >= 0;
   my $end = $self->end_range;
 
-  return $end && ($pos + length $string) >= $end ? -1 : $pos;
+  return $end && ($pos + length $str) >= $end ? -1 : $pos;
 }
 
 sub get_chunk {
-  my ($self, $start) = @_;
+  my ($self, $offset, $max) = @_;
+  $max = defined $max ? $max : 131072;
 
-  $start += $self->start_range;
-  my $size = 131072;
+  $offset += $self->start_range;
   if (my $end = $self->end_range) {
-    $size = $end + 1 - $start if ($start + $size) > $end;
+    $max = $end + 1 - $offset if ($offset + $max) > $end;
   }
 
-  return substr shift->{content}, $start, $size;
+  return substr shift->{content}, $offset, $max;
 }
 
 sub move_to {
@@ -110,7 +110,7 @@ automatically upgrade to a L<Mojo::Asset::File> object.
 
 Maximum size in bytes of data to keep in memory before automatically upgrading
 to a L<Mojo::Asset::File> object, defaults to the value of the
-C<MOJO_MAX_MEMORY_SIZE> environment variable or C<262144>.
+MOJO_MAX_MEMORY_SIZE environment variable or C<262144>.
 
 =head1 METHODS
 
@@ -139,8 +139,10 @@ Check if asset contains a specific string.
 =head2 get_chunk
 
   my $bytes = $mem->get_chunk($offset);
+  my $bytes = $mem->get_chunk($offset, $max);
 
-Get chunk of data starting from a specific position.
+Get chunk of data starting from a specific position, defaults to a maximum
+chunk size of C<131072> bytes.
 
 =head2 move_to
 

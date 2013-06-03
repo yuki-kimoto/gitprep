@@ -5,6 +5,7 @@ use Fcntl ':flock';
 use File::Spec::Functions qw(catfile tmpdir);
 use IO::Poll 'POLLIN';
 use List::Util 'shuffle';
+use Mojo::Util 'steady_time';
 use POSIX 'WNOHANG';
 use Scalar::Util 'weaken';
 use Time::HiRes ();
@@ -14,7 +15,7 @@ has accept_interval => 0.025;
 has [qw(graceful_timeout heartbeat_timeout)] => 20;
 has heartbeat_interval => 5;
 has lock_file          => sub { catfile tmpdir, 'prefork.lock' };
-has lock_timeout       => 0.5;
+has lock_timeout       => 1;
 has multi_accept       => 50;
 has pid_file           => sub { catfile tmpdir, 'prefork.pid' };
 has workers            => 4;
@@ -70,10 +71,10 @@ sub run {
   local $SIG{TTOU} = sub {
     $self->workers($self->workers - 1) if $self->workers > 0;
     return unless $self->workers;
-    $self->{pool}{shuffle keys %{$self->{pool}}}{graceful} ||= time;
+    $self->{pool}{shuffle keys %{$self->{pool}}}{graceful} ||= steady_time;
   };
 
-  # Preload application and start accepting connections
+  # Preload application before starting workers
   $self->start->app->log->info("Manager $$ started.");
   $self->{running} = 1;
   $self->_manage while $self->{running};
@@ -89,7 +90,8 @@ sub _heartbeat {
   return unless $self->{reader}->sysread(my $chunk, 4194304);
 
   # Update heartbeats
-  $self->{pool}{$1} and $self->emit(heartbeat => $1)->{pool}{$1}{time} = time
+  my $time = steady_time;
+  $self->{pool}{$1} and $self->emit(heartbeat => $1)->{pool}{$1}{time} = $time
     while $chunk =~ /(\d+)\n/g;
 }
 
@@ -113,17 +115,18 @@ sub _manage {
     # No heartbeat (graceful stop)
     my $interval = $self->heartbeat_interval;
     my $timeout  = $self->heartbeat_timeout;
-    if (!$w->{graceful} && ($w->{time} + $interval + $timeout <= time)) {
+    my $time     = steady_time;
+    if (!$w->{graceful} && ($w->{time} + $interval + $timeout <= $time)) {
       $log->info("Worker $pid has no heartbeat, restarting.");
-      $w->{graceful} = time;
+      $w->{graceful} = $time;
     }
 
     # Graceful stop with timeout
-    $w->{graceful} ||= time if $self->{graceful};
+    $w->{graceful} ||= $time if $self->{graceful};
     if ($w->{graceful}) {
       $log->debug("Trying to stop worker $pid gracefully.");
       kill 'QUIT', $pid;
-      $w->{force} = 1 if $w->{graceful} + $self->graceful_timeout <= time;
+      $w->{force} = 1 if $w->{graceful} + $self->graceful_timeout <= $time;
     }
 
     # Normal stop
@@ -151,7 +154,7 @@ sub _pid_file {
 sub _reap {
   my ($self, $pid) = @_;
 
-  # CLean up dead worker
+  # Clean up dead worker
   $self->app->log->debug("Worker $pid stopped.")
     if delete $self->emit(reap => $pid)->{pool}{$pid};
 }
@@ -161,7 +164,8 @@ sub _spawn {
 
   # Manager
   die "Can't fork: $!" unless defined(my $pid = fork);
-  return $self->emit(spawn => $pid)->{pool}{$pid} = {time => time} if $pid;
+  return $self->emit(spawn => $pid)->{pool}{$pid} = {time => steady_time}
+    if $pid;
 
   # Prepare lock file
   my $file = $self->{lock_file};
@@ -208,7 +212,6 @@ sub _spawn {
   $SIG{QUIT} = sub { $loop->max_connections(0) };
   delete $self->{$_} for qw(poll reader);
 
-  # Start event loop
   $self->app->log->debug("Worker $$ started.");
   $loop->start;
   exit 0;
@@ -254,14 +257,15 @@ Mojo::Server::Prefork - Preforking non-blocking I/O HTTP and WebSocket server
 L<Mojo::Server::Prefork> is a full featured, UNIX optimized, preforking
 non-blocking I/O HTTP and WebSocket server, built around the very well tested
 and reliable L<Mojo::Server::Daemon>, with C<IPv6>, C<TLS>, C<Comet> (long
-polling) and multiple event loop support. Note that the server uses signals
-for process management, so you should avoid modifying signal handlers in your
+polling), C<keep-alive>, connection pooling, timeout, cookie, multipart and
+multiple event loop support. Note that the server uses signals for process
+management, so you should avoid modifying signal handlers in your
 applications.
 
 Optional modules L<EV> (4.0+), L<IO::Socket::IP> (0.16+) and
 L<IO::Socket::SSL> (1.75+) are supported transparently through
 L<Mojo::IOLoop>, and used if installed. Individual features can also be
-disabled with the C<MOJO_NO_IPV6> and C<MOJO_NO_TLS> environment variables.
+disabled with the MOJO_NO_IPV6 and MOJO_NO_TLS environment variables.
 
 See L<Mojolicious::Guides::Cookbook> for more.
 
@@ -392,9 +396,9 @@ and implements the following new ones.
   my $interval = $prefork->accept_interval;
   $prefork     = $prefork->accept_interval(0.5);
 
-Interval in seconds for trying to reacquire the accept mutex and connection
-management, defaults to C<0.025>. Note that changing this value can affect
-performance and idle CPU usage.
+Interval in seconds for trying to reacquire the accept mutex, defaults to
+C<0.025>. Note that changing this value can affect performance and idle CPU
+usage.
 
 =head2 accepts
 
@@ -441,10 +445,11 @@ appended, defaults to a random temporary path.
 =head2 lock_timeout
 
   my $timeout = $prefork->lock_timeout;
-  $prefork    = $prefork->lock_timeout(1);
+  $prefork    = $prefork->lock_timeout(0.5);
 
 Maximum amount of time in seconds a worker may block when waiting for the
-accept mutex, defaults to C<0.5>.
+accept mutex, defaults to C<1>. Note that changing this value can affect
+performance and idle CPU usage.
 
 =head2 multi_accept
 

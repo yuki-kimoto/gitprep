@@ -130,7 +130,7 @@ plugins, since non-blocking requests that are already in progress will
 interfere with new blocking ones.
 
   # Perform blocking request
-  my $body = $app->ua->get('mojolicio.us')->res->body;
+  my $body = $app->ua->get('example.com')->res->body;
 
 =head1 METHODS
 
@@ -153,17 +153,15 @@ object.
 
 =head2 config
 
-  my $config = $app->config;
-  my $foo    = $app->config('foo');
-  $app       = $app->config({foo => 'bar'});
-  $app       = $app->config(foo => 'bar');
+  my $hash = $app->config;
+  my $foo  = $app->config('foo');
+  $app     = $app->config({foo => 'bar'});
+  $app     = $app->config(foo => 'bar');
 
 Application configuration.
 
-  # Manipulate configuration
-  $app->config->{foo} = 'bar';
-  my $foo = $app->config->{foo};
-  delete $app->config->{foo};
+  # Remove value
+  my $foo = delete $app->config->{foo};
 
 =head2 handler
 

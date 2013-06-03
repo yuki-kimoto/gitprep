@@ -28,16 +28,15 @@ sub each {
 
 sub first {
   my ($self, $cb) = @_;
-  return $cb ? do { (ref $cb) eq 'CODE' ? List::Util::first { $cb->($_) } @$self : List::Util::first { $_ =~ $cb } @$self } : $self->[0];
+  return $self->[0] unless $cb;
+  return List::Util::first { $cb->($_) } @$self if ref $cb eq 'CODE';
+  return List::Util::first { $_ =~ $cb } @$self;
 }
 
 sub grep {
   my ($self, $cb) = @_;
-  if ((ref $cb) eq 'CODE') {
-    return $self->new(grep { $cb->($_) } @$self);
-  } else {
-    return $self->new(grep { $_ =~ $cb } @$self);
-  }
+  return $self->new(grep { $cb->($_) } @$self) if ref $cb eq 'CODE';
+  return $self->new(grep { $_ =~ $cb } @$self);
 }
 
 sub join {
@@ -231,6 +230,13 @@ from the results.
   my $new = $collection->uniq;
 
 Create a new collection without duplicate elements.
+
+=head1 ELEMENTS
+
+Direct array reference access to elements is also possible.
+
+  say $collection->[23];
+  say for @$collection;
 
 =head1 SEE ALSO
 

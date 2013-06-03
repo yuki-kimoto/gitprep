@@ -10,12 +10,11 @@ our @EXPORT_OK = ('b');
 
 # Turn most functions from Mojo::Util into methods
 my @UTILS = (
-  qw(b64_decode b64_encode camelize decamelize hmac_md5_sum hmac_sha1_sum),
-  qw(html_unescape md5_bytes md5_sum punycode_decode punycode_encode quote),
-  qw(sha1_bytes sha1_sum slurp spurt squish trim unquote url_escape),
-  qw(url_unescape xml_escape xor_encode)
+  qw(b64_decode b64_encode camelize decamelize hmac_sha1_sum html_unescape),
+  qw(md5_bytes md5_sum punycode_decode punycode_encode quote sha1_bytes),
+  qw(sha1_sum slurp spurt squish trim unquote url_escape url_unescape),
+  qw(xml_escape xor_encode)
 );
-push @UTILS, 'html_escape';    # DEPRECATED in Rainbow!
 for my $name (@UTILS) {
   my $sub = Mojo::Util->can($name);
   Mojo::Util::monkey_patch __PACKAGE__, $name, sub {
@@ -165,12 +164,6 @@ Encode bytestream with L<Mojo::Util/"encode">, defaults to C<UTF-8>.
 
   $stream->trim->quote->encode->say;
 
-=head2 hmac_md5_sum
-
-  $stream = $stream->hmac_md5_sum('passw0rd');
-
-Generate HMAC-MD5 checksum for bytestream with L<Mojo::Util/"hmac_md5_sum">.
-
 =head2 hmac_sha1_sum
 
   $stream = $stream->hmac_sha1_sum('passw0rd');
@@ -226,7 +219,7 @@ Print bytestream to handle and append a newline, defaults to C<STDOUT>.
 
 =head2 secure_compare
 
-  my $success = $stream->secure_compare($string);
+  my $success = $stream->secure_compare($str);
 
 Compare bytestream with L<Mojo::Util/"secure_compare">.
 
@@ -284,8 +277,8 @@ L<Mojo::Util/"squish">.
 
 =head2 to_string
 
-  my $string = $stream->to_string;
-  my $string = "$stream";
+  my $str = $stream->to_string;
+  my $str = "$stream";
 
 Stringify bytestream.
 

@@ -52,7 +52,7 @@ sub select {
 
       # Try all selectors with element
       for my $part (@$pattern) {
-        push(@results, $current) and last
+        push @results, $current and last
           if $self->_combinator([reverse @$part], $current, $tree);
       }
     }
@@ -600,9 +600,10 @@ L<Mojo::DOM::CSS> implements the following attributes.
 =head2 tree
 
   my $tree = $css->tree;
-  $css     = $css->tree(['root', [qw(text lalala)]]);
+  $css     = $css->tree(['root', ['text', 'foo']]);
 
-Document Object Model.
+Document Object Model. Note that this structure should only be used very
+carefully since it is very dynamic.
 
 =head1 METHODS
 

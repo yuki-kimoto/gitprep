@@ -27,6 +27,7 @@ sub build {
   my $self = shift;
 
   my (@lines, $cpst, $multi);
+  my $escape = $self->auto_escape;
   for my $line (@{$self->tree}) {
     push @lines, '';
     for (my $j = 0; $j < @{$line}; $j += 2) {
@@ -58,13 +59,12 @@ sub build {
       if ($type eq 'code' || $multi) { $lines[-1] .= "$value" }
 
       # Expression
-      if (grep { $_ eq $type } qw(expr escp)) {
+      if ($type eq 'expr' || $type eq 'escp') {
 
         # Start
         unless ($multi) {
 
           # Escaped
-          my $escape = $self->auto_escape;
           if (($type eq 'escp' && !$escape) || ($type eq 'expr' && $escape)) {
             $lines[-1] .= "\$_M .= _escape";
             $lines[-1] .= " scalar $value" if length $value;
@@ -99,7 +99,9 @@ sub compile {
 
   # Compile with line directive
   return undef unless my $code = $self->code;
-  my $compiled = eval qq{#line 1 "@{[$self->name]}"\n$code};
+  my $name = $self->name;
+  $name =~ s/"//g;
+  my $compiled = eval qq{#line 1 "$name"\n$code};
   $self->compiled($compiled) and return undef unless $@;
 
   # Use local stacktrace for compile exceptions
@@ -124,10 +126,10 @@ sub interpret {
 }
 
 sub parse {
-  my ($self, $tmpl) = @_;
+  my ($self, $template) = @_;
 
   # Clean start
-  delete $self->template($tmpl)->{tree};
+  my $tree = $self->template($template)->tree([])->tree;
 
   my $tag     = $self->tag_start;
   my $replace = $self->replace_mark;
@@ -140,7 +142,6 @@ sub parse {
   my $end     = $self->tag_end;
   my $start   = $self->line_start;
 
-  # Precompile
   my $token_re = qr/
     (
       \Q$tag$replace\E                       # Replace
@@ -174,28 +175,23 @@ sub parse {
   # Split lines
   my $state = 'text';
   my ($trimming, @capture_token);
-  for my $line (split /\n/, $tmpl) {
+  for my $line (split /\n/, $template) {
     $trimming = 0 if $state eq 'text';
 
-    # Perl line
+    # Turn Perl line into mixed line
     if ($state eq 'text' && $line !~ s/^(\s*)\Q$start$replace\E/$1$start/) {
-      $line =~ s/^(\s*)\Q$start\E(\Q$expr\E)?//
-        and $line = $2 ? "$1$tag$2$line $end" : "$tag$line $trim$end";
+      if ($line =~ s/^(\s*)\Q$start\E(?:(\Q$cmnt\E)|(\Q$expr\E))?//) {
+
+        # Comment
+        if ($2) { $line = "$tag$2 $trim$end" }
+
+        # Expression or code
+        else { $line = $3 ? "$1$tag$3$line $end" : "$tag$line $trim$end" }
+      }
     }
 
     # Escaped line ending
-    if ($line =~ /(\\+)$/) {
-      my $len = length $1;
-
-      # Newline
-      if ($len == 1) { $line =~ s/\\$// }
-
-      # Backslash
-      elsif ($len > 1) { $line =~ s/\\\\$/\\\n/ }
-    }
-
-    # Normal line ending
-    else { $line .= "\n" }
+    $line .= "\n" unless $line =~ s/\\\\$/\\\n/ || $line =~ s/\\$//;
 
     # Mixed line
     my @token;
@@ -233,7 +229,7 @@ sub parse {
       # Comment
       elsif ($token =~ /^\Q$tag$cmnt\E$/) { $state = 'cmnt' }
 
-      # Value
+      # Text
       else {
 
         # Replace
@@ -251,27 +247,27 @@ sub parse {
         @capture_token = ();
       }
     }
-    push @{$self->tree}, \@token;
+    push @$tree, \@token;
   }
 
   return $self;
 }
 
 sub render {
-  my $self = shift->parse(shift)->build;
-  return $self->compile || $self->interpret(@_);
+  my $self = shift;
+  return $self->parse(shift)->build->compile || $self->interpret(@_);
 }
 
 sub render_file {
   my ($self, $path) = (shift, shift);
 
   $self->name($path) unless defined $self->{name};
-  my $tmpl     = slurp $path;
+  my $template = slurp $path;
   my $encoding = $self->encoding;
   croak qq{Template "$path" has invalid encoding.}
-    if $encoding && !defined($tmpl = decode $encoding, $tmpl);
+    if $encoding && !defined($template = decode $encoding, $template);
 
-  return $self->render($tmpl, @_);
+  return $self->render($template, @_);
 }
 
 sub _trim {
@@ -280,8 +276,8 @@ sub _trim {
   # Walk line backwards
   for (my $j = @$line - 4; $j >= 0; $j -= 2) {
 
-    # Skip capture
-    next if grep { $_ eq $line->[$j] } qw(cpst cpen);
+    # Skip captures
+    next if $line->[$j] eq 'cpst' || $line->[$j] eq 'cpen';
 
     # Only trim text
     return unless $line->[$j] eq 'text';
@@ -344,14 +340,14 @@ Mojo::Template - Perl-ish templates!
 
   # More advanced
   my $output = $mt->render(<<'EOF', 23, 'foo bar');
-  % my ($number, $text) = @_;
+  % my ($num, $text) = @_;
   %= 5 * 5
   <!DOCTYPE html>
   <html>
     <head><title>More advanced</title></head>
     <body>
       test 123
-      foo <% my $i = $number + 2; %>
+      foo <% my $i = $num + 2; %>
       % for (1 .. 23) {
       * some text <%= $i++ %>
       % }
@@ -383,7 +379,7 @@ automatically enabled.
   % Perl code line, treated as "<% line =%>"
   %= Perl expression line, treated as "<%= line %>"
   %== Perl expression line, treated as "<%== line %>"
-  %# Comment line, treated as "<%# line =%>"
+  %# Comment line, useful for debugging
   %% Replaced with "%", useful for generating templates
 
 Escaping behavior can be reversed with the C<auto_escape> attribute, this is
@@ -616,14 +612,15 @@ Characters indicating the end of a tag, defaults to C<%E<gt>>.
   my $template = $mt->template;
   $mt          = $mt->template($template);
 
-Raw template.
+Raw unparsed template.
 
 =head2 tree
 
   my $tree = $mt->tree;
-  $mt      = $mt->tree($tree);
+  $mt      = $mt->tree([['text', 'foo']]);
 
-Parsed tree.
+Template in parsed form. Note that this structure should only be used very
+carefully since it is very dynamic.
 
 =head2 trim_mark
 
@@ -638,12 +635,6 @@ Character activating automatic whitespace trimming, defaults to C<=>.
 
 L<Mojo::Template> inherits all methods from L<Mojo::Base> and implements the
 following new ones.
-
-=head2 new
-
-  my $mt = Mojo::Template->new;
-
-Construct a new L<Mojo::Template> object.
 
 =head2 build
 
@@ -693,8 +684,8 @@ Render template file.
 
 =head1 DEBUGGING
 
-You can set the C<MOJO_TEMPLATE_DEBUG> environment variable to get some
-advanced diagnostics information printed to C<STDERR>.
+You can set the MOJO_TEMPLATE_DEBUG environment variable to get some advanced
+diagnostics information printed to C<STDERR>.
 
   MOJO_TEMPLATE_DEBUG=1
 

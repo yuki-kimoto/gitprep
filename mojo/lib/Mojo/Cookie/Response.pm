@@ -10,10 +10,8 @@ sub expires {
   my $self = shift;
 
   # Upgrade
-  return $self->{expires}
-    = defined $self->{expires} && !ref $self->{expires}
-    ? Mojo::Date->new($self->{expires})
-    : $self->{expires}
+  my $e = $self->{expires};
+  return $self->{expires} = defined $e && !ref $e ? Mojo::Date->new($e) : $e
     unless @_;
   $self->{expires} = shift;
 
@@ -21,23 +19,21 @@ sub expires {
 }
 
 sub parse {
-  my ($self, $string) = @_;
+  my ($self, $str) = @_;
 
   my @cookies;
-  for my $token ($self->_tokenize($string)) {
+  for my $token ($self->_tokenize(defined $str ? $str : '')) {
     for my $i (0 .. $#$token) {
       my ($name, $value) = @{$token->[$i]};
 
       # This will only run once
-      push(@cookies,
-        Mojo::Cookie::Response->new(name => $name, value => defined $value ? $value : ''))
-        and next
+      push @cookies, $self->new(name => $name, value => defined $value ? $value : '') and next
         unless $i;
 
       # Attributes (Netscape and RFC 6265)
-      next
-        unless my @match
+      my @match
         = $name =~ /^(expires|domain|path|secure|Max-Age|HttpOnly)$/msi;
+      next unless @match;
       my $attr = lc $match[0];
       $attr =~ tr/-/_/;
       $cookies[-1]->$attr($attr =~ /(?:secure|HttpOnly)/i ? 1 : $value);
@@ -94,12 +90,13 @@ Mojo::Cookie::Response - HTTP response cookie
 
 =head1 DESCRIPTION
 
-L<Mojo::Cookie::Response> is a container for HTTP response cookies.
+L<Mojo::Cookie::Response> is a container for HTTP response cookies as
+described in RFC 6265.
 
 =head1 ATTRIBUTES
 
 L<Mojo::Cookie::Response> inherits all attributes from L<Mojo::Cookie> and
-implements the followign new ones.
+implements the following new ones.
 
 =head2 domain
 
@@ -153,13 +150,13 @@ Expiration for cookie.
 
 =head2 parse
 
-  my $cookies = $cookie->parse('f=b; path=/');
+  my $cookies = Mojo::Cookie::Response->parse('f=b; path=/');
 
 Parse cookies.
 
 =head2 to_string
 
-  my $string = $cookie->to_string;
+  my $str = $cookie->to_string;
 
 Render cookie.
 

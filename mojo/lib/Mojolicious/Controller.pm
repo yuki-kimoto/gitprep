@@ -4,7 +4,6 @@ use Mojo::Base -base;
 # No imports, for security reasons!
 use Carp ();
 use Mojo::ByteStream;
-use Mojo::Cookie::Response;
 use Mojo::Exception;
 use Mojo::Transaction::HTTP;
 use Mojo::URL;
@@ -12,11 +11,11 @@ use Mojo::Util;
 use Mojolicious;
 use Mojolicious::Routes::Match;
 use Scalar::Util ();
+use Time::HiRes  ();
 
 has app => sub { Mojolicious->new };
-has match => sub {
-  Mojolicious::Routes::Match->new(GET => '/')->root(shift->app->routes);
-};
+has match =>
+  sub { Mojolicious::Routes::Match->new(root => shift->app->routes) };
 has tx => sub { Mojo::Transaction::HTTP->new };
 
 # Reserved stash values
@@ -28,12 +27,11 @@ my %RESERVED = map { $_ => 1 } (
 sub AUTOLOAD {
   my $self = shift;
 
-  # Method
   my ($package, $method) = our $AUTOLOAD =~ /^([\w:]+)::(\w+)$/;
   Carp::croak "Undefined subroutine &${package}::$method called"
     unless Scalar::Util::blessed $self && $self->isa(__PACKAGE__);
 
-  # Call helper
+  # Call helper with current controller
   Carp::croak qq{Can't locate object method "$method" via package "$package"}
     unless my $helper = $self->app->renderer->helpers->{$method};
   return $self->$helper(@_);
@@ -42,19 +40,17 @@ sub AUTOLOAD {
 sub DESTROY { }
 
 sub cookie {
-  my ($self, $name, $value, $options) = @_;
-  $options ||= {};
+  my ($self, $name) = (shift, shift);
 
   # Response cookie
-  if (defined $value) {
+  if (@_) {
 
     # Cookie too big
+    my $cookie = {name => $name, value => shift, %{shift || {}}};
     $self->app->log->error(qq{Cookie "$name" is bigger than 4096 bytes.})
-      if length $value > 4096;
+      if length $cookie->{value} > 4096;
 
-    # Create new cookie
-    $self->res->cookies(
-      Mojo::Cookie::Response->new(name => $name, value => $value, %$options));
+    $self->res->cookies($cookie);
     return $self;
   }
 
@@ -65,20 +61,20 @@ sub cookie {
 }
 
 sub finish {
-  my ($self, $chunk) = @_;
+  my $self = shift;
 
   # WebSocket
   my $tx = $self->tx;
-  $tx->finish and return $self if $tx->is_websocket;
+  $tx->finish(@_) and return $self if $tx->is_websocket;
 
   # Chunked stream
-  if ($tx->res->is_chunked) {
-    $self->write_chunk($chunk) if defined $chunk;
+  if ($tx->res->content->is_chunked) {
+    $self->write_chunk(@_) if @_;
     return $self->write_chunk('');
   }
 
   # Normal stream
-  $self->write($chunk) if defined $chunk;
+  $self->write(@_) if @_;
   return $self->write('');
 }
 
@@ -152,43 +148,26 @@ sub render {
   my $self = shift;
 
   # Template may be first argument
-  my $template = @_ % 2 && !ref $_[0] ? shift : undef;
-  my $args = ref $_[0] ? $_[0] : {@_};
+  my ($template, $args) = (@_ % 2 ? shift : undef, {@_});
   $args->{template} = $template if $template;
-
-  # Detect template name
-  my $stash = $self->stash;
-  unless ($args->{template} || $stash->{template}) {
-
-    # Normal default template
-    my $controller = $args->{controller} || $stash->{controller};
-    my $action     = $args->{action}     || $stash->{action};
-    if ($controller && $action) {
-      $stash->{template} = join '/',
-        split(/-/, Mojo::Util::decamelize($controller)), $action;
-    }
-
-    # Try the route name if we don't have controller and action
-    elsif (my $endpoint = $self->match->endpoint) {
-      $stash->{template} = $endpoint->name;
-    }
-  }
+  my $maybe = delete $args->{'mojo.maybe'};
 
   # Render
   my $app = $self->app;
   my ($output, $format) = $app->renderer->render($self, $args);
-  return undef unless defined $output;
-  return Mojo::ByteStream->new($output) if $args->{partial};
+  return defined $output ? Mojo::ByteStream->new($output) : undef
+    if $args->{partial};
+
+  # Maybe
+  return $maybe ? undef : !$self->render_not_found unless defined $output;
 
   # Prepare response
   $app->plugins->emit_hook(after_render => $self, \$output, $format);
   my $headers = $self->res->body($output)->headers;
   $headers->content_type($app->types->type($format) || 'text/plain')
     unless $headers->content_type;
-  return !!$self->rendered($stash->{status});
+  return !!$self->rendered($self->stash->{status});
 }
-
-sub render_data { shift->render(data => @_) }
 
 sub render_exception {
   my ($self, $e) = @_;
@@ -214,13 +193,14 @@ sub render_exception {
   };
   my $inline = $renderer->_bundled(
     $mode eq 'development' ? 'exception.development' : 'exception');
-  return if $self->_fallbacks($options, 'exception', $inline);
+  return $self if $self->_fallbacks($options, 'exception', $inline);
   $self->_fallbacks({%$options, format => 'html'}, 'exception', $inline);
+  return $self;
 }
 
-sub render_json { shift->render(json => @_) }
-
 sub render_later { shift->stash('mojo.rendered' => 1) }
+
+sub render_maybe { shift->render(@_, 'mojo.maybe' => 1) }
 
 sub render_not_found {
   my $self = shift;
@@ -234,15 +214,9 @@ sub render_not_found {
     = {template => "not_found.$mode", format => $format, status => 404};
   my $inline = $renderer->_bundled(
     $mode eq 'development' ? 'not_found.development' : 'not_found');
-  return if $self->_fallbacks($options, 'not_found', $inline);
+  return $self if $self->_fallbacks($options, 'not_found', $inline);
   $self->_fallbacks({%$options, format => 'html'}, 'not_found', $inline);
-}
-
-sub render_partial {
-  my $self = shift;
-  my $template = @_ % 2 ? shift : undef;
-  return $self->render(
-    {@_, partial => 1, defined $template ? (template => $template) : ()});
+  return $self;
 }
 
 sub render_static {
@@ -250,10 +224,8 @@ sub render_static {
   my $app = $self->app;
   return !!$self->rendered if $app->static->serve($self, $file);
   $app->log->debug(qq{File "$file" not found, public directory missing?});
-  return undef;
+  return !$self->render_not_found;
 }
-
-sub render_text { shift->render(text => @_) }
 
 sub rendered {
   my ($self, $status) = @_;
@@ -263,8 +235,20 @@ sub rendered {
   $res->code($status || 200) if $status || !$res->code;
 
   # Finish transaction
-  unless ($self->stash->{'mojo.finished'}++) {
+  my $stash = $self->stash;
+  unless ($stash->{'mojo.finished'}++) {
+
+    # Stop timer
     my $app = $self->app;
+    if (my $started = delete $stash->{'mojo.started'}) {
+      my $elapsed = sprintf '%f',
+        Time::HiRes::tv_interval($started, [Time::HiRes::gettimeofday()]);
+      my $rps  = $elapsed == 0 ? '??' : sprintf '%.3f', 1 / $elapsed;
+      my $code = $res->code;
+      my $msg  = $res->message || $res->default_message($code);
+      $app->log->debug("$code $msg (${elapsed}s, $rps/s).");
+    }
+
     $app->plugins->emit_hook_reverse(after_dispatch => $self);
     $app->sessions->store($self);
   }
@@ -304,7 +288,9 @@ sub respond_to {
   }
 
   # Dispatch
-  ref $target eq 'CODE' ? $target->($self) : $self->render($target);
+  ref $target eq 'CODE' ? $target->($self) : $self->render(%$target);
+
+  return $self;
 }
 
 sub send {
@@ -438,14 +424,16 @@ sub url_for {
 sub write {
   my ($self, $chunk, $cb) = @_;
   ($cb, $chunk) = ($chunk, undef) if ref $chunk eq 'CODE';
-  $self->res->write($chunk => sub { shift and $self->$cb(@_) if $cb });
+  my $content = $self->res->content;
+  $content->write($chunk => sub { shift and $self->$cb(@_) if $cb });
   return $self->rendered;
 }
 
 sub write_chunk {
   my ($self, $chunk, $cb) = @_;
   ($cb, $chunk) = ($chunk, undef) if ref $chunk eq 'CODE';
-  $self->res->write_chunk($chunk => sub { shift and $self->$cb(@_) if $cb });
+  my $content = $self->res->content;
+  $content->write_chunk($chunk => sub { shift and $self->$cb(@_) if $cb });
   return $self->rendered;
 }
 
@@ -453,18 +441,16 @@ sub _fallbacks {
   my ($self, $options, $template, $inline) = @_;
 
   # Mode specific template
-  return 1 if $self->render($options);
+  return 1 if $self->render_maybe(%$options);
 
   # Normal template
-  $options->{template} = $template;
-  return 1 if $self->render($options);
+  return 1 if $self->render_maybe(%$options, template => $template);
 
   # Inline template
   my $stash = $self->stash;
   return undef unless $stash->{format} eq 'html';
   delete $stash->{$_} for qw(extends layout);
-  delete $options->{template};
-  return $self->render(%$options, inline => $inline, handler => 'ep');
+  return $self->render_maybe(%$options, inline => $inline, handler => 'ep');
 }
 
 1;
@@ -548,14 +534,16 @@ implements the following new ones.
 Access request cookie values and create new response cookies.
 
   # Create response cookie with domain and expiration date
-  $c->cookie(user => 'sri', {domain => 'mojolicio.us', expires => time + 60});
+  $c->cookie(user => 'sri', {domain => 'example.com', expires => time + 60});
 
 =head2 finish
 
   $c = $c->finish;
+  $c = $c->finish(1000);
+  $c = $c->finish(1003 => 'Cannot accept data!');
   $c = $c->finish('Bye!');
 
-Gracefully end WebSocket connection or long poll stream.
+Close WebSocket connection or long poll stream gracefully.
 
 =head2 flash
 
@@ -588,20 +576,17 @@ L<Mojo::Transaction::WebSocket> object.
     $c->app->log->debug("Message: $msg");
   });
 
-  # Receive JSON object via WebSocket "Text" message
-  use Mojo::JSON 'j';
-  $c->on(text => sub {
-    my ($c, $bytes) = @_;
-    my $test = j($bytes)->{test};
-    $c->app->log->debug("Test: $test");
+  # Receive JSON object via WebSocket message
+  $c->on(json => sub {
+    my ($c, $hash) = @_;
+    $c->app->log->debug("Test: $hash->{test}");
   });
 
-  # Receive JSON object via WebSocket "Binary" message
-  use Mojo::JSON 'j';
+  # Receive WebSocket "Binary" message
   $c->on(binary => sub {
     my ($c, $bytes) = @_;
-    my $test = j($bytes)->{test};
-    $c->app->log->debug("Test: $test");
+    my $len = length $bytes;
+    $c->app->log->debug("Received $len bytes.");
   });
 
 =head2 param
@@ -615,8 +600,8 @@ L<Mojo::Transaction::WebSocket> object.
 
 Access GET/POST parameters, file uploads and route placeholder values that are
 not reserved stash values. Note that this method is context sensitive in some
-cases and therefore needs to be used with care, every GET/POST parameter can
-have multiple values, which might have unexpected consequences.
+cases and therefore needs to be used with care, there can always be multiple
+values, which might have unexpected consequences.
 
   # List context is ambiguous and should be avoided
   my $hash = {foo => $self->param('foo')};
@@ -658,7 +643,6 @@ Prepare a C<302> redirect response, takes the same arguments as C<url_for>.
 
   my $success = $c->render;
   my $success = $c->render(controller => 'foo', action => 'bar');
-  my $success = $c->render({controller => 'foo', action => 'bar'});
   my $success = $c->render(template => 'foo/index');
   my $success = $c->render(template => 'index', format => 'html');
   my $success = $c->render(data => $bytes);
@@ -673,42 +657,22 @@ C<after_render> hook unless the result is C<partial>. If no template is
 provided a default one based on controller and action or route name will be
 generated, all additional values get merged into the C<stash>.
 
-=head2 render_data
-
-  $c->render_data($bytes);
-  $c->render_data($bytes, format => 'png');
-
-Render the given content as raw bytes, similar to C<render_text> but data will
-not be encoded. All additional values get merged into the C<stash>.
-
-  # Longer version
-  $c->render(data => $bytes);
-
 =head2 render_exception
 
-  $c->render_exception('Oops!');
-  $c->render_exception(Mojo::Exception->new('Oops!'));
+  $c = $c->render_exception('Oops!');
+  $c = $c->render_exception(Mojo::Exception->new('Oops!'));
 
 Render the exception template C<exception.$mode.$format.*> or
-C<exception.$format.*> and set the response status code to C<500>.
-
-=head2 render_json
-
-  $c->render_json({foo => 'bar'});
-  $c->render_json([1, 2, -3], status => 201);
-
-Render a data structure as JSON. All additional values get merged into the
-C<stash>.
-
-  # Longer version
-  $c->render(json => {foo => 'bar'});
+C<exception.$format.*> and set the response status code to C<500>. Also sets
+the stash values C<exception> to a L<Mojo::Exception> object and C<snapshot>
+to a copy of the C<stash> for use in the templates.
 
 =head2 render_later
 
   $c = $c->render_later;
 
 Disable automatic rendering to delay response generation, only necessary if
-automatic rendring would result in a response.
+automatic rendering would result in a response.
 
   # Delayed rendering
   $c->render_later;
@@ -716,23 +680,24 @@ automatic rendring would result in a response.
     $c->render(text => 'Delayed by 2 seconds!');
   });
 
+=head2 render_maybe
+
+  my $success = $c->render_maybe;
+  my $success = $c->render_maybe(controller => 'foo', action => 'bar');
+  my $success = $c->render_maybe('foo/index', format => 'html');
+
+Try to render content but do not call C<render_not_found> if no response could
+be generated, takes the same arguments as C<render>.
+
+  # Render template "index_local" only if it exists
+  $self->render_maybe('index_local') or $self->render('index');
+
 =head2 render_not_found
 
-  $c->render_not_found;
+  $c = $c->render_not_found;
 
 Render the not found template C<not_found.$mode.$format.*> or
 C<not_found.$format.*> and set the response status code to C<404>.
-
-=head2 render_partial
-
-  my $output = $c->render_partial('menubar');
-  my $output = $c->render_partial('menubar', format => 'txt');
-  my $output = $c->render_partial(template => 'menubar');
-
-Same as C<render> but returns the rendered result.
-
-  # Longer version
-  my $output = $c->render('menubar', partial => 1);
 
 =head2 render_static
 
@@ -742,22 +707,6 @@ Same as C<render> but returns the rendered result.
 Render a static file using L<Mojolicious::Static/"serve">, usually from the
 C<public> directories or C<DATA> sections of your application. Note that this
 method does not protect from traversing to parent directories.
-
-=head2 render_text
-
-  $c->render_text('Hello World!');
-  $c->render_text('Hello World!', layout => 'green');
-
-Render the given content as Perl characters, which will be encoded to bytes.
-All additional values get merged into the C<stash>. See C<render_data> for an
-alternative without encoding. Note that this does not change the content type
-of the response, which is C<text/html;charset=UTF-8> by default.
-
-  # Longer version
-  $c->render(text => 'Hello World!');
-
-  # Render "text/plain" response
-  $c->render_text('Hello World!', format => 'txt');
 
 =head2 rendered
 
@@ -777,7 +726,9 @@ Get L<Mojo::Message::Request> object from L<Mojo::Transaction/"req">.
   my $req = $c->tx->req;
 
   # Extract request information
-  my $userinfo = $c->req->url->userinfo;
+  my $url      = $c->req->url->to_abs;
+  my $userinfo = $c->req->url->to_abs->userinfo;
+  my $host     = $c->req->url->to_abs->host;
   my $agent    = $c->req->headers->user_agent;
   my $body     = $c->req->body;
   my $foo      = $c->req->json('/23/foo');
@@ -797,7 +748,7 @@ Get L<Mojo::Message::Response> object from L<Mojo::Transaction/"res">.
 
 =head2 respond_to
 
-  $c->respond_to(
+  $c = $c->respond_to(
     json => {json => {message => 'Welcome!'}},
     html => {template => 'welcome'},
     any  => sub {...}
@@ -811,7 +762,7 @@ more than one MIME type will be ignored, unless the C<X-Requested-With> header
 is set to the value C<XMLHttpRequest>.
 
   $c->respond_to(
-    json => sub { $c->render_json({just => 'works'}) },
+    json => sub { $c->render(json => {just => 'works'}) },
     xml  => {text => '<just>works</just>'},
     any  => {data => '', status => 204}
   );
@@ -820,7 +771,9 @@ is set to the value C<XMLHttpRequest>.
 
   $c = $c->send({binary => $bytes});
   $c = $c->send({text   => $bytes});
+  $c = $c->send({json   => {test => [1, 2, 3]}});
   $c = $c->send([$fin, $rsv1, $rsv2, $rsv3, $op, $bytes]);
+  $c = $c->send(Mojo::ByteStream->new($chars));
   $c = $c->send($chars);
   $c = $c->send($chars => sub {...});
 
@@ -831,8 +784,7 @@ will be invoked once all data has been written.
   $c->send('I ♥ Mojolicious!');
 
   # Send JSON object as "Text" message
-  use Mojo::JSON 'j';
-  $c->send({text => j({test => 'I ♥ Mojolicious!'})});
+  $c->send({json => {test => 'I ♥ Mojolicious!'}});
 
   # Send JSON object as "Binary" message
   use Mojo::JSON 'j';
@@ -885,10 +837,10 @@ discarded.
 
 =head2 stash
 
-  my $stash = $c->stash;
-  my $foo   = $c->stash('foo');
-  $c        = $c->stash({foo => 'bar'});
-  $c        = $c->stash(foo => 'bar');
+  my $hash = $c->stash;
+  my $foo  = $c->stash('foo');
+  $c       = $c->stash({foo => 'bar'});
+  $c       = $c->stash(foo => 'bar');
 
 Non persistent data storage and exchange, application wide default values can
 be set with L<Mojolicious/"defaults">. Many stash values have a special
@@ -897,10 +849,8 @@ C<controller>, C<data>, C<extends>, C<format>, C<handler>, C<json>, C<layout>,
 C<namespace>, C<partial>, C<path>, C<status>, C<template> and C<text>. Note
 that all stash values with a C<mojo.*> prefix are reserved for internal use.
 
-  # Manipulate stash
-  $c->stash->{foo} = 'bar';
-  my $foo = $c->stash->{foo};
-  delete $c->stash->{foo};
+  # Remove value
+  my $foo = delete $c->stash->{foo};
 
 =head2 ua
 
@@ -912,25 +862,25 @@ Get L<Mojo::UserAgent> object from L<Mojo/"ua">.
   my $ua = $c->app->ua;
 
   # Blocking
-  my $tx = $c->ua->get('http://mojolicio.us');
-  my $tx = $c->ua->post_form('http://kraih.com/login' => {user => 'mojo'});
+  my $tx = $c->ua->get('http://example.com');
+  my $tx = $c->ua->post('example.com/login' => form => {user => 'mojo'});
 
   # Non-blocking
-  $c->ua->get('http://mojolicio.us' => sub {
+  $c->ua->get('http://example.com' => sub {
     my ($ua, $tx) = @_;
-    $c->render_data($tx->res->body);
+    $c->render(data => $tx->res->body);
   });
 
   # Parallel non-blocking
   my $delay = Mojo::IOLoop->delay(sub {
     my ($delay, @titles) = @_;
-    $c->render_json(\@titles);
+    $c->render(json => \@titles);
   });
   for my $url ('http://mojolicio.us', 'https://metacpan.org') {
-    $delay->begin;
+    my $end = $delay->begin(0);
     $c->ua->get($url => sub {
       my ($ua, $tx) = @_;
-      $delay->end($tx->res->dom->html->head->title->text);
+      $end->($tx->res->dom->html->head->title->text);
     });
   }
 
@@ -938,7 +888,9 @@ Get L<Mojo::UserAgent> object from L<Mojo/"ua">.
 
   my $url = $c->url_for;
   my $url = $c->url_for(name => 'sebastian');
+  my $url = $c->url_for({name => 'sebastian'});
   my $url = $c->url_for('test', name => 'sebastian');
+  my $url = $c->url_for('test', {name => 'sebastian'});
   my $url = $c->url_for('/perldoc');
   my $url = $c->url_for('http://mojolicio.us/perldoc');
 

@@ -43,11 +43,11 @@ sub extract {
   for my $cookie (@{$tx->res->cookies}) {
 
     # Validate domain
-    my $host = lc $url->ihost;
+    my $host = $url->ihost;
     my $domain = lc(defined $cookie->domain ? $cookie->domain : $host);
     $domain =~ s/^\.//;
-    next unless $host eq $domain || $host =~ /\Q.$domain\E$/;
-    next if $host =~ /\.\d+$/;
+    next
+      if $host ne $domain && ($host !~ /\Q.$domain\E$/ || $host =~ /\.\d+$/);
     $cookie->domain($domain);
 
     # Validate path
@@ -61,7 +61,7 @@ sub extract {
 sub find {
   my ($self, $url) = @_;
 
-  return unless my $domain = lc(defined $url->ihost ? $url->ihost : '');
+  return unless my $domain = $url->ihost;
   my $path = $url->path->to_abs_string;
   my @found;
   while ($domain =~ /[^.]+\.[^.]+|localhost$/) {
@@ -129,8 +129,8 @@ Mojo::UserAgent::CookieJar - Cookie jar for HTTP user agents
 
 =head1 DESCRIPTION
 
-L<Mojo::UserAgent::CookieJar> is a minimalistic and relaxed cookie jar used by
-L<Mojo::UserAgent>.
+L<Mojo::UserAgent::CookieJar> is a minimalistic and relaxed cookie jar based
+on RFC 6265 for L<Mojo::UserAgent>.
 
 =head1 ATTRIBUTES
 

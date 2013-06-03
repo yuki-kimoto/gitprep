@@ -52,7 +52,7 @@ sub build_boundary {
 
   # Add boundary to Content-Type header
   my $headers = $self->headers;
-  ($headers->content_type || '') =~ m!^(.*multipart/[^;]+)(.*)$!;
+  (defined $headers->content_type ? $headers->content_type : '') =~ m!^(.*multipart/[^;]+)(.*)$!;
   my $before = $1 || 'multipart/mixed';
   my $after  = $2 || '';
   $headers->content_type("$before; boundary=$boundary$after");
@@ -289,7 +289,7 @@ Clone content if possible, otherwise return C<undef>.
 
   my $bytes = $multi->get_body_chunk(0);
 
-Get a chunk of content starting from a specfic position.
+Get a chunk of content starting from a specific position.
 
 =head2 is_multipart
 

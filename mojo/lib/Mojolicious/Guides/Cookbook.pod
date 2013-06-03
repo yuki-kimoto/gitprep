@@ -42,6 +42,15 @@ On UNIX platforms you can also add preforking with L<Mojo::Server::Prefork>.
   $ ./script/myapp prefork
   Server available at http://127.0.0.1:3000.
 
+Since all built-in web servers are based on the L<Mojo::IOLoop> event loop,
+they scale best with non-blocking operations. But if your application for some
+reason needs to perform many blocking operations, you can improve performance
+by increasing the number of worker processes and decreasing the number of
+concurrent connections each worker is allowed to handle.
+
+  $ ./script/myapp prefork -m production -w 10 -c 1
+  Server available at http://127.0.0.1:3000.
+
 =head2 Morbo
 
 After reading the L<Mojolicious::Lite> tutorial, you should already be
@@ -129,8 +138,8 @@ timers.
 
 =head2 Nginx
 
-One of the most popular setups these days is the built-in web server behind a
-Nginx reverse proxy.
+One of the most popular setups these days is Hypnotoad behind an Nginx reverse
+proxy, which even supports WebSockets in newer versions.
 
   upstream myapp {
     server 127.0.0.1:8080;
@@ -139,8 +148,10 @@ Nginx reverse proxy.
     listen 80;
     server_name localhost;
     location / {
-      proxy_read_timeout 300;
       proxy_pass http://myapp;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
       proxy_set_header Host $host;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-HTTPS 0;
@@ -150,7 +161,7 @@ Nginx reverse proxy.
 =head2 Apache/mod_proxy
 
 Another good reverse proxy is Apache with C<mod_proxy>, the configuration
-looks very similar to the Nginx one above.
+looks quite similar to the Nginx one above.
 
   <VirtualHost *:80>
     ServerName localhost
@@ -184,12 +195,12 @@ simple to deploy with L<Plack>.
   HTTP::Server::PSGI: Accepting connections at http://0:5000/
 
 L<Plack> provides many server and protocol adapters for you to choose from,
-such as C<FCGI>, C<SCGI> and C<mod_perl>.
+such as C<FCGI>, C<uWSGI> and C<mod_perl>.
 
   $ plackup ./script/myapp -s FCGI -l /tmp/myapp.sock
 
 If an older server adapter is not be able to correctly detect the application
-home directory, you can simply use the C<MOJO_HOME> environment variable.
+home directory, you can simply use the MOJO_HOME environment variable.
 
   $ MOJO_HOME=/home/sri/myapp plackup ./script/myapp
   HTTP::Server::PSGI: Accepting connections at http://0:5000/
@@ -247,8 +258,7 @@ incoming requests is also quite common.
   # Move first part from path to base path in production mode
   app->hook(before_dispatch => sub {
     my $self = shift;
-    push @{$self->req->url->base->path->parts},
-      shift @{$self->req->url->path->parts};
+    push @{$self->req->url->base->path}, shift @{$self->req->url->path};
   }) if app->mode eq 'production';
 
 =head2 Application embedding
@@ -440,9 +450,10 @@ shouldn't block for too long.
 =head2 WebSocket web service
 
 The WebSocket protocol offers full bi-directional low-latency communication
-channels between clients and servers. Receiving messages is as easy as
-subscribing to the event L<Mojo::Transaction::WebSocket/"message"> with the
-method L<Mojolicious::Controller/"on">.
+channels between clients and servers. Receive messages just by subscribing to
+events such as L<Mojo::Transaction::WebSocket/"message"> with the method
+L<Mojolicious::Controller/"on"> and return them with
+L<Mojolicious::Controller/"send">.
 
   use Mojolicious::Lite;
   use Mojo::IOLoop;
@@ -454,8 +465,8 @@ method L<Mojolicious::Controller/"on">.
   websocket '/echo' => sub {
     my $self = shift;
 
-    # Connected
-    $self->app->log->debug('WebSocket connected.');
+    # Opened
+    $self->app->log->debug('WebSocket opened.');
 
     # Increase inactivity timeout for connection a bit
     Mojo::IOLoop->stream($self->tx->connection)->timeout(300);
@@ -466,10 +477,10 @@ method L<Mojolicious::Controller/"on">.
       $self->send("echo: $msg");
     });
 
-    # Disconnected
+    # Closed
     $self->on(finish => sub {
-      my $self = shift;
-      $self->app->log->debug('WebSocket disconnected.');
+      my ($self, $code, $reason) = @_;
+      $self->app->log->debug("WebSocket closed with status $code.");
     });
   };
 
@@ -519,6 +530,13 @@ L<Test::Mojo> API to be used.
     ->send_ok('Hello Mojo!')
     ->message_ok
     ->message_is('echo: Hello Mojo!')
+    ->finish_ok;
+
+  # Test JSON web service
+  $t->websocket_ok('/echo.json')
+    ->send_ok({json => {test => [1, 2, 3]}})
+    ->message_ok
+    ->json_message_is('/test', [1, 2, 3])
     ->finish_ok;
 
   done_testing();
@@ -794,7 +812,7 @@ You can just add username and password to the URL.
   use Mojo::UserAgent;
 
   my $ua = Mojo::UserAgent->new;
-  say $ua->get('https://sri:secret@mojolicio.us/hideout')->res->body;
+  say $ua->get('https://sri:secret@example.com/hideout')->res->body;
 
 =head2 Decorating followup requests
 
@@ -820,6 +838,42 @@ them.
 
 This even works for proxy C<CONNECT> requests.
 
+=head2 Content generators
+
+Generate the same type of content repeatedly for multiple requests.
+
+  use Mojo::UserAgent;
+  use Mojo::Asset::File;
+
+  # Add "stream" generator
+  my $ua = Mojo::UserAgent->new;
+  $ua->transactor->add_generator(stream => sub {
+    my ($transactor, $tx, $path) = @_;
+    $tx->req->content->asset(Mojo::Asset::File->new(path => $path));
+  });
+
+  # Send multiple files streaming via PUT and POST
+  $ua->put('http://example.com/upload'  => stream => '/home/sri/mojo.png');
+  $ua->post('http://example.com/upload' => stream => '/home/sri/mango.png');
+
+The C<json> and C<form> content generators are always available.
+
+  use Mojo::UserAgent;
+
+  # Send JSON content via PATCH
+  my $ua = Mojo::UserAgent->new;
+  my $tx = $ua->patch('http://api.example.com' => json => {foo => 'bar'});
+
+  # Send "application/x-www-form-urlencoded" content via POST
+  my $tx2 = $ua->post('http://search.example.com' => form => {q => 'test'});
+
+  # Send "multipart/form-data" content via PUT
+  my $tx3 = $ua->put('http://upload.example.com' =>
+    form => {test => {content => 'Hello World!'}});
+
+For more information about available content generators see also
+L<Mojo::UserAgent::Transactor/"tx">.
+
 =head2 Streaming response
 
 Receiving a streaming response can be really tricky in most HTTP clients, but
@@ -829,7 +883,7 @@ L<Mojo::UserAgent> makes it actually easy.
 
   # Build a normal transaction
   my $ua = Mojo::UserAgent->new;
-  my $tx = $ua->build_tx(GET => 'http://mojolicio.us');
+  my $tx = $ua->build_tx(GET => 'http://example.com');
 
   # Replace "read" events to disable default content parser
   $tx->res->content->unsubscribe('read')->on(read => sub {
@@ -852,7 +906,7 @@ Sending a streaming request is almost just as easy.
 
   # Build a normal transaction
   my $ua = Mojo::UserAgent->new;
-  my $tx = $ua->build_tx(GET => 'http://mojolicio.us');
+  my $tx = $ua->build_tx(GET => 'http://example.com');
 
   # Prepare content
   my $content = 'Hello world!';
@@ -888,7 +942,7 @@ above C<250KB> into a temporary file.
   $tx->res->content->asset->move_to('mojo.tar.gz');
 
 To protect you from excessively large files there is also a limit of C<5MB> by
-default, which you can tweak with the C<MOJO_MAX_MESSAGE_SIZE> environment
+default, which you can tweak with the MOJO_MAX_MESSAGE_SIZE environment
 variable.
 
   # Increase limit to 1GB
@@ -902,20 +956,11 @@ Uploading a large file is even easier.
 
   # Upload file via POST and "multipart/form-data"
   my $ua = Mojo::UserAgent->new;
-  $ua->post_form('mojolicio.us/upload',
-    {image => {file => '/home/sri/hello.png'}});
+  $ua->post('example.com/upload' =>
+    form => {image => {file => '/home/sri/hello.png'}});
 
 And once again you don't have to worry about memory usage, all data will be
 streamed directly from the file.
-
-  use Mojo::UserAgent;
-
-  # Upload file via PUT
-  my $ua     = Mojo::UserAgent->new;
-  my $asset  = Mojo::Asset::File->new(path => '/home/sri/hello.png');
-  my $tx     = $ua->build_tx(PUT => 'mojolicio.us/upload');
-  $tx->req->content->asset($asset);
-  $ua->start($tx);
 
 =head2 Non-blocking
 
@@ -1030,7 +1075,7 @@ Fun hacks you might not use very often but that might come in handy some day.
 
 =head2 Adding commands to Mojolicious
 
-By now you've propably used many of the built-in commands described in
+By now you've probably used many of the built-in commands described in
 L<Mojolicious::Commands>, but did you know that you can just add new ones and
 that they will be picked up automatically by the command line interface?
 
@@ -1056,7 +1101,7 @@ There are many more useful methods and attributes in L<Mojolicious::Command>
 that you can use or overload.
 
   $ mojo spy secret
-  The secret of this application is "Mojolicious::Lite".
+  The secret of this application is "HelloWorld".
 
   $ ./myapp.pl spy secret
   The secret of this application is "secr3t".

@@ -22,7 +22,7 @@ has handle => sub {
   }
 
   # Open new or temporary file
-  my $base = catfile File::Spec::Functions::tmpdir, 'mojo.tmp';
+  my $base = catfile $self->tmpdir, 'mojo.tmp';
   my $name = defined $path ? $path : $base;
   until ($handle->open($name, O_CREAT | O_EXCL | O_RDWR)) {
     croak qq{Can't open file "$name": $!} if defined $path || $! != $!{EEXIST};
@@ -57,14 +57,14 @@ sub add_chunk {
 }
 
 sub contains {
-  my ($self, $string) = @_;
+  my ($self, $str) = @_;
 
   my $handle = $self->handle;
   $handle->sysseek($self->start_range, SEEK_SET);
 
   # Calculate window size
   my $end  = defined $self->end_range ? $self->end_range : $self->size;
-  my $len  = length $string;
+  my $len  = length $str;
   my $size = $len > 131072 ? $len : 131072;
   $size = $end - $self->start_range if $size > $end - $self->start_range;
 
@@ -79,7 +79,7 @@ sub contains {
     $window .= $buffer;
 
     # Search window
-    my $pos = index $window, $string;
+    my $pos = index $window, $str;
     return $offset + $pos if $pos >= 0;
     $offset += $read;
     return -1 if $read == 0 || $offset == $end;
@@ -92,19 +92,20 @@ sub contains {
 }
 
 sub get_chunk {
-  my ($self, $start) = @_;
+  my ($self, $offset, $max) = @_;
+  $max = defined $max ? $max : 131072;
 
-  $start += $self->start_range;
+  $offset += $self->start_range;
   my $handle = $self->handle;
-  $handle->sysseek($start, SEEK_SET);
+  $handle->sysseek($offset, SEEK_SET);
 
   my $buffer;
   if (defined(my $end = $self->end_range)) {
-    my $chunk = $end + 1 - $start;
+    my $chunk = $end + 1 - $offset;
     return '' if $chunk <= 0;
-    $handle->sysread($buffer, $chunk > 131072 ? 131072 : $chunk);
+    $handle->sysread($buffer, $chunk > $max ? $max : $chunk);
   }
-  else { $handle->sysread($buffer, 131072) }
+  else { $handle->sysread($buffer, $max) }
 
   return $buffer;
 }
@@ -199,7 +200,7 @@ necessary.
   $file      = $file->tmpdir('/tmp');
 
 Temporary directory used to generate C<path>, defaults to the value of the
-C<MOJO_TMPDIR> environment variable or auto detection.
+MOJO_TMPDIR environment variable or auto detection.
 
 =head1 METHODS
 
@@ -220,9 +221,11 @@ Check if asset contains a specific string.
 
 =head2 get_chunk
 
-  my $bytes = $file->get_chunk($start);
+  my $bytes = $file->get_chunk($offset);
+  my $bytes = $file->get_chunk($offset, $max);
 
-Get chunk of data starting from a specific position.
+Get chunk of data starting from a specific position, defaults to a maximum
+chunk size of C<131072> bytes.
 
 =head2 is_file
 

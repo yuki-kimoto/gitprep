@@ -20,56 +20,58 @@ sub add_shortcut  { shift->_add(shortcuts  => @_) }
 sub auto_render {
   my ($self, $c) = @_;
   my $stash = $c->stash;
-  return undef if $stash->{'mojo.rendered'} || $c->tx->is_websocket;
-  $c->render or ($stash->{'mojo.routed'} or $c->render_not_found);
+  return if $stash->{'mojo.rendered'};
+  $c->render_maybe or $stash->{'mojo.routed'} or $c->render_not_found;
 }
 
 sub dispatch {
   my ($self, $c) = @_;
 
-  # Prepare path
+  # Path (partial path gets priority)
   my $req  = $c->req;
   my $path = $c->stash->{path};
   if (defined $path) { $path = "/$path" if $path !~ m!^/! }
   else               { $path = $req->url->path->to_route }
 
-  # Prepare match
-  my $method = $req->method;
-  my $websocket = $c->tx->is_websocket ? 1 : 0;
-  my $m = Mojolicious::Routes::Match->new($method => $path, $websocket);
-  $c->match($m);
+  # Method (HEAD will be treated as GET)
+  my $method = uc $req->method;
+  $method = 'GET' if $method eq 'HEAD';
 
   # Check cache
   my $cache = $self->cache;
-  if ($cache && (my $cached = $cache->get("$method:$path:$websocket"))) {
-    $m->root($self)->endpoint($cached->{endpoint});
-    $m->stack($cached->{stack})->captures($cached->{captures});
+  my $ws    = $c->tx->is_websocket ? 1 : 0;
+  my $match = Mojolicious::Routes::Match->new(root => $self);
+  $c->match($match);
+  if ($cache && (my $cached = $cache->get("$method:$path:$ws"))) {
+    $match->endpoint($cached->{endpoint})->stack($cached->{stack});
   }
 
   # Check routes
   else {
-    $m->match($self, $c);
+    my $options = {method => $method, path => $path, websocket => $ws};
+    $match->match($c => $options);
 
     # Cache routes without conditions
-    if ($cache && (my $endpoint = $m->endpoint)) {
-      $cache->set(
-        "$method:$path:$websocket" => {
-          endpoint => $endpoint,
-          stack    => $m->stack,
-          captures => $m->captures
-        }
-      ) unless $endpoint->has_conditions;
+    if ($cache && (my $endpoint = $match->endpoint)) {
+      my $result = {endpoint => $endpoint, stack => $match->stack};
+      $cache->set("$method:$path:$ws" => $result)
+        unless $endpoint->has_conditions;
     }
   }
 
   # Dispatch
-  return undef unless $m && @{$m->stack};
-  return undef if $self->_walk($c);
+  return undef unless $self->_walk($c);
   $self->auto_render($c);
   return 1;
 }
 
 sub hide { push @{shift->hidden}, @_ }
+
+sub is_hidden {
+  my ($self, $method) = @_;
+  my $hiding = $self->{hiding} ||= {map { $_ => 1 } @{$self->hidden}};
+  return !!($hiding->{$method} || index($method, '_') == 0);
+}
 
 sub lookup {
   my ($self, $name) = @_;
@@ -77,18 +79,6 @@ sub lookup {
   return $reverse->{$name} if exists $reverse->{$name};
   return undef unless my $route = $self->find($name);
   return $reverse->{$name} = $route;
-}
-
-# DEPRECATED in Rainbow!
-sub namespace {
-  warn <<EOF;
-Mojolicious::Routes->namespace is DEPRECATED in favor of
-Mojolicious::Routes->namespaces!
-EOF
-  my $self = shift;
-  return $self->namespaces->[0] unless @_;
-  $self->namespaces->[0] = shift;
-  return $self;
 }
 
 sub route {
@@ -102,11 +92,11 @@ sub _add {
 }
 
 sub _callback {
-  my ($self, $c, $field, $staging) = @_;
+  my ($self, $c, $field, $nested) = @_;
   $c->stash->{'mojo.routed'}++;
   $c->app->log->debug('Routing to a callback.');
   my $continue = $field->{cb}->($c);
-  return !$staging || $continue ? 1 : undef;
+  return !$nested || $continue ? 1 : undef;
 }
 
 sub _class {
@@ -117,7 +107,7 @@ sub _class {
 
   # Application class
   my @classes;
-  my $class = camelize $field->{controller} || '';
+  my $class = $field->{controller} ? camelize($field->{controller}) : '';
   if ($field->{app}) { push @classes, $field->{app} }
 
   # Specific namespace
@@ -150,7 +140,7 @@ sub _class {
 }
 
 sub _controller {
-  my ($self, $c, $field, $staging) = @_;
+  my ($self, $c, $field, $nested) = @_;
 
   # Load and instantiate controller/application
   my $app;
@@ -178,7 +168,7 @@ sub _controller {
 
     # Try to call action
     if (my $sub = $app->can($method)) {
-      $c->stash->{'mojo.routed'}++ unless $staging;
+      $c->stash->{'mojo.routed'}++ unless $nested;
       $continue = $app->$sub;
     }
 
@@ -186,7 +176,7 @@ sub _controller {
     else { $log->debug('Action not found in controller.') }
   }
 
-  return !$staging || $continue ? 1 : undef;
+  return !$nested || $continue ? 1 : undef;
 }
 
 sub _load {
@@ -205,10 +195,9 @@ sub _method {
   my ($self, $c, $field) = @_;
 
   # Hidden
-  $self->{hiding} = {map { $_ => 1 } @{$self->hidden}} unless $self->{hiding};
   return undef unless my $method = $field->{action};
   $c->app->log->debug(qq{Action "$method" is not allowed.}) and return undef
-    if $self->{hiding}{$method} || index($method, '_') == 0;
+    if $self->is_hidden($method);
 
   # Invalid
   $c->app->log->debug(qq{Action "$method" is invalid.}) and return undef
@@ -220,28 +209,28 @@ sub _method {
 sub _walk {
   my ($self, $c) = @_;
 
-  my $stack   = $c->match->stack;
-  my $stash   = $c->stash;
-  my $staging = @$stack;
+  my $stack = $c->match->stack;
+  return undef unless my $nested = @$stack;
+  my $stash = $c->stash;
   $stash->{'mojo.captures'} ||= {};
   for my $field (@$stack) {
-    $staging--;
+    $nested--;
 
-    # Merge in captures
+    # Merge captures into stash
     my @keys = keys %$field;
     @{$stash}{@keys} = @{$stash->{'mojo.captures'}}{@keys} = values %$field;
 
     # Dispatch
     my $continue
       = $field->{cb}
-      ? $self->_callback($c, $field, $staging)
-      : $self->_controller($c, $field, $staging);
+      ? $self->_callback($c, $field, $nested)
+      : $self->_controller($c, $field, $nested);
 
     # Break the chain
-    return 1 if $staging && !$continue;
+    return undef if $nested && !$continue;
   }
 
-  return undef;
+  return 1;
 }
 
 1;
@@ -254,38 +243,15 @@ Mojolicious::Routes - Always find your destination with routes!
 
   use Mojolicious::Routes;
 
-  # New route tree
+  # Simple route
   my $r = Mojolicious::Routes->new;
+  $r->route('/')->to(controller => 'blog', action => 'welcome');
 
-  # Normal route matching "/articles" with parameters "controller" and
-  # "action"
-  $r->route('/articles')->to(controller => 'article', action => 'list');
-
-  # Route with a placeholder matching everything but "/" and "."
-  $r->route('/:controller')->to(action => 'list');
-
-  # Route with a placeholder and regex constraint
-  $r->route('/articles/:id', id => qr/\d+/)
-    ->to(controller => 'article', action => 'view');
-
-  # Route with an optional parameter "year"
-  $r->route('/archive/:year')
-    ->to(controller => 'archive', action => 'list', year => undef);
-
-  # Nested route for two actions sharing the same "controller" parameter
-  my $books = $r->route('/books/:id')->to(controller => 'book');
-  $books->route('/edit')->to(action => 'edit');
-  $books->route('/delete')->to(action => 'delete');
-
-  # Bridges can be used to chain multiple routes
-  $r->bridge->to(controller => 'foo', action =>'auth')
-    ->route('/blog')->to(action => 'list');
-
-  # Simplified Mojolicious::Lite style route generation is also possible
-  $r->get('/')->to(controller => 'blog', action => 'welcome');
+  # More advanced routes
   my $blog = $r->under('/blog');
-  $blog->post('/list')->to('blog#list');
-  $blog->get(sub { shift->render(text => 'Go away!') });
+  $blog->get('/list')->to('blog#list');
+  $blog->get('/:id' => [id => qr/\d+/])->to('blog#show', id => 23);
+  $blog->patch(sub { shift->render(text => 'Go away!', status => 405) });
 
 =head1 DESCRIPTION
 
@@ -328,7 +294,7 @@ Contains all available conditions.
   my $hidden = $r->hidden;
   $r         = $r->hidden([qw(attr has new)]);
 
-Controller methods and attributes that are hidden from routes, defaults to
+Controller methods and attributes that are hidden from router, defaults to
 C<attr>, C<has>, C<new> and C<tap>.
 
 =head2 namespaces
@@ -381,7 +347,13 @@ Match routes with L<Mojolicious::Routes::Match> and dispatch.
 
   $r = $r->hide(qw(foo bar));
 
-Hide controller methods and attributes from routes.
+Hide controller methods and attributes from router.
+
+=head2 is_hidden
+
+  my $success = $r->is_hidden('foo');
+
+Check if controller method or attribute is hidden from router.
 
 =head2 lookup
 

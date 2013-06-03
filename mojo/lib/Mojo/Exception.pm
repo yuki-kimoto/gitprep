@@ -9,7 +9,7 @@ use Scalar::Util 'blessed';
 
 has [qw(frames line lines_before lines_after)] => sub { [] };
 has message => 'Exception!';
-has verbose => sub { $ENV{MOJO_EXCEPTION_VERBOSE} || 0 };
+has 'verbose';
 
 sub new {
   my $self = shift->SUPER::new;
@@ -22,19 +22,19 @@ sub to_string {
   my $self = shift;
 
   return $self->message unless $self->verbose;
-  my $string = $self->message ? $self->message : '';
+  my $str = $self->message ? $self->message : '';
 
   # Before
-  $string .= $_->[0] . ': ' . $_->[1] . "\n" for @{$self->lines_before};
+  $str .= $_->[0] . ': ' . $_->[1] . "\n" for @{$self->lines_before};
 
   # Line
-  $string .= ($self->line->[0] . ': ' . $self->line->[1] . "\n")
+  $str .= ($self->line->[0] . ': ' . $self->line->[1] . "\n")
     if $self->line->[0];
 
   # After
-  $string .= $_->[0] . ': ' . $_->[1] . "\n" for @{$self->lines_after};
+  $str .= $_->[0] . ': ' . $_->[1] . "\n" for @{$self->lines_after};
 
-  return $string;
+  return $str;
 }
 
 sub trace {
@@ -100,8 +100,7 @@ sub _detect {
 
   # Search for context in files
   for my $frame (@trace) {
-    next unless -r $frame->[0];
-    open my $handle, '<:utf8', $frame->[0];
+    next unless -r $frame->[0] && open my $handle, '<:utf8', $frame->[0];
     $self->_context($frame->[1], [[<$handle>]]);
     return $self;
   }
@@ -148,21 +147,21 @@ Stacktrace.
   my $line = $e->line;
   $e       = $e->line([3 => 'foo']);
 
-The line where the exception occured.
+The line where the exception occurred.
 
 =head2 lines_after
 
   my $lines = $e->lines_after;
   $e        = $e->lines_after([[1 => 'bar'], [2 => 'baz']]);
 
-Lines after the line where the exception occured.
+Lines after the line where the exception occurred.
 
 =head2 lines_before
 
   my $lines = $e->lines_before;
   $e        = $e->lines_before([[4 => 'bar'], [5 => 'baz']]);
 
-Lines before the line where the exception occured.
+Lines before the line where the exception occurred.
 
 =head2 message
 
@@ -176,8 +175,7 @@ Exception message.
   my $verbose = $e->verbose;
   $e          = $e->verbose(1);
 
-Activate verbose rendering, defaults to the value of the
-C<MOJO_EXCEPTION_VERBOSE> environment variable or C<0>.
+Render exception with context.
 
 =head1 METHODS
 
@@ -200,8 +198,8 @@ Throw exception with stacktrace.
 
 =head2 to_string
 
-  my $string = $e->to_string;
-  my $string = "$e";
+  my $str = $e->to_string;
+  my $str = "$e";
 
 Render exception.
 

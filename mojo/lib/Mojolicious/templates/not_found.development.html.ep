@@ -2,8 +2,8 @@
 <html>
   <head>
     <title>Page not found</title>
+    %= javascript '/mojo/prettify/run_prettify.js'
     %= stylesheet '/mojo/prettify/prettify-mojo.css'
-    %= javascript '/mojo/prettify/prettify.js'
     %= stylesheet begin
       body {
         background-color: #f5f6f8;
@@ -73,7 +73,7 @@
       }
     % end
   </head>
-  <body onload="prettyPrint()">
+  <body>
     %= include inline => app->renderer->_bundled('mojobar')
     <div id="wrapperlicious">
       <div id="routes">
@@ -84,25 +84,24 @@
           <code><%= $self->req->url->path %></code>, maybe you need to add a
           new one?
         </p>
-        % my $walk;
-        % $walk = begin
-          % my ($node, $depth) = @_;
+        % my $walk = begin
+          % my ($walk, $route, $depth) = @_;
           <tr>
             <td>
-              % my $pattern = $node->pattern->pattern || '/';
+              % my $pattern = $route->pattern->pattern || '/';
               % $pattern = "+$pattern" if $depth;
               <pre><%= '  ' x $depth %><%= $pattern %></pre>
             </td>
             <td>
-              <pre><%= uc(join ',', @{$node->via || []}) || '*' %></pre>
+              <pre><%= uc(join ',', @{$route->via || []}) || '*' %></pre>
             </td>
             <td>
-              % my $name = $node->name;
-              <pre><%= $node->has_custom_name ? qq{"$name"} : $name %></pre>
+              % my $name = $route->name;
+              <pre><%= $route->has_custom_name ? qq{"$name"} : $name %></pre>
             </td>
           </tr>
           % $depth++;
-          %= $walk->($_, $depth) for @{$node->children};
+          %= $walk->($walk, $_, $depth) for @{$route->children};
           % $depth--;
         % end
         <table>
@@ -111,7 +110,7 @@
             <th>Methods</th>
             <th>Name</th>
           </tr>
-          %= $walk->($_, 0) for @{app->routes->children};
+          %= $walk->($walk, $_, 0) for @{app->routes->children};
         </table>
       </div>
     </div>

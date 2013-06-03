@@ -8,6 +8,7 @@ use Mojo::JSON;
 use Mojo::JSON::Pointer;
 use Mojo::UserAgent;
 use Mojo::Util qw(decode encode);
+use Scalar::Util 'weaken';
 
 has description => "Perform HTTP request.\n";
 has usage       => <<"EOF";
@@ -27,7 +28,7 @@ usage: $0 get [OPTIONS] URL [SELECTOR|JSON-POINTER] [COMMANDS]
 
 These options are available:
   -C, --charset <charset>     Charset of HTML/XML content, defaults to auto
-                              detection or "UTF-8".
+                              detection.
   -c, --content <content>     Content to send with request.
   -H, --header <name:value>   Additional HTTP header.
   -M, --method <method>       HTTP method to use, defaults to "GET".
@@ -46,59 +47,38 @@ sub run {
     'r|redirect'  => \my $redirect,
     'v|verbose'   => \my $verbose;
 
-  die $self->usage unless my $url = decode 'UTF-8', do {my $tmp = shift @args; defined $tmp ? $tmp : ''};
+  @args = map { decode 'UTF-8', $_ } @args;
+  die $self->usage unless my $url = shift @args;
   my $selector = shift @args;
 
   # Parse header pairs
   my %headers;
   /^\s*([^:]+)\s*:\s*(.+)$/ and $headers{$1} = $2 for @headers;
 
-  # Use global event loop singleton
+  # Detect proxy for absolute URLs
   my $ua = Mojo::UserAgent->new(ioloop => Mojo::IOLoop->singleton);
+  $url !~ m!^/! ? $ua->detect_proxy : $ua->app($self->app);
   $ua->max_redirects(10) if $redirect;
 
-  # Detect proxy for absolute URLs
-  if   ($url !~ m!/!) { $ua->detect_proxy }
-  else                { $ua->app($self->app) }
-
-  # Do the real work with "start" event
-  my $v = my $buffer = '';
+  my $buffer = '';
   $ua->on(
     start => sub {
-      my $tx = pop;
+      my ($ua, $tx) = @_;
 
-      # Verbose callback
-      my $v  = $verbose;
-      my $cb = sub {
-        my $res = shift;
+      # Verbose
+      weaken $tx;
+      $tx->res->content->on(
+        body => sub {
+          warn $tx->req->$_ for qw(build_start_line build_headers);
+          warn $tx->res->$_ for qw(build_start_line build_headers);
+        }
+      ) if $verbose;
 
-        # Wait for headers
-        return unless $v && $res->headers->is_finished;
-        $v = undef;
-
-        # Show request
-        my $req         = $tx->req;
-        my $startline   = $req->build_start_line;
-        my $req_headers = $req->build_headers;
-        warn "$startline$req_headers";
-
-        # Show response
-        my $version     = $res->version;
-        my $code        = $res->code;
-        my $msg         = $res->message;
-        my $res_headers = $res->headers->to_string;
-        warn "HTTP/$version $code $msg\n$res_headers\n\n";
-      };
-      $tx->res->on(progress => $cb);
-
-      # Stream content
-      $tx->res->body(
-        sub {
-          $cb->(my $res = shift);
-
-          # Ignore intermediate content
-          return if $redirect && $res->is_status_class(300);
-          $selector ? ($buffer .= pop) : print(pop);
+      # Stream content (ignore redirects)
+      $tx->res->content->unsubscribe('read')->on(
+        read => sub {
+          return if $redirect && $tx->res->is_status_class(300);
+          defined $selector ? ($buffer .= pop) : print pop;
         }
       );
     }
@@ -113,8 +93,8 @@ sub run {
   warn qq{Problem loading URL "$url". ($err)\n} if $err && !$code;
 
   # JSON Pointer
-  return unless $selector;
-  my $type = $tx->res->headers->content_type || '';
+  return unless defined $selector;
+  my $type = defined $tx->res->headers->content_type ? $tx->res->headers->content_type : '';
   return _json($buffer, $selector) if $type =~ /json/i;
 
   # Selector
@@ -126,19 +106,16 @@ sub _json {
   return unless my $data = $json->decode(shift);
   return unless defined($data = Mojo::JSON::Pointer->new->get($data, shift));
   return _say($data) unless ref $data eq 'HASH' || ref $data eq 'ARRAY';
-  say($json->encode($data));
+  say $json->encode($data);
 }
 
-sub _say {
-  return unless length(my $value = shift);
-  say encode('UTF-8', $value);
-}
+sub _say { say encode('UTF-8', $_[0]) if length $_[0] }
 
 sub _select {
   my ($buffer, $selector, $charset, @args) = @_;
 
-  my $dom     = Mojo::DOM->new->charset($charset)->parse($buffer);
-  my $results = $dom->find($selector);
+  $buffer = do {my $tmp = decode($charset, $buffer); defined $tmp ? $tmp : $buffer} if $charset;
+  my $results = Mojo::DOM->new($buffer)->find($selector);
 
   my $finished;
   while (defined(my $command = shift @args)) {

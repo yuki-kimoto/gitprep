@@ -4,7 +4,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::Asset::File;
 use Mojo::ByteStream 'b';
 use Mojo::DOM;
-use Mojo::Util 'url_escape';
+use Mojo::Util qw'slurp url_escape';
 BEGIN {eval {require Pod::Simple::HTML; import Pod::Simple::HTML}}
 BEGIN {eval {require Pod::Simple::Search; import Pod::Simple::Search}}
 
@@ -44,10 +44,7 @@ sub _perldoc {
   my $path = Pod::Simple::Search->new->find($module, @PATHS);
   return $self->redirect_to("http://metacpan.org/module/$module")
     unless $path && -r $path;
-
-  # Turn POD into HTML
-  open my $file, '<', $path;
-  my $html = _pod_to_html(join '', <$file>);
+  my $html = _pod_to_html(slurp $path);
 
   # Rewrite links
   my $dom     = Mojo::DOM->new("$html");
@@ -81,7 +78,7 @@ sub _perldoc {
       # Anchor and text
       my $name = my $text = $e->all_text;
       $name =~ s/\s+/_/g;
-      $name =~ s/\W//g;
+      $name =~ s/[^\w\-]//g;
       my $anchor = $name;
       my $i      = 1;
       $anchor = $name . $i++ while $anchors{$anchor}++;
@@ -206,7 +203,7 @@ L<Mojolicious::Plugin> and implements the following new ones.
   my $route = $plugin->register(Mojolicious->new);
   my $route = $plugin->register(Mojolicious->new, {name => 'foo'});
 
-Register renderer in L<Mojolicious> application.
+Register renderer and helper in L<Mojolicious> application.
 
 =head1 SEE ALSO
 

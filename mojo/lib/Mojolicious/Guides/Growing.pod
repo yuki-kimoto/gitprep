@@ -300,7 +300,7 @@ on L<Mojo::DOM>.
     ->element_exists('form input[type="submit"]');
 
   # Test login with valid credentials
-  $t->post_form_ok('/' => {user => 'sri', pass => 'secr3t'})
+  $t->post_ok('/' => form => {user => 'sri', pass => 'secr3t'})
     ->status_is(200)->text_like('html body' => qr/Welcome sri/);
 
   # Test accessing a protected page
@@ -319,20 +319,23 @@ against your application.
 
   $ ./myapp.pl test
   $ ./myapp.pl test t/login.t
+  $ ./myapp.pl test -v t/login.t
 
-To make the tests less noisy and limit log output to just C<error> messages
-you can also add a line like this.
-
-  $t->app->log->level('error');
-
-Quick C<GET> requests can be performed right from the command line.
+Or perform quick requests right from the command line.
 
   $ ./myapp.pl get /
   Wrong username or password.
 
   $ ./myapp.pl get -v '/?user=sri&pass=secr3t'
+  GET /?user=sri&pass=secr3t HTTP/1.1
+  User-Agent: Mojolicious (Perl)
+  Connection: keep-alive
+  Accept-Encoding: gzip
+  Content-Length: 0
+  Host: localhost:59472
+
   HTTP/1.1 200 OK
-  Connection: Keep-Alive
+  Connection: keep-alive
   Date: Sun, 18 Jul 2010 13:09:58 GMT
   Server: Mojolicious (Perl)
   Content-Length: 12
@@ -413,12 +416,17 @@ like this.
     $self->redirect_to('protected');
   } => 'index';
 
-  # A protected page auto rendering "protected.html.ep"
-  get '/protected' => sub {
-    my $self = shift;
+  # Make sure user is logged in for actions in this group
+  group {
+    under sub {
+      my $self = shift;
 
-    # Redirect to main page with a 302 response if user is not logged in
-    return $self->redirect_to('index') unless $self->session('user');
+      # Redirect to main page with a 302 response if user is not logged in
+      return $self->session('user') || !$self->redirect_to('index');
+    };
+
+    # A protected page auto rendering "protected.html.ep"
+    get '/protected';
   };
 
   # Logout action
@@ -521,10 +529,11 @@ actual action code needs to be changed.
       $self->redirect_to('protected');
     } => 'index');
 
-    $r->get('/protected' => sub {
+    my $logged_in = $r->under(sub {
       my $self = shift;
-      return $self->redirect_to('index') unless $self->session('user');
+      return $self->session('user') || !$self->redirect_to('index');
     });
+    $logged_in->get('/protected');
 
     $r->get('/logout' => sub {
       my $self = shift;
@@ -536,7 +545,8 @@ actual action code needs to be changed.
   1;
 
 The C<startup> method gets called right after instantiation and is the place
-where the whole application gets set up.
+where the whole application gets set up. Since full L<Mojolicious>
+applications can use nested routes they have no need for C<group> blocks.
 
 =head2 Simplified application script
 
@@ -580,9 +590,9 @@ Once again the actual action code does not change at all.
     $self->redirect_to('protected');
   }
 
-  sub protected {
+  sub logged_in {
     my $self = shift;
-    return $self->redirect_to('index') unless $self->session('user');
+    return $self->session('user') || !$self->redirect_to('index');
   }
 
   sub logout {
@@ -614,8 +624,9 @@ information.
 
     my $r = $self->routes;
     $r->any('/')->to('login#index')->name('index');
-    $r->get('/protected')->to('login#protected')->name('protected');
-    $r->get('/logout')->to('login#logout')->name('logout');
+    my $logged_in = $r->under->to('login#logged_in');
+    $logged_in->get('/protected')->to('login#protected');
+    $r->get('/logout')->to('login#logout');
   }
 
   1;
@@ -641,7 +652,8 @@ Finally C<myapp.pl> can be replaced with a proper L<Mojolicious> script.
   $ touch script/myapp
   $ chmod 744 script/myapp
 
-Only a few small details change.
+Only a few small details change, since installable scripts can't use L<lib>
+without breaking updated dual-life modules.
 
   #!/usr/bin/env perl
 
@@ -649,7 +661,7 @@ Only a few small details change.
   use warnings;
 
   use FindBin;
-  use lib "$FindBin::Bin/../lib";
+  BEGIN { unshift @INC, "$FindBin::Bin/../lib" }
 
   # Start command line interface for application
   require Mojolicious::Commands;
@@ -673,7 +685,7 @@ C<t/login.t> can be simplified.
     ->element_exists('form input[name="pass"]')
     ->element_exists('form input[type="submit"]');
 
-  $t->post_form_ok('/' => {user => 'sri', pass => 'secr3t'})
+  $t->post_ok('/' => form => {user => 'sri', pass => 'secr3t'})
     ->status_is(200)->text_like('html body' => qr/Welcome sri/);
 
   $t->get_ok('/protected')->status_is(200)->text_like('a' => qr/Logout/);

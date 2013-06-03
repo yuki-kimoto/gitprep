@@ -27,7 +27,7 @@ sub build_body    { shift->_build('get_body_chunk') }
 sub build_headers { shift->_build('get_header_chunk') }
 
 sub charset {
-  my $type = shift->headers->content_type || '';
+  my $type = do {my $tmp = shift->headers->content_type; defined $tmp ? $tmp : ''};
   return $type =~ /charset="?([^"\s;]+)"?/i ? $1 : undef;
 }
 
@@ -64,15 +64,13 @@ sub get_header_chunk {
   return substr $self->{header_buffer}, $offset, 131072;
 }
 
-sub has_leftovers { !!length shift->leftovers }
-
 sub header_size { length shift->build_headers }
 
 sub is_chunked { !!shift->headers->transfer_encoding }
 
-sub is_compressed { (shift->headers->content_encoding || '') =~ /^gzip$/i }
+sub is_compressed { (do {my $tmp = shift->headers->content_encoding; defined $tmp ? $tmp : ''}) =~ /^gzip$/i }
 
-sub is_dynamic { $_[0]->{dynamic} && !defined $_[0]->headers->content_length }
+sub is_dynamic { $_[0]{dynamic} && !defined $_[0]->headers->content_length }
 
 sub is_finished { my $tmp = shift->{state}; (defined $tmp ? $tmp : '') eq 'finished' }
 
@@ -117,8 +115,8 @@ sub parse {
   # Relaxed parsing
   my $headers = $self->headers;
   if ($self->auto_relax) {
-    my $connection = $headers->connection || '';
-    my $len = defined $headers->content_length ? $headers->content_length : '';
+    my $connection = defined $headers->connection ? $headers->connection : '';
+    my $len        = defined $headers->content_length ? $headers->content_length : '';
     $self->relaxed(1)
       if !length $len && ($connection =~ /close/i || $headers->content_type);
   }
@@ -155,7 +153,7 @@ sub parse_body {
 sub progress {
   my $self = shift;
   return 0 unless my $state = $self->{state};
-  return 0 unless grep { $_ eq $state } qw(body finished);
+  return 0 unless $state eq 'body' || $state eq 'finished';
   return $self->{raw_size} - ($self->{header_size} || 0);
 }
 
@@ -398,7 +396,7 @@ Content headers, defaults to a L<Mojo::Headers> object.
   $content = $content->max_buffer_size(1024);
 
 Maximum size in bytes of buffer for content parser, defaults to the value of
-the C<MOJO_MAX_BUFFER_SIZE> environment variable or C<262144>.
+the MOJO_MAX_BUFFER_SIZE environment variable or C<262144>.
 
 =head2 max_leftover_size
 
@@ -406,7 +404,7 @@ the C<MOJO_MAX_BUFFER_SIZE> environment variable or C<262144>.
   $content = $content->max_leftover_size(1024);
 
 Maximum size in bytes of buffer for pipelined HTTP requests, defaults to the
-value of the C<MOJO_MAX_LEFTOVER_SIZE> environment variable or C<262144>.
+value of the MOJO_MAX_LEFTOVER_SIZE environment variable or C<262144>.
 
 =head2 relaxed
 
@@ -449,13 +447,13 @@ Extract multipart boundary from C<Content-Type> header.
 
 =head2 build_body
 
-  my $string = $content->build_body;
+  my $str = $content->build_body;
 
 Render whole body.
 
 =head2 build_headers
 
-  my $string = $content->build_headers;
+  my $str = $content->build_headers;
 
 Render all headers.
 
@@ -481,20 +479,14 @@ Generate dynamic content.
 
   my $bytes = $content->get_body_chunk(0);
 
-Get a chunk of content starting from a specfic position. Meant to be
+Get a chunk of content starting from a specific position. Meant to be
 overloaded in a subclass.
 
 =head2 get_header_chunk
 
   my $bytes = $content->get_header_chunk(13);
 
-Get a chunk of the headers starting from a specfic position.
-
-=head2 has_leftovers
-
-  my $success = $content->has_leftovers;
-
-Check if there are leftovers.
+Get a chunk of the headers starting from a specific position.
 
 =head2 header_size
 

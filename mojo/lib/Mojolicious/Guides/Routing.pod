@@ -99,7 +99,7 @@ characters except C</> and C<.>.
   /sebastian23/hello  -> /:name/hello -> {name => 'sebastian23'}
   /sebastian 23/hello -> /:name/hello -> {name => 'sebastian 23'}
 
-A generic placeholder can be surrounded by parentheses to separate it from the
+All placeholders can be surrounded by parentheses to separate them from the
 surrounding text.
 
   /hello             -> /(:name)hello -> undef
@@ -221,7 +221,7 @@ L<Mojolicious::Controller/"stash">.
 =head2 Nested routes
 
 It is also possible to build tree structures from routes to remove repetitive
-code. A route with children can't match on it's own though, only the actual
+code. A route with children can't match on its own though, only the actual
 endpoints of these nested routes can.
 
   # /foo     -> undef
@@ -301,7 +301,7 @@ dispatching to it.
 You can use the C<namespace> stash value to change the namespace of a whole
 route with all its children.
 
-  # /bye -> MyApp::Controller::Foo->bye
+  # /bye -> MyApp::Controller::Foo::Bar->bye
   $r->route('/bye')
     ->to(namespace => 'MyApp::Controller::Foo::Bar', action => 'bye');
 
@@ -425,12 +425,12 @@ routes and allows selective re-enabling.
   # /foo      -> {controller => 'foo', action => 'bar'}
   # /foo.html -> undef
   # /baz      -> undef
-  # /baz.txt  -> {controller => 'bar', action => 'baz', format => 'txt'}
-  # /baz.html -> {controller => 'bar', action => 'baz', format => 'html'}
+  # /baz.txt  -> {controller => 'baz', action => 'yada', format => 'txt'}
+  # /baz.html -> {controller => 'baz', action => 'yada', format => 'html'}
   # /baz.xml  -> undef
   my $inactive = $r->route(format => 0);
-  $inactive->route('/foo')->to('foo#none');
-  $inactive->route('/baz', format => [qw(txt html)])->to('bar#baz');
+  $inactive->route('/foo')->to('foo#bar');
+  $inactive->route('/baz', format => [qw(txt html)])->to('baz#yada');
 
 =head2 Named routes
 
@@ -488,6 +488,14 @@ methods to pass.
   # DELETE /bye -> undef
   $r->route('/bye')->via('GET', 'POST')
     ->to(controller => 'foo', action => 'bye');
+
+With one small exception, C<HEAD> requests are considered equal to C<GET> and
+content will not be sent with the response.
+
+  # GET /test  -> {controller => 'bar', action => 'test'}
+  # HEAD /test -> {controller => 'bar', action => 'test'}
+  # PUT /test  -> undef
+  $r->route('/test')->via('GET')->to(controller => 'bar', action => 'test');
 
 =head2 WebSockets
 
@@ -634,7 +642,7 @@ Same for monitoring tasks.
   $self->hook(after_dispatch => sub {
     my $self = shift;
     return unless my $e = $self->stash('exception');
-    $self->ua->post_form('https://kraih.com/bugs' => {exception => $e});
+    $self->ua->post('https://example.com/bugs' => form => {exception => $e});
   });
 
 For a full list of available hooks see L<Mojolicious/"hook">.
@@ -682,7 +690,7 @@ Less commonly used and more powerful features.
 =head2 IRIs
 
 IRIs are handled transparently, that means paths are guaranteed to be
-unescaped and decoded to Perl characters.
+unescaped and decoded from bytes to characters.
 
   # GET /☃ (unicode snowman) -> {controller => 'foo', action => 'snowman'}
   $r->get('/☃')->to('foo#snowman');
@@ -829,7 +837,7 @@ self-contained applications under a prefix.
   plugin Mount => {'/prefix' => '/home/sri/myapp.pl'};
 
   # Normal route
-  get '/' => sub { shift->render_text('Hello World!') };
+  get '/' => sub { shift->render(text => 'Hello World!') };
 
   app->start;
 

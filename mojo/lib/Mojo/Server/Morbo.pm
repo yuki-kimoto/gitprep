@@ -25,7 +25,7 @@ sub check_file {
 sub run {
   my ($self, $app) = @_;
 
-  # Prepare environment
+  # Clean manager environment
   local $SIG{CHLD} = sub { $self->_reap };
   local $SIG{INT} = local $SIG{TERM} = local $SIG{QUIT} = sub {
     $self->{finished} = 1;
@@ -37,7 +37,6 @@ sub run {
   # Prepare and cache listen sockets for smooth restarting
   my $daemon = Mojo::Server::Daemon->new(silent => 1)->start->stop;
 
-  # Watch files and manage worker
   $self->_manage while !$self->{finished} || $self->{running};
   exit 0;
 }
@@ -116,8 +115,10 @@ Mojo::Server::Morbo - DOOOOOOOOOOOOOOOOOOM!
 
 L<Mojo::Server::Morbo> is a full featured, self-restart capable non-blocking
 I/O HTTP and WebSocket server, built around the very well tested and reliable
-L<Mojo::Server::Daemon>, with C<IPv6>, C<TLS>, C<Comet> (long polling) and
-multiple event loop support.
+L<Mojo::Server::Daemon>, with C<IPv6>, C<TLS>, C<Comet> (long polling),
+C<keep-alive>, connection pooling, timeout, cookie, multipart and multiple
+event loop support. Note that the server uses signals for process management,
+so you should avoid modifying signal handlers in your applications.
 
 To start applications with it you can use the L<morbo> script.
 
@@ -127,7 +128,7 @@ To start applications with it you can use the L<morbo> script.
 Optional modules L<EV> (4.0+), L<IO::Socket::IP> (0.16+) and
 L<IO::Socket::SSL> (1.75+) are supported transparently through
 L<Mojo::IOLoop>, and used if installed. Individual features can also be
-disabled with the C<MOJO_NO_IPV6> and C<MOJO_NO_TLS> environment variables.
+disabled with the MOJO_NO_IPV6 and MOJO_NO_TLS environment variables.
 
 See L<Mojolicious::Guides::Cookbook> for more.
 

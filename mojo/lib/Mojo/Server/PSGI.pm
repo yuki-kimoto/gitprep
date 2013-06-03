@@ -29,8 +29,8 @@ sub run {
   }
 
   # PSGI response
-  return [$res->code || 404,
-    \@headers, Mojo::Server::PSGI::_IO->new(tx => $tx)];
+  my $io = Mojo::Server::PSGI::_IO->new(tx => $tx, empty => $tx->is_empty);
+  return [$res->code || 404, \@headers, $io];
 }
 
 sub to_psgi_app {
@@ -49,6 +49,9 @@ sub close { shift->{tx}->server_close }
 
 sub getline {
   my $self = shift;
+
+  # Empty
+  return undef if $self->{empty};
 
   # No content yet, try again later
   my $chunk = $self->{tx}->res->get_body_chunk($self->{offset} = defined $self->{offset} ? $self->{offset} : 0);

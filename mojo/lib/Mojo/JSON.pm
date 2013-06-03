@@ -98,7 +98,7 @@ sub decode {
 
 sub encode {
   my ($self, $ref) = @_;
-  return Mojo::Util::encode 'UTF-8', _encode_values($ref);
+  return Mojo::Util::encode 'UTF-8', _encode_value($ref);
 }
 
 sub false {$FALSE}
@@ -251,23 +251,23 @@ sub _decode_value {
 
 sub _encode_array {
   my $array = shift;
-  return '[' . join(',', map { _encode_values($_) } @$array) . ']';
+  return '[' . join(',', map { _encode_value($_) } @$array) . ']';
 }
 
 sub _encode_object {
   my $object = shift;
-  my @pairs = map { _encode_string($_) . ':' . _encode_values($object->{$_}) }
+  my @pairs = map { _encode_string($_) . ':' . _encode_value($object->{$_}) }
     keys %$object;
   return '{' . join(',', @pairs) . '}';
 }
 
 sub _encode_string {
-  my $string = shift;
-  $string =~ s!([\x00-\x1F\x7F\x{2028}\x{2029}\\"/\b\f\n\r\t])!$REVERSE{$1}!gs;
-  return "\"$string\"";
+  my $str = shift;
+  $str =~ s!([\x00-\x1F\x7F\x{2028}\x{2029}\\"/\b\f\n\r\t])!$REVERSE{$1}!gs;
+  return "\"$str\"";
 }
 
-sub _encode_values {
+sub _encode_value {
   my $value = shift;
 
   # Reference
@@ -285,7 +285,7 @@ sub _encode_values {
 
     # Blessed reference with TO_JSON method
     if (blessed $value && (my $sub = $value->can('TO_JSON'))) {
-      return _encode_values($value->$sub);
+      return _encode_value($value->$sub);
     }
   }
 
@@ -294,8 +294,7 @@ sub _encode_values {
 
   # Number
   my $flags = B::svref_2object(\$value)->FLAGS;
-  return $value
-    if $flags & (B::SVp_IOK | B::SVp_NOK) && !($flags & B::SVp_POK);
+  return 0 + $value if $flags & (B::SVp_IOK | B::SVp_NOK) && $value * 0 == 0;
 
   # String
   return _encode_string($value);

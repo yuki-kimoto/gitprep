@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use FindBin;
-use lib "$FindBin::Bin/../lib";
+BEGIN { unshift @INC, "$FindBin::Bin/../lib" }
 
 require Mojolicious::Commands;
 Mojolicious::Commands->start_app('Mojo::HelloWorld');

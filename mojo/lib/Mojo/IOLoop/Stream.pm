@@ -3,62 +3,86 @@ use Mojo::Base 'Mojo::EventEmitter';
 
 use Errno qw(EAGAIN ECONNRESET EINTR EPIPE EWOULDBLOCK);
 use Scalar::Util 'weaken';
-use Time::HiRes 'time';
 
 has reactor => sub {
   require Mojo::IOLoop;
   Mojo::IOLoop->singleton->reactor;
 };
-has timeout => 15;
 
 sub DESTROY { shift->close }
 
-sub new { shift->SUPER::new(handle => shift, buffer => '', active => time) }
+sub new { shift->SUPER::new(handle => shift, buffer => '') }
 
 sub close {
   my $self = shift;
 
   # Cleanup
   return unless my $reactor = $self->{reactor};
-  $reactor->remove(delete $self->{timer}) if $self->{timer};
-  return unless my $handle = delete $self->{handle};
+  return unless my $handle  = delete $self->timeout(0)->{handle};
   $reactor->remove($handle);
 
   close $handle;
   $self->emit_safe('close');
 }
 
+sub close_gracefully {
+  my $self = shift;
+  return $self->{graceful} = 1 if $self->is_writing;
+  $self->close;
+}
+
 sub handle { shift->{handle} }
 
 sub is_readable {
   my $self = shift;
-  $self->{active} = time;
+  $self->_again;
   return $self->{handle} && $self->reactor->is_readable($self->{handle});
 }
 
 sub is_writing {
   my $self = shift;
-  return undef unless exists $self->{handle};
+  return undef unless $self->{handle};
   return !!length($self->{buffer}) || $self->has_subscribers('drain');
 }
 
 sub start {
   my $self = shift;
-  return $self->_startup unless $self->{startup}++;
-  return unless delete $self->{paused};
-  $self->reactor->watch($self->{handle}, 1, $self->is_writing);
+
+  my $reactor = $self->reactor;
+  $reactor->io($self->timeout(15)->{handle},
+    sub { pop() ? $self->_write : $self->_read })
+    unless $self->{timer};
+
+  # Resume
+  $reactor->watch($self->{handle}, 1, $self->is_writing)
+    if delete $self->{paused};
 }
 
 sub stop {
   my $self = shift;
-  return if $self->{paused}++;
-  $self->reactor->watch($self->{handle}, 0, $self->is_writing);
+  $self->reactor->watch($self->{handle}, 0, $self->is_writing)
+    unless $self->{paused}++;
 }
 
 sub steal_handle {
   my $self = shift;
   $self->reactor->remove($self->{handle});
   return delete $self->{handle};
+}
+
+sub timeout {
+  my $self = shift;
+
+  return $self->{timeout} unless @_;
+
+  my $reactor = $self->reactor;
+  $reactor->remove(delete $self->{timer}) if $self->{timer};
+  return $self unless my $timeout = $self->{timeout} = shift;
+  weaken $self;
+  $self->{timer}
+    = $reactor->timer($timeout => sub { $self->emit_safe('timeout')->close });
+
+  return $self;
 }
 
 sub write {
@@ -73,42 +97,27 @@ sub write {
   return $self;
 }
 
-sub _read {
+sub _again { $_[0]->reactor->again($_[0]{timer}) if $_[0]{timer} }
+
+sub _error {
   my $self = shift;
 
-  my $read = $self->{handle}->sysread(my $buffer, 131072, 0);
-  unless (defined $read) {
+  # Retry
+  return if $! == EAGAIN || $! == EINTR || $! == EWOULDBLOCK;
 
-    # Retry
-    return if grep { $_ == $! } EAGAIN, EINTR, EWOULDBLOCK;
+  # Closed
+  return $self->close if $! == ECONNRESET || $! == EPIPE;
 
-    # Closed
-    return $self->close if grep { $_ == $! } ECONNRESET, EPIPE;
-
-    # Read error
-    return $self->emit_safe(error => $!)->close;
-  }
-
-  # EOF
-  return $self->close if $read == 0;
-
-  $self->emit_safe(read => $buffer)->{active} = time;
+  # Error
+  $self->emit_safe(error => $!)->close;
 }
 
-sub _startup {
+sub _read {
   my $self = shift;
-
-  # Timeout (ignore 0 timeout)
-  my $reactor = $self->reactor;
-  weaken $self;
-  $self->{timer} = $reactor->recurring(
-    0.5 => sub {
-      return unless my $t = $self->timeout;
-      $self->emit_safe('timeout')->close if (time - $self->{active}) >= $t;
-    }
-  );
-
-  $reactor->io($self->{handle}, sub { pop() ? $self->_write : $self->_read });
+  my $read = $self->{handle}->sysread(my $buffer, 131072, 0);
+  return $self->_error unless defined $read;
+  return $self->close if $read == 0;
+  $self->emit_safe(read => $buffer)->_again;
 }
 
 sub _write {
@@ -117,25 +126,15 @@ sub _write {
   my $handle = $self->{handle};
   if (length $self->{buffer}) {
     my $written = $handle->syswrite($self->{buffer});
-    unless (defined $written) {
-
-      # Retry
-      return if grep { $_ == $! } EAGAIN, EINTR, EWOULDBLOCK;
-
-      # Closed
-      return $self->close if grep { $_ == $! } ECONNRESET, EPIPE;
-
-      # Write error
-      return $self->emit_safe(error => $!)->close;
-    }
-
+    return $self->_error unless defined $written;
     $self->emit_safe(write => substr($self->{buffer}, 0, $written, ''));
-    $self->{active} = time;
+    $self->_again;
   }
 
-  $self->emit_safe('drain') if !length $self->{buffer};
+  $self->emit_safe('drain') unless length $self->{buffer};
   return if $self->is_writing;
-  $self->reactor->watch($handle, !$self->{paused}, 0);
+  return $self->close if $self->{graceful};
+  $self->reactor->watch($handle, !$self->{paused}, 0) if $self->{handle};
 }
 
 1;
@@ -247,15 +246,6 @@ L<Mojo::IOLoop::Stream> implements the following attributes.
 Low level event reactor, defaults to the C<reactor> attribute value of the
 global L<Mojo::IOLoop> singleton.
 
-=head2 timeout
-
-  my $timeout = $stream->timeout;
-  $stream     = $stream->timeout(45);
-
-Maximum amount of time in seconds stream can be inactive before getting closed
-automatically, defaults to C<15>. Setting the value to C<0> will allow this
-stream to be inactive indefinitely.
-
 =head1 METHODS
 
 L<Mojo::IOLoop::Stream> inherits all methods from L<Mojo::EventEmitter> and
@@ -272,6 +262,12 @@ Construct a new L<Mojo::IOLoop::Stream> object.
   $stream->close;
 
 Close stream immediately.
+
+=head2 close_gracefully
+
+  $stream->close_gracefully;
+
+Close stream gracefully.
 
 =head2 handle
 
@@ -309,6 +305,15 @@ Stop watching for new data on the stream.
   my $handle = $stream->steal_handle;
 
 Steal handle from stream and prevent it from getting closed automatically.
+
+=head2 timeout
+
+  my $timeout = $stream->timeout;
+  $stream     = $stream->timeout(45);
+
+Maximum amount of time in seconds stream can be inactive before getting closed
+automatically, defaults to C<15>. Setting the value to C<0> will allow this
+stream to be inactive indefinitely.
 
 =head2 write
 

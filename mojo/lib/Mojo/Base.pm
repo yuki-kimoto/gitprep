@@ -213,7 +213,7 @@ pass it either a hash or a hash reference with attribute values.
 Create attribute accessor for hash-based objects, an array reference can be
 used to create more than one at a time. Pass an optional second argument to
 set a default value, it should be a constant or a callback. The callback will
-be excuted at accessor read time if there's no set value. Accessors can be
+be executed at accessor read time if there's no set value. Accessors can be
 chained, that means they return their invocant when they are called with an
 argument.
 
@@ -222,7 +222,8 @@ argument.
   $object = $object->tap(sub {...});
 
 K combinator, tap into a method chain to perform operations on an object
-within the chain.
+within the chain. The object will be the first argument passed to the closure
+and is also available via C<$_>.
 
 =head2 C<say>
 
@@ -230,7 +231,7 @@ Backported from perl-5.10.1
 
 =head1 DEBUGGING
 
-You can set the C<MOJO_BASE_DEBUG> environment variable to get some advanced
+You can set the MOJO_BASE_DEBUG environment variable to get some advanced
 diagnostics information printed to C<STDERR>.
 
   MOJO_BASE_DEBUG=1

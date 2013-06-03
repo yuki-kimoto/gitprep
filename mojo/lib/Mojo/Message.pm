@@ -10,7 +10,6 @@ use Mojo::JSON::Pointer;
 use Mojo::Parameters;
 use Mojo::Upload;
 use Mojo::Util 'decode';
-use Scalar::Util 'weaken';
 
 has content => sub { Mojo::Content::Single->new };
 has default_charset  => 'UTF-8';
@@ -22,20 +21,15 @@ sub body {
   my $self = shift;
 
   # Downgrade multipart content
-  $self->content(Mojo::Content::Single->new) if $self->content->is_multipart;
   my $content = $self->content;
+  $content = $self->content(Mojo::Content::Single->new)->content
+    if $content->is_multipart;
 
   # Get
-  return $content->asset->slurp unless defined(my $new = shift);
-
-  # Callback
-  if (ref $new eq 'CODE') {
-    weaken $self;
-    return $content->unsubscribe('read')->on(read => sub { $self->$new(pop) });
-  }
+  return $content->asset->slurp unless @_;
 
   # Set raw content
-  else { $content->asset(Mojo::Asset::Memory->new->add_chunk($new)) }
+  $content->asset(Mojo::Asset::Memory->new->add_chunk(@_));
 
   return $self;
 }
@@ -48,18 +42,15 @@ sub body_params {
   $params->charset($self->content->charset || $self->default_charset);
 
   # "x-application-urlencoded" and "application/x-www-form-urlencoded"
-  my $type = $self->headers->content_type || '';
+  my $type = defined $self->headers->content_type ? $self->headers->content_type : '';
   if ($type =~ m!(?:x-application|application/x-www-form)-urlencoded!i) {
     $params->parse($self->content->asset->slurp);
   }
 
   # "multipart/formdata"
   elsif ($type =~ m!multipart/form-data!i) {
-    my $formdata = $self->_parse_formdata;
-    for my $data (@$formdata) {
-      my ($name, $filename, $value) = @$data;
-      next if defined $filename;
-      $params->append($name, $value);
+    for my $data (@{$self->_parse_formdata}) {
+      $params->append($data->[0], $data->[2]) unless defined $data->[1];
     }
   }
 
@@ -72,23 +63,18 @@ sub build_body       { shift->_build('get_body_chunk') }
 sub build_headers    { shift->_build('get_header_chunk') }
 sub build_start_line { shift->_build('get_start_line_chunk') }
 
-sub cookie {
-  my ($self, $name) = @_;
-  $self->{cookies} ||= _nest($self->cookies);
-  return unless my $cookies = $self->{cookies}{$name};
-  my @cookies = ref $cookies eq 'ARRAY' ? @$cookies : ($cookies);
-  return wantarray ? @cookies : $cookies[0];
-}
+sub cookie { shift->_cache(cookies => @_) }
 
 sub cookies { croak 'Method "cookies" not implemented by subclass' }
 
 sub dom {
   my $self = shift;
 
-  return undef if $self->is_multipart;
-  my $dom = $self->{dom}
-    ||= Mojo::DOM->new->charset(defined $self->content->charset ? $self->content->charset : undef)
-    ->parse($self->body);
+  return undef if $self->content->is_multipart;
+  my $html    = $self->body;
+  my $charset = $self->content->charset;
+  $html = do { my $tmp = decode($charset, $html); defined $tmp ? $tmp : $html } if $charset;
+  my $dom = $self->{dom} ||= Mojo::DOM->new($html);
 
   return @_ ? $dom->find(@_) : $dom;
 }
@@ -121,9 +107,10 @@ sub fix_headers {
   my $self = shift;
 
   # Content-Length or Connection (unless chunked transfer encoding is used)
-  return $self if $self->{fix}++ || $self->is_chunked;
+  my $content = $self->content;
+  return $self if $self->{fix}++ || $content->is_chunked;
   my $headers = $self->headers;
-  $self->is_dynamic
+  $content->is_dynamic
     ? $headers->connection('close')
     : $headers->content_length($self->body_size)
     unless $headers->content_length;
@@ -152,31 +139,20 @@ sub get_start_line_chunk {
   croak 'Method "get_start_line_chunk" not implemented by subclass';
 }
 
-sub has_leftovers { shift->content->has_leftovers }
-
 sub header_size { shift->fix_headers->content->header_size }
 
-sub headers    { shift->content->headers }
-sub is_chunked { shift->content->is_chunked }
-sub is_dynamic { shift->content->is_dynamic }
+sub headers { shift->content->headers }
 
 sub is_finished { do { my $tmp = shift->{state}; defined $tmp ? $tmp : ''} eq 'finished' }
 
-sub is_limit_exceeded {
-  return undef unless my $code = (shift->error)[1];
-  return !!grep { $_ eq $code } 413, 431;
-}
-
-sub is_multipart { shift->content->is_multipart }
+sub is_limit_exceeded { !!shift->{limit} }
 
 sub json {
   my ($self, $pointer) = @_;
-  return undef if $self->is_multipart;
+  return undef if $self->content->is_multipart;
   my $data = $self->{json} ||= Mojo::JSON->new->decode($self->body);
   return $pointer ? Mojo::JSON::Pointer->new->get($data, $pointer) : $data;
 }
-
-sub leftovers { shift->content->leftovers }
 
 sub param { shift->body_params->param(@_) }
 
@@ -184,7 +160,7 @@ sub parse {
   my ($self, $chunk) = @_;
 
   # Check message size
-  return $self->error('Maximum message size exceeded', 413)
+  return $self->_limit('Maximum message size exceeded', 413)
     if ($self->{raw_size} += length($chunk = defined $chunk ? $chunk : '')) > $self->max_message_size;
 
   $self->{buffer} .= $chunk;
@@ -195,18 +171,19 @@ sub parse {
     # Check line size
     my $len = index $self->{buffer}, "\x0a";
     $len = length $self->{buffer} if $len < 0;
-    return $self->error('Maximum line size exceeded', 431)
+    return $self->_limit('Maximum line size exceeded', 431)
       if $len > $self->max_line_size;
 
     $self->{state} = 'content' if $self->extract_start_line(\$self->{buffer});
   }
 
   # Content
+  my $state = defined $self->{state} ? $self->{state} : '';
   $self->content($self->content->parse(delete $self->{buffer}))
-    if grep { $_ eq (defined $self->{state} ? $self->{state} : '') } qw(content finished);
+    if $state eq 'content' || $state eq 'finished';
 
   # Check line size
-  return $self->error('Maximum line size exceeded', 431)
+  return $self->_limit('Maximum line size exceeded', 431)
     if $self->headers->is_limit_exceeded;
 
   # Check buffer size
@@ -223,40 +200,29 @@ sub to_string {
   return $self->build_start_line . $self->build_headers . $self->build_body;
 }
 
-sub upload {
-  my ($self, $name) = @_;
-  $self->{uploads} ||= _nest($self->uploads);
-  return unless my $uploads = $self->{uploads}{$name};
-  my @uploads = ref $uploads eq 'ARRAY' ? @$uploads : ($uploads);
-  return wantarray ? @uploads : $uploads[0];
-}
+sub upload { shift->_cache(uploads => @_) }
 
 sub uploads {
   my $self = shift;
 
   my @uploads;
-  my $formdata = $self->_parse_formdata;
-  for my $data (@$formdata) {
-    my ($name, $filename, $part) = @$data;
+  for my $data (@{$self->_parse_formdata}) {
 
     # Just a form value
-    next unless defined $filename;
+    next unless defined $data->[1];
 
     # Uploaded file
     my $upload = Mojo::Upload->new(
-      name     => $name,
-      asset    => $part->asset,
-      filename => $filename,
-      headers  => $part->headers
+      name     => $data->[0],
+      filename => $data->[1],
+      asset    => $data->[2]->asset,
+      headers  => $data->[2]->headers
     );
     push @uploads, $upload;
   }
 
   return \@uploads;
 }
-
-sub write       { shift->_write(write       => @_) }
-sub write_chunk { shift->_write(write_chunk => @_) }
 
 sub _build {
   my ($self, $method) = @_;
@@ -278,25 +244,23 @@ sub _build {
   return $buffer;
 }
 
-sub _nest {
-  my $array = shift;
+sub _cache {
+  my ($self, $method, $name) = @_;
 
-  # Turn array of objects into hash
-  my $hash = {};
-  for my $object (@$array) {
-    my $name = $object->name;
-
-    # Multiple objects with same name
-    if (exists $hash->{$name}) {
-      $hash->{$name} = [$hash->{$name}] unless ref $hash->{$name} eq 'ARRAY';
-      push @{$hash->{$name}}, $object;
-    }
-
-    # Single object
-    else { $hash->{$name} = $object }
+  # Cache objects by name
+  unless ($self->{$method}) {
+    $self->{$method} = {};
+    push @{$self->{$method}{$_->name}}, $_ for @{$self->$method};
   }
 
-  return $hash;
+  return unless my $objects = $self->{$method}{$name};
+  return wantarray ? @$objects : $objects->[0];
+}
+
+sub _limit {
+  my $self = shift;
+  $self->{limit} = 1;
+  $self->error(@_);
 }
 
 sub _parse_formdata {
@@ -309,8 +273,7 @@ sub _parse_formdata {
   my $charset = $content->charset || $self->default_charset;
 
   # Check all parts for form data
-  my @parts;
-  push @parts, $content;
+  my @parts = ($content);
   while (my $part = shift @parts) {
 
     # Nested multipart content
@@ -320,8 +283,7 @@ sub _parse_formdata {
     }
 
     # Extract information from Content-Disposition header
-    my $disposition = $part->headers->content_disposition;
-    next unless $disposition;
+    next unless my $disposition = $part->headers->content_disposition;
     my ($name)     = $disposition =~ /[; ]name="?([^";]+)"?/;
     my ($filename) = $disposition =~ /[; ]filename="?([^"]*)"?/;
     if ($charset) {
@@ -340,13 +302,6 @@ sub _parse_formdata {
   }
 
   return \@formdata;
-}
-
-sub _write {
-  my ($self, $method, $chunk, $cb) = @_;
-  weaken $self;
-  $self->content->$method($chunk => sub { shift and $self->$cb(@_) if $cb });
-  return $self;
 }
 
 1;
@@ -436,7 +391,7 @@ Default charset used for form data parsing, defaults to C<UTF-8>.
   $msg     = $msg->max_line_size(1024);
 
 Maximum start line size in bytes, defaults to the value of the
-C<MOJO_MAX_LINE_SIZE> environment variable or C<10240>.
+MOJO_MAX_LINE_SIZE environment variable or C<10240>.
 
 =head2 max_message_size
 
@@ -444,10 +399,10 @@ C<MOJO_MAX_LINE_SIZE> environment variable or C<10240>.
   $msg     = $msg->max_message_size(1024);
 
 Maximum message size in bytes, defaults to the value of the
-C<MOJO_MAX_MESSAGE_SIZE> environment variable or C<5242880>. Note that
-increasing this value can also drastically increase memory usage, should you
-for example attempt to parse an excessively large message body with the
-C<body_params>, C<dom> or C<json> methods.
+MOJO_MAX_MESSAGE_SIZE environment variable or C<5242880>. Note that increasing
+this value can also drastically increase memory usage, should you for example
+attempt to parse an excessively large message body with the C<body_params>,
+C<dom> or C<json> methods.
 
 =head2 version
 
@@ -465,14 +420,8 @@ implements the following new ones.
 
   my $bytes = $msg->body;
   $msg      = $msg->body('Hello!');
-  my $cb    = $msg->body(sub {...});
 
-Access C<content> data or replace all subscribers of the C<read> event.
-
-  $msg->body(sub {
-    my ($msg, $bytes) = @_;
-    say "Streaming: $bytes";
-  });
+Slurp or replace C<content>.
 
 =head2 body_params
 
@@ -556,7 +505,7 @@ Error and code.
 
 =head2 extract_start_line
 
-  my $success = $msg->extract_start_line(\$string);
+  my $success = $msg->extract_start_line(\$str);
 
 Extract start line from string. Meant to be overloaded in a subclass.
 
@@ -591,12 +540,6 @@ Get a chunk of header data, starting from a specific position.
 Get a chunk of start line data starting from a specific position. Meant to be
 overloaded in a subclass.
 
-=head2 has_leftovers
-
-  my $success = $msg->has_leftovers;
-
-Check if there are leftovers.
-
 =head2 header_size
 
   my $size = $msg->header_size;
@@ -609,19 +552,6 @@ Size of headers in bytes.
 
 Message headers, usually a L<Mojo::Headers> object.
 
-=head2 is_chunked
-
-  my $success = $msg->is_chunked;
-
-Check if content is chunked.
-
-=head2 is_dynamic
-
-  my $success = $msg->is_dynamic;
-
-Check if content will be dynamically generated, which prevents C<clone> from
-working.
-
 =head2 is_finished
 
   my $success = $msg->is_finished;
@@ -633,12 +563,6 @@ Check if message parser/generator is finished.
   my $success = $msg->is_limit_exceeded;
 
 Check if message has exceeded C<max_line_size> or C<max_message_size>.
-
-=head2 is_multipart
-
-  my $success = $msg->is_multipart;
-
-Check if content is a L<Mojo::Content::MultiPart> object.
 
 =head2 json
 
@@ -654,12 +578,6 @@ it should not be called before the entire message body has been received.
   # Extract JSON values
   say $msg->json->{foo}{bar}[23];
   say $msg->json('/foo/bar/23');
-
-=head2 leftovers
-
-  my $bytes = $msg->leftovers;
-
-Get leftover data from content parser.
 
 =head2 param
 
@@ -684,7 +602,7 @@ Size of the start line in bytes.
 
 =head2 to_string
 
-  my $string = $msg->to_string;
+  my $str = $msg->to_string;
 
 Render whole message.
 
@@ -705,22 +623,6 @@ entire message body has been received.
   my $uploads = $msg->uploads;
 
 All C<multipart/form-data> file uploads, usually L<Mojo::Upload> objects.
-
-=head2 write
-
-  $msg = $msg->write($bytes);
-  $msg = $msg->write($bytes => sub {...});
-
-Write dynamic content non-blocking, the optional drain callback will be
-invoked once all data has been written.
-
-=head2 write_chunk
-
-  $msg = $msg->write_chunk($bytes);
-  $msg = $msg->write_chunk($bytes => sub {...});
-
-Write dynamic content non-blocking with C<chunked> transfer encoding, the
-optional drain callback will be invoked once all data has been written.
 
 =head1 SEE ALSO
 

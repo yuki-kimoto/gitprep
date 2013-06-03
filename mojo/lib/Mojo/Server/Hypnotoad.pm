@@ -7,6 +7,7 @@ use Cwd 'abs_path';
 use File::Basename 'dirname';
 use File::Spec::Functions 'catfile';
 use Mojo::Server::Prefork;
+use Mojo::Util 'steady_time';
 use POSIX 'setsid';
 use Scalar::Util 'weaken';
 
@@ -62,7 +63,7 @@ sub run {
   }
 
   # Start accepting connections
-  local $SIG{USR2} = sub { $self->{upgrade} ||= time };
+  local $SIG{USR2} = sub { $self->{upgrade} ||= steady_time };
   $prefork->run;
 }
 
@@ -123,7 +124,7 @@ sub _manage {
 
     # Timeout
     kill 'KILL', $self->{new}
-      if $self->{upgrade} + $self->{upgrade_timeout} <= time;
+      if $self->{upgrade} + $self->{upgrade_timeout} <= steady_time;
   }
 }
 
@@ -161,9 +162,10 @@ Mojo::Server::Hypnotoad - ALL GLORY TO THE HYPNOTOAD!
 L<Mojo::Server::Hypnotoad> is a full featured, UNIX optimized, preforking
 non-blocking I/O HTTP and WebSocket server, built around the very well tested
 and reliable L<Mojo::Server::Prefork>, with C<IPv6>, C<TLS>, C<Comet> (long
-polling), multiple event loop and hot deployment support that just works. Note
-that the server uses signals for process management, so you should avoid
-modifying signal handlers in your applications.
+polling), C<keep-alive>, connection pooling, timeout, cookie, multipart,
+multiple event loop and hot deployment support that just works. Note that the
+server uses signals for process management, so you should avoid modifying
+signal handlers in your applications.
 
 To start applications with it you can use the L<hypnotoad> script.
 
@@ -181,7 +183,7 @@ C<production> mode.
 Optional modules L<EV> (4.0+), L<IO::Socket::IP> (0.16+) and
 L<IO::Socket::SSL> (1.75+) are supported transparently through
 L<Mojo::IOLoop>, and used if installed. Individual features can also be
-disabled with the C<MOJO_NO_IPV6> and C<MOJO_NO_TLS> environment variables.
+disabled with the MOJO_NO_IPV6 and MOJO_NO_TLS environment variables.
 
 See L<Mojolicious::Guides::Cookbook> for more.
 
@@ -254,9 +256,9 @@ L<Mojolicious::Guides::Cookbook/"Hypnotoad"> for examples.
 
   accept_interval => 0.5
 
-Interval in seconds for trying to reacquire the accept mutex and connection
-management, defaults to C<0.025>. Note that changing this value can affect
-performance and idle CPU usage.
+Interval in seconds for trying to reacquire the accept mutex, defaults to
+C<0.025>. Note that changing this value can affect performance and idle CPU
+usage.
 
 =head2 accepts
 
@@ -321,7 +323,7 @@ be inactive indefinitely.
 
   keep_alive_requests => 50
 
-Number of keep alive requests per connection, defaults to C<25>.
+Number of keep-alive requests per connection, defaults to C<25>.
 
 =head2 listen
 
@@ -339,10 +341,11 @@ appended, defaults to a random temporary path.
 
 =head2 lock_timeout
 
-  lock_timeout => 1
+  lock_timeout => 0.5
 
 Maximum amount of time in seconds a worker may block when waiting for the
-accept mutex, defaults to C<0.5>.
+accept mutex, defaults to C<1>. Note that changing this value can affect
+performance and idle CPU usage.
 
 =head2 multi_accept
 
@@ -364,7 +367,7 @@ the server has been stopped.
 
 Activate reverse proxy support, which allows for the C<X-Forwarded-For> and
 C<X-Forwarded-HTTPS> headers to be picked up automatically, defaults to the
-value of the C<MOJO_REVERSE_PROXY> environment variable.
+value of the MOJO_REVERSE_PROXY environment variable.
 
 =head2 upgrade_timeout
 

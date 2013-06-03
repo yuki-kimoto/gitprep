@@ -108,9 +108,7 @@ sub _build_tx {
   );
 
   # Kept alive if we have more than one request on the connection
-  $tx->kept_alive(1) if ++$c->{requests} > 1;
-
-  return $tx;
+  return ++$c->{requests} > 1 ? $tx->kept_alive(1) : $tx;
 }
 
 sub _close {
@@ -153,9 +151,9 @@ sub _finish {
   return $self->_remove($id) if $req->error || !$tx->keep_alive;
 
   # Build new transaction for leftovers
-  return unless $req->has_leftovers;
+  return unless length(my $leftovers = $req->content->leftovers);
   $tx = $c->{tx} = $self->_build_tx($id, $c);
-  $tx->server_read($req->leftovers);
+  $tx->server_read($leftovers);
 }
 
 sub _listen {
@@ -210,12 +208,12 @@ sub _read {
   my ($self, $id, $chunk) = @_;
 
   # Make sure we have a transaction and parse chunk
-  my $c = $self->{connections}{$id};
+  return unless my $c = $self->{connections}{$id};
   my $tx = $c->{tx} ||= $self->_build_tx($id, $c);
   warn "-- Server <<< Client (@{[$tx->req->url->to_abs]})\n$chunk\n" if DEBUG;
   $tx->server_read($chunk);
 
-  # Last keep alive request or corrupted connection
+  # Last keep-alive request or corrupted connection
   $tx->res->headers->connection('close')
     if (($c->{requests} || 0) >= $self->max_requests) || $tx->req->error;
 
@@ -234,7 +232,7 @@ sub _write {
   my ($self, $id) = @_;
 
   # Not writing
-  my $c = $self->{connections}{$id};
+  return unless my $c  = $self->{connections}{$id};
   return unless my $tx = $c->{tx};
   return unless $tx->is_writing;
 
@@ -257,7 +255,7 @@ sub _write {
       return unless $c->{tx};
     }
   }
-  $stream->write('', $cb);
+  $stream->write('' => $cb);
 }
 
 1;
@@ -292,13 +290,14 @@ Mojo::Server::Daemon - Non-blocking I/O HTTP and WebSocket server
 =head1 DESCRIPTION
 
 L<Mojo::Server::Daemon> is a full featured, highly portable non-blocking I/O
-HTTP and WebSocket server, with C<IPv6>, C<TLS>, C<Comet> (long polling) and
-multiple event loop support.
+HTTP and WebSocket server, with C<IPv6>, C<TLS>, C<Comet> (long polling),
+C<keep-alive>, connection pooling, timeout, cookie, multipart and multiple
+event loop support.
 
 Optional modules L<EV> (4.0+), L<IO::Socket::IP> (0.16+) and
 L<IO::Socket::SSL> (1.75+) are supported transparently through
 L<Mojo::IOLoop>, and used if installed. Individual features can also be
-disabled with the C<MOJO_NO_IPV6> and C<MOJO_NO_TLS> environment variables.
+disabled with the MOJO_NO_IPV6 and MOJO_NO_TLS environment variables.
 
 See L<Mojolicious::Guides::Cookbook> for more.
 
@@ -331,7 +330,7 @@ Group for server process.
   $daemon     = $daemon->inactivity_timeout(5);
 
 Maximum amount of time in seconds a connection can be inactive before getting
-closed, defaults to the value of the C<MOJO_INACTIVITY_TIMEOUT> environment
+closed, defaults to the value of the MOJO_INACTIVITY_TIMEOUT environment
 variable or C<15>. Setting the value to C<0> will allow connections to be
 inactive indefinitely.
 
@@ -349,7 +348,7 @@ L<Mojo::IOLoop> singleton.
   $daemon    = $daemon->listen(['https://localhost:3000']);
 
 List of one or more locations to listen on, defaults to the value of the
-C<MOJO_LISTEN> environment variable or C<http://*:3000>.
+MOJO_LISTEN environment variable or C<http://*:3000>.
 
   # Listen on IPv6 interface
   $daemon->listen(['http://[::1]:4000']);
@@ -398,7 +397,7 @@ Maximum number of parallel client connections, defaults to C<1000>.
   my $max = $daemon->max_requests;
   $daemon = $daemon->max_requests(100);
 
-Maximum number of keep alive requests per connection, defaults to C<25>.
+Maximum number of keep-alive requests per connection, defaults to C<25>.
 
 =head2 silent
 
@@ -445,7 +444,7 @@ Stop accepting connections.
 
 =head1 DEBUGGING
 
-You can set the C<MOJO_DAEMON_DEBUG> environment variable to get some advanced
+You can set the MOJO_DAEMON_DEBUG environment variable to get some advanced
 diagnostics information printed to C<STDERR>.
 
   MOJO_DAEMON_DEBUG=1

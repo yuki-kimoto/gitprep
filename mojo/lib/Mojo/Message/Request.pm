@@ -2,7 +2,6 @@ package Mojo::Message::Request;
 use Mojo::Base 'Mojo::Message';
 
 use Mojo::Cookie::Request;
-use Mojo::Parameters;
 use Mojo::Util qw(b64_encode b64_decode get_line);
 use Mojo::URL;
 
@@ -11,7 +10,7 @@ has method => 'GET';
 has url => sub { Mojo::URL->new };
 
 my $START_LINE_RE = qr|
-  ^\s*
+  ^
   ([a-zA-Z]+)                                  # Method
   \s+
   ([0-9a-zA-Z\-._~:/?#[\]\@!\$&'()*+,;=\%]+)   # Path
@@ -79,11 +78,8 @@ sub fix_headers {
   $headers->authorization('Basic ' . b64_encode($auth, ''))
     if $auth && !$headers->authorization;
 
-  # Proxy
+  # Basic proxy authentication
   if (my $proxy = $self->proxy) {
-    $url = $proxy if $self->method eq 'CONNECT';
-
-    # Basic proxy authentication
     my $proxy_auth = $proxy->userinfo;
     $headers->proxy_authorization('Basic ' . b64_encode($proxy_auth, ''))
       if $proxy_auth && !$headers->proxy_authorization;
@@ -119,7 +115,7 @@ sub get_start_line_chunk {
     # Proxy
     elsif ($self->proxy) {
       my $clone = $url = $url->clone->userinfo(undef);
-      my $upgrade = lc($self->headers->upgrade || '');
+      my $upgrade = lc(defined $self->headers->upgrade ? $self->headers->upgrade : '');
       $path = $clone
         unless $upgrade eq 'websocket' || $url->protocol eq 'https';
     }
@@ -137,7 +133,7 @@ sub is_secure {
 }
 
 sub is_xhr {
-  (shift->headers->header('X-Requested-With') || '') =~ /XMLHttpRequest/i;
+  (do {my $tmp = shift->headers->header('X-Requested-With'); defined $tmp ? $tmp : ''}) =~ /XMLHttpRequest/i;
 }
 
 sub param { shift->params->param(@_) }
@@ -145,7 +141,7 @@ sub param { shift->params->param(@_) }
 sub params {
   my $self = shift;
   return $self->{params}
-    ||= Mojo::Parameters->new->merge($self->body_params, $self->query_params);
+    ||= $self->body_params->clone->merge($self->query_params);
 }
 
 sub parse {
@@ -233,7 +229,7 @@ sub _parse_env {
   $self->method($env->{REQUEST_METHOD}) if $env->{REQUEST_METHOD};
 
   # Scheme/Version
-  if (($env->{SERVER_PROTOCOL} || '') =~ m!^([^/]+)/([^/]+)$!) {
+  if ((defined $env->{SERVER_PROTOCOL} ? $env->{SERVER_PROTOCOL} : '') =~ m!^([^/]+)/([^/]+)$!) {
     $base->scheme($1);
     $self->version($2);
   }
@@ -291,7 +287,7 @@ Mojo::Message::Request - HTTP request
 =head1 DESCRIPTION
 
 L<Mojo::Message::Request> is a container for HTTP requests as described in RFC
-2616.
+2616 and RFC 2817.
 
 =head1 EVENTS
 
@@ -329,8 +325,10 @@ HTTP request method, defaults to C<GET>.
 
 HTTP request URL, defaults to a L<Mojo::URL> object.
 
-  # Get request path
-  say $req->url->path;
+  # Get request information
+  say $req->url->to_abs->userinfo;
+  say $req->url->to_abs->host;
+  say $req->url->to_abs->path;
 
 =head1 METHODS
 
@@ -353,7 +351,7 @@ Access request cookies, usually L<Mojo::Cookie::Request> objects.
 
 =head2 extract_start_line
 
-  my $success = $req->extract_start_line(\$string);
+  my $success = $req->extract_start_line(\$str);
 
 Extract request line from string.
 
