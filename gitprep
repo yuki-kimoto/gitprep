@@ -3,4 +3,5 @@
 DIR=$(dirname $0)
 PERL5LIB="$DIR/mojo/lib:$DIR/extlib/lib/perl5"
 export PERL5LIB
-$DIR/mojo/script/hypnotoad $* $DIR/script/gitprep
+exec $DIR/mojo/script/hypnotoad $* $DIR/script/gitprep
+

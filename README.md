@@ -154,7 +154,8 @@ If you want to do operation by root user,
 you must do some configuration for security.
 
 You add **user** and **group** to **hypnotoad** section
-in **gitprep.conf** to execute not root user for security.
+in **gitprep.conf** not to execute application by root user
+for security.
 
     [hypnotoad]
     ...
@@ -170,21 +171,22 @@ Stop application
     /home/gitprep/gitprep/gitprep --stop
 
 If you want to start application when os start,
-add the start application command to **rc.local**(Linux).
+add the application start command to **rc.local** file(Linux).
 
 If you want to make easy to manage gitprep,
-Let's create run script in /usr/local/sbin.
-
-    /home/gitprep/gitprep/create_run_script > /usr/local/sbin/run_gitprep
-    chmod 755 /usr/local/sbin/run_gitprep
+Let's create run script in webapp directory.
+    
+    mkdir -p /webapp
+    /home/gitprep/gitprep/create_run_script > /webapp/gitprep
+    chmod 755 /webapp/gitprep
 
 You can start and stop application the following command.
     
-    # Start/Restart
-    run_gitprep
+    # Start or Restart
+    /webapp/gitprep
     
     # Stop
-    run_gitprep --stop
+    /webapp/gitprep --stop
     
 ## Developer
 
