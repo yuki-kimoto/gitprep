@@ -808,8 +808,11 @@ sub references {
   while (my $line = $self->_dec(scalar <$fh>)) {
     chomp $line;
     if ($line =~ m!^([0-9a-fA-F]{40})\srefs/$type_re/(.*)$!) {
-      if (defined $refs{$1}) { push @{$refs{$1}}, $2 }
-      else { $refs{$1} = [$2] }
+      my $rev = $1;
+      my $ref = $2;
+      $ref =~ s/\^\{\}//;
+      if (defined $refs{$rev}) { push @{$refs{$rev}}, $ref }
+      else { $refs{$rev} = [$ref] }
     }
   }
   close $fh or return;

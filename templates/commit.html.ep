@@ -77,7 +77,7 @@
         </div>
       </div>
       % if (@{$commit->{comment}} > 1) {
-        <div class="border-bottom-gray" style="padding-left:15px;padding-bottom:5px">
+        <div style="padding-left:15px;padding-bottom:5px">
           % for (my $i = 1; $i < @{$commit->{comment}}; $i++) {
             <div>
               <%= $commit->{comment}[$i] %>
@@ -86,16 +86,17 @@
         </div>
       % }
       % if (@$branches || @$tags) {
+        <hr class="border-gray" style="border-bottom:none;margin-top:5px;margin-bottom:0px">
         <div class="broder-top-gray" style="padding-top:7px">
           % for my $branch (@$branches) {
-            <span style="padding-left:5px">
-              <i class="icon-share-alt"></i><a href="<%= url_for("/$user/$project/commit/$branch") %>"><%= $branch %></a>
+            <span style="padding-left:5px;">
+              <i class="icon-share-alt" style="padding-right:1px"></i><a href="<%= url_for("/$user/$project/tree/$branch") %>"><%= $branch %></a>
             </span>
           % }
           
           % for my $tag (@$tags) {
             <span style="padding-left:5px">
-              <i class="icon-tag"></i><a href="<%= url_for("/$user/$project/commit/$tag") %>"><%= $tag %></a>
+              <i class="icon-tag" style="padding-right:2px"></i><a href="<%= url_for("/$user/$project/tree/$tag") %>"><%= $tag %></a>
             </span>
           % }
         </div>

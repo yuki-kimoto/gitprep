@@ -161,6 +161,13 @@ note 'Commit page';
     $t->content_like(qr#refs/heads/b1#);
   }
   
+  note 'Branch and tag refernce';
+  {
+    $t->get_ok("/$user/$project/commit/6d71d9bc1ee3bd1c96a559109244c1fe745045de");
+    $t->content_like(qr/b2/);
+    $t->content_like(qr/t21/);
+    $t->content_unlike(qr/t21\^\{\}/);
+  }
   
 }
 
