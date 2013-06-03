@@ -9,7 +9,6 @@ use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use File::Path 'rmtree';
 use Encode qw/encode decode/;
-use Sys::Hostname 'hostname';
 
 use Test::Mojo;
 
@@ -319,8 +318,7 @@ note 'User Account Settings';
     $t->content_like(qr/first commit/);
     $t->content_like(qr/t2\.git/);
     $t->content_like(qr/README/);
-    my $host = quotemeta hostname;
-    $t->content_like(qr/kimoto1\@$host/);
+    $t->content_like(qr/kimoto1\@localhost/);
 
     # Settings page(don't has README)
     $t->get_ok('/kimoto1/t1/settings');
