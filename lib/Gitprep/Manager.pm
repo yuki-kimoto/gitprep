@@ -6,6 +6,7 @@ use Encode 'encode';
 use File::Copy qw/move copy/;
 use File::Path qw/mkpath rmtree/;
 use File::Temp ();
+use Sys::Hostname 'hostname';
 
 has 'app';
 
@@ -468,11 +469,14 @@ sub _create_rep {
         or croak "Can't execute git add";
       
       # Commit
+      my $host = hostname;
+      my $author = "$user <$user\@$host>";
       my @git_commit_cmd = $git->cmd_rep(
         $temp_work,
         "--work-tree=$temp_work",
         'commit',
         '-q',
+        "--author=$author",
         '-m',
         'first commit'
       );
