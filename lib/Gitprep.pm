@@ -11,7 +11,7 @@ use Gitprep::Manager;
 use Scalar::Util 'weaken';
 use Validator::Custom;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 has 'dbi';
 has 'git';
