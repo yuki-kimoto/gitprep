@@ -8,9 +8,6 @@
   my $errors;
   if ($op eq 'create') {
     
-    # Sleep to protect password atack
-    sleep 3 unless $ENV{GITPREP_TEST};
-    
     # Check existence admin user
     my $admin_user = app->manager->admin_user;
     if (defined $admin_user) { $errors = ['Admin user already exists.'] }
