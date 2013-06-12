@@ -200,6 +200,10 @@ If you have git, it is easy to install from git.
 It is useful to write configuration in ***gitprep.my.conf***
 , not gitprep.conf.
 
+## Web Site
+
+[GitPrep Web Site](http://perlcodesample.sakura.ne.jp/gitprep-site/)
+
 ## Copyright & license
 
 Copyright 2013-2013 Yuki Kimoto all rights reserved.
