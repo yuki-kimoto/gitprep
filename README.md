@@ -4,11 +4,6 @@ Github clone. you can install portable github system into unix/linux.
 
 <img src="http://cdn-ak.f.st-hatena.com/images/fotolife/p/perlcodesample/20130421/20130421180903_original.png" width="850">
 
-# Caution
-
-**This application is alpha relese.**
-**Features will be changed without warnings.**
-
 # Features
 
 * Github clone
