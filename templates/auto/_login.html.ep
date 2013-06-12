@@ -48,21 +48,29 @@
         => {copy => 0},
         => [
           $password_check
-        ]
+        ],
+      save => {require => 0} => [
+        'defined'
+      ]
     ];
     my $vresult = $self->app->validator->validate($params, $rule);
     
     if ($vresult->is_ok) {
       
       # Login success
-      my $params = $vresult->data;
-      my $id = $params->{id};
-      my $password = $params->{password};
+      my $safe_params = $vresult->data;
+      my $id = $safe_params->{id};
+      my $password = $safe_params ->{password};
       my $row = $self->app->dbi->model('user')->select(['admin', 'password'], id => $id)->one;
       my $password_encrypted = $row->{password};
       my $admin = $row->{admin};
       session(user => $id);
       session(password => $password_encrypted);
+      
+      if ($safe_params->{save}) {
+        # 2 weeks save
+        session(expires => time + 60 * 60 * 24 * 14);
+      }
       
       # Go to admin page
       if ($admin) {
@@ -126,6 +134,11 @@
           <div class="controls">
             <%= password_field 'password', id => 'input-password', placeholder => 'Password' %>
           </div>
+        </div>
+        <div class="control-group">
+          <label class="checkbox">
+            <input type="checkbox" name="save" value="1"> Save
+          </label>
         </div>
         <div class="control-group">
           <div class="controls">
