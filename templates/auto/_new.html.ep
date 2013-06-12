@@ -76,7 +76,7 @@
   }
 %>
 
-% layout 'common';
+% layout 'common', title => 'Create a New Repository';
 
   %= include '/include/header';
   

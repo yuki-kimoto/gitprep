@@ -31,7 +31,7 @@
   );
 %>
 
-% layout 'common';
+% layout 'common', title => "$project/$dir at $rev \x{30fb} $user/$project";
   
   %= include '/include/header';
 

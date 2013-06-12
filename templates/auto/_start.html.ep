@@ -56,7 +56,7 @@
   }
 %>
 
-% layout 'common';
+% layout 'common', title => 'Start page';
 
   %= include '/include/header';
 

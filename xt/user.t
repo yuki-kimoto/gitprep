@@ -260,7 +260,7 @@ note 'Reset password';
   $t->get_ok('/')->content_like(qr/kimoto1/);
 }
 
-note 'User Account Settings';
+note 'Profile';
 {
   unlink $db_file;
   rmtree $rep_home;
@@ -285,9 +285,9 @@ note 'User Account Settings';
   # Login as kimoto1
   $t->post_ok('/_login?op=login', form => {id => 'kimoto1', password => 'a'});
 
-  # User account settings
+  # Profile
   $t->get_ok('/kimoto1/_settings');
-  $t->content_like(qr/User Account Settings/);
+  $t->content_like(qr/Profile/);
   
   # Other user can't access
   $t->get_ok('/kimoto2/_settings');

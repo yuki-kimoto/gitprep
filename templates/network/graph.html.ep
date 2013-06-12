@@ -47,7 +47,7 @@
   }
 %>
 
-% layout 'common';
+% layout 'common', title => "Network Graph $user/$project/$branch...$rev2_abs";
   %= include 'include/header';
   
   %= javascript begin

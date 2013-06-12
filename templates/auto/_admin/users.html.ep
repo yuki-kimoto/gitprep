@@ -45,7 +45,7 @@
   my $users = app->manager->users;
 %>
 
-% layout 'common';
+% layout 'common', title => 'Admin Users';
 
   %= javascript begin
     $(document).ready(function () {

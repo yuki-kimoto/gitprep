@@ -73,7 +73,7 @@
   stash(rev => $base_branch_name);
 %>
 
-% layout 'common';
+% layout 'common', title => "branches  \x{30fb} $user/$project";
 
   %= javascript begin
     $('document').ready(function () {

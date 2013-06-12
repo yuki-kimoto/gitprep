@@ -79,7 +79,7 @@
   }
 %>
 
-% layout 'common';
+% layout 'common', title => 'Sign in';
 
   <!-- Login Page -->
   

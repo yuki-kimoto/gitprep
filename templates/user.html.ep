@@ -24,7 +24,7 @@
   }
 %>
 
-% layout 'common';
+% layout 'common', title => $user;
   %= include '/include/header', title => 'Repositories';
 
   <div class="container">

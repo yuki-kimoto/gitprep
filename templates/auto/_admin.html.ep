@@ -1,4 +1,4 @@
-% layout 'common';
+% layout 'common', title => 'Admin';
   
   %= include '/include/header';
   <div class="container" style="min-heigth:500px">

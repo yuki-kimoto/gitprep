@@ -54,7 +54,7 @@
   }
 %>
 
-% layout 'common';
+% layout 'common', title => 'Create User';
 
   %= include '/include/header';
 

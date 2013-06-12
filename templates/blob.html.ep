@@ -34,8 +34,10 @@
   stash(id => $rev, project => $project, rev => $rev);
 %>
 
-% layout 'common' , stylesheets => ['/js/google-code-prettify/prettify.css'];
+<% layout 'common' , title => "$project/$file at $rev \x{30fb} $user/$project",
+     stylesheets => ['/js/google-code-prettify/prettify.css']; %>
 
+%
   %= include '/include/header';
 
   <div class="container">

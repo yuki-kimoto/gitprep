@@ -14,7 +14,7 @@
   }
 %>
 
-% layout 'common';
+% layout 'common', title => 'Your Profile';
   
   %= include '/include/header';
   
@@ -24,11 +24,14 @@
       /
       <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
     </ul>
-    <h4>
-      User Account Settings
-    </h4>
-    <div style="margin-bottom:30px">
-      <a class="btn" href="<%= url_for("/reset-password")->query(user => $user) %>">Reset Password</a>
+    <div class="border-gray bk-gray-light" style="padding:5px;font-weight:bold;font-size:17px">
+      Profile
+    </div>
+    <div class="border-gray" style="margin-bottom:30px;border-top:none;padding:10px">
+      <div style="margin-bottom:10px;font-size:15px">
+        <b>ID</b>: <%= $user %>
+      </div>
+      <a class="btn btn-small" href="<%= url_for("/reset-password")->query(user => $user) %>">Reset Password</a>
     </div>
   </div>
   

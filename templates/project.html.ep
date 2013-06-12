@@ -54,7 +54,7 @@
     . ($ssh_port ? ":$ssh_port" : '') . "$rep_home/$user/$project.git";
 %>
 
-% layout 'common';
+% layout 'common', title => "$user/$project";
 
   % my $logined = $api->logined;
 

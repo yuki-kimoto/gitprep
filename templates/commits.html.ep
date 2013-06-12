@@ -37,7 +37,7 @@
   stash(user => $user, project => $project, rev => $rev);
 %>
 
-% layout 'common';
+% layout 'common', title => "Commit History \x{30fb} $user/$project";
   
   %= include '/include/header';
 

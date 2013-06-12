@@ -23,7 +23,7 @@
   my $tags_count = $git->tags_count($user, $project);
 %>
 
-% layout 'common';
+% layout 'common', title => "Tags \x{30fb} $user/$project";
   
   %= include '/include/header';
 
