@@ -115,14 +115,18 @@
       </li>
     % }
     <li class="<%= $display eq 'files' ? 'active' : '' %>">
-      % if ($rev eq $default_branch_name) {
+      % if ($display eq 'tags' || $rev eq $default_branch_name) {
         <a href="<%= url_for("/$user/$project") %>">Files</a>
       % } else {
         <a href="<%= url_for("/$user/$project/tree/$rev") %>">Files</a>
       % }
     </li>
     <li class="<%= $display eq 'commits' ? 'active' : '' %>">
-      <a href="<%= url_for("/$user/$project/commits/$rev") %>">Commits</a>
+      % if (length $rev) {
+        <a href="<%= url_for("/$user/$project/commits/$rev") %>">Commits</a>
+      % } else {
+        <a href="<%= url_for("/$user/$project/commits/$default_branch_name") %>">Commits</a>
+      % }
     </li>
     <li class="<%= $display eq 'branches' ? 'active' : '' %>">
       <a href="<%= url_for("/$user/$project/branches") %>">
