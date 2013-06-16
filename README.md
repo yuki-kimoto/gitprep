@@ -204,7 +204,7 @@ It is useful to write configuration in ***gitprep.my.conf***
 
 [GitPrep Web Site](http://perlcodesample.sakura.ne.jp/gitprep-site/)
 
-## Internally Using Project
+## Internally Using Library
 
 * [Config::Tiny](http://search.cpan.org/dist/Config-Tiny/lib/Config/Tiny.pm)
 * [DBD::SQLite](http://search.cpan.org/dist/DBD-SQLite/lib/DBD/SQLite.pm)
