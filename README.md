@@ -145,17 +145,13 @@ You can stop application by **--stop** option.
 
 ### Operation by root user
 
-If you want to do operation by root user,
-you must do some configuration for security.
+You can operation application by root user.
 
-You add **user** and **group** to **hypnotoad** section
-in **gitprep.conf** not to execute application by root user
-for security.
+  su -
 
-    [hypnotoad]
-    ...
-    user=gitprep
-    group=gitprep
+you must setsid to user for security.
+
+  su - gitprep -c "chmod u+s /home/gitprep/gitprep/gitprep"
 
 Start application
 
