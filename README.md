@@ -149,22 +149,22 @@ You can operation application from root user.
 
 Start application
 
-    sudo -u webdbviewer /home/webdbviewer/webdbviewer/webdbviewer
+    sudo -u gitprep /home/gitprep/gitprep/gitprep
 
 Stop application
 
-    sudo -u webdbviewer /home/webdbviewer/webdbviewer/webdbviewer --stop
+    sudo -u gitprep /home/gitprep/gitprep/gitprep --stop
 
 If you want to start application when os start,
 add the start application command to **rc.local**(Linux).
 
-If you want to make easy to manage webdbviewer,
+If you want to make easy to manage gitprep,
 Let's create run script.
     
     mkdir -p /webapp
-    echo '#!/bin/sh' > /webapp/webdbviewer
-    echo 'sudo -u webdbviewer /home/webdbviewer/webdbviewer/webdbviewer $*' >> /webapp/webdbviewer
-    chmod 755 /webapp/webdbviewer
+    echo '#!/bin/sh' > /webapp/gitprep
+    echo 'sudo -u gitprep /home/gitprep/gitprep/gitprep $*' >> /webapp/gitprep
+    chmod 755 /webapp/gitprep
 
 You can start and stop application the following command.
     
