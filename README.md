@@ -143,33 +143,28 @@ You can stop application by **--stop** option.
 
     ./gitprep --stop
 
-### Operation by root user
+### Operation from root user
 
-You can operation application by root user.
-
-    su -
-
-you must setsid to user for security.
-
-    su - gitprep -c "chmod u+s /home/gitprep/gitprep/gitprep"
+You can operation application from root user.
 
 Start application
 
-    /home/gitprep/gitprep/gitprep
+    sudo -u webdbviewer /home/webdbviewer/webdbviewer/webdbviewer
 
 Stop application
 
-    /home/gitprep/gitprep/gitprep --stop
+    sudo -u webdbviewer /home/webdbviewer/webdbviewer/webdbviewer --stop
 
 If you want to start application when os start,
-add the application start command to **rc.local** file(Linux).
+add the start application command to **rc.local**(Linux).
 
-If you want to make easy to manage gitprep,
-Let's create run script in webapp directory.
+If you want to make easy to manage webdbviewer,
+Let's create run script.
     
     mkdir -p /webapp
-    /home/gitprep/gitprep/create_run_script > /webapp/gitprep
-    chmod 755 /webapp/gitprep
+    echo '#!/bin/sh' > /webapp/webdbviewer
+    echo 'sudo -u webdbviewer /home/webdbviewer/webdbviewer/webdbviewer $*' >> /webapp/webdbviewer
+    chmod 755 /webapp/webdbviewer
 
 You can start and stop application the following command.
     
