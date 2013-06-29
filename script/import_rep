@@ -1,0 +1,102 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use utf8;
+use FindBin;
+use lib "$FindBin::Bin/../mojo/lib";
+use lib "$FindBin::Bin/../lib";
+use lib "$FindBin::Bin/../extlib/lib/perl5";
+use Getopt::Long;
+use File::Basename 'basename';
+use Gitprep;
+use Encode 'decode';
+
+no warnings;
+my $app = Gitprep->new;
+my $dbi = $app->dbi;
+my $manager = $app->manager;
+my $git = $app->git;
+
+my $user;
+my $only_push;
+
+GetOptions(
+  'user=s' => \$user,
+);
+
+my $rep_dir = shift;
+
+# Check user
+my $user_row = $dbi->model('user')->select(id => $user)->one;
+die "User $user is not exists\n" unless $user_row;
+
+for my $rep (glob "$rep_dir/*") {
+
+  if (-d $rep && $rep =~ /\.git$/) {
+    my $project = basename $rep;
+    $project =~ s/\.git$//;
+    
+    my $project_row = $dbi->model('project')->select(id => [$user, $project])->one;
+    
+    # Create project
+    if ($project_row) {
+      warn "Repository $project Already exists : $@\n";
+    }
+    else {
+      eval {
+        $manager->create_project($user, $project);
+      };       
+      if ($@) {
+        warn "Can't creat repository $project: $@\n";
+      }
+      else {
+        warn "Create repository $project\n";
+      }
+    }
+    
+    # Copy description
+    my $description = do {
+      my $success = open my $fh, '<', "$rep/description";
+      
+      if ($success) {
+        local $/;
+        <$fh>
+      }
+      else {
+        '';
+      }
+    };
+    $description = decode('UTF-8', $description);
+    eval {$git->description($user, $project, $description) };
+    if ($@) {
+      warn "Can't update description $project\n";
+    }
+    
+    # Push repository
+    chdir $rep
+      or warn "Can't change directory $rep: $!\n";
+    my $remote_rep = "$FindBin::Bin/../data/rep/$user/$project.git";
+    my @cmd = ('git', 'push', '-u', $remote_rep, 'master');
+    system(@cmd) == 0
+      or warn "Can't push repository: @cmd";
+  }
+}
+
+=head1 NAME
+
+import_rep - create repositories
+
+=head1 USAGE
+
+  ./import_rep -u kimoto rep_dir
+
+rep_dir must contains git respoitories
+
+   rep_dir/project1.git
+          /project2.git
+          /project3.git
+          /project3.git
+
+If C<description> file exists in git repository, it is copied.
+
