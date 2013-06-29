@@ -20,12 +20,26 @@ my $git = $app->git;
 
 my $user;
 my $only_push;
+my $help;
 
 GetOptions(
   'user=s' => \$user,
+  'help=s' => \$help
 );
 
+my $usage = <<'EOS';
+Usage:
+
+  ./import_rep -u USER REPOSITORY_DIR
+
+Example:
+
+  ./import_rep -u kimoto reps
+EOS
+
+
 my $rep_dir = shift;
+die "$usage\n" if !defined $rep_dir || $help;
 
 # Check user
 my $user_row = $dbi->model('user')->select(id => $user)->one;
@@ -85,7 +99,7 @@ for my $rep (glob "$rep_dir/*") {
 
 =head1 NAME
 
-import_rep - create repositories
+import_rep - Import existing repositories into GitPrep.
 
 =head1 USAGE
 
