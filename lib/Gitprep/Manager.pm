@@ -406,9 +406,8 @@ sub _create_rep {
     # Git init
     {
       my @git_init_cmd = $git->cmd_rep($rep, 'init', '--bare');
-      open my $fh, "-|", @git_init_cmd
-        or croak  "Can't execute git init";
-      close $fh;
+      system(@git_init_cmd) == 0
+        or croak  "Can't execute git init --bare:@git_init_cmd";
     }
     
     # Add git-daemon-export-ok

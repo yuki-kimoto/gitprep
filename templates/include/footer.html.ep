@@ -1,6 +1,6 @@
 <hr style="margin-top:0;margin-bottom:10px">
 <div class="text-center" style="margin-bottom:10px">
-  <a href="https://github.com/yuki-kimoto/gitprep">Gitprep</a>
+  <a href="http://perlcodesample.sakura.ne.jp/gitprep-site">Gitprep</a>
 </div>
 
 % if (app->mode eq 'development') {
