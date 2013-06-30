@@ -208,6 +208,10 @@ It is useful to write configuration in ***gitprep.my.conf***
 * [Object::Simple](http://search.cpan.org/dist/Object-Simple/lib/Object/Simple.pm)
 * [Validator::Custom](http://search.cpan.org/dist/Validator-Custom/lib/Validator/Custom.pm)
 
+## Sister project
+
+* [WebDBViewer](https://github.com/yuki-kimoto/webdbviewer) - Database viewer to see database information on web browser.
+
 ## Copyright & license
 
 Copyright 2013-2013 Yuki Kimoto all rights reserved.
