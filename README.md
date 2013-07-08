@@ -1,6 +1,6 @@
 # GitPrep
 
-Github clone. you can install portable github system into unix/linux.
+Github clone. You can install portable github system into unix/linux.
 
 <img src="http://cdn-ak.f.st-hatena.com/images/fotolife/p/perlcodesample/20130421/20130421180903_original.png" width="850">
 
@@ -10,7 +10,7 @@ Github clone. you can install portable github system into unix/linux.
 * Portable. you can install it into your Unix/Linux server.
 * Perl 5.8.7+ only needed
 * CGI support
-* Having built-in web werver, Reverse proxy support
+* Having built-in web server, Reverse proxy support
 
 # Installation into Shared Server
 
@@ -21,11 +21,11 @@ Shared Server must support **Linux/Unix**, **Apache**, **SuExec**,
 because you don't need to think about permission.)
 
 Many shared server support these,
-so you will find sutable server easily.
+so you will find suitable server easily.
 
 ## Download
 
-You donwload gitprep.
+You download gitprep.
 
 https://github.com/yuki-kimoto/gitprep/archive/latest.zip
 
@@ -63,7 +63,7 @@ please set this CGI script permission to 755)
 
     http://(Your host name)/gitprep/setup/setup.cgi.
 
-Click Setup button once and wait abount 5 minutes.
+Click Setup button once and wait about 5 minutes.
 
 ## Go to application
 
@@ -72,9 +72,9 @@ If you see result, click "Go to Application".
 ## You see Internal Server Error
 
 If you see internal server error, you see gitprep/log/production.log.
-You know what error is happned.
+You know what error is happened.
 
-# Instllation into own Unix/Linux Server
+# Installation into own Unix/Linux Server
 
 GitPrep have own web server,
 so you can execute application very easily.
@@ -88,7 +88,7 @@ gcc4 and make program are needed.)
 
 ## Create gitprep user
 
-At first create **gitprep** user. This is not nesessary, but recommended.
+At first create **gitprep** user. This is not necessary, but recommended.
 
     useradd gitprep
     su - gitprep
@@ -96,7 +96,7 @@ At first create **gitprep** user. This is not nesessary, but recommended.
 
 ## Download
 
-Download tar.gz archive and exapand it and change directory. 
+Download tar.gz archive and expand it and change directory.
 
     curl -kL https://github.com/yuki-kimoto/gitprep/archive/latest.tar.gz > gitprep-latest.tar.gz
     tar xf gitprep-latest.tar.gz
@@ -105,7 +105,7 @@ Download tar.gz archive and exapand it and change directory.
 
 ## Setup
 
-You execute the following command. Needed moudles is installed.
+You execute the following command. Needed modules is installed.
 
     ./setup.sh
 
@@ -131,9 +131,9 @@ Application is run in background, port is **10020** by default.
     ./gitprep
 
 You can access the following URL.
-      
+
     http://localhost:10020
-    
+
 If you change port, edit gitprep.conf.
 If you can't access this port, you might change firewall setting.
 
@@ -155,25 +155,25 @@ Stop application
 
     sudo -u gitprep /home/gitprep/gitprep/gitprep --stop
 
-If you want to start application when os start,
+If you want to start application when OS start,
 add the start application command to **rc.local**(Linux).
 
 If you want to make easy to manage gitprep,
 Let's create run script.
-    
+
     mkdir -p /webapp
     echo '#!/bin/sh' > /webapp/gitprep
     echo 'sudo -u gitprep /home/gitprep/gitprep/gitprep $*' >> /webapp/gitprep
     chmod 755 /webapp/gitprep
 
 You can start and stop application the following command.
-    
+
     # Start or Restart
     /webapp/gitprep
-    
+
     # Stop
     /webapp/gitprep --stop
-    
+
 ## Developer
 
 If you are developer, you can start application development mode
@@ -181,15 +181,14 @@ If you are developer, you can start application development mode
     ./morbo
 
 You can access the following URL.
-      
+
     http://localhost:3000
 
 If you have git, it is easy to install from git.
 
     git clone git://github.com/yuki-kimoto/gitprep.git
 
-It is useful to write configuration in ***gitprep.my.conf***
-, not gitprep.conf.
+It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 
 ## Web Site
 
