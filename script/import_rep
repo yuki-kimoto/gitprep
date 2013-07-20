@@ -91,9 +91,20 @@ for my $rep (glob "$rep_dir/*") {
     chdir $rep
       or warn "Can't change directory $rep: $!\n";
     my $remote_rep = "$FindBin::Bin/../data/rep/$user/$project.git";
-    my @cmd = ('git', 'push', '-u', $remote_rep, 'master');
-    system(@cmd) == 0
-      or warn "Can't push repository: @cmd";
+    
+    # push branches
+    {
+      my @cmd = ('git', 'push', $remote_rep, '--all');
+      system(@cmd) == 0
+        or warn "Can't push branches: @cmd";
+    }
+    
+    # push tags
+    {
+      my @cmd = ('git', 'push', $remote_rep, '--tags');
+      system(@cmd) == 0
+        or warn "Can't push tags: @cmd";
+    }
   }
 }
 
