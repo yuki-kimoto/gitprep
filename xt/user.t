@@ -64,9 +64,9 @@ note 'Start page';
   $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'});
   $t->content_like(qr/Login Page/);
 
-  # Admin user already exists
+  # Admin user already exists(Redirect to top page)
   $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'});
-  $t->content_like(qr/Admin user already exists/);
+  $t->content_like(qr/Users/);
 }
 
 note 'Admin pages';
