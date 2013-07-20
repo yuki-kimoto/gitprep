@@ -1,7 +1,7 @@
 package Mojolicious::Plugin::AutoRoute;
 use Mojo::Base 'Mojolicious::Plugin';
 
-our $VERSION = '0.09';
+our $VERSION = '0.12';
 
 sub register {
   my ($self, $app, $conf) = @_;
@@ -25,6 +25,8 @@ sub register {
     
     return if $path =~ /\.\./;
     
+    $path =~ s/\/+$//;
+    
     my $found;
     for my $dir (@{$c->app->renderer->paths}) {
       if (-f "$dir/$top_dir/$path.html.ep") {
@@ -38,7 +40,11 @@ sub register {
   # Index
   $r->route('/')
     ->over($condition_name)
-    ->to(cb => sub { shift->render("/$top_dir/index", 'mojo.maybe' => 1) });
+    ->to(cb => sub {
+      my $self = shift;
+      $self->render("/$top_dir/index", 'mojo.maybe' => 1);
+      $self->stash('mojo.finished') ? undef : $self->render_not_found;
+    });
   
   # Route
   $r->route('/(*__auto_route_plugin_path)')
@@ -47,18 +53,15 @@ sub register {
       my $c = shift;
       
       my $path = $c->stash('__auto_route_plugin_path');
+      $path =~ s/\/+$//;
       
       $c->render("/$top_dir/$path", 'mojo.maybe' => 1);
+      $c->stash('mojo.finished') ? undef : $c->render_not_found;
     });
   
   # Finish rendering Helper
   $app->helper(finish_rendering => sub {
-    my $self = shift;
-    
-    $self->stash->{'mojo.routed'} = 1;
-    $self->rendered;
-    
-    return $self;
+    warn "finish_rendering is DEPRECATED. no more needed";
   });
 }
 
@@ -70,7 +73,7 @@ Mojolicious::Plugin::AutoRoute - Mojolicious Plugin to create routes automatical
 
 =head1 CAUTION
 
-B<This is beta release. Implementation will be changed without warnings>. 
+B<This is beta release and very experimental. Implementation will be changed without warnings>.
 
 =head1 SYNOPSIS
 
@@ -96,6 +99,37 @@ Routes corresponding to URL is created .
 If you like C<PHP>, this plugin is very good.
 You only put file into C<auto> directory.
 
+=head1 EXAMPLE
+
+  use Mojolicious::Lite;
+  
+  # AutoRoute
+  plugin 'AutoRoute';
+  
+  # Custom routes
+  get '/create/:id' => template '/create';
+  
+  @@ auto/index.html.ep
+  /
+  
+  @@ auto/foo.html.ep
+  /foo
+  
+  @@ auto/bar.html.ep
+  /bar
+  
+  @@ auto/foo/bar/baz.html.ep
+  /foo/bar/baz
+  
+  @@ auto/json.html.ep
+  <%
+    $self->render(json => {foo => 1});
+    return;
+  %>
+  
+  @@ create.html.ep
+  /create/<%= $id %>
+
 =head1 OPTIONS
 
 =head2 route
@@ -112,37 +146,21 @@ Default is C<$app->routes>.
 
 Top directory. default is C<auto>.
 
-=head1 METHODS
+=head1 FUNCTIONS
 
-L<Mojolicious::Plugin::AutoRoute> inherits all methods from
-L<Mojolicious::Plugin> and implements the following new ones.
+=head2 template(Mojolicious::Plugin::AutoRoute::Util)
 
-=head1 HELPER
+If you want to create custom route, use C<template> function.
 
-=head2 finish_rendering
+  use Mojolicious::Plugin::AutoRoute::Util 'template';
+  
+  # Mojolicious Lite
+  any '/foo' => template 'foo';
 
-You can render data, json, not found and exeption from template
-using C<finish_rendering> helper.
+  # Mojolicious
+  $r->any('/foo' => template 'foo');
 
-  @@ index.html.ep
-  $self->render(data => 'foo');
-  $self->finish_rendering;
-  return;
-
-  @@ index.html.ep
-  $self->render(json => {foo => 1});
-  $self->finish_rendering;
-  return;
-
-  @@ index.html.ep
-  $self->render_not_found;
-  $self->finish_rendering;
-  return;
-
-  @@ index.html.ep
-  $self->render_exception;
-  $self->finish_rendering;
-  return;
+C<template> is return callback to call C<render_maybe>.
 
 =head2 register
 

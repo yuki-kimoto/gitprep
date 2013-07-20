@@ -7,7 +7,6 @@
   # Authentication
   unless ($api->logined) {
     $self->redirect_to('/');
-    $self->finish_rendering;
     return;
   }
   
@@ -67,7 +66,6 @@
         }
         else {
           $self->redirect_to("/$user/$project");
-          $self->finish_rendering;
           return;
         }
       }

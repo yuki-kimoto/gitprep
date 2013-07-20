@@ -29,7 +29,6 @@
   my $type = $git->object_type($user, $project, "$rev^{}");
   if (!$type || $type eq 'blob') {
     $self->render_not_found;
-    $self->finish_rendering;
     return;
   }
   
@@ -59,7 +58,6 @@
   
   unless ($success) {
     $self->render_exeption;
-    $self->finish_rendering;
     return;
   }
   

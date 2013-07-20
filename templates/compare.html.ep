@@ -33,7 +33,6 @@
   
   if (!$start_commit || !$end_commit) {
     $self->render_not_found;
-    $self->finish_rendering;
     return;
   }
   

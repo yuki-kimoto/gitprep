@@ -26,7 +26,5 @@
   $self->res->headers->content_disposition($content_disposition);
   $self->res->headers->content_type($type);
   $self->render(data => $blob_raw);
-  $self->finish_rendering;
-  
   return;
 %>

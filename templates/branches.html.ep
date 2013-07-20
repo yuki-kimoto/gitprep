@@ -18,7 +18,6 @@
     # Forbbiden
     unless ($api->logined($user)) {
       $self->redirect_to('/');
-      $self->finish_rendering;
       return;    
     }
 
@@ -46,7 +45,6 @@
       else {
         $self->flash(message => "Branch $branch is deleted.");
         $self->redirect_to;
-        $self->finish_rendering;
         return;
       }
     }

@@ -9,7 +9,6 @@
   # Authentication
   unless ($api->logined($user)) {
     $self->redirect_to('/');
-    $self->finish_rendering;
     return;
   }
   
@@ -47,7 +46,6 @@
         else {
           flash(message => "Repository name is renamed to $to_project");
           $self->redirect_to("/$user/$to_project/settings");
-          $self->finish_rendering;
           return;
         }
       }
@@ -68,7 +66,6 @@
     else {
       flash(message => 'Description is saved.');
       $self->redirect_to('current');
-      $self->finish_rendering;
       return;
     }
   }
@@ -84,7 +81,6 @@
     else {
       flash(message => "Default branch is changed to $default_branch.");
       $self->redirect_to('current');
-      $self->finish_rendering;
       return;
     }
   }
@@ -103,7 +99,6 @@
     else {
       flash(message => "Repository $project is deleted.");
       $self->redirect_to("/$user");
-      $self->finish_rendering;
       return;
     }
   }

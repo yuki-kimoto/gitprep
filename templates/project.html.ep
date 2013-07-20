@@ -14,7 +14,6 @@
   
   unless (app->manager->exists_project($user, $project)) {
     $self->render_not_found;
-    $self->finish_rendering;
     return;
   }
 

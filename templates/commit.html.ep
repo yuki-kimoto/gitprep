@@ -15,7 +15,6 @@
   my $commit = $git->get_commit($user, $project, $rev);
   unless ($commit) {
     $self->render_not_found;
-    $self->finish_rendering;
     return;
   }
   my $author_date

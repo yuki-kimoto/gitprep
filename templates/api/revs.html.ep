@@ -23,6 +23,5 @@
       tag_names => \@tag_names
     }
   );
-  $self->finish_rendering;
   return;
 %>

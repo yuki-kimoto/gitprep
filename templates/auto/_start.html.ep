@@ -45,7 +45,6 @@
         # Redirect
         $self->flash(admin_user_created => 1);
         $self->redirect_to('/_login');
-        $self->finish_rendering;
         return;
       }
       else { $errors = $vresult->messages }

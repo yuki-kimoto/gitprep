@@ -10,14 +10,12 @@
   # Can fork?
   unless ($api->logined) {
     $self->redirect_to('/');
-    $self->finish_rendering;
     return;
   }
   
   # Repository is already exists
   if (app->manager->exists_project($current_user, $project)) {
     $self->redirect_to("/$current_user/$project");
-    $self->finish_rendering;
     return;
   }
   # Fork
@@ -31,7 +29,6 @@
       flash(message => "Repository is forked from /$user/$project.");
       $self->redirect_to("/$current_user/$project");
     }
-    $self->finish_rendering;
     return;
   }
 %>
