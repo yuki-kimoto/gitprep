@@ -11,6 +11,8 @@ Github clone. You can install portable github system into unix/linux.
 * Perl 5.8.7+ only needed
 * CGI support
 * Having built-in web server, Reverse proxy support
+* SSL support
+* IP control suppport
 
 # Installation into Shared Server
 
