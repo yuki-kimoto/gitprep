@@ -1,14 +1,14 @@
 # GitPrep
 
-Github clone. You can install portable github system into unix/linux.
+Github clone. You can install portable github system into Unix/Linux.
 
 <img src="http://cdn-ak.f.st-hatena.com/images/fotolife/p/perlcodesample/20130421/20130421180903_original.png" width="850">
 
 # Features
 
 * Github clone
-* Portable. you can install it into your Unix/Linux server.
-* Perl 5.8.7+ only needed
+* Portable. You can install it into your Unix/Linux server.
+* Only needs Perl 5.8.7+
 * CGI support
 * Having built-in web server, Reverse proxy support
 * SSL support
@@ -19,31 +19,31 @@ Github clone. You can install portable github system into unix/linux.
 Shared Server must support **Linux/Unix**, **Apache**, **SuExec**,
 **CGI**, and **PHP5(CGI mode)**.
 
-(PHP is not necessary, if PHP exists, install process is easy
-because you don't need to think about permission.)
+(PHP is not necessary, if PHP exists, the install process is easy
+because you do not need to think about permissions.)
 
-Many shared server support these,
-so you will find suitable server easily.
+Many shared servers support these,
+so you will be able to find a suitable server easily.
 
 ## Download
 
-You download gitprep.
+First you need to download gitprep.
 
 https://github.com/yuki-kimoto/gitprep/archive/latest.zip
 
-You expand zip file. You see the following directory.
+Expand the zip file. You will see the following directory.
 
     gitprep-latest
 
-Rename this gitprep-latest to gitprep.
+Rename the gitprep-latest directory to gitprep.
 
     gitprep-latest -> gitprep
 
 ## Configuration
 
-GitPrep need git command. you must install git by yourself.
+GitPrep needs the git command. You must install git by yourself.
 
-and you must add git command path into config file **gitprep.conf**
+You must add the correct git command path to the **gitprep.conf** config file.
 
     [basic]
     ;;; Git command path
@@ -71,18 +71,18 @@ Click Setup button once and wait about 5 minutes.
 
 If you see result, click "Go to Application".
 
-## You see Internal Server Error
+## Internal Server Error
 
-If you see internal server error, you see gitprep/log/production.log.
-You know what error is happened.
+If you receive an internal server error, look at the log file (gitprep/log/production.log)
+to see what the problem occurred.
 
 # Installation into own Unix/Linux Server
 
-GitPrep have own web server,
-so you can execute application very easily.
-This is much better than above way
-because you don't need to setup Apache environment,
-and performance is much much better.
+GitPrep has its own web server,
+so you can start using the application very easily.
+This is much better than the way shown above
+because you do not need to setup the Apache environment
+and performance will be much better.
 
 (You can also install GitPrep into Cygwin.
 If you want to install GitPrep into Cygwin,
@@ -90,7 +90,7 @@ gcc4 and make program are needed.)
 
 ## Create gitprep user
 
-At first create **gitprep** user. This is not necessary, but recommended.
+Create a **gitprep** user. This is not necessary, but recommended.
 
     useradd gitprep
     su - gitprep
@@ -98,7 +98,7 @@ At first create **gitprep** user. This is not necessary, but recommended.
 
 ## Download
 
-Download tar.gz archive and expand it and change directory.
+Download tar.gz archive, expand it and change directory.
 
     curl -kL https://github.com/yuki-kimoto/gitprep/archive/latest.tar.gz > gitprep-latest.tar.gz
     tar xf gitprep-latest.tar.gz
@@ -107,17 +107,17 @@ Download tar.gz archive and expand it and change directory.
 
 ## Setup
 
-You execute the following command. Needed modules is installed.
+To setup GitPrep, execute the following command. All of the needed modules will be installed.
 
     ./setup.sh
 
 ## Test
 
-Do test to check setup process is success or not.
+Run the test to check if the setup process was successful or not.
 
     prove t
 
-If "All tests successful" is shown, setup process is success.
+If "All tests successful" is shown, the setup process was successful.
 
 ## Configuration
 
@@ -127,48 +127,48 @@ Same as Shared Server's Configuration section.
 
 ### Start
 
-You can start application start.
-Application is run in background, port is **10020** by default.
+You can start the application by running the provided gitprep script.
+The application is run in the background and the port is **10020** by default.
 
     ./gitprep
 
-You can access the following URL.
+Then access the following URL.
 
     http://localhost:10020
 
-If you change port, edit gitprep.conf.
-If you can't access this port, you might change firewall setting.
+If you want to change the port, edit gitprep.conf.
+If you cannot access this port, you might change the firewall settings.
 
 ### Stop
 
-You can stop application by **--stop** option.
+You can stop the application by adding the **--stop** option.
 
     ./gitprep --stop
 
 ### Operation from root user
 
-You can operation application from root user.
+You can manage the application from the root user.
 
-Start application
+Start the application
 
     sudo -u gitprep /home/gitprep/gitprep/gitprep
 
-Stop application
+Stop the application
 
     sudo -u gitprep /home/gitprep/gitprep/gitprep --stop
 
-If you want to start application when OS start,
+If you want to start the application when the OS starts,
 add the start application command to **rc.local**(Linux).
 
-If you want to make easy to manage gitprep,
-Let's create run script.
+If you want to make it easy to manage gitprep,
+then create a run script.
 
     mkdir -p /webapp
     echo '#!/bin/sh' > /webapp/gitprep
     echo 'sudo -u gitprep /home/gitprep/gitprep/gitprep $*' >> /webapp/gitprep
     chmod 755 /webapp/gitprep
 
-You can start and stop application the following command.
+You can start and stop the application with the following command.
 
     # Start or Restart
     /webapp/gitprep
@@ -178,11 +178,11 @@ You can start and stop application the following command.
 
 ## Developer
 
-If you are developer, you can start application development mode
+If you are a developer, you can start the application in development mode.
 
     ./morbo
 
-You can access the following URL.
+Then access the following URL.
 
     http://localhost:3000
 
