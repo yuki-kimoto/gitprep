@@ -187,47 +187,41 @@
         <li><a href="#file-changed" data-toggle="tab">Files Changed</a></li>
       </ul>
 
-      <div class="tab-content">
-        <div class="tab-pane active" id="commits">
-          <div>
-            Showing <%= @$commits %> commits by <%= $authors_count %> author.
-          </div>
+      <div>
+        Showing <%= @$commits %> commits by <%= $authors_count %> author.
+      </div>
 
-          % for my $date (reverse sort keys %$commits_date) {
-            % my $commits = $commits_date->{$date};
-            
-            <div class="bk-gray-light border-gray" style="padding:5px;">
-              <%= $date %>
-            </div>
-            
-            <div style="margin-bottom:20px">
-              % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
-                <div class="border-gray" style="padding:5px;border-top:none">
-                  <div class="row">
-                    <div class="span2">
-                      <span title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>
-                    </div>
-                    <div class="span7">
-                      <a style="color:#333" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                        <%= $commit->{title_short} %>
-                      </a>
-                    </div>
-                    <div class="span2 text-right" style="margin-left:80px">
-                      <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                        <%= substr($commit->{id}, 0, 7) %>
-                      </a>
-                    </div>
-                  </div>
+      % for my $date (reverse sort keys %$commits_date) {
+        % my $commits = $commits_date->{$date};
+        
+        <div class="bk-gray-light border-gray" style="padding:5px;">
+          <%= $date %>
+        </div>
+        
+        <div style="margin-bottom:20px">
+          % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
+            <div class="border-gray" style="padding:5px;border-top:none">
+              <div class="row">
+                <div class="span2">
+                  <span title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>
                 </div>
-              % }
+                <div class="span7">
+                  <a style="color:#333" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                    <%= $commit->{title_short} %>
+                  </a>
+                </div>
+                <div class="span2 text-right" style="margin-left:80px">
+                  <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                    <%= substr($commit->{id}, 0, 7) %>
+                  </a>
+                </div>
+              </div>
             </div>
           % }
         </div>
-        
-        <div class="tab-pane" id="file-changed">
-          %= include '/include/commit_body';
-        </div>
-      </div>
+      % }
+    
+      %= include '/include/commit_body';
     % } else {
       <div class="well" style="padding:35px">
         <div class="text-center" style="margin-bottom:15px"><b>There isn't anything to compare.</b></div>
