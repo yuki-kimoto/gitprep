@@ -179,7 +179,6 @@ sub blame {
   my $blame_lines = [];
   my $blame_line;
   while (my $line = $self->_dec(scalar <$fh>)) {
-    warn $line;
     chomp $line;
     
     if ($blame_line) {
@@ -188,6 +187,11 @@ sub blame {
       }
       elsif ($line =~ /^author-mail +(.+)/) {
         $blame_line->{author_mail} = $1;
+      }
+      elsif ($line =~ /^author-time +(.+)/) {
+        my $author_time = $1;
+        my $author_age_string_date = $self->_age_string_date($author_time);
+        $blame_line->{author_age_string_date} = $author_age_string_date;
       }
       elsif ($line =~ /^summary +(.+)/) {
         $blame_line->{summary} = $1;
@@ -203,7 +207,7 @@ sub blame {
     elsif ($line =~ /^([a-fA-F0-9]{40}) +\d+ +(\d+)/) {
       $blame_line = {};
       $blame_line->{commit} = $1;
-      $blame_line->{line} = $2;
+      $blame_line->{number} = $2;
       if ($blame_lines->[-1]
         && $blame_lines->[-1]{commit} eq $blame_line->{commit})
       {
@@ -213,6 +217,15 @@ sub blame {
   }
   
   return $blame_lines;
+}
+
+sub _age_string_date {
+  my ($self, $age) = @_;
+
+  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($age);
+  my $age_string_date = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
+  
+  return $age_string_date;
 }
 
 sub blob {

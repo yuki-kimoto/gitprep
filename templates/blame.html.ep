@@ -28,7 +28,7 @@
   my $mime_type = $git->blob_mime_type($user, $project, $rev, $file);
 
   # Blame
-  my $lines = $git->blame($user, $project, $rev, $file);
+  my $blame_lines = $git->blame($user, $project, $rev, $file);
 
   # Variables for included template
   stash(id => $rev, project => $project, rev => $rev);
@@ -36,7 +36,6 @@
 
 % layout 'common' , title => "$project/$file at $rev \x{30fb} $user/$project";
 
-%
   %= include '/include/header';
 
   <div class="container">
@@ -57,45 +56,54 @@
       </div>
     </div>
 
-    <div class="border-gray bk-gray-light" style="padding:5px">
+    <div class="border-gray bk-gray-light" style="padding:5px; border-bottom:none">
       <div class="row">
         <div class="span7" style="padding-top:5px">
           <i class="icon-file icon-white"></i>
           <%= $file_type %>
           <span class="muted">|</span>
-          <%= @$lines %> lines
+          <%= @$blame_lines %> lines
           <span class="muted">|</span>
           <%= $file_size %>kb
         </div>
         <div class="text-right">
-          <a class="btn" href="<%= url_for("/$user/$project/raw/$rev/$file") %>">Raw</a>
-          <a class="btn" href="<%= url_for("/$user/$project/blame/$rev/$file") %>">Normal View</a>
-          <a class="btn" href="<%= url_for("/$user/$project/commits/$rev/$file") %>">History</a>
+          <a class="btn" href="<%= url_for("/$user/$project/raw/$rev/$file") %>">Raw</a><a class="btn" href="<%= url_for("/$user/$project/blob/$rev/$file") %>">Normal View</a><a class="btn" href="<%= url_for("/$user/$project/commits/$rev/$file") %>">History</a>
         </div>
       </div>
     </div>
-    % if ($mime_type =~ m#^image/#) {
-      <div style="background:#ddd;text-align:center;padding-top:30px;padding-bottom:30px;margin-bottom:30px">
-        <img type="<%= $mime_type %>
-          % if (defined $file) {
-            alt="<%= $file %>" title="<%= $file %>"
-          % }
-          src="<%= url_for("/$user/$project/raw/$rev/$file") %>"
-        />
-      </div>
-    % } elsif ($mime_type =~ m#^text/#) {
-      <pre class="prettyprint linenums"><% for my $line (@$lines) { %><%= "$line\n" %><% } %></pre>
-    % } else {
-      <div style="font-size:16px;background:#ddd;text-align:center;padding-top:30px;padding-bottom:30px;margin-bottom:30px">
-        <a href="<%= url_for("/$user/$project/raw/$rev/$file") %>">View raw</a>
-      </div>
-    % }
+    <div class="border-gray" style="width:938px;overflow-x:scroll;border-top:none">
+      <table>
+        % for my $line (@$blame_lines) {
+          % my $blame_commit = $line->{commit};
+          % my $summary = $line->{summary};
+          % my $summary_short= length $summary > 28 ? substr($summary, 0, 28) . '...' : $summary;
+          <tr>
+            % if ($line->{before_same_commit}) {
+              <td nowrap class="border-gray" style="padding:5px 10px; background:#f7f7f7;vertical-align:middle;border-left:none;border-top:none" >
+              </td>
+            % } else {
+              <td nowrap class="border-gray" style="padding:5px 10px; background:#f7f7f7;vertical-align:middle;border-left:none;border-bottom:none" >
+                  <div style="margin-bottom:0;padding-botttom:0">
+                    <a href="<%= url_for("/$user/$project/commit/$blame_commit") %>" ><%= substr($blame_commit, 0, 8) %></a>
+                    <a href="<%= url_for("/$user/$project/blame/$blame_commit/$file") %>" >»</a>
+                    <span title="<%= $line->{author_mail} %>"><%= $line->{author} %></span>
+                  </div>
+                  <div style="margin-top:0;padding-top:0">
+                    <%= $line->{author_age_string_date} %>
+                    <%= $summary_short %>
+                  </div>
+              </td>
+            % }
+            <td nowrap class="border-gray" style="padding:5px 10px;color:gray;font-size:12px;vertical-align:middle;">
+              <%= $line->{number} %>
+            </td>
+            <td nowrap class="border-gray" style="padding:5px 10px;vertical-align:middle;white-space: nowrap;border-right:none">
+              <pre style="border:none;background:white;margin:0;padding:0;white-space: nowrap;"><%= $line->{content} %></pre>
+            </td>
+          </tr>
+        % }
+      </table>
+    </div>
   </div>
-  
-  %= javascript '/js/google-code-prettify/prettify.js';
-  %= javascript begin
-    // Google prety print
-    prettyPrint();
-  % end
   
   %= include '/include/footer';
