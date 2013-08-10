@@ -28,13 +28,30 @@
   my $mime_type = $git->blob_mime_type($user, $project, $rev, $file);
 
   # Blame
-  my $blame_lines = $git->blame($user, $project, $rev, $file);
-
+  my $blame = $git->blame($user, $project, $rev, $file);
+  my $blame_lines = $blame->{lines};
+  my $blame_min_author_time = $blame->{min_author_time};
+  my $blame_max_author_time = $blame->{max_author_time};
+  
+  # Color
+  my $colors = [
+    '#ffeca7',
+    '#ffdd8c',
+    '#ffdd7c',
+    '#fba447',
+    '#f68736',
+    '#f37636',
+    '#ca6632',
+    '#c0513f',
+    '#a2503a',
+    '#793738'
+  ];
+  
   # Variables for included template
   stash(id => $rev, project => $project, rev => $rev);
 %>
 
-% layout 'common' , title => "$project/$file at $rev \x{30fb} $user/$project";
+% layout 'common' , title => "$user/$project at $rev";
 
   %= include '/include/header';
 
@@ -42,20 +59,13 @@
     %= include '/include/project_header';
     %= include '/include/code_menu', display => 'files';
     %= include '/include/page_path', type => 'blob', Path => $file;
-        
-    <div class="border-gray" style="margin-bottom:20px">
-      <div class="bk-blue-light" style="padding:5px">
-        <a style="color:#333;font-weight:bold" href="#" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></a>
-        <span class="muted" title="<%= $commit->{age_string_datetime} %>"><%= $commit->{age_string} %></span>
-        <a style="color:#666" href="<%= url_for("/$user/$project/commit/$rev") %>">
-          <%= $commit->{title} %>
-        </a>
-      </div>
-      <div style="padding:5px">
-        <b><%= @$authors %></b> <span class="muted">contributor</span>
-      </div>
+    <div class="text-right" style="margin-bottom:10px">
+      Newer
+      % for my $color (@$colors) {
+        <span style="font-size:20px;color:<%= $color %>">■</span>
+      % }
+      Older
     </div>
-
     <div class="border-gray bk-gray-light" style="padding:5px; border-bottom:none">
       <div class="row">
         <div class="span7" style="padding-top:5px">
@@ -77,12 +87,16 @@
           % my $blame_commit = $line->{commit};
           % my $summary = $line->{summary};
           % my $summary_short= length $summary > 28 ? substr($summary, 0, 28) . '...' : $summary;
+          % my $time_rate = ($blame_max_author_time - $line->{author_time}) / ($blame_max_author_time - $blame_min_author_time);
+          % my $color_number = int($time_rate * 10);
+          % $color_number = 9 if $color_number == 10;
+          % my $hot_color = $colors->[$color_number];
           <tr>
             % if ($line->{before_same_commit}) {
-              <td nowrap class="border-gray" style="padding:5px 10px; background:#f7f7f7;vertical-align:middle;border-left:none;border-top:none" >
+              <td nowrap class="border-gray" style="padding:5px 10px; background:#f7f7f7;vertical-align:middle;border-left:none;border-top:none;border-right:2px solid <%= $hot_color %>" >
               </td>
             % } else {
-              <td nowrap class="border-gray" style="padding:5px 10px; background:#f7f7f7;vertical-align:middle;border-left:none;border-bottom:none" >
+              <td nowrap class="border-gray" style="padding:5px 10px; background:#f7f7f7;vertical-align:middle;border-left:none;border-bottom:none;border-right:2px solid <%= $hot_color %>" >
                   <div style="margin-bottom:0;padding-botttom:0">
                     <a href="<%= url_for("/$user/$project/commit/$blame_commit") %>" ><%= substr($blame_commit, 0, 8) %></a>
                     <a href="<%= url_for("/$user/$project/blame/$blame_commit/$file") %>" >»</a>

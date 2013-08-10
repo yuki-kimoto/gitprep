@@ -178,6 +178,8 @@ sub blame {
   # Format lines
   my $blame_lines = [];
   my $blame_line;
+  my $max_author_time;
+  my $min_author_time;
   while (my $line = $self->_dec(scalar <$fh>)) {
     chomp $line;
     
@@ -190,6 +192,9 @@ sub blame {
       }
       elsif ($line =~ /^author-time +(.+)/) {
         my $author_time = $1;
+        $blame_line->{author_time} = $author_time;
+        $max_author_time = $author_time if !$max_author_time || $author_time > $max_author_time;
+        $min_author_time = $author_time if !$min_author_time || $author_time < $min_author_time;
         my $author_age_string_date = $self->_age_string_date($author_time);
         $blame_line->{author_age_string_date} = $author_age_string_date;
       }
@@ -216,7 +221,13 @@ sub blame {
     }
   }
   
-  return $blame_lines;
+  my $blame = {
+    lines => $blame_lines,
+    max_author_time => $max_author_time,
+    min_author_time => $min_author_time
+  };
+  
+  return $blame;
 }
 
 sub _age_string_date {
