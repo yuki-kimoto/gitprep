@@ -54,7 +54,8 @@
 % layout 'common' , title => "$user/$project at $rev";
 
   %= include '/include/header';
-
+  
+  <!-- Blame page -->
   <div class="container">
     %= include '/include/project_header';
     %= include '/include/code_menu', display => 'files';
@@ -82,7 +83,7 @@
       </div>
     </div>
     <div class="border-gray" style="width:938px;overflow-x:scroll;border-top:none">
-      <table>
+      <table style="min-width:938px">
         % for my $line (@$blame_lines) {
           % my $blame_commit = $line->{commit};
           % my $summary = $line->{summary};
@@ -91,9 +92,9 @@
           % my $color_number = int($time_rate * 10);
           % $color_number = 9 if $color_number == 10;
           % my $hot_color = $colors->[$color_number];
-          <tr>
+          <tr id="L<%= $line->{number} %>">
             % if ($line->{before_same_commit}) {
-              <td nowrap class="border-gray" style="padding:5px 10px; background:#f7f7f7;vertical-align:middle;border-left:none;border-top:none;border-right:2px solid <%= $hot_color %>" >
+              <td nowrap class="border-gray" style="padding:5px 10px; background:#f7f7f7;vertical-align:middle;border-left:none;border-top:none;border-bottom:none;border-right:2px solid <%= $hot_color %>" >
               </td>
             % } else {
               <td nowrap class="border-gray" style="padding:5px 10px; background:#f7f7f7;vertical-align:middle;border-left:none;border-bottom:none;border-right:2px solid <%= $hot_color %>" >

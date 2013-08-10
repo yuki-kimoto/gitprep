@@ -416,3 +416,19 @@ note 'Compare';
   $t->content_like(qr/branch change/);
   $t->content_like(qr#http://foo5branch change#);
 }
+
+note 'blame';
+{
+  # Page access
+  $t->get_ok("/$user/$project/blame/3c617100f8e6d8ffe11d6c14ddf7b3646a198269/README");
+  $t->content_like(qr/Blame page/);
+  
+  # Commit link
+  $t->content_like(qr#/commit/0929b1a4ee79d0f104fd9ef7d6d410d501a273cf#);
+  
+  # Blame link
+  $t->content_like(qr#/blame/0929b1a4ee79d0f104fd9ef7d6d410d501a273cf/README#);
+  
+  # Lines
+  $t->content_like(qr#http://foo1#);
+}
