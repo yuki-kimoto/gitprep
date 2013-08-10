@@ -53,9 +53,6 @@
 
   %= javascript begin
     $(document).ready(function () {
-      $('#compare-tab a').on('click', function () {
-        $(this).tab('show');
-      });
       
       // Change base branch
       $('#base-branch-btn').on('click', function () {
@@ -181,11 +178,6 @@
     <hr style="margin-top:5px">
 
     % if (keys %$commits_date) {
-
-      <ul class="nav nav-tabs" id="compare-tab">
-        <li class="active"><a href="#commits" data-toggle="tab">Commits</a></li>
-        <li><a href="#file-changed" data-toggle="tab">Files Changed</a></li>
-      </ul>
 
       <div>
         Showing <%= @$commits %> commits by <%= $authors_count %> author.
