@@ -155,6 +155,92 @@ sub authors {
   return [sort keys %$authors];
 }
 
+sub blame {
+  my ($self, $user, $project, $rev, $file) = @_;
+  
+  # Blob
+  my $hash = $self->path_to_hash($user, $project, $rev, $file, 'blob')
+    or croak 'Cannot find file';
+  
+  # Git blame
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'blame',
+    '--line-porcelain',
+    $rev,
+    '--',
+    $file
+  );
+  open my $fh, '-|', @cmd
+    or croak "Can't git blame --line-porcelain";
+  
+  # Format lines
+  my $blame_lines = [];
+  my $blame_line;
+  while (my $line = $self->_dec(scalar <$fh>)) {
+    warn $line;
+    chomp $line;
+    
+    if ($blame_line) {
+      if ($line =~ /^author +(.+)/) {
+        $blame_line->{author} = $1;
+      }
+      elsif ($line =~ /^author-mail +(.+)/) {
+        $blame_line->{author_mail} = $1;
+      }
+      elsif ($line =~ /^summary +(.+)/) {
+        $blame_line->{summary} = $1;
+      }
+      elsif ($line =~ /^\t(.+)?/) {
+        my $content = $1;
+        $content = '' unless defined $content;
+        $blame_line->{content} = $content;
+        push @$blame_lines, $blame_line;
+        $blame_line = undef;
+      }
+    }
+    elsif ($line =~ /^([a-fA-F0-9]{40}) +\d+ +(\d+)/) {
+      $blame_line = {};
+      $blame_line->{commit} = $1;
+      $blame_line->{line} = $2;
+      if ($blame_lines->[-1]
+        && $blame_lines->[-1]{commit} eq $blame_line->{commit})
+      {
+        $blame_line->{before_same_commit} = 1;
+      }
+    }
+  }
+  
+  return $blame_lines;
+}
+
+sub blob {
+  my ($self, $user, $project, $rev, $file) = @_;
+  
+  # Blob
+  my $hash = $self->path_to_hash($user, $project, $rev, $file, 'blob')
+    or croak 'Cannot find file';
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'cat-file',
+    'blob',
+    $hash
+  );
+  open my $fh, '-|', @cmd
+    or croak "Can't cat $file, $hash";
+  
+  # Format lines
+  my $lines =[];
+  while (my $line = $self->_dec(scalar <$fh>)) {
+    chomp $line;
+    push @$lines, $line;
+  }
+  
+  return $lines;
+}
+
 sub blob_diffs {
   my ($self, $user, $project, $rev1, $rev2, $diff_trees) = @_;
   
@@ -238,32 +324,6 @@ sub blob_diffs {
   }
   
   return $blob_diffs;
-}
-
-sub blob {
-  my ($self, $user, $project, $rev, $file) = @_;
-  
-  # Blob
-  my $hash = $self->path_to_hash($user, $project, $rev, $file, 'blob')
-    or croak 'Cannot find file';
-  my @cmd = $self->cmd(
-    $user,
-    $project,
-    'cat-file',
-    'blob',
-    $hash
-  );
-  open my $fh, '-|', @cmd
-    or croak "Can't cat $file, $hash";
-  
-  # Format lines
-  my $lines =[];
-  while (my $line = $self->_dec(scalar <$fh>)) {
-    chomp $line;
-    push @$lines, $line;
-  }
-  
-  return $lines;
 }
 
 sub blob_is_image {

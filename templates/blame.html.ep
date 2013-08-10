@@ -17,25 +17,24 @@
   # Authors
   my $authors = $git->authors($user, $project, $rev, $file);
   
-  # Blob lines
-  my $lines = $git->blob($user, $project, $rev, $file);
-
   # File size
   my $file_size = $git->blob_size($user, $project, $rev, $file);
-  
+
   # File mode
   my $mode = $git->blob_mode($user, $project, $rev, $file);
   my $file_type = $git->file_type_long($mode);
-  
+
   # MIME type
   my $mime_type = $git->blob_mime_type($user, $project, $rev, $file);
+
+  # Blame
+  my $lines = $git->blame($user, $project, $rev, $file);
 
   # Variables for included template
   stash(id => $rev, project => $project, rev => $rev);
 %>
 
-<% layout 'common' , title => "$project/$file at $rev \x{30fb} $user/$project",
-     stylesheets => ['/js/google-code-prettify/prettify.css']; %>
+% layout 'common' , title => "$project/$file at $rev \x{30fb} $user/$project";
 
 %
   %= include '/include/header';
@@ -70,7 +69,7 @@
         </div>
         <div class="text-right">
           <a class="btn" href="<%= url_for("/$user/$project/raw/$rev/$file") %>">Raw</a>
-          <a class="btn" href="<%= url_for("/$user/$project/blame/$rev/$file") %>">Blame</a>
+          <a class="btn" href="<%= url_for("/$user/$project/blame/$rev/$file") %>">Normal View</a>
           <a class="btn" href="<%= url_for("/$user/$project/commits/$rev/$file") %>">History</a>
         </div>
       </div>

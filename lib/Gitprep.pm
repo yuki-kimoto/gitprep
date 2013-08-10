@@ -192,9 +192,12 @@ sub startup {
         
         # Blob
         $r->get('/blob/*rev_file' => template '/blob');
-        
+
         # Raw
         $r->get('/raw/*rev_file' => template '/raw');
+
+        # Blame
+        $r->get('/blame/*rev_file' => template '/blame');
         
         # Archive
         $r->get('/archive/(*rev).tar.gz' => template '/archive')->to(archive_type => 'tar');
