@@ -24,8 +24,8 @@
 
   %= javascript begin
     $(document).ready(function () {
-      // Update user and project hidden field
-      $('[name=remote-btn]').on('click', function () {
+      // Click compare button
+      $('[name=compare-btn]').on('click', function () {
         var branch = $('[name=branch]').val();
         var remote = $(this).closest('[name=remote]');
         var remote_member = remote.find('[name=remote-member]').text();
@@ -33,6 +33,18 @@
         var remote_branch = remote.find('[name=remote-branch]').val();
         
         location.href = '<%= url_for("/$user/$project/network/graph/") %>' + branch + '...'
+          + remote_member + '/' + remote_project + '/' + remote_branch;
+      });
+
+      // Click pull button
+      $('[name=pull-btn]').on('click', function () {
+        var branch = $('[name=branch]').val();
+        var remote = $(this).closest('[name=remote]');
+        var remote_member = remote.find('[name=remote-member]').text();
+        var remote_project = remote.find('[name=remote-project]').text();
+        var remote_branch = remote.find('[name=remote-branch]').val();
+        
+        location.href = '<%= url_for("/$user/$project/pull/") %>' + branch + '...'
           + remote_member + '/' + remote_project + '/' + remote_branch;
       });
     });
@@ -67,7 +79,8 @@
               %= select_field 'remote-branch' => $mbranches, style => 'margin-top:5px;margin-bottom:7px;width:150px';
             </div>
             <div class="text-right">
-              <button name="remote-btn" class="btn" style="margin-top:5px">Compare</button>
+              <button name="compare-btn" class="btn" style="margin-top:5px">Compare</button>
+              <button name="pull-btn" class="btn" style="margin-top:5px">Pull</button>
             </div>
           </div>
           <hr style="margin:0">
