@@ -11,6 +11,12 @@ use Gitprep::Manager;
 use Scalar::Util 'weaken';
 use Validator::Custom;
 
+# Digest::SHA loading to Mojo::Util if not loaded
+{
+  package Mojo::Util;
+  eval {require Digest::SHA; import Digest::SHA qw(sha1 sha1_hex)};
+}
+
 our $VERSION = '1.0';
 
 has 'dbi';
