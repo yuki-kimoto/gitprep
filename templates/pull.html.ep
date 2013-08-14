@@ -18,8 +18,35 @@
   
   %= javascript begin
     $('document').ready(function () {
-      // Scroll to right
-      $('#graph').scrollLeft(1000);
+      
+      // New button click
+      $('[name=new]').on('click', function () {
+        $('[name=branch_select]').val('');
+        $('[name=branch]').val('');
+        
+        return false;
+      });
+      
+      // Select branch
+      $('[name=branch_select]').on('change', function () {
+        var val = $(this).val();
+        if (val === '(New)') {
+          $('[name=branch]').val('');
+        }
+        else if (val === '(Same name)') {
+          $('[name=branch]').val($('[name=remote_branch]').val());
+        }
+        else {
+          $('[name=branch]').val($(this).val());
+        }
+      });
+      
+      // Select remote branch
+      $('[name=remote_branch]').on('change', function () {
+        if ($('[name=branch_select]').val() === '(Same name)') {
+          $('[name=branch]').val($(this).val());
+        }
+      });
     });
   % end
   
@@ -33,13 +60,12 @@
               %= "$user / $project";
             </div>
             % param(branch_select => $rev1);
-            %= select_field 'branch_select' => ['-' => '', @$branch_names];
+            %= select_field 'branch_select' => ['(New)', '(Same name)', @$branch_names];
             <div>
               % param(branch => $rev1);
               %= text_field 'branch';
             </div>
             %= submit_button 'Pull', style => "width:100px", class => "btn", ;
-            <button class="btn" style="width:100px">Clear</button>
           </div>
         </div>
         <div class="span2">
