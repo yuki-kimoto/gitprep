@@ -59,23 +59,35 @@
   
   <div class="container">
     <h3>Pull</h3>
-    <div class="row" style="font-size:22px">
-      <div class="span5">
-        <div class="well" style="text-align:center">
-          <span style="color:blue;"><%= "$user / $project / $branch" %></span>
+    <form action="<%= url_for->query(op => 'pull') %>" method="post">
+      <div class="row" style="font-size:22px">
+        <div class="span5">
+          <div class="well" style="text-align:center">
+            <div style="color:blue;margin-bottom:15px">
+              %= "$user / $project";
+            </div>
+            %= select_field 'local_branch_select';
+            <div>
+              %= text_field 'local_branch_input';
+            </div>
+            %= submit_button 'Pull', style => "width:100px";
+          </div>
+        </div>
+        <div class="span2">
+          <div style="padding: 19px;text-align:center;font-size:26px">
+            &lArr;
+          </div>
+        </div>
+        <div class="span5">
+          <div class="well" style="text-align:center">
+            <div style="color:green;margin-bottom:15px">
+              %= "$remote_user / $remote_project";
+            </div>
+            %= select_field 'remote_branch';
+          </div>
         </div>
       </div>
-      <div class="span2">
-        <div style="padding: 19px;text-align:center;font-size:26px">
-          &lArr;
-        </div>
-      </div>
-      <div class="span5">
-        <div class="well" style="text-align:center">
-          <span style="color:green;"><%= "$remote_user / $remote_project / $remote_branch" %></span>
-        </div>
-      </div>
-    </div>
+    </form>
   </div>
   
   %= include '/include/footer';
