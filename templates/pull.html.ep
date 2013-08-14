@@ -5,46 +5,12 @@
   my $rev2_abs = param('rev2_abs');
   my ($remote_user, $remote_project, $remote_branch) = split /\//, $rev2_abs, 3;
   
-  my $commits = app->git->get_commits($user, $project, $branch, 100);
-  my $remote_commits = app->git->get_commits(
-    $remote_user,
-    $remote_project,
-    $remote_branch,
-    100
-  );
-  
-  my $merged_commits_h = {};
-  for my $commit (@$commits) {
-    my $id = $commit->{id};
-    $merged_commits_h->{$id} ||= {};
-    $merged_commits_h->{$id}{age} = $commit->{age};
-    $merged_commits_h->{$id}{age_string_date} = $commit->{age_string_date};
-    $merged_commits_h->{$id}{title} = $commit->{title};
-    $merged_commits_h->{$id}{type} = 'local';
-  }
-  for my $commit (@$remote_commits) {
-    my $id = $commit->{id};
-    if ($merged_commits_h->{$id}) {
-      $merged_commits_h->{$id}{type} = 'same';
-    }
-    else {
-      $merged_commits_h->{$id} ||= {};
-      $merged_commits_h->{$id}{age} = $commit->{age};
-      $merged_commits_h->{$id}{age_string_date} = $commit->{age_string_date};
-      $merged_commits_h->{$id}{title} = $commit->{title};
-      $merged_commits_h->{$id}{type} = 'remote';
-    }
-  }
-  
-  my $merged_commits = [];
-  for my $id (
-    sort { $merged_commits_h->{$b}{age} <=> $merged_commits_h->{$a}{age}}
-    keys %$merged_commits_h)
-  {
-    my $commit = {%{$merged_commits_h->{$id}}};
-    $commit->{id} = $id;
-    push @$merged_commits, $commit;
-  }
+  # Branches
+  my $git = app->git;
+  my $branches = $git->branches($user, $project);
+  my $branch_names = [map { $_->{name} } @$branches];
+  my $remote_branches = $git->branches($remote_user, $remote_project);
+  my $remote_branch_names = [map { $_->{name} } @$remote_branches];
 %>
 
 % layout 'common', title => "Pull $user/$project/$branch...$rev2_abs";
@@ -66,11 +32,14 @@
             <div style="color:blue;margin-bottom:15px">
               %= "$user / $project";
             </div>
-            %= select_field 'local_branch_select';
+            % param(branch_select => $rev1);
+            %= select_field 'branch_select' => ['-' => '', @$branch_names];
             <div>
-              %= text_field 'local_branch_input';
+              % param(branch => $rev1);
+              %= text_field 'branch';
             </div>
-            %= submit_button 'Pull', style => "width:100px";
+            %= submit_button 'Pull', style => "width:100px", class => "btn", ;
+            <button class="btn" style="width:100px">Clear</button>
           </div>
         </div>
         <div class="span2">
@@ -83,7 +52,8 @@
             <div style="color:green;margin-bottom:15px">
               %= "$remote_user / $remote_project";
             </div>
-            %= select_field 'remote_branch';
+            % param(remote_branch => $remote_branch);
+            %= select_field 'remote_branch' => $remote_branch_names;
           </div>
         </div>
       </div>
