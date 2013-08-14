@@ -224,8 +224,8 @@ sub startup {
         # Network Graph
         $r->get('/network/graph/(*rev1)...(*rev2_abs)' => template '/network/graph');
 
-        # Pull
-        $r->get('/pull/(*rev1)...(*rev2_abs)' => template '/pull');
+        # Import branch
+        $r->any('/import-branch/(*rev1)...(*rev2_abs)' => template '/import-branch');
         
         # Get branches and tags
         $r->get('/api/revs' => template '/api/revs');

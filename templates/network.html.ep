@@ -36,15 +36,15 @@
           + remote_member + '/' + remote_project + '/' + remote_branch;
       });
 
-      // Click pull button
-      $('[name=pull-btn]').on('click', function () {
+      // Click import button
+      $('[name=import-btn]').on('click', function () {
         var branch = $('[name=branch]').val();
         var remote = $(this).closest('[name=remote]');
         var remote_member = remote.find('[name=remote-member]').text();
         var remote_project = remote.find('[name=remote-project]').text();
         var remote_branch = remote.find('[name=remote-branch]').val();
         
-        location.href = '<%= url_for("/$user/$project/pull/") %>' + branch + '...'
+        location.href = '<%= url_for("/$user/$project/import-branch/") %>' + branch + '...'
           + remote_member + '/' + remote_project + '/' + remote_branch;
       });
     });
@@ -80,7 +80,7 @@
             </div>
             <div class="text-right">
               <button name="compare-btn" class="btn" style="margin-top:5px">Compare</button>
-              <button name="pull-btn" class="btn" style="margin-top:5px">Pull</button>
+              <button name="import-btn" class="btn" style="margin-top:5px">Import</button>
             </div>
           </div>
           <hr style="margin:0">

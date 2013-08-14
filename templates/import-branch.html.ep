@@ -1,0 +1,129 @@
+<%
+  my $user = param('user');
+  my $project = param('project');
+  my $branch = param('rev1');
+  my $rev2_abs = param('rev2_abs');
+  my ($remote_user, $remote_project, $remote_branch) = split /\//, $rev2_abs, 3;
+  
+  # Branches
+  my $git = app->git;
+  my $branches = $git->branches($user, $project);
+  my $branch_names = [map { $_->{name} } @$branches];
+  my $remote_branches = $git->branches($remote_user, $remote_project);
+  my $remote_branch_names = [map { $_->{name} } @$remote_branches];
+  
+  my $op = param('op') || '';
+  my $errors;
+  if ($op eq 'pull' && lc $self->req->method eq 'post') {
+  
+    # Validation
+    my $api = gitprep_api;
+    my $params = $api->params;
+    my $rule = [
+      user => [
+        'user_name'
+      ],
+      project => [
+        'project_name'
+      ],
+      branch => [
+        'any'
+      ],
+      remote_user => [
+        'user_name'
+      ],
+      remote_project => [
+        'project_name'
+      ],
+      remote_branch => [
+        'any'
+      ]
+    ];
+    my $vresult = app->validator->validate($params, $rule);
+    
+    if ($vresult->is_ok) {
+      my $safe_params = $vresult->data;
+      
+      my $user = $safe_params->{user};
+      my $project = $safe_params->{project};
+      my $branch = $safe_params->{branch};
+      my $remote_user = $safe_params->{remote_user};
+      my $remote_project = $safe_params->{remote_project};
+      my $remote_branch = $safe_params->{remote_branch};
+      
+      $git->import_branch(
+        $user,
+        $project,
+        $branch,
+        $remote_user,
+        $remote_project,
+        $remote_branch
+      );
+    }
+    else {
+      $errors = ['Parameter is invalid'];
+    }
+  }
+%>
+
+% layout 'common', title => "Import branch";
+  %= include 'include/header';
+  
+  %= javascript begin
+    $('document').ready(function () {
+      
+      // Select remote branch
+      $('[name=copy-branch-name]').on('click', function () {
+        $('[name=branch]').val($('[name=remote_branch]').val());
+        return false;
+      });
+    });
+  % end
+  
+  <div class="container">
+    % if ($errors) {
+      <div class="alert alert-error">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        % for my $error (@$errors) {
+          <p><%= $error %></p>
+        % }
+      </div>
+    % }
+    <h3>Import branch</h3>
+    <form action="<%= url_for->query(op => 'import') %>" method="post">
+      <div class="row" style="font-size:22px">
+        <div class="span5">
+          <div class="well" style="text-align:center">
+            <div style="color:blue;margin-bottom:15px">
+              %= "$user / $project";
+            </div>
+            <div>
+              %= text_field 'branch';
+            </div>
+            <button name="copy-branch-name", class="btn">Copy Branch Name</button>
+            %= submit_button 'Import', style => "width:100px", class => "btn";
+          </div>
+        </div>
+        <div class="span2">
+          <div style="padding: 19px;text-align:center;font-size:26px">
+            &lArr;
+          </div>
+        </div>
+        <div class="span5">
+          <div class="well" style="text-align:center">
+            <div style="color:green;margin-bottom:15px">
+              %= "$remote_user / $remote_project";
+            </div>
+            % param(remote_branch => $remote_branch);
+            %= select_field 'remote_branch' => $remote_branch_names;
+          </div>
+        </div>
+      </div>
+      %= hidden_field user => $user;
+      %= hidden_field project => $user;
+      %= hidden_field remote_user => $remote_user;
+      %= hidden_field remote_project => $remote_project;
+    </form>
+  </div>
+  
+  %= include '/include/footer';

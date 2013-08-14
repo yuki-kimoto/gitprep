@@ -1405,6 +1405,28 @@ sub parse_ls_tree_line {
   return \%res;
 }
 
+sub import_branch {
+  my ($self, $user, $project, $branch, $remote_user, $remote_project, $remote_branch) = @_;
+  
+  # Git pull
+  my $remote_rep = $self->rep($remote_user, $remote_project);
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'fetch',
+    $remote_rep,
+    "refs/heads/$remote_branch:refs/heads/$branch"
+  );
+  open my $fh, '-|', @cmd
+    or croak 'Open git fetch failed';
+  
+  # Output
+  local $/ = "\0";
+  my $content = $self->_dec(scalar <$fh>);
+  warn $content;
+  close $fh or croak "Can't read git fetch result";
+}
+
 sub search_bin {
   my $self = shift;
   
@@ -1484,6 +1506,73 @@ sub snapshot_name {
   $name = "$name-$ver";
 
   return wantarray ? ($name, $name) : $name;
+}
+
+sub timestamp {
+  my ($self, $date) = @_;
+  
+  # Time stamp
+  my $strtime = $date->{rfc2822};
+  my $localtime_format = '(%02d:%02d %s)';
+  if ($date->{hour_local} < 6) { $localtime_format = '(%02d:%02d %s)' }
+  $strtime .= ' ' . sprintf(
+    $localtime_format,
+    $date->{hour_local},
+    $date->{minute_local},
+    $date->{tz_local}
+  );
+
+  return $strtime;
+}
+
+sub trees {
+  my ($self, $user, $project, $rev, $dir) = @_;
+  $dir = '' unless defined $dir;
+  
+  # Get tree
+  my $tid;
+  if (defined $dir && $dir ne '') {
+    $tid = $self->path_to_hash($user, $project, $rev, $dir, 'tree');
+  }
+  else {
+    my $commit = $self->get_commit($user, $project, $rev);
+    $tid = $commit->{tree};
+  }
+  my @entries = ();
+  my $show_sizes = 0;
+  my @cmd = $self->cmd(
+    $user,
+    $project,
+    'ls-tree',
+    '-z',
+    ($show_sizes ? '-l' : ()),
+    $tid
+  );
+  open my $fh, '-|', @cmd
+    or $self->croak('Open git-ls-tree failed');
+  {
+    local $/ = "\0";
+    @entries = map { chomp; $self->_dec($_) } <$fh>;
+  }
+  close $fh
+    or $self->croak(404, "Reading tree failed");
+
+  # Parse tree
+  my $trees;
+  for my $line (@entries) {
+    my $tree = $self->parse_ls_tree_line($line, -z => 1, -l => $show_sizes);
+    $tree->{mode_str} = $self->_mode_str($tree->{mode});
+    
+    # Commit log
+    my $path = defined $dir && $dir ne '' ? "$dir/$tree->{name}" : $tree->{name};
+    my $commit = $self->last_change_commit($user, $project, $rev, $path);
+    $tree->{commit} = $commit;
+    
+    push @$trees, $tree;
+  }
+  $trees = [sort {$b->{type} cmp $a->{type} || $a->{name} cmp $b->{name}} @$trees];
+  
+  return $trees;
 }
 
 sub _age_string {
@@ -1567,73 +1656,6 @@ sub _chop_str {
     }
     return "$body$tail";
   }
-}
-
-sub timestamp {
-  my ($self, $date) = @_;
-  
-  # Time stamp
-  my $strtime = $date->{rfc2822};
-  my $localtime_format = '(%02d:%02d %s)';
-  if ($date->{hour_local} < 6) { $localtime_format = '(%02d:%02d %s)' }
-  $strtime .= ' ' . sprintf(
-    $localtime_format,
-    $date->{hour_local},
-    $date->{minute_local},
-    $date->{tz_local}
-  );
-
-  return $strtime;
-}
-
-sub trees {
-  my ($self, $user, $project, $rev, $dir) = @_;
-  $dir = '' unless defined $dir;
-  
-  # Get tree
-  my $tid;
-  if (defined $dir && $dir ne '') {
-    $tid = $self->path_to_hash($user, $project, $rev, $dir, 'tree');
-  }
-  else {
-    my $commit = $self->get_commit($user, $project, $rev);
-    $tid = $commit->{tree};
-  }
-  my @entries = ();
-  my $show_sizes = 0;
-  my @cmd = $self->cmd(
-    $user,
-    $project,
-    'ls-tree',
-    '-z',
-    ($show_sizes ? '-l' : ()),
-    $tid
-  );
-  open my $fh, '-|', @cmd
-    or $self->croak('Open git-ls-tree failed');
-  {
-    local $/ = "\0";
-    @entries = map { chomp; $self->_dec($_) } <$fh>;
-  }
-  close $fh
-    or $self->croak(404, "Reading tree failed");
-
-  # Parse tree
-  my $trees;
-  for my $line (@entries) {
-    my $tree = $self->parse_ls_tree_line($line, -z => 1, -l => $show_sizes);
-    $tree->{mode_str} = $self->_mode_str($tree->{mode});
-    
-    # Commit log
-    my $path = defined $dir && $dir ne '' ? "$dir/$tree->{name}" : $tree->{name};
-    my $commit = $self->last_change_commit($user, $project, $rev, $path);
-    $tree->{commit} = $commit;
-    
-    push @$trees, $tree;
-  }
-  $trees = [sort {$b->{type} cmp $a->{type} || $a->{name} cmp $b->{name}} @$trees];
-  
-  return $trees;
 }
 
 sub _dec {
