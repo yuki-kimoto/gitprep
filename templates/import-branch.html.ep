@@ -1,9 +1,8 @@
 <%
   my $user = param('user');
   my $project = param('project');
-  my $branch = param('rev1');
-  my $rev2_abs = param('rev2_abs');
-  my ($remote_user, $remote_project, $remote_branch) = split /\//, $rev2_abs, 3;
+  my $remote_branch_abs = param('remote_branch_abs');
+  my ($remote_user, $remote_project, $remote_branch) = split /\//, $remote_branch_abs, 3;
   
   # Branches
   my $git = app->git;

@@ -44,7 +44,7 @@
         var remote_project = remote.find('[name=remote-project]').text();
         var remote_branch = remote.find('[name=remote-branch]').val();
         
-        location.href = '<%= url_for("/$user/$project/import-branch/") %>' + branch + '...'
+        location.href = '<%= url_for("/$user/$project/import-branch/") %>'
           + remote_member + '/' + remote_project + '/' + remote_branch;
       });
     });
