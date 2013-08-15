@@ -6,8 +6,6 @@
   
   # Branches
   my $git = app->git;
-  my $branches = $git->branches($user, $project);
-  my $branch_names = [map { $_->{name} } @$branches];
   my $remote_branches = $git->branches($remote_user, $remote_project);
   my $remote_branch_names = [map { $_->{name} } @$remote_branches];
   
@@ -36,6 +34,9 @@
       ],
       remote_branch => [
         ['not_blank' => 'Remote branch name is empty.']
+      ],
+      force => {require => 0} => [
+        'any'
       ]
     ];
     my $vresult = app->validator->validate($params, $rule);
@@ -43,31 +44,42 @@
     if ($vresult->is_ok) {
       my $safe_params = $vresult->data;
       
+      # Valid paramters
       my $user = $safe_params->{user};
       my $project = $safe_params->{project};
       my $branch = $safe_params->{branch};
       my $remote_user = $safe_params->{remote_user};
       my $remote_project = $safe_params->{remote_project};
       my $remote_branch = $safe_params->{remote_branch};
+      my $force = $safe_params->{force};
       
-      eval {
-        $git->import_branch(
-          $user,
-          $project,
-          $branch,
-          $remote_user,
-          $remote_project,
-          $remote_branch
-        );
-      };
+      # Check branch name
+      my $branches = $git->branches($user, $project);
       
-      if ($@) {
-        $errors = ['Internal Error'];
+      if (!$force && grep { $branch eq $_->{name} } @$branches) {
+        $errors = ["Branch \"$branch\" is already exists. If you want to import this branch, check force option."];
       }
       else {
-        flash(message => "Success: import \"$remote_user / $remote_project / $remote_branch\" into \"$user / $project / $branch\"");
-        $self->redirect_to('current');
-        return;
+        eval {
+          $git->import_branch(
+            $user,
+            $project,
+            $branch,
+            $remote_user,
+            $remote_project,
+            $remote_branch,
+            {force => $force}
+          );
+        };
+        
+        if ($@) {
+          $errors = ['Internal Error'];
+        }
+        else {
+          flash(message => "Success: " . ($force ? 'force ' : '') . "import \"$remote_user / $remote_project / $remote_branch\" into \"$user / $project / $branch\"");
+          $self->redirect_to('current');
+          return;
+        }
       }
     }
     else {
@@ -118,9 +130,19 @@
               %= text_field 'branch', placeholder => "Branch name", style => "margin-top:12px;width:250px";
               <button name="copy-branch-name", class="btn" style="font-size:12px; padding-left:3px;padding-right:3px;color:#666">Copy Branch Name</button>
             </div>
-            <div>
-              %= submit_button 'Import', style => "width:100px;margin-top:10px;", class => "btn";
-            </div>
+            <table style="width:100%">
+              <tr>
+                <td style="width:80px;text-align:right">
+                  %= submit_button 'Import', class => "btn";
+                </td>
+                <td style="width:20px;">
+                  <%= check_box force => 1 %> 
+                </td>
+                <td style="font-size:13px;padding-top:7px;text-align:left">
+                  Force
+                </td>
+              </tr>
+            </table>
           </div>
         </div>
         <div class="span1">

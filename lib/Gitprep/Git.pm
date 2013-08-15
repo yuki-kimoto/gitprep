@@ -1406,7 +1406,9 @@ sub parse_ls_tree_line {
 }
 
 sub import_branch {
-  my ($self, $user, $project, $branch, $remote_user, $remote_project, $remote_branch) = @_;
+  my ($self, $user, $project, $branch, $remote_user, $remote_project, $remote_branch, $opt) = @_;
+  
+  my $force = $opt->{force};
   
   # Git pull
   my $remote_rep = $self->rep($remote_user, $remote_project);
@@ -1415,16 +1417,11 @@ sub import_branch {
     $project,
     'fetch',
     $remote_rep,
-    "refs/heads/$remote_branch:refs/heads/$branch"
+    ($force ? '+' : '') . "refs/heads/$remote_branch:refs/heads/$branch"
   );
-  open my $fh, '-|', @cmd
-    or croak 'Open git fetch failed';
   
-  # Output
-  local $/ = "\0";
-  my $content = $self->_dec(scalar <$fh>);
-  warn $content;
-  close $fh or croak "Can't read git fetch result";
+  system(@cmd) == 0
+    or croak 'Open git fetch for import_branch failed';
 }
 
 sub search_bin {
