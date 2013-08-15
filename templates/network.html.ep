@@ -51,8 +51,9 @@
   % end
   
   %= include '/include/header';
-  
+
   <div class="container" style="min-heigth:500px">
+    %= include '/include/project_header';
     <h3>Members of the <%= $project %> Network</h3>
     <div class="well" style="padding:5px 10px 0 10px;margin-bottom:20px">
       <span class="label label-info">My branch</span>

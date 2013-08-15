@@ -58,6 +58,7 @@
   % end
   
   <div class="container">
+    %= include '/include/project_header';
     <h3>Graph</h3>
     <div style="margin-bottom:20px">Compare 100 commits.</div>
     <div style="margin-bottom:10px">

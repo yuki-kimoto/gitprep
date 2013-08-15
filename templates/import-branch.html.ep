@@ -14,29 +14,29 @@
   
   my $op = param('op') || '';
   my $errors;
-  if ($op eq 'pull' && lc $self->req->method eq 'post') {
+  if ($op eq 'import' && lc $self->req->method eq 'post') {
   
     # Validation
     my $api = gitprep_api;
     my $params = $api->params;
     my $rule = [
       user => [
-        'user_name'
+        ['user_name' => 'User name is invalid.']
       ],
       project => [
-        'project_name'
+        ['project_name' => 'Repository name is invalid.']
       ],
       branch => [
-        'any'
+        ['not_blank' => 'Branch name is empty.']
       ],
       remote_user => [
-        'user_name'
+        ['user_name' => 'Remote User name is invalid.']
       ],
       remote_project => [
-        'project_name'
+        ['project_name' => 'Remote repository is invalid.']
       ],
       remote_branch => [
-        'any'
+        ['not_blank' => 'Remote branch name is empty.']
       ]
     ];
     my $vresult = app->validator->validate($params, $rule);
@@ -51,24 +51,35 @@
       my $remote_project = $safe_params->{remote_project};
       my $remote_branch = $safe_params->{remote_branch};
       
-      $git->import_branch(
-        $user,
-        $project,
-        $branch,
-        $remote_user,
-        $remote_project,
-        $remote_branch
-      );
+      eval {
+        $git->import_branch(
+          $user,
+          $project,
+          $branch,
+          $remote_user,
+          $remote_project,
+          $remote_branch
+        );
+      };
+      
+      if ($@) {
+        $errors = ['Internal Error'];
+      }
+      else {
+        flash(message => "Success: import \"$remote_user / $remote_project / $remote_branch\" into \"$user / $project / $branch\"");
+        $self->redirect_to('current');
+        return;
+      }
     }
     else {
-      $errors = ['Parameter is invalid'];
+      $errors = $vresult->messages;
     }
   }
 %>
 
 % layout 'common', title => "Import branch";
   %= include 'include/header';
-  
+
   %= javascript begin
     $('document').ready(function () {
       
@@ -81,6 +92,13 @@
   % end
   
   <div class="container">
+    %= include '/include/project_header';
+    % if (my $message = flash('message')) {
+      <div class="alert alert-success">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <%= $message %>
+      </div>
+    % }
     % if ($errors) {
       <div class="alert alert-error">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -92,19 +110,21 @@
     <h3>Import branch</h3>
     <form action="<%= url_for->query(op => 'import') %>" method="post">
       <div class="row" style="font-size:22px">
-        <div class="span5">
+        <div class="span6">
           <div class="well" style="text-align:center">
             <div style="color:blue;margin-bottom:15px">
               %= "$user / $project";
             </div>
             <div>
-              %= text_field 'branch';
+              %= text_field 'branch', placeholder => "Branch name", style => "margin-top:12px;width:250px";
+              <button name="copy-branch-name", class="btn" style="font-size:12px; padding-left:3px;padding-right:3px;color:#666">Copy Branch Name</button>
             </div>
-            <button name="copy-branch-name", class="btn">Copy Branch Name</button>
-            %= submit_button 'Import', style => "width:100px", class => "btn";
+            <div>
+              %= submit_button 'Import', style => "width:100px;margin-top:10px;", class => "btn";
+            </div>
           </div>
         </div>
-        <div class="span2">
+        <div class="span1">
           <div style="padding: 19px;text-align:center;font-size:26px">
             &lArr;
           </div>
@@ -115,7 +135,7 @@
               %= "$remote_user / $remote_project";
             </div>
             % param(remote_branch => $remote_branch);
-            %= select_field 'remote_branch' => $remote_branch_names;
+            %= select_field 'remote_branch' => $remote_branch_names, style => "width:250px";
           </div>
         </div>
       </div>
