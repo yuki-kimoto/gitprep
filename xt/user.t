@@ -35,7 +35,7 @@ note 'Start page';
   my $app = Gitprep->new;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
-
+  
   # Redirect to _start page
   $t->get_ok('/');
   $t->content_like(qr/Create Admin User/);
@@ -461,21 +461,68 @@ note 'Delete branch';
   $t->content_unlike(qr/tmp_branch/);
 }
 
-=pod
 note 'import-branch';
 {
   my $app = Gitprep->new;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
 
-  # Login as kimoto
-  $t->post_ok('/_login?op=login', form => {id => 'kimoto', password => 'a'});
+  # Login as kimoto1
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto1', password => 'a'});
+  $t->get_ok('/')->content_like(qr/Logined as kimoto1 /);
 
   # Create project
-  $t->post_ok('/_new?op=create', form => {project => 'import-branch1', readme => 1});
-  $t->content_like(qr/import-branch1\.git/);
+  $t->post_ok('/_new?op=create', form => {project => 'import-branch1', description => '', readme => 1});
+  $t->get_ok('/kimoto1')->content_like(qr/import-branch1/);
   
+  # Login as kimoto2
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto2', password => 'a'});
+  $t->get_ok('/')->content_like(qr/Logined as kimoto2 /);
+
+  # Fork kimoto1/import-branch1
+  $t->get_ok("/kimoto1/import-branch1/fork");
+  $t->content_like(qr#Repository is forked from /kimoto1/import-branch1#);
+
+  # Access not valid user
+  $t->get_ok('/kimoto1/import-branch1/network');
+  $t->content_like(qr/Network/);
+  $t->content_unlike(qr/Import/);
+  $t->get_ok('/kimoto1/import-branch1/import-branch/kimoto2/import-branch1?remote-branch=master');
+  $t->content_like(qr/ Index page /);
   
-  $t->get_ok('/kimoto/gitprep_t/import-branch/kimoto1/gitprep_t/master');
+  # Show network page import button
+  $t->get_ok('/kimoto2/import-branch1/network');
+  $t->content_like(qr/Network/);
+  $t->content_like(qr/Import/);
+  
+  # Import branch page access
+  $t->get_ok('/kimoto2/import-branch1/import-branch/kimoto1/import-branch1?remote-branch=master');
+  $t->content_like(qr/Import branch/);
+
+  # Invalid parameters
+  $t->post_ok('/kimoto2/import-branch1/import-branch/kimoto1/import-branch1?remote-branch=master&op=import');
+  $t->content_like(qr/Branch name is empty/);
+  
+  # Import branch
+  $t->post_ok('/kimoto2/import-branch1/import-branch/kimoto1/import-branch1?op=import', form => {
+    branch => 'new1',
+    'remote-branch' => 'master'
+  });
+  $t->content_like(qr#Success: import#);
+  $t->get_ok('/kimoto2/import-branch1/branches')->content_like(qr/new1/);
+
+  # Import same name branch fail
+  $t->post_ok('/kimoto2/import-branch1/import-branch/kimoto1/import-branch1?op=import', form => {
+    branch => 'new1',
+    'remote-branch' => 'master'
+  });
+  $t->content_like(qr#already exists#);
+
+  # Import force
+  $t->post_ok('/kimoto2/import-branch1/import-branch/kimoto1/import-branch1?op=import', form => {
+    branch => 'new1',
+    'remote-branch' => 'master',
+    force => 1
+  });
+  $t->content_like(qr#Success: force import#);
 }
-=cut

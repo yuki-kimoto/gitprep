@@ -225,7 +225,7 @@ sub startup {
         $r->get('/network/graph/(*rev1)...(*rev2_abs)' => template '/network/graph');
 
         # Import branch
-        $r->any('/import-branch/(*remote_branch_abs)' => template '/import-branch');
+        $r->any('/import-branch/:remote_user/:remote_project' => template '/import-branch');
         
         # Get branches and tags
         $r->get('/api/revs' => template '/api/revs');

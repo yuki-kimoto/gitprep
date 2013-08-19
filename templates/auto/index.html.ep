@@ -13,6 +13,7 @@
 % layout 'common';
   
   %= include '/include/header', title => 'Gitprep';
+  <!-- Index page -->
   <div class="container" style="min-heigth:500px">
     <h3>Users</h3>
     <ul class="nav nav-tabs nav-stacked">

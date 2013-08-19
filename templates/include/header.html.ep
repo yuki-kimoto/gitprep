@@ -12,6 +12,8 @@
         <div  style="margin-top:5px">
           <div>
             % my $user = session('user') || '';
+            <!-- Logined as <%= $user %> -->
+
             <i class="icon-user"></i><a href="<%= url_for("/$user") %>"><%= $user %></a>
           </div>
           % unless ($user eq 'admin') {

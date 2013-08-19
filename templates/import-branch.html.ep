@@ -4,15 +4,15 @@
   
   my $user = param('user');
   my $project = param('project');
+  my $remote_user = param('remote_user');
+  my $remote_project = param('remote_project');
+  my $remote_branch = param('remote-branch');
   
   # Authentication
   unless ($api->logined($user)) {
     $self->redirect_to('/');
     return;
   }
-
-  my $remote_branch_abs = param('remote_branch_abs');
-  my ($remote_user, $remote_project, $remote_branch) = split /\//, $remote_branch_abs, 3;
   
   # Branches
   my $git = app->git;
@@ -42,7 +42,7 @@
       remote_project => [
         ['project_name' => 'Remote repository is invalid.']
       ],
-      remote_branch => [
+      'remote-branch' => [
         ['not_blank' => 'Remote branch name is empty.']
       ],
       force => {require => 0} => [
@@ -60,7 +60,7 @@
       my $branch = $safe_params->{branch};
       my $remote_user = $safe_params->{remote_user};
       my $remote_project = $safe_params->{remote_project};
-      my $remote_branch = $safe_params->{remote_branch};
+      my $remote_branch = $safe_params->{'remote-branch'};
       my $force = $safe_params->{force};
       
       # Check branch name
@@ -129,7 +129,7 @@
       </div>
     % }
     <h3>Import branch</h3>
-    <form action="<%= url_for->query(op => 'import') %>" method="post">
+    <form action="<%= url_for("/$user/$project/import-branch/$remote_user/$remote_project")->query(op => 'import') %>" method="post">
       <div class="row" style="font-size:22px">
         <div class="span6">
           <div class="well" style="text-align:center">
@@ -166,14 +166,10 @@
               %= "$remote_user / $remote_project";
             </div>
             % param(remote_branch => $remote_branch);
-            %= select_field 'remote_branch' => $remote_branch_names, style => "width:250px";
+            %= select_field 'remote-branch' => $remote_branch_names, style => "width:250px";
           </div>
         </div>
       </div>
-      %= hidden_field user => $user;
-      %= hidden_field project => $user;
-      %= hidden_field remote_user => $remote_user;
-      %= hidden_field remote_project => $remote_project;
     </form>
   </div>
   

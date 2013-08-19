@@ -200,7 +200,7 @@ sub original_project {
     id => [$user, $project]
   )->one;
   
-  croak "No original project" unless $row;
+  croak "Original project don't eixsts." unless $row;
   
   # Original project
   my $original_project = $dbi->model('project')->select(

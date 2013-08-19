@@ -32,3 +32,4 @@ xt/admin.db
 xt/admin
 xt/user.db
 xt/user
+xt/log
