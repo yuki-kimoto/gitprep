@@ -460,3 +460,22 @@ note 'Delete branch';
   $t->get_ok('/kimoto1/t2/branches');
   $t->content_unlike(qr/tmp_branch/);
 }
+
+=pod
+note 'import-branch';
+{
+  my $app = Gitprep->new;
+  my $t = Test::Mojo->new($app);
+  $t->ua->max_redirects(3);
+
+  # Login as kimoto
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto', password => 'a'});
+
+  # Create project
+  $t->post_ok('/_new?op=create', form => {project => 'import-branch1', readme => 1});
+  $t->content_like(qr/import-branch1\.git/);
+  
+  
+  $t->get_ok('/kimoto/gitprep_t/import-branch/kimoto1/gitprep_t/master');
+}
+=cut

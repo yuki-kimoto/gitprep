@@ -81,7 +81,9 @@
             </div>
             <div class="text-right">
               <button name="compare-btn" class="btn" style="margin-top:5px">Compare</button>
-              <button name="import-btn" class="btn" style="margin-top:5px">Import</button>
+            % if ($api->logined($user)) {
+                <button name="import-btn" class="btn" style="margin-top:5px">Import</button>
+            % }
             </div>
           </div>
           <hr style="margin:0">

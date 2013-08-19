@@ -1,6 +1,16 @@
 <%
+  
+  my $api = gitprep_api;
+  
   my $user = param('user');
   my $project = param('project');
+  
+  # Authentication
+  unless ($api->logined($user)) {
+    $self->redirect_to('/');
+    return;
+  }
+
   my $remote_branch_abs = param('remote_branch_abs');
   my ($remote_user, $remote_project, $remote_branch) = split /\//, $remote_branch_abs, 3;
   
