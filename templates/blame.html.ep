@@ -88,7 +88,9 @@
           % my $blame_commit = $line->{commit};
           % my $summary = $line->{summary};
           % my $summary_short= length $summary > 28 ? substr($summary, 0, 28) . '...' : $summary;
-          % my $time_rate = ($blame_max_author_time - $line->{author_time}) / ($blame_max_author_time - $blame_min_author_time);
+          % my $time_rate = $blame_max_author_time == $blame_min_author_time
+          %  ? 1
+          %  : ($blame_max_author_time - $line->{author_time}) / ($blame_max_author_time - $blame_min_author_time);
           % my $color_number = int($time_rate * 10);
           % $color_number = 9 if $color_number == 10;
           % my $hot_color = $colors->[$color_number];
