@@ -1,3 +1,7 @@
+1.2
+  - add blame page
+  - add blanch import feature
+  - add need_login_always option
 1.1
   - add import_rep script to import repositories.
 1.0
