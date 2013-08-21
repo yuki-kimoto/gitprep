@@ -15,6 +15,8 @@ $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/basic.db";
 # Test Repository home
 $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/../../gitprep_t_rep_home";
 
+$ENV{GITPREP_NO_MYCONFIG} = 1;
+
 use Gitprep;
 
 my $app = Gitprep->new;

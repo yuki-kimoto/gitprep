@@ -31,8 +31,10 @@ sub startup {
   $self->plugin('INIConfig', {ext => 'conf'});
   
   # Config file for developper
-  my $my_conf_file = $self->home->rel_file('gitprep.my.conf');
-  $self->plugin('INIConfig', {file => $my_conf_file}) if -f $my_conf_file;
+  unless ($ENV{GITPREP_NO_MYCONFIG}) {
+    my $my_conf_file = $self->home->rel_file('gitprep.my.conf');
+    $self->plugin('INIConfig', {file => $my_conf_file}) if -f $my_conf_file;
+  }
   
   # Listen
   my $conf = $self->config;
@@ -145,90 +147,100 @@ sub startup {
         
         my $api = $self->gitprep_api;
         
-        # Admin page authentication
+        # Authentication
         {
           my $path = $self->req->url->path->parts->[0] || '';
-
+          
+          # Admin
           if ($path eq '_admin' && !$api->logined_admin) {
             $self->redirect_to('/');
             return;
+          }
+          # Need login always
+          elsif ($self->config->{basic}{need_login_always} && !$api->logined) {
+            if ($path ne '_start' && $path ne 'reset-password' && $path ne '_login') {
+              $self->redirect_to('/_login');
+              return;
+            }
           }
         }
         
         return 1; 
       });
+      
+      # Auto routes
       $self->plugin('AutoRoute', route => $r);
-    }
 
-    # Custom routes
-    {
-      my $id_re = qr/[a-zA-Z0-9_-]+/;
-      
-      # User
-      my $r = $r->route('/:user', user => $id_re);
+      # Custom routes
       {
-        # Home
-        $r->get('/' => template '/user');
+        my $id_re = qr/[a-zA-Z0-9_-]+/;
         
-        # Settings
-        $r->get('/_settings' => template '/user-settings');
-      }
-      
-      # Project
-      {
-        my $r = $r->route('/:project', project => $id_re);
+        # User
+        my $r = $r->route('/:user', user => $id_re);
+        {
+          # Home
+          $r->get('/' => template '/user');
+          
+          # Settings
+          $r->get('/_settings' => template '/user-settings');
+        }
         
-        # Home
-        $r->get('/' => template '/project');
-        
-        # Commit
-        $r->get('/commit/*diff' => template '/commit');
-        
-        # Commits
-        $r->get('/commits/*rev_file' => template '/commits');
-        
-        # Branches
-        $r->any('/branches/*base_branch' => {base_branch => undef} => template '/branches');
+        # Project
+        {
+          my $r = $r->route('/:project', project => $id_re);
+          
+          # Home
+          $r->get('/' => template '/project');
+          
+          # Commit
+          $r->get('/commit/*diff' => template '/commit');
+          
+          # Commits
+          $r->get('/commits/*rev_file' => template '/commits');
+          
+          # Branches
+          $r->any('/branches/*base_branch' => {base_branch => undef} => template '/branches');
 
-        # Tags
-        $r->get('/tags' => template '/tags');
+          # Tags
+          $r->get('/tags' => template '/tags');
 
-        # Tree
-        $r->get('/tree/*rev_dir' => template '/tree');
-        
-        # Blob
-        $r->get('/blob/*rev_file' => template '/blob');
+          # Tree
+          $r->get('/tree/*rev_dir' => template '/tree');
+          
+          # Blob
+          $r->get('/blob/*rev_file' => template '/blob');
 
-        # Raw
-        $r->get('/raw/*rev_file' => template '/raw');
+          # Raw
+          $r->get('/raw/*rev_file' => template '/raw');
 
-        # Blame
-        $r->get('/blame/*rev_file' => template '/blame');
-        
-        # Archive
-        $r->get('/archive/(*rev).tar.gz' => template '/archive')->to(archive_type => 'tar');
-        $r->get('/archive/(*rev).zip' => template '/archive')->to(archive_type => 'zip' );
-        
-        # Compare
-        $r->get('/compare/(*rev1)...(*rev2)' => template '/compare');
-        
-        # Settings
-        $r->any('/settings' => template '/settings');
-        
-        # Fork
-        $r->any('/fork' => template '/fork');
+          # Blame
+          $r->get('/blame/*rev_file' => template '/blame');
+          
+          # Archive
+          $r->get('/archive/(*rev).tar.gz' => template '/archive')->to(archive_type => 'tar');
+          $r->get('/archive/(*rev).zip' => template '/archive')->to(archive_type => 'zip' );
+          
+          # Compare
+          $r->get('/compare/(*rev1)...(*rev2)' => template '/compare');
+          
+          # Settings
+          $r->any('/settings' => template '/settings');
+          
+          # Fork
+          $r->any('/fork' => template '/fork');
 
-        # Network
-        $r->get('/network' => template '/network');
+          # Network
+          $r->get('/network' => template '/network');
 
-        # Network Graph
-        $r->get('/network/graph/(*rev1)...(*rev2_abs)' => template '/network/graph');
+          # Network Graph
+          $r->get('/network/graph/(*rev1)...(*rev2_abs)' => template '/network/graph');
 
-        # Import branch
-        $r->any('/import-branch/:remote_user/:remote_project' => template '/import-branch');
-        
-        # Get branches and tags
-        $r->get('/api/revs' => template '/api/revs');
+          # Import branch
+          $r->any('/import-branch/:remote_user/:remote_project' => template '/import-branch');
+          
+          # Get branches and tags
+          $r->get('/api/revs' => template '/api/revs');
+        }
       }
     }
   }

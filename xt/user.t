@@ -20,6 +20,9 @@ my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/user.db";
 # Test Repository home
 my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/user";
 
+$ENV{GITPREP_NO_MYCONFIG} = 1;
+
+
 use Gitprep;
 
 # For perl 5.8
@@ -62,7 +65,7 @@ note 'Start page';
   
   # Create admin user
   $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'});
-  $t->content_like(qr/Login Page/);
+  $t->content_like(qr/Login page/);
 
   # Admin user already exists(Redirect to top page)
   $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'});
@@ -79,11 +82,11 @@ note 'Admin pages';
 
   # Create admin user
   $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'});
-  $t->content_like(qr/Login Page/);
+  $t->content_like(qr/Login page/);
   
   # Page access
   $t->get_ok('/_login');
-  $t->content_like(qr/Login Page/);
+  $t->content_like(qr/Login page/);
   
   # Login fail
   $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'b'});
@@ -212,7 +215,7 @@ note 'Reset password';
 
   # Create admin user
   $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'});
-  $t->content_like(qr/Login Page/);;
+  $t->content_like(qr/Login page/);;
 
   # Not loing user can't access
   $t->get_ok('/reset-password');
@@ -271,7 +274,7 @@ note 'Profile';
 
   # Create admin user
   $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'});
-  $t->content_like(qr/Login Page/);
+  $t->content_like(qr/Login page/);
 
   # Login as admin
   $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'a'});

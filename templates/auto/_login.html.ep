@@ -87,7 +87,7 @@
 
 % layout 'common', title => 'Sign in';
 
-  <!-- Login Page -->
+  <!-- Login page -->
   
   %= include '/include/header';
 

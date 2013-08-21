@@ -18,6 +18,9 @@ my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/import_rep.db";
 # Test Repository home
 my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/import_rep_user";
 
+$ENV{GITPREP_NO_MYCONFIG} = 1;
+
+
 use Gitprep;
 
 # For perl 5.8
