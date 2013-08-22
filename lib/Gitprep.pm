@@ -156,13 +156,6 @@ sub startup {
             $self->redirect_to('/');
             return;
           }
-          # Need login always
-          elsif ($self->config->{basic}{need_login_always} && !$api->logined) {
-            if ($path ne '_start' && $path ne 'reset-password' && $path ne '_login') {
-              $self->redirect_to('/_login');
-              return;
-            }
-          }
         }
         
         return 1; 

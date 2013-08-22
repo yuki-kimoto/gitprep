@@ -40,7 +40,7 @@ note 'import_rep';
   
   # Create admin user
   $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'});
-  $t->content_like(qr/Login Page/);
+  $t->content_like(qr/Login page/);
 
   # Login as admin
   $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'a'});
