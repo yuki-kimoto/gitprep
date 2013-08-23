@@ -165,7 +165,7 @@ then create a run script.
 
     mkdir -p /webapp
     echo '#!/bin/sh' > /webapp/gitprep
-    echo 'sudo -u gitprep /home/gitprep/gitprep/gitprep $*' >> /webapp/gitprep
+    echo 'su - gitprep -c "/home/gitprep/gitprep/gitprep $*"' >> /webapp/gitprep
     chmod 755 /webapp/gitprep
 
 You can start and stop the application with the following command.
