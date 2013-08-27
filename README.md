@@ -215,7 +215,7 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 
 ## Copyright & license
 
-Copyright 2013-2013 Yuki Kimoto all rights reserved.
+Copyright 2012-2013 Yuki Kimoto. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
