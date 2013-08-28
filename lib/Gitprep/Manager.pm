@@ -406,8 +406,9 @@ sub _create_rep {
     # Git init
     {
       my @git_init_cmd = $git->cmd_rep($rep, 'init', '--bare');
-      system(@git_init_cmd) == 0
-        or croak  "Can't execute git init --bare:@git_init_cmd";
+      open my $fh, "-|", @git_init_cmd
+        or croak  "Can't open git init --bare:@git_init_cmd";
+      close $fh or croak  "Can't execute git init --bare:@git_init_cmd";
     }
     
     # Add git-daemon-export-ok
@@ -423,8 +424,9 @@ sub _create_rep {
       '--bare',
       'update-server-info'
     );
-    system(@git_update_server_info_cmd) == 0
-      or croak "Can't execute git --bare update-server-info";
+    open my $update_server_info_fh, "-|", @git_update_server_info_cmd
+      or croak "Can't open git --bare update-server-info";
+    close $update_server_info_fh or croak "Can't execute git --bare update-server-info";
     move("$rep/hooks/post-update.sample", "$rep/hooks/post-update")
       or croak "Can't move post-update";
     
@@ -450,8 +452,9 @@ sub _create_rep {
 
       # Git init
       my @git_init_cmd = $git->cmd_rep($temp_work, 'init', '-q');
-      system(@git_init_cmd) == 0
-        or croak "Can't execute git init";
+      open my $init_fh, "-|", @git_init_cmd
+        or croak "Can't open git init";
+      close $init_fh or croak "Can't execute git init";
       
       # Add README
       my $file = "$temp_work/README";
@@ -463,8 +466,9 @@ sub _create_rep {
         'add',
         'README'
       );
-      system(@git_add_cmd) == 0
-        or croak "Can't execute git add";
+      open my $add_fh, "-|", @git_add_cmd
+        or croak "Can't open git add";
+      close $add_fh or croak "Can't execute git add";
       
       # Commit
       my $author = "$user <$user\@localhost>";
@@ -477,8 +481,9 @@ sub _create_rep {
         '-m',
         'first commit'
       );
-      system(@git_commit_cmd) == 0
-        or croak "Can't execute git commit";
+      open my $commit_fh, "-|", @git_commit_cmd
+        or croak "Can't open git commit";
+      close $commit_fh or croak "Can't execute git commit";
       
       # Push
       {
@@ -492,8 +497,9 @@ sub _create_rep {
         );
         # (This is bad, but --quiet option can't supress in old git)
         my $git_push_cmd = join(' ', @git_push_cmd);
-        system("$git_push_cmd 2> /dev/null") == 0
-          or croak "Can't execute git push";
+        open my $commit_fh, "-|", "$git_push_cmd 2> /dev/null"
+          or croak "Can't open git push";
+        close $commit_fh or croak "Can't execute git push";
       }
     }
   };
