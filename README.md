@@ -8,7 +8,7 @@ Github clone. You can install portable github system into Unix/Linux.
 
 * Github clone. GitPrep have same interface as GitHub.
 * Portable. You can install GitPrep into your Unix/Linux server.
-* Support cygwin on Windows. You can install GitPrep into Windows.
+* Support cygwin on Windows(need gcc4 package). You can install GitPrep into Windows.
 * Only needs Perl 5.8.7+.
 * CGI support.
 * Having built-in web server, Reverse proxy support.
