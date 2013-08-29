@@ -1,0 +1,8 @@
+DirectoryIndex index.html
+
+RewriteEngine on
+RewriteCond %{HTTP_HOST} ^www\.gitprep\.org
+RewriteRule (.*) http://gitprep.org/$1 [R=301,L]
+
+RewriteCond %{HTTP_HOST} perlcodesample\.sakura\.ne\.jp
+RewriteRule (.*) http://gitprep.org/$1 [R=301,L]
