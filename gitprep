@@ -1,7 +1,16 @@
-#!/bin/sh
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use Cwd qw(abs_path);
+use File::Basename qw(dirname);
 
-DIR=$(dirname $0)
-PERL5LIB="$DIR/mojo/lib:$DIR/extlib/lib/perl5"
-export PERL5LIB
-exec $DIR/mojo/script/hypnotoad $* $DIR/script/gitprep
+my $dir = dirname abs_path $0;
+
+if ($^O eq 'MSWin32') {
+	system "plackup -I $dir/mojo/lib -I $dir/extlib/lib/perl5 @ARGV $dir/script/gitprep";
+} else {
+	$ENV{PERL5LIB}="$dir/mojo/lib:$dir/extlib/lib/perl5";
+	system "$^X $dir/mojo/script/hypnotoad @ARGV $dir/script/gitprep";
+}
+
 
