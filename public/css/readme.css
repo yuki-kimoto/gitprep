@@ -21,9 +21,7 @@ pre.README h1 {
 
 pre.README p {
   margin        : 0;
-  padding       : 0 1em;
-  padding-left  : 1em;
-  padding-right : 1em;
+  padding       : 0;
 }
 
 pre.README ul {
