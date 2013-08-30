@@ -1,9 +1,9 @@
 pre.README {
   background             : white;
-  border-top-left-radius : 0;
   border-radius          : 1px;
   border-top             : none;
-  padding                : 27px;
+  border-top-left-radius : 0;
   font-size              : 16px;
   margin-bottom          : 80px;
+  padding                : 27px;
 }
