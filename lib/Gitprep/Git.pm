@@ -1597,7 +1597,7 @@ sub _age_string {
   } elsif ($age >= 1) {
     $age_str = $self->_age_ago(sec => int $age);
   } else {
-    $age_str .= ' right now';
+    $age_str .= 'right now';
   }
   
   $age_str =~ s/^1 /a /;

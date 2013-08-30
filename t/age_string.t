@@ -5,7 +5,7 @@ use Test::More;
 use Gitprep::Git;
 
 my @cases = (
-  { stimulus =>                           0,     expected => ' right now'    },
+  { stimulus =>                           0,     expected => 'right now'     },
   { stimulus =>                           1,     expected => 'a sec ago'     },
   { stimulus =>                          59,     expected => '59 sec ago'    },
   { stimulus =>                          60,     expected => 'a min ago'     },
