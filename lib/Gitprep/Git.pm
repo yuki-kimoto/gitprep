@@ -1575,7 +1575,7 @@ sub trees {
 sub _age_ago {
   my($self,$unit,$age) = @_;
 
-  return $age . " $unit" . ( $unit =~ /^(sec|min)$/ ? "" : "s" ) . " ago";
+  return $age . " $unit" . ( $unit =~ /^(sec|min)$/ ? "" : ( $age > 1 ? "s" : "" ) ) . " ago";
 }
 
 sub _age_string {
