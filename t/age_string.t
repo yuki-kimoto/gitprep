@@ -34,5 +34,5 @@ my @cases = (
 plan ( tests => scalar @cases );
 
 for ( @cases ) {
-  is ( Gitprep::Git->_age_string ( $_->{stimulus} ), $_->{expected}, "$_->{stimulus} ~ $_->{expected}" );
+  is ( Gitprep::Git->_age_string ( $_->{stimulus} ), $_->{expected}, "$_->{stimulus} sec ~ \"$_->{expected}\"" );
 }
