@@ -1,5 +1,6 @@
 <%
   use Mojo::ByteStream ();
+  use Text::Markdown qw( markdown );
   
   # README
   my $lines;
@@ -10,11 +11,18 @@
     $readme_e = Mojo::ByteStream->new($readme)->xml_escape->to_string;
     $readme_e =~ s#(^|\s|[^\x00-\x7F])(http(?:s)?://.+?)($|\s|[^\x00-\x7F])#$1<a href="$2">$2</a>$3#msg;
   }
+  else {
+    eval { $lines = app->git->blob($user, $project, $rev, 'README.md') };
+    if ($lines) {
+      my $readme = join "\n", @$lines;
+      $readme_e = markdown($readme);
+    }
+  }
 %>
 
 % if (defined $readme_e) {
   <div class="border-gray bk-gray-light" style="border-radius:1px;font-size:17px;padding:10px">
     <i class="icon-book" style="margin-top:2px"></i> README
   </div>
-  <pre class="border-gray " style="background:white;border-top-left-radius:0;border-radius:1px;border-top:none;padding:27px;font-size:16px;margin-bottom:80px"><%== $readme_e %></pre>
+  <pre class="border-gray README"><%== $readme_e %></pre>
 % }
