@@ -15,6 +15,10 @@ pre.README h3 { margin: 0; font-size: 1.17em; }
 pre.README h5 { margin: 0; font-size:  .83em; }
 pre.README h6 { margin: 0; font-size:  .75em; }
 
+pre.README h1 {
+  border-bottom : 1px solid #DDDDDD;
+}
+
 pre.README p {
   margin        : 0;
   padding       : 0 1em;
