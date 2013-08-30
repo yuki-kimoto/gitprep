@@ -1601,6 +1601,7 @@ sub _age_string {
   }
   
   $age_str =~ s/^1 /a /;
+  $age_str =~ s/^a hour/an hour/;
   
   return $age_str;
 }
