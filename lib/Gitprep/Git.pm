@@ -1572,36 +1572,36 @@ sub trees {
   return $trees;
 }
 
+sub _age_ago {
+  my($self,$unit,$age) = @_;
+
+  return $age . " $unit" . ( $unit =~ /^(sec|min)$/ ? "" : ( $age > 1 ? "s" : "" ) ) . " ago";
+}
+
 sub _age_string {
   my ($self, $age) = @_;
   my $age_str;
 
   if ($age >= 60 * 60 * 24 * 365) {
-    $age_str = (int $age/60/60/24/365);
-    $age_str .= ' years ago';
+    $age_str = $self->_age_ago(year => (int $age/60/60/24/365));
   } elsif ($age >= 60 * 60 * 24 * (365/12)) {
-    $age_str = int $age/60/60/24/(365/12);
-    $age_str .= ' months ago';
+    $age_str = $self->_age_ago(month => int $age/60/60/24/(365/12));
   } elsif ($age >= 60 * 60 * 24 * 7) {
-    $age_str = int $age/60/60/24/7;
-    $age_str .= ' weeks ago';
+    $age_str = $self->_age_ago(week => int $age/60/60/24/7);
   } elsif ($age >= 60 * 60 * 24) {
-    $age_str = int $age/60/60/24;
-    $age_str .= ' days ago';
+    $age_str = $self->_age_ago(day => int $age/60/60/24);
   } elsif ($age >= 60 * 60) {
-    $age_str = int $age / 60 / 60;
-    $age_str .= ' hours ago';
+    $age_str = $self->_age_ago(hour => int $age/60/60);
   } elsif ($age >= 60) {
-    $age_str = int $age/60;
-    $age_str .= ' min ago';
+    $age_str = $self->_age_ago(min => int $age/60);
   } elsif ($age >= 1) {
-    $age_str = int $age;
-    $age_str .= ' sec ago';
+    $age_str = $self->_age_ago(sec => int $age);
   } else {
-    $age_str .= ' right now';
+    $age_str .= 'right now';
   }
   
   $age_str =~ s/^1 /a /;
+  $age_str =~ s/^a hour/an hour/;
   
   return $age_str;
 }
