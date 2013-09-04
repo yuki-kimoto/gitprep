@@ -192,6 +192,22 @@ If you have git, it is easy to install from git.
 
 It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 
+## FAQ
+
+### blame don't work
+
+In Gitprep, blame page use "git blame --line-porcelain". In old git, there is no --line-porcelain option.
+We don't know when --line-porcelain is added to git.
+At least, blame page work well in git 1.8.2.1.
+
+### How to upgrade GitPrep
+
+It is ver easy. you only overwrite all files except for "gitprep.conf".
+
+If you want to upgrade by "git pull", you can do it.
+you create "gitprep.my.conf" copied from "gitprep.my.conf",
+and do "git pull"
+
 ## Web Site
 
 [GitPrep Web Site](http://perlcodesample.sakura.ne.jp/gitprep-site/)
