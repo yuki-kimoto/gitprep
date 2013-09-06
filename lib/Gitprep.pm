@@ -202,6 +202,9 @@ sub startup {
           
           # Blob
           $r->get('/blob/*rev_file' => template '/blob');
+          
+          # Sub module
+          $r->get('/submodule/*rev_file' => template '/submodule');
 
           # Raw
           $r->get('/raw/*rev_file' => template '/raw');
