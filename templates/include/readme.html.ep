@@ -1,6 +1,6 @@
 <%
   use Mojo::ByteStream ();
-  use Text::Markdown qw( markdown );
+  use Text::Markdown ();
   
   # README
   my $lines;
@@ -15,7 +15,7 @@
     eval { $lines = app->git->blob($user, $project, $rev, 'README.md') };
     if ($lines) {
       my $readme = join "\n", @$lines;
-      $readme_e = markdown($readme);
+      $readme_e = Text::Markdown::markdown($readme);
     }
   }
 %>

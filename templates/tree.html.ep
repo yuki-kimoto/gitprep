@@ -40,8 +40,10 @@
     %= include '/include/code_menu', display => 'files';
     %= include '/include/page_path', type => 'tree', Path => $dir;
     %= include '/include/tree';
-
-    %= include '/include/readme';
+    
+    % if (!defined $dir || $dir eq '') {
+      %= include '/include/readme'
+    % }
   </div>
   
   %= include '/include/footer';

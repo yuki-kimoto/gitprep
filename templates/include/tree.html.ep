@@ -32,10 +32,16 @@
           % my $type = $tree->{type};
           % my $name = $tree->{name};
           % my $commit = $tree->{commit};
+          % my $mode_str = $tree->{mode_str};
           
           <div class="span3" style="width:170px">
             % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
-            % if ($type eq 'blob') {
+            % if ($mode_str eq 'm---------') {
+              <i class="icon-folder-open"></i>
+              <a href="<%= url_for("/$user/$project/submodule/$rev/$child_dir") %>">
+                <%= $name %>
+              </a>              
+            % } elsif ($type eq 'blob') {
               % my $file = defined $dir && $dir ne '' ? "$dir/$name" : $name;
               <i class="icon-file"></i>
               <a href="<%= url_for("/$user/$project/blob/$rev/$file") %>">

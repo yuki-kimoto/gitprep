@@ -46,3 +46,33 @@
 .border-blue {
   border:1px solid #c5d5dd;
 }
+
+pre.README {
+  background             : white;
+  border-radius          : 1px;
+  border-top             : none;
+  border-top-left-radius : 0;
+  font-size              : 16px;
+  line-height            : 1.5em;
+  margin-bottom          : 80px;
+  padding                : 27px;
+}
+
+pre.README h1 { margin: 0; font-size: 2em;    }
+pre.README h2 { margin: 0; font-size: 1.5em;  }
+pre.README h3 { margin: 0; font-size: 1.17em; }
+pre.README h5 { margin: 0; font-size:  .83em; }
+pre.README h6 { margin: 0; font-size:  .75em; }
+
+pre.README h1 {
+  border-bottom : 1px solid #DDDDDD;
+}
+
+pre.README p {
+  margin  : 0;
+  padding : 0;
+}
+
+pre.README ul {
+  padding : 0 1em;
+}
