@@ -1,5 +1,6 @@
 1.3
   - add README.md support
+  - add submodule support
 1.2
   - add blame page
   - add blanch import feature
