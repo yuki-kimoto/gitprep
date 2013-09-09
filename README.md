@@ -109,7 +109,7 @@ Download tar.gz archive, expand it and change directory.
 
 To setup GitPrep, execute the following command. All of the needed modules will be installed.
 
-    ./setup.sh
+    perl setup.pl
 
 ## Test
 
