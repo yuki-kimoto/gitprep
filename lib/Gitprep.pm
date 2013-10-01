@@ -24,6 +24,7 @@ has 'dbi';
 has 'git';
 has 'manager';
 has 'validator';
+has 'smart_http';
 
 use constant BUFFER_SIZE => 8192;
 
@@ -186,63 +187,10 @@ sub startup {
           my $r = $r->route('/(:project).git', project => $id_re);
           
           my $sh = Gitprep::SmartHTTP->new;
+          $self->smart_http($sh);
           
           # Fetch
-          $r->get('/info/refs')->to(cb => sub {
-            my $self = shift;
-            
-            my $service = $self->param('service') || '';
-            
-            my $user = $self->param('user');
-            my $project = $self->param('project');
-            
-            if ($service eq 'git-upload-pack') {
-              
-              my $rep = $git->rep($user, $project);
-              my @cmd = $git->cmd($user, $project, 'upload-pack', '--stateless-rpc', '--advertise-refs', $rep);
-              
-              warn "@cmd";
-              
-              use IPC::Open3 'open3';
-              use Symbol 'gensym';
-              my ($cout, $cerr) = (gensym, gensym );
-              my $pid = open3(my $cin, $cout, $cerr, @cmd );
-              close $cin;
-              my ( $refs, $err, $buf ) = ( '', '', '' );
-              my $s = IO::Select->new( $cout, $cerr );
-              while (my @ready = $s->can_read) {
-                for my $handle (@ready) {
-                  while ( sysread( $handle, $buf, BUFFER_SIZE ) ) {
-                    if ( $handle == $cerr ) {
-                      $err .= $buf;
-                    }
-                    else {
-                      $refs .= $buf;
-                    }
-                  }
-                  $s->remove($handle) if eof($handle);
-                }
-              }
-              close $cout;
-              close $cerr;
-              waitpid($pid, 0);
-
-              if ($err) {
-                app->log->error($err);
-                $self->render_exception($err);
-              }
-              
-              $self->res->headers->content_type('application/x-git-upload-pack-advertisement');
-              
-              my $data =
-                $sh->pkt_write("# service=git-upload-pack\n") . $sh->pkt_flush() . $refs;
-              
-              $self->render(data => $data);
-            }
-            else {
-              $sh->dumb_info_refs;
-            }
-          });
+          $r->get('/info/refs' => template 'info-refs');
 
           # $r->post('/git-upload-pack');
           # $r->post('/git-receive-pack');

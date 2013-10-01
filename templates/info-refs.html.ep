@@ -1,0 +1,58 @@
+<%
+  use IPC::Open3 ();;
+  use Symbol ();
+
+  my $service = param('service') || '';
+  my $user = param('user');
+  my $project = param('project');
+  my $git = app->git;
+  my $sh = app->smart_http;
+
+  if ($service eq 'git-upload-pack') {
+    
+    my $rep = $git->rep($user, $project);
+    my @cmd = $git->cmd($user, $project, 'upload-pack', '--stateless-rpc', '--advertise-refs', $rep);
+    
+    my ($cout, $cerr) = (Symbol::gensym, Symbol::gensym);
+    my $pid = IPC::Open3::open3(my $cin, $cout, $cerr, @cmd );
+    close $cin;
+    my ( $refs, $err, $buf ) = ( '', '', '' );
+    my $s = IO::Select->new( $cout, $cerr );
+    my $buffer_size = $sh->buffer_size;
+    while (my @ready = $s->can_read) {
+      for my $handle (@ready) {
+        while (sysread($handle, $buf,$buffer_size)) {
+          if ($handle == $cerr) {
+            $err .= $buf;
+          }
+          else {
+            $refs .= $buf;
+          }
+        }
+        $s->remove($handle) if eof($handle);
+      }
+    }
+    close $cout;
+    close $cerr;
+    waitpid($pid, 0);
+
+    if ($err) {
+      app->log->error($err);
+      $self->render_exception($err);
+      return;
+    }
+    
+    $self->res->headers->content_type('application/x-git-upload-pack-advertisement');
+    
+    my $data =
+      $sh->pkt_write("# service=git-upload-pack\n") . $sh->pkt_flush() . $refs;
+    
+    warn $data;
+    
+    $self->render(data => $data);
+    return;
+  }
+  else {
+    $sh->dumb_info_refs;
+  }
+%>
