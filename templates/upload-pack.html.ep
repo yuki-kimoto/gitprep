@@ -1,0 +1,6 @@
+<%
+  use Data::Dumper;
+  warn Dumper $self->req;
+%>
+
+upload-pack

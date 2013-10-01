@@ -8,6 +8,7 @@ use Encode qw/encode decode/;
 use Gitprep::API;
 use Gitprep::Git;
 use Gitprep::Manager;
+use Gitprep::SmartHTTP;
 use Scalar::Util 'weaken';
 use Validator::Custom;
 
@@ -23,6 +24,8 @@ has 'dbi';
 has 'git';
 has 'manager';
 has 'validator';
+
+use constant BUFFER_SIZE => 8192;
 
 sub startup {
   my $self = shift;
@@ -70,7 +73,7 @@ sub startup {
   $self->git($git);
   
   # Added public path
-  push @{$self->static->paths}, $rep_home;
+  # push @{$self->static->paths}, $rep_home;
   
   # DBI
   my $db_file = $ENV{GITPREP_DB_FILE}
@@ -177,7 +180,81 @@ sub startup {
           # Settings
           $r->get('/_settings' => template '/user-settings');
         }
-        
+
+        # Smart HTTP
+        {
+          my $r = $r->route('/(:project).git', project => $id_re);
+          
+          my $sh = Gitprep::SmartHTTP->new;
+          
+          # Fetch
+          $r->get('/info/refs')->to(cb => sub {
+            my $self = shift;
+            
+            my $service = $self->param('service') || '';
+            
+            my $user = $self->param('user');
+            my $project = $self->param('project');
+            
+            if ($service eq 'git-upload-pack') {
+              
+              my $rep = $git->rep($user, $project);
+              my @cmd = $git->cmd($user, $project, 'upload-pack', '--stateless-rpc', '--advertise-refs', $rep);
+              
+              warn "@cmd";
+              
+              use IPC::Open3 'open3';
+              use Symbol 'gensym';
+              my ($cout, $cerr) = (gensym, gensym );
+              my $pid = open3(my $cin, $cout, $cerr, @cmd );
+              close $cin;
+              my ( $refs, $err, $buf ) = ( '', '', '' );
+              my $s = IO::Select->new( $cout, $cerr );
+              while (my @ready = $s->can_read) {
+                for my $handle (@ready) {
+                  while ( sysread( $handle, $buf, BUFFER_SIZE ) ) {
+                    if ( $handle == $cerr ) {
+                      $err .= $buf;
+                    }
+                    else {
+                      $refs .= $buf;
+                    }
+                  }
+                  $s->remove($handle) if eof($handle);
+                }
+              }
+              close $cout;
+              close $cerr;
+              waitpid($pid, 0);
+
+              if ($err) {
+                app->log->error($err);
+                $self->render_exception($err);
+              }
+              
+              $self->res->headers->content_type('application/x-git-upload-pack-advertisement');
+              
+              my $data =
+                $sh->pkt_write("# service=git-upload-pack\n") . $sh->pkt_flush() . $refs;
+              
+              $self->render(data => $data);
+            }
+            else {
+              $sh->dumb_info_refs;
+            }
+          });
+
+          # $r->post('/git-upload-pack');
+          # $r->post('/git-receive-pack');
+          # $r->get('/HEAD');
+          # $r->get('/objects/info/alternates');
+          # $r->get('/objects/info/http-alternates');
+          # $r->get('/objects/info/packs');
+          # $r->get('/objects/[0-9a-f]{2}/[0-9a-f]{38}');
+          # $r->get('/objects/pack/pack-[0-9a-f]{40}\.pack');
+          # $r->get('/objects/pack/pack-[0-9a-f]{40}\.idx');
+        }
+                
         # Project
         {
           my $r = $r->route('/:project', project => $id_re);
