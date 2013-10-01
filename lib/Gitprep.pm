@@ -194,13 +194,47 @@ sub startup {
 
           # $r->post('/git-upload-pack');
           # $r->post('/git-receive-pack');
-          # $r->get('/HEAD');
-          # $r->get('/objects/info/alternates');
-          # $r->get('/objects/info/http-alternates');
-          # $r->get('/objects/info/packs');
-          # $r->get('/objects/[0-9a-f]{2}/[0-9a-f]{38}');
-          # $r->get('/objects/pack/pack-[0-9a-f]{40}\.pack');
-          # $r->get('/objects/pack/pack-[0-9a-f]{40}\.idx');
+          
+          $r->get('/(*Path)')->to(cb => sub { 
+            my $self = shift;
+            
+            my $path = $self->param('Path');
+            my $user = $self->param('user');
+            my $project = $self->param('project');
+            
+            warn $self->dumper($path, $user, $project);
+            
+            # Protect directory traversal
+            if ($path =~ m#\.\.#) {
+              $self->render_exception('Invalid URL');
+              return;
+            }
+            
+            # Content type
+            my $content_type;
+            if ($path eq 'HEAD'
+              || $path eq 'objects/info/alternates'
+              || $path eq 'objects/info/http-alternates'
+            )
+            {
+              $content_type = 'text/plain';
+            }
+            elsif ($path eq '/objects/info/packs') {
+              $content_type = 'text/plain; charset=UTF-8';
+            }
+            elsif ($path =~ m#^objects/[0-9a-f]{2}/[0-9a-f]{38}$#) {
+              $content_type = 'application/x-git-loose-object';
+            }
+            elsif ($path =~ m#^objects/pack/pack-[0-9a-f]{40}\.pack$#) {
+              $content_type = 'application/x-git-packed-objects';
+            }
+            elsif ($path =~ m#^objects/pack/pack-[0-9a-f]{40}\.idx$#) {
+              $content_type = 'application/x-git-packed-objects-toc';
+            }
+            
+            $self->res->headers->content_type($content_type) if $content_type;
+            $self->render_static("../data/rep/$user/$project.git/$path");
+          });
         }
                 
         # Project
