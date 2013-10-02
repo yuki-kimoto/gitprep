@@ -1,6 +1,7 @@
 <%
   use IPC::Open3 ();;
   use Symbol ();
+  use IO::Select ();
 
   my $service = param('service') || '';
   my $user = param('user');
@@ -18,7 +19,7 @@
     my $pid = IPC::Open3::open3(my $cin, $cout, $cerr, @cmd );
     close $cin;
     my ( $refs, $err, $buf ) = ( '', '', '' );
-    my $s = IO::Select->new( $cout, $cerr );
+    my $s = IO::Select->new($cout, $cerr);
     my $buffer_size = $sh->buffer_size;
     while (my @ready = $s->can_read) {
       for my $handle (@ready) {
