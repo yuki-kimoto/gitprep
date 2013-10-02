@@ -7,7 +7,8 @@
   my $project = param('project');
   my $git = app->git;
   my $sh = app->smart_http;
-
+  
+  # Smart HTTP
   if ($service eq 'git-upload-pack') {
     
     my $rep = $git->rep($user, $project);
@@ -44,15 +45,17 @@
     
     $self->res->headers->content_type('application/x-git-upload-pack-advertisement');
     
-    my $data =
-      $sh->pkt_write("# service=git-upload-pack\n") . $sh->pkt_flush() . $refs;
-    
-    warn $data;
+    # Data start
+    my $message = "# service=git-upload-pack\n";
+    my $data = sprintf( '%04x', length($message) + 4 ) . $message . '0000' . $refs;
     
     $self->render(data => $data);
     return;
   }
+  # Dumb HTTP
   else {
-    $sh->dumb_info_refs;
+    $git->cmd($user, $project, 'update-server-info');
+    $self->render_static("../data/rep/$user/$project.git/info/refs");
+    return;
   }
 %>
