@@ -189,12 +189,16 @@ sub startup {
           my $sh = Gitprep::SmartHTTP->new;
           $self->smart_http($sh);
           
-          # Fetch
+          # /info/refs
           $r->get('/info/refs' => template 'smart-http/info-refs');
-
-          # $r->post('/git-upload-pack');
-          # $r->post('/git-receive-pack');
           
+          # /git-upload-pack or /git-receive-pack
+          $r->any('/git-(:service)'
+            => [service => qr/(?:upload-pack|receive-pack)/]
+            => template 'smart-http/service'
+          );
+          
+          # Static file
           $r->get('/(*Path)' => template 'smart-http/static');
         }
                 
