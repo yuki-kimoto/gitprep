@@ -123,6 +123,8 @@ sub startup {
     }
   );
   
+  # Basic auth plugin
+  $self->plugin('BasicAuth');
 
   # Routes
   sub template {
@@ -186,20 +188,54 @@ sub startup {
         {
           my $r = $r->route('/(:project).git', project => $id_re);
           
-          my $sh = Gitprep::SmartHTTP->new;
-          $self->smart_http($sh);
-          
-          # /info/refs
-          $r->get('/info/refs' => template 'smart-http/info-refs');
-          
-          # /git-upload-pack or /git-receive-pack
-          $r->any('/git-(:service)'
-            => [service => qr/(?:upload-pack|receive-pack)/]
-            => template 'smart-http/service'
-          );
-          
-          # Static file
-          $r->get('/(*Path)' => template 'smart-http/static');
+          {
+            my $r = $r->under(sub {
+              my $self = shift;
+              
+              my $paths = $self->url_for->path->parts;
+              
+              # Basic auth when push request
+              my $service = $self->param('service') || '';
+              if ($service eq 'git-receive-pack') {
+                
+                $self->basic_auth("Git Area", sub {
+                  my ($user, $password) = @_;
+
+                  my $row
+                    = $dbi->model('user')->select(['password', 'salt'], id => $user)->one;
+                  
+                  return unless $row;
+                  
+                  my $api = $self->gitprep_api;
+                  my $is_valid = $api->check_password(
+                    $password,
+                    $row->{salt},
+                    $row->{password}
+                  );
+                  
+                  return $is_valid;
+                });
+              }
+              else {
+                return 1;
+              }
+            });
+            
+            my $sh = Gitprep::SmartHTTP->new;
+            $self->smart_http($sh);
+            
+            # /info/refs
+            $r->get('/info/refs' => template 'smart-http/info-refs');
+            
+            # /git-upload-pack or /git-receive-pack
+            $r->any('/git-(:service)'
+              => [service => qr/(?:upload-pack|receive-pack)/]
+              => template 'smart-http/service'
+            );
+            
+            # Static file
+            $r->get('/(*Path)' => template 'smart-http/static');
+          }
         }
                 
         # Project
