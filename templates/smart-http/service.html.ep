@@ -15,6 +15,8 @@
   my $rep_dir = $git->rep($user, $project);
   my @cmd = $git->cmd($user, $project, $service, '--stateless-rpc', $rep_dir);
   
+  warn 'a';
+  
   # Command
   my ($cout, $cerr) = (Symbol::gensym, Symbol::gensym);
   my $pid = IPC::Open3::open3(my $cin, $cout, $cerr, @cmd);
@@ -31,6 +33,8 @@
   }
   close $cin;
   
+  warn 'b';
+  
   # Response
   $self->res->headers->content_type("application/x-git-$service-result");
   $self->render_later;
@@ -41,6 +45,7 @@
   my $buffer_size = $sh->buffer_size;
   my $cb;
   $cb = sub {
+    warn 'c';
     my $c = shift;
     if (my @ready = $s->can_read) {
       my $error;

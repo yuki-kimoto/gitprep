@@ -2,7 +2,7 @@
   use IPC::Open3 ();;
   use Symbol ();
   use IO::Select ();
-
+  
   my $service = param('service') || '';
   my $user = param('user');
   my $project = param('project');
@@ -58,8 +58,28 @@
   }
   # Dumb HTTP
   else {
-    $git->cmd($user, $project, 'update-server-info');
-    $self->render_static("../data/rep/$user/$project.git/info/refs");
-    return;
+    # Update server info
+    my @cmd = $git->cmd($user, $project, 'update-server-info');
+    open my $fh, '-|', @cmd
+      or die "Can't open pipe for @cmd:$!";
+    close $fh
+      or die "Can't close pipe for @cmd:$!";
+    
+    my $rep_home = app->git->rep_home;
+    my $file = Mojo::Asset::File->new(path => "$rep_home/$user/$project.git/info/refs");
+    my $content = $file->slurp;
+    if (defined $content) {
+      $self->res->headers->content_type('text/plain; charset=UTF-8');
+      $self->res->headers->content_length(length $content);
+      $self->res->body($content);
+      $self->res->code(200);
+      $self->rendered;
+      return;
+    }
+    else {
+      $self->res->code(404);
+      $self->rendered;
+      return;
+    }
   }
 %>
