@@ -24,6 +24,7 @@
        return;
      }
   }
+  warn $body;
   
   # Read
   my ($cout, $cerr) = (Symbol::gensym, Symbol::gensym);
@@ -51,9 +52,11 @@
         while (sysread($handle, $buf, $buffer_size)) {
           if ($handle == $cerr) {
             $error .= $buf;
+            warn "error $buf";
           }
           else {
             $output .= $buf;
+            warn "output $buf";
           }
         }
         $s->remove($handle) if eof($handle);
