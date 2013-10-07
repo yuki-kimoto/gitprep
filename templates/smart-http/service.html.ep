@@ -16,22 +16,22 @@
   my @cmd = $git->cmd($user, $project, $service, '--stateless-rpc', $rep_dir);
   
   # Body
-  my $body = $self->req->body;
-  if (($self->req->headers->content_encoding || '') =~ /^(?:x-)?gzip$/) {
-     my $success = IO::Uncompress::Gunzip::gunzip(\$body);
-     unless ($success) {
-       $self->render_exception("gunzip failed: $IO::Uncompress::Gunzip::GunzipError\n");
-       return;
-     }
-  }
-  warn $body;
+  my $content = $self->req->content;
   
   # Read
   my ($cout, $cerr) = (Symbol::gensym, Symbol::gensym);
   my $pid = IPC::Open3::open3(my $cin, $cout, $cerr, @cmd);
-  print $cin $body;
+  my $pos = 0;
+  while (1) {
+    my $chunk = $content->get_body_chunk($pos);
+    last unless defined $chunk;
+    my $length = length $chunk;
+    last unless $length;
+
+    print $cin $chunk;
+    $pos += $length;
+  }
   close $cin;
-  $body = undef;
   
   # Response
   $self->res->headers->content_type("application/x-git-$service-result");
