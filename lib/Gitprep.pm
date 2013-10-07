@@ -1,3 +1,5 @@
+# 環境変数
+
 use 5.008007;
 package Gitprep;
 use Mojo::Base 'Mojolicious';
@@ -27,8 +29,6 @@ has 'validator';
 has 'smart_http';
 
 use constant BUFFER_SIZE => 8192;
-
-$ENV{MOJO_MAX_MESSAGE_SIZE} = 1024 * 1024 * 100;
 
 sub startup {
   my $self = shift;

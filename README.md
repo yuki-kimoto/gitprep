@@ -208,6 +208,12 @@ If you want to upgrade by "git pull", you can do it.
 you create "gitprep.my.conf" copied from "gitprep.my.conf",
 and do "git pull"
 
+### I can't push learge repository by http protocal
+
+Manye http.postBuffer value of git config is small. Input the following command to increase this size.
+
+    git config http.postBuffer 104857600
+
 ## Web Site
 
 [GitPrep Web Site](http://perlcodesample.sakura.ne.jp/gitprep-site/)

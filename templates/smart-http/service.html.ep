@@ -15,13 +15,11 @@
   my $rep_dir = $git->rep($user, $project);
   my @cmd = $git->cmd($user, $project, $service, '--stateless-rpc', $rep_dir);
   
-  # Body
-  my $content = $self->req->content;
-  
-  # Read
+  # Command
   my ($cout, $cerr) = (Symbol::gensym, Symbol::gensym);
   my $pid = IPC::Open3::open3(my $cin, $cout, $cerr, @cmd);
   my $pos = 0;
+  my $content = $self->req->content;
   while (1) {
     my $chunk = $content->get_body_chunk($pos);
     last unless defined $chunk;
@@ -52,11 +50,9 @@
         while (sysread($handle, $buf, $buffer_size)) {
           if ($handle == $cerr) {
             $error .= $buf;
-            warn "error $buf";
           }
           else {
             $output .= $buf;
-            warn "output $buf";
           }
         }
         $s->remove($handle) if eof($handle);
