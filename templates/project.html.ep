@@ -82,12 +82,7 @@
       });
 
       // Initialize
-      if (logined) {
-        $('#btn_ssh').trigger('click');
-      }
-      else {
-        $('#btn_http').trigger('click');
-      }
+      $('#btn_http').trigger('click');
       
       // URL is automatically selected
       var url_selected_count = 0;
