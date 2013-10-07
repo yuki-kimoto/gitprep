@@ -35,4 +35,5 @@ xt/user
 xt/log
 xt/import_rep.db
 xt/import_rep_user
-
+xt/smart_http.db
+xt/smart_http
