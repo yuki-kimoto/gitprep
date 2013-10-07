@@ -114,7 +114,7 @@
         </a>
         <div class="input-append" style="margin-top:10px">
           <div class="btn-group" data-toggle="buttons-radio">
-            <button class="btn" id="btn_http" style="margin-left:5px;padding:3px 6px;border-top-right-radius:0px; border-bottom-right-radius:0px">HTTP</button>
+            <button class="btn" id="btn_http" style="margin-left:5px;padding:3px 6px;border-top-right-radius:0px; border-bottom-right-radius:0px"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
             % if ($logined) {
               <button class="btn" id="btn_ssh" style="padding:3px 7px;border-radius:0">SSH</button>
             % }
