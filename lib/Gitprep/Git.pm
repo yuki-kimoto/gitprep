@@ -686,6 +686,7 @@ sub path_to_hash {
   my $line = $self->_dec(scalar <$fh>);
   close $fh or return;
   my ($t, $id) = ($line || '') =~ m/^[0-9]+ (.+) ([0-9a-fA-F]{40})\t/;
+  $t ||= '';
   return if defined $type && $type ne $t;
 
   return $id;

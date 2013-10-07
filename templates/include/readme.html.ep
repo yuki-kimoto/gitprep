@@ -1,12 +1,14 @@
 <%
   use Mojo::ByteStream ();
-  use Text::Markdown ();
+  use Text::Markdown::Discount ();
   
   # README
+  my $type;
   my $lines;
   eval { $lines = app->git->blob($user, $project, $rev, 'README') };
   my $readme_e;
   if ($lines) {
+    $type = 'plain';
     my $readme = join "\n", @$lines;
     $readme_e = Mojo::ByteStream->new($readme)->xml_escape->to_string;
     $readme_e =~ s#(^|\s|[^\x00-\x7F])(http(?:s)?://.+?)($|\s|[^\x00-\x7F])#$1<a href="$2">$2</a>$3#msg;
@@ -14,15 +16,22 @@
   else {
     eval { $lines = app->git->blob($user, $project, $rev, 'README.md') };
     if ($lines) {
+      $type = 'markdown';
       my $readme = join "\n", @$lines;
-      $readme_e = Text::Markdown::markdown($readme);
+      $readme_e = Text::Markdown::Discount::markdown($readme);
     }
   }
 %>
 
 % if (defined $readme_e) {
-  <div class="border-gray bk-gray-light" style="border-radius:1px;font-size:17px;padding:10px">
-    <i class="icon-book" style="margin-top:2px"></i> README
+  <div class="README">
+    <div class="border-gray bk-gray-light" style="border-radius:1px;font-size:17px;padding:10px">
+      <i class="icon-book" style="margin-top:2px"></i> README
+    </div>
+    % if ($type eq 'plain') {
+      <pre class="plain-text border-gray"><%== $readme_e %></pre>
+    % } else {
+      <div class="markdown border-gray"><%== $readme_e %></div>
+    % }
   </div>
-  <pre class="border-gray README"><%== $readme_e %></pre>
 % }

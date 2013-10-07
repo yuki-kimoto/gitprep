@@ -47,7 +47,8 @@
   border:1px solid #c5d5dd;
 }
 
-pre.README {
+/* Plain text */
+.plain-text {
   background             : white;
   border-radius          : 1px;
   border-top             : none;
@@ -58,21 +59,34 @@ pre.README {
   padding                : 27px;
 }
 
-pre.README h1 { margin: 0; font-size: 2em;    }
-pre.README h2 { margin: 0; font-size: 1.5em;  }
-pre.README h3 { margin: 0; font-size: 1.17em; }
-pre.README h5 { margin: 0; font-size:  .83em; }
-pre.README h6 { margin: 0; font-size:  .75em; }
+/* Markdown */
+.markdown {
+  background             : white;
+  border-radius          : 1px;
+  border-top             : none;
+  border-top-left-radius : 0;
+  font-size              : 14px;
+  line-height            : 1.5em;
+  margin-bottom          : 80px;
+  padding                : 27px;
+  font-color:#aaa;
+}
 
-pre.README h1 {
+.markdown h1 { margin-bottom:10px; padding:10px 0; font-size: 36px; }
+.markdown h2 { margin: 0; font-size: 1.5em;  }
+.markdown h3 { margin: 0; font-size: 1.17em; }
+.markdown h5 { margin: 0; font-size:  .83em; }
+.markdown h6 { margin: 0; font-size:  .75em; }
+
+.markdown h1 {
   border-bottom : 1px solid #DDDDDD;
 }
 
-pre.README p {
+.markdown p {
   margin  : 0;
-  padding : 0;
+  padding:10px 0;
 }
 
-pre.README ul {
+.markdown ul {
   padding : 0 1em;
 }
