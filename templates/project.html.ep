@@ -72,7 +72,7 @@
       // Click HTTP button
       $('#btn_http').on('click', function () {
         $('#rep_url').val(http_rep_url);
-        $('#access').text('Read-only');
+        $('#access').text('Read-write');
       });
       
       // Click SSH button
@@ -148,7 +148,7 @@
       
       %= include '/include/readme';
       
-    % } elsif ($state eq 'init' && $logined) {
+    % } elsif ($state eq 'init' && $api->logined($user)) {
 
       <div class="text-center" style="margin-bottom:10px">
         <b>Create a new repository on the command line via ssh</b>
