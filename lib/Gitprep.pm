@@ -194,8 +194,6 @@ sub startup {
             my $r = $r->under(sub {
               my $self = shift;
               
-              my $paths = $self->url_for->path->parts;
-              
               # Basic auth when push request
               my $service = $self->param('service') || '';
               if ($service eq 'git-receive-pack') {
