@@ -61,14 +61,14 @@ note 'Smart HTTP';
   $t->get_ok("/kimoto/t1.git/info/refs");
   $t->status_is(200);
   $t->content_type_is('text/plain; charset=UTF-8');
-
-=pod
+  
+  my $object_id1 = substr($t->tx->res->body, 0, 2);
+  my $object_id2 = substr($t->tx->res->body, 2, 38);
+  
   # Loose object
-  $t->get_ok("/kimoto/t1.git/objects/20/42336f878dd054083193909140d1d10c16e775");
+  $t->get_ok("/kimoto/t1.git/objects/$object_id1/$object_id2");
   $t->status_is(200);
   $t->content_type_is('application/x-git-loose-object');
-=cut
 
-  
-  
+
 }

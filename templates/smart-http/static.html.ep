@@ -31,7 +31,20 @@
     $content_type = 'application/x-git-packed-objects-toc';
   }
 
-  $self->res->headers->content_type($content_type) if $content_type;
-  $self->render_static("../data/rep/$user/$project.git/$path");
-  return;
+  my $rep_home = app->git->rep_home;
+  my $file = Mojo::Asset::File->new(path => "$rep_home/$user/$project.git/info/refs");
+  my $content = $file->slurp;
+  if (defined $content) {
+    $self->res->headers->content_type($content_type);
+    $self->res->headers->content_length(length $content);
+    $self->res->body($content);
+    $self->res->code(200);
+    $self->rendered;
+    return;
+  }
+  else {
+    $self->res->code(404);
+    $self->rendered;
+    return;
+  }
 %>
