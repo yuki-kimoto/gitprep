@@ -18,7 +18,7 @@
   {
     $content_type = 'text/plain';
   }
-  elsif ($path eq '/objects/info/packs') {
+  elsif ($path eq 'objects/info/packs') {
     $content_type = 'text/plain; charset=UTF-8';
   }
   elsif ($path =~ m#^objects/[0-9a-f]{2}/[0-9a-f]{38}$#) {
@@ -30,11 +30,13 @@
   elsif ($path =~ m#^objects/pack/pack-[0-9a-f]{40}\.idx$#) {
     $content_type = 'application/x-git-packed-objects-toc';
   }
-
+  
   my $rep_home = app->git->rep_home;
-  my $file = Mojo::Asset::File->new(path => "$rep_home/$user/$project.git/info/refs");
-  my $content = $file->slurp;
-  if (defined $content) {
+  my $file = "$rep_home/$user/$project.git/$path";
+  if (-f $file) {
+    my $asset = Mojo::Asset::File->new(path => $file);
+    my $content = $asset->slurp;
+    $content = '' unless defined $content;
     $self->res->headers->content_type($content_type);
     $self->res->headers->content_length(length $content);
     $self->res->body($content);

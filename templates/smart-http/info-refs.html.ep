@@ -65,11 +65,14 @@
     close $fh
       or die "Can't close pipe for @cmd:$!";
     
+    my $content_type = 'text/plain; charset=UTF-8';
     my $rep_home = app->git->rep_home;
-    my $file = Mojo::Asset::File->new(path => "$rep_home/$user/$project.git/info/refs");
-    my $content = $file->slurp;
-    if (defined $content) {
-      $self->res->headers->content_type('text/plain; charset=UTF-8');
+    my $file = "$rep_home/$user/$project.git/info/refs";
+    if (-f $file) {
+      my $asset = Mojo::Asset::File->new(path => $file);
+      my $content = $asset->slurp;
+      $content = '' unless defined $content;
+      $self->res->headers->content_type($content_type);
       $self->res->headers->content_length(length $content);
       $self->res->body($content);
       $self->res->code(200);

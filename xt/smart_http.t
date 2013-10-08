@@ -70,5 +70,16 @@ note 'Smart HTTP';
   $t->status_is(200);
   $t->content_type_is('application/x-git-loose-object');
 
+  # /info/pack
+  $t->get_ok("/kimoto/t1.git/objects/info/packs");
+  $t->status_is(200);
+  $t->content_type_is('text/plain; charset=UTF-8');
 
+  # /HEAD
+  $t->get_ok("/kimoto/t1.git/HEAD");
+  $t->status_is(200);
+  $t->content_type_is('text/plain');
+  $t->content_like(qr#ref: refs/heads/master#);
+  
+  
 }
