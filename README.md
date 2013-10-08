@@ -197,7 +197,7 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 ### blame don't work
 
 In Gitprep, blame page use "git blame --line-porcelain". In old git, there is no --line-porcelain option.
-We don't know when --line-porcelain is added to git.
+We don't know when --line-porcelain was added to git.
 At least, blame page work well in git 1.8.2.1.
 
 ### How to upgrade GitPrep
@@ -208,9 +208,9 @@ If you want to upgrade by "git pull", you can do it.
 you create "gitprep.my.conf" copied from "gitprep.my.conf",
 and do "git pull"
 
-### I can't push learge repository by http protocal
+### I can't push large repository by http protocal
 
-Manye http.postBuffer value of git config is small. Input the following command to increase this size.
+Maybe http.postBuffer value of git config is small. Input the following command to increase this size.
 
     git config http.postBuffer 104857600
 
