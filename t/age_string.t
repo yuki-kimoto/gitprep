@@ -1,6 +1,9 @@
-#!/usr/bin/env perl
+use Test::More 'no_plan';
 
-use Test::More;
+use FindBin;
+use lib "$FindBin::Bin/../mojo/lib";
+use lib "$FindBin::Bin/../lib";
+use lib "$FindBin::Bin/../extlib/lib/perl5";
 
 use Gitprep::Git;
 
@@ -34,8 +37,6 @@ my @cases = (
   { stimulus =>  2 * 365     * 24 * 60 * 60 + 1, expected => '2 years ago'   },
 );
 
-plan ( tests => scalar @cases );
-
 for ( @cases ) {
-  is ( Gitprep::Git->_age_string ( $_->{stimulus} ), $_->{expected}, "$_->{stimulus} sec ~ \"$_->{expected}\"" );
+  is ( Gitprep::Git->new->_age_string ( $_->{stimulus} ), $_->{expected}, "$_->{stimulus} sec ~ \"$_->{expected}\"" );
 }
