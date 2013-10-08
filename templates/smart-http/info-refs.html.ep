@@ -9,6 +9,8 @@
   my $git = app->git;
   my $sh = app->smart_http;
   
+  warn $service;
+  
   # Smart HTTP
   if ($service eq 'git-upload-pack' || $service eq 'git-receive-pack') {
     
@@ -40,7 +42,7 @@
     close $cout;
     close $cerr;
     waitpid($pid, 0);
-
+    
     if ($err) {
       app->log->error($err);
       $self->render_exception($err);

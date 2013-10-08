@@ -9,6 +9,7 @@ use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use File::Path 'rmtree';
 use Encode qw/encode decode/;
+use MIME::Base64 'encode_base64';
 
 use Test::Mojo;
 
@@ -71,15 +72,56 @@ note 'Smart HTTP';
   $t->content_type_is('application/x-git-loose-object');
 
   # /info/pack
-  $t->get_ok("/kimoto/t1.git/objects/info/packs");
+  $t->get_ok('/kimoto/t1.git/objects/info/packs');
   $t->status_is(200);
   $t->content_type_is('text/plain; charset=UTF-8');
 
   # /HEAD
-  $t->get_ok("/kimoto/t1.git/HEAD");
+  $t->get_ok('/kimoto/t1.git/HEAD');
   $t->status_is(200);
   $t->content_type_is('text/plain');
   $t->content_like(qr#ref: refs/heads/master#);
   
+  # /info/refs upload-pack request
+  $t->get_ok('/kimoto/t1.git/info/refs?service=git-upload-pack');
+  $t->status_is(200);
+  $t->header_is('Content-Type', 'application/x-git-upload-pack-advertisement');
+  $t->content_like(qr/^001e# service=git-upload-pack/);
+  $t->content_like(qr/multi_ack_detailed/);
   
+  # /git-upload-pack
+  {
+    my $content = <<EOS;
+006fwant 6410316f2ed260666a8a6b9a223ad3c95d7abaed multi_ack_detailed no-done side-band-64k thin-pack ofs-delta
+0032want 6410316f2ed260666a8a6b9a223ad3c95d7abaed
+00000009done
+EOS
+    $t->post_ok(
+      '/kimoto/t1.git/git-upload-pack',
+      {
+        'Content-Type' => 'application/x-git-upload-pack-request',
+        'Content-Length' => 174,
+        'Content'        => $content
+      }
+    );
+    $t->status_is(200);
+    $t->content_type_is('application/x-git-upload-pack-result');
+  }
+
+  # /info/refs recieve-pack request(Basic authentication)
+  $t->get_ok('/kimoto/t1.git/info/refs?service=git-receive-pack');
+  $t->status_is(401);
+  
+  # /info/refs recieve-pack request
+  $t->get_ok(
+    '/kimoto/t1.git/info/refs?service=git-receive-pack',
+    {
+      Authorization => 'Basic ' . encode_base64('kimoto:a')
+    }
+  );
+  $t->header_is("Content-Type", "application/x-git-receive-pack-advertisement");
+  $t->content_like(qr/^001f# service=git-receive-pack/);
+  $t->content_like(qr/report-status/);
+  $t->content_like(qr/delete-refs/);
+  $t->content_like(qr/ofs-delta/);
 }
