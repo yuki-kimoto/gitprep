@@ -124,4 +124,15 @@ EOS
   $t->content_like(qr/report-status/);
   $t->content_like(qr/delete-refs/);
   $t->content_like(qr/ofs-delta/);
+  
+  # /git-receive-pack
+  $t->post_ok(
+    '/kimoto/t1.git/git-receive-pack',
+    {
+      'Content-Type' => 'application/x-git-receive-pack-request',
+      Content => '00810000000000000000000000000000000000000000 6410316f2ed260666a8a6b9a223ad3c95d7abaed refs/tags/v1.0. report-status side-band-64k0000'
+    }
+  );
+  $t->status_is(200);
+  $t->content_type_is('application/x-git-receive-pack-result');
 }
