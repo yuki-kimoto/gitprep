@@ -22,4 +22,3 @@ requires 'ExtUtils::ParseXS', '== 3.18';
 requires 'Test::MockModule', '== 0.05';
 requires 'Digest::SHA', '== 5.84';
 requires 'Text::Markdown::Discount', '== 0.10';
-requires 'Compress::Zlib', '== 2.062';

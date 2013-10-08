@@ -1,5 +1,4 @@
 <%
-  use IO::Uncompress::Gunzip ();
   use IPC::Open3 ();
   use Symbol ();
   use IO::Select ();
