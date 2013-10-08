@@ -1,5 +1,5 @@
 requires 'DBI', '== 1.625';
-requires 'DBD::SQLite', '== 1.37';
+requires 'DBD::SQLite', '== 1.40';
 requires 'Object::Simple', '== 3.09';
 requires 'DBIx::Custom', '== 0.28';
 requires 'Config::Tiny', '== 2.14';
