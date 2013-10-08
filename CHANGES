@@ -2,6 +2,7 @@
   - add README.md support
   - add submodule support
   - add Smart HTTP and basic authentication support
+  - add Markdown format in normal file
 1.2
   - add blame page
   - add blanch import feature

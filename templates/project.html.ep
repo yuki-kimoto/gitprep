@@ -1,4 +1,6 @@
 <%
+  use Text::Markdown::Discount ();
+
   my $state;
 
   # API

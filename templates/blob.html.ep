@@ -1,4 +1,6 @@
 <%
+  use Text::Markdown::Discount ();
+  
   # API
   my $api = gitprep_api;
 
@@ -75,7 +77,13 @@
         </div>
       </div>
     </div>
-    % if ($mime_type =~ m#^image/#) {
+    % if ($file =~ /\.md$/) {
+        % my $readme = join "\n", @$lines;
+        % my $readme_e = Text::Markdown::Discount::markdown($readme);
+       <div class="markdown border-gray">
+         <%== $readme_e %>
+       </div>
+    % } elsif ($mime_type =~ m#^image/#) {
       <div style="background:#ddd;text-align:center;padding-top:30px;padding-bottom:30px;margin-bottom:30px">
         <img type="<%= $mime_type %>
           % if (defined $file) {
