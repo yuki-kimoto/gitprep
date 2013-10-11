@@ -3,8 +3,6 @@
   use Symbol ();
   use IO::Select ();
   
-  my $sh = app->smart_http;
-  
   my $service = param('service');
   my $user = param('user');
   my $project = param('project');
@@ -37,7 +35,7 @@
   # Write
   my $buf = '';
   my $s = IO::Select->new($cout, $cerr);
-  my $buffer_size = $sh->buffer_size;
+  my $buffer_size = $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE};
   my $cb;
   $cb = sub {
     my $c = shift;

@@ -7,7 +7,6 @@
   my $user = param('user');
   my $project = param('project');
   my $git = app->git;
-  my $sh = app->smart_http;
   
   # Smart HTTP
   if ($service eq 'git-upload-pack' || $service eq 'git-receive-pack') {
@@ -23,10 +22,10 @@
     close $cin;
     my ( $refs, $err, $buf ) = ( '', '', '' );
     my $s = IO::Select->new($cout, $cerr);
-    my $buffer_size = $sh->buffer_size;
+    my $buffer_size = $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE};
     while (my @ready = $s->can_read) {
       for my $handle (@ready) {
-        while (sysread($handle, $buf,$buffer_size)) {
+        while (sysread($handle, $buf, $buffer_size)) {
           if ($handle == $cerr) {
             $err .= $buf;
           }

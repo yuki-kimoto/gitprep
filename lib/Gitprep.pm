@@ -10,7 +10,6 @@ use Encode qw/encode decode/;
 use Gitprep::API;
 use Gitprep::Git;
 use Gitprep::Manager;
-use Gitprep::SmartHTTP;
 use Scalar::Util 'weaken';
 use Validator::Custom;
 
@@ -26,7 +25,6 @@ has 'dbi';
 has 'git';
 has 'manager';
 has 'validator';
-has 'smart_http';
 
 use constant BUFFER_SIZE => 8192;
 
@@ -221,9 +219,6 @@ sub startup {
               }
             });
             
-            my $sh = Gitprep::SmartHTTP->new;
-            $self->smart_http($sh);
-            
             # /info/refs
             $r->get('/info/refs' => template 'smart-http/info-refs');
             
@@ -322,6 +317,9 @@ sub startup {
       });
     }
   }
+  
+  # Smart HTTP Buffer size
+  $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE} ||= 8192;
 }
 
 1;
