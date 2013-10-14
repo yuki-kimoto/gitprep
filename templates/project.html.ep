@@ -190,7 +190,7 @@ git remote add origin <%= $http_rep_url %>
 git push -u origin master</pre>
     % } else {
       <div class="well text-center muted" style="background:white;margin-bottom:30px">
-        <b>Repositry is not yet created.</b>
+        <b>Repository is not yet created.</b>
       </div>
     % }
   </div>
