@@ -48,7 +48,7 @@
       
       my $manager = app->manager;
       if ($manager->exists_project($user, $project)) {
-        $errors = ['Repositry already exists'];
+        $errors = ['Repository already exists'];
       }
       else {
         # Create repository
