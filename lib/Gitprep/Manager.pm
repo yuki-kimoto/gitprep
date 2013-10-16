@@ -556,7 +556,7 @@ sub _delete_rep {
 
   # Delete repository
   my $rep_home = $self->app->git->rep_home;
-  croak "Can't remove repository. repositry home is empty"
+  croak "Can't remove repository. repository home is empty"
     if !defined $rep_home || $rep_home eq '';
   my $rep = "$rep_home/$user/$project.git";
   rmtree $rep;
