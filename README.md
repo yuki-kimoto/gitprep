@@ -19,7 +19,7 @@ Github clone. You can install portable github system into Unix/Linux.
 Shared Server must support **Linux/Unix**, **Apache**, **SuExec**,
 **CGI**, and **PHP5(CGI mode)**.
 
-(PHP is not necessary, if PHP exists, the install process is easy
+(*PHP* is not necessary, if PHP exists, the install process is easy
 because you do not need to think about permissions.)
 
 Many shared servers support these,
