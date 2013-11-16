@@ -1,6 +1,7 @@
 <%
   # API
   my $api = gitprep_api;
+  my $manager = app->manager;
   
   # Parameters
   my $op = param('op') || '';
@@ -39,8 +40,8 @@
       }
       else {
         eval { app->manager->rename_project($user, $project, $to_project) };
-        if ($@) {
-          app->log->error($@);
+        if (my $e = $@) {
+          app->log->error($e);
           $errors = ['Internal Error'];
         }
         else {
@@ -59,8 +60,8 @@
     $description = '' unless defined $description;
     
     eval { $git->description($user, $project, $description) };
-    if ($@) {
-      app->log->error("/$user/$project/settings?op=description: $@");
+    if (my $e = $@) {
+      app->log->error("/$user/$project/settings?op=description: $e");
       $errors = ['Internal Error'];
     }
     else {
@@ -74,12 +75,33 @@
   elsif ($op eq 'default-branch' && $post) {
     my $default_branch = param('default-branch');
     eval { app->manager->default_branch($user, $project, $default_branch) };
-    if ($@) {
-      app->log->error("/$user/$project/settings?op=default-branch: $@");
+    if (my $e = $@) {
+      app->log->error("/$user/$project/settings?op=default-branch: $e");
       $errors = ['Internal Error'];
     }
     else {
       flash(message => "Default branch is changed to $default_branch.");
+      $self->redirect_to('current');
+      return;
+    }
+  }
+  
+  # Private repository
+  elsif ($op eq 'private' && $post) {
+    my $private = param('private') ? 1 : 0;
+    
+    eval {
+      app->dbi->model('project')->update(
+        {private => $private},
+        id => [$user, $project]
+      );
+    };
+    if (my $e = $@) {
+      app->log->error("/$user/$project/settings?op=private: $e");
+      $errors = ['Internal Error'];
+    }
+    else {
+      flash(message => 'Private status is saved.');
       $self->redirect_to('current');
       return;
     }
@@ -92,8 +114,8 @@
     my $project = param('project');
     
     eval { app->manager->delete_project($user, $project) };
-    if ($@) {
-      app->log->error("/$user/$project/settings:$@");
+    if (my $e = $@) {
+      app->log->error("/$user/$project/settings: $e");
       $errors = ['Internal Error'];
     }
     else {
@@ -191,9 +213,11 @@
       <div class="border-gray radius-bottom" style="padding:5px 10px;border-top:none;">
         <form id="form-default-branch" action="<%= url_for->query(op => 'private') %>" method="post" style="margin-bottom:0px">
           <span>Make this repository private</span>
-          %# my $private = $git->description($user, $project);
-          % my $private = 1;
-          %= check_box 'private' => $private, style => 'margin-top:0px;margin-left:5px;margin-right:10px';
+          % my $private = app->manager->is_private_project($user, $project);
+          % if ($private) {
+            % param('private', 1);
+          % }
+          %= check_box 'private' => 1, style => 'margin-top:0px;margin-left:5px;margin-right:10px';
           <input type="submit" class="btn" value="Save">
         </form>
       </div>

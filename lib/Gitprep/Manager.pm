@@ -89,6 +89,16 @@ sub is_admin {
   return $is_admin;
 }
 
+sub is_private_project {
+  my ($self, $user, $project) = @_;
+  
+  # Is private
+  my $private = $self->app->dbi->model('project')
+    ->select('private', id => [$user, $project])->value;
+  
+  return $private;
+}
+
 sub members {
   my ($self, $user, $project) = @_;
   
@@ -321,7 +331,8 @@ EOS
   my $project_columns = [
     "default_branch not null default 'master'",
     "original_user not null default ''",
-    "original_pid integer not null default 0"
+    "original_pid integer not null default 0",
+    "private not null default 0"
   ];
   for my $column (@$project_columns) {
     eval { $dbi->execute("alter table project add column $column") };
