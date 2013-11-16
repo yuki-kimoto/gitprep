@@ -1,6 +1,7 @@
 1.4
   - fix markdown bugs (*em*, _em_)
   - default readme file is changed. README is changed to README.md
+  - add private repository feature
 1.3
   - add README.md support
   - add submodule support

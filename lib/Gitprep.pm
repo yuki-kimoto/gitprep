@@ -192,15 +192,19 @@ sub startup {
               my $self = shift;
               
               my $api = $self->gitprep_api;
+              my $user = $self->param('user');
+              my $project = $self->param('project');
+              my $private = $self->app->manager->is_private_project($user, $project);
               
               # Basic auth when push request
               my $service = $self->param('service') || '';
-              if ($service eq 'git-receive-pack') {
+              if ($service eq 'git-receive-pack' || $private) {
                 
                 $self->basic_auth("Git Area", sub {
-                  my ($user, $password) = @_;
+                  my ($auth_user, $auth_password) = @_;
                   
-                  my $is_valid = $api->check_user_and_password($user, $password);
+                  my $is_valid
+                    = $user eq $auth_user && $api->check_user_and_password($auth_user, $auth_password);
                   
                   return $is_valid;
                 });
