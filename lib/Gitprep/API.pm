@@ -25,6 +25,23 @@ sub check_password {
   return md5_hex(md5_hex "$salt$password") eq $password_encrypted;
 }
 
+sub check_user_and_password {
+  my ($self, $user, $password) = @_;
+  
+  my $row
+    = $self->app->dbi->model('user')->select(['password', 'salt'], id => $user)->one;
+  
+  return unless $row;
+  
+  my $is_valid = $self->check_password(
+    $password,
+    $row->{salt},
+    $row->{password}
+  );
+  
+  return $is_valid;
+}
+
 sub new {
   my ($class, $cntl) = @_;
 

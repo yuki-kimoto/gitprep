@@ -191,24 +191,16 @@ sub startup {
             my $r = $r->under(sub {
               my $self = shift;
               
+              my $api = $self->gitprep_api;
+              
               # Basic auth when push request
               my $service = $self->param('service') || '';
               if ($service eq 'git-receive-pack') {
                 
                 $self->basic_auth("Git Area", sub {
                   my ($user, $password) = @_;
-
-                  my $row
-                    = $dbi->model('user')->select(['password', 'salt'], id => $user)->one;
                   
-                  return unless $row;
-                  
-                  my $api = $self->gitprep_api;
-                  my $is_valid = $api->check_password(
-                    $password,
-                    $row->{salt},
-                    $row->{password}
-                  );
+                  my $is_valid = $api->check_user_and_password($user, $password);
                   
                   return $is_valid;
                 });
@@ -240,13 +232,15 @@ sub startup {
             my $r = $r->under(sub {
               my $self = shift;
               
+              # API
+              my $api = $self->gitprep_api;
+              
               # Private
-              my $session_user = $self->session('user');
               my $user = $self->param('user');
               my $project = $self->param('project');
               my $private = $self->app->manager->is_private_project($user, $project);
               if ($private) {
-                if ($session_user eq $user) {
+                if ($api->logined($user)) {
                   return 1;
                 }
                 else {
