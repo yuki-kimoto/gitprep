@@ -236,60 +236,84 @@ sub startup {
         {
           my $r = $r->route('/:project', project => $id_re);
           
-          # Home
-          $r->get('/' => template '/project');
-          
-          # Commit
-          $r->get('/commit/*diff' => template '/commit');
-          
-          # Commits
-          $r->get('/commits/*rev_file' => template '/commits');
-          
-          # Branches
-          $r->any('/branches/*base_branch' => {base_branch => undef} => template '/branches');
+          {
+            my $r = $r->under(sub {
+              my $self = shift;
+              
+              # Private
+              my $session_user = $self->session('user');
+              my $user = $self->param('user');
+              my $project = $self->param('project');
+              my $private = $self->app->manager->is_private_project($user, $project);
+              if ($private) {
+                if ($session_user eq $user) {
+                  return 1;
+                }
+                else {
+                  $self->render('private');
+                  return 0;
+                }
+              }
+              else {
+                return 1;
+              }
+            });
+            
+            # Home
+            $r->get('/' => template '/project');
+            
+            # Commit
+            $r->get('/commit/*diff' => template '/commit');
+            
+            # Commits
+            $r->get('/commits/*rev_file' => template '/commits');
+            
+            # Branches
+            $r->any('/branches/*base_branch' => {base_branch => undef} => template '/branches');
 
-          # Tags
-          $r->get('/tags' => template '/tags');
+            # Tags
+            $r->get('/tags' => template '/tags');
 
-          # Tree
-          $r->get('/tree/*rev_dir' => template '/tree');
-          
-          # Blob
-          $r->get('/blob/*rev_file' => template '/blob');
-          
-          # Sub module
-          $r->get('/submodule/*rev_file' => template '/submodule');
+            # Tree
+            $r->get('/tree/*rev_dir' => template '/tree');
+            
+            # Blob
+            $r->get('/blob/*rev_file' => template '/blob');
+            
+            # Sub module
+            $r->get('/submodule/*rev_file' => template '/submodule');
 
-          # Raw
-          $r->get('/raw/*rev_file' => template '/raw');
+            # Raw
+            $r->get('/raw/*rev_file' => template '/raw');
 
-          # Blame
-          $r->get('/blame/*rev_file' => template '/blame');
-          
-          # Archive
-          $r->get('/archive/(*rev).tar.gz' => template '/archive')->to(archive_type => 'tar');
-          $r->get('/archive/(*rev).zip' => template '/archive')->to(archive_type => 'zip' );
-          
-          # Compare
-          $r->get('/compare/(*rev1)...(*rev2)' => template '/compare');
-          
-          # Settings
-          $r->any('/settings' => template '/settings');
-          
-          # Fork
-          $r->any('/fork' => template '/fork');
+            # Blame
+            $r->get('/blame/*rev_file' => template '/blame');
+            
+            # Archive
+            $r->get('/archive/(*rev).tar.gz' => template '/archive')->to(archive_type => 'tar');
+            $r->get('/archive/(*rev).zip' => template '/archive')->to(archive_type => 'zip' );
+            
+            # Compare
+            $r->get('/compare/(*rev1)...(*rev2)' => template '/compare');
+            
+            # Settings
+            $r->any('/settings' => template '/settings');
+            
+            # Fork
+            $r->any('/fork' => template '/fork');
 
-          # Network
-          $r->get('/network' => template '/network');
+            # Network
+            $r->get('/network' => template '/network');
 
-          # Network Graph
-          $r->get('/network/graph/(*rev1)...(*rev2_abs)' => template '/network/graph');
+            # Network Graph
+            $r->get('/network/graph/(*rev1)...(*rev2_abs)' => template '/network/graph');
 
-          # Import branch
-          $r->any('/import-branch/:remote_user/:remote_project' => template '/import-branch');
-          
-          # Get branches and tags
-          $r->get('/api/revs' => template '/api/revs');
+            # Import branch
+            $r->any('/import-branch/:remote_user/:remote_project' => template '/import-branch');
+            
+            # Get branches and tags
+            $r->get('/api/revs' => template '/api/revs');
+          }
         }
       }
     }

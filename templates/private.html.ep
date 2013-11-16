@@ -1,0 +1,11 @@
+% layout 'common', title => 'Private repository';
+
+  %= include '/include/header';
+  
+  <div class="container">
+    <div class="well" style="background:white;text-align:center;font-size:20px;">
+      <%= $project %> is private repository
+    </div>
+  </div>
+
+  %= include '/include/footer';
