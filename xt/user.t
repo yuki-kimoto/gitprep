@@ -320,7 +320,7 @@ note 'Profile';
     $t->post_ok('/_new?op=create', form => {project => 't2', description => 'Hello', readme => 1});
     $t->content_like(qr/first commit/);
     $t->content_like(qr/t2\.git/);
-    $t->content_like(qr/README/);
+    $t->content_like(qr/README\.md/);
     $t->content_like(qr/kimoto1\@localhost/);
 
     # Settings page(don't has README)

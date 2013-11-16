@@ -457,14 +457,17 @@ sub _create_rep {
       close $init_fh or croak "Can't execute git init";
       
       # Add README
-      my $file = "$temp_work/README";
-      open my $fh, '>', $file
+      my $file = "$temp_work/README.md";
+      open my $readme_fh, '>', $file
         or croak "Can't create $file: $!";
+      print $readme_fh "$project\n=====\n";
+      close $readme_fh;
+      
       my @git_add_cmd = $git->cmd_rep(
         $temp_work,
         "--work-tree=$temp_work",
         'add',
-        'README'
+        'README.md'
       );
       open my $add_fh, "-|", @git_add_cmd
         or croak "Can't open git add";
