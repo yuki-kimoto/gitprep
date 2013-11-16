@@ -188,6 +188,15 @@
           %= select_field 'default-branch' => $branch_names, style => 'margin-top:5px';
         </form>
       </div>
+      <div class="border-gray radius-bottom" style="padding:5px 10px;border-top:none;">
+        <form id="form-default-branch" action="<%= url_for->query(op => 'private') %>" method="post" style="margin-bottom:0px">
+          <span>Make this repository private</span>
+          %# my $private = $git->description($user, $project);
+          % my $private = 1;
+          %= check_box 'private' => $private, style => 'margin-top:0px;margin-left:5px;margin-right:10px';
+          <input type="submit" class="btn" value="Save">
+        </form>
+      </div>
     </div>
     
     <div style="margin-bottom:30px">
