@@ -6,7 +6,6 @@ use Mojo::Base 'Mojolicious';
 
 use Carp 'croak';
 use DBIx::Custom;
-use Encode qw/encode decode/;
 use Gitprep::API;
 use Gitprep::Git;
 use Gitprep::Manager;

@@ -547,7 +547,7 @@ sub description {
   else {
     # Read description
     return unless -f $file;
-    my $description = $self->_slurp($file) || '';
+    my $description = $self->_dec($self->_slurp($file) || '');
     return $description;
   }
 }
@@ -1708,7 +1708,7 @@ sub _slurp {
   # Slurp
   open my $fh, '<', $file
     or croak qq/Can't open file "$file": $!/;
-  my $content = do { local $/; $self->_dec(scalar <$fh>) };
+  my $content = do { local $/; scalar <$fh> };
   close $fh;
   
   return $content;
