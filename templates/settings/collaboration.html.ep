@@ -17,35 +17,63 @@
   # Rename project
   my $git = app->git;
   my $errors;
-  if ($op eq 'add' && lc $self->req->method eq 'post') {
-    my $params = $api->params;
-    my $rule = [
-      collaborator => [
-        ['not_blank' => 'collaborator is empty.'],
-        # Check user
-        sub {
-          my $collaborator = shift || '';
-          
-          if ($collaborator eq $user) {
-            return {result => 0, message => "User $collaborator is yourself"};
-          }
-          else {
-            my $row = app->dbi->model('user')->select(id => $collaborator)->one;
+  if (lc $self->req->method eq 'post') {
+    if ($op eq 'add') {
+      my $params = $api->params;
+      my $rule = [
+        collaborator => [
+          ['not_blank' => 'collaborator is empty.'],
+          # Check user
+          sub {
+            my $collaborator = shift || '';
             
-            return $row ? 1 : {result => 0, message => "User $collaborator don't exists"};
+            if ($collaborator eq $user) {
+              return {result => 0, message => "User $collaborator is yourself"};
+            }
+            else {
+              my $row = app->dbi->model('user')->select(id => $collaborator)->one;
+              
+              return $row ? 1 : {result => 0, message => "User $collaborator don't exists"};
+            }
           }
+        ]
+      ];
+      my $vresult = app->validator->validate($params, $rule);
+      if ($vresult->is_ok) {
+        my $safe_params = $vresult->data;
+        my $collaborator = $safe_params->{collaborator};
+        
+        # Insert
+        eval {
+          app->dbi->model('collaboration')->insert(
+            {
+              user_id => $user,
+              project_name => $project,
+              collaborator_id => $collaborator
+            }
+          );
+        };
+        if (my $e = $@) {
+          app->log->error(url_with . ": $e");
+          $errors = ['Internal Error'];
         }
-      ]
-    ];
-    my $vresult = app->validator->validate($params, $rule);
-    if ($vresult->is_ok) {
-      my $safe_params = $vresult->data;
-      my $collaborator = $safe_params->{collaborator};
+        else {
+          flash(message => "Collaborator $collaborator is added.");
+          $self->redirect_to('current');
+          return;
+        }
+      }
+      else {
+        $errors = $vresult->messages;
+      }
+    }
+    elsif ($op eq 'remove') {
+      my $collaborator = param('collaborator');
       
-      # Insert
+      # Delete
       eval {
-        app->dbi->model('collaboration')->insert(
-          {
+        app->dbi->model('collaboration')->delete(
+          where => {
             user_id => $user,
             project_name => $project,
             collaborator_id => $collaborator
@@ -57,15 +85,18 @@
         $errors = ['Internal Error'];
       }
       else {
-        flash(message => "Collaborator $collaborator is added.");
+        flash(message => "Collaborator $collaborator is removed.");
         $self->redirect_to('current');
         return;
       }
     }
-    else {
-      $errors = $vresult->messages;
-    }
   }
+  
+  my $collaborators = app->dbi->model('collaboration')->select(
+    'collaborator_id',
+    where => {user_id => $user, project_name => $project},
+    append => 'order by collaborator_id'
+  )->values;
 %>
 
 % layout 'common', title => 'Collaboration';
@@ -86,6 +117,21 @@
       </div>
       <div class="span10">
         <div style="font-size:16px;margin-top:10px;margin-bottom:10px"><b>Manage Collaborators</b></div>
+        % if (@$collaborators) {
+          <table class="table" style="margin-bottom:0">
+            % for my $collaborator (@$collaborators) {
+              <tr>
+                <td>
+                  <a href="<%= url_for("/$collaborator") %>"><%= $collaborator %></a>
+                  <form action="<%= url_for->query(op => 'remove') %>" method="post" style="display:inline-block">
+                    <%= hidden_field 'collaborator' => $collaborator %>
+                    (<a href="javascript:void(0)" onclick="$(this).closest('form').submit();" style="color:red">remove</a>)
+                  </form>
+                </td>
+              </tr>
+            % }
+          </table>
+        % }
         <form action="<%= url_for->query(op => 'add') %>" method="post">
           <div class="well" style="padding:5px">
             <%= text_field 'collaborator', style => 'margin-bottom:0' %>
