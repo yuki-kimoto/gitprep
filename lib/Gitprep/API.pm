@@ -42,6 +42,30 @@ sub check_user_and_password {
   return $is_valid;
 }
 
+sub is_collaborator {
+  my ($self, $user, $project, $session_user) = @_;
+
+  $session_user = $self->cntl->session('user') unless defined $session_user;
+  
+  my $row = $self->app->dbi->model('collaboration')->select(
+    id => [$user, $project, $session_user]
+  )->one;
+  
+  return $row ? 1 : 0;
+}
+
+sub can_access_private_project {
+  my ($self, $user, $project) = @_;
+
+  my $session_user = $self->cntl->session('user');
+  
+  my $is_valid =
+    ($user eq $session_user || $self->is_collaborator($user, $project))
+    && $self->logined;
+  
+  return $is_valid;
+}
+
 sub new {
   my ($class, $cntl) = @_;
 

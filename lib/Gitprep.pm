@@ -204,8 +204,9 @@ sub startup {
                 $self->basic_auth("Git Area", sub {
                   my ($auth_user, $auth_password) = @_;
                   
-                  my $is_valid
-                    = $user eq $auth_user && $api->check_user_and_password($auth_user, $auth_password);
+                  my $is_valid =
+                    ($user eq $auth_user || $api->is_collaborator($user, $project, $auth_user))
+                    && $api->check_user_and_password($auth_user, $auth_password);
                   
                   return $is_valid;
                 });
@@ -245,7 +246,7 @@ sub startup {
               my $project = $self->param('project');
               my $private = $self->app->manager->is_private_project($user, $project);
               if ($private) {
-                if ($api->logined($user)) {
+                if ($api->can_access_private_project($user, $project)) {
                   return 1;
                 }
                 else {
