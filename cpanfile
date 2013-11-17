@@ -5,7 +5,7 @@ requires 'DBIx::Custom', '== 0.28';
 requires 'Config::Tiny', '== 2.14';
 requires 'Time::HiRes', '== 1.9725';
 requires 'Test::Simple', '== 0.98';
-requires 'Validator::Custom', '== 0.20';
+requires 'Validator::Custom', '== 0.22';
 requires 'DBIx::Connector', '== 0.53';
 requires 'Module::Build', '== 0.4003';
 requires 'Test::Harness', '== 3.26';

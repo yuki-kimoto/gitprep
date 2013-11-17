@@ -346,6 +346,28 @@ EOS
     croak $error;
   }
 
+  # Create collaboration table
+  eval {
+    my $sql = <<"EOS";
+create table collaboration (
+  row_id integer primary key autoincrement,
+  user_id not null unique default '',
+  project_name not null unique default '',
+  collaborator_id not null unique default '',
+  unique(user_id, project_name, collaborator_id)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Check collaboration table
+  eval { $dbi->select([qw/row_id user_id project_name collaborator_id/], table => 'collaboration') };
+  if ($@) {
+    my $error = "Can't create collaboration table properly: $@";
+    $self->app->log->error($error);
+    croak $error;
+  }
+
   # Create number table
   eval {
     my $sql = <<"EOS";

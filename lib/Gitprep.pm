@@ -102,7 +102,8 @@ sub startup {
   my $models = [
     {table => 'user', primary_key => 'id'},
     {table => 'project', primary_key => ['user_id', 'name']},
-    {table => 'number', primary_key => 'key'}
+    {table => 'number', primary_key => 'key'},
+    {table => 'collaboration', primary_key => ['user_id', 'project_name', 'collaborator_id']}
   ];
   $dbi->create_model($_) for @$models;
 

@@ -2,10 +2,11 @@
   # API
   my $api = gitprep_api;
   my $manager = app->manager;
-  
+
   # Parameters
   my $op = param('op') || '';
   my $user = param('user') || '';
+  my $project = param('project');
   
   # Authentication
   unless ($api->logined($user)) {
@@ -17,17 +18,52 @@
   my $git = app->git;
   my $errors;
   if ($op eq 'add' && lc $self->req->method eq 'post') {
-    my $collaborator = param('collaborator');
-    
-    eval { $git->description($user, $project) };
-    if (my $e = $@) {
-      app->log->error(url_with . ": $e");
-      $errors = ['Internal Error'];
+    my $params = $api->params;
+    my $rule = [
+      collaborator => [
+        ['not_blank' => 'collaborator is empty.'],
+        # Check user
+        sub {
+          my $collaborator = shift || '';
+          
+          if ($collaborator eq $user) {
+            return {result => 0, message => "User $collaborator is yourself"};
+          }
+          else {
+            my $row = app->dbi->model('user')->select(id => $collaborator)->one;
+            
+            return $row ? 1 : {result => 0, message => "User $collaborator don't exists"};
+          }
+        }
+      ]
+    ];
+    my $vresult = app->validator->validate($params, $rule);
+    if ($vresult->is_ok) {
+      my $safe_params = $vresult->data;
+      my $collaborator = $safe_params->{collaborator};
+      
+      # Insert
+      eval {
+        app->dbi->model('collaboration')->insert(
+          {
+            user_id => $user,
+            project_name => $project,
+            collaborator_id => $collaborator
+          }
+        );
+      };
+      if (my $e = $@) {
+        app->log->error(url_with . ": $e");
+        $errors = ['Internal Error'];
+      }
+      else {
+        flash(message => "Collaborator $collaborator is added.");
+        $self->redirect_to('current');
+        return;
+      }
     }
     else {
-      flash(message => 'Collaborator is added.');
-      $self->redirect_to('current');
-      return;
+      $errors = $vresult->messages;
     }
   }
 %>
