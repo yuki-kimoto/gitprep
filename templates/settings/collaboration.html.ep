@@ -1,0 +1,63 @@
+<%
+  # API
+  my $api = gitprep_api;
+  my $manager = app->manager;
+  
+  # Parameters
+  my $op = param('op') || '';
+  my $user = param('user') || '';
+  
+  # Authentication
+  unless ($api->logined($user)) {
+    $self->redirect_to('/');
+    return;
+  }
+  
+  # Rename project
+  my $git = app->git;
+  my $errors;
+  if ($op eq 'add' && lc $self->req->method eq 'post') {
+    my $collaborator = param('collaborator');
+    
+    eval { $git->description($user, $project) };
+    if (my $e = $@) {
+      app->log->error(url_with . ": $e");
+      $errors = ['Internal Error'];
+    }
+    else {
+      flash(message => 'Collaborator is added.');
+      $self->redirect_to('current');
+      return;
+    }
+  }
+%>
+
+% layout 'common', title => 'Collaboration';
+  
+  %= include '/include/header';
+  
+  <div class="container">
+    %= include '/include/errors', errors => $errors;
+    %= include '/include/message', message => flash('message');
+    %= include '/include/project_header';
+    
+    <div class="row">
+      <div class="span2">
+        <ul class="unstyled" style="font-size:13px;">
+          <li class="border-gray" style="padding:6px;"><a href="<%= url_for("/$user/$project/settings") %>">Options</a></li>
+          <li class="border-gray" style="border-top:none;padding:5px;"><b>Collaborators</b></li>
+        </ul>
+      </div>
+      <div class="span10">
+        <div style="font-size:16px;margin-top:10px;margin-bottom:10px"><b>Manage Collaborators</b></div>
+        <form action="<%= url_for->query(op => 'add') %>" method="post">
+          <div class="well" style="padding:5px">
+            <%= text_field 'collaborator', style => 'margin-bottom:0' %>
+            <input type="submit" value="Add"" >
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  %= include '/include/footer';

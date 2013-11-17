@@ -297,6 +297,9 @@ sub startup {
             # Settings
             $r->any('/settings' => template '/settings');
             
+            # Collaboration
+            $r->any('/settings/collaboration' => template '/settings/collaboration');
+            
             # Fork
             $r->any('/fork' => template '/fork');
 
