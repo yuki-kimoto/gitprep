@@ -203,6 +203,8 @@ sub startup {
                 
                 $self->basic_auth("Git Area", sub {
                   my ($auth_user, $auth_password) = @_;
+                  $auth_user = '' unless defined $auth_user;
+                  $auth_password = '' unless defined $auth_password;
                   
                   my $is_valid =
                     ($user eq $auth_user || $api->is_collaborator($user, $project, $auth_user))
