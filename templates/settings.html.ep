@@ -101,7 +101,9 @@
       $errors = ['Internal Error'];
     }
     else {
-      flash(message => 'Private status is saved.');
+      my $message = 'Private status is saved. Repository is '
+        . ($private ? 'private' : 'public');
+      flash(message => $message);
       $self->redirect_to('current');
       return;
     }

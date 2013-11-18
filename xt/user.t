@@ -12,8 +12,6 @@ use Encode qw/encode decode/;
 
 use Test::Mojo;
 
-$ENV{GITPREP_TEST} = 1;
-
 # Test DB
 my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/user.db";
 
@@ -528,4 +526,84 @@ note 'import-branch';
     force => 1
   });
   $t->content_like(qr#Success: force import#);
+}
+
+note 'Private repository and collaborator';
+{
+  unlink $db_file;
+  rmtree $rep_home;
+
+  my $app = Gitprep->new;
+  my $t = Test::Mojo->new($app);
+  $t->ua->max_redirects(3);
+
+  # Create admin user
+  $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'});
+  $t->content_like(qr/Login page/);
+
+  # Login success
+  $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'a'});
+  $t->content_like(qr/Admin/);
+  
+  # Create user
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', password => 'a', password2 => 'a'});
+  $t->content_like(qr/Success.*created/);
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', password => 'a', password2 => 'a'});
+  $t->content_like(qr/Success.*created/);
+
+  # Login as kimoto
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto', password => 'a'});
+  $t->get_ok('/')->content_like(qr/kimoto/);
+
+  # Create repository
+  $t->post_ok('/_new?op=create', form => {project => 't1', description => 'Hello', readme => 1});
+  $t->content_like(qr/README/);
+  
+  # Check private repository
+  $t->post_ok("/kimoto/t1/settings?op=private", form => {private => 1});
+  $t->content_like(qr/Repository is private/);
+  
+  # Can access repository myself
+  $t->get_ok("/kimoto/t1");
+  $t->content_like(qr/README/);
+
+  # Login as kimoto2
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto2', password => 'a'});
+  $t->get_ok('/')->content_like(qr/kimoto2/);
+  
+  # Can't access private repository
+  $t->get_ok("/kimoto/t1");
+  $t->content_like(qr/t1 is private repository/);
+  
+  # Login as kimoto
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto', password => 'a'});
+  $t->get_ok('/')->content_like(qr/kimoto/);
+  
+  # Add collaborator
+  $t->post_ok("/kimoto/t1/settings/collaboration?op=add", form => {collaborator => 'kimoto2'});
+  $t->content_like(qr/Collaborator kimoto2 is added/);
+  
+  # Login as kimoto2
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto2', password => 'a'});
+  $t->get_ok('/')->content_like(qr/kimoto2/);
+  
+  # Can access private repository from collaborator
+  $t->get_ok("/kimoto/t1");
+  $t->content_like(qr/README/);
+
+  # Login as kimoto
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto', password => 'a'});
+  $t->get_ok('/')->content_like(qr/kimoto/);
+
+  # Delete collaborator
+  $t->post_ok("/kimoto/t1/settings/collaboration?op=remove", form => {collaborator => 'kimoto2'});
+  $t->content_like(qr/Collaborator kimoto2 is removed/);
+
+  # Login as kimoto2
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto2', password => 'a'});
+  $t->get_ok('/')->content_like(qr/kimoto2/);
+
+  # Can't access private repository
+  $t->get_ok("/kimoto/t1");
+  $t->content_like(qr/t1 is private repository/);
 }
