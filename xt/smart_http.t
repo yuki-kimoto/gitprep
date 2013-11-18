@@ -136,3 +136,72 @@ EOS
   $t->status_is(200);
   $t->content_type_is('application/x-git-receive-pack-result');
 }
+
+note 'Private repository and collaborator';
+{
+  unlink $db_file;
+  rmtree $rep_home;
+
+  my $app = Gitprep->new;
+  my $t = Test::Mojo->new($app);
+  $t->ua->max_redirects(3);
+
+  # Create admin user
+  $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'});
+  $t->content_like(qr/Login page/);
+
+  # Login success
+  $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'a'});
+  $t->content_like(qr/Admin/);
+  
+  # Create user
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', password => 'a', password2 => 'a'});
+  $t->content_like(qr/Success.*created/);
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', password => 'a', password2 => 'a'});
+  $t->content_like(qr/Success.*created/);
+
+  # Login as kimoto
+  $t->post_ok('/_login?op=login', form => {id => 'kimoto', password => 'a'});
+  $t->get_ok('/')->content_like(qr/kimoto/);
+
+  # Create repository
+  $t->post_ok('/_new?op=create', form => {project => 't1', description => 'Hello', readme => 1});
+  $t->content_like(qr/README/);
+  
+  # Check private repository
+  $t->post_ok("/kimoto/t1/settings?op=private", form => {private => 1});
+  $t->content_like(qr/Repository is private/);
+  
+  # Can access private repository from myself
+  $t->get_ok(
+    '/kimoto/t1.git/info/refs?service=git-receive-pack',
+    {
+      Authorization => 'Basic ' . encode_base64('kimoto:a')
+    }
+  );
+  $t->header_is("Content-Type", "application/x-git-receive-pack-advertisement");
+  $t->content_like(qr/^001f# service=git-receive-pack/);
+  
+  # Can't access private repository from others
+  $t->get_ok(
+    '/kimoto/t1.git/info/refs?service=git-receive-pack',
+    {
+      Authorization => 'Basic ' . encode_base64('kimoto2:a')
+    }
+  );
+  $t->status_is(401);
+  
+  # Add collaborator
+  $t->post_ok("/kimoto/t1/settings/collaboration?op=add", form => {collaborator => 'kimoto2'});
+  $t->content_like(qr/Collaborator kimoto2 is added/);
+  
+  # Can access private repository from collaborator
+  $t->get_ok(
+    '/kimoto/t1.git/info/refs?service=git-receive-pack',
+    {
+      Authorization => 'Basic ' . encode_base64('kimoto2:a')
+    }
+  );
+  $t->header_is("Content-Type", "application/x-git-receive-pack-advertisement");
+  $t->content_like(qr/^001f# service=git-receive-pack/);
+}
