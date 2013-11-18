@@ -229,11 +229,15 @@ Maybe http.postBuffer value of git config is small. Input the following command 
 * [Mojolicious::Plugin::INIConfig](http://search.cpan.org/dist/Mojolicious-Plugin-INIConfig/lib/Mojolicious/Plugin/INIConfig.pm)
 * [mojo-legacy](https://github.com/jamadam/mojo-legacy)
 * [Object::Simple](http://search.cpan.org/dist/Object-Simple/lib/Object/Simple.pm)
+* [Text::Markdown::Discount](http://search.cpan.org/dist/Text-Markdown-Discount/lib/Text/Markdown/Discount.pm)
 * [Validator::Custom](http://search.cpan.org/dist/Validator-Custom/lib/Validator/Custom.pm)
 
 ## Sister project
 
+These are my Perl web application projects.
+
 * [WebDBViewer](https://github.com/yuki-kimoto/webdbviewer) - Database viewer to see database information on web browser.
+* [TaskDeal](http://perlcodesample.sakura.ne.jp/taskdeal-site/) - Setup or deploy multiple environments on web browser. Ruby Chef alternative tool.
 
 ## Copyright & license
 
