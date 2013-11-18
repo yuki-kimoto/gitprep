@@ -236,7 +236,7 @@ Maybe http.postBuffer value of git config is small. Input the following command 
 
 These are my Perl web application projects.
 
-* [WebDBViewer](https://github.com/yuki-kimoto/webdbviewer) - Database viewer to see database information on web browser.
+* [WebDBViewer](http://perlcodesample.sakura.ne.jp/webdbviewer-site/) - Database viewer to see database information on web browser.
 * [TaskDeal](http://perlcodesample.sakura.ne.jp/taskdeal-site/) - Setup or deploy multiple environments on web browser. Ruby Chef alternative tool.
 
 ## Copyright & license
