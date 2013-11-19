@@ -18,7 +18,7 @@ use Validator::Custom;
   eval {require Digest::SHA; import Digest::SHA qw(sha1 sha1_hex)};
 }
 
-our $VERSION = '1.0301';
+our $VERSION = '1.04';
 
 has 'dbi';
 has 'manager';
