@@ -465,9 +465,9 @@ sub _create_rep {
       or croak "Can't move post-update";
     
     # Description
+    my $description = $opts->{description};
+    $description = '' unless defined $description;
     {
-      my $description = $opts->{description};
-      $description = '' unless defined $description;
       my $file = "$rep/description";
       open my $fh, '>', $file
         or croak "Can't open $file: $!";
@@ -494,7 +494,8 @@ sub _create_rep {
       my $file = "$temp_work/README.md";
       open my $readme_fh, '>', $file
         or croak "Can't create $file: $!";
-      print $readme_fh "$project\n=====\n";
+      print $readme_fh "# $project\n";
+      print $readme_fh "\n" . encode('UTF-8', $description) . "\n";
       close $readme_fh;
       
       my @git_add_cmd = $git->cmd_rep(
