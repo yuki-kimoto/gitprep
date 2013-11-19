@@ -559,7 +559,7 @@ sub description {
   else {
     # Read description
     return unless -f $file;
-    my $description = $self->_dec($self->_slurp($file) || '');
+    my $description = $self->_dec($self->_slurp($file) || '', 'UTF-8');
     return $description;
   }
 }
@@ -1669,22 +1669,14 @@ sub _chop_str {
 }
 
 sub _dec {
-  my ($self, $str) = @_;
+  my ($self, $str, $encoding) = @_;
   
-  my $enc = $self->encoding;
+  my $enc = $encoding || $self->encoding;
   
   my $new_str;
   eval { $new_str = decode($enc, $str) };
   
   return $@ ? $str : $new_str;
-}
-
-sub _enc {
-  my ($self, $str) = @_;
-  
-  my $enc = $self->encoding;
-  
-  return encode($enc, $str);
 }
 
 sub _mode_str {
