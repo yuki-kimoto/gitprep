@@ -3,11 +3,13 @@
   use Symbol ();
   use IO::Select ();
   
+  my $api = gitprep_api;
+  
   my $service = param('service');
   my $user = param('user');
   my $project = param('project');
   
-  my $git = app->git;
+  my $git = $api->git;
   
   my $rep_dir = $git->rep($user, $project);
   my @cmd = $git->cmd($user, $project, $service, '--stateless-rpc', $rep_dir);

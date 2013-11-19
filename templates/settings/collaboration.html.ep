@@ -15,7 +15,7 @@
   }
   
   # Rename project
-  my $git = app->git;
+  my $git = $api->git;
   my $errors;
   if (lc $self->req->method eq 'post') {
     if ($op eq 'add') {

@@ -1,4 +1,6 @@
 <%
+  my $api = gitprep_api;
+  
   my $path = param('Path');
   my $user = param('user');
   my $project = param('project');
@@ -31,7 +33,7 @@
     $content_type = 'application/x-git-packed-objects-toc';
   }
   
-  my $rep_home = app->git->rep_home;
+  my $rep_home = $api->git->rep_home;
   my $file = "$rep_home/$user/$project.git/$path";
   if (-f $file) {
     my $asset = Mojo::Asset::File->new(path => $file);

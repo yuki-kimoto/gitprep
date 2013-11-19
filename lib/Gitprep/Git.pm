@@ -53,6 +53,18 @@ sub branch_status {
   return $status;
 }
 
+sub clone {
+  my $self = shift;
+  
+  my $clone = __PACKAGE__->new;
+  $clone->bin($self->bin);
+  $clone->encoding($self->encoding);
+  $clone->rep_home($self->rep_home);
+  $clone->text_exts([@{$self->text_exts}]);
+  
+  return $clone;
+}
+
 sub no_merged_branch_h {
   my ($self, $user, $project) = @_;
   

@@ -2,10 +2,12 @@
   use Mojo::ByteStream ();
   use Text::Markdown::Discount ();
   
+  my $api = gitprep_api;
+  
   # README
   my $type;
   my $lines;
-  eval { $lines = app->git->blob($user, $project, $rev, 'README') };
+  eval { $lines = $api->git->blob($user, $project, $rev, 'README') };
   my $readme_e;
   if ($lines) {
     $type = 'plain';
@@ -14,7 +16,7 @@
     $readme_e =~ s#(^|\s|[^\x00-\x7F])(http(?:s)?://.+?)($|\s|[^\x00-\x7F])#$1<a href="$2">$2</a>$3#msg;
   }
   else {
-    eval { $lines = app->git->blob($user, $project, $rev, 'README.md') };
+    eval { $lines = $api->git->blob($user, $project, $rev, 'README.md') };
     if ($lines) {
       $type = 'markdown';
       my $readme = join "\n", @$lines;

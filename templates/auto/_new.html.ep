@@ -33,7 +33,7 @@
     my $vresult = $validator->validate($params, $rule);
     
     # Git
-    my $git = app->git;
+    my $git = $api->git;
     if ($vresult->is_ok) {
       # Not logined
       unless ($api->logined) {

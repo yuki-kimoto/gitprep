@@ -42,6 +42,26 @@ sub check_user_and_password {
   return $is_valid;
 }
 
+sub git {
+  my $self = shift;
+
+  my $git = $self->app->git->clone;
+  
+  my $user = $self->cntl->param('user');
+  my $project = $self->cntl->param('project');
+  
+  if (defined $user && defined $project){
+    # Project encoding
+    my $encoding = $self->app->dbi->model('project')->select(
+      'encoding',
+      id => [$user, $project]
+    )->value;
+    $git->encoding($encoding) if length $encoding;
+  }
+
+  return $git;
+}
+
 sub is_collaborator {
   my ($self, $user, $project, $session_user) = @_;
 

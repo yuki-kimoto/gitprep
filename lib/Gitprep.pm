@@ -23,16 +23,7 @@ our $VERSION = '1.0301';
 has 'dbi';
 has 'manager';
 has 'validator';
-
-sub git {
-  my $self = shift;
-  
-  my $git = Gitprep::Git->new;
-  $git->bin($self->config->{internal}{git_bin});
-  $git->rep_home($self->config->{internal}{git_rep_home});
-  
-  return $git;
-}
+has 'git';
 
 sub startup {
   my $self = shift;
@@ -63,7 +54,7 @@ sub startup {
     $self->log->error($error);
     croak $error;
   }
-  $conf->{internal}{git_bin} = $git_bin;
+  $git->bin($git_bin);
 
   # Repository home
   my $rep_home = $ENV{GITPREP_REP_HOME} || $self->home->rel_file('data/rep');
@@ -71,7 +62,8 @@ sub startup {
     mkdir $rep_home
       or croak "Can't create directory $rep_home: $!";
   }
-  $conf->{internal}{git_rep_home} = $rep_home;
+  $git->rep_home($rep_home);
+  $self->git($git);
   
   # Repository Manager
   my $manager = Gitprep::Manager->new(app => $self);
@@ -245,10 +237,10 @@ sub startup {
               
               # API
               my $api = $self->gitprep_api;
-              
-              # Private
               my $user = $self->param('user');
               my $project = $self->param('project');
+              
+              # Private
               my $private = $self->app->manager->is_private_project($user, $project);
               if ($private) {
                 if ($api->can_access_private_project($user, $project)) {
