@@ -58,6 +58,7 @@ sub can_access_private_project {
   my ($self, $user, $project) = @_;
 
   my $session_user = $self->cntl->session('user');
+  return unless $session_user;
   
   my $is_valid =
     ($user eq $session_user || $self->is_collaborator($user, $project))

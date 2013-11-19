@@ -21,11 +21,18 @@ use Validator::Custom;
 our $VERSION = '1.0301';
 
 has 'dbi';
-has 'git';
 has 'manager';
 has 'validator';
 
-use constant BUFFER_SIZE => 8192;
+sub git {
+  my $self = shift;
+  
+  my $git = Gitprep::Git->new;
+  $git->bin($self->config->{internal}{git_bin});
+  $git->rep_home($self->config->{internal}{git_rep_home});
+  
+  return $git;
+}
 
 sub startup {
   my $self = shift;
@@ -45,7 +52,7 @@ sub startup {
   $listen = [split /,/, $listen] unless ref $listen eq 'ARRAY';
   $conf->{hypnotoad}{listen} = $listen;
   
-  # Git
+  # Git settings
   my $git = Gitprep::Git->new;
   my $git_bin
     = $conf->{basic}{git_bin} ? $conf->{basic}{git_bin} : $git->search_bin;
@@ -56,24 +63,20 @@ sub startup {
     $self->log->error($error);
     croak $error;
   }
-  $git->bin($git_bin);
+  $conf->{internal}{git_bin} = $git_bin;
+
+  # Repository home
+  my $rep_home = $ENV{GITPREP_REP_HOME} || $self->home->rel_file('data/rep');
+  unless (-d $rep_home) {
+    mkdir $rep_home
+      or croak "Can't create directory $rep_home: $!";
+  }
+  $conf->{internal}{git_rep_home} = $rep_home;
   
   # Repository Manager
   my $manager = Gitprep::Manager->new(app => $self);
   weaken $manager->{app};
   $self->manager($manager);
-  
-  # Repository home
-  my $rep_home = $ENV{GITPREP_REP_HOME} || $self->home->rel_file('data/rep');
-  $git->rep_home($rep_home);
-  unless (-d $rep_home) {
-    mkdir $rep_home
-      or croak "Can't create directory $rep_home: $!";
-  }
-  $self->git($git);
-  
-  # Added public path
-  # push @{$self->static->paths}, $rep_home;
   
   # DBI
   my $db_file = $ENV{GITPREP_DB_FILE}
