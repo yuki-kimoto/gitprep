@@ -2,7 +2,7 @@
   # API
   my $api = gitprep_api;
   
-  my $admin_user = app->manager->admin_user;
+  my $admin_user = $api->manager->admin_user;
   if (defined $admin_user && $admin_user ne '') {
     $self->redirect_to('/');
     return;
@@ -15,7 +15,7 @@
   if ($op eq 'create') {
     
     # Check existence admin user
-    my $admin_user = app->manager->admin_user;
+    my $admin_user = $api->manager->admin_user;
     if (defined $admin_user) { $errors = ['Admin user already exists.'] }
     else {
       # Validation

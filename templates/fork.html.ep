@@ -14,13 +14,13 @@
   }
   
   # Repository is already exists
-  if (app->manager->exists_project($current_user, $project)) {
+  if ($api->manager->exists_project($current_user, $project)) {
     $self->redirect_to("/$current_user/$project");
     return;
   }
   # Fork
   else {
-    eval { app->manager->fork_project($current_user, $user, $project) };
+    eval { $api->manager->fork_project($current_user, $user, $project) };
     if ($@) {
       $self->render_exception('Internal Error');
       app->log->error("/$user/$project/fork: $@");

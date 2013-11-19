@@ -23,7 +23,7 @@
       
       # Delete user
       my $count;
-      eval { $count = app->manager->delete_user($user) };
+      eval { $count = $api->manager->delete_user($user) };
       if ($@) {
         app->log->error("/_admin/users?op=delete: $@");
         $errors = ['Internal Error'];
@@ -41,7 +41,7 @@
     else { $errors = $vresult->messages }
   }
   
-  my $users = app->manager->users;
+  my $users = $api->manager->users;
 %>
 
 % layout 'common', title => 'Admin Users';

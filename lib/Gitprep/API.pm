@@ -87,6 +87,15 @@ sub can_access_private_project {
   return $is_valid;
 }
 
+sub manager {
+  my $self = shift;
+  
+  my $manager = $self->app->manager->clone;
+  $manager->git($self->git);
+  
+  return $manager;
+}
+
 sub new {
   my ($class, $cntl) = @_;
 

@@ -8,6 +8,7 @@ use File::Path qw/mkpath rmtree/;
 use File::Temp ();
 
 has 'app';
+has 'git';
 
 sub admin_user {
   my $self = shift;
@@ -17,6 +18,16 @@ sub admin_user {
     ->select(where => {admin => 1})->one;
   
   return $admin_user;
+}
+
+sub clone {
+  my $self = shift;
+  
+  my $clone = __PACKAGE__->new;
+  $clone->app($self->app);
+  $clone->git($self->git);
+  
+  return $clone;
 }
 
 sub default_branch {
@@ -266,7 +277,7 @@ sub rename_project {
   my ($self, $user, $project, $to_project) = @_;
   
   # Rename project
-  my $git = $self->app->git;
+  my $git = $self->git;
   my $dbi = $self->app->dbi;
   my $error;
   eval {
@@ -431,7 +442,7 @@ sub _create_rep {
   my ($self, $user, $project, $opts) = @_;
   
   # Create repository directory
-  my $git = $self->app->git;
+  my $git = $self->git;
   my $rep = $git->rep($user, $project);
   mkdir $rep
     or croak "Can't create directory $rep: $!";
@@ -558,7 +569,7 @@ sub _create_user_dir {
   my ($self, $user) = @_;
   
   # Create user directory
-  my $rep_home = $self->app->git->rep_home;
+  my $rep_home = $self->git->rep_home;
   my $user_dir = "$rep_home/$user";
   mkpath $user_dir;
 }
@@ -576,7 +587,7 @@ sub _delete_user_dir {
   my ($self, $user) = @_;
   
   # Delete user directory
-  my $rep_home = $self->app->git->rep_home;
+  my $rep_home = $self->git->rep_home;
   my $user_dir = "$rep_home/$user";
   rmtree $user_dir;
 }
@@ -593,7 +604,7 @@ sub _delete_rep {
   my ($self, $user, $project) = @_;
 
   # Delete repository
-  my $rep_home = $self->app->git->rep_home;
+  my $rep_home = $self->git->rep_home;
   croak "Can't remove repository. repository home is empty"
     if !defined $rep_home || $rep_home eq '';
   my $rep = "$rep_home/$user/$project.git";
@@ -625,7 +636,7 @@ sub _exists_rep {
   my ($self, $user, $project) = @_;
   
   # Exists repository
-  my $rep = $self->app->git->rep($user, $project);
+  my $rep = $self->git->rep($user, $project);
   
   return -e $rep;
 }
@@ -634,7 +645,7 @@ sub _fork_rep {
   my ($self, $user, $project, $to_user, $to_project) = @_;
   
   # Fork repository
-  my $git = $self->app->git;
+  my $git = $self->git;
   my $rep = $git->rep($user, $project);
   my $to_rep = $git->rep($to_user, $to_project);
   my @cmd = (
@@ -676,8 +687,8 @@ sub _rename_rep {
     unless defined $user && defined $project && defined $renamed_project;
 
   # Rename repository
-  my $rep = $self->app->git->rep($user, $project);
-  my $renamed_rep = $self->app->git->rep($user, $renamed_project);
+  my $rep = $self->git->rep($user, $project);
+  my $renamed_rep = $self->git->rep($user, $renamed_project);
   move($rep, $renamed_rep)
     or croak "Can't move $rep to $renamed_rep: $!";
 }

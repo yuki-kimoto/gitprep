@@ -66,7 +66,7 @@ sub startup {
   $self->git($git);
   
   # Repository Manager
-  my $manager = Gitprep::Manager->new(app => $self);
+  my $manager = Gitprep::Manager->new(app => $self, git => $git);
   weaken $manager->{app};
   $self->manager($manager);
   

@@ -6,7 +6,7 @@
   $rev = '' unless defined $rev;
   my $branches = stash('branches');
   my $branches_count = $api->git->branches_count($user, $project);
-  my $default_branch_name = app->manager->default_branch($user, $project);
+  my $default_branch_name = $api->manager->default_branch($user, $project);
   my $tags_count = $api->git->tags_count($user, $project);
 %>
 

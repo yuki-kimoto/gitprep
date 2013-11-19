@@ -46,7 +46,7 @@
       my $description = $data->{description};
       my $readme = $data->{readme};
       
-      my $manager = app->manager;
+      my $manager = $api->manager;
       if ($manager->exists_project($user, $project)) {
         $errors = ['Repository already exists'];
       }

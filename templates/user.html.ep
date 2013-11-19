@@ -11,11 +11,11 @@
   my $user = param('user');
   
   # Projects
-  unless (app->manager->exists_user($user)) {
+  unless ($api->manager->exists_user($user)) {
     $self->render_not_found;
     return;
   }
-  my $projects = app->manager->projects($user);
+  my $projects = $api->manager->projects($user);
   my $reps = [];
   for my $project (@$projects) {
     my $rep = $api->git->repository($user, $project->{name}) || {none => 1};

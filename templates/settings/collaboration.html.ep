@@ -1,7 +1,7 @@
 <%
   # API
   my $api = gitprep_api;
-  my $manager = app->manager;
+  my $manager = $api->manager;
 
   # Parameters
   my $op = param('op') || '';

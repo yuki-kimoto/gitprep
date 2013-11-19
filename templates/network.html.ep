@@ -6,7 +6,7 @@
   my $branches = [map { $_->{name} } @{$api->git->branches($user, $project)}];
   
   # Members
-  my $members = app->manager->members($user, $project);
+  my $members = $api->manager->members($user, $project);
   
   # Members branches
   for my $member (@$members) {
@@ -17,7 +17,7 @@
   }
   
   # Default branch
-  my $default_branch = app->manager->default_branch($user, $project);
+  my $default_branch = $api->manager->default_branch($user, $project);
 %>
 
 % layout 'common', title => "Network \x{30fb} $user/$project";

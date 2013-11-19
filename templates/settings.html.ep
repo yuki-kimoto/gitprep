@@ -3,7 +3,7 @@
   
   # API
   my $api = gitprep_api;
-  my $manager = app->manager;
+  my $manager = $api->manager;
   
   # Parameters
   my $op = param('op') || '';
@@ -37,11 +37,11 @@
       my $to_project = $data->{'to-project'};
       
       # Rename
-      if (app->manager->exists_project($user, $to_project)) {
+      if ($api->manager->exists_project($user, $to_project)) {
         $errors = ["$to_project is already exists"];
       }
       else {
-        eval { app->manager->rename_project($user, $project, $to_project) };
+        eval { $api->manager->rename_project($user, $project, $to_project) };
         if (my $e = $@) {
           app->log->error($e);
           $errors = ['Internal Error'];
@@ -76,7 +76,7 @@
   # Change default branch
   elsif ($op eq 'default-branch' && $post) {
     my $default_branch = param('default-branch');
-    eval { app->manager->default_branch($user, $project, $default_branch) };
+    eval { $api->manager->default_branch($user, $project, $default_branch) };
     if (my $e = $@) {
       app->log->error("/$user/$project/settings?op=default-branch: $e");
       $errors = ['Internal Error'];
@@ -145,7 +145,7 @@
     my $user = param('user');
     my $project = param('project');
     
-    eval { app->manager->delete_project($user, $project) };
+    eval { $api->manager->delete_project($user, $project) };
     if (my $e = $@) {
       app->log->error("/$user/$project/settings: $e");
       $errors = ['Internal Error'];
@@ -265,7 +265,7 @@
           <div class="border-gray radius-bottom" style="padding:5px 10px;border-top:none;">
             <form action="<%= url_for->query(op => 'private') %>" method="post" style="margin-bottom:0px">
               <span>Make this repository private</span>
-              % my $private = app->manager->is_private_project($user, $project);
+              % my $private = $api->manager->is_private_project($user, $project);
               % if ($private) {
                 % param('private', 1);
               % }
@@ -308,7 +308,7 @@
 
   <div id="rename-confirm" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="rename-confirm-label" aria-hidden="true">
     <div class="modal-header">
-      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">??</button>
       <div style="font-weight:bold">Are you sure you want to rename?</div>
     </div>
     <div class="modal-body">
@@ -333,7 +333,7 @@
 
   <div id="delete-confirm" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="delete-confirm-label" aria-hidden="true">
     <div class="modal-header">
-      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">??</button>
       <div style="font-weight:bold">Are you ABSOLUTELY sure?</div>
     </div>
     <div class="modal-body">
