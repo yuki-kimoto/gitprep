@@ -1,4 +1,6 @@
 <%
+  use Encode ();
+  
   # API
   my $api = gitprep_api;
   my $manager = app->manager;
@@ -85,7 +87,35 @@
       return;
     }
   }
-  
+  # Encoding
+  elsif ($op eq 'encoding' && $post) {
+    my $encoding = param('encoding') || '';
+    
+    my $enc = $encoding ? $encoding : 'UTF-8';
+    my $enc_object = Encode::find_encoding($enc);
+    if ($enc_object) {
+      eval {
+        app->dbi->model('project')->update(
+          {encoding => $encoding},
+          id => [$user, $project]
+        );
+      };
+      if (my $e = $@) {
+        app->log->error("/$user/$project/settings?op=encoding: $e");
+        $errors = ['Internal Error'];
+      }
+      else {
+        my $message = 'Encoding is saved. Encoding is '
+          . ($encoding ? $encoding : 'UTF-8(default)');
+        flash(message => $message);
+        $self->redirect_to('current');
+        return;
+      }
+    }
+    else {
+      $errors = ["$encoding is invalid encoding"];
+    }
+  }
   # Private repository
   elsif ($op eq 'private' && $post) {
     my $private = param('private') ? 1 : 0;
@@ -126,6 +156,8 @@
       return;
     }
   }
+  
+  my $project_info = app->dbi->model('project')->select(id => [$user, $project])->one;
 %>
 
 % layout 'common', title => 'Options';
@@ -209,19 +241,29 @@
               </div>
             </form>
           </div>
-          <div class="border-gray radius-bottom" style="padding:5px 10px;border-top:none;">
+          <div class="border-gray" style="padding:5px 10px;border-top:none;">
             <form id="form-default-branch" action="<%= url_for->query(op => 'default-branch') %>" method="post" style="margin-bottom:0px">
               Default Branch
               % my $branches = $git->branches($user, $project);
               % my $branch_names = [map { $_->{name} } @$branches];
-              % my $default_branch = app->manager->default_branch($user, $project);
+              % my $default_branch = $project_info->{default_branch};
               % push @$branch_names, $default_branch unless @$branch_names;
               % param('default-branch', $default_branch);
               %= select_field 'default-branch' => $branch_names, style => 'margin-top:5px';
             </form>
           </div>
+          <div class="border-gray" style="padding:5px 10px;border-top:none;">
+            <form action="<%= url_for->query(op => 'encoding') %>" method="post" style="margin-bottom:0px">
+              Encoding
+              % my $encoding = $project_info->{encoding};
+              % param('encoding', $encoding);
+              %= text_field 'encoding', style => 'margin-top:5px;width:100px';
+              <input type="submit" class="btn" value="Save">
+              (Default is UTF-8)
+            </form>
+          </div>
           <div class="border-gray radius-bottom" style="padding:5px 10px;border-top:none;">
-            <form id="form-default-branch" action="<%= url_for->query(op => 'private') %>" method="post" style="margin-bottom:0px">
+            <form action="<%= url_for->query(op => 'private') %>" method="post" style="margin-bottom:0px">
               <span>Make this repository private</span>
               % my $private = app->manager->is_private_project($user, $project);
               % if ($private) {
