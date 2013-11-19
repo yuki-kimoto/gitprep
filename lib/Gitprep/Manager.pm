@@ -61,8 +61,12 @@ sub fork_project {
     $dbi->connector->txn(sub {
       
       # Original project id
-      my $original_pid = $dbi->model('project')
-        ->select('original_pid', id => [$original_user, $project])->value;
+      my $project_info = $dbi->model('project')->select(
+        ['original_pid', 'private', 'encoding'],
+        id => [$original_user, $project]
+      )->one;
+      
+      my $original_pid = $project_info->{original_pid};
       
       croak "Can't get original project id"
         unless defined $original_pid && $original_pid > 0;
@@ -74,7 +78,9 @@ sub fork_project {
           $project,
           {
             original_user => $original_user,
-            original_pid => $original_pid
+            original_pid => $original_pid,
+            private => $project_info->{private},
+            encoding => $project_info->{encoding}
           }
         );
       };
@@ -434,6 +440,7 @@ sub _create_project {
       $dbi->model('number')->update({value => $number}, where => {key => 'original_pid'});
       $params->{original_pid} = $number;
     }
+    use Data::Dumper;
     $dbi->model('project')->insert($params, id => [$user, $project]);
   });
 }
