@@ -1,13 +1,11 @@
 <%
-  my $api = gitprep_api;
-  
   my $display = stash('display') || '';
   my $rev = stash('rev');
   $rev = '' unless defined $rev;
   my $branches = stash('branches');
-  my $branches_count = $api->git->branches_count($user, $project);
-  my $default_branch_name = $api->manager->default_branch($user, $project);
-  my $tags_count = $api->git->tags_count($user, $project);
+  my $branches_count = app->git->branches_count($user, $project);
+  my $default_branch_name = app->manager->default_branch($user, $project);
+  my $tags_count = app->git->tags_count($user, $project);
 %>
 
 %= javascript begin

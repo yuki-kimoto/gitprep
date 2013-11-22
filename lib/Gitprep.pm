@@ -18,12 +18,14 @@ use Validator::Custom;
   eval {require Digest::SHA; import Digest::SHA qw(sha1 sha1_hex)};
 }
 
-our $VERSION = '1.04';
+our $VERSION = '1.0301';
 
 has 'dbi';
+has 'git';
 has 'manager';
 has 'validator';
-has 'git';
+
+use constant BUFFER_SIZE => 8192;
 
 sub startup {
   my $self = shift;
@@ -43,7 +45,7 @@ sub startup {
   $listen = [split /,/, $listen] unless ref $listen eq 'ARRAY';
   $conf->{hypnotoad}{listen} = $listen;
   
-  # Git settings
+  # Git
   my $git = Gitprep::Git->new;
   my $git_bin
     = $conf->{basic}{git_bin} ? $conf->{basic}{git_bin} : $git->search_bin;
@@ -55,20 +57,23 @@ sub startup {
     croak $error;
   }
   $git->bin($git_bin);
-
+  
+  # Repository Manager
+  my $manager = Gitprep::Manager->new(app => $self);
+  weaken $manager->{app};
+  $self->manager($manager);
+  
   # Repository home
   my $rep_home = $ENV{GITPREP_REP_HOME} || $self->home->rel_file('data/rep');
+  $git->rep_home($rep_home);
   unless (-d $rep_home) {
     mkdir $rep_home
       or croak "Can't create directory $rep_home: $!";
   }
-  $git->rep_home($rep_home);
   $self->git($git);
   
-  # Repository Manager
-  my $manager = Gitprep::Manager->new(app => $self, git => $git);
-  weaken $manager->{app};
-  $self->manager($manager);
+  # Added public path
+  # push @{$self->static->paths}, $rep_home;
   
   # DBI
   my $db_file = $ENV{GITPREP_DB_FILE}
@@ -237,10 +242,10 @@ sub startup {
               
               # API
               my $api = $self->gitprep_api;
-              my $user = $self->param('user');
-              my $project = $self->param('project');
               
               # Private
+              my $user = $self->param('user');
+              my $project = $self->param('project');
               my $private = $self->app->manager->is_private_project($user, $project);
               if ($private) {
                 if ($api->can_access_private_project($user, $project)) {

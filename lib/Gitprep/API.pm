@@ -42,26 +42,6 @@ sub check_user_and_password {
   return $is_valid;
 }
 
-sub git {
-  my $self = shift;
-
-  my $git = $self->app->git->clone;
-  
-  my $user = $self->cntl->param('user');
-  my $project = $self->cntl->param('project');
-  
-  if (defined $user && defined $project){
-    # Project encoding
-    my $encoding = $self->app->dbi->model('project')->select(
-      'encoding',
-      id => [$user, $project]
-    )->value;
-    $git->encoding($encoding) if length $encoding;
-  }
-
-  return $git;
-}
-
 sub is_collaborator {
   my ($self, $user, $project, $session_user) = @_;
 
@@ -78,22 +58,12 @@ sub can_access_private_project {
   my ($self, $user, $project) = @_;
 
   my $session_user = $self->cntl->session('user');
-  return unless $session_user;
   
   my $is_valid =
     ($user eq $session_user || $self->is_collaborator($user, $project))
     && $self->logined;
   
   return $is_valid;
-}
-
-sub manager {
-  my $self = shift;
-  
-  my $manager = $self->app->manager->clone;
-  $manager->git($self->git);
-  
-  return $manager;
 }
 
 sub new {

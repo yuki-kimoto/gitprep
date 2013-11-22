@@ -1,12 +1,10 @@
 <%
-  my $api = gitprep_api;
-  
   # Parameters
   my $rev = stash('rev');
   my $from_rev = stash('from_rev');
   
   # Git
-  my $git = $api->git;
+  my $git = app->git;
   
   # Diff tree
   my $diff_trees = $git->diff_tree(

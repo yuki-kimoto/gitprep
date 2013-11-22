@@ -20,6 +20,7 @@ my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/user";
 
 $ENV{GITPREP_NO_MYCONFIG} = 1;
 
+
 use Gitprep;
 
 # For perl 5.8
@@ -605,38 +606,4 @@ note 'Private repository and collaborator';
   # Can't access private repository
   $t->get_ok("/kimoto/t1");
   $t->content_like(qr/t1 is private repository/);
-}
-
-note 'Project encoding';
-{
-  unlink $db_file;
-  rmtree $rep_home;
-
-  my $app = Gitprep->new;
-  my $t = Test::Mojo->new($app);
-  $t->ua->max_redirects(3);
-
-  # Create admin user
-  $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'});
-  $t->content_like(qr/Login page/);
-
-  # Login success
-  $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'a'});
-  $t->content_like(qr/Admin/);
-  
-  # Create user
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', password => 'a', password2 => 'a'});
-  $t->content_like(qr/Success.*created/);
-
-  # Login as kimoto
-  $t->post_ok('/_login?op=login', form => {id => 'kimoto', password => 'a'});
-  $t->get_ok('/')->content_like(qr/kimoto/);
-
-  # Create repository
-  $t->post_ok('/_new?op=create', form => {project => 't1', description => 'Hello', readme => 1});
-  $t->content_like(qr/README/);
-  
-  # Change encoding
-  $t->post_ok("/kimoto/t1/settings?op=encoding", form => {encoding => 'EUC-jp'});
-  $t->content_like(qr/Encoding is EUC-jp/);
 }

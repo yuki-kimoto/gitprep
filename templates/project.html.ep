@@ -7,14 +7,14 @@
   my $api = gitprep_api;
 
   # Git
-  my $git = $api->git;
+  my $git = app->git;
   
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $rev = $api->manager->default_branch($user, $project);
+  my $rev = app->manager->default_branch($user, $project);
   
-  unless ($api->manager->exists_project($user, $project)) {
+  unless (app->manager->exists_project($user, $project)) {
     $self->render_not_found;
     return;
   }
@@ -49,7 +49,7 @@
   my $url = url_for->to_abs;
   $url->base(undef);
   my $ssh_port = config->{basic}{ssh_port};
-  my $rep_home = $api->git->rep_home;
+  my $rep_home = app->git->rep_home;
   my $execute_user = getpwuid($>);
   my $ssh_rep_url = "ssh://$execute_user\@" . $url->host
     . ($ssh_port ? ":$ssh_port" : '') . "$rep_home/$user/$project.git";

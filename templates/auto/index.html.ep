@@ -1,8 +1,6 @@
 <%
-  my $api = gitprep_api;
-
   # Users
-  my $manager = $api->manager;
+  my $manager = app->manager;
   my $users = $manager->users;
   
   # Goto Start page

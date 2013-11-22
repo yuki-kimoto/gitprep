@@ -1,7 +1,7 @@
 <%
   # API
   my $api = gitprep_api;
-  my $manager = $api->manager;
+  my $manager = app->manager;
 
   # Parameters
   my $op = param('op') || '';
@@ -15,7 +15,7 @@
   }
   
   # Rename project
-  my $git = $api->git;
+  my $git = app->git;
   my $errors;
   if (lc $self->req->method eq 'post') {
     if ($op eq 'add') {

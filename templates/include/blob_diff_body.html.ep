@@ -1,10 +1,8 @@
 <%
-  my $api = gitprep_api;
-  
   my $rev = stash('rev');
   my $from_rev = stash('from_rev');
   
-  my $git = $api->git;
+  my $git = app->git;
   
   my $diff_tree = stash('diff_tree');
   my $blob_diff = stash('blob_diff');

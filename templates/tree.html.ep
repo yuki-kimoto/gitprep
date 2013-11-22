@@ -3,7 +3,7 @@
   my $api = gitprep_api;
 
   # Git
-  my $git = $api->git;
+  my $git = app->git;
   
   # Parameters
   my $user = param('user');

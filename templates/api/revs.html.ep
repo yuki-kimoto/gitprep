@@ -2,7 +2,7 @@
   my $api = gitprep_api;
   
   # Git
-  my $git = $api->git;
+  my $git = app->git;
   
   # Branches
   my $branches = $git->branches($user, $project) || [];

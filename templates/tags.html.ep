@@ -8,7 +8,7 @@
   my $page = param('page') || 1;
   
   # Git
-  my $git = $api->git;
+  my $git = $self->app->git;
   
   # Ref names
   my $limit = app->config->{basic}{tags_limit};

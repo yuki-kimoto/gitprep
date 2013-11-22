@@ -53,18 +53,6 @@ sub branch_status {
   return $status;
 }
 
-sub clone {
-  my $self = shift;
-  
-  my $clone = __PACKAGE__->new;
-  $clone->bin($self->bin);
-  $clone->encoding($self->encoding);
-  $clone->rep_home($self->rep_home);
-  $clone->text_exts([@{$self->text_exts}]);
-  
-  return $clone;
-}
-
 sub no_merged_branch_h {
   my ($self, $user, $project) = @_;
   
@@ -559,7 +547,7 @@ sub description {
   else {
     # Read description
     return unless -f $file;
-    my $description = $self->_dec($self->_slurp($file) || '', 'UTF-8');
+    my $description = $self->_dec($self->_slurp($file) || '');
     return $description;
   }
 }
@@ -1669,14 +1657,22 @@ sub _chop_str {
 }
 
 sub _dec {
-  my ($self, $str, $encoding) = @_;
+  my ($self, $str) = @_;
   
-  my $enc = $encoding || $self->encoding;
+  my $enc = $self->encoding;
   
   my $new_str;
   eval { $new_str = decode($enc, $str) };
   
   return $@ ? $str : $new_str;
+}
+
+sub _enc {
+  my ($self, $str) = @_;
+  
+  my $enc = $self->encoding;
+  
+  return encode($enc, $str);
 }
 
 sub _mode_str {

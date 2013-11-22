@@ -15,7 +15,7 @@
   }
   
   # Branches
-  my $git = $api->git;
+  my $git = app->git;
   my $remote_branches = $git->branches($remote_user, $remote_project);
   my $remote_branch_names = [map { $_->{name} } @$remote_branches];
   

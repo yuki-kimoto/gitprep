@@ -10,7 +10,7 @@
   my $page = param('page') || 0;
   
   # Git
-  my $git = $api->git;
+  my $git = $self->app->git;
   
   # Commits
   my $commits = $git->forward_commits($user, $project, $from_rev, $rev);

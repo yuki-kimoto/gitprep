@@ -1,6 +1,6 @@
 <%
   # API
-  my $api = gitprep_api;
+  my $api = $self->gitprep_api;
   
   # Parameter
   my $user = param('user');
@@ -23,7 +23,7 @@
   }
   
   # Git
-  my $git = $api->git;
+  my $git = app->git;
 
   # Object type
   my $type = $git->object_type($user, $project, "$rev^{}");

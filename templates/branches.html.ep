@@ -9,7 +9,7 @@
   my $op = param('op') || '';
   
   # Git
-  my $git = $api->git;
+  my $git = $self->app->git;
 
   # Delete
   my $errors;
@@ -52,7 +52,7 @@
   }
   
   # Default branch
-  my $base_branch_name = param('base_branch') || $api->manager->default_branch($user, $project);
+  my $base_branch_name = param('base_branch') || app->manager->default_branch($user, $project);
   my $base_branch = $git->branch($user, $project, $base_branch_name);
   
   # No merged branches

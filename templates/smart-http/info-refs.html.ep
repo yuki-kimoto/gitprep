@@ -3,12 +3,10 @@
   use Symbol ();
   use IO::Select ();
   
-  my $api = gitprep_api;
-  
   my $service = param('service') || '';
   my $user = param('user');
   my $project = param('project');
-  my $git = $api->git;
+  my $git = app->git;
   
   # Smart HTTP
   if ($service eq 'git-upload-pack' || $service eq 'git-receive-pack') {
@@ -67,7 +65,7 @@
       or die "Can't close pipe for @cmd:$!";
     
     my $content_type = 'text/plain; charset=UTF-8';
-    my $rep_home = $api->git->rep_home;
+    my $rep_home = app->git->rep_home;
     my $file = "$rep_home/$user/$project.git/info/refs";
     if (-f $file) {
       my $asset = Mojo::Asset::File->new(path => $file);

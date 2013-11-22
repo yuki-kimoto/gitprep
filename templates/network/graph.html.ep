@@ -1,14 +1,12 @@
 <%
-  my $api = gitprep_api;
-  
   my $user = param('user');
   my $project = param('project');
   my $branch = param('rev1');
   my $rev2_abs = param('rev2_abs');
   my ($remote_user, $remote_project, $remote_branch) = split /\//, $rev2_abs, 3;
   
-  my $commits = $api->git->get_commits($user, $project, $branch, 100);
-  my $remote_commits = $api->git->get_commits(
+  my $commits = app->git->get_commits($user, $project, $branch, 100);
+  my $remote_commits = app->git->get_commits(
     $remote_user,
     $remote_project,
     $remote_branch,

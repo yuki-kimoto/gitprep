@@ -33,7 +33,7 @@
     my $vresult = $validator->validate($params, $rule);
     
     # Git
-    my $git = $api->git;
+    my $git = app->git;
     if ($vresult->is_ok) {
       # Not logined
       unless ($api->logined) {
@@ -46,7 +46,7 @@
       my $description = $data->{description};
       my $readme = $data->{readme};
       
-      my $manager = $api->manager;
+      my $manager = app->manager;
       if ($manager->exists_project($user, $project)) {
         $errors = ['Repository already exists'];
       }

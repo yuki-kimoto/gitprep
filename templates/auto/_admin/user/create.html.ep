@@ -39,7 +39,7 @@
       $params->{salt} = $salt;
       
       # Create user
-      eval { $api->manager->create_user($id, $params) };
+      eval { app->manager->create_user($id, $params) };
       if ($@) {
         app->log->error($@);
         $errors = ['Internal Error'];

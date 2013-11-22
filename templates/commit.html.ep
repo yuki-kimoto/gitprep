@@ -9,7 +9,7 @@
   $rev = $diff unless defined $rev;
   
   # Git
-  my $git = $api->git;
+  my $git = app->git;
   
   # Commit
   my $commit = $git->get_commit($user, $project, $rev);

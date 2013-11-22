@@ -3,8 +3,8 @@
   my $logined = $api->logined;
   my $current_user = session('user');
   my $user = stash('user');
-  my $original_user = $api->manager->original_user($user, $project);
-  my $original_project = $api->manager->original_project($user, $project);
+  my $original_user = app->manager->original_user($user, $project);
+  my $original_project = app->manager->original_project($user, $project);
 %>
 
 <div class="row" style="margin-bottom:10px">
