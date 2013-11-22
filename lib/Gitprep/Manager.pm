@@ -50,8 +50,12 @@ sub fork_project {
     $dbi->connector->txn(sub {
       
       # Original project id
-      my $original_pid = $dbi->model('project')
-        ->select('original_pid', id => [$original_user, $project])->value;
+      my $project_info = $dbi->model('project')->select(
+        ['original_pid', 'private'],
+        id => [$original_user, $project]
+      )->one;
+      
+      my $original_pid = $project_info->{original_pid};
       
       croak "Can't get original project id"
         unless defined $original_pid && $original_pid > 0;
@@ -63,7 +67,8 @@ sub fork_project {
           $project,
           {
             original_user => $original_user,
-            original_pid => $original_pid
+            original_pid => $original_pid,
+            private => $project_info->{private}
           }
         );
       };
@@ -464,9 +469,9 @@ sub _create_rep {
       or croak "Can't move post-update";
     
     # Description
+    my $description = $opts->{description};
+    $description = '' unless defined $description;
     {
-      my $description = $opts->{description};
-      $description = '' unless defined $description;
       my $file = "$rep/description";
       open my $fh, '>', $file
         or croak "Can't open $file: $!";
@@ -493,7 +498,8 @@ sub _create_rep {
       my $file = "$temp_work/README.md";
       open my $readme_fh, '>', $file
         or croak "Can't create $file: $!";
-      print $readme_fh "$project\n=====\n";
+      print $readme_fh "# $project\n";
+      print $readme_fh "\n" . encode('UTF-8', $description) . "\n";
       close $readme_fh;
       
       my @git_add_cmd = $git->cmd_rep(

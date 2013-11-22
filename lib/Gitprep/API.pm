@@ -46,6 +46,7 @@ sub is_collaborator {
   my ($self, $user, $project, $session_user) = @_;
 
   $session_user = $self->cntl->session('user') unless defined $session_user;
+  return unless $session_user;
   
   my $row = $self->app->dbi->model('collaboration')->select(
     id => [$user, $project, $session_user]

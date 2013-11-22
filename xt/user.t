@@ -320,6 +320,7 @@ note 'Profile';
     $t->content_like(qr/t2\.git/);
     $t->content_like(qr/README\.md/);
     $t->content_like(qr/kimoto1\@localhost/);
+    $t->content_like(qr/Hello/);
 
     # Settings page(don't has README)
     $t->get_ok('/kimoto1/t1/settings');
