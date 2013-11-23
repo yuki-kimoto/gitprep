@@ -1,5 +1,6 @@
 *.bak
 *.BAK
+*~
 Build
 MANIFEST
 META.yml
