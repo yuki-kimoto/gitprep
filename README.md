@@ -209,10 +209,10 @@ you create "gitprep.my.conf" copied from "gitprep.my.conf",
 and do "git pull"
 
 If you get a rainbow unicorn t-rex error after upgrading, you might be missing
-a new CPAN dependency. Rerun the /setup/setup.php or install the missing dependencies
-by hand.
+a new CPAN dependency. Rerun the /setup/setup.php on brower
+or rerun setup.sh on command line.
 
-### I can't push large repository by http protocal
+### I can't push large repository by http protocol
 
 Maybe http.postBuffer value of git config is small. Input the following command to increase this size.
 
