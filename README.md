@@ -202,11 +202,15 @@ At least, blame page work well in git 1.8.2.1.
 
 ### How to upgrade GitPrep
 
-It is ver easy. you only overwrite all files except for "gitprep.conf".
+It is very easy. you only overwrite all files except for "gitprep.conf".
 
 If you want to upgrade by "git pull", you can do it.
 you create "gitprep.my.conf" copied from "gitprep.my.conf",
 and do "git pull"
+
+If you get a rainbow unicorn t-rex error after upgrading, you might be missing
+a new CPAN dependency. Rerun the /setup/setup.php or install the missing dependencies
+by hand.
 
 ### I can't push large repository by http protocal
 
