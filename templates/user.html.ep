@@ -58,7 +58,6 @@
                   <%= $age ? "last updated $age" : 'new repository' %>
                 % }
               </td>
-            </div>
           </tr>
         % }
       </table>
