@@ -329,6 +329,11 @@ note 'Profile';
     # Settings page(has README)
     $t->get_ok('/kimoto1/t2/settings');
     $t->content_like(qr/Settings/);
+
+    # Create repository(with private)
+    $t->post_ok('/_new?op=create', form => {project => 't_private', private => 1});
+    $t->content_like(qr/t_private\.git/);
+    $t->content_like(qr/icon-lock/);
   }
   
   note 'Project settings';
@@ -387,6 +392,8 @@ note 'Profile';
     }
   }
 }
+
+__END__
 
 note 'fork';
 {

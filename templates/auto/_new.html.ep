@@ -22,10 +22,13 @@
         ['not_blank' => 'Repository name is empty'],
         ['project_name' => 'Invalid repository name']
       ],
-      description => [
+      description => {require => 0} => [
         'any'
       ],
       readme => {require => 0} => [
+        'any'
+      ],
+      private => {require => 0} => [
         'any'
       ]
     ];
@@ -44,7 +47,9 @@
       my $user = session('user');
       my $project = $data->{project};
       my $description = $data->{description};
+      $description = '' unless defined $description;
       my $readme = $data->{readme};
+      my $private = $data->{private};
       
       my $manager = app->manager;
       if ($manager->exists_project($user, $project)) {
@@ -56,7 +61,7 @@
           $manager->create_project(
             $user,
             $project,
-            {description => $description, readme => $readme}
+            {description => $description, readme => $readme, private => $private}
           );
         };
         
@@ -106,9 +111,15 @@
           <%= check_box readme => 1 %><b>Initialize this repository with a README</b>
         </label>
       </div>
-      <div class="muted" style="margin-bottom:10px;margin-left:20px">This will allow you to git clone the repository immediately.</div>
+      <div class="muted" style="margin-left:20px">This will allow you to git clone the repository immediately.</div>
 
-      <input type="submit" class="btn" value="Create repository">
+      <div>
+        <label class="checkbox" style="margin-bottom:0">
+          <%= check_box private => 1 %><b>Make this repository private </b>
+        </label>
+      </div>
+            
+      <input style="margin-top:10px" type="submit" class="btn" value="Create repository">
     </form>
   </div>
   %= include '/include/footer';

@@ -137,12 +137,17 @@ sub members {
 sub create_project {
   my ($self, $user, $project, $opts) = @_;
   
+  my $params = {};
+  if ($opts->{private}) {
+    $params->{private} = 1;
+  }
+  
   # Create project
   my $dbi = $self->app->dbi;
   my $error;
   eval {
     $dbi->connector->txn(sub {
-      eval { $self->_create_project($user, $project) };
+      eval { $self->_create_project($user, $project, $params) };
       croak $error = $@ if $@;
       eval {$self->_create_rep($user, $project, $opts) };
       croak $error = $@ if $@;
