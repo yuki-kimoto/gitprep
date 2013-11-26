@@ -18,6 +18,7 @@
   for my $project (@$projects) {
     my $rep = app->git->repository($user, $project->{name}) || {none => 1};
     $rep->{name} = $project->{name};
+    $rep->{private} = app->manager->is_private_project($user, $rep->{name});
     push @$reps, $rep;
   }
 %>
@@ -42,6 +43,7 @@
           <tr>
             % my $pname = $rep->{name};
               <td>
+		<span class="<%= $rep->{private} ? 'icon-lock' : '' %>"></span>
                 <a href="<%= url_for("/$user/$pname") %>">
                   <%= $rep->{name} %>
                 </a>
