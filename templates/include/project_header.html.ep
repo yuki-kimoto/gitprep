@@ -14,6 +14,9 @@
       /
       <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
       /
+      % if (app->manager->is_private_project($user, $project)) {
+	<span class="icon-lock" title="Private"></span>
+      % }
       <li><b><a href="<%= url_for("/$user/$project") %>"><%= $project %></a></b></li>
       
       % if (defined $original_project) {
