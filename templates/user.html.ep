@@ -46,27 +46,26 @@
           % if (!$rep->{private} || $api->can_access_private_project($user, $rep->{name})) {
             <tr>
               % my $pname = $rep->{name};
-                <td>
-                  <a href="<%= url_for("/$user/$pname") %>">
-                    <%= $rep->{name} %>
-                    % if ($rep->{private}) {
-                      <i class="icon icon-lock" style="margin-left:5px;margin-right:5px"></i>
-                    % }
-                  </a>
-                </td>
-                <td>
-                  <%= $rep->{description} %>
-                </td>
-                % my $age = $rep->{age_string};
-                <td class="muted">
-                  % if ($rep->{none}) {
-                    <span style="color:red">Repository not exists</span>
-                    <a href="<%= "/$user/$rep->{name}/settings" %>" class="btn btn-mini">Settings</a>
-                  % } else {
-                    <%= $age ? "last updated $age" : 'new repository' %>
+              <td>
+                <a href="<%= url_for("/$user/$pname") %>">
+                  <%= $rep->{name} %>
+                  % if ($rep->{private}) {
+                    <i class="icon icon-lock" style="margin-left:5px;margin-right:5px"></i>
                   % }
-                </td>
-              </div>
+                </a>
+              </td>
+              <td>
+                <%= $rep->{description} %>
+              </td>
+              % my $age = $rep->{age_string};
+              <td class="muted">
+                % if ($rep->{none}) {
+                  <span style="color:red">Repository not exists</span>
+                  <a href="<%= "/$user/$rep->{name}/settings" %>" class="btn btn-mini">Settings</a>
+                % } else {
+                  <%= $age ? "last updated $age" : 'new repository' %>
+                % }
+              </td>
             </tr>
           % }
         % }
