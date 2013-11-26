@@ -393,8 +393,6 @@ note 'Profile';
   }
 }
 
-__END__
-
 note 'fork';
 {
   my $app = Gitprep->new;
