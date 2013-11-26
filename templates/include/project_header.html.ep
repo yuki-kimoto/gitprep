@@ -5,6 +5,7 @@
   my $user = stash('user');
   my $original_user = app->manager->original_user($user, $project);
   my $original_project = app->manager->original_project($user, $project);
+  my $is_private_project = app->manager->is_private_project($user, $project);
 %>
 
 <div class="row" style="margin-bottom:10px">
@@ -15,6 +16,10 @@
       <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
       /
       <li><b><a href="<%= url_for("/$user/$project") %>"><%= $project %></a></b></li>
+      
+      % if ($is_private_project) {
+        <i class="icon icon-lock" style="margin-left:5px;margin-right:5px"></i>
+      % }
       
       % if (defined $original_project) {
         (
