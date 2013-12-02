@@ -72,6 +72,8 @@ sub _timer {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojo::Reactor::EV - Low level event reactor with libev support
@@ -127,7 +129,7 @@ Restart active timer.
 
 =head2 is_running
 
-  my $success = $reactor->is_running;
+  my $bool = $reactor->is_running;
 
 Check if reactor is running.
 
@@ -149,7 +151,7 @@ amount of time in seconds.
 
   $reactor->start;
 
-Start watching for I/O and timer events, this will block until C<stop> is
+Start watching for I/O and timer events, this will block until L</"stop"> is
 called or no events are being watched anymore.
 
 =head2 stop

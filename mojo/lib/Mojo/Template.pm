@@ -317,6 +317,8 @@ sub _wrap {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojo::Template - Perl-ish templates!
@@ -382,8 +384,8 @@ automatically enabled.
   %# Comment line, useful for debugging
   %% Replaced with "%", useful for generating templates
 
-Escaping behavior can be reversed with the C<auto_escape> attribute, this is
-the default in L<Mojolicious> C<.ep> templates for example.
+Escaping behavior can be reversed with the L</"auto_escape"> attribute, this
+is the default in L<Mojolicious> C<.ep> templates for example.
 
   <%= Perl expression, replaced with XML escaped result %>
   <%== Perl expression, replaced with result %>
@@ -452,8 +454,8 @@ L<Mojo::Template> implements the following attributes.
 
 =head2 auto_escape
 
-  my $escape = $mt->auto_escape;
-  $mt        = $mt->auto_escape(1);
+  my $bool = $mt->auto_escape;
+  $mt      = $mt->auto_escape($bool);
 
 Activate automatic escaping.
 

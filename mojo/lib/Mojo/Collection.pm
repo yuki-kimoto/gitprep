@@ -1,15 +1,28 @@
 package Mojo::Collection;
-use Mojo::Base -base;
-use overload
-  'bool'   => sub {1},
-  '""'     => sub { shift->join("\n") },
-  fallback => 1;
+use Mojo::Base -strict;
+use overload bool => sub {1}, '""' => sub { shift->join("\n") }, fallback => 1;
 
+use Carp 'croak';
 use Exporter 'import';
 use List::Util;
 use Mojo::ByteStream;
+use Scalar::Util 'blessed';
 
 our @EXPORT_OK = ('c');
+
+sub AUTOLOAD {
+  my $self = shift;
+
+  my ($package, $method) = our $AUTOLOAD =~ /^([\w:]+)::(\w+)$/;
+  croak "Undefined subroutine &${package}::$method called"
+    unless blessed $self && $self->isa(__PACKAGE__);
+
+  croak qq{Can't locate object method "$method" via package "$package"}
+    unless @$self;
+  return $self->pluck($method, @_);
+}
+
+sub DESTROY { }
 
 sub new {
   my $class = shift;
@@ -17,6 +30,10 @@ sub new {
 }
 
 sub c { __PACKAGE__->new(@_) }
+
+sub compact {
+  shift->grep(sub { length(defined $_ ? $_ : '') });
+}
 
 sub each {
   my ($self, $cb) = @_;
@@ -33,16 +50,15 @@ sub first {
   return List::Util::first { $_ =~ $cb } @$self;
 }
 
+sub flatten { $_[0]->new(_flatten(@{$_[0]})) }
+
 sub grep {
   my ($self, $cb) = @_;
   return $self->new(grep { $cb->($_) } @$self) if ref $cb eq 'CODE';
   return $self->new(grep { $_ =~ $cb } @$self);
 }
 
-sub join {
-  my ($self, $expr) = @_;
-  return Mojo::ByteStream->new(join $expr, map({"$_"} @$self));
-}
+sub join { Mojo::ByteStream->new(join $_[1], map({"$_"} @{$_[0]})) }
 
 sub map {
   my ($self, $cb) = @_;
@@ -54,15 +70,9 @@ sub pluck {
   return $self->map(sub { $_->$method(@args) });
 }
 
-sub reverse {
-  my $self = shift;
-  return $self->new(reverse @$self);
-}
+sub reverse { $_[0]->new(reverse @{$_[0]}) }
 
-sub shuffle {
-  my $self = shift;
-  return $self->new(List::Util::shuffle @$self);
-}
+sub shuffle { $_[0]->new(List::Util::shuffle @{$_[0]}) }
 
 sub size { scalar @{$_[0]} }
 
@@ -76,13 +86,23 @@ sub sort {
   return $self->new($cb ? sort { $a->$cb($b) } @$self : sort @$self);
 }
 
+sub tap { shift->Mojo::Base::tap(@_) }
+
 sub uniq {
   my $self = shift;
   my %seen;
   return $self->grep(sub { !$seen{$_}++ });
 }
 
+sub _flatten {
+  map { _ref($_) ? _flatten(@$_) : $_ } @_;
+}
+
+sub _ref { ref $_[0] && (ref $_[0] eq 'ARRAY' || $_[0]->isa(__PACKAGE__)) }
+
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -119,8 +139,7 @@ Construct a new array-based L<Mojo::Collection> object.
 
 =head1 METHODS
 
-L<Mojo::Collection> inherits all methods from L<Mojo::Base> and implements the
-following new ones.
+L<Mojo::Collection> implements the following methods.
 
 =head2 new
 
@@ -128,12 +147,21 @@ following new ones.
 
 Construct a new array-based L<Mojo::Collection> object.
 
+=head2 compact
+
+  my $new = $collection->compact;
+
+Create a new collection with all elements that are defined and not an empty
+string.
+
 =head2 each
 
   my @elements = $collection->each;
   $collection  = $collection->each(sub {...});
 
-Evaluate callback for each element in collection.
+Evaluate callback for each element in collection or return all elements as a
+list if none has been provided. The element will be the first argument passed
+to the callback and is also available as C<$_>.
 
   $collection->each(sub {
     my ($e, $count) = @_;
@@ -148,9 +176,17 @@ Evaluate callback for each element in collection.
 
 Evaluate regular expression or callback for each element in collection and
 return the first one that matched the regular expression, or for which the
-callback returned true.
+callback returned true. The element will be the first argument passed to the
+callback and is also available as C<$_>.
 
   my $five = $collection->first(sub { $_ == 5 });
+
+=head2 flatten
+
+  my $new = $collection->flatten;
+
+Flatten nested collections/arrays recursively and create a new collection with
+all elements.
 
 =head2 grep
 
@@ -159,7 +195,8 @@ callback returned true.
 
 Evaluate regular expression or callback for each element in collection and
 create a new collection with all elements that matched the regular expression,
-or for which the callback returned true.
+or for which the callback returned true. The element will be the first
+argument passed to the callback and is also available as C<$_>.
 
   my $interesting = $collection->grep(qr/mojo/i);
 
@@ -176,7 +213,8 @@ Turn collection into L<Mojo::ByteStream>.
   my $new = $collection->map(sub {...});
 
 Evaluate callback for each element in collection and create a new collection
-from the results.
+from the results. The element will be the first argument passed to the
+callback and is also available as C<$_>.
 
   my $doubled = $collection->map(sub { $_ * 2 });
 
@@ -225,11 +263,26 @@ from the results.
 
   my $insensitive = $collection->sort(sub { uc(shift) cmp uc(shift) });
 
+=head2 tap
+
+  $collection = $collection->tap(sub {...});
+
+Alias for L<Mojo::Base/"tap">.
+
 =head2 uniq
 
   my $new = $collection->uniq;
 
 Create a new collection without duplicate elements.
+
+=head1 ELEMENT METHODS
+
+In addition to the methods above, you can also call methods provided by all
+elements in the collection directly and create a new collection from the
+results, similar to L</"pluck">.
+
+  push @$collection, Mojo::DOM->new("<div><h1>$_</h1></div>") for 1 .. 9;
+  say $collection->at('h1')->type('h2')->prepend_content('Test ')->root;
 
 =head1 ELEMENTS
 

@@ -1,9 +1,6 @@
 package Mojo::Date;
 use Mojo::Base -base;
-use overload
-  'bool'   => sub {1},
-  '""'     => sub { shift->to_string },
-  fallback => 1;
+use overload bool => sub {1}, '""' => sub { shift->to_string }, fallback => 1;
 
 use Time::Local 'timegm';
 
@@ -63,6 +60,8 @@ sub to_string {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojo::Date - HTTP date
@@ -109,7 +108,7 @@ following new ones.
   my $date = Mojo::Date->new;
   my $date = Mojo::Date->new('Sun Nov  6 08:49:37 1994');
 
-Construct a new L<Mojo::Date> object and C<parse> date if necessary.
+Construct a new L<Mojo::Date> object and L</"parse"> date if necessary.
 
 =head2 parse
 

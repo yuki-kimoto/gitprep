@@ -61,6 +61,8 @@ sub store {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojolicious::Sessions - Signed cookie based session manager
@@ -127,8 +129,8 @@ C<expiration> and C<expires> session values.
 
 =head2 secure
 
-  my $secure = $sessions->secure;
-  $sessions  = $sessions->secure(1);
+  my $bool  = $sessions->secure;
+  $sessions = $sessions->secure($bool);
 
 Set the secure flag on all session cookies, so that browsers send them only
 over HTTPS connections.
@@ -136,7 +138,7 @@ over HTTPS connections.
 =head1 METHODS
 
 L<Mojolicious::Sessions> inherits all methods from L<Mojo::Base> and
-implements the following ones.
+implements the following new ones.
 
 =head2 load
 

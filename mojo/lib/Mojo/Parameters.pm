@@ -2,7 +2,7 @@ package Mojo::Parameters;
 use Mojo::Base -base;
 use overload
   '@{}'    => sub { shift->params },
-  'bool'   => sub {1},
+  bool     => sub {1},
   '""'     => sub { shift->to_string },
   fallback => 1;
 
@@ -230,7 +230,7 @@ following new ones.
   my $params = Mojo::Parameters->new(foo => ['ba;r', 'b;az']);
   my $params = Mojo::Parameters->new(foo => ['ba;r', 'b;az'], bar => 23);
 
-Construct a new L<Mojo::Parameters> object and C<parse> parameters if
+Construct a new L<Mojo::Parameters> object and L</"parse"> parameters if
 necessary.
 
 =head2 append

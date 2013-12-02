@@ -45,7 +45,7 @@ sub build_boundary {
   my $boundary;
   my $size = 1;
   while (1) {
-    $boundary = b64_encode join('', map chr(rand(256)), 1 .. $size++ * 3);
+    $boundary = b64_encode join('', map chr(rand 256), 1 .. $size++ * 3);
     $boundary =~ s/\W/X/g;
     last unless $self->body_contains($boundary);
   }
@@ -199,6 +199,8 @@ sub _read {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojo::Content::MultiPart - HTTP multipart content
@@ -258,12 +260,12 @@ implements the following new ones.
 
   my $multi = Mojo::Content::MultiPart->new;
 
-Construct a new L<Mojo::Content::MultiPart> object and subscribe to C<read>
+Construct a new L<Mojo::Content::MultiPart> object and subscribe to L</"read">
 event with default content parser.
 
 =head2 body_contains
 
-  my $success = $multi->body_contains('foobarbaz');
+  my $bool = $multi->body_contains('foobarbaz');
 
 Check if content parts contain a specific string.
 

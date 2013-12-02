@@ -13,6 +13,8 @@ sub register {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojolicious::Plugin::Charset - Charset plugin
@@ -53,8 +55,8 @@ L<Mojolicious::Plugin> and implements the following new ones.
 
   $plugin->register(Mojolicious->new, {charset => 'Shift_JIS'});
 
-Register C<before_dispatch> hook in L<Mojolicious> application and change a
-few defaults.
+Register hook L<Mojolicious/"before_dispatch"> in application and change a few
+defaults.
 
 =head1 SEE ALSO
 

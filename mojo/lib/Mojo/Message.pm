@@ -14,7 +14,7 @@ use Mojo::Util 'decode';
 has content => sub { Mojo::Content::Single->new };
 has default_charset  => 'UTF-8';
 has max_line_size    => sub { $ENV{MOJO_MAX_LINE_SIZE} || 10240 };
-has max_message_size => sub { $ENV{MOJO_MAX_MESSAGE_SIZE} || 5242880 };
+has max_message_size => sub { defined $ENV{MOJO_MAX_MESSAGE_SIZE} ? $ENV{MOJO_MAX_MESSAGE_SIZE} : 10485760 };
 has version          => '1.1';
 
 sub body {
@@ -28,7 +28,7 @@ sub body {
   # Get
   return $content->asset->slurp unless @_;
 
-  # Set raw content
+  # Set
   $content->asset(Mojo::Asset::Memory->new->add_chunk(@_));
 
   return $self;
@@ -41,17 +41,15 @@ sub body_params {
   my $params = $self->{body_params} = Mojo::Parameters->new;
   $params->charset($self->content->charset || $self->default_charset);
 
-  # "x-application-urlencoded" and "application/x-www-form-urlencoded"
+  # "application/x-www-form-urlencoded"
   my $type = defined $self->headers->content_type ? $self->headers->content_type : '';
-  if ($type =~ m!(?:x-application|application/x-www-form)-urlencoded!i) {
+  if ($type =~ m!application/x-www-form-urlencoded!i) {
     $params->parse($self->content->asset->slurp);
   }
 
-  # "multipart/formdata"
+  # "multipart/form-data"
   elsif ($type =~ m!multipart/form-data!i) {
-    for my $data (@{$self->_parse_formdata}) {
-      $params->append($data->[0], $data->[2]) unless defined $data->[1];
-    }
+    $params->append(@$_[0, 1]) for @{$self->_parse_formdata};
   }
 
   return $params;
@@ -69,13 +67,8 @@ sub cookies { croak 'Method "cookies" not implemented by subclass' }
 
 sub dom {
   my $self = shift;
-
   return undef if $self->content->is_multipart;
-  my $html    = $self->body;
-  my $charset = $self->content->charset;
-  $html = do { my $tmp = decode($charset, $html); defined $tmp ? $tmp : $html } if $charset;
-  my $dom = $self->{dom} ||= Mojo::DOM->new($html);
-
+  my $dom = $self->{dom} ||= Mojo::DOM->new($self->text);
   return @_ ? $dom->find(@_) : $dom;
 }
 
@@ -160,8 +153,9 @@ sub parse {
   my ($self, $chunk) = @_;
 
   # Check message size
+  my $max = $self->max_message_size;
   return $self->_limit('Maximum message size exceeded', 413)
-    if ($self->{raw_size} += length($chunk = defined $chunk ? $chunk : '')) > $self->max_message_size;
+    if $max && ($self->{raw_size} += length($chunk = defined $chunk ? $chunk : '')) > $max;
 
   $self->{buffer} .= $chunk;
 
@@ -195,6 +189,13 @@ sub parse {
 
 sub start_line_size { length shift->build_start_line }
 
+sub text {
+  my $self    = shift;
+  my $body    = $self->body;
+  my $charset = $self->content->charset;
+  return $charset ? do {my $decoded = decode($charset, $body); defined $decoded ? $decoded : $body} : $body;
+}
+
 sub to_string {
   my $self = shift;
   return $self->build_start_line . $self->build_headers . $self->build_body;
@@ -206,17 +207,12 @@ sub uploads {
   my $self = shift;
 
   my @uploads;
-  for my $data (@{$self->_parse_formdata}) {
-
-    # Just a form value
-    next unless defined $data->[1];
-
-    # Uploaded file
+  for my $data (@{$self->_parse_formdata(1)}) {
     my $upload = Mojo::Upload->new(
       name     => $data->[0],
-      filename => $data->[1],
-      asset    => $data->[2]->asset,
-      headers  => $data->[2]->headers
+      filename => $data->[2],
+      asset    => $data->[1]->asset,
+      headers  => $data->[1]->headers
     );
     push @uploads, $upload;
   }
@@ -264,47 +260,45 @@ sub _limit {
 }
 
 sub _parse_formdata {
-  my $self = shift;
+  my ($self, $upload) = @_;
 
-  # Check for multipart content
   my @formdata;
   my $content = $self->content;
   return \@formdata unless $content->is_multipart;
   my $charset = $content->charset || $self->default_charset;
 
-  # Check all parts for form data
+  # Check all parts recursively
   my @parts = ($content);
   while (my $part = shift @parts) {
 
-    # Nested multipart content
     if ($part->is_multipart) {
       unshift @parts, @{$part->parts};
       next;
     }
 
-    # Extract information from Content-Disposition header
     next unless my $disposition = $part->headers->content_disposition;
-    my ($name)     = $disposition =~ /[; ]name="?([^";]+)"?/;
-    my ($filename) = $disposition =~ /[; ]filename="?([^"]*)"?/;
+    my ($filename) = $disposition =~ /[; ]filename\s*=\s*"?((?:\\"|[^"])*)"?/i;
+    next if ($upload && !defined $filename) || (!$upload && defined $filename);
+    my ($name) = $disposition =~ /[; ]name\s*=\s*"?((?:\\"|[^";])+)"?/i;
     if ($charset) {
       $name     = do {my $tmp = decode($charset, $name); defined $tmp ? $tmp : $name} if $name;
       $filename = do {my $tmp = decode($charset, $filename); defined $tmp ? $tmp : $filename} if $filename;
     }
 
-    # Check for file upload
-    my $value = $part;
-    unless (defined $filename) {
-      $value = $part->asset->slurp;
-      $value = do {my $tmp = decode($charset, $value); defined $tmp ? $tmp : $value} if $charset;
+    unless ($upload) {
+      $part = $part->asset->slurp;
+      $part = do {my $decoded = decode($charset, $part); defined $decoded ? $decoded : $part} if $charset;
     }
 
-    push @formdata, [$name, $filename, $value];
+    push @formdata, [$name, $part, $filename];
   }
 
   return \@formdata;
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -383,7 +377,7 @@ Message content, defaults to a L<Mojo::Content::Single> object.
   my $charset = $msg->default_charset;
   $msg        = $msg->default_charset('UTF-8');
 
-Default charset used for form data parsing, defaults to C<UTF-8>.
+Default charset used for form-data parsing, defaults to C<UTF-8>.
 
 =head2 max_line_size
 
@@ -399,10 +393,11 @@ MOJO_MAX_LINE_SIZE environment variable or C<10240>.
   $msg     = $msg->max_message_size(1024);
 
 Maximum message size in bytes, defaults to the value of the
-MOJO_MAX_MESSAGE_SIZE environment variable or C<5242880>. Note that increasing
-this value can also drastically increase memory usage, should you for example
-attempt to parse an excessively large message body with the C<body_params>,
-C<dom> or C<json> methods.
+MOJO_MAX_MESSAGE_SIZE environment variable or C<10485760>. Setting the value
+to C<0> will allow messages of indefinite size. Note that increasing this
+value can also drastically increase memory usage, should you for example
+attempt to parse an excessively large message body with the L</"body_params">,
+L</"dom"> or L</"json"> methods.
 
 =head2 version
 
@@ -421,16 +416,19 @@ implements the following new ones.
   my $bytes = $msg->body;
   $msg      = $msg->body('Hello!');
 
-Slurp or replace C<content>.
+Slurp or replace L</"content">, L<Mojo::Content::MultiPart> will be
+automatically downgraded to L<Mojo::Content::Single>.
 
 =head2 body_params
 
   my $params = $msg->body_params;
 
-C<POST> parameters extracted from C<x-application-urlencoded>,
-C<application/x-www-form-urlencoded> or C<multipart/form-data> message body,
-usually a L<Mojo::Parameters> object. Note that this method caches all data,
-so it should not be called before the entire message body has been received.
+POST parameters extracted from C<application/x-www-form-urlencoded> or
+C<multipart/form-data> message body, usually a L<Mojo::Parameters> object.
+Note that this method caches all data, so it should not be called before the
+entire message body has been received. Parts of the message body need to be
+loaded into memory to parse POST parameters, so you have to make sure it is
+not excessively large.
 
   # Get POST parameter value
   say $msg->body_params->param('foo');
@@ -485,14 +483,16 @@ Access message cookies. Meant to be overloaded in a subclass.
 Turns message body into a L<Mojo::DOM> object and takes an optional selector
 to perform a C<find> on it right away, which returns a L<Mojo::Collection>
 object. Note that this method caches all data, so it should not be called
-before the entire message body has been received.
+before the entire message body has been received. The whole message body needs
+to be loaded into memory to parse it, so you have to make sure it is not
+excessively large.
 
   # Perform "find" right away
-  say $msg->dom('h1, h2, h3')->pluck('text');
+  say $msg->dom('h1, h2, h3')->text;
 
   # Use everything else Mojo::DOM has to offer
   say $msg->dom->at('title')->text;
-  say $msg->dom->html->body->children->pluck('type')->uniq;
+  say $msg->dom->html->body->children->type->uniq;
 
 =head2 error
 
@@ -505,7 +505,7 @@ Error and code.
 
 =head2 extract_start_line
 
-  my $success = $msg->extract_start_line(\$str);
+  my $bool = $msg->extract_start_line(\$str);
 
 Extract start line from string. Meant to be overloaded in a subclass.
 
@@ -554,15 +554,15 @@ Message headers, usually a L<Mojo::Headers> object.
 
 =head2 is_finished
 
-  my $success = $msg->is_finished;
+  my $bool = $msg->is_finished;
 
 Check if message parser/generator is finished.
 
 =head2 is_limit_exceeded
 
-  my $success = $msg->is_limit_exceeded;
+  my $bool = $msg->is_limit_exceeded;
 
-Check if message has exceeded C<max_line_size> or C<max_message_size>.
+Check if message has exceeded L</"max_line_size"> or L</"max_message_size">.
 
 =head2 json
 
@@ -574,6 +574,8 @@ Decode JSON message body directly using L<Mojo::JSON> if possible, returns
 C<undef> otherwise. An optional JSON Pointer can be used to extract a specific
 value with L<Mojo::JSON::Pointer>. Note that this method caches all data, so
 it should not be called before the entire message body has been received.
+The whole message body needs to be loaded into memory to parse it, so you have
+to make sure it is not excessively large.
 
   # Extract JSON values
   say $msg->json->{foo}{bar}[23];
@@ -585,8 +587,10 @@ it should not be called before the entire message body has been received.
   my $foo   = $msg->param('foo');
   my @foo   = $msg->param('foo');
 
-Access C<POST> parameters. Note that this method caches all data, so it should
-not be called before the entire message body has been received.
+Access POST parameters. Note that this method caches all data, so it should
+not be called before the entire message body has been received. Parts of the
+message body need to be loaded into memory to parse POST parameters, so you
+have to make sure it is not excessively large.
 
 =head2 parse
 
@@ -599,6 +603,13 @@ Parse message chunk.
   my $size = $msg->start_line_size;
 
 Size of the start line in bytes.
+
+=head2 text
+
+  my $str = $msg->text;
+
+Retrieve L</"body"> and try to decode it if a charset could be extracted with
+L<Mojo::Content/"charset">.
 
 =head2 to_string
 

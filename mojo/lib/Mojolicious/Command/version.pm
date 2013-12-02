@@ -17,7 +17,7 @@ sub run {
   my $tls
     = Mojo::IOLoop::Server::TLS ? $IO::Socket::SSL::VERSION : 'not installed';
 
-  print <<"EOF";
+  print <<EOF;
 CORE
   Perl        ($^V, $^O)
   Mojolicious ($Mojolicious::VERSION, $Mojolicious::CODENAME)
@@ -31,7 +31,8 @@ EOF
 
   # Check latest version on CPAN
   my $latest = eval {
-    my $ua = Mojo::UserAgent->new(max_redirects => 10)->detect_proxy;
+    my $ua = Mojo::UserAgent->new(max_redirects => 10);
+    $ua->proxy->detect;
     $ua->get('api.metacpan.org/v0/release/Mojolicious')->res->json->{version};
   };
 
@@ -45,6 +46,8 @@ EOF
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 

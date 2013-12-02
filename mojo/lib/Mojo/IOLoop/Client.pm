@@ -34,7 +34,7 @@ sub connect {
 
 sub _cleanup {
   my $self = shift;
-  return $self unless my $reactor = $self->{reactor};
+  return $self unless my $reactor = $self->reactor;
   $self->{$_} && $reactor->remove(delete $self->{$_})
     for qw(delay timer handle);
   return $self;
@@ -50,18 +50,17 @@ sub _connect {
     my %options = (
       Blocking => 0,
       PeerAddr => $address eq 'localhost' ? '127.0.0.1' : $address,
-      PeerPort => $args->{port} || ($args->{tls} ? 443 : 80),
-      Proto    => 'tcp'
+      PeerPort => $args->{port} || ($args->{tls} ? 443 : 80)
     );
     $options{LocalAddr} = $args->{local_address} if $args->{local_address};
     $options{PeerAddr} =~ s/[\[\]]//g if $options{PeerAddr};
     my $class = IPV6 ? 'IO::Socket::IP' : 'IO::Socket::INET';
-    return $self->emit_safe(error => "Couldn't connect")
+    return $self->emit(error => "Couldn't connect: $@")
       unless $self->{handle} = $handle = $class->new(%options);
 
     # Timeout
     $self->{timer} = $reactor->timer($args->{timeout} || 10,
-      sub { $self->emit_safe(error => 'Connect timeout') });
+      sub { $self->emit(error => 'Connect timeout') });
   }
   $handle->blocking(0);
 
@@ -73,16 +72,15 @@ sub _connect {
 sub _tls {
   my $self = shift;
 
-  # Switch between reading and writing
+  # Connected
   my $handle = $self->{handle};
-  if ($self->{tls} && !$handle->connect_SSL) {
-    my $err = $IO::Socket::SSL::SSL_ERROR;
-    if    ($err == TLS_READ)  { $self->reactor->watch($handle, 1, 0) }
-    elsif ($err == TLS_WRITE) { $self->reactor->watch($handle, 1, 1) }
-    return;
-  }
+  return $self->_cleanup->emit_safe(connect => $handle)
+    if $handle->connect_SSL;
 
-  $self->_cleanup->emit_safe(connect => $handle);
+  # Switch between reading and writing
+  my $err = $IO::Socket::SSL::SSL_ERROR;
+  if    ($err == TLS_READ)  { $self->reactor->watch($handle, 1, 0) }
+  elsif ($err == TLS_WRITE) { $self->reactor->watch($handle, 1, 1) }
 }
 
 sub _try {
@@ -90,46 +88,43 @@ sub _try {
 
   # Retry or handle exceptions
   my $handle = $self->{handle};
-  return $! == EINPROGRESS ? undef : $self->emit_safe(error => $!)
+  return $! == EINPROGRESS ? undef : $self->emit(error => $!)
     if IPV6 && !$handle->connect;
-  return $self->emit_safe(error => $! = $handle->sockopt(SO_ERROR))
+  return $self->emit(error => $! = $handle->sockopt(SO_ERROR))
     if !IPV6 && !$handle->connected;
 
   # Disable Nagle's algorithm
   setsockopt $handle, IPPROTO_TCP, TCP_NODELAY, 1;
 
-  # TLS
-  if ($args->{tls} && !$handle->isa('IO::Socket::SSL')) {
-    return $self->emit_safe(
-      error => 'IO::Socket::SSL 1.75 required for TLS support')
-      unless TLS;
+  return $self->_cleanup->emit_safe(connect => $handle)
+    if !$args->{tls} || $handle->isa('IO::Socket::SSL');
+  return $self->emit(error => 'IO::Socket::SSL 1.75 required for TLS support')
+    unless TLS;
 
-    # Upgrade
-    weaken $self;
-    my %options = (
-      SSL_ca_file => $args->{tls_ca}
-        && -T $args->{tls_ca} ? $args->{tls_ca} : undef,
-      SSL_cert_file      => $args->{tls_cert},
-      SSL_error_trap     => sub { $self->_cleanup->emit_safe(error => $_[1]) },
-      SSL_hostname       => $args->{address},
-      SSL_key_file       => $args->{tls_key},
-      SSL_startHandshake => 0,
-      SSL_verify_mode    => $args->{tls_ca} ? 0x01 : 0x00,
-      SSL_verifycn_name  => $args->{address},
-      SSL_verifycn_scheme => $args->{tls_ca} ? 'http' : undef
-    );
-    $self->{tls} = 1;
-    my $reactor = $self->reactor;
-    $reactor->remove($handle);
-    return $self->emit_safe(error => 'TLS upgrade failed')
-      unless $handle = IO::Socket::SSL->start_SSL($handle, %options);
-    return $reactor->io($handle => sub { $self->_tls })->watch($handle, 0, 1);
-  }
-
-  $self->_cleanup->emit_safe(connect => $handle);
+  # Upgrade
+  weaken $self;
+  my %options = (
+    SSL_ca_file => $args->{tls_ca}
+      && -T $args->{tls_ca} ? $args->{tls_ca} : undef,
+    SSL_cert_file       => $args->{tls_cert},
+    SSL_error_trap      => sub { $self->_cleanup->emit(error => $_[1]) },
+    SSL_hostname        => $args->{address},
+    SSL_key_file        => $args->{tls_key},
+    SSL_startHandshake  => 0,
+    SSL_verify_mode     => $args->{tls_ca} ? 0x01 : 0x00,
+    SSL_verifycn_name   => $args->{address},
+    SSL_verifycn_scheme => $args->{tls_ca} ? 'http' : undef
+  );
+  my $reactor = $self->reactor;
+  $reactor->remove($handle);
+  return $self->emit(error => 'TLS upgrade failed')
+    unless $handle = IO::Socket::SSL->start_SSL($handle, %options);
+  $reactor->io($handle => sub { $self->_tls })->watch($handle, 0, 1);
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -179,7 +174,7 @@ Emitted safely once the connection is established.
     ...
   });
 
-Emitted safely if an error occurs on the connection.
+Emitted if an error occurs on the connection, fatal if unhandled.
 
 =head1 ATTRIBUTES
 
@@ -211,38 +206,56 @@ These options are currently available:
 
 =item address
 
+  address => 'mojolicio.us'
+
 Address or host name of the peer to connect to, defaults to C<localhost>.
 
 =item handle
+
+  handle => $handle
 
 Use an already prepared handle.
 
 =item local_address
 
+  local_address => '127.0.0.1'
+
 Local address to bind to.
 
 =item port
 
-Port to connect to.
+  port => 80
+
+Port to connect to, defaults to C<80> or C<443> with C<tls> option.
 
 =item timeout
+
+  timeout => 15
 
 Maximum amount of time in seconds establishing connection may take before
 getting canceled, defaults to C<10>.
 
 =item tls
 
+  tls => 1
+
 Enable TLS.
 
 =item tls_ca
+
+  tls_ca => '/etc/tls/ca.crt'
 
 Path to TLS certificate authority file. Also activates hostname verification.
 
 =item tls_cert
 
+  tls_cert => '/etc/tls/client.crt'
+
 Path to the TLS certificate file.
 
 =item tls_key
+
+  tls_key => '/etc/tls/client.key'
 
 Path to the TLS key file.
 

@@ -11,16 +11,14 @@ has reactor => sub {
 
 sub DESTROY { shift->close }
 
-sub new { shift->SUPER::new(handle => shift, buffer => '') }
+sub new { shift->SUPER::new(handle => shift, buffer => '', timeout => 15) }
 
 sub close {
   my $self = shift;
 
-  # Cleanup
-  return unless my $reactor = $self->{reactor};
+  return unless my $reactor = $self->reactor;
   return unless my $handle  = delete $self->timeout(0)->{handle};
   $reactor->remove($handle);
-
   close $handle;
   $self->emit_safe('close');
 }
@@ -48,14 +46,14 @@ sub is_writing {
 sub start {
   my $self = shift;
 
-  my $reactor = $self->reactor;
-  $reactor->io($self->timeout(15)->{handle},
-    sub { pop() ? $self->_write : $self->_read })
-    unless $self->{timer};
-
   # Resume
-  $reactor->watch($self->{handle}, 1, $self->is_writing)
+  my $reactor = $self->reactor;
+  return $reactor->watch($self->{handle}, 1, $self->is_writing)
     if delete $self->{paused};
+
+  weaken $self;
+  my $cb = sub { pop() ? $self->_write : $self->_read };
+  $reactor->io($self->timeout($self->{timeout})->{handle} => $cb);
 }
 
 sub stop {
@@ -109,7 +107,7 @@ sub _error {
   return $self->close if $! == ECONNRESET || $! == EPIPE;
 
   # Error
-  $self->emit_safe(error => $!)->close;
+  $self->emit(error => $!)->close;
 }
 
 sub _read {
@@ -138,6 +136,8 @@ sub _write {
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -204,7 +204,7 @@ Emitted safely once all data has been written.
     ...
   });
 
-Emitted safely if an error occurs on the stream.
+Emitted if an error occurs on the stream, fatal if unhandled.
 
 =head2 read
 
@@ -277,14 +277,14 @@ Get handle for stream.
 
 =head2 is_readable
 
-  my $success = $stream->is_readable;
+  my $bool = $stream->is_readable;
 
 Quick non-blocking check if stream is readable, useful for identifying tainted
 sockets.
 
 =head2 is_writing
 
-  my $success = $stream->is_writing;
+  my $bool = $stream->is_writing;
 
 Check if stream is writing.
 

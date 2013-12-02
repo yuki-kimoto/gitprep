@@ -24,7 +24,7 @@ has types => sub {
     png      => ['image/png'],
     rss      => ['application/rss+xml'],
     svg      => ['image/svg+xml'],
-    txt      => ['text/plain'],
+    txt      => ['text/plain;charset=UTF-8'],
     webm     => ['video/webm'],
     woff     => ['application/font-woff'],
     xml      => ['application/xml', 'text/xml'],
@@ -37,7 +37,7 @@ sub detect {
 
   # Extract and prioritize MIME types
   my %types;
-  /^\s*([^,; ]+)(?:\s*\;\s*q=(\d+(?:\.\d+)?))?\s*$/i
+  /^\s*([^,; ]+)(?:\s*\;\s*q\s*=\s*(\d+(?:\.\d+)?))?\s*$/i
     and $types{lc $1} = defined $2 ? $2 : 1
     for split /,/, defined $accept ? $accept : '';
   my @detected = sort { $types{$b} <=> $types{$a} } sort keys %types;
@@ -61,6 +61,8 @@ sub type {
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -99,7 +101,7 @@ L<Mojolicious::Types> manages MIME types for L<Mojolicious>.
   png      -> image/png
   rss      -> application/rss+xml
   svg      -> image/svg+xml
-  txt      -> text/plain
+  txt      -> text/plain;charset=UTF-8
   webm     -> video/webm
   woff     -> application/font-woff
   xml      -> application/xml,text/xml

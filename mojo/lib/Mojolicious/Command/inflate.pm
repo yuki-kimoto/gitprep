@@ -14,18 +14,24 @@ sub run {
   my %all;
   my $app    = $self->app;
   my $loader = Mojo::Loader->new;
-  %all = (%{$loader->data($_)}, %all)
-    for @{$app->renderer->classes}, @{$app->static->classes};
+  for my $class (@{$app->renderer->classes}, @{$app->static->classes}) {
+    for my $name (keys %{$loader->data($class)}) {
+      my $data = $loader->data($class, $name);
+      $all{$name}
+        = $loader->is_binary($class, $name) ? $data : encode('UTF-8', $data);
+    }
+  }
 
   # Turn them into real files
-  for my $file (keys %all) {
-    my $prefix = $file =~ /\.\w+\.\w+$/ ? 'templates' : 'public';
-    my $path = $self->rel_file("$prefix/$file");
-    $self->write_file($path, encode('UTF-8', $all{$file}));
+  for my $name (keys %all) {
+    my $prefix = $name =~ /\.\w+\.\w+$/ ? 'templates' : 'public';
+    $self->write_file($self->rel_file("$prefix/$name"), $all{$name});
   }
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 

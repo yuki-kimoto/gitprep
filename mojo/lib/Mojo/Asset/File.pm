@@ -26,7 +26,7 @@ has handle => sub {
   my $name = defined $path ? $path : $base;
   until ($handle->open($name, O_CREAT | O_EXCL | O_RDWR)) {
     croak qq{Can't open file "$name": $!} if defined $path || $! != $!{EEXIST};
-    $name = "$base." . md5_sum(time . $$ . rand 9999999);
+    $name = "$base." . md5_sum(time . $$ . rand 9 x 7);
   }
   $self->path($name);
 
@@ -140,6 +140,8 @@ sub slurp {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojo::Asset::File - File storage for HTTP content
@@ -174,8 +176,8 @@ implements the following new ones.
 
 =head2 cleanup
 
-  my $cleanup = $file->cleanup;
-  $file       = $file->cleanup(1);
+  my $bool = $file->cleanup;
+  $file    = $file->cleanup($bool);
 
 Delete file automatically once it's not used anymore.
 
@@ -184,14 +186,14 @@ Delete file automatically once it's not used anymore.
   my $handle = $file->handle;
   $file      = $file->handle(IO::File->new);
 
-File handle, created on demand.
+Filehandle, created on demand.
 
 =head2 path
 
   my $path = $file->path;
   $file    = $file->path('/home/sri/foo.txt');
 
-File path used to create C<handle>, can also be automatically generated if
+File path used to create L</"handle">, can also be automatically generated if
 necessary.
 
 =head2 tmpdir
@@ -199,7 +201,7 @@ necessary.
   my $tmpdir = $file->tmpdir;
   $file      = $file->tmpdir('/tmp');
 
-Temporary directory used to generate C<path>, defaults to the value of the
+Temporary directory used to generate L</"path">, defaults to the value of the
 MOJO_TMPDIR environment variable or auto detection.
 
 =head1 METHODS
@@ -237,7 +239,7 @@ True.
 
   $file = $file->move_to('/home/sri/bar.txt');
 
-Move asset data into a specific file and disable C<cleanup>.
+Move asset data into a specific file and disable L</"cleanup">.
 
 =head2 size
 

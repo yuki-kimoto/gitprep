@@ -56,7 +56,7 @@ sub run {
     exit 0 if $pid;
     setsid or die "Can't start a new session: $!";
 
-    # Close file handles
+    # Close filehandles
     open STDIN,  '</dev/null';
     open STDOUT, '>/dev/null';
     open STDERR, '>&STDOUT';
@@ -134,7 +134,7 @@ sub _reap {
   # Clean up failed upgrade
   return unless ($self->{new} || '') eq $pid;
   $self->{prefork}->app->log->info('Zero downtime software upgrade failed.');
-  delete $self->{$_} for qw(new upgrade);
+  delete @$self{qw(new upgrade)};
 }
 
 sub _stop {
@@ -145,6 +145,8 @@ sub _stop {
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -161,13 +163,15 @@ Mojo::Server::Hypnotoad - ALL GLORY TO THE HYPNOTOAD!
 
 L<Mojo::Server::Hypnotoad> is a full featured, UNIX optimized, preforking
 non-blocking I/O HTTP and WebSocket server, built around the very well tested
-and reliable L<Mojo::Server::Prefork>, with C<IPv6>, C<TLS>, C<Comet> (long
-polling), C<keep-alive>, connection pooling, timeout, cookie, multipart,
-multiple event loop and hot deployment support that just works. Note that the
-server uses signals for process management, so you should avoid modifying
-signal handlers in your applications.
+and reliable L<Mojo::Server::Prefork>, with IPv6, TLS, Comet (long polling),
+keep-alive, connection pooling, timeout, cookie, multipart, multiple event
+loop and hot deployment support that just works. Note that the server uses
+signals for process management, so you should avoid modifying signal handlers
+in your applications.
 
-To start applications with it you can use the L<hypnotoad> script.
+To start applications with it you can use the L<hypnotoad> script, for
+L<Mojolicious> and L<Mojolicious::Lite> applications it will default to
+C<production> mode.
 
   $ hypnotoad myapp.pl
   Server available at http://127.0.0.1:8080.
@@ -177,42 +181,39 @@ You can run the same command again for automatic hot deployment.
   $ hypnotoad myapp.pl
   Starting hot deployment for Hypnotoad server 31841.
 
-For L<Mojolicious> and L<Mojolicious::Lite> applications it will default to
-C<production> mode.
+This second invocation will load the application again, detect the process id
+file with it, and send a L</"USR2"> signal to the already running server.
 
-Optional modules L<EV> (4.0+), L<IO::Socket::IP> (0.16+) and
-L<IO::Socket::SSL> (1.75+) are supported transparently through
-L<Mojo::IOLoop>, and used if installed. Individual features can also be
-disabled with the MOJO_NO_IPV6 and MOJO_NO_TLS environment variables.
+For better scalability (epoll, kqueue) and to provide IPv6 as well as TLS
+support, the optional modules L<EV> (4.0+), L<IO::Socket::IP> (0.16+) and
+L<IO::Socket::SSL> (1.75+) will be used automatically by L<Mojo::IOLoop> if
+they are installed. Individual features can also be disabled with the
+MOJO_NO_IPV6 and MOJO_NO_TLS environment variables.
 
 See L<Mojolicious::Guides::Cookbook> for more.
 
-=head1 SIGNALS
+=head1 MANAGER SIGNALS
 
-L<Mojo::Server::Hypnotoad> can be controlled at runtime with the following
-signals.
+The L<Mojo::Server::Hypnotoad> manager process can be controlled at runtime
+with the following signals.
 
-=head2 Manager
-
-=over 2
-
-=item INT, TERM
+=head2 INT, TERM
 
 Shutdown server immediately.
 
-=item QUIT
+=head2 QUIT
 
 Shutdown server gracefully.
 
-=item TTIN
+=head2 TTIN
 
 Increase worker pool by one.
 
-=item TTOU
+=head2 TTOU
 
 Decrease worker pool by one.
 
-=item USR2
+=head2 USR2
 
 Attempt zero downtime software upgrade (hot deployment) without losing any
 incoming connections.
@@ -228,24 +229,21 @@ incoming connections.
      |- Worker [3]
      +- Worker [4]
 
-The new manager will automatically send a C<QUIT> signal to the old manager
+The new manager will automatically send a L</"QUIT"> signal to the old manager
 and take over serving requests after starting up successfully.
 
-=back
+=head1 WORKER SIGNALS
 
-=head2 Worker
+L<Mojo::Server::Hypnotoad> worker processes can be controlled at runtime with
+the following signals.
 
-=over 2
-
-=item INT, TERM
+=head2 INT, TERM
 
 Stop worker immediately.
 
-=item QUIT
+=head2 QUIT
 
 Stop worker gracefully.
-
-=back
 
 =head1 SETTINGS
 
@@ -282,7 +280,7 @@ Listen backlog size, defaults to C<SOMAXCONN>.
 
 Maximum number of parallel client connections per worker process, defaults to
 C<1000>. Note that depending on how much your application may block, you might
-want to decrease this value and increase C<workers> instead for better
+want to decrease this value and increase L</"workers"> instead for better
 performance.
 
 =head2 graceful_timeout

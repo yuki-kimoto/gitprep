@@ -24,6 +24,27 @@ sub auto_render {
   $c->render_maybe or $stash->{'mojo.routed'} or $c->render_not_found;
 }
 
+sub continue {
+  my ($self, $c) = @_;
+
+  my $match   = $c->match;
+  my $stack   = $match->stack;
+  my $current = $match->current;
+  return $self->auto_render($c) unless my $field = $stack->[$current];
+
+  # Merge captures into stash
+  my @keys  = keys %$field;
+  my $stash = $c->stash;
+  @{$stash}{@keys} = @{$stash->{'mojo.captures'}}{@keys} = values %$field;
+
+  my $continue;
+  my $last = !$stack->[++$current];
+  if (my $cb = $field->{cb}) { $continue = $self->_callback($c, $cb, $last) }
+  else { $continue = $self->_controller($c, $field, $last) }
+  $match->current($current);
+  $self->continue($c) if $last || $continue;
+}
+
 sub dispatch {
   my ($self, $c) = @_;
 
@@ -59,9 +80,8 @@ sub dispatch {
     }
   }
 
-  # Dispatch
-  return undef unless $self->_walk($c);
-  $self->auto_render($c);
+  return undef unless @{$c->match->stack};
+  $self->continue($c);
   return 1;
 }
 
@@ -69,8 +89,8 @@ sub hide { push @{shift->hidden}, @_ }
 
 sub is_hidden {
   my ($self, $method) = @_;
-  my $hiding = $self->{hiding} ||= {map { $_ => 1 } @{$self->hidden}};
-  return !!($hiding->{$method} || index($method, '_') == 0);
+  my $h = $self->{hiding} ||= {map { $_ => 1 } @{$self->hidden}};
+  return !!($h->{$method} || index($method, '_') == 0 || $method !~ /[a-z]/);
 }
 
 sub lookup {
@@ -85,6 +105,8 @@ sub route {
   shift->add_child(Mojolicious::Routes::Route->new(@_))->children->[-1];
 }
 
+sub _action { shift->plugins->emit_chain(around_action => @_) }
+
 sub _add {
   my ($self, $attr, $name, $cb) = @_;
   $self->$attr->{$name} = $cb;
@@ -92,11 +114,11 @@ sub _add {
 }
 
 sub _callback {
-  my ($self, $c, $field, $nested) = @_;
-  $c->stash->{'mojo.routed'}++;
-  $c->app->log->debug('Routing to a callback.');
-  my $continue = $field->{cb}->($c);
-  return !$nested || $continue ? 1 : undef;
+  my ($self, $c, $cb, $last) = @_;
+  $c->stash->{'mojo.routed'}++ if $last;
+  my $app = $c->app;
+  $app->log->debug('Routing to a callback.');
+  return _action($app, $c, $cb, $last);
 }
 
 sub _class {
@@ -131,7 +153,9 @@ sub _class {
     }
 
     # Success
-    return $class->new($c);
+    my $new = $class->new(%$c);
+    weaken $new->{$_} for qw(app tx);
+    return $new;
   }
 
   # Nothing found
@@ -140,43 +164,44 @@ sub _class {
 }
 
 sub _controller {
-  my ($self, $c, $field, $nested) = @_;
+  my ($self, $old, $field, $last) = @_;
 
   # Load and instantiate controller/application
-  my $app;
-  unless ($app = $self->_class($c, $field)) { return defined $app ? 1 : undef }
+  my $new;
+  unless ($new = $self->_class($old, $field)) { return !!defined $new }
 
   # Application
-  my $continue;
-  my $class = ref $app;
-  my $log   = $c->app->log;
-  if (my $sub = $app->can('handler')) {
+  my $class = ref $new;
+  my $app   = $old->app;
+  my $log   = $app->log;
+  if (my $sub = $new->can('handler')) {
     $log->debug(qq{Routing to application "$class".});
 
     # Try to connect routes
-    if (my $sub = $app->can('routes')) {
-      my $r = $app->$sub;
-      weaken $r->parent($c->match->endpoint)->{parent} unless $r->parent;
+    if (my $sub = $new->can('routes')) {
+      my $r = $new->$sub;
+      weaken $r->parent($old->match->endpoint)->{parent} unless $r->parent;
     }
-    $app->$sub($c);
-    $c->stash->{'mojo.routed'}++;
+    $new->$sub($old);
+    $old->stash->{'mojo.routed'}++;
   }
 
   # Action
-  elsif (my $method = $self->_method($c, $field)) {
-    $log->debug(qq{Routing to controller "$class" and action "$method".});
+  elsif (my $method = $field->{action}) {
+    if (!$self->is_hidden($method)) {
+      $log->debug(qq{Routing to controller "$class" and action "$method".});
 
-    # Try to call action
-    if (my $sub = $app->can($method)) {
-      $c->stash->{'mojo.routed'}++ unless $nested;
-      $continue = $app->$sub;
+      if (my $sub = $new->can($method)) {
+        $old->stash->{'mojo.routed'}++ if $last;
+        return 1 if _action($app, $new, $sub, $last);
+      }
+
+      else { $log->debug('Action not found in controller.') }
     }
-
-    # Action not found
-    else { $log->debug('Action not found in controller.') }
+    else { $log->debug(qq{Action "$method" is not allowed.}) }
   }
 
-  return !$nested || $continue ? 1 : undef;
+  return undef;
 }
 
 sub _load {
@@ -191,49 +216,9 @@ sub _load {
   return ++$self->{loaded}{$app};
 }
 
-sub _method {
-  my ($self, $c, $field) = @_;
-
-  # Hidden
-  return undef unless my $method = $field->{action};
-  $c->app->log->debug(qq{Action "$method" is not allowed.}) and return undef
-    if $self->is_hidden($method);
-
-  # Invalid
-  $c->app->log->debug(qq{Action "$method" is invalid.}) and return undef
-    unless $method =~ /^[a-zA-Z0-9_:]+$/;
-
-  return $method;
-}
-
-sub _walk {
-  my ($self, $c) = @_;
-
-  my $stack = $c->match->stack;
-  return undef unless my $nested = @$stack;
-  my $stash = $c->stash;
-  $stash->{'mojo.captures'} ||= {};
-  for my $field (@$stack) {
-    $nested--;
-
-    # Merge captures into stash
-    my @keys = keys %$field;
-    @{$stash}{@keys} = @{$stash->{'mojo.captures'}}{@keys} = values %$field;
-
-    # Dispatch
-    my $continue
-      = $field->{cb}
-      ? $self->_callback($c, $field, $nested)
-      : $self->_controller($c, $field, $nested);
-
-    # Break the chain
-    return undef if $nested && !$continue;
-  }
-
-  return 1;
-}
-
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -294,7 +279,7 @@ Contains all available conditions.
   my $hidden = $r->hidden;
   $r         = $r->hidden([qw(attr has new)]);
 
-Controller methods and attributes that are hidden from router, defaults to
+Controller attributes and methods that are hidden from router, defaults to
 C<attr>, C<has>, C<new> and C<tap>.
 
 =head2 namespaces
@@ -337,9 +322,15 @@ Add a new shortcut.
 
 Automatic rendering.
 
+=head2 continue
+
+  $r->continue(Mojolicious::Controller->new);
+
+Continue dispatch chain.
+
 =head2 dispatch
 
-  my $success = $r->dispatch(Mojolicious::Controller->new);
+  my $bool = $r->dispatch(Mojolicious::Controller->new);
 
 Match routes with L<Mojolicious::Routes::Match> and dispatch.
 
@@ -347,13 +338,13 @@ Match routes with L<Mojolicious::Routes::Match> and dispatch.
 
   $r = $r->hide(qw(foo bar));
 
-Hide controller methods and attributes from router.
+Hide controller attributes and methods from router.
 
 =head2 is_hidden
 
-  my $success = $r->is_hidden('foo');
+  my $bool = $r->is_hidden('foo');
 
-Check if controller method or attribute is hidden from router.
+Check if controller attribute or method is hidden from router.
 
 =head2 lookup
 

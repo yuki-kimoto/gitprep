@@ -1,5 +1,5 @@
 package Mojo::ByteStream;
-use Mojo::Base -base;
+use Mojo::Base -strict;
 use overload '""' => sub { shift->to_string }, fallback => 1;
 
 use Exporter 'import';
@@ -63,9 +63,13 @@ sub split {
   return Mojo::Collection->new(map { $self->new($_) } split $pattern, $$self);
 }
 
+sub tap { shift->Mojo::Base::tap(@_) }
+
 sub to_string { ${$_[0]} }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -104,8 +108,7 @@ Construct a new scalar-based L<Mojo::ByteStream> object.
 
 =head1 METHODS
 
-L<Mojo::ByteStream> inherits all methods from L<Mojo::Base> and implements the
-following new ones.
+L<Mojo::ByteStream> implements the following methods.
 
 =head2 new
 
@@ -219,7 +222,7 @@ Print bytestream to handle and append a newline, defaults to C<STDOUT>.
 
 =head2 secure_compare
 
-  my $success = $stream->secure_compare($str);
+  my $bool = $stream->secure_compare($str);
 
 Compare bytestream with L<Mojo::Util/"secure_compare">.
 
@@ -263,9 +266,10 @@ Write all data from bytestream at once to file with L<Mojo::Util/"spurt">.
 
   my $collection = $stream->split(',');
 
-Turn bytestream into L<Mojo::Collection>.
+Turn bytestream into L<Mojo::Collection> object containing L<Mojo::ByteStream>
+objects.
 
-  b('a,b,c')->split(',')->pluck('quote')->join(',')->say;
+  b('a,b,c')->split(',')->quote->join(',')->say;
 
 =head2 squish
 
@@ -274,6 +278,12 @@ Turn bytestream into L<Mojo::Collection>.
 Trim whitespace characters from both ends of bytestream and then change all
 consecutive groups of whitespace into one space each with
 L<Mojo::Util/"squish">.
+
+=head2 tap
+
+  $stream = $stream->tap(sub {...});
+
+Alias for L<Mojo::Base/"tap">.
 
 =head2 to_string
 
@@ -326,6 +336,12 @@ bytestream with L<Mojo::Util/"xml_escape">.
   $stream = $stream->xor_encode($key);
 
 XOR encode bytestream with L<Mojo::Util/"xor_encode">.
+
+=head1 BYTESTREAM
+
+Direct scalar reference access to the bytestream is also possible.
+
+  $$stream .= 'foo';
 
 =head1 SEE ALSO
 

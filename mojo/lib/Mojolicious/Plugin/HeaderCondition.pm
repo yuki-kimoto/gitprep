@@ -15,7 +15,7 @@ sub _check {
   my ($value, $pattern) = @_;
   return 1
     if $value && $pattern && ref $pattern eq 'Regexp' && $value =~ $pattern;
-  return $value && defined $pattern && $pattern eq $value ? 1 : undef;
+  return $value && defined $pattern && $pattern eq $value;
 }
 
 sub _headers {
@@ -31,6 +31,8 @@ sub _headers {
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 

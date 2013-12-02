@@ -11,7 +11,7 @@ use Mojo::Util qw(decode encode);
 use Scalar::Util 'weaken';
 
 has description => "Perform HTTP request.\n";
-has usage       => <<"EOF";
+has usage       => <<EOF;
 usage: $0 get [OPTIONS] URL [SELECTOR|JSON-POINTER] [COMMANDS]
 
   mojo get /
@@ -24,7 +24,7 @@ usage: $0 get [OPTIONS] URL [SELECTOR|JSON-POINTER] [COMMANDS]
   mojo get mojolicio.us a attr href
   mojo get mojolicio.us '*' attr id
   mojo get mojolicio.us 'h1, h2, h3' 3 text
-  mojo get http://search.twitter.com/search.json /error
+  mojo get https://api.metacpan.org/v0/author/SRI /name
 
 These options are available:
   -C, --charset <charset>     Charset of HTML/XML content, defaults to auto
@@ -57,7 +57,7 @@ sub run {
 
   # Detect proxy for absolute URLs
   my $ua = Mojo::UserAgent->new(ioloop => Mojo::IOLoop->singleton);
-  $url !~ m!^/! ? $ua->detect_proxy : $ua->app($self->app);
+  $url !~ m!^/! ? $ua->proxy->detect : $ua->server->app($self->app);
   $ua->max_redirects(10) if $redirect;
 
   my $buffer = '';
@@ -135,7 +135,7 @@ sub _select {
     # Attribute
     elsif ($command eq 'attr') {
       next unless my $name = shift @args;
-      _say($_->attrs->{$name}) for @$results;
+      _say($_->attr->{$name}) for @$results;
     }
 
     # Unknown
@@ -147,6 +147,8 @@ sub _select {
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 

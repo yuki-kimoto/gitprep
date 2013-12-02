@@ -4,31 +4,35 @@ use Mojo::Base 'Mojolicious::Command';
 use Getopt::Long qw(GetOptionsFromArray :config no_auto_abbrev no_ignore_case);
 
 has description => "Run code against application.\n";
-has usage       => <<"EOF";
+has usage       => <<EOF;
 usage: $0 eval [OPTIONS] CODE
 
   mojo eval 'say app->ua->get("/")->res->body'
   mojo eval -v 'app->home'
+  mojo eval -V 'app->renderer->paths'
 
 These options are available:
   -v, --verbose   Print return value to STDOUT.
+  -V              Print returned data structure to STDOUT.
 EOF
 
 sub run {
   my ($self, @args) = @_;
 
-  GetOptionsFromArray \@args, 'v|verbose' => \my $verbose;
+  GetOptionsFromArray \@args, 'v|verbose' => \my $v1, 'V' => \my $v2;
   my $code = shift @args || '';
 
   # Run code against application
   my $app = $self->app;
   no warnings;
-  my $result = eval "package main; sub app { \$app }; $code";
-  say $result if $verbose && defined $result;
-  return $@ ? die $@ : $result;
+  my $result = eval "package main; sub app; local *app = sub { \$app }; $code";
+  return $@ ? die $@ : $result unless defined $result && ($v1 || $v2);
+  $v2 ? print($app->dumper($result)) : say $result;
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 

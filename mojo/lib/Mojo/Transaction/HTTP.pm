@@ -3,6 +3,8 @@ use Mojo::Base 'Mojo::Transaction';
 
 use Mojo::Transaction::WebSocket;
 
+has 'previous';
+
 sub client_read {
   my ($self, $chunk) = @_;
 
@@ -38,6 +40,13 @@ sub keep_alive {
 
   # No keep-alive for 1.0
   return !($req->version eq '1.0' || $res->version eq '1.0');
+}
+
+sub redirects {
+  my $previous = shift;
+  my @redirects;
+  unshift @redirects, $previous while $previous = $previous->previous;
+  return \@redirects;
 }
 
 sub server_read {
@@ -162,6 +171,8 @@ sub _write {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojo::Transaction::HTTP - HTTP transaction
@@ -245,7 +256,19 @@ object.
 
 =head1 ATTRIBUTES
 
-L<Mojo::Transaction::HTTP> inherits all attributes from L<Mojo::Transaction>.
+L<Mojo::Transaction::HTTP> inherits all attributes from L<Mojo::Transaction>
+and implements the following new ones.
+
+=head2 previous
+
+  my $previous = $tx->previous;
+  $tx          = $tx->previous(Mojo::Transaction->new);
+
+Previous transaction that triggered this followup transaction.
+
+  # Paths of previous requests
+  say $tx->previous->previous->req->url->path;
+  say $tx->previous->req->url->path;
 
 =head1 METHODS
 
@@ -266,15 +289,25 @@ Write data client-side, used to implement user agents.
 
 =head2 is_empty
 
-  my $success = $tx->is_empty;
+  my $bool = $tx->is_empty;
 
 Check transaction for C<HEAD> request and C<1xx>, C<204> or C<304> response.
 
 =head2 keep_alive
 
-  my $success = $tx->keep_alive;
+  my $bool = $tx->keep_alive;
 
 Check if connection can be kept alive.
+
+=head2 redirects
+
+  my $redirects = $tx->redirects;
+
+Return a list of all previous transactions that preceded this followup
+transaction.
+
+  # Paths of all previous requests
+  say $_->req->url->path for @{$tx->redirects};
 
 =head2 server_read
 

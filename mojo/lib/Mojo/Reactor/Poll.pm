@@ -105,8 +105,8 @@ sub watch {
 sub _poll { shift->{poll} ||= IO::Poll->new }
 
 sub _sandbox {
-  my ($self, $desc, $cb) = (shift, shift, shift);
-  eval { $self->$cb(@_); 1 } or $self->emit_safe(error => "$desc failed: $@");
+  my ($self, $event, $cb) = (shift, shift, shift);
+  eval { $self->$cb(@_); 1 } or $self->emit(error => "$event failed: $@");
 }
 
 sub _timer {
@@ -123,6 +123,8 @@ sub _timer {
 }
 
 1;
+
+=encoding utf8
 
 =head1 NAME
 
@@ -180,7 +182,7 @@ readable or writable.
 
 =head2 is_running
 
-  my $success = $reactor->is_running;
+  my $bool = $reactor->is_running;
 
 Check if reactor is running.
 
@@ -200,8 +202,8 @@ amount of time in seconds.
 
 =head2 remove
 
-  my $success = $reactor->remove($handle);
-  my $success = $reactor->remove($id);
+  my $bool = $reactor->remove($handle);
+  my $bool = $reactor->remove($id);
 
 Remove handle or timer.
 
@@ -209,7 +211,7 @@ Remove handle or timer.
 
   $reactor->start;
 
-Start watching for I/O and timer events, this will block until C<stop> is
+Start watching for I/O and timer events, this will block until L</"stop"> is
 called or no events are being watched anymore.
 
 =head2 stop

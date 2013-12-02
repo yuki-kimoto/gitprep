@@ -2,8 +2,9 @@ package Mojo::Util;
 use Mojo::Base 'Exporter';
 
 use Carp qw(carp croak);
+use Data::Dumper ();
 use Digest::MD5 qw(md5 md5_hex);
-BEGIN {eval {require Digest::SHA; import Digest::SHA qw(sha1 sha1_hex)}}
+BEGIN {eval {require Digest::SHA; import Digest::SHA qw(hmac_sha1 sha1 sha1_hex)}}
 use Encode 'find_encoding';
 use File::Basename 'dirname';
 use File::Spec::Functions 'catfile';
@@ -25,7 +26,7 @@ use constant {
   PC_INITIAL_N    => 128
 };
 
-# To update HTML5 entities run this command
+# To update HTML entities run this command
 # perl examples/entities.pl > lib/Mojo/entities.txt
 my %ENTITIES;
 for my $line (split "\x0a", slurp(catfile dirname(__FILE__), 'entities.txt')) {
@@ -38,10 +39,10 @@ my %CACHE;
 
 our @EXPORT_OK = (
   qw(b64_decode b64_encode camelize class_to_file class_to_path decamelize),
-  qw(decode deprecated encode get_line hmac_sha1_sum html_unescape md5_bytes),
-  qw(md5_sum monkey_patch punycode_decode punycode_encode quote),
-  qw(secure_compare sha1_bytes sha1_sum slurp spurt squish steady_time trim),
-  qw(unquote url_escape url_unescape xml_escape xor_encode)
+  qw(decode deprecated dumper encode get_line hmac_sha1_sum html_unescape),
+  qw(md5_bytes md5_sum monkey_patch punycode_decode punycode_encode quote),
+  qw(secure_compare sha1_bytes sha1_sum slurp split_header spurt squish),
+  qw(steady_time trim unquote url_escape url_unescape xml_escape xor_encode)
 );
 
 sub b64_decode { decode_base64($_[0]) }
@@ -51,7 +52,7 @@ sub camelize {
   my $str = shift;
   return $str if $str =~ /^[A-Z]/;
 
-  # Camel case words
+  # CamelCase words
   return join '::', map {
     join '', map { ucfirst lc } split /_/, $_
   } split /-/, $str;
@@ -74,7 +75,7 @@ sub decamelize {
   my @parts;
   for my $part (split /::/, $str) {
 
-    # Snake case words
+    # snake_case words
     my @words;
     push @words, lc $1 while $part =~ s/([A-Z]{1}[^A-Z]*)//;
     push @parts, join '_', @words;
@@ -95,6 +96,8 @@ sub deprecated {
   $ENV{MOJO_FATAL_DEPRECATIONS} ? croak(@_) : carp(@_);
 }
 
+sub dumper { Data::Dumper->new([@_])->Indent(1)->Sortkeys(1)->Terse(1)->Dump }
+
 sub encode { _encoding($_[0])->encode("$_[1]") }
 
 sub get_line {
@@ -109,21 +112,12 @@ sub get_line {
   return $line;
 }
 
-sub hmac_sha1_sum {
-  my ($str, $secret) = @_;
-  $secret = $secret ? "$secret" : 'Very insecure!';
-  $secret = sha1 $secret if length $secret > 64;
-
-  my $ipad = $secret ^ (chr(0x36) x 64);
-  my $opad = $secret ^ (chr(0x5c) x 64);
-  return unpack 'H*', sha1($opad . sha1($ipad . $str));
-}
+sub hmac_sha1_sum { unpack 'H*', hmac_sha1(@_) }
 
 sub html_unescape {
   my $str = shift;
   return $str if index($str, '&') == -1;
-  $str
-    =~ s/&(?:\#((?:\d{1,7}|x[[:xdigit:]]{1,6}));|(\w+;?))/_decode($1, $2)/ge;
+  $str =~ s/&(?:\#((?:\d{1,7}|x[0-9a-fA-F]{1,6}));|(\w+;?))/_decode($1, $2)/ge;
   return $str;
 }
 
@@ -142,36 +136,32 @@ sub punycode_decode {
   my $input = shift;
   use integer;
 
-  # Delimiter
-  my @output;
-  push @output, split //, $1 if $input =~ s/(.*)\x2d//s;
-
   my $n    = PC_INITIAL_N;
   my $i    = 0;
   my $bias = PC_INITIAL_BIAS;
+  my @output;
+
+  # Consume all code points before the last delimiter
+  push @output, split //, $1 if $input =~ s/(.*)\x2d//s;
+
   while (length $input) {
     my $oldi = $i;
     my $w    = 1;
 
     # Base to infinity in steps of base
     for (my $k = PC_BASE; 1; $k += PC_BASE) {
-
-      # Digit
       my $digit = ord substr $input, 0, 1, '';
       $digit = $digit < 0x40 ? $digit + (26 - 0x30) : ($digit & 0x1f) - 1;
       $i += $digit * $w;
       my $t = $k - $bias;
       $t = $t < PC_TMIN ? PC_TMIN : $t > PC_TMAX ? PC_TMAX : $t;
       last if $digit < $t;
-
-      $w *= (PC_BASE - $t);
+      $w *= PC_BASE - $t;
     }
 
-    # Bias
     $bias = _adapt($i - $oldi, @output + 1, $oldi == 0);
     $n += $i / (@output + 1);
     $i = $i % (@output + 1);
-
     splice @output, $i++, 0, chr $n;
   }
 
@@ -183,35 +173,28 @@ sub punycode_encode {
   my $output = shift;
   use integer;
 
-  # Split input
+  my $n     = PC_INITIAL_N;
+  my $delta = 0;
+  my $bias  = PC_INITIAL_BIAS;
+
+  # Extract basic code points
   my $len   = length $output;
   my @input = map {ord} split //, $output;
   my @chars = sort grep { $_ >= PC_INITIAL_N } @input;
-
-  # Handle non-basic characters
   $output =~ s/[^\x00-\x7f]+//gs;
   my $h = my $b = length $output;
   $output .= "\x2d" if $b > 0;
 
-  my $n     = PC_INITIAL_N;
-  my $delta = 0;
-  my $bias  = PC_INITIAL_BIAS;
   for my $m (@chars) {
-
-    # Basic character
     next if $m < $n;
-
-    # Walk all code points in order
     $delta += ($m - $n) * ($h + 1);
     $n = $m;
+
     for (my $i = 0; $i < $len; $i++) {
       my $c = $input[$i];
 
-      # Basic character
-      $delta++ if $c < $n;
-
-      # Non basic character
-      if ($c == $n) {
+      if ($c < $n) { $delta++ }
+      elsif ($c == $n) {
         my $q = $delta;
 
         # Base to infinity in steps of base
@@ -219,18 +202,12 @@ sub punycode_encode {
           my $t = $k - $bias;
           $t = $t < PC_TMIN ? PC_TMIN : $t > PC_TMAX ? PC_TMAX : $t;
           last if $q < $t;
-
-          # Code point for digit "t"
           my $o = $t + (($q - $t) % (PC_BASE - $t));
           $output .= chr $o + ($o < 26 ? 0x61 : 0x30 - 26);
-
           $q = ($q - $t) / (PC_BASE - $t);
         }
 
-        # Code point for digit "q"
         $output .= chr $q + ($q < 26 ? 0x61 : 0x30 - 26);
-
-        # Bias
         $bias = _adapt($delta, $h + 1, $h == $b);
         $delta = 0;
         $h++;
@@ -267,6 +244,26 @@ sub slurp {
   my $content = '';
   while ($file->sysread(my $buffer, 131072, 0)) { $content .= $buffer }
   return $content;
+}
+
+sub split_header {
+  my $str = shift;
+
+  my (@tree, @token);
+  while ($str =~ s/^[,;\s]*([^=;, ]+)\s*//) {
+    push @token, $1, undef;
+    $token[-1] = unquote($1)
+      if $str =~ s/^=\s*("(?:\\\\|\\"|[^"])*"|[^;, ]*)\s*//;
+
+    # Separator
+    $str =~ s/^;\s*//;
+    next unless $str =~ s/^,\s*//;
+    push @tree, [@token];
+    @token = ();
+  }
+
+  # Take care of final token
+  return [@token ? (@tree, \@token) : @tree];
 }
 
 sub spurt {
@@ -313,7 +310,7 @@ sub url_escape {
 sub url_unescape {
   my $str = shift;
   return $str if index($str, '%') == -1;
-  $str =~ s/%([[:xdigit:]]{2})/chr(hex($1))/ge;
+  $str =~ s/%([0-9a-fA-F]{2})/chr(hex($1))/ge;
   return $str;
 }
 
@@ -342,8 +339,8 @@ sub xor_encode {
 
 sub _adapt {
   my ($delta, $numpoints, $firsttime) = @_;
-
   use integer;
+
   $delta = $firsttime ? $delta / PC_DAMP : $delta / 2;
   $delta += $delta / $numpoints;
   my $k = 0;
@@ -376,6 +373,8 @@ sub _encoding {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojo::Util - Portable utility functions
@@ -399,22 +398,22 @@ L<Mojo::Util> implements the following functions.
 
 =head2 b64_decode
 
-  my $str = b64_decode $b64;
+  my $bytes = b64_decode $b64;
 
-Base64 decode string.
+Base64 decode bytes.
 
 =head2 b64_encode
 
-  my $b64 = b64_encode $str;
-  my $b64 = b64_encode $str, "\n";
+  my $b64 = b64_encode $bytes;
+  my $b64 = b64_encode $bytes, "\n";
 
-Base64 encode string, the line ending defaults to a newline.
+Base64 encode bytes, the line ending defaults to a newline.
 
 =head2 camelize
 
   my $camelcase = camelize $snakecase;
 
-Convert snake case string to camel case and replace C<-> with C<::>.
+Convert snake_case string to CamelCase and replace C<-> with C<::>.
 
   # "FooBar"
   camelize 'foo_bar';
@@ -431,10 +430,17 @@ Convert snake case string to camel case and replace C<-> with C<::>.
 
 Convert a class name to a file.
 
-  Foo::Bar -> foo_bar
-  FOO::Bar -> foobar
-  FooBar   -> foo_bar
-  FOOBar   -> foobar
+  # "foo_bar"
+  class_to_file 'Foo::Bar';
+
+  # "foobar"
+  class_to_file 'FOO::Bar';
+
+  # "foo_bar"
+  class_to_file 'FooBar';
+
+  # "foobar"
+  class_to_file 'FOOBar';
 
 =head2 class_to_path
 
@@ -442,14 +448,17 @@ Convert a class name to a file.
 
 Convert class name to path.
 
-  Foo::Bar -> Foo/Bar.pm
-  FooBar   -> FooBar.pm
+  # "Foo/Bar.pm"
+  class_to_path 'Foo::Bar';
+
+  # "FooBar.pm"
+  class_to_path 'FooBar';
 
 =head2 decamelize
 
   my $snakecase = decamelize $camelcase;
 
-Convert camel case string to snake case and replace C<::> with C<->.
+Convert CamelCase string to snake_case and replace C<::> with C<->.
 
   # "foo_bar"
   decamelize 'FooBar';
@@ -473,6 +482,12 @@ Decode bytes to characters and return C<undef> if decoding failed.
 Warn about deprecated feature from perspective of caller. You can also set the
 MOJO_FATAL_DEPRECATIONS environment variable to make them die instead.
 
+=head2 dumper
+
+  my $perl = dumper {some => 'data'};
+
+Dump a Perl data structure with L<Data::Dumper>.
+
 =head2 encode
 
   my $bytes = encode 'UTF-8', $chars;
@@ -488,9 +503,9 @@ with C<0x0d 0x0a> or C<0x0a>.
 
 =head2 hmac_sha1_sum
 
-  my $checksum = hmac_sha1_sum $str, 'passw0rd';
+  my $checksum = hmac_sha1_sum $bytes, 'passw0rd';
 
-Generate HMAC-SHA1 checksum for string.
+Generate HMAC-SHA1 checksum for bytes.
 
 =head2 html_unescape
 
@@ -500,15 +515,15 @@ Unescape all HTML entities in string.
 
 =head2 md5_bytes
 
-  my $checksum = md5_bytes $str;
+  my $checksum = md5_bytes $bytes;
 
-Generate binary MD5 checksum for string.
+Generate binary MD5 checksum for bytes.
 
 =head2 md5_sum
 
-  my $checksum = md5_sum $str;
+  my $checksum = md5_sum $bytes;
 
-Generate MD5 checksum for string.
+Generate MD5 checksum for bytes.
 
 =head2 monkey_patch
 
@@ -542,31 +557,46 @@ Quote string.
 
 =head2 secure_compare
 
-  my $success = secure_compare $str1, $str2;
+  my $bool = secure_compare $str1, $str2;
 
 Constant time comparison algorithm to prevent timing attacks.
 
 =head2 sha1_bytes
 
-  my $checksum = sha1_bytes $str;
+  my $checksum = sha1_bytes $bytes;
 
-Generate binary SHA1 checksum for string.
+Generate binary SHA1 checksum for bytes.
 
 =head2 sha1_sum
 
-  my $checksum = sha1_sum $str;
+  my $checksum = sha1_sum $bytes;
 
-Generate SHA1 checksum for string.
+Generate SHA1 checksum for bytes.
 
 =head2 slurp
 
-  my $content = slurp '/etc/passwd';
+  my $bytes = slurp '/etc/passwd';
 
 Read all data at once from file.
 
+=head2 split_header
+
+   my $tree = split_header 'foo="bar baz"; test=123, yada';
+
+Split HTTP header value.
+
+  # "one"
+  split_header('one; two="three four", five=six')->[0][0];
+
+  # "three four"
+  split_header('one; two="three four", five=six')->[0][3];
+
+  # "five"
+  split_header('one; two="three four", five=six')->[1][0];
+
 =head2 spurt
 
-  $content = spurt $content, '/etc/passwd';
+  $bytes = spurt $bytes, '/etc/passwd';
 
 Write all data at once to file.
 
