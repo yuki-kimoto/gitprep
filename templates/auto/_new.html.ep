@@ -32,8 +32,8 @@
         'any'
       ]
     ];
-    my $validator = app->validator;
-    my $vresult = $validator->validate($params, $rule);
+    my $vc = app->vc;
+    my $vresult = $vc->validate($params, $rule);
     
     # Git
     my $git = app->git;

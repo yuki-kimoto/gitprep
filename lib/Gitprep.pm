@@ -23,7 +23,7 @@ our $VERSION = '1.04';
 has 'dbi';
 has 'git';
 has 'manager';
-has 'validator';
+has 'vc';
 
 use constant BUFFER_SIZE => 8192;
 
@@ -108,9 +108,9 @@ sub startup {
   $dbi->create_model($_) for @$models;
 
   # Validator
-  my $validator = Validator::Custom->new;
-  $self->validator($validator);
-  $validator->register_constraint(
+  my $vc = Validator::Custom->new;
+  $self->vc($vc);
+  $vc->register_constraint(
     user_name => sub {
       my $value = shift;
       

@@ -23,13 +23,13 @@
 
     # Validation
     my $params = $api->params;
-    my $validator = $self->app->validator;
+    my $vc = $self->app->vc;
     my $rule = [
       branch => [
         [not_blank => 'Branch name is empty']
       ]
     ];
-    my $vresult = $validator->validate($params, $rule);
+    my $vresult = $vc->validate($params, $rule);
 
     if ($vresult->is_ok) {
       # Valid parameters

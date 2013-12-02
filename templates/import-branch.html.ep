@@ -49,7 +49,7 @@
         'any'
       ]
     ];
-    my $vresult = app->validator->validate($params, $rule);
+    my $vresult = app->vc->validate($params, $rule);
     
     if ($vresult->is_ok) {
       my $safe_params = $vresult->data;

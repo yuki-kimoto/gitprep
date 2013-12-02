@@ -16,7 +16,7 @@
     
     # Validation
     my $params = $api->params;
-    my $validator = $self->app->validator;
+    my $vc = $self->app->vc;
     my $password_check = sub {
       my $values = shift;
       
@@ -51,7 +51,7 @@
         'defined'
       ]
     ];
-    my $vresult = $self->app->validator->validate($params, $rule);
+    my $vresult = $self->app->vc->validate($params, $rule);
     
     if ($vresult->is_ok) {
       

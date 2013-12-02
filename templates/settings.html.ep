@@ -27,7 +27,7 @@
         ['project_name' => 'Repository name contains invalid charactor.']
       ]
     ];
-    my $vresult = app->validator->validate($params, $rule);
+    my $vresult = app->vc->validate($params, $rule);
     
     if ($vresult->is_ok) {
       # Valida parameters

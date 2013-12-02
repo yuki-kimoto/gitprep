@@ -8,7 +8,7 @@
     
     # Validation
     my $params = $api->params;
-    my $validator = $self->app->validator;
+    my $vc = $self->app->vc;
     my $rule = [
       id => [
         ['not_blank' => 'User name is empty.'],
@@ -26,7 +26,7 @@
           ['duplication' => "Two password don't match"]
         ]
     ];
-    my $vresult = $validator->validate($params, $rule);
+    my $vresult = $vc->validate($params, $rule);
     
     if ($vresult->is_ok) {
       

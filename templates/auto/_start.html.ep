@@ -32,7 +32,7 @@
             ['duplication' => "Two password don't match."]
           ]
       ];
-      my $vresult = $self->app->validator->validate($params, $rule);
+      my $vresult = $self->app->vc->validate($params, $rule);
       
       if ($vresult->is_ok) {
         
