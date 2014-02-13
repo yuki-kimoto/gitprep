@@ -546,7 +546,7 @@ sub _create_rep {
         my $git_push_cmd = join(' ', @git_push_cmd);
         open my $commit_fh, "-|", "$git_push_cmd 2> /dev/null"
           or croak "Can't open git push: @git_push_cmd";
-        close $commit_fh or croak "Can't execute git push @git_push_cmd";
+        close $commit_fh or croak "Can't execute git push: @git_push_cmd";
       }
     }
   };
