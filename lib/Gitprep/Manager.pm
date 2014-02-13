@@ -496,8 +496,8 @@ sub _create_rep {
       # Git init
       my @git_init_cmd = $git->cmd_rep($temp_work, 'init', '-q');
       open my $init_fh, "-|", @git_init_cmd
-        or croak "Can't open git init";
-      close $init_fh or croak "Can't execute git init";
+        or croak "Can't open git init: @git_init_cmd";
+      close $init_fh or croak "Can't execute git init: @git_init_cmd";
       
       # Add README
       my $file = "$temp_work/README.md";
@@ -514,8 +514,8 @@ sub _create_rep {
         'README.md'
       );
       open my $add_fh, "-|", @git_add_cmd
-        or croak "Can't open git add";
-      close $add_fh or croak "Can't execute git add";
+        or croak "Can't open git add: @git_add_cmd";
+      close $add_fh or croak "Can't execute git add: @git_add_cmd";
       
       # Commit
       my $author = "$user <$user\@localhost>";
@@ -529,8 +529,8 @@ sub _create_rep {
         'first commit'
       );
       open my $commit_fh, "-|", @git_commit_cmd
-        or croak "Can't open git commit";
-      close $commit_fh or croak "Can't execute git commit";
+        or croak "Can't open git commit: @git_commit_cmd";
+      close $commit_fh or croak "Can't execute git commit: @git_commit_cmd";
       
       # Push
       {
@@ -545,8 +545,8 @@ sub _create_rep {
         # (This is bad, but --quiet option can't supress in old git)
         my $git_push_cmd = join(' ', @git_push_cmd);
         open my $commit_fh, "-|", "$git_push_cmd 2> /dev/null"
-          or croak "Can't open git push";
-        close $commit_fh or croak "Can't execute git push";
+          or croak "Can't open git push: @git_push_cmd";
+        close $commit_fh or croak "Can't execute git push @git_push_cmd";
       }
     }
   };
