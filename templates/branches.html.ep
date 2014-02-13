@@ -38,8 +38,8 @@
       
       # Delete branch
       eval { $git->delete_branch($user, $project, $branch) };
-      if ($@) {
-        app->log->error(url_with . ":$@");
+      if (my $e = $@) {
+        app->log->error(url_with . ": $e");
         $errors = ['Internal Error'];
       }
       else {

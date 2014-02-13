@@ -24,8 +24,8 @@
       # Delete user
       my $count;
       eval { $count = app->manager->delete_user($user) };
-      if ($@) {
-        app->log->error("/_admin/users?op=delete: $@");
+      if (my $e = $@) {
+        app->log->error(url_for . ": $e");
         $errors = ['Internal Error'];
       }
       elsif ($count == 0) {

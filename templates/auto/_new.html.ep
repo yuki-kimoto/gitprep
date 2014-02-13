@@ -65,8 +65,8 @@
           );
         };
         
-        if ($@) {
-          app->log->fatal($@);
+        if (my $e = $@) {
+          app->log->error(url_for . ": $e");
           $errors = ['Internal error'];
         }
         else {

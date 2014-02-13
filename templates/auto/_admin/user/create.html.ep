@@ -40,8 +40,8 @@
       
       # Create user
       eval { app->manager->create_user($id, $params) };
-      if ($@) {
-        app->log->error($@);
+      if (my $e = $@) {
+        app->log->error(url_for . ": $e");
         $errors = ['Internal Error'];
       }
       else {
