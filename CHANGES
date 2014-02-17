@@ -1,3 +1,5 @@
+1.5
+  - fix bug that git clone via http failed.
 1.4
   - fix markdown bugs (*em*, _em_)
   - default readme file is changed. README is changed to README.md
