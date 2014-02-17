@@ -7,7 +7,7 @@
   # README
   my $type;
   my $lines;
-  my $readme_path = defined $dir ? "$dir/README" : 'README';
+  my $readme_path = (defined $dir && $dir ne '') ? "$dir/README" : 'README';
   eval { $lines = app->git->blob($user, $project, $rev, $readme_path) };
   my $readme_e;
   if ($lines) {

@@ -41,9 +41,7 @@
     %= include '/include/page_path', type => 'tree', Path => $dir;
     %= include '/include/tree';
     
-    % if (!defined $dir || $dir eq '') {
-      %= include '/include/readme'
-    % }
+    %= include '/include/readme', dir => $dir;
   </div>
   
   %= include '/include/footer';
