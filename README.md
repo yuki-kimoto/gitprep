@@ -216,7 +216,7 @@ or rerun setup.sh on command line.
 
 There are some reasons.
 
-** 1. Git version is old **
+**1. Git version is old**
 
 If you see "error: RPC failed; result=56, HTTP code = 200" , your git maybe old.
 Please upgrade to latest git. I checked git version 1.8.5.5.
