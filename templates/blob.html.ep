@@ -15,7 +15,7 @@
 
   # Commit
   my $commit = $git->last_change_commit($user, $project, $rev, $file);
-  
+
   # Authors
   my $authors = $git->authors($user, $project, $rev, $file);
   

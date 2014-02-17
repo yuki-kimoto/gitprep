@@ -1,5 +1,3 @@
-# 環境変数
-
 use 5.008007;
 package Gitprep;
 use Mojo::Base 'Mojolicious';
