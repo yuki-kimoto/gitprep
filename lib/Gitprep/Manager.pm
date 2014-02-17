@@ -550,9 +550,9 @@ sub _create_rep {
       }
     }
   };
-  if ($@) {
+  if (my $e = $@) {
     rmtree $rep;
-    croak $@;
+    croak $e;
   }
 }
 

@@ -214,9 +214,53 @@ or rerun setup.sh on command line.
 
 ### I can't push large repository by http protocol
 
-Maybe http.postBuffer value of git config is small. Input the following command to increase this size.
+There are some reasons.
 
-    git config http.postBuffer 104857600
+** 1. Git version is old **
+
+If you see "error: RPC failed; result=56, HTTP code = 200" , your git maybe old.
+Please upgrade to latest git. I checked git version 1.8.5.5.
+
+**2. GitPrep restriction**
+
+GitPrep restrict max post message size 10MB(This is default of Mojolicious)
+
+You maybe see the following error
+
+    Delta compression using up to 4 threads.
+    Compressing objects: 100% (17830/17830), done.
+    Writing objects: 100% (18281/18281), 687.05 MiB | 129.92 MiB/s, done.
+    Total 18281 (delta 295), reused 18281 (delta 295)
+    error: RPC failed; result=22, HTTP code = 413
+    fatal: The remote end hung up unexpectedly
+    fatal: The remote end hung up unexpectedly
+
+Please increase increase the value of MOJO_MAX_MESSAGE_SIZE
+    
+    # 1GB
+    export MOJO_MAX_MESSAGE_SIZE=1024000000
+
+**3. git restriction**
+
+git restrict post max size via http protocol.
+http.postBuffer value of git config is maybe small.
+
+You maybe see the following error message.
+
+    error: RPC failed; result=56, HTTP code = 200
+    fatal: The remote end hung up unexpectedly
+    Counting objects: 18281, done.
+    Delta compression using up to 4 threads.
+    Compressing objects: 100% (17830/17830), done.
+    Writing objects: 100% (18281/18281), 687.05 MiB | 133.23 MiB/s, done.
+    Total 18281 (delta 295), reused 18281 (delta 295)
+    fatal: The remote end hung up unexpectedly
+    Everything up-to-date
+
+Please increase the value of http.postBuffer.
+    
+    # 1GB
+    git config http.postBuffer 1024000000
 
 ## Web Site
 
