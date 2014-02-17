@@ -2,10 +2,13 @@
   use Mojo::ByteStream ();
   use Text::Markdown::Discount ();
   
+  my $dir = stash('dir');
+  
   # README
   my $type;
   my $lines;
-  eval { $lines = app->git->blob($user, $project, $rev, 'README') };
+  my $readme_path = defined $dir ? "$dir/README" : 'README';
+  eval { $lines = app->git->blob($user, $project, $rev, $readme_path) };
   my $readme_e;
   if ($lines) {
     $type = 'plain';
