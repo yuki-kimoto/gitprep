@@ -33,18 +33,21 @@
   $self->render_later;
   
   # Write
-  my $buf = '';
   my $s = IO::Select->new($cout, $cerr);
   my $buffer_size = $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE};
   my $cb;
+  my $error;
+  my $output;
+  my @ready;
   $cb = sub {
     my $c = shift;
-    if (my @ready = $s->can_read) {
-      my $error;
-      my $output = '';
-      
+    if (@ready = $s->can_read) {
+      $output = '';
       for my $handle (@ready) {
-        while (sysread($handle, $buf, $buffer_size)) {
+        
+        if (sysread($handle, my $buf, $buffer_size)) {
+          #warn `ps axuww|grep gitprep` if $k % 3000 == 0;
+          
           if ($handle == $cerr) {
             $error .= $buf;
           }
@@ -54,10 +57,11 @@
         }
         $s->remove($handle) if eof($handle);
       }
-      app->log->error($error) if defined $error;
       $c->write_chunk($output, $cb);
     }
     else {
+      app->log->error($error) if defined $error;
+      $c->finish;
       close $cout;
       close $cerr;
       waitpid($pid, 0);

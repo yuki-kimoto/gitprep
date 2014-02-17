@@ -347,7 +347,7 @@ sub startup {
   }
   
   # Smart HTTP Buffer size
-  $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE} ||= 8192;
+  $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE} ||= 16384;
 }
 
 1;
