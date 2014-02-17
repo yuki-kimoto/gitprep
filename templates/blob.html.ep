@@ -51,7 +51,7 @@
       <div class="bk-blue-light" style="padding:5px">
         <a style="color:#333;font-weight:bold" href="#" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></a>
         <span class="muted" title="<%= $commit->{age_string_datetime} %>"><%= $commit->{age_string} %></span>
-        <a style="color:#666" href="<%= url_for("/$user/$project/commit/$rev") %>">
+        <a style="color:#666" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
           <%= $commit->{title} %>
         </a>
       </div>
