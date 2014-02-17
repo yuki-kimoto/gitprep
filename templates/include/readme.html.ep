@@ -5,7 +5,7 @@
   my $dir = stash('dir');
   
   # README
-  my $type;
+  my $type = '';
   my $lines;
   my $readme_path = (defined $dir && $dir ne '') ? "$dir/README" : 'README';
   eval { $lines = app->git->blob($user, $project, $rev, $readme_path) };
@@ -17,7 +17,7 @@
     $readme_e =~ s#(^|\s|[^\x00-\x7F])(http(?:s)?://.+?)($|\s|[^\x00-\x7F])#$1<a href="$2">$2</a>$3#msg;
   }
   else {
-    eval { $lines = app->git->blob($user, $project, $rev, 'README.md') };
+    eval { $lines = app->git->blob($user, $project, $rev, "$readme_path.md") };
     if ($lines) {
       $type = 'markdown';
       my $readme = join "\n", @$lines;
@@ -29,7 +29,7 @@
 % if (defined $readme_e) {
   <div class="README">
     <div class="border-gray bk-gray-light" style="border-radius:1px;font-size:17px;padding:10px">
-      <i class="icon-book" style="margin-top:2px"></i> README
+      <i class="icon-book" style="margin-top:2px"></i> <%= $type eq 'plain' ? 'README' : 'README.md' %>
     </div>
     % if ($type eq 'plain') {
       <pre class="plain-text border-gray"><%== $readme_e %></pre>
