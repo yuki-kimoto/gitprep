@@ -201,6 +201,11 @@ sub startup {
                 
                 $self->basic_auth("Git Area", sub {
                   my ($auth_user, $auth_password) = @_;
+                  
+                  if (!defined $auth_user || !length $auth_user) {
+                    $self->app->log->warn("Authentication: User name is empty");
+                  }
+                  
                   $auth_user = '' unless defined $auth_user;
                   $auth_password = '' unless defined $auth_password;
                   
