@@ -146,7 +146,9 @@
       %= include '/include/readme';
       
     % } elsif ($state eq 'init' && $api->logined($user)) {
-
+      
+      <h4>SSH</h4>
+      
       <div class="text-center" style="margin-bottom:10px">
         <b>Create a new repository on the command line via ssh</b>
       </div>
@@ -169,8 +171,11 @@ git push -u origin master</pre>
 
       <hr>
       % my $http_rep_url = url_for("$user/$project.git")->to_abs;
+
+      <h4><%= uc url_for->to_abs->scheme %></h4>
+
       <div class="text-center" style="margin-bottom:10px">
-        <b>Create a new repository on the command line via <%= $self->req->is_secure ? 'https' : 'http' %></b>
+        <b>Create a new repository on the command line via <%= url_for->to_abs->scheme %></b>
       </div>
       
       <pre style="margin-bottom:30px">
@@ -182,7 +187,7 @@ git remote add origin <%= $http_rep_url %>
 git push -u origin master</pre>
       
       <div class="text-center" style="margin-bottom:10px">
-        <b>Push an existing repository from the command line via <%= $self->req->is_secure ? 'https' : 'http' %></b>
+        <b>Push an existing repository from the command line via <%= url_for->to_abs->scheme %></b>
       </div>
       
       <pre style="margin-bottom:30px">
