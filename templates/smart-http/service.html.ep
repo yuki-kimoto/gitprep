@@ -35,10 +35,10 @@
   # Write
   my $s = IO::Select->new($cout, $cerr);
   my $buffer_size = $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE};
-  my $cb;
   my $error;
   my $output;
   my @ready;
+  my $cb;
   $cb = sub {
     my $c = shift;
     if (@ready = $s->can_read) {
@@ -55,14 +55,14 @@
             $output .= $buf;
           }
         }
-        $s->remove($handle) if eof($handle);
+        else {
+          $s->remove($handle);
+        }
       }
       $c->write_chunk($output, $cb);
     }
     else {
       $c->finish;
-      close $cout;
-      close $cerr;
       waitpid($pid, 0);
       app->log->error(url_for . ": $error") if defined $error;
       undef $cb;
