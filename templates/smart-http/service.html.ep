@@ -60,11 +60,11 @@
       $c->write_chunk($output, $cb);
     }
     else {
-      app->log->error($error) if defined $error;
       $c->finish;
       close $cout;
       close $cerr;
       waitpid($pid, 0);
+      app->log->error(url_for . ": $error") if defined $error;
       undef $cb;
       return;
     }
