@@ -278,6 +278,53 @@ Please set user.name and user.email.
     git config --global user.name "gitprep"
     git config --global user.email "gitprep@example.com"
 
+### How to use reverse proxy
+
+You can use GitPrep via reverse proxy access
+
+         ----------------------------     ------------
+    ---->| Web Server(Reverse proxy)|---->|GitPrep   |
+    <----| (Apache, etc)            |<----|          |
+         ----------------------------     ------------
+
+I show apache config example.
+You can use Name virtual host.
+    
+    # HTTP
+    <VirtualHost *:80>
+
+      ServerName myhost.com
+      <Proxy *>
+        Order deny,allow
+        Allow from all
+      </Proxy>
+      
+      ProxyRequests Off
+      ProxyPreserveHost On
+      ProxyPass / http://localhost:10020/ keepalive=On
+      ProxyPassReverse / http://localhost:10020/
+      RequestHeader set X-Forwarded-HTTPS "0"
+        
+    </VirtualHost>
+
+If you use GitPrep vis https, you should set X-Forwarded-HTTPS Request Header.
+
+    # HTTPS
+    <VirtualHost *:443>
+
+      ServerName myhost.com
+      <Proxy *>
+        Order deny,allow
+        Allow from all
+      </Proxy>
+      
+      ProxyRequests Off
+      ProxyPreserveHost On
+      ProxyPass / http://localhost:10020/ keepalive=On
+      ProxyPassReverse / http://localhost:10020/
+      RequestHeader set X-Forwarded-HTTPS "1"
+    </VirtualHost>
+
 ## Web Site
 
 [GitPrep Web Site](http://perlcodesample.sakura.ne.jp/gitprep-site/)
