@@ -184,6 +184,7 @@ sub startup {
 
         # Smart HTTP
         {
+          
           my $r = $r->route('/(:project).git', project => $id_re);
           
           {
@@ -219,6 +220,16 @@ sub startup {
               else {
                 return 1;
               }
+            });
+            
+            # /
+            $r->get('/')->to(cb => sub {
+              my $self = shift;
+              
+              my $user = $self->param('user');
+              my $project = $self->param('project');
+              
+              $self->redirect_to("/$user/$project");
             });
             
             # /info/refs
