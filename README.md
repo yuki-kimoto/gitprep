@@ -334,10 +334,10 @@ You can import already existing repositories by **script/import_rep** script.
 
 **-u** is user name. rep_dir must contains git respoitories like the following.
 
-   rep_dir/project1.git
-          /project2.git
-          /project3.git
-          /project3.git
+    rep_dir/project1.git
+           /project2.git
+           /project3.git
+           /project3.git
 
 If C<description> file exists in git repository, it is copied.
 
