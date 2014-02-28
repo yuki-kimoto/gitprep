@@ -325,6 +325,22 @@ If you use GitPrep vis https, you should set X-Forwarded-HTTPS Request Header.
       RequestHeader set X-Forwarded-HTTPS "1"
     </VirtualHost>
 
+### How to import already existing repositories?
+
+You can import already existing repositories by **script/import_rep** script.
+
+    cd script
+    ./import_rep -u kimoto rep_dir
+
+**-u** is user name. rep_dir must contains git respoitories like the following.
+
+   rep_dir/project1.git
+          /project2.git
+          /project3.git
+          /project3.git
+
+If C<description> file exists in git repository, it is copied.
+
 ## Web Site
 
 [GitPrep Web Site](http://perlcodesample.sakura.ne.jp/gitprep-site/)
