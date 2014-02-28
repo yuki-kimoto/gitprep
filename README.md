@@ -278,7 +278,7 @@ Please set user.name and user.email.
     git config --global user.name "gitprep"
     git config --global user.email "gitprep@example.com"
 
-### How to use reverse proxy
+### How to use reverse proxy?
 
 You can use GitPrep via reverse proxy access
 
