@@ -339,7 +339,7 @@ You can import already existing repositories by **script/import_rep** script.
            /project3.git
            /project3.git
 
-If C<description> file exists in git repository, it is copied.
+If **description** file exists in git repository, it is copied.
 
 ## Web Site
 
