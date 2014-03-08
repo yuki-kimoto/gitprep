@@ -15,6 +15,7 @@ has 'bin';
 has encoding => 'UTF-8';
 has 'rep_home';
 has text_exts => sub { ['txt'] };
+has 'time_zone_second';
 
 sub branch {
   my ($self, $user, $project, $branch_name) = @_;
@@ -1264,10 +1265,25 @@ sub parse_commit_text {
   my $age = time - $commit{committer_epoch};
   $commit{age} = $age;
   $commit{age_string} = $self->_age_string($age);
-  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($commit{committer_epoch});
-  $commit{age_string_date} = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
-  $commit{age_string_datetime} = sprintf '%4d-%02d-%02d %02d:%02d:%02d',
-    1900 + $year, $mon + 1, $mday, $hour, $min, $sec;
+  
+  # GMT
+  {
+    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($commit{committer_epoch});
+    $commit{age_string_date} = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
+    $commit{age_string_datetime} = sprintf '%4d-%02d-%02d %02d:%02d:%02d',
+      1900 + $year, $mon + 1, $mday, $hour, $min, $sec;
+  }
+  
+  # Local Time
+  {
+    my $time_zone_second = $self->time_zone_second || 0;
+    
+    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($commit{committer_epoch} + $time_zone_second);
+    $commit{age_string_date_local}
+      = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
+    $commit{age_string_datetime_local} = sprintf '%4d-%02d-%02d %02d:%02d:%02d',
+      1900 + $year, $mon + 1, $mday, $hour, $min, $sec;
+  }
   
   return \%commit;
 }

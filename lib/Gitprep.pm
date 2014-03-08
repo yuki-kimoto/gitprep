@@ -68,10 +68,23 @@ sub startup {
     mkdir $rep_home
       or croak "Can't create directory $rep_home: $!";
   }
-  $self->git($git);
   
-  # Added public path
-  # push @{$self->static->paths}, $rep_home;
+  # Time Zone
+  if (my $time_zone = $conf->{basic}{time_zone}) {
+    
+    if ($time_zone =~ /^([\+-])?([0-9]?[0-9]):([0-9][0-9])$/) {
+      my $sign = $1 || '';
+      my $hour = $2;
+      my $min = $3;
+      
+      my $time_zone_second = $sign . ($hour * 60 * 60) + ($min * 60);
+      $git->time_zone_second($time_zone_second);
+    }
+    else {
+      $self->log->warn("Bad time zone $time_zone. Time zone become GMT");
+    }
+  }
+  $self->git($git);
   
   # DBI
   my $db_file = $ENV{GITPREP_DB_FILE}
