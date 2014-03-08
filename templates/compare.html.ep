@@ -18,7 +18,7 @@
   my $commits_date = {};
   my $authors = {};
   for my $commit (@$commits) {
-    my $date = $commit->{age_string_date};
+    my $date = $commit->{age_string_date_local};
     $commits_date->{$date} ||= [];
     $authors->{$commit->{author}} = 1;
     push @{$commits_date->{$date}}, $commit;

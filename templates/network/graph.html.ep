@@ -18,7 +18,7 @@
     my $id = $commit->{id};
     $merged_commits_h->{$id} ||= {};
     $merged_commits_h->{$id}{age} = $commit->{age};
-    $merged_commits_h->{$id}{age_string_date} = $commit->{age_string_date};
+    $merged_commits_h->{$id}{age_string_date_local} = $commit->{age_string_date_local};
     $merged_commits_h->{$id}{title} = $commit->{title};
     $merged_commits_h->{$id}{type} = 'local';
   }
@@ -30,7 +30,7 @@
     else {
       $merged_commits_h->{$id} ||= {};
       $merged_commits_h->{$id}{age} = $commit->{age};
-      $merged_commits_h->{$id}{age_string_date} = $commit->{age_string_date};
+      $merged_commits_h->{$id}{age_string_date_local} = $commit->{age_string_date_local};
       $merged_commits_h->{$id}{title} = $commit->{title};
       $merged_commits_h->{$id}{type} = 'remote';
     }
@@ -77,7 +77,7 @@
 
               % if ($commit->{type} eq $type) {
                 <td>
-                  <a style="color:<%= $color %>" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>" title="<%= "$commit->{title}($commit->{age_string_date})" %>">●</a>
+                  <a style="color:<%= $color %>" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>" title="<%= "$commit->{title}($commit->{age_string_date_local})" %>">●</a>
                 </td>
               % } else {
                 <td></td>

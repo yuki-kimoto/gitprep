@@ -359,6 +359,16 @@ Please fix it by the following way.
     # Restart
     ./gitprep
 
+## I want to set time zone.
+
+OK. GitPrep suport time zone. You can set time_zone option in conig file.
+
+    [basic]
+    ;;; Time Zone
+    ;;; GitPrep time zone is GMT by default
+    ;;; You can set your local time zone.
+    time_zone=+9:00
+
 ## Web Site
 
 [GitPrep Web Site](http://perlcodesample.sakura.ne.jp/gitprep-site/)

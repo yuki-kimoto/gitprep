@@ -138,7 +138,7 @@
           </div>
           <div class="muted" style="font-size:12px">
             Last updated
-            <span title="<%= $base_branch->{commit}{age_string_datetime} %>">
+            <span title="<%= $base_branch->{commit}{age_string_datetime_local} %>">
               <%= $base_branch->{commit}{age_string} %>
             </span>
             by
@@ -166,7 +166,7 @@
             </div>
             <div style="font-size:12px">
               Last updated
-              <span title="<%= $branch->{commit}{age_string_datetime} %>">
+              <span title="<%= $branch->{commit}{age_string_datetime_local} %>">
                 <%= $branch->{commit}{age_string} %>
               </span>
               by

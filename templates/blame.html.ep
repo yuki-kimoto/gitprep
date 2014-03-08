@@ -106,7 +106,7 @@
                     <span title="<%= $line->{author_mail} %>"><%= $line->{author} %></span>
                   </div>
                   <div style="margin-top:0;padding-top:0">
-                    <%= $line->{author_age_string_date} %>
+                    <%= $line->{author_age_string_date_local} %>
                     <%= $summary_short %>
                   </div>
               </td>

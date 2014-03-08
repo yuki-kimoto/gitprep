@@ -107,7 +107,7 @@
       <div class="row">
         <div class="span4" style="padding:5px">
           <span><b><%= $commit->{author_name} %></b></span>
-          <span class="muted">authored <span title="<%= $commit->{age_string_datetime} %>"><%= $commit->{age_string} %></span>
+          <span class="muted">authored <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
         </div>
         <div class="span7 text-right" style="padding:5px;margin-left:75px">
           % my $parents = $commit->{parents};

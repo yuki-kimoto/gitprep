@@ -42,7 +42,7 @@
           <div class="border-gray" style="padding:7px 5px;border-left:none;border-right:none;border-bottom:none;">
             <div class="row">
               <div class="span3">
-                <span class="muted" href="<%= url_for("/$user/$project/tree/$name") %>" title="<%= $tag->{commit}{age_string_datetime} %>"><%= $tag->{commit}{age_string} %></span>
+                <span class="muted" href="<%= url_for("/$user/$project/tree/$name") %>" title="<%= $tag->{commit}{age_string_datetime_local} %>"><%= $tag->{commit}{age_string} %></span>
               </div>
               <div class="span8">
                 <div>
