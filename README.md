@@ -341,6 +341,24 @@ You can import already existing repositories by **script/import_rep** script.
 
 If **description** file exists in git repository, it is copied.
 
+### I can't add collabortor more than one
+
+This is GitPrep bug before version 1.5.1.
+Please use after version 1.5.2.
+
+If you contine to use GitPrep before version 1.5.1,
+collaboration table is broken.
+Please fix it by the following way.
+
+    # Run SQLite client
+    sqlite3 data/gitprep.db
+    
+    # drop collaboration table
+    drop table collaboration;
+    
+    # Restart
+    ./gitprep
+
 ## Web Site
 
 [GitPrep Web Site](http://perlcodesample.sakura.ne.jp/gitprep-site/)

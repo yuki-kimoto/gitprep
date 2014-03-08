@@ -361,9 +361,9 @@ EOS
     my $sql = <<"EOS";
 create table collaboration (
   row_id integer primary key autoincrement,
-  user_id not null unique default '',
-  project_name not null unique default '',
-  collaborator_id not null unique default '',
+  user_id not null default '',
+  project_name not null default '',
+  collaborator_id not null default '',
   unique(user_id, project_name, collaborator_id)
 );
 EOS
