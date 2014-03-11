@@ -28,4 +28,4 @@ use_ok('Params::Check');
 use_ok('ExtUtils::ParseXS');
 use_ok('Test::MockModule');
 use_ok('Digest::SHA');
-use_ok('Text::Markdown::Discount');
+use_ok('Text::Markdown::Hoedown');

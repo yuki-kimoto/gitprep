@@ -1,5 +1,5 @@
 <%
-  use Text::Markdown::Discount ();
+  use Text::Markdown::Hoedown;
 
   my $state;
 
