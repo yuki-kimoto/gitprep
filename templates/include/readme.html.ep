@@ -1,6 +1,6 @@
 <%
   use Mojo::ByteStream ();
-  use Text::Markdown::Discount ();
+  use Text::Markdown::Hoedown;
   
   my $dir = stash('dir');
   
@@ -21,7 +21,7 @@
     if ($lines) {
       $type = 'markdown';
       my $readme = join "\n", @$lines;
-      $readme_e = Text::Markdown::Discount::markdown($readme);
+      $readme_e = Text::Markdown::Hoedown::markdown($readme, extensions => HOEDOWN_EXT_FENCED_CODE);
     }
   }
 %>

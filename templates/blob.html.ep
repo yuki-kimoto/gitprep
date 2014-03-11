@@ -1,5 +1,5 @@
 <%
-  use Text::Markdown::Discount ();
+  use Text::Markdown::Hoedown;
   
   # API
   my $api = gitprep_api;
@@ -79,7 +79,7 @@
     </div>
     % if ($file =~ /\.md$/) {
         % my $readme = join "\n", @$lines;
-        % my $readme_e = Text::Markdown::Discount::markdown($readme);
+        % my $readme_e = Text::Markdown::Hoedown::markdown($readme, extensions => HOEDOWN_EXT_FENCED_CODE);
        <div class="markdown border-gray">
          <%== $readme_e %>
        </div>
