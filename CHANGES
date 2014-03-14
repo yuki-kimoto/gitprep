@@ -1,6 +1,11 @@
 1.6
-  fix bug that can't create collaborator more than one.
-  support time zone.
+  - fix bug that can't create collaborator more than one.
+  - support time zone.
+  - change markdown parser from Text::Markdown::Discount to Text::Markdown::Hoedown
+    because we want to support fenced code syntax
+    ```
+    code
+    ```
 1.5
   - fix bug that git clone via http failed.
   - show readme file in sub directory.

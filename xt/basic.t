@@ -439,5 +439,5 @@ note 'Markdown normal file';
 {
   # Page access
   $t->get_ok("/$user/$project/blob/12e44f2e4ecf55c5d3a307889829b47c05e216d3/dir/markdown.md");
-  $t->content_like(qr#<h1>Head</h1>#);
+  $t->content_like(qr#<h1 .*?>Head</h1>#);
 }
