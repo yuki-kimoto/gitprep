@@ -18,7 +18,7 @@ requires 'Locale::Maketext::Simple', '== 0.21';
 requires 'Module::Load::Conditional', '== 0.54';
 requires 'Module::Load', '== 0.24';
 requires 'Params::Check', '== 0.36';
-requires 'ExtUtils::ParseXS', '== 3.18';
+requires 'ExtUtils::ParseXS', '== 3.24';
 requires 'Test::MockModule', '== 0.05';
 requires 'Digest::SHA', '== 5.84';
 requires 'Text::Markdown::Hoedown', '== 1.01';
