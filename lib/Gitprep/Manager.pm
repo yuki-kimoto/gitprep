@@ -310,7 +310,8 @@ EOS
   my $user_columns = [
     "admin not null default '0'",
     "password not null default ''",
-    "salt not null default ''"
+    "salt not null default ''",
+    "public_keys not null default ''"
   ];
   for my $column (@$user_columns) {
     eval { $dbi->execute("alter table user add column $column") };

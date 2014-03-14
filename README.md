@@ -369,6 +369,25 @@ OK. GitPrep suport time zone. You can set time_zone option in conig file.
     ;;; You can set your local time zone.
     time_zone=+9:00
 
+## How to authorize by user via ssh?
+
+First, you can need open-ssh after version 6.1.
+You check ssh version
+
+    ssh -V
+
+If open-ssh after version 6.1 is installed, you can authorize by user via ssh.
+You edit **/etc/ssh/ssh_config** and add the following lines.
+
+    AuthorizedKeysCommand /home/gitprep/gitprep/script/authorized_keys_command
+    AuthorizedKeysCommandUser gitprep
+
+You set permission for this command
+
+    su -
+    chmod 700 /home/gitprep/gitprep/script/authorized_keys_command
+    chown root:root /home/gitprep/gitprep/script/authorized_keys_command
+
 ## Web Site
 
 [GitPrep Web Site](http://perlcodesample.sakura.ne.jp/gitprep-site/)
