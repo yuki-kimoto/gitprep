@@ -12,7 +12,7 @@ use POSIX 'floor';
 
 # Attributes
 has 'bin';
-has encoding => 'UTF-8';
+has default_encoding => 'UTF-8';
 has 'rep_home';
 has text_exts => sub { ['txt'] };
 has 'time_zone_second';
@@ -399,7 +399,7 @@ sub blob_content_type {
   # Content type
   my $type = $self->blob_mime_type($user, $project, $rev, $file);
   if ($type eq 'text/plain') {
-    $type .= "; charset=" . $self->encoding;
+    $type .= "; charset=" . $self->default_encoding;
   }
 
   return $type;
@@ -1675,7 +1675,7 @@ sub _chop_str {
 sub _dec {
   my ($self, $str) = @_;
   
-  my $enc = $self->encoding;
+  my $enc = $self->default_encoding;
   
   my $new_str;
   eval { $new_str = decode($enc, $str) };
@@ -1686,7 +1686,7 @@ sub _dec {
 sub _enc {
   my ($self, $str) = @_;
   
-  my $enc = $self->encoding;
+  my $enc = $self->default_encoding;
   
   return encode($enc, $str);
 }
