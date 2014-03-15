@@ -3,6 +3,7 @@ use Mojo::Base -base;
 
 use Carp 'croak';
 use Encode qw/encode decode/;
+use Encode::Guess;
 use Fcntl ':mode';
 use File::Basename qw/basename dirname/;
 use File::Copy 'move';
@@ -13,6 +14,7 @@ use POSIX 'floor';
 # Attributes
 has 'bin';
 has default_encoding => 'UTF-8';
+has 'encoding_suspects';
 has 'rep_home';
 has text_exts => sub { ['txt'] };
 has 'time_zone_second';
@@ -181,7 +183,7 @@ sub blame {
   my $blame_line;
   my $max_author_time;
   my $min_author_time;
-  while (my $line = $self->_dec(scalar <$fh>)) {
+  while (my $line = $self->_dec_guess(scalar <$fh>)) {
     chomp $line;
     
     if ($blame_line) {
@@ -258,7 +260,7 @@ sub blob {
   
   # Format lines
   my $lines =[];
-  while (my $line = $self->_dec(scalar <$fh>)) {
+  while (my $line = $self->_dec_guess(scalar <$fh>)) {
     chomp $line;
     push @$lines, $line;
   }
@@ -287,7 +289,7 @@ sub blob_diffs {
   open my $fh, '-|', @cmd
     or croak('Open self-diff-tree failed');
   my @diff_tree;
-  while (my $line = $self->_dec(scalar <$fh>)) {
+  while (my $line = $self->_dec_guess(scalar <$fh>)) {
     chomp $line;
     push @diff_tree, $line if $line =~ /^:/;
     last if $line =~ /^\n/;
@@ -320,7 +322,7 @@ sub blob_diffs {
     );
     open my $fh, '-|', @cmd
       or croak('Open self-diff-tree failed');
-    my @lines = map { $self->_dec($_) } <$fh>;
+    my @lines = map { $self->_dec_guess($_) } <$fh>;
     close $fh;
     my ($lines, $diff_info) = $self->parse_blob_diff_lines(\@lines);
     my $blob_diff = {
@@ -1670,6 +1672,20 @@ sub _chop_str {
     }
     return "$body$tail";
   }
+}
+
+sub _dec_guess {
+  my ($self, $str) = @_;
+
+  my $enc = Encode::Guess->guess($str, @{$self->encoding_suspects});
+  # fallback default encoding if multile guess result
+  # http://perl-users.jp/articles/advent-calendar/2009/casual/10.html
+  $enc = $self->default_encoding unless ref $enc;
+
+  my $new_str;
+  eval { $new_str = decode($enc, $str) };
+
+  return $@ ? $str : $new_str;
 }
 
 sub _dec {

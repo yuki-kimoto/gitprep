@@ -56,6 +56,12 @@ sub startup {
   }
   $git->bin($git_bin);
   
+  # Encoding suspects list for Git
+  my $encoding_suspects
+    = $conf->{basic}{encoding_suspects} ||= 'utf8';
+  $encoding_suspects = [split /,/, $encoding_suspects] unless ref $encoding_suspects eq 'ARRAY';
+  $git->encoding_suspects($encoding_suspects);
+
   # Repository Manager
   my $manager = Gitprep::Manager->new(app => $self);
   weaken $manager->{app};
