@@ -441,3 +441,12 @@ note 'Markdown normal file';
   $t->get_ok("/$user/$project/blob/12e44f2e4ecf55c5d3a307889829b47c05e216d3/dir/markdown.md");
   $t->content_like(qr#<h1 .*?>Head</h1>#);
 }
+
+note 'encoding_suspects option';
+{
+  my $app = Gitprep->new;
+  $app->git->encoding_suspects(['EUC-jp', 'UTF-8']);
+  my $t = Test::Mojo->new($app);
+  $t->get_ok("/$user/$project/blob/3cf14ade5e28ee0cd83b9a3b1e1c332aed66df53/euc-jp.txt");
+  $t->content_like(qr/あああ/);
+}
