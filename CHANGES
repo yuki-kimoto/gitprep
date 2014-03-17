@@ -6,6 +6,7 @@
     ```
     code
     ```
+  - add encoding_suspects to support multiple encoding in blob, commit diff, and blame.
 1.5
   - fix bug that git clone via http failed.
   - show readme file in sub directory.
