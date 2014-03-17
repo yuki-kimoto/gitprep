@@ -19,9 +19,6 @@
   # Authors
   my $authors = $git->authors($user, $project, $rev, $file);
   
-  # Blob lines
-  my $lines = $git->blob($user, $project, $rev, $file);
-
   # File size
   my $file_size = $git->blob_size($user, $project, $rev, $file);
   
@@ -31,6 +28,10 @@
   
   # MIME type
   my $mime_type = $git->blob_mime_type($user, $project, $rev, $file);
+
+  # Blob lines(only text)
+  my $lines;
+  $lines = $git->blob($user, $project, $rev, $file) if $mime_type =~ /^text/;
 
   # Variables for included template
   stash(id => $rev, project => $project, rev => $rev);
@@ -65,8 +66,10 @@
         <div class="span7" style="padding-top:5px">
           <i class="icon-file icon-white"></i>
           <%= $file_type %>
-          <span class="muted">|</span>
-          <%= @$lines %> lines
+          % if ($lines) {
+            <span class="muted">|</span>
+            <%= @$lines %> lines
+          % }
           <span class="muted">|</span>
           <%= $file_size %>kb
         </div>
@@ -77,13 +80,7 @@
         </div>
       </div>
     </div>
-    % if ($file =~ /\.md$/) {
-        % my $readme = join "\n", @$lines;
-        % my $readme_e = Text::Markdown::Hoedown::markdown($readme, extensions => HOEDOWN_EXT_FENCED_CODE);
-       <div class="markdown border-gray">
-         <%== $readme_e %>
-       </div>
-    % } elsif ($mime_type =~ m#^image/#) {
+    % if ($mime_type =~ m#^image/#) {
       <div style="background:#ddd;text-align:center;padding-top:30px;padding-bottom:30px;margin-bottom:30px">
         <img type="<%= $mime_type %>
           % if (defined $file) {
@@ -93,7 +90,15 @@
         />
       </div>
     % } elsif ($mime_type =~ m#^text/#) {
-      <pre class="prettyprint linenums"><% for my $line (@$lines) { %><%= "$line\n" %><% } %></pre>
+      % if ($file =~ /\.md$/) {
+        % my $readme = join "\n", @$lines;
+        % my $readme_e = Text::Markdown::Hoedown::markdown($readme, extensions => HOEDOWN_EXT_FENCED_CODE);
+        <div class="markdown border-gray">
+          <%== $readme_e %>
+        </div>
+      % } else {
+        <pre class="prettyprint linenums"><% for my $line (@$lines) { %><%= "$line\n" %><% } %></pre>
+      % }
     % } else {
       <div style="font-size:16px;background:#ddd;text-align:center;padding-top:30px;padding-bottom:30px;margin-bottom:30px">
         <a href="<%= url_for("/$user/$project/raw/$rev/$file") %>">View raw</a>

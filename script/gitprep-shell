@@ -1,0 +1,32 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use utf8;
+use FindBin;
+use lib "$FindBin::Bin/../mojo/lib";
+use lib "$FindBin::Bin/../lib";
+use lib "$FindBin::Bin/../extlib/lib/perl5";
+use Gitprep;
+
+my $user = shift;
+
+die "User not specifed" unless defined $user;
+
+my $app = Gitprep->new;
+my $dbi = $app->dbi;
+
+my $public_key = $dbi->model('user')->select('public_keys', id => $user)->value || '';
+
+print $public_key;
+
+=head1 NAME
+
+authorized_keys_command - AuthorizedKeysCommand for sshd
+
+=head1 USAGE
+
+  ./authorized_keys_command kimoto
+
+This command return user public_key
+
