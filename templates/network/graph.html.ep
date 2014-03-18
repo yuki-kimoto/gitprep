@@ -91,6 +91,31 @@
     <div style="margin-bottom:30px">
       <span style="color:green;font-size:22px"><%= "$remote_user / $remote_project / $remote_branch" %></span>
     </div>
+    <hr>
+    <div style="margin-bottom:15px">
+      <h4>Merging via command line</h4>
+      you can perform a manual merge on the command line.
+    </div>
+
+    <b>Step 1:</b> If you don't add user remote repository, add it.
+    <pre class="well" style="background:#333333;color:white;padding:20px 20px 0px 20px;">
+git remote add <%= $remote_user %> <%= url_for("/$remote_user/$remote_project.git")->to_abs %>
+    </pre>
+
+    <b>Step 2:</b> From your project repository, bring in the changes and test.
+    <pre class="well" style="background:#333333;color:white;padding:20px 20px 0px 20px;">
+git remote update
+git fetch
+git checkout -b <%= "$remote_user-$remote_branch" %> <%= "$remote_user/$remote_branch" %>
+git merge <%= $branch %>
+    </pre>
+    
+    <b>Step 3:</b> Merge the changes and update on GitHub.
+    <pre class="well" style="background:#333333;color:white;padding:20px 20px 0px 20px;">
+git checkout <%= $branch %>
+git merge <%= "$remote_user-$remote_branch" %>
+git push origin <%= $branch %>
+    </pre>
   </div>
   
   %= include '/include/footer';
