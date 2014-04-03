@@ -16,7 +16,7 @@ use Validator::Custom;
   eval {require Digest::SHA; import Digest::SHA qw(sha1 sha1_hex)};
 }
 
-our $VERSION = 'v1.5.2';
+our $VERSION = 'v1.6';
 
 has 'dbi';
 has 'git';
