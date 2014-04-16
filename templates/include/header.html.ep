@@ -4,10 +4,15 @@
 
 <div class="container">
   <div class="row">
-    <div class="span4">
-      <h3><a href="<%= url_for('/') %>">GitPrep</a></h3>
+    <div class="span6">
+      <div style="margin-top:5px">
+        <h3 style="display:inline-block"><a href="<%= url_for('/') %>">GitPrep</a></h3>
+        <form action="<%= url_for('/_search') %>" style="display:inline-block;margin-left:15px">
+          <%= text_field 'q', style => 'display:inline-block', placeholder => 'Search' %>
+        </form>
+      </div>
     </div>
-    <div class="span8 text-right">
+    <div class="span6 text-right">
       % if ($api->logined) {
         <div  style="margin-top:5px">
           <div>
@@ -24,7 +29,7 @@
           <a class="btn btn-small" href="<%= url_for("/_logout?from=$url") %>">Sign out</a>
         </div>
       % } else {
-        <div  style="margin-top:15px">
+        <div  style="margin-top:20px">
           <a class="btn btn-primary" href="<%= url_for('/_login') %>">Sign in</a>
         </div>
       % }
