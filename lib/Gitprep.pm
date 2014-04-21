@@ -9,6 +9,7 @@ use Gitprep::Git;
 use Gitprep::Manager;
 use Scalar::Util 'weaken';
 use Validator::Custom;
+use Mojolicious::Plugin::AutoRoute::Util 'template';
 
 # Digest::SHA loading to Mojo::Util if not loaded
 {
@@ -145,13 +146,6 @@ sub startup {
   # Basic auth plugin
   $self->plugin('BasicAuth');
 
-  # Routes
-  sub template {
-    my $template = shift;
-    
-    return sub { shift->render($template, , 'mojo.maybe' => 1) };
-  }
-  
   {
     my $r = $self->routes;
 
@@ -188,14 +182,14 @@ sub startup {
       
       # Auto routes
       $self->plugin('AutoRoute', route => $r);
-
+      
       # Custom routes
       {
         # User
         my $r = $r->route('/:user');
         {
           # Home
-          $r->get('/' => template '/user');
+          $r->get('/' => [format => 0] => template '/user');
           
           # Settings
           $r->get('/_settings' => template '/user-settings');
