@@ -7,9 +7,11 @@
     <div class="span6">
       <div style="margin-top:5px">
         <h3 style="display:inline-block"><a href="<%= url_for('/') %>">GitPrep</a></h3>
-        <form action="<%= url_for('/_search') %>" style="display:inline-block;margin-left:15px">
-          <%= text_field 'q', style => 'display:inline-block', placeholder => 'Search' %>
-        </form>
+        % if ((url_for->path->parts->[0] || '') ne '_search') {
+          <form action="<%= url_for('/_search') %>" style="display:inline-block;margin-left:15px">
+            <%= text_field 'q', style => 'display:inline-block', placeholder => 'Search' %>
+          </form>
+        % }
       </div>
     </div>
     <div class="span6 text-right">

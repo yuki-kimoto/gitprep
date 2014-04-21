@@ -1,1 +1,97 @@
-aaaa
+<%
+  my $type = param('type');
+  my $type_exists = $type ? 1 : 0;
+  $type ||= 'repositories';
+  my $q = param('q');
+  my $q_exists = defined $q ? 1 : 0;
+  
+  # DBI
+  my $dbi = app->dbi;
+  
+  my $users;
+  my $projects;
+  if ($q_exists) {
+    if ($type eq 'users') {
+      $users = $dbi->model('user')->select(
+        where => [
+          ':id{like}',
+          {id => "%$q%"}
+        ],
+        append => 'order by id'
+      )->all;
+    } elsif ($type eq 'repositories') {
+      $projects = $dbi->model('project')->select(
+        where => [
+          ':name{like}',
+          {name => "%$q%"}
+        ],
+        append => 'order by name, user_id'
+      )->all;
+    }
+  }
+  $users ||= [];
+  $projects ||= [];
+%>
+% layout 'common';
+  
+  %= include '/include/header', title => 'Gitprep';
+  <!-- Index page -->
+  <div class="container" style="min-heigth:500px">
+    <div class="row">
+      <div class="span2">
+        <h3 style="font-size:19px;display:inline-block;margin-top:5px;margin-bottom:0;padding-bottom:0;padding-top:0">Search</h3>
+      </div>
+      <div class="span10" style="height:30px">
+        <form action="<%= url_for %>">
+          <%= text_field 'q', style => "width:600px;margin-top:10px;margin-right:3px" %>
+          <input class="btn" type="submit" value="Search">
+          % if ($type_exists) {
+            %= hidden_field type => $type;
+          % }
+        </form>
+      </div>
+    </div>
+  </div>
+  <hr>
+  <div class="container" style="min-heigth:500px">
+    <div class="row">
+      <div class="span2">
+        <ul class="nav nav-tabs nav-stacked">
+          <li>
+            <a href="<%= url_with->query([type => 'repositories']) %>">Repositories</a>
+          </li>
+          <li>
+            <a href="<%= url_with->query([type => 'users']) %>">Users</a>
+          </li>
+        </ul>
+      </div>
+      <div class="span10">
+        % if ($type eq 'users') {
+          % if (@$users) {
+            % for my $user (@$users) {
+              <div>
+                <%= $user->{id} %>
+              </div>
+            % }
+          % } else {
+            <div class="well">
+              <b>We couldn't find any users matching '<%= $q %>'</b>
+            </div>
+          % }
+        % } else {
+          % if (@$projects) {
+            % for my $project (@$projects) {
+              <div>
+                <%= $project->{name} %>
+              </div>
+            % }
+          % } else {
+            <div class="well">
+              <b>We couldn't find any repositories matching '<%= $q %>'</b>
+            </div>
+          % }
+        % }
+      </div>
+    </div>
+  </div>
+  %= include '/include/footer';
