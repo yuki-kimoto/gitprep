@@ -131,12 +131,12 @@ sub startup {
     user_name => sub {
       my $value = shift;
       
-      return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/
+      return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/;
     },
     project_name => sub {
       my $value = shift;
       
-      return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/
+      return ($value || '') =~ /^[a-zA-Z0-9_\-][a-zA-Z0-9_\-\.]*$/;
     }
   );
   
