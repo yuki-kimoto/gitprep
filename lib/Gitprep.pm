@@ -9,6 +9,7 @@ use Gitprep::Git;
 use Gitprep::Manager;
 use Scalar::Util 'weaken';
 use Validator::Custom;
+use Mojolicious::Plugin::AutoRoute::Util 'template';
 
 # Digest::SHA loading to Mojo::Util if not loaded
 {
@@ -131,25 +132,20 @@ sub startup {
     user_name => sub {
       my $value = shift;
       
-      return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/
+      return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/;
     },
     project_name => sub {
       my $value = shift;
-      
-      return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/
+      return 0 unless defined $value;
+      return 0 if $value eq '.' || $value eq '..';
+
+      return ($value || '') =~ /[a-zA-Z0-9_\-\.]+$/;
     }
   );
   
   # Basic auth plugin
   $self->plugin('BasicAuth');
 
-  # Routes
-  sub template {
-    my $template = shift;
-    
-    return sub { shift->render($template, , 'mojo.maybe' => 1) };
-  }
-  
   {
     my $r = $self->routes;
 
@@ -186,16 +182,14 @@ sub startup {
       
       # Auto routes
       $self->plugin('AutoRoute', route => $r);
-
+      
       # Custom routes
       {
-        my $id_re = qr/[a-zA-Z0-9_-]+/;
-        
         # User
-        my $r = $r->route('/:user', user => $id_re);
+        my $r = $r->route('/:user');
         {
           # Home
-          $r->get('/' => template '/user');
+          $r->get('/' => [format => 0] => template '/user');
           
           # Settings
           $r->get('/_settings' => template '/user-settings');
@@ -203,8 +197,7 @@ sub startup {
 
         # Smart HTTP
         {
-          
-          my $r = $r->route('/(:project).git', project => $id_re);
+          my $r = $r->route('/(#project).git');
           
           {
             my $r = $r->under(sub {
@@ -267,7 +260,7 @@ sub startup {
                 
         # Project
         {
-          my $r = $r->route('/:project', project => $id_re);
+          my $r = $r->route('/#project');
           
           {
             my $r = $r->under(sub {
