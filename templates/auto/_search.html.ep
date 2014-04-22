@@ -32,7 +32,7 @@
   $users ||= [];
   $projects ||= [];
 %>
-% layout 'common';
+% layout 'common', title => 'Search';
   
   %= include '/include/header', title => 'Gitprep';
   <!-- Index page -->
@@ -81,8 +81,23 @@
         % } else {
           % if (@$projects) {
             % for my $project (@$projects) {
+              % my $user = $project->{user_id};
+              % my $project = $project->{name};
+              % my $rev = app->manager->default_branch($user, $project);
+              % my $desc = app->git->description($user, $project);
+              % my $commit = app->git->get_commit($user, $project, $rev);
+              
               <div>
-                <%= $project->{name} %>
+                <div>
+                  <a style="font-size:19px" href="<%= url_for("/$user/$project") %>"><%= $user %>/<%= $project %></a>
+                </div>
+                <div>
+                  <span style="font-size:15px;color:#333333"><%= $desc %></span>
+                </div>
+                <div>
+                  <span style="font-size:13px" class="muted" title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
+                </div>
+                <hr style="margin:10px 0;padding:0">
               </div>
             % }
           % } else {
