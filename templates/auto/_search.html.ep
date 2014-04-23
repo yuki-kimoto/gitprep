@@ -89,7 +89,11 @@
               % my $project = $project->{name};
               % my $rev = app->manager->default_branch($user, $project);
               % my $desc = app->git->description($user, $project);
-              % my $commit = app->git->get_commit($user, $project, $rev);
+              % my $branches = app->git->branches($user, $project);
+              % my $commit;
+              % if (@$branches) {
+                % $commit = app->git->get_commit($user, $project, $rev);
+              % }
               
               <div>
                 <div>
@@ -99,7 +103,11 @@
                   <span style="font-size:15px;color:#333333"><%= $desc %></span>
                 </div>
                 <div>
-                  <span style="font-size:13px" class="muted" title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
+                  % if ($commit) {
+                    <span style="font-size:13px" class="muted" title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
+                  % } else {
+                    <span style="font-size:13px" class="muted">Repositry is not yet created.</span>
+                  % }
                 </div>
                 <hr style="margin:10px 0;padding:0">
               </div>
