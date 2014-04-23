@@ -57,10 +57,10 @@
     <div class="row">
       <div class="span2">
         <ul class="nav nav-tabs nav-stacked">
-          <li>
+          <li class="<%= $type eq 'repositories' ? 'active' : '' %>" style="<%= $type eq 'repositories' ? 'font-weight:bold' : '' %>">
             <a href="<%= url_with->query([type => 'repositories']) %>">Repositories</a>
           </li>
-          <li>
+          <li class="<%= $type eq 'users' ? 'active' : '' %>" style="<%= $type eq 'users' ? 'font-weight:bold' : '' %>">
             <a href="<%= url_with->query([type => 'users']) %>">Users</a>
           </li>
         </ul>
@@ -69,8 +69,12 @@
         % if ($type eq 'users') {
           % if (@$users) {
             % for my $user (@$users) {
+              % my $user = $user->{id};
               <div>
-                <%= $user->{id} %>
+                <div>
+                  <a style="font-size:19px" href="<%= url_for("/$user") %>"><%= $user %></a>
+                </div>
+                <hr style="margin:10px 0;padding:0">
               </div>
             % }
           % } else {
