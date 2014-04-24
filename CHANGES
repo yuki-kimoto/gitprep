@@ -1,5 +1,6 @@
 1.7
   - allow . as project name.
+  - add respository and user search page
 1.6
   - fix bug that can't create collaborator more than one.
   - support time zone.
