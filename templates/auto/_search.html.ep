@@ -1,36 +1,56 @@
 <%
+  use Data::Page ();
+  use Data::Page::Navigation ();
+  
+  # Parameters
   my $type = param('type');
+  my $q = param('q');
+  my $page = param('page');
+  
   my $type_exists = $type ? 1 : 0;
   $type ||= 'repositories';
-  my $q = param('q');
   my $q_exists = defined $q ? 1 : 0;
   
   # DBI
   my $dbi = app->dbi;
-  
-  my $users;
-  my $projects;
+
+  # Limit
+  $page ||= 1;
+  my $count = 20;
+  my $offset = ($page - 1) * $count;
+
+  my $rows;
+  my $tabel;
+  my $table;
+  my $where = $dbi->where;
   if ($q_exists) {
     if ($type eq 'users') {
-      $users = $dbi->model('user')->select(
-        where => [
-          ':id{like}',
-          {id => "%$q%"}
-        ],
-        append => 'order by id'
+      $table = 'user';
+      $where->clause(':id{like}');
+      $where->param({id => "%$q%"});
+      $rows = $dbi->model($table)->select(
+        where => $where,
+        append => "order by id limit $offset, $count"
       )->all;
     } elsif ($type eq 'repositories') {
-      $projects = $dbi->model('project')->select(
-        where => [
-          ':name{like}',
-          {name => "%$q%"}
-        ],
-        append => 'order by name, user_id'
+      $table = 'project';
+      $where->clause(':name{like}');
+      $where->param({name => "%$q%"});
+      $rows = $dbi->model($table)->select(
+        where => $where,
+        append => "order by name, user_id limit $offset, $count"
       )->all;
     }
   }
-  $users ||= [];
-  $projects ||= [];
+  $rows ||= [];
+
+  # Pager
+  my $total = $dbi->model($table)->select(
+    'count(*)',
+    where => $where,
+  )->value;
+  my $pager = Data::Page->new($total, $count, $page);
+  my @pages = $pager->pages_in_navigation(10);
 %>
 % layout 'common', title => 'Search';
   
@@ -67,8 +87,11 @@
       </div>
       <div class="span10">
         % if ($type eq 'users') {
-          % if (@$users) {
-            % for my $user (@$users) {
+          % if (@$rows) {
+            <div style="font-size:18px;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #EEEEEE">
+              <b>We've found <%= $total %> user results</b>
+            </div>
+            % for my $user (@$rows) {
               % my $user = $user->{id};
               <div>
                 <div>
@@ -83,8 +106,11 @@
             </div>
           % }
         % } else {
-          % if (@$projects) {
-            % for my $project (@$projects) {
+          % if (@$rows) {
+            <div style="font-size:18px;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #EEEEEE">
+              <b>We've found <%= $total %> repository results</b>
+            </div>
+            % for my $project (@$rows) {
               % my $user = $project->{user_id};
               % my $project = $project->{name};
               % my $rev = app->manager->default_branch($user, $project);
@@ -117,6 +143,30 @@
               <b>We couldn't find any repositories matching '<%= $q %>'</b>
             </div>
           % }
+        % }
+
+        % if (@$rows && $pager->last_page != 1) {
+          <div class="pagination">
+            <ul>
+              % if ($pager->previous_page) {
+                <li><a href="<%= url_with->query([page => $pager->previous_page]) %>">&laquo;</a></li>
+              % } else {
+                <li class="disabled"><a href="#">&laquo;</a></li>
+              % }
+              % for my $p (@pages) {
+                % if ($p eq $pager->current_page) {
+                  <li class="active"><a href="#"><%= $p %></a></li>
+                % } else {
+                  <li><a href="<%= url_with->query([page => $p]) %>"><%= $p %></a></li>
+                % }
+              % }
+              % if ($pager->next_page) {
+                <li><a href="<%= url_with->query([page => $pager->next_page]) %>">&raquo;</a></li>
+              % } else {
+                <li class="disabled"><a href="#">&raquo;</a></li>
+              % }
+            </ul>
+          </div>
         % }
       </div>
     </div>
