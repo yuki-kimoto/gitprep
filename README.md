@@ -94,7 +94,7 @@ One way to import data:
 ```
 git remote add gitprep git@my.gitprep.server:new-repo.git 
 ```
-3. Push all your repo up in to this new gitprep target
+3. Push all your repo content up in to this new gitprep target
 4. Update your local git repo config such that gitprep is now the origin
 
 Copy from /var/lib/gitolite or /var/lib/gitosis
