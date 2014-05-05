@@ -75,6 +75,32 @@ Click Setup button once and wait about 5 minutes.
 
 If you see result, click "Go to Application".
 
+## Getting started
+
+On a fresh install, you will be asked to create the admin user.
+
+Log in as the admin user, then create a new regular user.
+
+Logout and log in as the regular user. Create repos and use the system!
+
+Note: the admin user cannot create repos.
+
+## Importing data
+
+One way to import data:
+
+1. Create your new repo in gitprep
+2. In your local git repo, add a new remote target
+```
+git remote add gitprep git@my.gitprep.server:new-repo.git 
+```
+3. Push all your repo content up in to this new gitprep target
+4. Update your local git repo config such that gitprep is now the origin
+
+Copy from /var/lib/gitolite or /var/lib/gitosis
+
+TBD
+
 ## Internal Server Error
 
 If you receive an internal server error, look at the log file (gitprep/log/production.log)
