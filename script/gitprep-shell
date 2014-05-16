@@ -9,24 +9,79 @@ use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use Gitprep;
 
-my $user = shift;
+# Project name pattern
+my $project_re = qr/[a-zA-Z0-9_\-\.]+$/;
 
+# User
+my $user = shift;
 die "User not specifed" unless defined $user;
 
+# Application
 my $app = Gitprep->new;
+
+# Git
+my $git = $app->git;
+
+# DBI
 my $dbi = $app->dbi;
 
-my $public_key = $dbi->model('user')->select('public_keys', id => $user)->value || '';
+# SSH connection
+my $ssh_connection = $ENV{SSH_CONNECTION};
+die "who the *heck* are you?" unless defined $ssh_connection;
 
-print $public_key;
+# SSH original command
+my $ssh_original_command = $ENV{SSH_ORIGINAL_COMMAND} || '';
+
+# IP address
+my $ip = $ssh_connection || '(no-IP)';
+$ip =~ s/ .*//;
+
+# Check new line of SSH original command
+my $ssh_original_command_tmp = $ssh_original_command;
+$ssh_original_command_tmp =~ s/[\n\r]+/<<newline>>/g;
+die "I don't like newlines in the command: $ssh_original_command\n"
+  if $ssh_original_command ne $ssh_original_command_tmp;
+
+my ($verb, $project) = parse_ssh_original_command($ssh_original_command);
+sanity($project);
+
+my $rep_home = $git->rep_home;
+my $repository = "'$rep_home/$project.git'";
+my @git_shell_cmd = ("git", "shell", "-c", "$verb $repository");
+system(@git_shell_cmd) == 0
+  or die "Can't execute command: @git_shell_cmd" ;
+
+sub parse_ssh_original_command {
+  my $ssh_original_command = shift;
+
+  $ssh_original_command ||= 'info';
+
+  my $git_commands = "git-upload-pack|git-receive-pack|git-upload-archive";
+  if ($ssh_original_command =~ m(^($git_commands) '/?(.*?)(?:\.git)?'$)) {
+    my ($verb, $project) = ($1, $2);
+    die "invalid repo name: '$project'" if $project !~ $project_re;
+    return ($verb, $project);
+  }
+  else {
+    die "Invalid command: $ssh_original_command";
+  }
+}
+
+sub sanity {
+  my $project = shift;
+  die "'$project' contains bad characters" if $project !~ $project_re;
+  die "'$project' ends with a '/'"         if $project =~ m(/$);
+  die "'$project' contains '..'"           if $project =~ m(\.\.);
+}
+
 
 =head1 NAME
 
-authorized_keys_command - AuthorizedKeysCommand for sshd
+gitprep-shell - AuthorizedKeysCommand for sshd
 
 =head1 USAGE
 
-  ./authorized_keys_command kimoto
+  ./gitprep-shell kimoto
 
 This command return user public_key
 
