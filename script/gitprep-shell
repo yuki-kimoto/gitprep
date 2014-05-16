@@ -9,6 +9,8 @@ use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use Gitprep;
 
+my $debug = 0;
+
 # Project name pattern
 my $project_re = qr/[a-zA-Z0-9_\-\.]+$/;
 
@@ -27,13 +29,16 @@ my $dbi = $app->dbi;
 
 # SSH connection
 my $ssh_connection = $ENV{SSH_CONNECTION};
+warn "ssh_connection: $ssh_connection" if $debug;
 die "who the *heck* are you?" unless defined $ssh_connection;
 
 # SSH original command
 my $ssh_original_command = $ENV{SSH_ORIGINAL_COMMAND} || '';
+warn "ssh_original_command: $ssh_original_command";
 
 # IP address
 my $ip = $ssh_connection || '(no-IP)';
+warn "ip: $ip";
 $ip =~ s/ .*//;
 
 # Check new line of SSH original command
@@ -46,15 +51,19 @@ my ($verb, $project) = parse_ssh_original_command($ssh_original_command);
 sanity($project);
 
 my $rep_home = $git->rep_home;
-my $repository = "'$rep_home/$project.git'";
+my $repository = "'$rep_home/$user/$project.git'";
 my @git_shell_cmd = ("git", "shell", "-c", "$verb $repository");
-system(@git_shell_cmd) == 0
-  or die "Can't execute command: @git_shell_cmd" ;
+warn "@git_shell_cmd" if $debug;
+
+unless ($debug) {
+  system(@git_shell_cmd) == 0
+    or die "Can't execute command: @git_shell_cmd" ;
+}
 
 sub parse_ssh_original_command {
   my $ssh_original_command = shift;
 
-  $ssh_original_command ||= 'info';
+  $ssh_original_command ||= '';
 
   my $git_commands = "git-upload-pack|git-receive-pack|git-upload-archive";
   if ($ssh_original_command =~ m(^($git_commands) '/?(.*?)(?:\.git)?'$)) {
@@ -73,7 +82,6 @@ sub sanity {
   die "'$project' ends with a '/'"         if $project =~ m(/$);
   die "'$project' contains '..'"           if $project =~ m(\.\.);
 }
-
 
 =head1 NAME
 
