@@ -23,14 +23,28 @@
       /
       <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
     </ul>
-    <div class="border-gray bk-gray-light" style="padding:5px;font-weight:bold;font-size:17px">
-      Profile
-    </div>
-    <div class="border-gray" style="margin-bottom:30px;border-top:none;padding:10px">
-      <div style="margin-bottom:10px;font-size:15px">
-        <b>ID</b>: <%= $user %>
+    <div class="row">
+      <div class="span2">
+        <ul class="nav nav-tabs nav-stacked">
+          <li class="active" style="font-weight:bold">
+            <a href="<%= url_for("/$user/_settings") %>">Profile</a>
+          </li>
+          <li class="" style="">
+            <a href="<%= url_for("/$user/_settings/ssh") %>">SSH keys</a>
+          </li>
+        </ul>
       </div>
-      <a class="btn btn-small" href="<%= url_for("/reset-password")->query(user => $user) %>">Reset Password</a>
+      <div class="span10">
+        <div class="border-gray bk-gray-light" style="padding:5px;font-weight:bold;font-size:17px">
+          Profile
+        </div>
+        <div class="border-gray" style="margin-bottom:30px;border-top:none;padding:10px">
+          <div style="margin-bottom:10px;font-size:15px">
+            <b>ID</b>: <%= $user %>
+          </div>
+          <a class="btn btn-small" href="<%= url_for("/reset-password")->query(user => $user) %>">Reset Password</a>
+        </div>
+      </div>
     </div>
   </div>
   
