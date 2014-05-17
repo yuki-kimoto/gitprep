@@ -27,6 +27,21 @@
 %>
 
 % layout 'common', title => 'Your Profile';
+
+  %= javascript begin
+    $(document).ready(function () {
+      $('#show-add-key-form').on('click', function () {
+        var display = $('#add-key-form').css('display');
+        
+        if (display === 'block') {
+          $('#add-key-form').css('display', 'none');
+        }
+        else {
+          $('#add-key-form').css('display', 'block');
+        }
+      });
+    });
+  % end
   
   %= include '/include/header';
   
@@ -58,44 +73,71 @@
               </div>
               <div class="span2">
                 <div style="text-align:right">
-                  <a class="btn" href="">Add SSH Key</a>
+                  <a id="show-add-key-form" class="btn" href="javascript:void(0)">Add SSH Key</a>
                 </div>
               </div>
             </div>
           </div>
-          % if (@$keys > 0) {
-            <div class="border-gray" style="border-top:none;padding:10px">
-              This is a list of SSH keys associated with your account. Remove any keys that you do not recognize.
-            </div>
-            % for my $key (@$keys) {
-              <div class="border-gray" style="border-top:none;">
-                <div class="row">
-                  <div class="span7" style="width:600px">
-                    <div style="font-size:15px;padding:10px">
-                      <div>
-                        <b><%= $key->{key} %></b>
-                      </div>
-                      <div class="muted">
-                        <%= $key->{hash} %>
-                      </div>
-                      <div>
-                        <%= $key->{mtime} %>
+          <div style="margin-bottom:30px">
+            % if (@$keys > 0) {
+              <div class="border-gray" style="border-top:none;padding:10px">
+                This is a list of SSH keys associated with your account. Remove any keys that you do not recognize.
+              </div>
+              % for my $key (@$keys) {
+                <div class="border-gray" style="border-top:none;">
+                  <div class="row">
+                    <div class="span7" style="width:600px">
+                      <div style="font-size:15px;padding:10px">
+                        <div>
+                          <b><%= $key->{key} %></b>
+                        </div>
+                        <div class="muted">
+                          <%= $key->{hash} %>
+                        </div>
+                        <div>
+                          <%= $key->{mtime} %>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div class="span2">
-                    <div style="padding-top:20px;text-align:right">
-                      <a class="btn btn-danger" href="<%= url_for("/reset-password")->query(user => $user) %>">Delete</a>
+                    <div class="span2">
+                      <div style="padding-top:20px;text-align:right">
+                        <a class="btn btn-danger" href="<%= url_for("/reset-password")->query(user => $user) %>">Delete</a>
+                      </div>
                     </div>
                   </div>
                 </div>
+              % }
+            % } else {
+              <div class="border-gray" style="margin-bottom:30px;border-top:none;padding:10px">
+                SSH key don't exists.
               </div>
             % }
-          % } else {
-            <div class="border-gray" style="margin-bottom:30px;border-top:none;padding:10px">
-              SSH key don't exists.
+          </div>
+          
+          <div id="add-key-form" style="display:none">
+            <div class="border-gray bk-gray-light radius-top" style="padding:5px;font-weight:bold;font-size:17px">
+              <div style="font-size:15px;padding:5px">
+                Add an SSH Key
+              </div>
             </div>
-          % }
+            <div class="border-gray" style="margin-bottom:30px;border-top:none;padding:10px">
+              <form>
+                <div style="margin-bottom:5px">
+                  Title
+                </div>
+                <div>
+                  <%= text_field 'title', style => "width:400px" %>
+                </div>
+                <div style="margin-bottom:5px">
+                  Key
+                </div>
+                <div>
+                  <%= text_area 'key', style => "width:730px;height:200px" %>
+                </div>
+                <input type="submit" class="btn btn-success" value="Add key">
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </div>
