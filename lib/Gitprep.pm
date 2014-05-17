@@ -193,6 +193,9 @@ sub startup {
           
           # Settings
           $r->get('/_settings' => template '/user-settings');
+          
+          # SSH keys
+          $r->get('/_settings/ssh' => template '/user-settings/ssh');
         }
 
         # Smart HTTP

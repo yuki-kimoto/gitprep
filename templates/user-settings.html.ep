@@ -35,7 +35,7 @@
         </ul>
       </div>
       <div class="span10">
-        <div class="border-gray bk-gray-light" style="padding:5px;font-weight:bold;font-size:17px">
+        <div class="border-gray bk-gray-light radius-top" style="padding:5px;font-weight:bold;font-size:17px">
           Profile
         </div>
         <div class="border-gray" style="margin-bottom:30px;border-top:none;padding:10px">

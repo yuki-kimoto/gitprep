@@ -1,0 +1,104 @@
+<%
+  # API
+  my $api = gitprep_api;
+  
+  # Parameters
+  my $op = param('op') || '';
+  my $user = param('user') || '';
+  
+  # Authentication
+  unless ($api->logined($user)) {
+    $self->redirect_to('/');
+    return;
+  }
+  
+  my $keys = [
+    {
+      key => 'key1',
+      hash => '7d:d7:ec:86:f6:96:cf:8f:63:07:79:01:f4:cb:f7:78',
+      mtime => 'Last used on May 16, 2014'
+    },
+    {
+      key => 'key1',
+      hash => '7d:d7:ec:86:f6:96:cf:8f:63:07:79:01:f4:cb:f7:78',
+      mtime => 'Last used on May 16, 2014'
+    },
+  ];
+%>
+
+% layout 'common', title => 'Your Profile';
+  
+  %= include '/include/header';
+  
+  <div class="container">
+    <ul class="breadcrumb" style="margin-top:10px">
+      <li><a href="<%= url_for('/') %>">Home</a></li>
+      /
+      <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
+    </ul>
+    <div style="margin-bottom:30px">
+      <div class="row">
+        <div class="span2">
+          <ul class="nav nav-tabs nav-stacked">
+            <li class="" style="font-weight:bold">
+              <a href="<%= url_for("/$user/_settings") %>">Profile</a>
+            </li>
+            <li class="active" style="">
+              <a href="<%= url_for("/$user/_settings/ssh") %>">SSH keys</a>
+            </li>
+          </ul>
+        </div>
+        <div class="span10">
+          <div class="border-gray bk-gray-light radius-top" style="padding:5px;font-weight:bold;font-size:17px">
+            <div class="row">
+              <div class="span7" style="width:600px">
+                <div style="font-size:15px;padding:5px">
+                  SSH Keys
+                </div>
+              </div>
+              <div class="span2">
+                <div style="text-align:right">
+                  <a class="btn" href="">Add SSH Key</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          % if (@$keys > 0) {
+            <div class="border-gray" style="border-top:none;padding:10px">
+              This is a list of SSH keys associated with your account. Remove any keys that you do not recognize.
+            </div>
+            % for my $key (@$keys) {
+              <div class="border-gray" style="border-top:none;">
+                <div class="row">
+                  <div class="span7" style="width:600px">
+                    <div style="font-size:15px;padding:10px">
+                      <div>
+                        <b><%= $key->{key} %></b>
+                      </div>
+                      <div class="muted">
+                        <%= $key->{hash} %>
+                      </div>
+                      <div>
+                        <%= $key->{mtime} %>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="span2">
+                    <div style="padding-top:20px;text-align:right">
+                      <a class="btn btn-danger" href="<%= url_for("/reset-password")->query(user => $user) %>">Delete</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            % }
+          % } else {
+            <div class="border-gray" style="margin-bottom:30px;border-top:none;padding:10px">
+              SSH key don't exists.
+            </div>
+          % }
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  %= include '/include/footer';
