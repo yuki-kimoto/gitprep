@@ -5,7 +5,7 @@
   <div class="alert alert-error">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
     % for my $error (@$errors) {
-      <p><%= $error %></p>
+      <p style="margin:0;padding:0"><%= $error %></p>
     % }
   </div>
 % }

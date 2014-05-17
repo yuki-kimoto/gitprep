@@ -306,7 +306,7 @@ EOS
     $dbi->execute($sql);
   };
 
-  # Create usert columns
+  # Create user columns
   my $user_columns = [
     "admin not null default '0'",
     "password not null default ''",
@@ -320,6 +320,35 @@ EOS
   eval { $dbi->select([qw/row_id id admin password salt/], table => 'user') };
   if ($@) {
     my $error = "Can't create user table properly: $@";
+    $self->app->log->error($error);
+    croak $error;
+  }
+
+  # Create ssh_public_key table
+  eval {
+    my $sql = <<"EOS";
+create table ssh_public_key (
+  row_id integer primary key autoincrement,
+  user_id not null default '',
+  key not null default '',
+  unique(user_id, key)
+);
+EOS
+    $dbi->execute($sql);
+  };
+
+  # Create ssh_public_key columns
+  my $ssh_public_key_columns = [
+    "title not null default ''",
+  ];
+  for my $column (@$ssh_public_key_columns) {
+    eval { $dbi->execute("alter table ssh_public_key add column $column") };
+  }
+  
+  # Check ssh_public_key table
+  eval { $dbi->select([qw/row_id user_id key title/], table => 'ssh_public_key') };
+  if ($@) {
+    my $error = "Can't create ssh_public_key table properly: $@";
     $self->app->log->error($error);
     croak $error;
   }

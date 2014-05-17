@@ -12,37 +12,103 @@
     return;
   }
   
-  my $keys = [
-    {
-      key => 'key1',
-      hash => '7d:d7:ec:86:f6:96:cf:8f:63:07:79:01:f4:cb:f7:78',
-      mtime => 'Last used on May 16, 2014'
-    },
-    {
-      key => 'key1',
-      hash => '7d:d7:ec:86:f6:96:cf:8f:63:07:79:01:f4:cb:f7:78',
-      mtime => 'Last used on May 16, 2014'
-    },
-  ];
-%>
-
-% layout 'common', title => 'Your Profile';
-
-  %= javascript begin
-    $(document).ready(function () {
-      $('#show-add-key-form').on('click', function () {
-        var display = $('#add-key-form').css('display');
+  # Process form
+  my $errors;
+  if (lc $self->req->method eq 'post') {
+    # Add ssh key
+    if ($op eq 'add') {
+      
+      # Paramters
+      my $params = $api->params;
+      
+      # Rule
+      my $rule = [
+        title => [
+          ['not_blank' => 'title is empty'],
+          ['ascii' => 'title contains invalid character'],
+        ],
+        key => [
+          ['not_blank' => 'key is empty'],
+          sub {
+            my ($original_key, $args, $vc) = @_;
+            
+            my $type;
+            my $original_key_edit;
+            if ($original_key =~ /^(ssh-rsa|ssh-dss|ecdsa-sha2-nistp25|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) +(\S+)/) {
+              $type = $1;
+              $original_key_edit = $2;
+            }
+            
+            if ($type) {
+              if ($vc->constraints->{ascii}->($original_key_edit)) {
+                my $key = "$type $original_key_edit";
+                
+                my $row = app->dbi->model('ssh_public_key')->select(id => [$user, $key])->one;
+                
+                if ($row) {
+                  return {result => 0, message => 'Key already exists'};
+                }
+                else {
+                  return {result => 1, output => $key}
+                }
+              }
+              else {
+                return {
+                  result => 0,
+                  message => "Key contains invalid character."
+                }
+              }
+            }
+            else {
+              return {
+                result => 0,
+                message => "Key is invalid. It must begin with 'ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256',"
+                  . "'ecdsa-sha2-nistp384', or 'ecdsa-sha2-nistp521'. Check that you're copying the public half of the key"
+              };
+            }
+          }
+        ]
+      ];
+      
+      # Validation
+      my $vresult = app->vc->validate($params, $rule);
+      
+      # Register ssh key
+      if ($vresult->is_ok) {
+        my $safe_params = $vresult->data;
+        my $title = $safe_params->{title};
+        my $key = $safe_params->{key};
         
-        if (display === 'block') {
-          $('#add-key-form').css('display', 'none');
+        my $p = {
+          user_id => $user,
+          title => $title,
+          key => $key
+        };
+        eval {
+          app->dbi->model('ssh_public_key')->insert($p);
+        };
+        
+        if (my $e = $@) {
+          app->log->error(url_for . ":$e");
+          $errors = ['Internal error'];
         }
         else {
-          $('#add-key-form').css('display', 'block');
+          flash('message' => 'Success: ssh key is added');
+          $self->redirect_to('current');
+          return;
         }
-      });
-    });
-  % end
+      }
+      else {
+        $errors = $vresult->messages;
+      }
+    }
+  }
   
+  my $keys = app->dbi->model('ssh_public_key')->select(where => {user_id => $user})->all;
+%>
+
+% layout 'common', title => 'SSH keys';
+
   %= include '/include/header';
   
   <div class="container">
@@ -64,18 +130,12 @@
           </ul>
         </div>
         <div class="span10">
-          <div class="border-gray bk-gray-light radius-top" style="padding:5px;font-weight:bold;font-size:17px">
-            <div class="row">
-              <div class="span7" style="width:600px">
-                <div style="font-size:15px;padding:5px">
-                  SSH Keys
-                </div>
-              </div>
-              <div class="span2">
-                <div style="text-align:right">
-                  <a id="show-add-key-form" class="btn" href="javascript:void(0)">Add SSH Key</a>
-                </div>
-              </div>
+          <%= include '/include/errors', errors => $errors %>
+          <%= include '/include/message', message => flash('message') %>
+          
+          <div class="border-gray bk-gray-light radius-top" style="padding:5px;">
+            <div style="padding:5px">
+              <span style="font-size:15px;font-weight:bold;">SSH Keys</span> (<a href="<%= url_for("/$user.keys") %>">see</a>)
             </div>
           </div>
           <div style="margin-bottom:30px">
@@ -89,19 +149,13 @@
                     <div class="span7" style="width:600px">
                       <div style="font-size:15px;padding:10px">
                         <div>
-                          <b><%= $key->{key} %></b>
-                        </div>
-                        <div class="muted">
-                          <%= $key->{hash} %>
-                        </div>
-                        <div>
-                          <%= $key->{mtime} %>
+                          <b><%= $key->{title} %></b>
                         </div>
                       </div>
                     </div>
                     <div class="span2">
-                      <div style="padding-top:20px;text-align:right">
-                        <a class="btn btn-danger" href="<%= url_for("/reset-password")->query(user => $user) %>">Delete</a>
+                      <div style="padding:5px;text-align:right">
+                        <a class="btn btn-danger" href="javascript:void(0)">Delete</a>
                       </div>
                     </div>
                   </div>
@@ -114,14 +168,14 @@
             % }
           </div>
           
-          <div id="add-key-form" style="display:none">
+          <div>
             <div class="border-gray bk-gray-light radius-top" style="padding:5px;font-weight:bold;font-size:17px">
               <div style="font-size:15px;padding:5px">
                 Add an SSH Key
               </div>
             </div>
             <div class="border-gray" style="margin-bottom:30px;border-top:none;padding:10px">
-              <form>
+              <form action="<%= url_for->query(op => 'add') %>" method="post" %>
                 <div style="margin-bottom:5px">
                   Title
                 </div>

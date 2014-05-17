@@ -119,6 +119,7 @@ sub startup {
   # Model
   my $models = [
     {table => 'user', primary_key => 'id'},
+    {table => 'ssh_public_key', primary_key => ['user_id', 'key']},
     {table => 'project', primary_key => ['user_id', 'name']},
     {table => 'number', primary_key => 'key'},
     {table => 'collaboration', primary_key => ['user_id', 'project_name', 'collaborator_id']}
@@ -185,6 +186,9 @@ sub startup {
       
       # Custom routes
       {
+        # Show ssh keys
+        $r->get('/:user.keys' => template '/user-keys');
+        
         # User
         my $r = $r->route('/:user');
         {
@@ -195,7 +199,7 @@ sub startup {
           $r->get('/_settings' => template '/user-settings');
           
           # SSH keys
-          $r->get('/_settings/ssh' => template '/user-settings/ssh');
+          $r->any('/_settings/ssh' => template '/user-settings/ssh');
         }
 
         # Smart HTTP
