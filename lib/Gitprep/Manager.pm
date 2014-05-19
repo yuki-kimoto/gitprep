@@ -496,8 +496,8 @@ sub update_authorized_keys_file {
     my $ssh_public_keys = $self->app->dbi->model('ssh_public_key')->select->all;
     my $ssh_public_keys_str = '';
     for my $key (@$ssh_public_keys) {
-      my $ssh_public_key_str = $self->app->home->rel_file('script/gitprep-shell')
-        . " $key->{user_id},no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty $key->{key}";
+      my $ssh_public_key_str = 'command="' . $self->app->home->rel_file('script/gitprep-shell')
+        . " $key->{user_id}\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty $key->{key}";
       $ssh_public_keys_str .= "$ssh_public_key_str $key->{user_id}\n\n";
     }
     
@@ -511,6 +511,8 @@ sub update_authorized_keys_file {
       or croak "Can't close authorized_keys tmp file $output_file";
 
     # Replace
+    chmod 0600, $output_file
+      or croak "Can't chmod authorized_keys tmp file: $output_file";
     move $output_file, $authorized_keys_file
       or croak "Can't replace $authorized_keys_file by $output_file";
     
