@@ -85,7 +85,10 @@
           key => $key
         };
         eval {
-          app->dbi->model('ssh_public_key')->insert($p);
+          app->dbi->connector->txn(sub {
+            app->dbi->model('ssh_public_key')->insert($p);
+            # $self->manager->update_authorized_keys_file;
+          });
         };
         
         if (my $e = $@) {
@@ -100,6 +103,22 @@
       }
       else {
         $errors = $vresult->messages;
+      }
+    }
+    # Delete ssh public key
+    elsif ($op eq 'delete') {
+      my $row_id = param('row-id');
+      eval {
+        app->dbi->model('ssh_public_key')->delete(where => {row_id => $row_id});
+      };
+      
+      if (my $e = $@) {
+        app->log->error(url_with . ": $e");
+        $errors = ['Internal Error'];
+      }
+      else {
+        flash(message => 'Success: a key is deleted');
+        $self->redirect_to('current');
       }
     }
   }
@@ -144,22 +163,25 @@
                 This is a list of SSH keys associated with your account. Remove any keys that you do not recognize.
               </div>
               % for my $key (@$keys) {
-                <div class="border-gray" style="border-top:none;">
-                  <div class="row">
-                    <div class="span7" style="width:600px">
-                      <div style="font-size:15px;padding:10px">
-                        <div>
-                          <b><%= $key->{title} %></b>
+                <form action="<%= url_for->query(op => 'delete') %>" method="post" style="margin:0;padding:0">
+                  <div class="border-gray" style="border-top:none;">
+                    <div class="row">
+                      <div class="span7" style="width:600px">
+                        <div style="font-size:15px;padding:10px">
+                          <div>
+                            <b><%= $key->{title} %></b>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="span2">
+                        <div style="padding:5px;text-align:right">
+                          <a class="btn btn-danger" href="javascript:void(0)" onclick="$(this).closest('form').submit()">Delete</a>
+                          <%= hidden_field 'row-id' => $key->{row_id} %>
                         </div>
                       </div>
                     </div>
-                    <div class="span2">
-                      <div style="padding:5px;text-align:right">
-                        <a class="btn btn-danger" href="javascript:void(0)">Delete</a>
-                      </div>
-                    </div>
                   </div>
-                </div>
+                </form>
               % }
             % } else {
               <div class="border-gray" style="margin-bottom:30px;border-top:none;padding:10px">

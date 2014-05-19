@@ -6,8 +6,12 @@ use Encode 'encode';
 use File::Copy qw/move copy/;
 use File::Path qw/mkpath rmtree/;
 use File::Temp ();
+use Fcntl ':flock';
+use Carp 'croak';
+use File::Copy qw/copy move/;
 
 has 'app';
+has 'authorized_keys_file';
 
 sub admin_user {
   my $self = shift;
@@ -446,6 +450,121 @@ EOS
     $self->app->log->error($error);
     croak $error;
   }
+}
+
+
+sub update_authorized_keys_file {
+  my $self = shift;
+
+  my $authorized_keys_file = $self->authorized_keys_file;
+  if (defined $authorized_keys_file) {
+    
+    # Lock file
+    my $lock_file = $self->app->rel_file('lock/authorized_keys');
+    open my $lock_fh, $lock_file
+      or croak "Can't open lock file $lock_file";
+    flock $lock_fh, LOCK_EX
+      or croak "Can't lock $lock_file";
+    
+    # Create authorized_keys_file
+    unless (-f $authorized_keys_file) {
+      open my $fh, '>', $authorized_keys_file
+        or croak "Can't create $authorized_keys_file";
+    }
+    
+    # Parse file
+    my ($before_part, $gitprep_part, $after_part)
+      = $self->_parse_authorized_keys_file($authorized_keys_file);
+    
+    # Backup at first time
+    if ($gitprep_part eq '') {
+      # Backup original file
+      my $to = "$authorized_keys_file.gitprep.original";
+      unless (-f $to) {
+        copy $authorized_keys_file, $to
+          or croak "Can't copy $authorized_keys_file to $to";
+      }
+    }
+    
+    # Create public keys
+    my $ssh_public_keys = $self->app->dbi->mode('ssh_public_key')->select->all;
+    my $ssh_public_keys_str = '';
+    for my $key (@$ssh_public_keys) {
+      my $ssh_public_key_str = $self->app->home->rel_file('script/gitprep-shell')
+        . " $key->{user_id},no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty $key->{key}";
+      $ssh_public_keys_str .= "$ssh_public_key_str\n\n";
+    }
+    
+    # Output tmp file
+    my $output = "$before_part\n\n$ssh_public_keys_str\n\n$after_part";
+    my $output_file = "$authorized_keys_file.gitprep.tmp";
+    open my $out_fh, '>', $output_file
+      or croak "Can't create authorized_keys tmp file $output_file";
+    print $out_fh $output;
+    close $out_fh
+      or croak "Can't close authorized_keys tmp file $output_file";
+    
+    # Replace
+    move $output_file, $authorized_keys_file
+      or croak "Can't replace $authorized_keys_file by $output_file";
+    
+    # Unlock file
+    flock $lock_fh, LOCK_EX
+      or croak "Can't unlock $lock_file"
+  }
+  else {
+    croak qq/authorized_keys file "$authorized_keys_file" is not found./;
+  }
+}
+
+sub _parse_authorized_keys_file {
+  my ($self, $file) = shift;
+  
+  my $start_symbol = "# gitprep start";
+  my $end_symbol = "# gitprep end";
+  
+  # Parse
+  open my $fh, '<', $file
+    or croak "Can't open $file";
+  my $start_symbol_count = 0;
+  my $end_symbol_count = 0;
+  my $before_part = '';
+  my $gitprep_part = '';
+  my $after_part = '';
+  my $error_prefix = "authorized_keys file $file format error:";
+  while (my $line = <$fh>) {
+    if ($line =~ /^$start_symbol/) {
+      if ($start_symbol_count > 0) {
+        croak qq/$error_prefix "$start_symbol" is found more than one/;
+      }
+      else {
+        if ($end_symbol_count > 0) {
+          croak qq/$error_prefix "$end_symbol" is found before "$start_symbol"/;
+        }
+        else {
+          $start_symbol_count++;
+        }
+      }
+    }
+    elsif ($line =~ /^$end_symbol/) {
+      if ($end_symbol > 0) {
+        croak qq/$error_prefix "$end_symbol" is found more than one/;
+      }
+      else {
+        $end_symbol++;
+      }
+    }
+    elsif ($start_symbol_count == 0 && $end_symbol_count == 0) {
+      $before_part .= $line;
+    }
+    elsif ($start_symbol_count == 1 && $end_symbol_count == 0) {
+      $gitprep_part .= $line;
+    }
+    elsif ($start_symbol_count == 1 && $end_symbol_count == 1) {
+      $after_part .= $line;
+    }
+  }
+  return ($before_part, $gitprep_part, $after_part);
 }
 
 sub _create_project {

@@ -68,6 +68,20 @@ sub startup {
   weaken $manager->{app};
   $self->manager($manager);
   
+  # authorized_keys file
+  my $authorized_keys_file = $self->config('authorized_keys_file');
+  unless (defined $authorized_keys_file) {
+    if (defined $ENV{HOME}) {
+      $authorized_keys_file = "$ENV{HOME}/.ssh/authorized_keys_file";
+    }
+  }
+  if (defined $authorized_keys_file) {
+    $self->manager->authorized_keys_file($authorized_keys_file);
+  }
+  else {
+    $self->app->log->warn(qq/Config "authorized_keys_file" can't be detected/);
+  }
+  
   # Repository home
   my $rep_home = $ENV{GITPREP_REP_HOME} || $self->home->rel_file('data/rep');
   $git->rep_home($rep_home);
