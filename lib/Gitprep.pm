@@ -72,7 +72,7 @@ sub startup {
   my $authorized_keys_file = $self->config('authorized_keys_file');
   unless (defined $authorized_keys_file) {
     if (defined $ENV{HOME}) {
-      $authorized_keys_file = "$ENV{HOME}/.ssh/authorized_keys_file";
+      $authorized_keys_file = "$ENV{HOME}/.ssh/authorized_keys";
     }
   }
   if (defined $authorized_keys_file) {

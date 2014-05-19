@@ -87,7 +87,7 @@
         eval {
           app->dbi->connector->txn(sub {
             app->dbi->model('ssh_public_key')->insert($p);
-            # $self->manager->update_authorized_keys_file;
+            $self->app->manager->update_authorized_keys_file;
           });
         };
         
@@ -109,7 +109,10 @@
     elsif ($op eq 'delete') {
       my $row_id = param('row-id');
       eval {
-        app->dbi->model('ssh_public_key')->delete(where => {row_id => $row_id});
+        app->dbi->connector->txn(sub {
+          app->dbi->model('ssh_public_key')->delete(where => {row_id => $row_id});
+          $self->app->manager->update_authorized_keys_file;
+        });
       };
       
       if (my $e = $@) {

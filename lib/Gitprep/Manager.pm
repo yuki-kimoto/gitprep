@@ -460,7 +460,7 @@ sub update_authorized_keys_file {
   if (defined $authorized_keys_file) {
     
     # Lock file
-    my $lock_file = $self->app->rel_file('lock/authorized_keys');
+    my $lock_file = $self->app->home->rel_file('lock/authorized_keys');
     open my $lock_fh, $lock_file
       or croak "Can't open lock file $lock_file";
     flock $lock_fh, LOCK_EX
@@ -473,8 +473,12 @@ sub update_authorized_keys_file {
     }
     
     # Parse file
-    my ($before_part, $gitprep_part, $after_part)
-      = $self->_parse_authorized_keys_file($authorized_keys_file);
+    my $result = $self->_parse_authorized_keys_file($authorized_keys_file);
+    my $before_part = $result->{before_part};
+    my $gitprep_part = $result->{gitprep_part};
+    my $after_part = $result->{after_part};
+    my $start_symbol = $result->{start_symbol};
+    my $end_symbol = $result->{end_symbol};
     
     # Backup at first time
     if ($gitprep_part eq '') {
@@ -485,25 +489,25 @@ sub update_authorized_keys_file {
           or croak "Can't copy $authorized_keys_file to $to";
       }
     }
-    
+
     # Create public keys
-    my $ssh_public_keys = $self->app->dbi->mode('ssh_public_key')->select->all;
+    my $ssh_public_keys = $self->app->dbi->model('ssh_public_key')->select->all;
     my $ssh_public_keys_str = '';
     for my $key (@$ssh_public_keys) {
       my $ssh_public_key_str = $self->app->home->rel_file('script/gitprep-shell')
         . " $key->{user_id},no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty $key->{key}";
-      $ssh_public_keys_str .= "$ssh_public_key_str\n\n";
+      $ssh_public_keys_str .= "$ssh_public_key_str $key->{user_id}\n\n";
     }
     
     # Output tmp file
-    my $output = "$before_part\n\n$ssh_public_keys_str\n\n$after_part";
+    my $output = "$before_part\n\n$start_symbol\n\n$ssh_public_keys_str$end_symbol\n\n$after_part";
     my $output_file = "$authorized_keys_file.gitprep.tmp";
     open my $out_fh, '>', $output_file
       or croak "Can't create authorized_keys tmp file $output_file";
     print $out_fh $output;
     close $out_fh
       or croak "Can't close authorized_keys tmp file $output_file";
-    
+
     # Replace
     move $output_file, $authorized_keys_file
       or croak "Can't replace $authorized_keys_file by $output_file";
@@ -518,14 +522,14 @@ sub update_authorized_keys_file {
 }
 
 sub _parse_authorized_keys_file {
-  my ($self, $file) = shift;
+  my ($self, $file) = @_;
   
   my $start_symbol = "# gitprep start";
   my $end_symbol = "# gitprep end";
   
   # Parse
   open my $fh, '<', $file
-    or croak "Can't open $file";
+    or croak "Can't open authorized_key file $file";
   my $start_symbol_count = 0;
   my $end_symbol_count = 0;
   my $before_part = '';
@@ -564,7 +568,16 @@ sub _parse_authorized_keys_file {
       $after_part .= $line;
     }
   }
-  return ($before_part, $gitprep_part, $after_part);
+  
+  my $result = {
+    start_symbol => $start_symbol,
+    end_symbol => $end_symbol,
+    before_part => $before_part,
+    gitprep_part => $gitprep_part,
+    after_part => $after_part
+  };
+  
+  return $result;
 }
 
 sub _create_project {
