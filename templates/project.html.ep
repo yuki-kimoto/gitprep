@@ -51,8 +51,11 @@
   my $ssh_port = config->{basic}{ssh_port};
   my $rep_home = app->git->rep_home;
   my $execute_user = getpwuid($>);
-  my $ssh_rep_url = "ssh://$execute_user\@" . $url->host
+  my $ssh_rep_url_deprected = "ssh://$execute_user\@" . $url->host
     . ($ssh_port ? ":$ssh_port" : '') . "$rep_home/$user/$project.git";
+  my $ssh_rep_url = "ssh://$execute_user\@" . $url->host
+    . ($ssh_port ? ":$ssh_port" : '') . "/$user/$project.git";
+
 %>
 
 % layout 'common', title => "$user/$project";
@@ -66,8 +69,9 @@
       % my $ssh_port = config->{basic}{ssh_port} || '';
       
       var logined = <%= $logined ? 'true' : 'false' %>;
-      var ssh_rep_url = '';
+      var ssh_rep_url_deprecated = '';
       if (logined) {
+        ssh_rep_url_deprecated = '<%= $ssh_rep_url_deprected %>';
         ssh_rep_url = '<%= $ssh_rep_url %>';
       }
       
@@ -76,10 +80,16 @@
         $('#rep_url').val(http_rep_url);
         $('#access').text('Read-write');
       });
-      
+
       // Click SSH button
       $('#btn_ssh').on('click', function () {
         $('#rep_url').val(ssh_rep_url);
+        $('#access').text('Read-write');
+      });
+            
+      // Click SSH(old) button
+      $('#btn_ssh_deprecated').on('click', function () {
+        $('#rep_url').val(ssh_rep_url_deprecated);
         $('#access').text('Read-write');
       });
 
@@ -119,6 +129,7 @@
             <button class="btn" id="btn_http" style="margin-left:5px;padding:3px 6px;border-top-right-radius:0px; border-bottom-right-radius:0px"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
             % if ($logined) {
               <button class="btn" id="btn_ssh" style="padding:3px 7px;border-radius:0">SSH</button>
+              <button class="btn" id="btn_ssh_deprecated" style="padding:3px 7px;border-radius:0">SSH(old)</button>
             % }
           </div>
           <input id="rep_url" type="text" style="width:635px;border-radius:0;padding:3px 7px;border-top-right-radius:3px;border-bottom-right-radius:3px">
@@ -158,7 +169,7 @@ touch README
 git init
 git add README
 git commit -m "first commit"
-git remote add origin <%= $ssh_rep_url %>
+git remote add origin <%= $ssh_rep_url_deprected %>
 git push -u origin master</pre>
       
       <div class="text-center" style="margin-bottom:10px">
@@ -166,12 +177,35 @@ git push -u origin master</pre>
       </div>
       
       <pre style="margin-bottom:30px">
-git remote add origin <%= $ssh_rep_url %>
+git remote add origin <%= $ssh_rep_url_deprected %>
+git push -u origin master</pre>
+
+      <hr>
+
+      <h4>SSH(deprecated)</h4>
+      
+      <div class="text-center" style="margin-bottom:10px">
+        <b>Create a new repository on the command line via ssh</b>
+      </div>
+      
+      <pre style="margin-bottom:30px">
+touch README
+git init
+git add README
+git commit -m "first commit"
+git remote add origin <%= $ssh_rep_url_deprected %>
+git push -u origin master</pre>
+      
+      <div class="text-center" style="margin-bottom:10px">
+        <b>Push an existing repository from the command line via ssh</b>
+      </div>
+      
+      <pre style="margin-bottom:30px">
+git remote add origin <%= $ssh_rep_url_deprected %>
 git push -u origin master</pre>
 
       <hr>
       % my $http_rep_url = url_for("$user/$project.git")->to_abs;
-
       <h4><%= uc url_for->to_abs->scheme %></h4>
 
       <div class="text-center" style="margin-bottom:10px">

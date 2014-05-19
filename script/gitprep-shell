@@ -47,7 +47,8 @@ $ssh_original_command_tmp =~ s/[\n\r]+/<<newline>>/g;
 die "I don't like newlines in the command: $ssh_original_command\n"
   if $ssh_original_command ne $ssh_original_command_tmp;
 
-my ($verb, $project) = parse_ssh_original_command($ssh_original_command);
+my ($verb, $user_url, $project) = parse_ssh_original_command($ssh_original_command);
+die "User don't match" if $user ne $user_url;
 sanity($project);
 
 my $rep_home = $git->rep_home;
@@ -66,10 +67,10 @@ sub parse_ssh_original_command {
   $ssh_original_command ||= '';
 
   my $git_commands = "git-upload-pack|git-receive-pack|git-upload-archive";
-  if ($ssh_original_command =~ m(^($git_commands) '/?(.*?)(?:\.git)?'$)) {
-    my ($verb, $project) = ($1, $2);
+  if ($ssh_original_command =~ m(^($git_commands) '/([a-zA-Z_]+)/?(.*?)(?:\.git)?'$)) {
+    my ($verb, $user, $project) = ($1, $2, $3);
     die "invalid repo name: '$project'" if $project !~ $project_re;
-    return ($verb, $project);
+    return ($verb, $user, $project);
   }
   else {
     die "Invalid command: $ssh_original_command";

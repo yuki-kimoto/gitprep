@@ -469,7 +469,9 @@ sub update_authorized_keys_file {
     # Create authorized_keys_file
     unless (-f $authorized_keys_file) {
       open my $fh, '>', $authorized_keys_file
-        or croak "Can't create $authorized_keys_file";
+        or croak "Can't create authorized_keys file: $authorized_keys_file";
+      chmod 0600, $authorized_keys_file
+        or croak "Can't chmod authorized_keys file: $authorized_keys_file";
     }
     
     # Parse file
@@ -500,7 +502,7 @@ sub update_authorized_keys_file {
     }
     
     # Output tmp file
-    my $output = "$before_part\n\n$start_symbol\n\n$ssh_public_keys_str$end_symbol\n\n$after_part";
+    my $output = "$before_part$start_symbol\n\n$ssh_public_keys_str$end_symbol$after_part";
     my $output_file = "$authorized_keys_file.gitprep.tmp";
     open my $out_fh, '>', $output_file
       or croak "Can't create authorized_keys tmp file $output_file";
@@ -555,7 +557,7 @@ sub _parse_authorized_keys_file {
         croak qq/$error_prefix "$end_symbol" is found more than one/;
       }
       else {
-        $end_symbol++;
+        $end_symbol_count++;
       }
     }
     elsif ($start_symbol_count == 0 && $end_symbol_count == 0) {
