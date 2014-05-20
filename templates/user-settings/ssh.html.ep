@@ -43,7 +43,7 @@
               if ($vc->constraints->{ascii}->($original_key_edit)) {
                 my $key = "$type $original_key_edit";
                 
-                my $row = app->dbi->model('ssh_public_key')->select(id => [$user, $key])->one;
+                my $row = app->dbi->model('ssh_public_key')->select(id => $key)->one;
                 
                 if ($row) {
                   return {result => 0, message => 'Key already exists'};

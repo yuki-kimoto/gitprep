@@ -34,11 +34,11 @@ die "who the *heck* are you?" unless defined $ssh_connection;
 
 # SSH original command
 my $ssh_original_command = $ENV{SSH_ORIGINAL_COMMAND} || '';
-warn "ssh_original_command: $ssh_original_command";
+warn "ssh_original_command: $ssh_original_command" if $debug;
 
 # IP address
 my $ip = $ssh_connection || '(no-IP)';
-warn "ip: $ip";
+warn "ip: $ip" if $debug;
 $ip =~ s/ .*//;
 
 # Check new line of SSH original command
@@ -67,8 +67,9 @@ sub parse_ssh_original_command {
   $ssh_original_command ||= '';
 
   my $git_commands = "git-upload-pack|git-receive-pack|git-upload-archive";
-  if ($ssh_original_command =~ m(^($git_commands) '/([a-zA-Z_]+)/?(.*?)(?:\.git)?'$)) {
+  if ($ssh_original_command =~ m(^($git_commands) '.*/([a-zA-Z_]+)/([^\/]+?)\.git'$)) {
     my ($verb, $user, $project) = ($1, $2, $3);
+    warn "User:$user, Project:$project" if $debug;
     die "invalid repo name: '$project'" if $project !~ $project_re;
     return ($verb, $user, $project);
   }

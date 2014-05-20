@@ -333,9 +333,7 @@ EOS
     my $sql = <<"EOS";
 create table ssh_public_key (
   row_id integer primary key autoincrement,
-  user_id not null default '',
-  key not null default '',
-  unique(user_id, key)
+  key not null unique default ''
 );
 EOS
     $dbi->execute($sql);
@@ -343,7 +341,8 @@ EOS
 
   # Create ssh_public_key columns
   my $ssh_public_key_columns = [
-    "title not null default ''",
+    "user_id not null default ''",
+    "title not null default ''"
   ];
   for my $column (@$ssh_public_key_columns) {
     eval { $dbi->execute("alter table ssh_public_key add column $column") };
@@ -555,7 +554,7 @@ sub _parse_authorized_keys_file {
       }
     }
     elsif ($line =~ /^$end_symbol/) {
-      if ($end_symbol > 0) {
+      if ($end_symbol_count > 0) {
         croak qq/$error_prefix "$end_symbol" is found more than one/;
       }
       else {
