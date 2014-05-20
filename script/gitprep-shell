@@ -15,8 +15,8 @@ my $debug = 0;
 my $project_re = qr/[a-zA-Z0-9_\-\.]+$/;
 
 # User
-my $user = shift;
-die "User not specifed" unless defined $user;
+my $session_user = shift;
+die "User not specifed" unless defined $session_user;
 
 # Application
 my $app = Gitprep->new;
@@ -30,7 +30,7 @@ my $dbi = $app->dbi;
 # SSH connection
 my $ssh_connection = $ENV{SSH_CONNECTION};
 warn "ssh_connection: $ssh_connection" if $debug;
-die "who the *heck* are you?" unless defined $ssh_connection;
+die "who the *heck* are you?\n" unless defined $ssh_connection;
 
 # SSH original command
 my $ssh_original_command = $ENV{SSH_ORIGINAL_COMMAND} || '';
@@ -47,18 +47,33 @@ $ssh_original_command_tmp =~ s/[\n\r]+/<<newline>>/g;
 die "I don't like newlines in the command: $ssh_original_command\n"
   if $ssh_original_command ne $ssh_original_command_tmp;
 
-my ($verb, $user_url, $project) = parse_ssh_original_command($ssh_original_command);
-die "User don't match" if $user ne $user_url;
+# Project
+my ($verb, $user, $project) = parse_ssh_original_command($ssh_original_command);
 sanity($project);
 
+# Can access
+my $can_access;
+if ($session_user eq $user) {
+  $can_access = 1;
+}
+else {
+  my $row = $app->dbi->model('collaboration')->select(
+    id => [$user, $project, $session_user]
+  )->one;
+  
+  $can_access = $row ? 1 : 0;
+}
+die qq|User "$session_user" can't access repository "$user/$project.git"\n|
+  unless $can_access; 
+
+# Command
 my $rep_home = $git->rep_home;
 my $repository = "'$rep_home/$user/$project.git'";
 my @git_shell_cmd = ("git", "shell", "-c", "$verb $repository");
 warn "@git_shell_cmd" if $debug;
-
 unless ($debug) {
   system(@git_shell_cmd) == 0
-    or die "Can't execute command: @git_shell_cmd" ;
+    or die "Can't execute command: @git_shell_cmd\n" ;
 }
 
 sub parse_ssh_original_command {
@@ -67,22 +82,22 @@ sub parse_ssh_original_command {
   $ssh_original_command ||= '';
 
   my $git_commands = "git-upload-pack|git-receive-pack|git-upload-archive";
-  if ($ssh_original_command =~ m(^($git_commands) '.*/([a-zA-Z_]+)/([^\/]+?)\.git'$)) {
+  if ($ssh_original_command =~ m(^($git_commands) '.*/([a-zA-Z1-9_]+)/([^\/]+?)\.git'$)) {
     my ($verb, $user, $project) = ($1, $2, $3);
     warn "User:$user, Project:$project" if $debug;
-    die "invalid repo name: '$project'" if $project !~ $project_re;
+    die "invalid repo name: '$project'\n" if $project !~ $project_re;
     return ($verb, $user, $project);
   }
   else {
-    die "Invalid command: $ssh_original_command";
+    die "Invalid command: $ssh_original_command\n";
   }
 }
 
 sub sanity {
   my $project = shift;
-  die "'$project' contains bad characters" if $project !~ $project_re;
-  die "'$project' ends with a '/'"         if $project =~ m(/$);
-  die "'$project' contains '..'"           if $project =~ m(\.\.);
+  die "'$project' contains bad characters\n" if $project !~ $project_re;
+  die "'$project' ends with a '/'\n"         if $project =~ m(/$);
+  die "'$project' contains '..'\n"           if $project =~ m(\.\.);
 }
 
 =head1 NAME
