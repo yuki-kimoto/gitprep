@@ -432,7 +432,7 @@ If you want new features, pelese tell me on GitHub issue.
 
 ## Support
 
-You can ask questions about usage of GitPrep.
+You can ask questions about usage of GitPrep at Google GitPrep Group.
 
 * [Google GitPrep Group](https://groups.google.com/forum/#!forum/gitprep)
 
