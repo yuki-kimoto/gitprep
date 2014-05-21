@@ -1,3 +1,5 @@
+1.8
+  - support publick key authentication
 1.7
   - allow . as project name.
   - add respository and user search page
