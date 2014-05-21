@@ -420,9 +420,25 @@ These are my Perl web application projects.
 * [WebDBViewer](http://perlcodesample.sakura.ne.jp/webdbviewer-site/) - Database viewer to see database information on web browser.
 * [TaskDeal](http://perlcodesample.sakura.ne.jp/taskdeal-site/) - Setup or deploy multiple environments on web browser. Ruby Chef alternative tool.
 
+## Bug
+
+If you find bug, plese tell me on GitHub issue.
+
+* [Github Issue](https://github.com/yuki-kimoto/gitprep/issues?state=open)
+
+## Request
+
+If you want new features, pelese tell me on GitHub issue.
+
+## Support
+
+You can ask questions about usage of GitPrep.
+
+* [Google GitPrep Group](https://groups.google.com/forum/#!forum/gitprep)
+
 ## Copyright & license
 
-Copyright 2012-2013 Yuki Kimoto. All rights reserved.
+Copyright 2012-2014 Yuki Kimoto. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
