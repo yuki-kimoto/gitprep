@@ -426,14 +426,14 @@ OK. GitPrep suport time zone. You can set time_zone option in conig file.
 
 ### How to hide user home directory in ssh repository URL?
 
-**1. Use symbolic link and ssh_repo_url_base option
+**1. Use symbolic link and ssh_rep_url_base option
 
-At first, set [basic]ssh_repo_url_base option to /git
+At first, set [basic]ssh_rep_url_base option to /git
 
     ;;; SSH repository url base
     ; For exampke, If you set this value to /git, SSH repository url become
     ; ssh://kimoto@59.106.185.196/git/kimoto/gitprep.git
-    ssh_repo_url_base=/git
+    ssh_rep_url_base=/git
 
 And you create symbolic link to /home/gitprep/gitprep/data/rep
     
@@ -441,19 +441,19 @@ And you create symbolic link to /home/gitprep/gitprep/data/rep
     ln -s /home/gitprep/gitprep/data/rep /git
     chown gitprep:gitprep /git
 
-**2. Use only public key authentication and set [basic]ssh_repo_url_base to empty
+**2. Use only public key authentication and set [basic]ssh_rep_url_base to empty
 
 If you use only public key authentication, you can access ssh repository
 using the following url.
 
     ssh://kimoto@59.106.185.196/kimoto/gitprep.git
 
-If you set [basic]ssh_repo_url_base to empty string, this URL is shown on Browser.
+If you set [basic]ssh_rep_url_base to empty string, this URL is shown on Browser.
 
     ;;; SSH repository url base
     ; For exampke, If you set this value to /git, SSH repository url become
     ; ssh://kimoto@59.106.185.196/git/kimoto/gitprep.git
-    ssh_repo_url_base=
+    ssh_rep_url_base=
 
 ## Web Site
 
