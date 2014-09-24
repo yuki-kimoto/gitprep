@@ -347,6 +347,39 @@ If you use GitPrep vis https, you should set X-Forwarded-HTTPS Request Header.
       RequestHeader set X-Forwarded-HTTPS "1"
     </VirtualHost>
 
+### How to use reverse proxy with sub directory?
+
+GitPrep support reverse proxy with sub directory.
+
+At first, set [reverse_proxy]path_depth option.
+
+    [reverse_proxy]
+
+    ;;; Reverse proxy path depth (default: none)
+    ;;; If proxy path is http://somehost.com/foo, you set path_depth to 1.
+    ;;; If proxy path is http://somehost.com/foo/bar, you set path_depth to 2.
+    path_depth=1
+
+Next you set http server config file. The following is apache example.
+
+    <VirtualHost *:80>
+      ServerName perlcodesample.com
+      <Proxy *>
+        Order deny,allow
+        Allow from all
+      </Proxy>
+      ProxyRequests Off
+      ProxyPreserveHost On
+
+      ProxyPass /app1 http://localhost:10020/app1 keepalive=On
+      ProxyPassReverse /app1 http://localhost:3000/app1
+
+      ProxyPass /app2 http://localhost:10021/app2 keepalive=On
+      ProxyPassReverse /app2 http://localhost:3001/app2
+
+      RequestHeader set X-Forwarded-HTTPS "0"
+    </VirtualHost>
+
 ### How to import already existing repositories?
 
 You can import already existing repositories by **script/import_rep** script.
