@@ -9,12 +9,21 @@
   my $user = param('user');
   my $project = param('project');
   my $rev_file = param('rev_file');
+  
+  my $return_atom = $rev_file =~ s/\.atom$// ? 1 : 0;
+  
   my ($rev, $file) = $git->parse_rev_path($user, $project, $rev_file);
   my $page = param('page') || 0;
   
   # Commit
   my $commit = $git->get_commit($user, $project, $rev);
-  
+
+  # Not found
+  unless ($commit) {
+    $self->render_not_found;
+    return;
+  }
+    
   # Commits
   my $page_count = 30;
   my $commits = $git->get_commits(
@@ -35,6 +44,28 @@
   
   # Global variable
   stash(user => $user, project => $project, rev => $rev);
+  
+  if ($return_atom) {
+    my $url = url_with->to_abs;
+    
+    my $xml = <<"EOS";
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xml:lang="en-US">
+  <id>tag:gitprep,2008:/$user/$project/commits/$rev_file</id>
+  <link type="application/atom+xml" rel="self" href="$url"/>
+  <title>Recent Commits to $project:$rev</title>
+  <updated>2013-03-29T22:16:25+09:00</updated>
+EOS
+
+    $xml .= <<"EOS";
+</feed>
+EOS
+    
+    
+    $self->res->headers->content_type('application/atom+xml');
+    $self->render(text => $xml);
+    return;
+  }
 %>
 
 % layout 'common', title => "Commit History \x{30fb} $user/$project";

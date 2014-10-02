@@ -313,7 +313,7 @@ sub startup {
             
             # Commit
             $r->get('/commit/*diff' => template '/commit');
-            
+
             # Commits
             $r->get('/commits/*rev_file' => template '/commits');
             
