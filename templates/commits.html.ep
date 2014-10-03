@@ -85,10 +85,11 @@ EOS
 
     for my $commit (reverse @$commits) {
       my $author_uri = url_for->base->to_abs . "/$user";
+      my $link_href = url_for->base->to_abs . "/$user/$project/commit/$commit->{id}";
       $xml .= <<"EOS";
   <entry>
     <id>tag:gitprep,2008:Grit::Commit/$commit->{id}</id>
-    <link type="text/html" rel="alternate" href="https://github.com/kraih/mojo/commit/9efcd268fd08c8e0f2418278aec31c44906e1be3"/>
+    <link type="text/html" rel="alternate" href="$link_href"/>
     <title>
         $commit->{title}
     </title>
