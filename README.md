@@ -426,7 +426,7 @@ OK. GitPrep suport time zone. You can set time_zone option in conig file.
 
 ### How to hide user home directory in ssh repository URL?
 
-**1. Use symbolic link and ssh_rep_url_base option
+**1. Use symbolic link and ssh_rep_url_base option**
 
 At first, set [basic]ssh_rep_url_base option to /git
 
@@ -441,7 +441,7 @@ And you create symbolic link to /home/gitprep/gitprep/data/rep
     ln -s /home/gitprep/gitprep/data/rep /git
     chown gitprep:gitprep /git
 
-**2. Use only public key authentication and set [basic]ssh_rep_url_base to empty
+**2. Use only public key authentication and set [basic]ssh_rep_url_base to empty**
 
 If you use only public key authentication, you can access ssh repository
 using the following url.
@@ -454,6 +454,12 @@ If you set [basic]ssh_rep_url_base to empty string, this URL is shown on Browser
     ; For exampke, If you set this value to /git, SSH repository url become
     ; ssh://kimoto@59.106.185.196/git/kimoto/gitprep.git
     ssh_rep_url_base=
+
+### How to get atom feed of commits page
+
+You can get atom feed of commits page by the following URL
+
+    http://somehost.com/kimoto/gitprep/commits/master.atom
 
 ## Web Site
 
