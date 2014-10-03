@@ -95,7 +95,7 @@ EOS
     </title>
     <updated>$commit->{updated}</updated>
     <author>
-      <name>$commit->{author_name}</name>
+      <name>$user</name>
       <uri>$author_uri</uri>
     </author>
     <content type="html">
