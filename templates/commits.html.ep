@@ -45,8 +45,13 @@
   # Global variable
   stash(user => $user, project => $project, rev => $rev);
   
+  # Render atom xml feed
   if ($return_atom) {
     my $url = url_with->to_abs;
+    
+    my $updated = $commits->[0];
+    
+    warn dumper $commits->[0];
     
     my $xml = <<"EOS";
 <?xml version="1.0" encoding="UTF-8"?>

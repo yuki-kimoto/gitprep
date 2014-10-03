@@ -1270,7 +1270,8 @@ sub parse_commit_text {
   
   # GMT
   {
-    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($commit{committer_epoch});
+    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday)
+      = gmtime($commit{committer_epoch});
     $commit{age_string_date} = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
     $commit{age_string_datetime} = sprintf '%4d-%02d-%02d %02d:%02d:%02d',
       1900 + $year, $mon + 1, $mday, $hour, $min, $sec;
@@ -1279,11 +1280,16 @@ sub parse_commit_text {
   # Local Time
   {
     my $time_zone_second = $self->time_zone_second || 0;
+    my $time_zone_hour = int($time_zone_second / 60);
+    my $time_zone_min = $time_zone_second % 60;
+    my $time_zone = $time_zone_second >= 0 ? '+' : '-';
+    $time_zone .= sprintf("%02d:%02d", $time_zone_hour, $time_zone_min);
     
-    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($commit{committer_epoch} + $time_zone_second);
+    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday)
+      = gmtime($commit{committer_epoch} + $time_zone_second);
     $commit{age_string_date_local}
       = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
-    $commit{age_string_datetime_local} = sprintf '%4d-%02d-%02d %02d:%02d:%02d',
+    $commit{age_string_datetime_local} = sprintf "%4d-%02d-%02d %02d:%02d:%02d GMT$time_zone",
       1900 + $year, $mon + 1, $mday, $hour, $min, $sec;
   }
   
