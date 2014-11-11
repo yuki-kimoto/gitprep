@@ -188,6 +188,14 @@ note 'Commits page';
     $t->get_ok("/$user/$project/commits/refs/heads/master");
     $t->content_like(qr#refs/heads/master#);
   }
+  
+  # Commits page - atom feed
+  {
+    # Page access(branch name long)
+    $t->get_ok("/$user/$project/commits/master.atom");
+    $t->content_like(qr/\Q<?xml version="1.0" encoding="UTF-8"?>/);
+    $t->content_like(qr/<entry>/);
+  }
 }
 
 note 'History page';

@@ -9,12 +9,21 @@
   my $user = param('user');
   my $project = param('project');
   my $rev_file = param('rev_file');
+  
+  my $render_atom_feed = $rev_file =~ s/\.atom$// ? 1 : 0;
+  
   my ($rev, $file) = $git->parse_rev_path($user, $project, $rev_file);
   my $page = param('page') || 0;
   
   # Commit
   my $commit = $git->get_commit($user, $project, $rev);
-  
+
+  # Not found
+  unless ($commit) {
+    $self->render_not_found;
+    return;
+  }
+    
   # Commits
   my $page_count = 30;
   my $commits = $git->get_commits(
@@ -35,6 +44,75 @@
   
   # Global variable
   stash(user => $user, project => $project, rev => $rev);
+  
+  # Render atom xml feed
+  if ($render_atom_feed) {
+    my $url = url_with->to_abs;
+    
+    # Add updated date time
+    for my $commit (@$commits) {
+      my $committer_epoch = $commit->{committer_epoch};
+      my $committer_tz = $commit->{committer_tz};
+      
+      my $time_zone_second;
+      my $time_zone;
+      if ($committer_tz =~ /^(\+|\-)([0-9]{2})([0-9]{2})$/) {
+        my $time_zone_sign = $1;
+        my $time_zone_hour = $2;
+        my $time_zone_min = $3;
+        $time_zone_second = $time_zone_sign . ($time_zone_hour * (60 * 60) + $time_zone_min * 60);
+        $time_zone = sprintf("$time_zone_sign%02d:%02d", $time_zone_hour, $time_zone_min);
+      }
+
+      # updated datetime
+      my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($committer_epoch + $time_zone_second);
+      my $updated = sprintf('%4d-%02d-%02dT%02d:%02d:%02d', 1900 + $year, $mon + 1, $mday, $hour, $min, $sec);
+      $updated .= $time_zone;
+      
+      $commit->{updated} = $updated;
+    }
+    
+    my $xml = <<"EOS";
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xml:lang="en-US">
+  <id>tag:gitprep,2008:/$user/$project/commits/$rev_file</id>
+  <link type="text/html" rel="alternate" href="$url"/>
+  <link type="application/atom+xml" rel="self" href="$url"/>
+  <title>Recent Commits to $project:$rev</title>
+  <updated>$commits->[0]->{updated}</updated>
+
+EOS
+
+    for my $commit (reverse @$commits) {
+      my $author_uri = url_for->base->to_abs . "/$user";
+      my $link_href = url_for->base->to_abs . "/$user/$project/commit/$commit->{id}";
+      $xml .= <<"EOS";
+  <entry>
+    <id>tag:gitprep,2008:Grit::Commit/$commit->{id}</id>
+    <link type="text/html" rel="alternate" href="$link_href"/>
+    <title>
+        $commit->{title}
+    </title>
+    <updated>$commit->{updated}</updated>
+    <author>
+      <name>$user</name>
+      <uri>$author_uri</uri>
+    </author>
+    <content type="html">
+      &lt;pre style='white-space:pre-wrap;width:81ex'>$commit->{title}&lt;/pre>
+    </content>
+  </entry>
+EOS
+    }
+
+    $xml .= <<"EOS";
+</feed>
+EOS
+    
+    $self->res->headers->content_type('application/atom+xml');
+    $self->render(text => $xml);
+    return;
+  }
 %>
 
 % layout 'common', title => "Commit History \x{30fb} $user/$project";

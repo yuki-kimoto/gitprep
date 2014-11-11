@@ -17,7 +17,7 @@ use Mojolicious::Plugin::AutoRoute::Util 'template';
   eval {require Digest::SHA; import Digest::SHA qw(sha1 sha1_hex)};
 }
 
-our $VERSION = 'v1.8';
+our $VERSION = 'v1.9';
 
 has 'dbi';
 has 'git';
@@ -313,7 +313,7 @@ sub startup {
             
             # Commit
             $r->get('/commit/*diff' => template '/commit');
-            
+
             # Commits
             $r->get('/commits/*rev_file' => template '/commits');
             

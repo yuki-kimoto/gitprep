@@ -1,3 +1,7 @@
+1.9
+  - add ssh_rep_url_base to cnahge or hide ssh URL user directory
+  - add atom feed of commits page
+    for example, http://somehost.com/kimoto/gitprep_t/commits/master.atom
 1.8
   - support publick key authentication
 1.7

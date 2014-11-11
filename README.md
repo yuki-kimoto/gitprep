@@ -6,12 +6,12 @@ Github clone. You can install portable github system into Unix/Linux.
 
 # Features
 
-* Github clone. GitPrep have same interface as GitHub.
-* Portable. You can install GitPrep into your Unix/Linux server.
-* Support cygwin on Windows(need gcc4 package). You can install GitPrep into Windows.
+* Github clone: GitPrep has the same interface as GitHub.
+* Portable: You can install GitPrep on your own Unix/Linux server.
+* Supports Windows installation via cygwin for Windows (need gcc4 package).
 * Only needs Perl 5.8.7+.
-* Smart HTTP support, you can pull and push via HTTP
-* CGI support, and having built-in web server, Reverse proxy support.
+* Smart HTTP support: you can pull and push via HTTP
+* CGI support, built-in web server, and reverse proxy support.
 * SSL support.
 
 # Installation into Shared Server
@@ -19,19 +19,16 @@ Github clone. You can install portable github system into Unix/Linux.
 Shared Server must support **Linux/Unix**, **Apache**, **SuExec**,
 **CGI**, and **PHP5(CGI mode)**.
 
-(*PHP* is not necessary, if PHP exists, the install process is easy
+(*PHP* is not strictly necessary. If PHP exists, the install process is easy
 because you do not need to think about permissions.)
 
-Many shared servers support these,
-so you will be able to find a suitable server easily.
+Many shared servers support these, so you will be able to find or setup a suitable server easily.
 
 ## Download
 
-First you need to download gitprep.
+First you need to [download gitprep](https://github.com/yuki-kimoto/gitprep/archive/latest.zip).
 
-https://github.com/yuki-kimoto/gitprep/archive/latest.zip
-
-Expand the zip file. You will see the following directory.
+Expand the zip file. You will see the following directory:
 
     gitprep-latest
 
@@ -42,7 +39,7 @@ Rename the gitprep-latest directory to gitprep.
 ## Configuration
 
 GitPrep needs the git command. You must install git by yourself.
-If you don't yet set user.name and user.email, you must set them.
+If you haven't set user.name and user.email, you must set them.
 
     git config --global user.name "gitprep"
     git config --global user.email "gitprep@example.com"
@@ -55,25 +52,24 @@ You must add the correct git command path to the **gitprep.conf** config file.
 
 ## Upload Server by FTP
 
-You upload these directory into server document root by FTP.
+You should upload these directories into server document root by FTP.
 
 ## Setup
 
-Access the following URL by browser.
+Access the following URL by browser:
 
     http://(Your host name)/gitprep/setup/setup.php
 
-(If you don't access PHP file or don't have PHP,
-you can use CGI script
-please set this CGI script permission to 755)
+If you don't access PHP file or don't have PHP,
+you can use CGI script. Please set this CGI script permission to `755`.
 
-    http://(Your host name)/gitprep/setup/setup.cgi.
+    http://(Your host name)/gitprep/setup/setup.cgi
 
-Click Setup button once and wait about 5 minutes.
+Click the Setup button once and wait about 5 minutes.
 
 ## Go to application
 
-If you see result, click "Go to Application".
+If you see the result screen, click "Go to Application".
 
 ## Getting started
 
@@ -89,22 +85,22 @@ Note: the admin user cannot create repos.
 
 One way to import data:
 
-1. Create your new repo in gitprep
-2. In your local git repo, add a new remote target
+1. Create your new repo in gitprep.
+2. In your local git repo, add a new remote target: 
 ```
 git remote add gitprep git@my.gitprep.server:new-repo.git 
 ```
-3. Push all your repo content up in to this new gitprep target
-4. Update your local git repo config such that gitprep is now the origin
+3. Push all your repo content up in to this new gitprep target.
+4. Update your local git repo config such that gitprep is now the origin.
 
-Copy from /var/lib/gitolite or /var/lib/gitosis
+Copy from `/var/lib/gitolite` or `/var/lib/gitosis`
 
 TBD
 
 ## Internal Server Error
 
 If you receive an internal server error, look at the log file (gitprep/log/production.log)
-to see what the problem occurred.
+to see what problem has occurred.
 
 # Installation into own Unix/Linux Server
 
@@ -114,13 +110,13 @@ This is much better than the way shown above
 because you do not need to setup the Apache environment
 and performance will be much better.
 
-(You can also install GitPrep into Cygwin.
+You can also install GitPrep into Cygwin.
 If you want to install GitPrep into Cygwin,
-gcc4 and make program are needed.)
+gcc4 and make program are needed.
 
 ## Create gitprep user
 
-Create a **gitprep** user. This is not necessary, but recommended.
+Create a **gitprep** user. This is not necessary, but recommended:
 
     useradd gitprep
     su - gitprep
@@ -128,7 +124,7 @@ Create a **gitprep** user. This is not necessary, but recommended.
 
 ## Download
 
-Download tar.gz archive, expand it and change directory.
+Download tar.gz archive, expand it and change directory:
 
     curl -kL https://github.com/yuki-kimoto/gitprep/archive/latest.tar.gz > gitprep-latest.tar.gz
     tar xf gitprep-latest.tar.gz
@@ -137,13 +133,13 @@ Download tar.gz archive, expand it and change directory.
 
 ## Setup
 
-To setup GitPrep, execute the following command. All of the needed modules will be installed.
+To setup GitPrep, execute the following command. All of the needed modules will be installed:
 
     ./setup.sh
 
 ## Test
 
-Run the test to check if the setup process was successful or not.
+Run the test to check if the setup process was successful or not:
 
     prove t
 
@@ -351,6 +347,39 @@ If you use GitPrep vis https, you should set X-Forwarded-HTTPS Request Header.
       RequestHeader set X-Forwarded-HTTPS "1"
     </VirtualHost>
 
+### How to use reverse proxy with sub directory?
+
+GitPrep support reverse proxy with sub directory.
+
+At first, set [reverse_proxy]path_depth option.
+
+    [reverse_proxy]
+
+    ;;; Reverse proxy path depth (default: none)
+    ;;; If proxy path is http://somehost.com/foo, you set path_depth to 1.
+    ;;; If proxy path is http://somehost.com/foo/bar, you set path_depth to 2.
+    path_depth=1
+
+Next you set http server config file. The following is apache example.
+
+    <VirtualHost *:80>
+      ServerName perlcodesample.com
+      <Proxy *>
+        Order deny,allow
+        Allow from all
+      </Proxy>
+      ProxyRequests Off
+      ProxyPreserveHost On
+
+      ProxyPass /app1 http://localhost:10020/app1 keepalive=On
+      ProxyPassReverse /app1 http://localhost:3000/app1
+
+      ProxyPass /app2 http://localhost:10021/app2 keepalive=On
+      ProxyPassReverse /app2 http://localhost:3001/app2
+
+      RequestHeader set X-Forwarded-HTTPS "0"
+    </VirtualHost>
+
 ### How to import already existing repositories?
 
 You can import already existing repositories by **script/import_rep** script.
@@ -385,7 +414,7 @@ Please fix it by the following way.
     # Restart
     ./gitprep
 
-## I want to set time zone.
+### I want to set time zone.
 
 OK. GitPrep suport time zone. You can set time_zone option in conig file.
 
@@ -394,6 +423,43 @@ OK. GitPrep suport time zone. You can set time_zone option in conig file.
     ;;; GitPrep time zone is GMT by default
     ;;; You can set your local time zone.
     time_zone=+9:00
+
+### How to hide user home directory in ssh repository URL?
+
+**1. Use symbolic link and ssh_rep_url_base option**
+
+At first, set [basic]ssh_rep_url_base option to /git
+
+    ;;; SSH repository url base
+    ; For exampke, If you set this value to /git, SSH repository url become
+    ; ssh://kimoto@59.106.185.196/git/kimoto/gitprep.git
+    ssh_rep_url_base=/git
+
+And you create symbolic link to /home/gitprep/gitprep/data/rep
+    
+    cd /
+    ln -s /home/gitprep/gitprep/data/rep /git
+    chown gitprep:gitprep /git
+
+**2. Use only public key authentication and set [basic]ssh_rep_url_base to empty**
+
+If you use only public key authentication, you can access ssh repository
+using the following url.
+
+    ssh://kimoto@59.106.185.196/kimoto/gitprep.git
+
+If you set [basic]ssh_rep_url_base to empty string, this URL is shown on Browser.
+
+    ;;; SSH repository url base
+    ; For exampke, If you set this value to /git, SSH repository url become
+    ; ssh://kimoto@59.106.185.196/git/kimoto/gitprep.git
+    ssh_rep_url_base=
+
+### How to get atom feed of commits page
+
+You can get atom feed of commits page by the following URL
+
+    http://somehost.com/kimoto/gitprep/commits/master.atom
 
 ## Web Site
 

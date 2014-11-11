@@ -1286,7 +1286,7 @@ sub parse_commit_text {
     $commit{age_string_datetime_local} = sprintf '%4d-%02d-%02d %02d:%02d:%02d',
       1900 + $year, $mon + 1, $mday, $hour, $min, $sec;
   }
-  
+
   return \%commit;
 }
 
