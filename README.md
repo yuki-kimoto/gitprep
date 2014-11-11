@@ -36,6 +36,13 @@ Rename the gitprep-latest directory to gitprep.
 
     gitprep-latest -> gitprep
 
+If you know latest gitprep release, I inform you in the following blog
+or mailing list.
+
+[Yuki Kimoto Perl Blog](http://blogs.perl.org/users/yuki_kimoto/)
+
+[Google GitPrep Group](https://groups.google.com/forum/#!forum/gitprep)
+
 ## Configuration
 
 GitPrep needs the git command. You must install git by yourself.
