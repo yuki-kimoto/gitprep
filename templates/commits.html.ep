@@ -73,7 +73,7 @@
 #%>
 % if ($render_atom_feed) {
 <%
-    $self->res->headers->content_type('application/atom+xml');
+    $self->res->headers->content_type('application/atom+xml;charset=UTF-8');
     # Create atom feed
     my $commit_title = $commit->{title};
     $commit_title = Mojo::Util::xml_escape
