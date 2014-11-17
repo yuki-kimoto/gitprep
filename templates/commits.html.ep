@@ -83,7 +83,7 @@
 #%>
 <?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xml:lang="en-US">
-  <id>tag:gitprep,2008:/$user/$project/commits/$rev_file</id>
+  <id>tag:gitprep,2008:/<%= $user %>/<%= $project %>/commits/<%= $rev_file %></id>
   <link type="text/html" rel="alternate" href="<%= $url_no_atom %>"/>
   <link type="application/atom+xml" rel="self" href="<%= $url %>"/>
   <title>Recent Commits to <%= "$project:$rev" %></title>
