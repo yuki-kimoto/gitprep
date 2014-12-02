@@ -92,13 +92,11 @@
   <updated><%= $commits->[0]->{updated} %></updated>
 
     % for my $commit (@$commits) {
-      % my $author_url = url_for;
-      % $author_url->path->parts([$user]);
-      % my $entry_alternate_url = url_for;
-      % $entry_alternate_url->path->parts([$user, $project, 'commit', $commit->{id}]);
+      % my $entry_alternate_url = url_for("/$user/$project/commit/$commit->{id}");
+      % my $author_url = url_for("/$user");
   <entry>
     <id>tag:gitprep,2008:Grit::Commit/<%= $commit->{id} %></id>
-    <link type="text/html" rel="alternate" href="<%= $entry_alternate_url->to_abs %>"/>
+    <link type="text/html" rel="alternate" href="<%= $entry_alternate_url->to_abs %>" />
     <title>
         <%= $commit->{title} %>
     </title>
