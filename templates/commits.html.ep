@@ -77,31 +77,35 @@
     # Create atom feed
     my $commit_title = $commit->{title};
     $commit_title = Mojo::Util::xml_escape
-    my $url = url_with->to_abs;
-    my $url_no_atom = $url;
-    $url_no_atom =~ s/\.atom$//;
+    
+    my $alternate_url = url_with;
+    my $alternate_url_path_parts = $alternate_url->path->parts;
+    $alternate_url_path_parts->[-1] =~ s/\.atom$//;
+    
 #%>
 <?xml version="1.0" encoding="UTF-8" ?>
 <feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xml:lang="en-US">
   <id>tag:gitprep,2008:/<%= $user %>/<%= $project %>/commits/<%= $rev_file %></id>
-  <link type="text/html" rel="alternate" href="<%= $url_no_atom %>"/>
-  <link type="application/atom+xml" rel="self" href="<%= $url %>"/>
+  <link type="text/html" rel="alternate" href="<%= $alternate_url->to_abs %>"/>
+  <link type="application/atom+xml" rel="self" href="<%= url_with->to_abs %>"/>
   <title>Recent Commits to <%= "$project:$rev" %></title>
   <updated><%= $commits->[0]->{updated} %></updated>
 
     % for my $commit (@$commits) {
-      % my $author_uri = url_for->base->to_abs . "/$user";
-      % my $link_href = url_for->base->to_abs . "/$user/$project/commit/$commit->{id}";
+      % my $author_url = url_for;
+      % $author_url->path->parts([$user]);
+      % my $entry_alternate_url = url_for;
+      % $entry_alternate_url->path->parts([$user, $project, 'commit', $commit->{id}]);
   <entry>
     <id>tag:gitprep,2008:Grit::Commit/<%= $commit->{id} %></id>
-    <link type="text/html" rel="alternate" href="<%= $link_href %>"/>
+    <link type="text/html" rel="alternate" href="<%= $entry_alternate_url->to_abs %>"/>
     <title>
         <%= $commit->{title} %>
     </title>
     <updated><%= $commit->{updated} %></updated>
     <author>
       <name><%= $user %></name>
-      <uri><%= $author_uri %></uri>
+      <uri><%= $author_url->to_abs %></uri>
     </author>
     <content type="html">
       <%= "<pre style='white-space:pre-wrap;width:81ex'>$commit->{title}</pre>" %>
