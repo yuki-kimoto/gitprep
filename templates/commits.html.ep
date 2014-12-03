@@ -70,6 +70,13 @@
       $commit->{updated} = $updated;
     }
   }
+  
+  # Set stash
+  stash(
+    user => $user,
+    project => $project,
+    rev => $rev
+  );
 #%>
 % if ($render_atom_feed) {
 <%

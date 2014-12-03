@@ -1,5 +1,14 @@
 <%
   my $stylesheets = stash('stylesheets') || [];
+  my $user = stash('user');
+  $user = '' unless defined $user;
+  my $project = stash('project');
+  $project = '' unless defined $project;
+  my $rev = stash('rev');
+  if (length $user && length $project && !defined $rev) {
+    $rev = app->manager->default_branch($user, $project);
+  }
+  $rev = '' unless $rev;
 %>
 <!DOCTYPE html>
 <html>
@@ -16,6 +25,9 @@
     %= javascript '/js/bootstrap.min.js';
     
     <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" >
+    % if (length $user && length $project && length $rev) {
+      <link href="<%= url_for("/$user/$project/commits/$rev.atom")->to_abs %>" rel="alternate" title="Recent Commits to <%= "$project:$rev" %>" type="application/atom+xml">
+    % }
   </head>
   <body>
     %= stylesheet begin
