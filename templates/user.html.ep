@@ -24,52 +24,89 @@
     $rep->{private} = $project->{private};
     push @$reps, $rep;
   }
-%>
+#%>
+% if ($render_atom_feed) {
+<%
+    $self->res->headers->content_type('application/atom+xml;charset=UTF-8');
+    my $alternate_url = url_with;
+    my $alternate_url_path_parts = $alternate_url->path->parts;
+    $alternate_url_path_parts->[-1] =~ s/\.atom$//;
+#%>
+<?xml version="1.0" encoding="UTF-8" ?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xml:lang="en-US">
+  <id>tag:gitprep,2008:/<%= $user %></id>
+  <link type="text/html" rel="alternate" href="<%= $alternate_url->to_abs %>"/>
+  <link type="application/atom+xml" rel="self" href="<%= url_with->to_abs %>"/>
+  <title>Recent Commits to <%= "$project:$rev" %></title>
+  <updated><%= $commits->[0]->{updated} %></updated>
 
-% layout 'common', title => $user;
-  %= include '/include/header', title => 'Repositories';
+    % for my $commit (@$commits) {
+      % my $entry_alternate_url = url_for("/$user/$project/commit/$commit->{id}");
+      % my $author_url = url_for("/$user");
+  <entry>
+    <id>tag:gitprep,2008:Grit::Commit/<%= $commit->{id} %></id>
+    <link type="text/html" rel="alternate" href="<%= $entry_alternate_url->to_abs %>" />
+    <title>
+        <%= $commit->{title} %>
+    </title>
+    <updated><%= $commit->{updated} %></updated>
+    <author>
+      <name><%= $user %></name>
+      <uri><%= $author_url->to_abs %></uri>
+    </author>
+    <content type="html">
+      <%= "<pre style='white-space:pre-wrap;width:81ex'>$commit->{title}</pre>" %>
+    </content>
+  </entry>
+    % }
+</feed>
+% } else {
 
-  <div class="container">
-    <div>
-      %= include '/include/message', message => flash('message');
-      
-      <ul class="breadcrumb" style="margin-top:10px">
-        <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>
-        /
-        <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
-      </ul>
+  % layout 'common', title => $user;
+    %= include '/include/header', title => 'Repositories';
 
-      <h3>Repositories</h3>
-      
-      <table class="table">
-        % for my $rep (sort { $a->{age} <=> $b->{age} } @$reps) {
-          % if (!$rep->{private} || $api->can_access_private_project($user, $rep->{name})) {
-            <tr>
-              % my $pname = $rep->{name};
-              <td>
-                <a href="<%= url_for("/$user/$pname") %>">
-                  <%= $rep->{name} %>
-                  % if ($rep->{private}) {
-                    <i class="icon icon-lock" style="margin-left:5px;margin-right:5px"></i>
+    <div class="container">
+      <div>
+        %= include '/include/message', message => flash('message');
+        
+        <ul class="breadcrumb" style="margin-top:10px">
+          <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>
+          /
+          <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
+        </ul>
+
+        <h3>Repositories</h3>
+        
+        <table class="table">
+          % for my $rep (sort { $a->{age} <=> $b->{age} } @$reps) {
+            % if (!$rep->{private} || $api->can_access_private_project($user, $rep->{name})) {
+              <tr>
+                % my $pname = $rep->{name};
+                <td>
+                  <a href="<%= url_for("/$user/$pname") %>">
+                    <%= $rep->{name} %>
+                    % if ($rep->{private}) {
+                      <i class="icon icon-lock" style="margin-left:5px;margin-right:5px"></i>
+                    % }
+                  </a>
+                </td>
+                <td>
+                  <%= $rep->{description} %>
+                </td>
+                % my $age = $rep->{age_string};
+                <td class="muted">
+                  % if ($rep->{none}) {
+                    <span style="color:red">Repository not exists</span>
+                    <a href="<%= "/$user/$rep->{name}/settings" %>" class="btn btn-mini">Settings</a>
+                  % } else {
+                    <%= $age ? "last updated $age" : 'new repository' %>
                   % }
-                </a>
-              </td>
-              <td>
-                <%= $rep->{description} %>
-              </td>
-              % my $age = $rep->{age_string};
-              <td class="muted">
-                % if ($rep->{none}) {
-                  <span style="color:red">Repository not exists</span>
-                  <a href="<%= "/$user/$rep->{name}/settings" %>" class="btn btn-mini">Settings</a>
-                % } else {
-                  <%= $age ? "last updated $age" : 'new repository' %>
-                % }
-              </td>
-            </tr>
+                </td>
+              </tr>
+            % }
           % }
-        % }
-      </table>
+        </table>
+      </div>
     </div>
-  </div>
-  %= include '/include/footer';
+    %= include '/include/footer';
+% }
