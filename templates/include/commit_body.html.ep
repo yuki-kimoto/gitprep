@@ -2,6 +2,9 @@
   # Parameters
   my $rev = stash('rev');
   my $from_rev = stash('from_rev');
+
+  my $param_ignore_space_change = param('w');
+  my $ignore_space_change = defined $param_ignore_space_change;
   
   # Git
   my $git = app->git;
@@ -12,6 +15,7 @@
     $project,
     $rev,
     $from_rev,
+    {ignore_space_change => $ignore_space_change}
   );
 
   my $diff_trees_h = {};
@@ -22,7 +26,15 @@
   }
   
   # Get blob diffs
-  my $blob_diffs = $git->blob_diffs($user, $project, $from_rev, $rev, $diff_trees) || [];
+  my $blob_diffs = $git->blob_diffs(
+    $user,
+    $project,
+    $from_rev,
+    $rev,
+    $diff_trees,
+    {ignore_space_change => $ignore_space_change}
+  ) || [];
+  
   my $blob_diffs_h = {};
   my $total_add_line_count = 0;
   my $total_delete_line_count = 0;

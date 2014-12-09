@@ -269,7 +269,10 @@ sub blob {
 }
 
 sub blob_diffs {
-  my ($self, $user, $project, $rev1, $rev2, $diff_trees) = @_;
+  my ($self, $user, $project, $rev1, $rev2, $diff_trees, $opt) = @_;
+
+  $opt ||= {};
+  my $ignore_space_change = $opt->{ignore_space_change};
   
   return unless defined $rev1 && defined $rev2;
   
@@ -282,10 +285,12 @@ sub blob_diffs {
     '-M',
     '--no-commit-id',
     '--patch-with-raw',
+    ($ignore_space_change ? '--ignore-space-change' : ()),
     $rev1,
     $rev2,
     '--'
   );
+  
   open my $fh, '-|', @cmd
     or croak('Open self-diff-tree failed');
   my @diff_tree;
@@ -556,7 +561,10 @@ sub description {
 }
 
 sub diff_tree {
-  my ($self, $user, $project, $rev, $parent) = @_;
+  my ($self, $user, $project, $rev, $parent, $opt) = @_;
+  
+  $opt ||= {};
+  my $ignore_space_change = $opt->{ignore_space_change};
   
   # Root
   $parent = '--root' unless defined $parent;
@@ -569,10 +577,12 @@ sub diff_tree {
     '-r',
     '--no-commit-id',
     '-M',
+    ($ignore_space_change ? '--ignore-space-change' : ()),
     $parent,
     $rev,
     '--'
   );
+  
   open my $fh, "-|", @cmd
     or croak 500, "Open git-diff-tree failed";
   my @diff_tree = map { chomp; $self->_dec($_) } <$fh>;
