@@ -1,4 +1,5 @@
 1.10
+  - add show_ignore_space_change_link option to show --ignore-space-change page easily
   - add --ignore-space-change feature in diff page by using w= query string
     for example, http://some.com/kimoto/gitprep_t/commit/3cf14ade5e28ee0cd83b9a3b1e1c332aed66df53?w=
 1.9.2

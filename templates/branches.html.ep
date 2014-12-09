@@ -217,6 +217,11 @@
             <a class="btn" href="<%= url_for("/$user/$project/compare/$base_branch->{name}...$bname") %>">
               Compare
             </a>
+            % if (app->config->{basic}{show_ignore_space_change_link}) {
+              (<a style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/compare/$base_branch->{name}...$bname?w=") %>">
+                ignore space
+              </a>)
+            % }
           </div>
         </div>
       </div>

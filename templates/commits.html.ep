@@ -150,6 +150,11 @@
                   <a class="font-black" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                     <b><%= $commit->{title_short} %></b>
                   </a>
+                  % if (app->config->{basic}{show_ignore_space_change_link}) {
+                    (<a class="font-black" style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/commit/$commit->{id}?w=") %>">
+                      ignore space
+                    </a>)
+                  % }
                 </div>
                 <div class="text-right">
                   <a class="btn" style="width:90px;padding:0px 10px;color:#3a505b;font-size:12px" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
