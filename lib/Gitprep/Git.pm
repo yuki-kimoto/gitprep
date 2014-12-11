@@ -319,6 +319,7 @@ sub blob_diffs {
       '-r',
       '-M',
       '-p',
+      ($ignore_space_change ? '--ignore-space-change' : ()),
       $rev1,
       $rev2,
       '--',
