@@ -61,6 +61,9 @@
             <a class="font-black" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
               <%= $commit->{title_short} %>
             </a>
+            (<a style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/commit/$commit->{id}?w=") %>">
+              ignore space
+            </a>)
             [<span style="color:#4183c4" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>]
           </div>
         </div>
