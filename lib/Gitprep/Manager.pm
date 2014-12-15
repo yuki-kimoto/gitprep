@@ -474,7 +474,7 @@ sub update_authorized_keys_file {
     }
     
     # Parse file
-    my $result = $self->_parse_authorized_keys_file($authorized_keys_file);
+    my $result = $self->parse_authorized_keys_file($authorized_keys_file);
     my $before_part = $result->{before_part};
     my $gitprep_part = $result->{gitprep_part};
     my $after_part = $result->{after_part};
@@ -524,7 +524,7 @@ sub update_authorized_keys_file {
   }
 }
 
-sub _parse_authorized_keys_file {
+sub parse_authorized_keys_file {
   my ($self, $file) = @_;
   
   my $start_symbol = "# gitprep start";

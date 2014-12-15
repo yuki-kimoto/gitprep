@@ -29,6 +29,7 @@
         ],
         key => [
           ['not_blank' => 'key is empty'],
+          # Check if key format is valid
           sub {
             my ($original_key, $args, $vc) = @_;
             
@@ -49,7 +50,29 @@
                   return {result => 0, message => 'Key already exists'};
                 }
                 else {
-                  return {result => 1, output => $key}
+                  my $key_is_contained;
+                  my $authorized_keys_file = app->manager->authorized_keys_file;
+                  if (defined $authorized_keys_file) {
+                    my $result
+                      = app->manager->parse_authorized_keys_file($authorized_keys_file);
+
+                    my $before_part = $result->{before_part};
+                    my $after_part = $result->{after_part};
+                    my $other_part = "$before_part\n$after_part";
+                    if ($other_part =~ /\s\Q$original_key_edit\E(\s|$)/) {
+                      $key_is_contained = 1;
+                    }
+                  }
+                  
+                  if ($key_is_contained) {
+                    return {
+                      result => 0,
+                      message => "authorized_keys file already contain this key"
+                    };
+                  }
+                  else {
+                    return {result => 1, output => $key}
+                  }
                 }
               }
               else {
