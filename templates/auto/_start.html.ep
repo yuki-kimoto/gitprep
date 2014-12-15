@@ -23,8 +23,7 @@
       my $rule = [
         password => [
           ['not_blank' => 'Password is empty.'],
-          ['ascii' => 'Password contains invalid character.'],
-          [{'length' => {max => 20}} => 'Password is too long.']
+          ['ascii' => 'Password contains invalid character.']
         ],
         {password_check => [qw/password password2/]}
           => {copy => 0}

@@ -53,10 +53,6 @@ note 'Start page';
   $t->post_ok('/_start?op=create', form => {password => "\t"});
   $t->content_like(qr/Password contains invalid character/);
 
-  # Password contains invalid character
-  $t->post_ok('/_start?op=create', form => {password => 'a' x 21});
-  $t->content_like(qr/Password is too long/);
-
   # Two password don't match
   $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'b'});
   $t->content_like(qr/Two password/);
@@ -133,10 +129,6 @@ note 'Admin pages';
     $t->content_like(qr/Password contain invalid character/);
 
     # Password contain invalid character
-    $t->post_ok('/_admin/user/create?op=create', form => {id => 'a', password => 'a' x 21});
-    $t->content_like(qr/Password is too long/);
-
-    # Password contain invalid character
     $t->post_ok('/_admin/user/create?op=create', form => {id => 'a', password => 'a', password2 => 'b'});
     $t->content_like(qr/Two password/);
     
@@ -164,10 +156,6 @@ note 'Admin pages';
     # Password contains invalid character
     $t->post_ok('/reset-password?user=kimoto&op=reset', form => {password => "\t"});
     $t->content_like(qr/Password contains invalid character/);
-
-    # Password is too long
-    $t->post_ok('/reset-password?user=kimoto&op=reset', form => {password => 'a' x 21});
-    $t->content_like(qr/Password is too long/);
     
     # Two password don't match
     $t->post_ok('/reset-password?user=kimoto&op=reset', form => {password => 'a', password2 => 'b'});

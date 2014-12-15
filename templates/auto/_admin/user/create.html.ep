@@ -17,8 +17,7 @@
       ],
       password => [
         ['not_blank' => 'Password is empty.'],
-        ['ascii' => 'Password contain invalid character.'],
-        [{'length' => {max => 20}} => 'Password is too long.']
+        ['ascii' => 'Password contain invalid character.']
       ],
       {password_check => [qw/password password2/]}
         => {copy => 0}
