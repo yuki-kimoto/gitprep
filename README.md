@@ -14,101 +14,6 @@ Github clone. You can install portable github system into Unix/Linux.
 * CGI support, built-in web server, and reverse proxy support.
 * SSL support.
 
-# Installation into Shared Server
-
-Shared Server must support **Linux/Unix**, **Apache**, **SuExec**,
-**CGI**, and **PHP5(CGI mode)**.
-
-(*PHP* is not strictly necessary. If PHP exists, the install process is easy
-because you do not need to think about permissions.)
-
-Many shared servers support these, so you will be able to find or setup a suitable server easily.
-
-## Download
-
-First you need to [download gitprep](https://github.com/yuki-kimoto/gitprep/archive/latest.zip).
-
-Expand the zip file. You will see the following directory:
-
-    gitprep-latest
-
-Rename the gitprep-latest directory to gitprep.
-
-    gitprep-latest -> gitprep
-
-If you know latest gitprep release, I inform you in the following blog
-or mailing list.
-
-[Yuki Kimoto Perl Blog](http://blogs.perl.org/users/yuki_kimoto/)
-
-[Google GitPrep Group](https://groups.google.com/forum/#!forum/gitprep)
-
-## Configuration
-
-GitPrep needs the git command. You must install git by yourself.
-If you haven't set user.name and user.email, you must set them.
-
-    git config --global user.name "gitprep"
-    git config --global user.email "gitprep@example.com"
-
-You must add the correct git command path to the **gitprep.conf** config file.
-
-    [basic]
-    ;;; Git command path
-    git_bin=/home/yourname/local/bin/git
-
-## Upload Server by FTP
-
-You should upload these directories into server document root by FTP.
-
-## Setup
-
-Access the following URL by browser:
-
-    http://(Your host name)/gitprep/setup/setup.php
-
-If you don't access PHP file or don't have PHP,
-you can use CGI script. Please set this CGI script permission to `755`.
-
-    http://(Your host name)/gitprep/setup/setup.cgi
-
-Click the Setup button once and wait about 5 minutes.
-
-## Go to application
-
-If you see the result screen, click "Go to Application".
-
-## Getting started
-
-On a fresh install, you will be asked to create the admin user.
-
-Log in as the admin user, then create a new regular user.
-
-Logout and log in as the regular user. Create repos and use the system!
-
-Note: the admin user cannot create repos.
-
-## Importing data
-
-One way to import data:
-
-1. Create your new repo in gitprep.
-2. In your local git repo, add a new remote target: 
-```
-git remote add gitprep git@my.gitprep.server:new-repo.git 
-```
-3. Push all your repo content up in to this new gitprep target.
-4. Update your local git repo config such that gitprep is now the origin.
-
-Copy from `/var/lib/gitolite` or `/var/lib/gitosis`
-
-TBD
-
-## Internal Server Error
-
-If you receive an internal server error, look at the log file (gitprep/log/production.log)
-to see what problem has occurred.
-
 # Installation into own Unix/Linux Server
 
 GitPrep has its own web server,
@@ -154,7 +59,17 @@ If "All tests successful" is shown, the setup process was successful.
 
 ## Configuration
 
-Same as Shared Server's Configuration section.
+GitPrep needs the git command. You must install git by yourself.
+If you haven't set user.name and user.email, you must set them.
+
+    git config --global user.name "gitprep"
+    git config --global user.email "gitprep@example.com"
+
+You must add the correct git command path to the **gitprep.conf** config file.
+
+    [basic]
+    ;;; Git command path
+    git_bin=/home/yourname/local/bin/git
 
 ## Operation
 
@@ -225,7 +140,93 @@ If you have git, it is easy to install from git.
 
 It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 
-## FAQ
+# Installation into Shared Server
+
+Shared Server must support **Linux/Unix**, **Apache**, **SuExec**,
+**CGI**, and **PHP5(CGI mode)**.
+
+(*PHP* is not strictly necessary. If PHP exists, the install process is easy
+because you do not need to think about permissions.)
+
+**Note that CGI script only work on shared server which support CGI + SuExec.
+At first, you should check the shared server support CGI + SuExec.**
+
+## Download
+
+First you need to [download gitprep](https://github.com/yuki-kimoto/gitprep/archive/latest.zip).
+
+Expand the zip file. You will see the following directory:
+
+    gitprep-latest
+
+Rename the gitprep-latest directory to gitprep.
+
+    gitprep-latest -> gitprep
+
+If you know latest gitprep release, I inform you in the following blog
+or mailing list.
+
+[Yuki Kimoto Perl Blog](http://blogs.perl.org/users/yuki_kimoto/)
+
+[Google GitPrep Group](https://groups.google.com/forum/#!forum/gitprep)
+
+## Configuration
+
+Same as "Installation into own Unix/Linux Server" Configuration section.
+
+## Upload Server by FTP
+
+You should upload these directories into server document root by FTP.
+
+## Setup
+
+Access the following URL by browser:
+
+    http://(Your host name)/gitprep/setup/setup.php
+
+If you don't access PHP file or don't have PHP,
+you can use CGI script. Please set this CGI script permission to `755`.
+
+    http://(Your host name)/gitprep/setup/setup.cgi
+
+Click the Setup button once and wait about 5 minutes.
+
+## Go to application
+
+If you see the result screen, click "Go to Application".
+
+## Getting started
+
+On a fresh install, you will be asked to create the admin user.
+
+Log in as the admin user, then create a new regular user.
+
+Logout and log in as the regular user. Create repos and use the system!
+
+Note: the admin user cannot create repos.
+
+## Importing data
+
+One way to import data:
+
+1. Create your new repo in gitprep.
+2. In your local git repo, add a new remote target: 
+```
+git remote add gitprep git@my.gitprep.server:new-repo.git 
+```
+3. Push all your repo content up in to this new gitprep target.
+4. Update your local git repo config such that gitprep is now the origin.
+
+Copy from `/var/lib/gitolite` or `/var/lib/gitosis`
+
+TBD
+
+## Internal Server Error
+
+If you receive an internal server error, look at the log file (gitprep/log/production.log)
+to see what problem has occurred.
+
+# FAQ
 
 ### blame don't work
 
