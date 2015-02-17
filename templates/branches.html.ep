@@ -76,7 +76,7 @@
   %= javascript begin
     $('document').ready(function () {
       
-      // Swich merged branch or not merged branch
+      // Switch merged branch or not merged branch
       var display_no_merged = true;
       $('#toggle-branch').on('click', function () {
         if (display_no_merged) {
