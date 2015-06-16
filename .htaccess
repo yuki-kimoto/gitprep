@@ -1,3 +1,5 @@
-<Files ~ gitprep.cgi>
-  Deny from all
+deny from all
+
+<Files ~ "gitprep\.cgi">
+allow from all
 </Files>
