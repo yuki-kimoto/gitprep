@@ -1,2 +1,3 @@
-order deny,allow
-deny from all
+<Files ~ gitprep.cgi>
+  Deny from all
+</Files>

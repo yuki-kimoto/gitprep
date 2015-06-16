@@ -143,10 +143,7 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 # Installation into Shared Server
 
 Shared Server must support **Linux/Unix**, **Apache**, **SuExec**,
-**CGI**, and **PHP5(CGI mode)**.
-
-(*PHP* is not strictly necessary. If PHP exists, the install process is easy
-because you do not need to think about permissions.)
+**CGI**.
 
 **Note that CGI script only work on shared server which support CGI + SuExec.
 At first, you should check the shared server support CGI + SuExec.**
