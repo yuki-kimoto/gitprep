@@ -58,10 +58,10 @@ You can access the following URL.
 If you see an internal server error, look at the log file (gitprep/log/production.log)
 to see what problem has occurred.
 
-### Additional work when you don't run CGI script by your user authority.
+### Additional work when you don't run CGI script by your user.
 
-If CGI script isn't run by your user authority, you need the following work.
-For example, CGI script is run by apache authority.
+If CGI script isn't run by your user, you need the following work.
+For example, CGI script is run by apache user.
 
 Change user and group of all files in gitprep directory to apache 
 
