@@ -3,6 +3,10 @@
   - add --ignore-space-change feature in diff page by using w= query string
     for example, http://some.com/kimoto/gitprep_t/commit/3cf14ade5e28ee0cd83b9a3b1e1c332aed66df53?w=
   - remove password length limit
+  - improve CGI installation and change CGI script path. This is not backword compatible.
+    you need to change CGI script path, path/gitprep.cgi to path/gitprep/gitprep/cgi
+  - remove setup.php
+  
 1.9.2
   - fix atom feed entry url bug
 1.9.1

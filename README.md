@@ -3,8 +3,7 @@
 Github clone. You can install portable github system into Unix/Linux.
 
 <img src="http://cdn-ak.f.st-hatena.com/images/fotolife/p/perlcodesample/20130421/20130421180903_original.png" width="850">
-
-# Features
+## Features
 
 * Github clone: GitPrep has the same interface as GitHub.
 * Portable: You can install GitPrep on your own Unix/Linux server.
@@ -14,27 +13,29 @@ Github clone. You can install portable github system into Unix/Linux.
 * CGI support, built-in web server, and reverse proxy support.
 * SSL support.
 
-# Installation into own Unix/Linux Server
+## Check Perl Version
 
-GitPrep has its own web server,
-so you can start using the application very easily.
-This is much better than the way shown above
-because you do not need to setup the Apache environment
-and performance will be much better.
+Check Perl version. You can use GitPrep if the Perl version is 5.8.7+;
 
-You can also install GitPrep into Cygwin.
-If you want to install GitPrep into Cygwin,
-gcc4 and make program are needed.
+    perl -v
 
-## Create gitprep user
+## Configuration
 
-Create a **gitprep** user. This is not necessary, but recommended:
+GitPrep needs the git command. You must install git by yourself.
+If you haven't set user.name and user.email, you must set them.
+For example:
 
-    useradd gitprep
-    su - gitprep
-    cd ~
+    git config --global user.name "gitprep"
+    git config --global user.email "gitprep@example.com"
 
-## Download
+If you install git in your local directry,
+you must add the correct git command path to the **gitprep.conf** config file
+
+    [basic]
+    ;;; Git command path
+    git_bin=/home/yourname/local/bin/git
+
+## A. Installation when you run GitPrep as CGI script
 
 Download tar.gz archive, expand it and change directory:
 
@@ -43,35 +44,76 @@ Download tar.gz archive, expand it and change directory:
     mv gitprep-latest gitprep
     cd gitprep
 
-## Setup
-
-To setup GitPrep, execute the following command. All of the needed modules will be installed:
+Setup. Needed module is installed.
 
     ./setup.sh
 
-## Test
-
-Run the test to check if the setup process was successful or not:
+Check setup. Run the following command.
 
     prove t
 
-If "All tests successful" is shown, the setup process was successful.
+If "syntax OK" is displayed, setup is sucseed.
 
-## Configuration
+You can access the following URL.
 
-GitPrep needs the git command. You must install git by yourself.
-If you haven't set user.name and user.email, you must set them.
+    http://yourhost/somepath/gitprep/gitprep.cgi
 
-    git config --global user.name "gitprep"
-    git config --global user.email "gitprep@example.com"
+### If you see Internal Server Error
 
-You must add the correct git command path to the **gitprep.conf** config file.
+If you see an internal server error, look at the log file (gitprep/log/production.log)
+to see what problem has occurred.
 
-    [basic]
-    ;;; Git command path
-    git_bin=/home/yourname/local/bin/git
+### Additional work when you don't run CGI script by your user authority.
 
-## Operation
+If CGI script isn't run by your user authority, you need the following work.
+For example, CGI script is run by apache authority.
+
+Change user and group of all files in gitprep directory to apache 
+
+    chown -R apache:apache gitprep
+
+In this case, you server need to execute CGI.
+Check apache config file.
+
+For example, you need the following config.
+
+    <Directory /var/www/html>
+        Options +ExecCGI
+        AddHandler cgi-script .cgi
+    </Directory>
+
+## B. Installation when you run GitPrep as embdded web server
+
+GitPrep has its own web server,
+so you can start using the application very easily.
+In this way, performance is much better than CGI.
+
+### Create gitprep user
+
+Create a **gitprep** user. This is not necessary, but recommended:
+
+    useradd gitprep
+    su - gitprep
+    cd ~
+
+### Download
+
+Download tar.gz archive, expand it and change directory:
+
+    curl -kL https://github.com/yuki-kimoto/gitprep/archive/latest.tar.gz > gitprep-latest.tar.gz
+    tar xf gitprep-latest.tar.gz
+    mv gitprep-latest gitprep
+    cd gitprep
+
+Setup. Needed module is installed.
+
+    ./setup.sh
+
+Check setup. Run the following command.
+
+    prove t
+
+If "syntax OK" is displayed, setup is sucseed.
 
 ### Start
 
@@ -93,137 +135,7 @@ You can stop the application by adding the **--stop** option.
 
     ./gitprep --stop
 
-### Operation from root user
-
-You can manage the application from the root user.
-
-Start the application
-
-    sudo -u gitprep /home/gitprep/gitprep/gitprep
-
-Stop the application
-
-    sudo -u gitprep /home/gitprep/gitprep/gitprep --stop
-
-If you want to start the application when the OS starts,
-add the start application command to **rc.local**(Linux).
-
-If you want to make it easy to manage gitprep,
-then create a run script.
-
-    mkdir -p /webapp
-    echo '#!/bin/sh' > /webapp/gitprep
-    echo 'su - gitprep -c "/home/gitprep/gitprep/gitprep $*"' >> /webapp/gitprep
-    chmod 755 /webapp/gitprep
-
-You can start and stop the application with the following command.
-
-    # Start or Restart
-    /webapp/gitprep
-
-    # Stop
-    /webapp/gitprep --stop
-
-## Developer
-
-If you are a developer, you can start the application in development mode.
-
-    ./morbo
-
-Then access the following URL.
-
-    http://localhost:3000
-
-If you have git, it is easy to install from git.
-
-    git clone git://github.com/yuki-kimoto/gitprep.git
-
-It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
-
-# Installation into Shared Server
-
-Shared Server must support **Linux/Unix**, **Apache**, **SuExec**,
-**CGI**.
-
-**Note that CGI script only work on shared server which support CGI + SuExec.
-At first, you should check the shared server support CGI + SuExec.**
-
-## Download
-
-First you need to [download gitprep](https://github.com/yuki-kimoto/gitprep/archive/latest.zip).
-
-Expand the zip file. You will see the following directory:
-
-    gitprep-latest
-
-Rename the gitprep-latest directory to gitprep.
-
-    gitprep-latest -> gitprep
-
-If you know latest gitprep release, I inform you in the following blog
-or mailing list.
-
-[Yuki Kimoto Perl Blog](http://blogs.perl.org/users/yuki_kimoto/)
-
-[Google GitPrep Group](https://groups.google.com/forum/#!forum/gitprep)
-
-## Configuration
-
-Same as "Installation into own Unix/Linux Server" Configuration section.
-
-## Upload Server by FTP
-
-You should upload these directories into server document root by FTP.
-
-## Setup
-
-Access the following URL by browser:
-
-    http://(Your host name)/gitprep/setup/setup.php
-
-If you don't access PHP file or don't have PHP,
-you can use CGI script. Please set this CGI script permission to `755`.
-
-    http://(Your host name)/gitprep/setup/setup.cgi
-
-Click the Setup button once and wait about 5 minutes.
-
-## Go to application
-
-If you see the result screen, click "Go to Application".
-
-## Getting started
-
-On a fresh install, you will be asked to create the admin user.
-
-Log in as the admin user, then create a new regular user.
-
-Logout and log in as the regular user. Create repos and use the system!
-
-Note: the admin user cannot create repos.
-
-## Importing data
-
-One way to import data:
-
-1. Create your new repo in gitprep.
-2. In your local git repo, add a new remote target: 
-```
-git remote add gitprep git@my.gitprep.server:new-repo.git 
-```
-3. Push all your repo content up in to this new gitprep target.
-4. Update your local git repo config such that gitprep is now the origin.
-
-Copy from `/var/lib/gitolite` or `/var/lib/gitosis`
-
-TBD
-
-## Internal Server Error
-
-If you receive an internal server error, look at the log file (gitprep/log/production.log)
-to see what problem has occurred.
-
-# FAQ
+## FAQ
 
 ### blame don't work
 
@@ -466,6 +378,53 @@ You can get atom feed of commits page by the following URL
 
     http://somehost.com/kimoto/gitprep/commits/master.atom
 
+### How to run GitPrep from root user
+
+You can manage the application from the root user.
+
+Start the application
+
+    sudo -u gitprep /home/gitprep/gitprep/gitprep
+
+Stop the application
+
+    sudo -u gitprep /home/gitprep/gitprep/gitprep --stop
+
+If you want to start the application when the OS starts,
+add the start application command to **rc.local**(Linux).
+
+If you want to make it easy to manage gitprep,
+then create a run script.
+
+    mkdir -p /webapp
+    echo '#!/bin/sh' > /webapp/gitprep
+    echo 'su - gitprep -c "/home/gitprep/gitprep/gitprep $*"' >> /webapp/gitprep
+    chmod 755 /webapp/gitprep
+
+You can start and stop the application with the following command.
+
+    # Start or Restart
+    /webapp/gitprep
+
+    # Stop
+    /webapp/gitprep --stop
+
+## For Developer
+
+If you are a developer, you can start the application in development mode.
+
+    ./morbo
+
+Then access the following URL.
+
+    http://localhost:3000
+
+If you have git, it is easy to install from git.
+
+    git clone git://github.com/yuki-kimoto/gitprep.git
+
+It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
+
 ## Web Site
 
 [GitPrep Web Site](http://perlcodesample.sakura.ne.jp/gitprep-site/)
@@ -483,6 +442,7 @@ You can get atom feed of commits page by the following URL
 * [Object::Simple](http://search.cpan.org/dist/Object-Simple/lib/Object/Simple.pm)
 * [Text::Markdown::Hoedown](http://search.cpan.org/~tokuhirom/Text-Markdown-Hoedown-1.01/lib/Text/Markdown/Hoedown.pm)
 * [Validator::Custom](http://search.cpan.org/dist/Validator-Custom/lib/Validator/Custom.pm)
+
 
 ## Sister project
 
