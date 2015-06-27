@@ -19,22 +19,10 @@ Check Perl version. You can use GitPrep if the Perl version is 5.8.7+;
 
     perl -v
 
-## Configuration
+### Checki git command existance
 
-GitPrep needs the git command. You must install git by yourself.
-If you haven't set user.name and user.email, you must set them.
-For example:
-
-    git config --global user.name "gitprep"
-    git config --global user.email "gitprep@example.com"
-
-If you install git in your local directry,
-you must add the correct git command path to the **gitprep.conf** config file
-
-    [basic]
-    ;;; Git command path
-    git_bin=/home/yourname/local/bin/git
-
+    git --version
+    
 ## A. Installation when you run GitPrep as CGI script
 
 Download tar.gz archive, expand it and change directory:
@@ -47,6 +35,13 @@ Download tar.gz archive, expand it and change directory:
 Setup. Needed module is installed.
 
     ./setup.sh
+
+If you install git in your local directry,
+you must add the correct git command path to the **gitprep.conf** config file.
+
+    [basic]
+    ;;; Git command path
+    git_bin=/home/yourname/local/bin/git
 
 Check setup. Run the following command.
 
@@ -96,6 +91,11 @@ Create a **gitprep** user. This is not necessary, but recommended:
     su - gitprep
     cd ~
 
+And config global git config
+
+    git config --global user.name "gitprep"
+    git config --global user.email "gitprep@example.com"
+
 ### Download
 
 Download tar.gz archive, expand it and change directory:
@@ -136,6 +136,15 @@ You can stop the application by adding the **--stop** option.
     ./gitprep --stop
 
 ## FAQ
+
+## Cna't find git command from GitPrep
+
+If you install git in your local directry,
+you must add the correct git command path to the **gitprep.conf** config file.
+
+    [basic]
+    ;;; Git command path
+    git_bin=/home/yourname/local/bin/git
 
 ### blame don't work
 
