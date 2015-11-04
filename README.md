@@ -137,7 +137,7 @@ You can stop the application by adding the **--stop** option.
 
 ## FAQ
 
-## Cna't find git command from GitPrep
+## Can't find git command from GitPrep
 
 If you install git in your local directry,
 you must add the correct git command path to the **gitprep.conf** config file.
