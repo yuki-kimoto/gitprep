@@ -13,6 +13,8 @@
   if ($lines) {
     $type = 'plain';
     my $readme = join "\n", @$lines;
+    $readme =~ s#^(\[.*\]:)(?!\s*https?://)\s*(\S*)#$1 /$user/$project/raw/$rev/$2#mg;
+    $readme =~ s#^(!\[.*\]\()(?!https?://)(\S*)#$1/$user/$project/raw/$rev/$2#mg;
     $readme_e = Mojo::ByteStream->new($readme)->xml_escape->to_string;
     $readme_e =~ s#(^|\s|[^\x00-\x7F])(http(?:s)?://.+?)($|\s|[^\x00-\x7F])#$1<a href="$2">$2</a>$3#msg;
   }
