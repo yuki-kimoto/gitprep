@@ -1,4 +1,4 @@
-1.10
+1.10 (27 Jun 2015)
   - add show_ignore_space_change_link option to show --ignore-space-change page easily
   - add --ignore-space-change feature in diff page by using w= query string
     for example, http://some.com/kimoto/gitprep_t/commit/3cf14ade5e28ee0cd83b9a3b1e1c332aed66df53?w=
@@ -7,20 +7,20 @@
     you need to change CGI script path, path/gitprep.cgi to path/gitprep/gitprep/cgi
   - remove setup.php
   
-1.9.2
+1.9.2 (18 Nov 2014)
   - fix atom feed entry url bug
 1.9.1
   - fix atom feed bug
-1.9
+1.9 (11 Nov 2014)
   - add ssh_rep_url_base to cnahge or hide ssh URL user directory
   - add atom feed of commits page
     for example, http://somehost.com/kimoto/gitprep_t/commits/master.atom
-1.8
+1.8 (6 Jun 2014)
   - support publick key authentication
-1.7
+1.7 (26 Apr 2014)
   - allow . as project name.
   - add respository and user search page
-1.6
+1.6 (3 Apr 2014)
   - fix bug that can't create collaborator more than one.
   - support time zone.
   - change markdown parser from Text::Markdown::Discount to Text::Markdown::Hoedown
@@ -29,22 +29,22 @@
     code
     ```
   - add encoding_suspects to support multiple encoding in blob, commit diff, and blame.
-1.5
+1.5 (26 Feb 2014)
   - fix bug that git clone via http failed.
   - show readme file in sub directory.
-1.4
+1.4 (26 Nov 2013)
   - fix markdown bugs (*em*, _em_)
   - default readme file is changed. README is changed to README.md
   - add private repository and collaborator feature
-1.3
+1.3 (9 Oct 2013)
   - add README.md support
   - add submodule support
   - add Smart HTTP and basic authentication support
   - add Markdown format in normal file
-1.2
+1.2 (23 Aug 2013)
   - add blame page
   - add blanch import feature
-1.1
+1.1 (30 Jun 2013)
   - add import_rep script to import repositories.
-1.0
+1.0 (12 Jun 2013)
   - first major release
