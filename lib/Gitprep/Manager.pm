@@ -9,6 +9,8 @@ use File::Temp ();
 use Fcntl ':flock';
 use Carp 'croak';
 use File::Copy qw/copy move/;
+use File::Spec;
+use Gitprep::Util;
 
 has 'app';
 has 'authorized_keys_file';
@@ -608,12 +610,12 @@ sub _create_rep {
   my $rep = $git->rep($user, $project);
   mkdir $rep
     or croak "Can't create directory $rep: $!";
-
+  
   eval {
     # Git init
     {
       my @git_init_cmd = $git->cmd_rep($rep, 'init', '--bare');
-      system(@git_init_cmd) == 0
+      Gitprep::Util::run_command(@git_init_cmd)
         or croak  "Can't execute git init --bare:@git_init_cmd";
     }
     
@@ -630,7 +632,7 @@ sub _create_rep {
       '--bare',
       'update-server-info'
     );
-    system(@git_update_server_info_cmd) == 0
+    Gitprep::Util::run_command(@git_update_server_info_cmd)
       or croak "Can't execute git --bare update-server-info";
     move("$rep/hooks/post-update.sample", "$rep/hooks/post-update")
       or croak "Can't move post-update";
@@ -657,7 +659,7 @@ sub _create_rep {
 
       # Git init
       my @git_init_cmd = $git->cmd_rep($temp_work, 'init', '-q');
-      system(@git_init_cmd) == 0
+      Gitprep::Util::run_command(@git_init_cmd)
         or croak "Can't execute git init: @git_init_cmd";
       
       # Add README
@@ -674,7 +676,7 @@ sub _create_rep {
         'add',
         'README.md'
       );
-      system(@git_add_cmd) == 0
+      Gitprep::Util::run_command(@git_add_cmd)
         or croak "Can't execute git add: @git_add_cmd";
       
       # Commit
@@ -688,7 +690,7 @@ sub _create_rep {
         '-m',
         'first commit'
       );
-      system(@git_commit_cmd) == 0
+      Gitprep::Util::run_command(@git_commit_cmd)
         or croak "Can't execute git commit: @git_commit_cmd";
       
       # Push
@@ -702,8 +704,7 @@ sub _create_rep {
           'master'
         );
         # (This is bad, but --quiet option can't supress in old git)
-        my $git_push_cmd = join(' ', @git_push_cmd);
-        system("$git_push_cmd 2> /dev/null") == 0
+        Gitprep::Util::run_command(@git_push_cmd)
           or croak "Can't execute git push: @git_push_cmd";
       }
     }
@@ -812,7 +813,7 @@ sub _fork_rep {
     $rep,
     $to_rep
   );
-  system(@cmd) == 0
+  Gitprep::Util::run_command(@cmd)
     or croak "Can't fork repository(_fork_rep): @cmd";
   
   # Copy description

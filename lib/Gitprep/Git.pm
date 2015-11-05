@@ -10,6 +10,7 @@ use File::Copy 'move';
 use File::Find 'find';
 use File::Path qw/mkpath rmtree/;
 use POSIX 'floor';
+use Gitprep::Util;
 
 # Attributes
 has 'bin';
@@ -531,7 +532,7 @@ sub delete_branch {
   
   if ($exists) {
     my @cmd = $self->cmd($user, $project, 'branch', '-D', $branch);
-    system(@cmd) == 0
+    Gitprep::Util::run_command(@cmd)
       or croak "Branch deleting failed. Can't delete branch $branch";
   }
   else {
@@ -1450,7 +1451,7 @@ sub import_branch {
     ($force ? '+' : '') . "refs/heads/$remote_branch:refs/heads/$branch"
   );
   
-  system(@cmd) == 0
+  Gitprep::Util::run_command(@cmd)
     or croak 'Open git fetch for import_branch failed';
 }
 

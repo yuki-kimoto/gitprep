@@ -11,6 +11,7 @@ use Scalar::Util 'weaken';
 use Validator::Custom;
 use Mojolicious::Plugin::AutoRoute::Util 'template';
 
+
 # Digest::SHA loading to Mojo::Util if not loaded
 {
   package Mojo::Util;
