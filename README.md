@@ -139,8 +139,8 @@ You can stop the application by adding the **--stop** option.
 
 ## Can't find git command from GitPrep
 
-If you install git in your local directry,
-you must add the correct git command path to the **gitprep.conf** config file.
+If you install git into your local directry,
+you must add the correct git command path to the config file **gitprep.conf** .
 
     [basic]
     ;;; Git command path
@@ -161,8 +161,7 @@ you create "gitprep.my.conf" copied from "gitprep.my.conf",
 and do "git pull"
 
 If you get a rainbow unicorn t-rex error after upgrading, you might be missing
-a new CPAN dependency. Rerun the /setup/setup.php on brower
-or rerun setup.sh on command line.
+a new CPAN dependency. Run again "setup.sh".
 
 ### I can't push large repository by http protocol
 
@@ -327,7 +326,7 @@ If **description** file exists in git repository, it is copied.
 This is GitPrep bug before version 1.5.1.
 Please use after version 1.5.2.
 
-If you contine to use GitPrep before version 1.5.1,
+If you continue to use GitPrep before version 1.5.1,
 collaboration table is broken.
 Please fix it by the following way.
 
