@@ -1,3 +1,6 @@
+1.11
+  - support relative path in README.md and blob html.
+  - support git version 2
 1.10 (27 Jun 2015)
   - add show_ignore_space_change_link option to show --ignore-space-change page easily
   - add --ignore-space-change feature in diff page by using w= query string
