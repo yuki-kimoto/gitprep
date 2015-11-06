@@ -435,7 +435,7 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 
 ## Web Site
 
-[GitPrep Web Site](http://perlcodesample.sakura.ne.jp/gitprep-site/)
+[GitPrep Web Site](http://gitprep.yukikimoto.com/)
 
 ## Internally Using Library
 
@@ -456,8 +456,7 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 
 These are my Perl web application projects.
 
-* [WebDBViewer](http://perlcodesample.sakura.ne.jp/webdbviewer-site/) - Database viewer to see database information on web browser.
-* [TaskDeal](http://perlcodesample.sakura.ne.jp/taskdeal-site/) - Setup or deploy multiple environments on web browser. Ruby Chef alternative tool.
+* [WebDBViewer](http://webdbviewer.yukikimoto.com/) - Database viewer to see database information on web browser.
 
 ## Bug
 

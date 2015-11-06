@@ -1,6 +1,6 @@
 <hr style="margin-top:0;margin-bottom:10px">
 <div class="text-center" style="margin-bottom:10px">
-  <a href="http://perlcodesample.sakura.ne.jp/gitprep-site">Gitprep</a>
+  <a href="http://gitprep.yukikimoto.com/">Gitprep</a>
   <span>Version <%= $Gitprep::VERSION %></span>
 </div>
 
