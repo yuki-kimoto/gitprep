@@ -456,7 +456,7 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 
 These are my Perl web application projects.
 
-* [WebDBViewer](http://webdbviewer.yukikimoto.com/) - Database viewer to see database information on web browser.
+* [WebDBViewer](https://github.com/yuki-kimoto/webdbviewer) - Database viewer to see database information on web browser.
 
 ## Bug
 
