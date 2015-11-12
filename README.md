@@ -2,7 +2,7 @@
 
 Github clone. You can install portable github system into Unix/Linux.
 
-![GitPrep Image](gitprep_image.png)
+![GitPrep Image](gitprep_image.png "Gitprep image example")
 
 ## Features
 
