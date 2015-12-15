@@ -17,7 +17,7 @@
     <meta name="robots" content="index, nofollow" >
     % my $title = stash('title');
     <title><%= $title ? "$title \x{30fb} Gitprep" : 'Gitprep' %></title>
-    %= stylesheet '/css/bootstrap.min.css', rel => 'stylesheet', media => 'screen';
+    %= stylesheet '/css/bootstrap.css', rel => 'stylesheet', media => 'screen';
     % for my $stylesheet (@$stylesheets) {
       %= stylesheet $stylesheet;
     % }
