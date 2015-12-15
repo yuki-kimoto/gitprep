@@ -17,10 +17,17 @@
     <meta name="robots" content="index, nofollow" >
     % my $title = stash('title');
     <title><%= $title ? "$title \x{30fb} Gitprep" : 'Gitprep' %></title>
-    %= stylesheet '/css/bootstrap.css', rel => 'stylesheet', media => 'screen';
+    
+    % if (stash('no_bootstrap')) {
+      %= stylesheet '/css/common.css';
+    % } else {
+      %= stylesheet '/css/bootstrap.css', rel => 'stylesheet', media => 'screen';
+    % }
+    
     % for my $stylesheet (@$stylesheets) {
       %= stylesheet $stylesheet;
     % }
+    
     %= javascript '/js/jquery-1.9.0.min.js';
     %= javascript '/js/bootstrap.min.js';
     

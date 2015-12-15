@@ -10,7 +10,7 @@
   }
 %>
 
-% layout 'common';
+% layout 'common', no_bootstrap => 1;
   
   %= include '/include/header', title => 'Gitprep';
   <!-- Index page -->

@@ -1,41 +1,85 @@
 <%
   my $api = gitprep_api;
+  my $user = session('user') || '';
 %>
 
-<div class="container">
-  <div class="row">
-    <div class="span6">
-      <div style="margin-top:5px">
-        <h3 style="display:inline-block"><a href="<%= url_for('/') %>">GitPrep</a></h3>
+% if (stash('no_bootstrap')) {
+  <div class="header">
+    <div class="container">
+      <div class="header-left">
+        <h3 class="title"><a href="<%= url_for('/') %>">GitPrep</a></h3>
         % if ((url_for->path->parts->[0] || '') ne '_search') {
-          <form action="<%= url_for('/_search') %>" style="display:inline-block;margin-left:15px">
-            <%= text_field 'q', style => 'display:inline-block', placeholder => 'Search' %>
+          <form class="search-box" action="<%= url_for('/_search') %>" >
+            <%= text_field 'q', placeholder => 'Search GitPrep' %>
           </form>
         % }
       </div>
-    </div>
-    <div class="span6 text-right">
-      % if ($api->logined) {
-        <div  style="margin-top:5px">
-          <div>
-            % my $user = session('user') || '';
-            <!-- Logined as <%= $user %> -->
-
-            <i class="icon-user"></i><a href="<%= url_for("/$user") %>"><%= $user %></a>
-          </div>
-          % unless ($user eq 'admin') {
-            <a class="btn btn-small" href="<%= url_for("/_new") %>">Create a new repo</a>
-            <a class="btn btn-small" href="<%= url_for("/$user/_settings") %>">Account Settings</a>
+      <div class="header-rigth">
+        <ul class="header-navi">
+          % if ($api->logined) {
+            % unless ($user eq 'admin') {
+              <li>
+                <a class="btn btn-small" href="<%= url_for("/_new") %>">Create a new repo</a>
+              </li>
+              <li>
+                <a class="btn btn-small" href="<%= url_for("/$user/_settings") %>">Account Settings</a>
+              </li>
+            % }
+            % my $url = url_with->to_abs;
+            <li>
+              <a class="btn btn-small" href="<%= url_for("/_logout?from=$url") %>">Sign out</a>
+            </li>
+          % } else {
+            <li>
+              <a class="btn btn-primary" href="<%= url_for('/_login') %>">Sign in</a>
+            </li>
           % }
-          % my $url = url_with->to_abs;
-          <a class="btn btn-small" href="<%= url_for("/_logout?from=$url") %>">Sign out</a>
-        </div>
-      % } else {
-        <div  style="margin-top:20px">
-          <a class="btn btn-primary" href="<%= url_for('/_login') %>">Sign in</a>
-        </div>
-      % }
+          % if ($api->logined) {
+            <li>
+              <!-- Logined as <%= $user %> -->
+              <i class="icon-user"></i><a href="<%= url_for("/$user") %>"><%= $user %></a>
+            </li>
+          % }
+        </ul>
+      </div>
     </div>
   </div>
-</div>
-<hr style="margin-top:0;margin-bottom:10px">
+% } else {
+  <div class="container">
+    <div class="row">
+      <div class="span6">
+        <div style="margin-top:5px">
+          <h3 style="display:inline-block"><a href="<%= url_for('/') %>">GitPrep</a></h3>
+          % if ((url_for->path->parts->[0] || '') ne '_search') {
+            <form action="<%= url_for('/_search') %>" style="display:inline-block;margin-left:15px">
+              <%= text_field 'q', style => 'display:inline-block', placeholder => 'Search' %>
+            </form>
+          % }
+        </div>
+      </div>
+      <div class="span6 text-right">
+        % if ($api->logined) {
+          <div  style="margin-top:5px">
+            <div>
+              % my $user = session('user') || '';
+              <!-- Logined as <%= $user %> -->
+
+              <i class="icon-user"></i><a href="<%= url_for("/$user") %>"><%= $user %></a>
+            </div>
+            % unless ($user eq 'admin') {
+              <a class="btn btn-small" href="<%= url_for("/_new") %>">Create a new repo</a>
+              <a class="btn btn-small" href="<%= url_for("/$user/_settings") %>">Account Settings</a>
+            % }
+            % my $url = url_with->to_abs;
+            <a class="btn btn-small" href="<%= url_for("/_logout?from=$url") %>">Sign out</a>
+          </div>
+        % } else {
+          <div  style="margin-top:20px">
+            <a class="btn btn-primary" href="<%= url_for('/_login') %>">Sign in</a>
+          </div>
+        % }
+      </div>
+    </div>
+  </div>
+  <hr style="margin-top:0;margin-bottom:10px">
+% }
