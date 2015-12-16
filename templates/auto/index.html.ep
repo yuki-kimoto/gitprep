@@ -14,17 +14,19 @@
   
   %= include '/include/header', title => 'Gitprep';
   <!-- Index page -->
-  <div class="container" style="min-heigth:500px">
-    <h3>Users</h3>
-    <ul class="nav nav-tabs nav-stacked">
-      % for my $user (@$users) {
-        % my $uid = $user->{id};
-        <li>
-          <a href="<%= url_for("/$uid") %>">
-            <%= $uid %>
-          </a>
-        </li>
-      % }
-    </ul>
+  <div class="container">
+    <div class="user-list">
+      <h3 class="user-list-header">Users</h3>
+      <ul class="user-list-body">
+        % for my $user (@$users) {
+          % my $uid = $user->{id};
+          <li>
+            <a href="<%= url_for("/$uid") %>">
+              <%= $uid %>
+            </a>
+          </li>
+        % }
+      </ul>
+    </div>
   </div>
   %= include '/include/footer';
