@@ -37,7 +37,7 @@
 
   <div class="container">
     %= include '/include/project_header';
-    %= include '/include/code_menu', display => 'files';
+    %= include '/include/branch_select', display => 'files';
     %= include '/include/page_path', type => 'tree', Path => $dir;
     %= include '/include/tree';
     

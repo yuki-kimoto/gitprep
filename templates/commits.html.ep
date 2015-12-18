@@ -126,7 +126,7 @@
           % my $commits = $commits_date->{$date};
           
           <div class="bk-blue-light border-blue radius-top" style="padding:5px 8px;color:#3a505b">
-            <b><%= $date %></b>
+            <b>Commits on <%= $date %></b>
           </div>
           % my $num = 0;
           % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {

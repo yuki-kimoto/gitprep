@@ -50,7 +50,7 @@
 
   <div class="container">
     %= include '/include/project_header';
-    %= include '/include/code_menu', display => 'commits';
+    %= include '/include/branch_select', display => 'commits';
 
     <div class="bk-blue-light border-gray" style="border-bottom:none;padding:10px;border-top-left-radius:5px;border-top-right-radius:5px">
       <div class="row">

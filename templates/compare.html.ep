@@ -96,7 +96,7 @@
 
   <div class="container">
     %= include '/include/project_header';
-    %= include '/include/code_menu', display => 'files';
+    %= include '/include/branch_select', display => 'files';
     
     <h2>Compare View</h2>
     <div class="well" style="padding:9px 10px 9px 10px;margin-bottom:5px;position:relative">

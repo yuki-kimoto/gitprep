@@ -203,7 +203,7 @@ note 'History page';
   {
     # Page access
     $t->get_ok("/$user/$project/commits/b1/README");
-    $t->content_like(qr/History for/);
+    $t->content_like(qr/Commits on/);
     
     # Content
     $t->content_like(qr/first commit/);
