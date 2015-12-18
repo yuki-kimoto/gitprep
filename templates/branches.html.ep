@@ -115,7 +115,6 @@
     %= include '/include/message', message => flash('message');
     
     %= include '/include/project_header';
-    %= include '/include/code_menu', display => 'branches', branches => $branches;
     
     <h3 style="font-size:19px">Branches</h3>
     

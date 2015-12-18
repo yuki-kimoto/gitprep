@@ -29,7 +29,6 @@
 
   <div class="container">
     %= include '/include/project_header';
-    %= include '/include/code_menu', display => 'tags';
     
     <h3 style="font-size:20px">Tags</h3>
     
