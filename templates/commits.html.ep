@@ -119,22 +119,8 @@
 
     <div class="container">
       %= include '/include/project_header';
-      %= include '/include/code_menu', display => 'commits';
-          
-      <div style="margin-top:20px;margin-bottom:15px">
-        % if (defined $file && length $file) {
-          %= include '/include/page_path', type => 'blob', Path => $file, operation => 'commits', prefix => 'History for';
-        % } else {
-          <div style="font-size:18px">
-            <a class="ubar" href="<%= url_for("/$user/$project") %>">
-              <%= $project %>
-            </a>
-            /
-            <span class="muted">Commit History</span>
-          </div>
-        % }
-      </div>
-      
+      %= include '/include/branch_select', display => 'commits';
+     
       % for my $date (reverse sort keys %$commits_date) {
         <div style="margin-bottom:20px">
           % my $commits = $commits_date->{$date};
