@@ -119,7 +119,9 @@
 
     <div class="container">
       %= include '/include/project_header';
-      %= include '/include/branch_select', display => 'commits';
+      <div style="margin-bottom:20px;">
+        %= include '/include/branch_select', display => 'commits';
+      </div>
      
       % for my $date (reverse sort keys %$commits_date) {
         <div style="margin-bottom:20px">

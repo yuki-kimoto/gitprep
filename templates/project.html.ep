@@ -61,11 +61,11 @@
   my $default_branch_name = app->manager->default_branch($user, $project);
   my $tags_count = app->git->tags_count($user, $project);
   my $display = 'files';
+  
+  my $logined = $api->logined;
+  
+  layout 'common', title => "$user/$project";
 %>
-
-% layout 'common', title => "$user/$project";
-
-  % my $logined = $api->logined;
 
   %= javascript begin
     $(document).ready(function () {
@@ -114,7 +114,7 @@
     %= include '/include/message', message => flash('message');
     %= include '/include/project_header';
     
-    <h3 style="margin:20px 0px 20px 0;font-size:16px;line-height:0">
+    <h3 style="font-weight:normal;color:#666;margin:20px 0px 20px 0;font-size:16px;line-height:0">
       <%= $desc %>
     </h3>
     % if ($state eq 'display') {
@@ -137,28 +137,14 @@
         </li>
         <li class="<%= $display eq 'tags' ? 'active' : '' %>">
           <a href="<%= url_for("/$user/$project/tags") %>">
-            <%= $tags_count %> tags
+            <%= $tags_count %> releases
           </a>
         </li>
       </ul>
 
-      <div class="border-gray radius" style="padding:0 3px;margin-bottom:10px;">
-        <a class="btn" style="padding:3px 6px;margin-left:10px" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
-          <i class="icon-arrow-down"></i>ZIP
-        </a>
-        <div class="input-append" style="margin-top:10px">
-          <div class="btn-group" data-toggle="buttons-radio">
-            <button class="btn" id="btn_http" style="margin-left:5px;padding:3px 6px;border-top-right-radius:0px; border-bottom-right-radius:0px"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
-            % if ($logined) {
-              <button class="btn" id="btn_ssh" style="padding:3px 7px;border-radius:0">SSH</button>
-            % }
-          </div>
-          <input id="rep_url" type="text" style="width:635px;border-radius:0;padding:3px 7px;border-top-right-radius:3px;border-bottom-right-radius:3px">
-        </div>
-        <span style="color:#666;font-size:12px"><b><span id="access"></span></b> access</span>
+      <div style="margin-bottom:5px;">
+        %= include '/include/branch_select', display => 'files', project_page => 1;
       </div>
-      
-      %= include '/include/branch_select', display => 'files';
       
       <div style="margin-bottom:30px">
         %= include '/include/tree';

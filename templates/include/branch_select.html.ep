@@ -1,8 +1,13 @@
 <%
+  my $api = gitprep_api;
+  
   my $display = stash('display') || '';
   my $rev = stash('rev');
   $rev = '' unless defined $rev;
   my $branches = stash('branches');
+  my $project_page = stash('project_page');
+
+  my $logined = $api->logined;
 %>
 
 %= javascript begin
@@ -50,7 +55,7 @@
             }
             $('#rev-popup')
               .css('display', 'block')
-              .css('top', '40px')
+              .css('top', '5px')
               .css('left', '0px')
             ;
           });
@@ -59,7 +64,7 @@
         else {
           $('#rev-popup')
             .css('display', 'block')
-            .css('top', '40px')
+            .css('top', '5px')
             .css('left', '0px')
           ;
         }
@@ -77,7 +82,7 @@
       $('#rev-btn').on('click', function () {
         $('#rev-popup')
           .css('display', 'block')
-          .css('top', '40px')
+          .css('top', '5px')
           .css('left', '0px')
         ;
         $('#rev-close').on('click', function () {
@@ -89,28 +94,45 @@
 % end
 
 
-
-<div style="position:relative">
-  <div style="margin-bottom:20px">
-    % if ($display eq 'files' || $display eq 'commits' || $display eq 'branches') {
-      <%
-        my $title;
-        my $rev_short;
-        if (defined $rev && length $rev == 40) {
-          $title = 'tree';
-          $rev_short = substr($rev, 0, 10);
-        }
-        else {
-          $title = 'branch';
-          $rev_short = $rev;
-        }
-      %>
-      <button id="rev-btn" class="btn" style="font-size:13px;padding:2px 10px;margin-top:5px;margin-right:6px">
+<div class="row">
+  % if ($display eq 'files' || $display eq 'commits' || $display eq 'branches') {
+    <%
+      my $title;
+      my $rev_short;
+      if (defined $rev && length $rev == 40) {
+        $title = 'tree';
+        $rev_short = substr($rev, 0, 10);
+      }
+      else {
+        $title = 'branch';
+        $rev_short = $rev;
+      }
+    %>
+    <div class="span2">
+      <button id="rev-btn" class="btn" style="font-size:13px;padding:2px 10px;margin-right:6px">
         <i class="icon-share-alt"></i><span class="muted"><%= $title %>:</span> <b><%= $rev_short %></b>
       </button>
-    % }
-  </div>
-  
+    </div>
+  % }
+  % if ($project_page) {
+    <div class="span10" style="text-algin:right;overflow:hidden">
+      <a class="btn" style="margin-left:5px;float:right;font-size:12px;font-weight:bold;color:#333;padding:3px 6px" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
+        Download ZIP
+      </a>
+      <div class="input-append" style="float:right">
+        <div class="btn-group" data-toggle="buttons-radio">
+          <button class="btn" id="btn_http" style="margin-left:5px;padding:3px 6px;border-top-right-radius:0px; border-bottom-right-radius:0px"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
+          % if ($logined) {
+            <button class="btn" id="btn_ssh" style="padding:3px 7px;border-radius:0">SSH</button>
+          % }
+        </div>
+        <input id="rep_url" type="text" style="width:550px;border-radius:0;padding:3px 7px;border-top-right-radius:3px;border-bottom-right-radius:3px">
+      </div>
+    </div>
+  % }
+</div>
+
+<div style="position:relative">
   % if ($display eq 'files' || $display eq 'commits') {
     <div id="rev-popup" style="display:none;width:330px;position:absolute">
       <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
@@ -164,5 +186,4 @@
       </ul>
     </div>
   % }
-  
 </div>
