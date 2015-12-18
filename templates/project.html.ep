@@ -55,6 +55,12 @@
     ? app->config->{basic}{'ssh_rep_url_base'} : $rep_home;
   my $ssh_rep_url = "ssh://$execute_user\@" . $url->host
     . ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user/$project.git";
+
+  my $branches = stash('branches');
+  my $branches_count = app->git->branches_count($user, $project);
+  my $default_branch_name = app->manager->default_branch($user, $project);
+  my $tags_count = app->git->tags_count($user, $project);
+  my $display = 'files';
 %>
 
 % layout 'common', title => "$user/$project";
@@ -112,6 +118,30 @@
       <%= $desc %>
     </h3>
     % if ($state eq 'display') {
+      <ul class="nav nav-tabs" style="margin-bottom:20px">
+        <li class="<%= $display eq 'commits' ? 'active' : '' %>">
+          % if (length $rev) {
+            <a href="<%= url_for("/$user/$project/commits/$rev") %>">
+              <%= $commits_number %> commits
+            </a>
+          % } else {
+            <a href="<%= url_for("/$user/$project/commits/$default_branch_name") %>">
+              <%= $commits_number %> Commits
+            </a>
+          % }
+        </li>
+        <li class="<%= $display eq 'branches' ? 'active' : '' %>">
+          <a href="<%= url_for("/$user/$project/branches") %>">
+            <%= $branches_count %> branches
+          </a>
+        </li>
+        <li class="<%= $display eq 'tags' ? 'active' : '' %>">
+          <a href="<%= url_for("/$user/$project/tags") %>">
+            <%= $tags_count %> tags
+          </a>
+        </li>
+      </ul>
+
       <div class="border-gray radius" style="padding:0 3px;margin-bottom:10px;">
         <a class="btn" style="padding:3px 6px;margin-left:10px" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
           <i class="icon-arrow-down"></i>ZIP
@@ -128,18 +158,7 @@
         <span style="color:#666;font-size:12px"><b><span id="access"></span></b> access</span>
       </div>
       
-      %= include '/include/code_menu', display => 'files';
-      
-      <div class="row" style="font-size:18px;margin-bottom:10px">
-        <div class="span6">
-          <a href="<%= url_for %>"><%= $project %></a>
-        </div>
-        <div class="text-right">
-          <a href="<%= url_for("/$user/$project/commits/$rev") %>">
-            <%= $commits_number %> commits
-          </a>
-        </div>
-      </div>
+      %= include '/include/branch_select', display => 'files';
       
       <div style="margin-bottom:30px">
         %= include '/include/tree';
