@@ -268,7 +268,7 @@ note 'Tree page';
     $t->get_ok("/$user/$project/tree/heads/b21/dir");
     
     # File
-    $t->content_like(qr/b\.txt/s);
+    $t->content_like(qr/dir\/b\.txt/s);
   }
   {
     # Page access (branch name long)

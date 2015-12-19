@@ -208,7 +208,7 @@
       </div>
       
       <div style="margin-bottom:30px">
-        %= include '/include/tree';
+        %= include '/include/tree', dir => $dir;
       </div>
       
       %= include '/include/readme';
