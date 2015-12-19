@@ -18,11 +18,6 @@
   %= include '/include/header';
   
   <div class="container">
-    <ul class="breadcrumb" style="margin-top:10px">
-      <li><a href="<%= url_for('/') %>">Home</a></li>
-      /
-      <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
-    </ul>
     <div class="row">
       <div class="span2">
         <ul class="nav nav-tabs nav-stacked">

@@ -88,8 +88,9 @@
 % layout 'common', title => 'Sign in';
 
   <!-- Login page -->
-  
-  %= include '/include/header';
+  <div class="text-center" style="margin:15px 0;font-size:18px;">
+    Sign in to GitPrep
+  </div>
 
   <div class="container">
     % my $id = '';
@@ -116,13 +117,13 @@
         <div><%= $error %></div>
       </div>
     % }
-      
+    
     <div class="well border-gray"
       style="background:white;padding-top:15px;padding-left:60px;width:300px;margin-left:auto;margin-right:auto"
     >
       <form action="<%= url_for->query(op => 'login') %>" method="post">
         <div class="control-group">
-          <label class="control-label" for="user-name">User name</label>
+          <label class="control-label" for="user-name">Username</label>
           <div class="controls">
             <%= input_tag id => $id, type => 'text', placeholder => 'User', id =>'user-name'%>
           </div>

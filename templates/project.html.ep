@@ -112,7 +112,6 @@
   
   <div class="container">
     %= include '/include/message', message => flash('message');
-    %= include '/include/project_header';
     
     <h3 style="font-weight:normal;color:#666;margin:20px 0px 20px 0;font-size:16px;line-height:0">
       <%= $desc %>

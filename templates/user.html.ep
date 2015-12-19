@@ -32,12 +32,6 @@
   <div class="container">
     <div>
       %= include '/include/message', message => flash('message');
-      
-      <ul class="breadcrumb" style="margin-top:10px">
-        <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>
-        /
-        <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
-      </ul>
 
       <h3>Repositories</h3>
       

@@ -114,8 +114,6 @@
     %= include '/include/errors', errors => $errors;
     %= include '/include/message', message => flash('message');
     
-    %= include '/include/project_header';
-    
     <h3 style="font-size:19px">Branches</h3>
     
     <div style="margin-bottom:10px">

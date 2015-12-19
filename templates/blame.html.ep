@@ -57,7 +57,6 @@
   
   <!-- Blame page -->
   <div class="container">
-    %= include '/include/project_header';
     <div style="margin-bottom:20px;">
       %= include '/include/branch_select', display => 'files';
     </div>

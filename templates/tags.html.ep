@@ -28,7 +28,6 @@
   %= include '/include/header';
 
   <div class="container">
-    %= include '/include/project_header';
     
     <h3 style="font-size:20px">Tags</h3>
     

@@ -1,6 +1,20 @@
 <%
   my $api = gitprep_api;
-  my $user = session('user') || '';
+  my $logined = $api->logined;
+
+  my $current_user = session('user');
+  my $user = param('user');
+
+  my $project = param('project');
+  my $original_user;
+  my $original_project;
+  my $is_private_project;
+  
+  if (defined $project) {
+    $original_user = app->manager->original_user($user, $project);
+    $original_project = app->manager->original_project($user, $project);
+    $is_private_project = app->manager->is_private_project($user, $project);
+  }
 %>
 
 <div style="background:#f5f5f5">
@@ -19,14 +33,14 @@
       <div class="span6 text-right">
         <div style="margin:0; padding-top:12px">
           % if ($api->logined) {
-            % unless ($user eq 'admin') {
+            % unless ($current_user eq 'admin') {
               <a class="btn btn-small" href="<%= url_for("/_new") %>">Create a new repo</a>
-              <a class="btn btn-small" href="<%= url_for("/$user/_settings") %>">Account Settings</a>
+              <a class="btn btn-small" href="<%= url_for("/$current_user/_settings") %>">Account Settings</a>
             % }
             % my $url = url_with->to_abs;
             <a class="btn btn-small" href="<%= url_for("/_logout?from=$url") %>">Sign out</a>
-            <!-- Logined as <%= $user %> -->
-            <i class="icon-user"></i><a href="<%= url_for("/$user") %>"><%= $user %></a>
+            <!-- Logined as <%= $current_user %> -->
+            <i class="icon-user"></i><a href="<%= url_for("/$current_user") %>"><%= $current_user %></a>
           % } else {
             <a class="btn btn-primary" href="<%= url_for('/_login') %>">Sign in</a>
           % }
@@ -35,4 +49,52 @@
     </div>
   </div>
 </div>
-<hr style="margin-top:0;margin-bottom:10px">
+<hr style="margin:0;">
+
+% if (defined $user || defined $project) {
+  <div style="padding-top:10px;background:#fafafa;border-bottom:1px solid #eee;margin-bottom:10px;">
+    <div class="container">
+      <div class="row" style="margin-bottom:10px">
+        <div class="span9">
+          <ul class="breadcrumb" style="margin:0;background:none;padding-left:0;font-size:16px;">
+            <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>
+            /
+            <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
+            % if (defined $project) {
+              /
+              <li><b><a href="<%= url_for("/$user/$project") %>"><%= $project %></a></b></li>
+            % }
+            
+            % if ($is_private_project) {
+              <i class="icon icon-lock" style="margin-left:5px;margin-right:5px"></i>
+            % }
+            
+            % if (defined $original_project) {
+              (
+                forked from
+                <a href="<%= url_for("/$original_user/$original_project") %>">
+                  <%= "$original_user/$original_project" %>
+                </a>
+              )
+            % }
+          </ul>
+        </div>
+        % if (defined $project) {
+          <div class="span3">
+            <a class="btn" href="<%= url_for("/$user/$project/network") %>" >Network</a>
+            % if ($logined && $current_user ne $user ) {
+              <a href="<%= url_for("/$user/$project/fork") %>" class="btn">Fork</a>
+            % } else {
+              <button class="btn disabled" disabled>Fork</button>
+            % }
+            % if ($logined && $user eq session('user')) {
+              <a class="btn" href="<%= url_for("/$user/$project/settings") %>">Settings</a>
+            % } else {
+              <button class="btn disabled" disabled>Settings</button>
+            % }
+          </div>
+        % }
+      </div>
+    </div>
+  </div>
+% }

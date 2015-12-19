@@ -106,7 +106,6 @@
   <div class="container">
     %= include '/include/errors', errors => $errors;
     %= include '/include/message', message => flash('message');
-    %= include '/include/project_header';
     
     <div class="row">
       <div class="span2">

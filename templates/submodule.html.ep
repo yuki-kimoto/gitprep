@@ -42,11 +42,9 @@
 <% layout 'common' , title => "$project/$file at $rev \x{30fb} $user/$project",
      stylesheets => ['/js/google-code-prettify/prettify.css']; %>
 
-%
   %= include '/include/header';
 
   <div class="container">
-    %= include '/include/project_header';
     <div style="margin-bottom:20px;">
       %= include '/include/branch_select', display => 'files';
     </div>

@@ -113,7 +113,6 @@
   % end
   
   <div class="container">
-    %= include '/include/project_header';
     % if (my $message = flash('message')) {
       <div class="alert alert-success">
         <button type="button" class="close" data-dismiss="alert">&times;</button>

@@ -84,13 +84,6 @@
   %= include '/include/header';
   
   <div class="container">
-    <ul class="breadcrumb" style="margin-top:10px">
-      <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>
-      /
-      % my $user = session('user');
-      <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
-    </ul>
-  
     % if ($errors) {
       <div class="alert alert-error">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
