@@ -46,8 +46,8 @@
   <div class="container">
     <div style="margin-bottom:20px;">
       %= include '/include/branch_select', display => 'files';
+      %= include '/include/page_path', type => 'blob', Path => $file;
     </div>
-    %= include '/include/page_path', type => 'blob', Path => $file;
         
     <div class="border-gray" style="margin-bottom:20px">
       <div class="bk-blue-light" style="padding:5px">

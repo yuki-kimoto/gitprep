@@ -9,7 +9,7 @@
   my $prefix = stash('prefix');
 %>
 
-<div style="margin-bottom:10px;font-size:16px">
+<div style="margin-bottom:10px;font-size:16px;display:inline-block;">
   % if ($prefix) {
     <span class="muted">History for</span>
   % }

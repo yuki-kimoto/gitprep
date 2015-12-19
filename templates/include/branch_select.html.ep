@@ -5,16 +5,18 @@
   my $rev = stash('rev');
   $rev = '' unless defined $rev;
   my $branches = stash('branches');
-  my $tree_top= stash('tree_top');
 
   my $logined = $api->logined;
+
+  my $type
+    = $display eq 'tree' || $display eq 'tree_top' || $display eq 'files'
+    ? 'tree' : 'commits';
 %>
 
 %= javascript begin
   $(document).ready(function () {
   
-    % if ($display eq 'files' || $display eq 'commits') {
-      % my $type = $display eq 'files' ? 'tree' : 'commits';
+    % if ($display eq 'tree' || $display eq 'tree_top' || $display eq 'files' || $display eq 'commits') {
       
       // Switch branches and tags
       var revs_init = false;
@@ -95,7 +97,7 @@
 
 
 <div class="row">
-  % if ($display eq 'files' || $display eq 'commits' || $display eq 'branches') {
+  % if ($display eq 'tree' || $display eq 'tree_top' || $display eq 'files' || $display eq 'commits' || $display eq 'branches') {
     <%
       my $title;
       my $rev_short;
@@ -114,7 +116,7 @@
       </button>
     </div>
   % }
-  % if ($tree_top) {
+  % if ($display eq 'tree_top') {
     <div class="span10" style="text-algin:right;overflow:hidden">
       <a class="btn" style="margin-left:5px;float:right;font-size:12px;font-weight:bold;color:#333;padding:3px 6px" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
         Download ZIP
@@ -133,7 +135,7 @@
 </div>
 
 <div style="position:relative">
-  % if ($display eq 'files' || $display eq 'commits') {
+  % if ($display eq 'tree' || $display eq 'tree_top' || $display eq 'files' || $display eq 'commits') {
     <div id="rev-popup" style="display:none;width:330px;position:absolute">
       <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
         <div class="row">

@@ -69,7 +69,6 @@
   my $branches_count = app->git->branches_count($user, $project);
   my $default_branch_name = app->manager->default_branch($user, $project);
   my $tags_count = app->git->tags_count($user, $project);
-  my $display = 'files';
   
   my $logined = $api->logined;
   
@@ -199,7 +198,8 @@
       % }
 
       <div style="margin-bottom:5px;">
-        %= include '/include/branch_select', display => 'files', ((defined $dir && length $dir) ? () : (tree_top => 1));
+        % my $display = defined $dir && length $dir ? 'tree' : 'tree_top';
+        %= include '/include/branch_select', display => $display;
       </div>
       
       <div style="margin-bottom:30px">
