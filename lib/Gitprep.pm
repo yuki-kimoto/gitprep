@@ -310,7 +310,7 @@ sub startup {
             });
             
             # Home
-            $r->get('/' => template '/project');
+            $r->get('/' => template '/tree');
             
             # Commit
             $r->get('/commit/*diff' => template '/commit');

@@ -1,4 +1,8 @@
 <%
+  use Text::Markdown::Hoedown;
+
+  my $state;
+
   # API
   my $api = gitprep_api;
 
@@ -8,42 +12,255 @@
   # Parameters
   my $user = param('user');
   my $project = param('project');
+  
+  my $rev;
+  my $dir;
   my $rev_dir = param('rev_dir');
-  my ($rev, $dir) = $git->parse_rev_path($user, $project, $rev_dir);
+  if (defined $rev_dir) {
+    ($rev, $dir) = $git->parse_rev_path($user, $project, $rev_dir);
+  }
+  else {
+    $rev = app->manager->default_branch($user, $project);
+  }
   
-  # Tree id
-  my $commit = $git->get_commit($user, $project, $rev);
-  my $top;
-  $top = 1 unless defined $dir && $dir ne '';
+  unless (app->manager->exists_project($user, $project)) {
+    $self->render_not_found;
+    return;
+  }
 
-  # Tree
-  my $trees = $git->trees($user, $project, $rev, $dir);
+  # Repository description
+  my $desc = $git->description($user, $project);
   
-  # Commits number
-  my $commits_number = $git->commits_number($user, $project, $rev);
+  # Check exsitence
+  my $commits_number;
+  if ($git->exists_branch($user, $project)) {
+    # Commit
+    my $commit = $git->get_commit($user, $project, $rev);
+    
+    # Tree
+    my $trees = $git->trees($user, $project, $rev);
+    
+    # Commits number
+    $commits_number = $git->commits_number($user, $project, $rev);
+    
+    # Variable for included template
+    stash(
+      commit => $commit,
+      trees => $trees,
+      rev => $rev,
+      title => "$user/$project",
+    );
+    
+    $state = 'display';
+  }
+  else { $state = 'init' }
+
+  my $url = url_for->to_abs;
+  $url->base(undef);
+  my $ssh_port = config->{basic}{ssh_port};
+  my $rep_home = app->git->rep_home;
+  my $execute_user = getpwuid($>);
+  my $ssh_rep_url_base = defined app->config->{basic}{'ssh_rep_url_base'}
+    ? app->config->{basic}{'ssh_rep_url_base'} : $rep_home;
+  my $ssh_rep_url = "ssh://$execute_user\@" . $url->host
+    . ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user/$project.git";
+
+  my $branches = stash('branches');
+  my $branches_count = app->git->branches_count($user, $project);
+  my $default_branch_name = app->manager->default_branch($user, $project);
+  my $tags_count = app->git->tags_count($user, $project);
+  my $display = 'files';
   
-  # Variable for included templates
-  stash(
-    commit => $commit,
-    trees => $trees,
-    rev => $rev,
-    dir => $dir
-  );
+  my $logined = $api->logined;
+  
+  layout 'common', title => "$user/$project";
 %>
 
-% layout 'common', title => "$project/$dir at $rev \x{30fb} $user/$project";
+  %= javascript begin
+    $(document).ready(function () {
+      var http_rep_url = '<%= url_for("$user/$project.git")->to_abs %>';
+      % my $rep = $git->rep($user, $project);
+      % my $ssh_port = config->{basic}{ssh_port} || '';
+      
+      var logined = <%= $logined ? 'true' : 'false' %>;
+      var ssh_rep_url = '';
+      if (logined) {
+        ssh_rep_url = '<%= $ssh_rep_url %>';
+      }
+      
+      // Click HTTP button
+      $('#btn_http').on('click', function () {
+        $('#rep_url').val(http_rep_url);
+        $('#access').text('Read-write');
+      });
+
+      // Click SSH(old) button
+      $('#btn_ssh').on('click', function () {
+        $('#rep_url').val(ssh_rep_url);
+        $('#access').text('Read-write');
+      });
+
+      // Initialize
+      $('#btn_http').trigger('click');
+      
+      // URL is automatically selected
+      var url_selected_count = 0;
+      $('#rep_url').on('mouseup', function () {
+        if (url_selected_count == 0) {
+          $(this).select();
+        }
+        url_selected_count += 1;
+      });
+      $('#rep_url').on('blur', function () {
+        url_selected_count = 0;
+      });
+    });
+  % end
   
   %= include '/include/header';
-
+  
   <div class="container">
-    <div style="margin-bottom:20px;">
-      %= include '/include/branch_select', display => 'files';
-    </div>
-    %= include '/include/page_path', type => 'tree', Path => $dir;
-    %= include '/include/tree';
+    %= include '/include/message', message => flash('message');
     
-    %= include '/include/readme', dir => $dir;
+    % if (!(defined $dir && length $dir)) {
+      <h3 style="font-weight:normal;color:#666;margin:20px 0px 20px 0;font-size:16px;line-height:0">
+        <%= $desc %>
+      </h3>
+    % }
+    % if ($state eq 'display') {
+      % if (!(defined $dir && length $dir)) {
+        %= stylesheet begin
+          .commits-count {
+            margin:0;
+            border-radius: 3px 3px 0 0;
+            border: 1px solid #ddd;
+            border-bottom:none;
+          }
+          
+          .commits-count li {
+            display:inline-block;
+            width:25%;
+            margin-left:0px;
+            list-style-type: none;
+            padding:0;
+            text-align:center;
+          }
+          .commits-count li a {
+            width:100%;
+            display:block;
+            padding:10px 0;
+            color:#767676;
+          }
+          .commits-count li a:hover {
+            color:#4078c0;
+            text-decoration:none;
+          }
+        % end
+        
+        <ul class="commits-count">
+          <li>
+            % my $commits_url = "/$user/$project/commits/" . ((defined $rev && length $rev) ? $rev : $default_branch_name);
+            <a href="<%= url_for($commits_url) %>">
+              <span class="commits-count-number">
+                <i class="icon-repeat"></i>
+                <%= $commits_number %>
+              </span>
+              <span class="commits-count-type">
+                commits
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="<%= url_for("/$user/$project/branches") %>">
+              <span class="commits-count-number">
+                <i class="icon-indent-left"></i>
+                <%= $branches_count %>
+              </span>
+              <span class="commits-count-type">
+                branches
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="<%= url_for("/$user/$project/tags") %>">
+              <span class="commits-count-number">
+                <i class="icon-tags"></i>
+                <%= $tags_count %>
+              </span>
+              <span class="commits-count-type">
+                releases
+              </span>
+            </a>
+          </li>
+        </ul>
+        <div style="border-radius:0 0 3px 3px;border: 1px solid #ddd;min-height:8px;border-top:none;margin-bottom:15px;background:#0298c3">
+          
+        </div>
+      % }
+
+      <div style="margin-bottom:5px;">
+        %= include '/include/branch_select', display => 'files', ((defined $dir && length $dir) ? () : (tree_top => 1));
+      </div>
+      
+      <div style="margin-bottom:30px">
+        %= include '/include/tree';
+      </div>
+      
+      %= include '/include/readme';
+      
+    % } elsif ($state eq 'init' && $api->logined($user)) {
+      
+      <h4>SSH</h4>
+      
+      <div class="text-center" style="margin-bottom:10px">
+        <b>Create a new repository on the command line via ssh</b>
+      </div>
+      
+      <pre style="margin-bottom:30px">
+touch README
+git init
+git add README
+git commit -m "first commit"
+git remote add origin <%= $ssh_rep_url %>
+git push -u origin master</pre>
+      
+      <div class="text-center" style="margin-bottom:10px">
+        <b>Push an existing repository from the command line via ssh</b>
+      </div>
+      
+      <pre style="margin-bottom:30px">
+git remote add origin <%= $ssh_rep_url %>
+git push -u origin master</pre>
+
+      <hr>
+
+      % my $http_rep_url = url_for("$user/$project.git")->to_abs;
+      <h4><%= uc url_for->to_abs->scheme %></h4>
+
+      <div class="text-center" style="margin-bottom:10px">
+        <b>Create a new repository on the command line via <%= url_for->to_abs->scheme %></b>
+      </div>
+      
+      <pre style="margin-bottom:30px">
+touch README
+git init
+git add README
+git commit -m "first commit"
+git remote add origin <%= $http_rep_url %>
+git push -u origin master</pre>
+      
+      <div class="text-center" style="margin-bottom:10px">
+        <b>Push an existing repository from the command line via <%= url_for->to_abs->scheme %></b>
+      </div>
+      
+      <pre style="margin-bottom:30px">
+git remote add origin <%= $http_rep_url %>
+git push -u origin master</pre>
+    % } else {
+      <div class="well text-center muted" style="background:white;margin-bottom:30px">
+        <b>Repository is not yet created.</b>
+      </div>
+    % }
   </div>
   
   %= include '/include/footer';
-
