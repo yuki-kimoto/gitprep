@@ -9,10 +9,10 @@
   my $logined = $api->logined;
 
   my $type
-    = $display eq 'tree' || $display eq 'tree_top' || $display eq 'files'
+    = $display eq 'tree' || $display eq 'tree_top' || $display eq 'blob' || $display eq 'files'
     ? 'tree' : 'commits';
   
-  my $dir = stash('dir');
+  my $path = stash('Path');
 %>
 
 %= javascript begin
@@ -117,8 +117,8 @@
         <input id="rep_url" type="text" style="width:550px;border-radius:0;padding:3px 7px;border-top-right-radius:3px;border-bottom-right-radius:3px">
       </div>
     </div>
-  % } elsif ($display eq 'tree') {
-    %= include '/include/page_path', Path => $dir;
+  % } elsif ($display eq 'tree' || $display eq 'blob') {
+    %= include '/include/page_path', Path => $path;
   % }
 </div>
 

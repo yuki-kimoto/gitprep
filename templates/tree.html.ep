@@ -204,7 +204,7 @@
 
       <div style="margin-bottom:5px;">
         % my $display = defined $dir && length $dir ? 'tree' : 'tree_top';
-        %= include '/include/branch_select', display => $display, dir => $dir;
+        %= include '/include/branch_select', display => $display, Path => $dir;
       </div>
       
       <div style="margin-bottom:30px">
