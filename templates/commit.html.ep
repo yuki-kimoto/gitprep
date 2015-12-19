@@ -49,10 +49,6 @@
   %= include '/include/header';
 
   <div class="container">
-    <div style="margin-bottom:20px;">
-      %= include '/include/branch_select', display => 'commits';
-    </div>
-
     <div class="bk-blue-light border-gray" style="border-bottom:none;padding:10px;border-top-left-radius:5px;border-top-right-radius:5px">
       <div class="row">
        <div class="span10">
@@ -74,7 +70,7 @@
         </div>
         <div class="text-right">
           <a class="btn btn-primary" href="<%= url_for("/$user/$project/tree/$commit->{id}") %>">
-            Browse code
+            Browse files
           </a>
         </div>
       </div>
@@ -88,12 +84,9 @@
         </div>
       % }
       % if (@$branches || @$tags) {
-        <hr class="border-gray" style="border-bottom:none;margin-top:5px;margin-bottom:0px">
-        <div class="broder-top-gray" style="padding-top:7px">
+        <div class="broder-top-gray">
           % for my $branch (@$branches) {
-            <span style="padding-left:5px;">
-              <i class="icon-share-alt" style="padding-right:1px"></i><a href="<%= url_for("/$user/$project/tree/$branch") %>"><%= $branch %></a>
-            </span>
+            <i class="icon-share-alt" style="padding-right:1px"></i><a href="<%= url_for("/$user/$project/tree/$branch") %>"><%= $branch %></a>
           % }
           
           % for my $tag (@$tags) {
