@@ -7,9 +7,10 @@
   
   my $rev = stash('id') || stash('rev');
   my $prefix = stash('prefix');
+  my $type = stash('type') || '';
 %>
 
-<div style="margin-bottom:10px;font-size:16px;display:inline-block;">
+<div style="margin-bottom:10px;font-size:16px;display:inline-block;padding-top:3px;">
   % if ($prefix) {
     <span class="muted">History for</span>
   % }
@@ -26,7 +27,7 @@
       % my $part = $parts[$i];
       % $path .= $part;
       
-      % if ($type eq 'blob' && $i == @parts - 1) {
+      % if ($i == @parts - 1) {
         <b><%= $part %></b>
       % } else {
         <a href=

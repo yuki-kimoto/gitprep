@@ -11,6 +11,8 @@
   my $type
     = $display eq 'tree' || $display eq 'tree_top' || $display eq 'files'
     ? 'tree' : 'commits';
+  
+  my $dir = stash('dir');
 %>
 
 %= javascript begin
@@ -115,6 +117,8 @@
         <input id="rep_url" type="text" style="width:550px;border-radius:0;padding:3px 7px;border-top-right-radius:3px;border-bottom-right-radius:3px">
       </div>
     </div>
+  % } elsif ($display eq 'tree') {
+    %= include '/include/page_path', Path => $dir;
   % }
 </div>
 

@@ -38,8 +38,13 @@
     my $commit = $git->get_commit($user, $project, $rev);
     
     # Tree
-    my $trees = $git->trees($user, $project, $rev);
-    
+    my $trees;
+    if (defined $dir && length $dir) {
+      $trees = $git->trees($user, $project, $rev, $dir);
+    }
+    else {
+      $trees = $git->trees($user, $project, $rev);
+    }
     # Commits number
     $commits_number = $git->commits_number($user, $project, $rev);
     
@@ -199,7 +204,7 @@
 
       <div style="margin-bottom:5px;">
         % my $display = defined $dir && length $dir ? 'tree' : 'tree_top';
-        %= include '/include/branch_select', display => $display;
+        %= include '/include/branch_select', display => $display, dir => $dir;
       </div>
       
       <div style="margin-bottom:30px">
