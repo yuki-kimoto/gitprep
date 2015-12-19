@@ -3,14 +3,16 @@
   my $logined = $api->logined;
 
   my $current_user = session('user');
-  my $user = param('user');
+  my $user = $self->param('user');
 
   my $project = param('project');
   my $original_user;
   my $original_project;
   my $is_private_project;
   
-  if (defined $project) {
+  my $no_project_header = stash('no_project_header');
+  
+  if (!$no_project_header && defined $project) {
     $original_user = app->manager->original_user($user, $project);
     $original_project = app->manager->original_project($user, $project);
     $is_private_project = app->manager->is_private_project($user, $project);
@@ -51,7 +53,7 @@
 </div>
 <hr style="margin:0;">
 
-% if (defined $user || defined $project) {
+% if (!$no_project_header && (defined $user || defined $project)) {
   <div style="padding-top:10px;background:#fafafa;border-bottom:1px solid #eee;margin-bottom:10px;">
     <div class="container">
       <div class="row" style="margin-bottom:10px">

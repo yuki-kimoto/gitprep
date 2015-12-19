@@ -1,6 +1,7 @@
 <%
   # API
   my $api = gitprep_api;
+  my $session_user = session('user');
 
   my $op = param('op') || '';
 
@@ -44,7 +45,6 @@
       }
       
       my $data = $vresult->data;
-      my $user = session('user');
       my $project = $data->{project};
       my $description = $data->{description};
       $description = '' unless defined $description;
@@ -52,14 +52,14 @@
       my $private = $data->{private};
       
       my $manager = app->manager;
-      if ($manager->exists_project($user, $project)) {
+      if ($manager->exists_project($session_user, $project)) {
         $errors = ['Repository already exists'];
       }
       else {
         # Create repository
         eval {
           $manager->create_project(
-            $user,
+            $session_user,
             $project,
             {description => $description, readme => $readme, private => $private}
           );
@@ -70,7 +70,7 @@
           $errors = ['Internal error'];
         }
         else {
-          $self->redirect_to("/$user/$project");
+          $self->redirect_to("/$session_user/$project");
           return;
         }
       }
@@ -81,7 +81,7 @@
 
 % layout 'common', title => 'Create a New Repository';
 
-  %= include '/include/header';
+  %= include '/include/header', no_project_header => 1;
   
   <div class="container">
     % if ($errors) {
@@ -92,16 +92,49 @@
         % }
       </div>
     % }
+    <div style="border-bottom:1px solid #e5e5e5;margin-top:40px;margin-bottom:20px;">
+      <div style="font-weight:bold;font-size:18px;color:#333;margin-bottom:3px;">
+        Create a new repository
+      </div>
+      <div style="color:#666;margin-bottom:5px;">
+        A repository contains all the files for your project, including the revision history.
+      </div>
+    </div>
     <form action="<%= url_for->query(op => 'create') %>" method="post">
-      <div><b>Repository name</b></div>
-      <div><%= input_tag 'project', type => 'text', style => 'width:300px' %></div>
+      <table>
+        <tr>
+          <td>
+            <b>Owner</b>
+          </td>
+          <td>
+          
+          </td>
+          <td>
+            <b>Repository name</b>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <i class="icon-user"></i><%= $session_user %>
+          </td>
+          <td style="padding:0 10px">
+            /
+          </td>
+          <td>
+            <%= input_tag 'project', type => 'text', style => 'width:300px' %>
+          </td>
+        </tr>
+      </table>
+      <div style="margin-bottom:20px">
+        Great repository names are short and memorable.
+      </div>
 
       <div><b>Description</b> (optional)</div>
       <div><%= input_tag 'description', type => 'text', style => 'width:600px' %></div>
       
       <div>
         <label class="checkbox" style="margin-bottom:0">
-          <%= check_box readme => 1 %><b>Initialize this repository with a README</b>
+          <%= check_box readme => 1 %><b>Initialize this $session_usertory with a README</b>
         </label>
       </div>
       <div class="muted" style="margin-left:20px">This will allow you to git clone the repository immediately.</div>
