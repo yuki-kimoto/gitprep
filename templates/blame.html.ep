@@ -57,10 +57,7 @@
   
   <!-- Blame page -->
   <div class="container">
-    <div style="margin-bottom:20px;">
-      %= include '/include/branch_select', display => 'files';
-    </div>
-    %= include '/include/page_path', type => 'blob', Path => $file;
+    %= include '/include/page_path', Path => $file;
     <div class="text-right" style="margin-bottom:10px">
       Newer
       % for my $color (@$colors) {
