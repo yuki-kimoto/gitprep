@@ -211,7 +211,7 @@
         %= include '/include/tree', dir => $dir;
       </div>
       
-      %= include '/include/readme';
+      %= include '/include/readme', dir => $dir;
       
     % } elsif ($state eq 'init' && $api->logined($user)) {
       
