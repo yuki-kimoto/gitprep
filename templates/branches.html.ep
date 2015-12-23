@@ -72,19 +72,30 @@
     $max = $branch->{status}{ahead} if $max < $branch->{status}{ahead};
     $max = $branch->{status}{behind} if $max < $branch->{status}{behind};
     
+    my $is_active = $branch->{commit}{age} < 60 * 60 * 24 * (365 * 3);
+    
     if ($display eq 'overview') {
       if ($branch->{name} eq $default_branch_name) {
         push @{$branches_h->{default}}, $branch;
       }
       else {
-        push @{$branches_h->{active}}, $branch;
+        if ($is_active) {
+          push @{$branches_h->{active}}, $branch;
+        }
+        else {
+          push @{$branches_h->{stale}}, $branch;
+        }
       }
     }
     elsif ($display eq 'active') {
-      push @{$branches_h->{active}}, $branch;
+      if ($is_active) {
+        push @{$branches_h->{active}}, $branch;
+      }
     }
     elsif ($display eq 'stale') {
-      push @{$branches_h->{stale}}, $branch;
+      unless ($is_active) {
+        push @{$branches_h->{stale}}, $branch;
+      }
     }
     elsif ($display eq 'all') {
       push @{$branches_h->{all}}, $branch;
