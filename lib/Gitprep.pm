@@ -319,7 +319,7 @@ sub startup {
             $r->get('/commits/*rev_file' => template '/commits');
             
             # Branches
-            $r->any('/branches/*base_branch' => {base_branch => undef} => template '/branches');
+            $r->any('/branches/:display' => {display => undef} => template '/branches');
 
             # Tags
             $r->get('/tags' => template '/tags');

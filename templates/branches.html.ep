@@ -7,6 +7,7 @@
   my $user = param('user');
   my $project = param('project');
   my $op = param('op') || '';
+  my $display = param('display') || 'overview';
   
   # Git
   my $git = $self->app->git;
@@ -52,176 +53,160 @@
   }
   
   # Default branch
-  my $base_branch_name = param('base_branch') || app->manager->default_branch($user, $project);
-  my $base_branch = $git->branch($user, $project, $base_branch_name);
+  my $default_branch_name = app->manager->default_branch($user, $project);
+  my $default_branch = $git->branch($user, $project, $default_branch_name);
   
-  # No merged branches
+  # Branches
+  my $branch_types = ['default', 'active', 'stale', 'all'];
+  my $branches_h = {
+    default => [],
+    active => [],
+    stale => [],
+    all => []
+  };
+  
   my $branches = $git->branches($user, $project);
   my $max = 0;
   for my $branch (@$branches) {
-    $branch->{status} = $git->branch_status($user, $project, $base_branch->{name}, $branch->{name});
+    $branch->{status} = $git->branch_status($user, $project, $default_branch->{name}, $branch->{name});
     $max = $branch->{status}{ahead} if $max < $branch->{status}{ahead};
     $max = $branch->{status}{behind} if $max < $branch->{status}{behind};
+    
+    if ($display eq 'overview') {
+      if ($branch->{name} eq $default_branch_name) {
+        push @{$branches_h->{default}}, $branch;
+      }
+      else {
+        push @{$branches_h->{active}}, $branch;
+      }
+    }
+    elsif ($display eq 'active') {
+      push @{$branches_h->{active}}, $branch;
+    }
+    elsif ($display eq 'stale') {
+      push @{$branches_h->{stale}}, $branch;
+    }
+    elsif ($display eq 'all') {
+      push @{$branches_h->{all}}, $branch;
+    }
   }
-  my $branches_count = $git->branches_count($user, $project);
-  my $no_merged_branches_count = $git->no_merged_branches_count($user, $project);
-  my $merged_branches_count = $branches_count - $no_merged_branches_count - 1;
-  
-  # Global variable
-  stash(rev => $base_branch_name);
 %>
 
 % layout 'common', title => "branches  \x{30fb} $user/$project";
 
-  %= javascript begin
-    $('document').ready(function () {
-      
-      // Switch merged branch or not merged branch
-      var display_no_merged = true;
-      $('#toggle-branch').on('click', function () {
-        if (display_no_merged) {
-          $(this).text('View unmerged branches');
-          $('#no-merged-branch-message').hide();
-          $('#merged-branch-message').show();
-          $('.no-merged-branch').css('display', 'none');
-          $('.merged-branch').css('display', 'block');
-        }
-        else {
-          $(this).text('View merged branches');
-          $('#no-merged-branch-message').show();
-          $('#merged-branch-message').hide();
-          $('.no-merged-branch').css('display', 'block');
-          $('.merged-branch').css('display', 'none');
-        }
-        display_no_merged = !display_no_merged;
-      });
-      
-      // Click delete button
-      $('.delete-branch').on('click', function () {
-        if (window.confirm('Are you sure you want to remove this branch?')) {
-          return true;
-        }
-        else {
-          return false;
-        }
-      });
-    });
-  % end
-  
   %= include '/include/header';
   
   <div class="container" style="padding-bottom:30px">
     %= include '/include/errors', errors => $errors;
     %= include '/include/message', message => flash('message');
     
-    <h3 style="font-size:19px">Branches</h3>
+    <!-- Branches (for tests) -->
     
-    <div style="margin-bottom:10px">
-      Showing
-      <span id="no-merged-branch-message">
-         <%= $no_merged_branches_count %> branches not merged
-      </span>
-      <span style="display:none" id="merged-branch-message">
-        <%= $merged_branches_count %> branches merged
-      </span>
-      into <%= $base_branch->{name} %>.
-      <a id="toggle-branch" href="#">View merged branches</a>
-    </div>
-    <div class="bk-black" style="padding:5px 10px">
-      <div class="row">
-        <div class="span8" style="line-height:1.2em">
-          <div style="color:white;font-size:16px;">
-            <b><%= $base_branch->{name} %></b>
-          </div>
-          <div class="muted" style="font-size:12px">
-            Last updated
-            <span title="<%= $base_branch->{commit}{age_string_datetime_local} %>">
-              <%= $base_branch->{commit}{age_string} %>
-            </span>
-            by
-            <span title="<%= $base_branch->{commit}{author_email} %>" style="color:white">
-              <%= $base_branch->{commit}{author_name} %>
-            </span>
-          </div>
+    <ul>
+      <li>
+        <a href="<%= url_for("/$user/$project/branches") %>">Overview</a>
+      </li>
+      <li>
+        <a href="<%= url_for("/$user/$project/branches/active") %>">Active</a>
+      </li>
+      <li>
+        <a href="<%= url_for("/$user/$project/branches/stale") %>">Stale</a>
+      </li>
+      <li>
+        <a href="<%= url_for("/$user/$project/branches/all") %>">All branches</a>
+      </li>
+    </ul>
+    
+    % for my $branch_type (@$branch_types) {
+      % my $branches = $branches_h->{$branch_type};
+      % if (@$branches) {
+        <div>
+          % if ($branch_type eq 'default') {
+            Default branch
+          % } elsif ($branch_type eq 'active') {
+            Active branch
+          % } elsif ($branch_type eq 'stale') {
+            Stale branch
+          % } elsif ($branch_type eq 'all') {
+            All branches
+          % }
         </div>
-        <div class="text-right font-white" style="padding-top:6px">
-          Base branch
-        </div>
-      </div>
-    </div>
-    % for (my $i = 0; $i < @$branches; $i++) {
-      % my $branch = $branches->[$i];
-      % my $bname = $branch->{name};
-      % next if $bname eq $base_branch->{name};
-      <div class="<%= $branch->{no_merged} ? 'no-merged-branch' : 'merged-branch' %> border-bottom-gray" style="padding:10px 0px 5px 0px;<%= $branch->{no_merged} ? '' : 'display:none' %>">
-        <div class="row">
-          <div class="span5" style="line-height:1.2em">
-            <div style="font-size:16px;">
-              <a href="<%= url_for("/$user/$project/tree/$bname") %>">
-                <b><%= $bname %></b>
-              </a>
-            </div>
-            <div style="font-size:12px">
-              Last updated
-              <span title="<%= $branch->{commit}{age_string_datetime_local} %>">
-                <%= $branch->{commit}{age_string} %>
-              </span>
-              by
-              <span title="<%= $branch->{commit}{author_email} %>">
-                <%= $branch->{commit}{author_name} %>
-              </span>
-            </div>
-          </div>
-          <div class="span3 muted" style="line-height:1em;font-size:11px">
-            <table>
-              <tr>
-                <td>
-                </td>
-                <td style="background:#333">
-                </td>
-                <td style="padding-left:3px">
-                  <%= $branch->{status}{ahead} %> ahead
-                </td>
-              </tr>
-              <tr>
-                <td style="width:100px">
-                  <div style="margin-left:auto;margin-right:0;background:#b2d0dd;width:<%= $max != 0 ? 100 * ($branch->{status}{behind} / $max) : 0 %>%;height:8px"></div>
-                </td>
-                <td style="background:#333">
-                </td>
-                <td style="width:100px">
-                  <div style="background:#b2d0dd;width:<%= $max != 0 ? 100 * ($branch->{status}{ahead} / $max) : 0 %>%;height:8px"></div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <%= $branch->{status}{behind} %> behind
-                </td>
-                <td style="background:#333">
-                </td>
-                <td>
-                </td>
-              </tr>
-            </table>
-          </div>
-          <div class="span4 text-right" style="padding-top:0px">
-            % if ($api->logined($user)) {
-              <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
-                <input type="submit" class="btn delete-branch" style="color:#900;" value="Delete branch">
-                %= hidden_field branch => $bname;
-              </form>
-            % }
-            <a class="btn" href="<%= url_for("/$user/$project/compare/$base_branch->{name}...$bname") %>">
-              Compare
-            </a>
-            % if (app->config->{basic}{show_ignore_space_change_link}) {
-              (<a style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/compare/$base_branch->{name}...$bname?w=") %>">
-                ignore space
-              </a>)
-            % }
-          </div>
-        </div>
-      </div>
+        <ul>
+          % for (my $i = 0; $i < @$branches; $i++) {
+            % my $branch = $branches->[$i];
+            % my $bname = $branch->{name};
+            <li>
+              <div class="row">
+                <div class="span5" style="line-height:1.2em">
+                  <div style="font-size:16px;">
+                    <a href="<%= url_for("/$user/$project/tree/$bname") %>">
+                      <b><%= $bname %></b>
+                    </a>
+                  </div>
+                  <div style="font-size:12px">
+                    Updated
+                    <span title="<%= $branch->{commit}{age_string_datetime_local} %>">
+                      <%= $branch->{commit}{age_string} %>
+                    </span>
+                    by
+                    <span title="<%= $branch->{commit}{author_email} %>">
+                      <%= $branch->{commit}{author_name} %>
+                    </span>
+                  </div>
+                </div>
+                <div class="span3 muted" style="line-height:1em;font-size:11px">
+                  <table>
+                    <tr>
+                      <td>
+                      </td>
+                      <td style="background:#333">
+                      </td>
+                      <td style="padding-left:3px">
+                        <%= $branch->{status}{ahead} %> ahead
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="width:100px">
+                        <div style="margin-left:auto;margin-right:0;background:#b2d0dd;width:<%= $max != 0 ? 100 * ($branch->{status}{behind} / $max) : 0 %>%;height:8px"></div>
+                      </td>
+                      <td style="background:#333">
+                      </td>
+                      <td style="width:100px">
+                        <div style="background:#b2d0dd;width:<%= $max != 0 ? 100 * ($branch->{status}{ahead} / $max) : 0 %>%;height:8px"></div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <%= $branch->{status}{behind} %> behind
+                      </td>
+                      <td style="background:#333">
+                      </td>
+                      <td>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                <div class="span4 text-right" style="padding-top:0px">
+                  % if ($api->logined($user)) {
+                    <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
+                      <input type="submit" class="btn delete-branch" style="color:#900;" value="Delete branch">
+                      %= hidden_field branch => $bname;
+                    </form>
+                  % }
+                  <a class="btn" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname") %>">
+                    Compare
+                  </a>
+                  % if (app->config->{basic}{show_ignore_space_change_link}) {
+                    (<a style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname?w=") %>">
+                      ignore space
+                    </a>)
+                  % }
+                </div>
+              </div>
+            </li>
+          % }
+        </ul>
+      % }
     % }
   </div>
   

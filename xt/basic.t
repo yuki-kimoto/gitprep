@@ -412,11 +412,6 @@ note 'Branches';
   $t->get_ok("/$user/$project/branches");
   $t->content_like(qr/Branches/);
   
-  # No merged branch
-  $t->content_like(qr/no-merged-branch.*?no_merged/s);
-  
-  # Marged branch
-  $t->content_like(qr/"merged-branch.*?b2/s);
 }
 
 note 'Compare';
