@@ -1,11 +1,15 @@
 <hr style="margin-top:0;margin-bottom:10px">
-<div class="text-center" style="margin-bottom:10px">
-  <a href="http://gitprep.yukikimoto.com/">Gitprep</a>
-  <span>Version <%= $Gitprep::VERSION %></span>
-</div>
+<div class="container">
+  <div class="footer">
+    <div>
+      <a href="http://gitprep.yukikimoto.com/">Gitprep</a>
+      <span>Version <%= $Gitprep::VERSION %></span>
+    </div>
 
-% if (app->mode eq 'development') {
-  <div class="text-center">
-    <a href="<%= url_for('/dbviewer') %>">DBViewer</a>
+    % if (app->mode eq 'development') {
+      <div>
+        <a href="<%= url_for('/dbviewer') %>">DBViewer</a>
+      </div>
+    % }
   </div>
-% }
+</div>
