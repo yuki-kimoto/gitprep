@@ -21,8 +21,8 @@
 
 <div style="background:#f5f5f5">
   <div class="container">
-    <div class="row">
-      <div class="span6">
+    <div>
+      <div>
         <div style="overflow:hidden">
           <h3 style="float:left;display:inline-block;font-size:19px;margin:0;padding-top:5px;"><a href="<%= url_for('/') %>">GitPrep</a></h3>
           % if ((url_for->path->parts->[0] || '') ne '_search') {
@@ -32,7 +32,7 @@
           % }
         </div>
       </div>
-      <div class="span6 text-right">
+      <div>
         <div style="margin:0; padding-top:12px">
           % if ($api->logined) {
             % unless ($current_user eq 'admin') {
@@ -56,8 +56,8 @@
 % if (!$no_project_header && (defined $user || defined $project)) {
   <div style="padding-top:10px;background:#fafafa;border-bottom:1px solid #eee;margin-bottom:10px;">
     <div class="container">
-      <div class="row" style="margin-bottom:10px">
-        <div class="span9">
+      <div style="margin-bottom:10px">
+        <div>
           <ul class="breadcrumb" style="margin:0;background:none;padding-left:0;font-size:16px;">
             <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>
             /
@@ -82,7 +82,7 @@
           </ul>
         </div>
         % if (defined $project) {
-          <div class="span3">
+          <div>
             <a class="btn" href="<%= url_for("/$user/$project/network") %>" >Network</a>
             % if ($logined && $current_user ne $user ) {
               <a href="<%= url_for("/$user/$project/fork") %>" class="btn">Fork</a>

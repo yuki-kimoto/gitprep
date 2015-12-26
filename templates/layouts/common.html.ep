@@ -30,10 +30,6 @@
     % }
   </head>
   <body>
-    %= stylesheet begin
-      %= include '/css/common';
-    % end
-
     %= content;
   </body>
 </html>
