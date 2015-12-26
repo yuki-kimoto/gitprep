@@ -14,8 +14,8 @@
   
   %= include '/include/header', title => 'Gitprep';
   <!-- Index page -->
-  <div class="container" style="min-heigth:500px">
-    <h3>Users</h3>
+  <div class="container">
+    <div class="topic1">Users</div>
     <ul class="nav nav-tabs nav-stacked">
       % for my $user (@$users) {
         % my $uid = $user->{id};

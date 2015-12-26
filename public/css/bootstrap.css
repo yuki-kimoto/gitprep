@@ -1598,3 +1598,10 @@ button.close {
   float:left;
   padding-top:13px;
 }
+
+.topic1 {
+  font-size:19px;
+  font-weight:bold;
+  margin:13px 0 8px 0;
+  padding-left:8px;
+}
