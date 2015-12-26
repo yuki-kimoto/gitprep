@@ -1549,7 +1549,6 @@ button.close {
 .header {
   background:#f5f5f5;
   border-bottom:1px solid #e5e5e5;
-  margin-bottom:10px;
   overflow:hidden;
 }
 
@@ -1604,6 +1603,36 @@ button.close {
   font-weight:bold;
   margin:13px 0 8px 0;
   padding-left:8px;
+}
+
+.project-header {
+  background:#fafafa;
+  border-bottom: 1px solid #eee;
+  margin-bottom:10px;
+  overflow:hidden;
+  padding:14px 0 10px 0;
+}
+
+.project-header-left {
+  float:left;
+  width:50%;
+  overflow:hidden;
+}
+
+.project-header-right {
+  float:left;
+  width:50%;
+  overflow:hidden;
+}
+
+.project-header-right-container {
+  float:right;
+  overflow:hidden;
+}
+
+.project-header-btn-container {
+  float:left;
+  margin-right:4px;
 }
 
 /* Markdown */

@@ -59,48 +59,54 @@
 </div>
 
 % if (!$no_project_header && (defined $user || defined $project)) {
-  <div>
+  <div class="project-header">
     <div class="container">
-      <div>
-        <div>
-          <ul class="breadcrumb" style="margin:0;background:none;padding-left:0;font-size:16px;">
-            <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>
+      <div class="project-header-left">
+        <ul class="breadcrumb" style="margin:0;background:none;padding-left:0;font-size:16px;">
+          <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>
+          /
+          <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
+          % if (defined $project) {
             /
-            <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
-            % if (defined $project) {
-              /
-              <li><b><a href="<%= url_for("/$user/$project") %>"><%= $project %></a></b></li>
-            % }
-            
-            % if ($is_private_project) {
-              <i class="icon icon-lock" style="margin-left:5px;margin-right:5px"></i>
-            % }
-            
-            % if (defined $original_project) {
-              (
-                forked from
-                <a href="<%= url_for("/$original_user/$original_project") %>">
-                  <%= "$original_user/$original_project" %>
-                </a>
-              )
-            % }
-          </ul>
+            <li><b><a href="<%= url_for("/$user/$project") %>"><%= $project %></a></b></li>
+          % }
+          
+          % if ($is_private_project) {
+            <i class="icon icon-lock" style="margin-left:5px;margin-right:5px"></i>
+          % }
+          
+          % if (defined $original_project) {
+            (
+              forked from
+              <a href="<%= url_for("/$original_user/$original_project") %>">
+                <%= "$original_user/$original_project" %>
+              </a>
+            )
+          % }
+        </ul>
+      </div>
+      <div class="project-header-right">
+        <div class="project-header-right-container">
+          % if (defined $project) {
+            <div class="project-header-btn-container">
+              <a class="btn" href="<%= url_for("/$user/$project/network") %>" >Network</a>
+            </div>
+            <div class="project-header-btn-container">
+              % if ($logined && $current_user ne $user ) {
+                <a href="<%= url_for("/$user/$project/fork") %>" class="btn">Fork</a>
+              % } else {
+                <button class="btn disabled" disabled>Fork</button>
+              % }
+            </div>
+            <div class="project-header-btn-container">
+              % if ($logined && $user eq session('user')) {
+                <a class="btn" href="<%= url_for("/$user/$project/settings") %>">Settings</a>
+              % } else {
+                <button class="btn disabled" disabled>Settings</button>
+              % }
+            </div>
+          % }
         </div>
-        % if (defined $project) {
-          <div>
-            <a class="btn" href="<%= url_for("/$user/$project/network") %>" >Network</a>
-            % if ($logined && $current_user ne $user ) {
-              <a href="<%= url_for("/$user/$project/fork") %>" class="btn">Fork</a>
-            % } else {
-              <button class="btn disabled" disabled>Fork</button>
-            % }
-            % if ($logined && $user eq session('user')) {
-              <a class="btn" href="<%= url_for("/$user/$project/settings") %>">Settings</a>
-            % } else {
-              <button class="btn disabled" disabled>Settings</button>
-            % }
-          </div>
-        % }
       </div>
     </div>
   </div>
