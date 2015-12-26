@@ -30,18 +30,28 @@
       % }
     </div>
     <div class="header-right">
-      <div style="margin:0; padding-top:12px">
+      <div class="header-rigth-container">
         % if ($api->logined) {
           % unless ($current_user eq 'admin') {
-            <a class="btn btn-small" href="<%= url_for("/_new") %>">Create a new repo</a>
-            <a class="btn btn-small" href="<%= url_for("/$current_user/_settings") %>">Account Settings</a>
+            <div class="header-btn-container">
+              <a class="btn btn-small" href="<%= url_for("/_new") %>">Create a new repo</a>
+            </div>
+            <div class="header-btn-container">
+              <a class="btn btn-small" href="<%= url_for("/$current_user/_settings") %>">Account Settings</a>
+            </div>
           % }
           % my $url = url_with->to_abs;
-          <a class="btn btn-small" href="<%= url_for("/_logout?from=$url") %>">Sign out</a>
+          <div class="header-btn-container">
+            <a class="btn btn-small" href="<%= url_for("/_logout?from=$url") %>">Sign out</a>
+          </div>
           <!-- Logined as <%= $current_user %> -->
-          <i class="icon-user"></i><a href="<%= url_for("/$current_user") %>"><%= $current_user %></a>
+          <div class="header-login-container">
+            <i class="icon-user"></i><a href="<%= url_for("/$current_user") %>"><%= $current_user %></a>
+          </div>
         % } else {
-          <a class="btn btn-primary" href="<%= url_for('/_login') %>">Sign in</a>
+          <div class="header-btn-container">
+            <a class="btn btn-primary" href="<%= url_for('/_login') %>">Sign in</a>
+          </div>
         % }
       </div>
     </div>
