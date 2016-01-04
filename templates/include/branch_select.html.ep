@@ -13,6 +13,17 @@
     ? 'tree' : 'commits';
   
   my $path = stash('Path');
+
+  my $title;
+  my $rev_short;
+  if (defined $rev && length $rev == 40) {
+    $title = 'tree';
+    $rev_short = substr($rev, 0, 10);
+  }
+  else {
+    $title = 'branch';
+    $rev_short = $rev;
+  }
 %>
 
 %= javascript begin
@@ -83,43 +94,40 @@
   });
 % end
 
-
-<div class="row">
-  <%
-    my $title;
-    my $rev_short;
-    if (defined $rev && length $rev == 40) {
-      $title = 'tree';
-      $rev_short = substr($rev, 0, 10);
-    }
-    else {
-      $title = 'branch';
-      $rev_short = $rev;
-    }
-  %>
-  <div class="span2">
-    <button id="rev-btn" class="btn" style="font-size:13px;padding:2px 10px;margin-right:6px">
-      <span class="muted"><%= $title %>:</span> <b><%= $rev_short %></b> <i class="icon-arrow-down"></i>
+<div class="branch-select-container">
+  <div class="branch-select-left-container">
+    <button id="rev-btn" class="btn btn-small">
+      <span><%= $title %>:</span> <b><%= $rev_short %></b> <i class="icon-arrow-down"></i>
     </button>
   </div>
-  % if ($display eq 'tree_top') {
-    <div class="span10" style="text-algin:right;overflow:hidden">
-      <a class="btn" style="margin-left:5px;float:right;font-size:12px;font-weight:bold;color:#333;padding:3px 6px" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
-        Download ZIP
-      </a>
-      <div class="input-append" style="float:right">
-        <div class="btn-group" data-toggle="buttons-radio">
-          <button class="btn" id="btn_http" style="margin-left:5px;padding:3px 6px;border-top-right-radius:0px; border-bottom-right-radius:0px"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
-          % if ($logined) {
-            <button class="btn" id="btn_ssh" style="padding:3px 7px;border-radius:0">SSH</button>
-          % }
-        </div>
-        <input id="rep_url" type="text" style="width:550px;border-radius:0;padding:3px 7px;border-top-right-radius:3px;border-bottom-right-radius:3px">
+  <div class="branch-select-right-container">
+    % if ($display eq 'tree_top') {
+      <ul class="git-url-container">
+        <li>
+          <button class="btn btn-small" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
+        </li>
+        % if ($logined) {
+          <li>
+            <button class="btn btn-small" id="btn_ssh">SSH</button>
+          </li>
+        % }
+        <li>
+          <input id="rep_url" type="text">
+        </li>
+        <li>
+          <div class="donwload-zip">
+            <a class="btn btn-small" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
+              Download ZIP
+            </a>
+          </div>
+        </li>
+      </ul>
+    % } elsif ($display eq 'tree' || $display eq 'blob') {
+      <div class="page-path-container">
+        %= include '/include/page_path', Path => $path;
       </div>
-    </div>
-  % } elsif ($display eq 'tree' || $display eq 'blob') {
-    %= include '/include/page_path', Path => $path;
-  % }
+    % }
+  </div>
 </div>
 
 <div style="position:relative">
