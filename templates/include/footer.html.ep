@@ -1,6 +1,5 @@
-<hr style="margin-top:0;margin-bottom:10px">
-<div class="container">
-  <div class="footer">
+<div class="footer">
+  <div class="container">
     <div>
       <a href="http://gitprep.yukikimoto.com/">Gitprep</a>
       <span>Version <%= $Gitprep::VERSION %></span>
