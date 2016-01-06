@@ -48,7 +48,7 @@
                 <%= $name %>
               </a>
             % } elsif ($tree) {
-              <i class="icon-folder-open"></i>
+              <i class="icon-folder-close"></i>
               <a href="<%= url_for("/$user/$project/tree/$rev/$child_dir") %>">
                 <%= $name %>
               </a>
