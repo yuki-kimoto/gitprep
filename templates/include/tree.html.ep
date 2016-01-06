@@ -3,25 +3,20 @@
 %>
 
 <div style="margin-bottom:10px">
-  <div class="bk-blue-light border-blue radius-top" style="padding:5px">
-    <a style="color:#333" href="<%= url_for("/$user/$project/commit/$rev") %>">
-      <%= $commit->{title} %>
-    </a>
-  </div>
-  <div class="border-blue" style="padding:5px;border-top:none">
-    <div class="row" style="font-size:12px">
-      <div class="span8">
-        <span style="color:#333" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>
-        <span class="muted">
-          authored <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
-        </span>
-      </div>
-      <div class="text-right">
-        <a class="muted" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-          latest commit <%= substr($commit->{id}, 0, 10) %>
-        </a>
-     </div>
-   </div>
+  <div class="commit-summary">
+    <div class="commit-summary-left-container">
+      <span class="commit-summary-author" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>
+      <a href="<%= url_for("/$user/$project/commit/$rev") %>">
+        <%= $commit->{title} %>
+      </a>
+    </div>
+    <div class="commit-summary-right-container">
+      Latest commit
+      <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+        <%= substr($commit->{id}, 0, 7) %>
+      </a>
+      <%= $commit->{age_string} %>
+    </div>
   </div>
   % for (my $i = 0; $i <@$trees; $i++) {
     % my $last = $i == @$trees - 1;

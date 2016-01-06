@@ -1643,3 +1643,39 @@ button.close {
 .readme-frame {
   border: 1px solid #d8d8d8;
 }
+
+.commit-summary {
+  overflow:hidden;
+  padding: 10px;
+  line-height: 20px;
+  background-color: #e6f1f6;
+  border: 1px solid #c1dce9;
+  border-radius: 3px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-top:13px;
+}
+
+.commit-summary-left-container {
+  float:left;
+  width:70%;
+}
+
+.commit-summary-right-container {
+  float:right;
+  width:30%;
+  text-align:right;
+  color: #68777d;
+}
+
+.commit-summary-author {
+  font-weight:bold;
+}
+
+.commit-summary-left-container a {
+  color: #68777d;
+}
+
+.commit-summary-right-container a {
+  color:#445055;
+}
