@@ -1,10 +1,13 @@
 <%
   my $api = gitprep_api;
   
+  my $user = param('user');
+  my $project = param('project');
   my $display = stash('display') || '';
   my $rev = stash('rev');
   $rev = '' unless defined $rev;
   my $branches = stash('branches');
+  my $ssh_rep_url = stash('ssh_rep_url');
 
   my $logined = $api->logined;
 
@@ -24,6 +27,7 @@
     $title = 'branch';
     $rev_short = $rev;
   }
+  
 %>
 
 %= javascript begin
@@ -91,6 +95,35 @@
     $('#rev-close').on('click', function () {
       $('#rev-popup').css('display', 'none');
     });
+    
+    
+    // Repository URL buttons
+    var http_rep_url = '<%= url_for("$user/$project.git")->to_abs %>';
+    
+    var logined = <%= $logined ? 'true' : 'false' %>;
+    var ssh_rep_url = '<%= $ssh_rep_url %>';
+    
+    // Click HTTP button
+    $('#btn_http').on('click', function () {
+      $('#rep_url').val(http_rep_url);
+      $('#btn_http').addClass('btn-info');
+      $('#btn_ssh').removeClass('btn-info');
+    });
+
+    // Click SSH button
+    $('#btn_ssh').on('click', function () {
+      $('#rep_url').val(ssh_rep_url);
+      $('#btn_http').removeClass('btn-info');
+      $('#btn_ssh').addClass('btn-info');
+    });
+
+    // Initialize
+    if (logined) {
+      $('#btn_ssh').trigger('click');
+    }
+    else {
+      $('#btn_http').trigger('click');
+    }
   });
 % end
 
@@ -103,14 +136,14 @@
   <div class="branch-select-right-container">
     % if ($display eq 'tree_top') {
       <ul class="git-url-container">
-        <li>
-          <button class="btn btn-small" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
-        </li>
         % if ($logined) {
           <li>
-            <button class="btn btn-small" id="btn_ssh">SSH</button>
+            <button class="btn btn-small btn-info" id="btn_ssh">SSH</button>
           </li>
         % }
+        <li>
+          <button class="btn btn-small <%= !$logined ? 'btn-info' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
+        </li>
         <li>
           <input id="rep_url" type="text">
         </li>

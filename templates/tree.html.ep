@@ -79,47 +79,6 @@
   
   layout 'common', title => "$user/$project";
 %>
-
-  %= javascript begin
-    $(document).ready(function () {
-      var http_rep_url = '<%= url_for("$user/$project.git")->to_abs %>';
-      % my $rep = $git->rep($user, $project);
-      % my $ssh_port = config->{basic}{ssh_port} || '';
-      
-      var logined = <%= $logined ? 'true' : 'false' %>;
-      var ssh_rep_url = '';
-      if (logined) {
-        ssh_rep_url = '<%= $ssh_rep_url %>';
-      }
-      
-      // Click HTTP button
-      $('#btn_http').on('click', function () {
-        $('#rep_url').val(http_rep_url);
-        $('#access').text('Read-write');
-      });
-
-      // Click SSH(old) button
-      $('#btn_ssh').on('click', function () {
-        $('#rep_url').val(ssh_rep_url);
-        $('#access').text('Read-write');
-      });
-
-      // Initialize
-      $('#btn_http').trigger('click');
-      
-      // URL is automatically selected
-      var url_selected_count = 0;
-      $('#rep_url').on('mouseup', function () {
-        if (url_selected_count == 0) {
-          $(this).select();
-        }
-        url_selected_count += 1;
-      });
-      $('#rep_url').on('blur', function () {
-        url_selected_count = 0;
-      });
-    });
-  % end
   
   %= include '/include/header';
   
@@ -204,7 +163,7 @@
 
       <div style="margin-bottom:5px;">
         % my $display = defined $dir && length $dir ? 'tree' : 'tree_top';
-        %= include '/include/branch_select', display => $display, Path => $dir;
+        %= include '/include/branch_select', display => $display, Path => $dir, ssh_rep_url => $ssh_rep_url;
       </div>
       
       <div style="margin-bottom:30px">
