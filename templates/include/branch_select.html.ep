@@ -128,7 +128,7 @@
 % end
 
 <div class="branch-select-container">
-  <div class="branch-select-left-container branch-select-left-container-page-path">
+  <div class="branch-select-left-container <%= $display eq 'tree' || $display eq 'blob' ? 'branch-select-left-container-page-path' : '' %>">
     <button id="rev-btn" class="btn btn-small">
       <span><%= $title %>:</span> <b><%= $rev_short %></b> <i class="icon-arrow-down"></i>
     </button>
