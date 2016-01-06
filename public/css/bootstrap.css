@@ -1640,3 +1640,12 @@ button.close {
   margin-left:5px;
   font-weight:bold;
 }
+
+.page-path {
+  display:inline-block;
+  margin-left:5px;
+}
+
+.branch-select-left-container-page-path {
+  width:100%;
+}

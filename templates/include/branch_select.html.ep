@@ -128,39 +128,38 @@
 % end
 
 <div class="branch-select-container">
-  <div class="branch-select-left-container">
+  <div class="branch-select-left-container branch-select-left-container-page-path">
     <button id="rev-btn" class="btn btn-small">
       <span><%= $title %>:</span> <b><%= $rev_short %></b> <i class="icon-arrow-down"></i>
     </button>
-  </div>
-  <div class="branch-select-right-container">
-    % if ($display eq 'tree_top') {
-      <ul class="git-url-container">
-        % if ($logined) {
-          <li>
-            <button class="btn btn-small btn-info" id="btn_ssh">SSH</button>
-          </li>
-        % }
-        <li>
-          <button class="btn btn-small <%= !$logined ? 'btn-info' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
-        </li>
-        <li>
-          <input id="rep_url" type="text">
-        </li>
-        <li>
-          <div class="donwload-zip">
-            <a class="btn btn-small" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
-              Download ZIP
-            </a>
-          </div>
-        </li>
-      </ul>
-    % } elsif ($display eq 'tree' || $display eq 'blob') {
-      <div class="page-path-container">
+    % if ($display eq 'tree' || $display eq 'blob') {
         %= include '/include/page_path', Path => $path;
-      </div>
     % }
   </div>
+    % if ($display eq 'tree_top') {
+      <div class="branch-select-right-container">
+        <ul class="git-url-container">
+          % if ($logined) {
+            <li>
+              <button class="btn btn-small btn-info" id="btn_ssh">SSH</button>
+            </li>
+          % }
+          <li>
+            <button class="btn btn-small <%= !$logined ? 'btn-info' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
+          </li>
+          <li>
+            <input id="rep_url" type="text">
+          </li>
+          <li>
+            <div class="donwload-zip">
+              <a class="btn btn-small" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
+                Download ZIP
+              </a>
+            </div>
+          </li>
+        </ul>
+      </div>
+    % }
 </div>
 
 <div style="position:relative">
