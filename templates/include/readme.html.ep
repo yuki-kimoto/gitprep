@@ -30,14 +30,16 @@
 %>
 
 % if (defined $readme_e) {
-  <div class="README">
-    <div class="border-gray bk-gray-light" style="border-radius:1px;font-size:17px;padding:10px">
-      <i class="icon-book" style="margin-top:2px"></i> <%= $type eq 'plain' ? 'README' : 'README.md' %>
+  <div class="readme">
+    <div class="readme-header">
+      <i class="icon-book"></i> <%= $type eq 'plain' ? 'README' : 'README.md' %>
     </div>
-    % if ($type eq 'plain') {
-      <pre class="plain-text border-gray"><%== $readme_e %></pre>
-    % } else {
-      <div class="markdown-body border-gray"><%== $readme_e %></div>
-    % }
+    <div class="readme-frame">
+      % if ($type eq 'plain') {
+        <pre class="plain-text"><%== $readme_e %></pre>
+      % } else {
+        <div class="markdown-body"><%== $readme_e %></div>
+      % }
+    </div>
   </div>
 % }
