@@ -18,7 +18,7 @@ use Mojolicious::Plugin::AutoRoute::Util 'template';
   eval {require Digest::SHA; import Digest::SHA qw(sha1 sha1_hex)};
 }
 
-our $VERSION = 'v1.11';
+our $VERSION = 'v1.12_dev';
 
 has 'dbi';
 has 'git';
