@@ -1607,7 +1607,7 @@ button.close {
 
 .git-url-container input {
   width:550px;
-  padding:4px 0 5px 5px;
+  padding:5px 0 5px 5px;
   border:1px solid #d8d8d8;
 }
 
@@ -1678,4 +1678,36 @@ button.close {
 
 .commit-summary-right-container a {
   color:#445055;
+}
+
+.file-list li {
+  border: 1px solid #c1dce9;
+  border-top:none;
+  padding:7px;
+  overflow:hidden;
+}
+
+.file-list li:last-child {
+  border-radius: 3px;
+}
+
+.file-list-name {
+  width:25%;
+  float:left;
+}
+
+.file-list-commit {
+  width:60%;
+  float:left;
+}
+
+.file-list-commit a {
+  color:#888;
+}
+
+.file-list-age {
+  width:15%;
+  float:left;
+  text-align:right;
+  color:#888
 }

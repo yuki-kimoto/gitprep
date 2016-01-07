@@ -18,53 +18,52 @@
       <%= $commit->{age_string} %>
     </div>
   </div>
-  % for (my $i = 0; $i <@$trees; $i++) {
-    % my $last = $i == @$trees - 1;
-    <div class="border-gray <%= $last ? 'radius-bottom' : '' %>" style="padding:5px;font-size:90%;border-top:none;#eee;background:#f8f8f8;<%= $last ? '' : 'border-bottom:1px solid #eee;' %>">
-      <div>
-        <div class="row">
-          % my $tree = $trees->[$i];
-          % my $type = $tree->{type};
-          % my $name = $tree->{name};
-          % my $commit = $tree->{commit};
-          % my $mode_str = $tree->{mode_str};
-          
-          <div class="span3" style="width:170px">
-            % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
-            % if ($mode_str eq 'm---------') {
-              <i class="icon-folder-open"></i>
-              <a href="<%= url_for("/$user/$project/submodule/$rev/$child_dir") %>">
-                <%= $name %>
-              </a>              
-            % } elsif ($type eq 'blob') {
-              % my $file = defined $dir && $dir ne '' ? "$dir/$name" : $name;
-              <i class="icon-file"></i>
-              <a href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
-                <%= $name %>
-              </a>
-            % } elsif ($tree) {
-              <i class="icon-folder-close"></i>
-              <a href="<%= url_for("/$user/$project/tree/$rev/$child_dir") %>">
-                <%= $name %>
-              </a>
-            % }
-          </div>
-          <div class="span2" style="width:100px">
-            <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
-          </div>
-          <div class="span6" style="width:610px">
-            <a class="font-black" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-              <%= $commit->{title_short} %>
+  <ul class="file-list">
+    % for (my $i = 0; $i <@$trees; $i++) {
+      <%
+        my $last = $i == @$trees - 1;
+        my $tree = $trees->[$i];
+        my $type = $tree->{type};
+        my $name = $tree->{name};
+        my $commit = $tree->{commit};
+        my $mode_str = $tree->{mode_str};
+      %>
+      
+      <li>
+        <div class="file-list-name">
+          % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
+          % if ($mode_str eq 'm---------') {
+            <i class="icon-folder-close"></i>
+            <a href="<%= url_for("/$user/$project/submodule/$rev/$child_dir") %>">
+              <%= $name %>
+            </a>              
+          % } elsif ($type eq 'blob') {
+            % my $file = defined $dir && $dir ne '' ? "$dir/$name" : $name;
+            <i class="icon-file"></i>
+            <a href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
+              <%= $name %>
             </a>
-            % if (app->config->{basic}{show_ignore_space_change_link}) {
-              (<a style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/commit/$commit->{id}?w=") %>">
-                ignore space
-              </a>)
-            % }
-            [<span style="color:#4183c4" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>]
-          </div>
+          % } elsif ($tree) {
+            <i class="icon-folder-close"></i>
+            <a href="<%= url_for("/$user/$project/tree/$rev/$child_dir") %>">
+              <%= $name %>
+            </a>
+          % }
         </div>
-      </div>
-    </div>
-  % }
+        <div class="file-list-commit">
+          <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+            <%= $commit->{title_short} %>
+          </a>
+          % if (app->config->{basic}{show_ignore_space_change_link}) {
+            (<a href="<%= url_for("/$user/$project/commit/$commit->{id}?w=") %>">
+              ignore space
+            </a>)
+          % }
+        </div>
+        <div class="file-list-age">
+          <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
+        </div>
+      </li>
+    % }
+  </ul>
 </div>

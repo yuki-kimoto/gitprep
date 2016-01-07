@@ -20,11 +20,11 @@
   my $title;
   my $rev_short;
   if (defined $rev && length $rev == 40) {
-    $title = 'tree';
+    $title = 'Tree';
     $rev_short = substr($rev, 0, 10);
   }
   else {
-    $title = 'branch';
+    $title = 'Branch';
     $rev_short = $rev;
   }
   
