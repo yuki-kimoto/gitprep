@@ -2,7 +2,7 @@
   my $dir = stash('dir');
 %>
 
-<div style="margin-bottom:10px">
+<div>
   <div class="commit-summary">
     <div class="commit-summary-left-container">
       <span class="commit-summary-author" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>

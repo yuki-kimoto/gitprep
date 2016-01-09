@@ -100,7 +100,7 @@ ul {
   margin: 0;;
 }
 
-li {
+ul li {
   list-style:none;
 }
 
@@ -1679,6 +1679,16 @@ button.close {
   color:#445055;
 }
 
+.commit-contributor {
+  padding: 5px 10px;
+  background-color: #fff;
+  border: 1px solid #c1dce9;
+  border-top:none;
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+  color:#68777d;
+}
+
 .file-list li {
   border: 1px solid #c1dce9;
   border-top:none;
@@ -1709,4 +1719,62 @@ button.close {
   float:left;
   text-align:right;
   color:#888
+}
+
+.file-header {
+  padding: 5px 10px;
+  background-color: #f7f7f7;
+  border: 1px solid #d8d8d8;
+  border-bottom:none;
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+  margin-top:20px;
+  overflow:hidden;
+}
+
+.file-header-left {
+  float:left;
+  width:50%;
+  padding-top:4px;
+}
+
+.file-header-right {
+  float:left;
+  width:50%;
+  overflow:hidden;
+}
+
+.file-header-right ul {
+  float:right;
+  overflow:hidden;
+}
+
+.file-header-right li {
+  float:left;
+  margin-left:1px;
+  font-weight:bold;
+}
+
+.blob-image {
+  background:#ddd;
+  text-align:center;
+  padding-top:30px;
+  padding-bottom:30px;
+  margin-bottom:30px;
+  border-radius: 0 0 2px 2px;
+}
+
+.blob-image img {
+  max-width: 600px;
+  border: 1px solid #fff;
+}
+
+.blob-raw {
+  font-size:16px;
+  background:#ddd;
+  text-align:center;
+  padding-top:30px;
+  padding-bottom:30px;
+  margin-bottom:30px;
+  border-radius: 0 0 2px 2px;
 }
