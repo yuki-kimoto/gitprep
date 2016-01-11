@@ -1874,3 +1874,49 @@ button.close {
   color:white;
   background:#4169e1;
 }
+
+.pagenation {
+  overflow:hidden;
+  width:140px;
+  margin: 0 auto;
+}
+
+.pagenation li {
+  float: left;
+  font-size: 13px;
+  font-weight: bold;
+  color: #4078c0;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-left:none;
+  width:50%;
+  text-align:center;
+}
+
+.pagenation li a {
+  padding: 7px 12px;
+  display:block;
+  width:100%;
+}
+
+.pagenation li span {
+  padding: 7px 12px;
+  display:block;
+  width:100%;
+  color:#d3d3d3;;
+  background:#fafafa;
+}
+
+.pagenation li a:hover {
+  text-decoration:none;
+  background:#e5e5e5;
+}
+
+.pagenation li:first-child {
+  border-left: 1px solid #e5e5e5;
+  border-radius:3px 0 0 3px;
+}
+
+.pagenation li:last-child {
+  border-radius:0 3px 3px 0;
+}
