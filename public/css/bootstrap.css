@@ -1778,3 +1778,99 @@ button.close {
   margin-bottom:30px;
   border-radius: 0 0 2px 2px;
 }
+
+.commits {
+  margin-top:20px;
+}
+
+.commits-date-container {
+  border-left:#f3f3f3 2px solid;
+  margin:3px 6px;
+  padding:10px 0;
+}
+
+.commit-date {
+  color: #767676;
+}
+
+.commit-date i {
+  margin-right:15px;
+}
+
+.commits-date-container li:first-child {
+  border-top: 1px solid #e5e5e5;
+}
+
+.commits-date-container li {
+  margin-left:20px;
+  border: 1px solid #e5e5e5;
+  border-top:none;
+  padding:8px 20px 8px 15px;
+  overflow:hidden;
+}
+
+.commit-left {
+  float:left;
+  width:70%;
+}
+
+.commit-left-title a {
+  color:#333;
+}
+
+.commit-left-author {
+  color: #767676;
+  margin-top:1px;
+}
+
+.commit-right {
+  float:left;
+  width:30%;
+}
+
+.commit-right-container {
+  float:right;
+}
+
+.commit-right-commit-id {
+  float:left;
+  width:80px;
+}
+
+.commit-right-commit-id a {
+  border: 1px solid #e5e5e5;
+  display:block;
+  width:100%;
+  padding:6px 10px;
+  text-align:center;
+  margin-top:3px;
+  border-radius:3px;
+}
+
+.commit-right-commit-id a:hover {
+  text-decoration:none;
+  color:white;
+  background:#4169e1;
+}
+
+.commit-right-browse-repository {
+  float:left;
+}
+
+.commit-right-browse-repository a {
+  border: 1px solid #e5e5e5;
+  display:block;
+  width:100%;
+  padding:6px 5px;
+  margin-left:10px;
+  text-align:center;
+  font-weight:bold;
+  margin-top:3px;
+  border-radius:3px;
+}
+
+.commit-right-browse-repository a:hover {
+  text-decoration:none;
+  color:white;
+  background:#4169e1;
+}

@@ -59,7 +59,7 @@
         <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
           <%= substr($commit->{id}, 0, 7) %>
         </a>
-        <%= $commit->{age_string} %>
+        <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
       </div>
     </div>
           
