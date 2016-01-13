@@ -57,62 +57,75 @@
   
   <!-- Blame page -->
   <div class="container">
-    %= include '/include/page_path', Path => $file;
-    <div class="text-right" style="margin-bottom:10px">
-      Newer
-      % for my $color (@$colors) {
-        <span style="font-size:20px;color:<%= $color %>">■</span>
-      % }
-      Older
-    </div>
-    <div class="border-gray bk-gray-light" style="padding:5px; border-bottom:none">
-      <div class="row">
-        <div class="span7" style="padding-top:5px">
-          <i class="icon-file icon-white"></i>
-          <%= $file_type %>
-          <span class="muted">|</span>
-          <%= @$blame_lines %> lines
-          <span class="muted">|</span>
-          <%= $file_size %>kb
-        </div>
-        <div class="text-right">
-          <a class="btn" href="<%= url_for("/$user/$project/raw/$rev/$file") %>">Raw</a><a class="btn" href="<%= url_for("/$user/$project/blob/$rev/$file") %>">Normal View</a><a class="btn" href="<%= url_for("/$user/$project/commits/$rev/$file") %>">History</a>
-        </div>
+    <div class="blame-page-path">
+      %= include '/include/page_path', Path => $file;
+      <div class="blame-gradation">
+        Newer
+        % for my $color (@$colors) {
+          <span style="font-size:20px;color:<%= $color %>">■</span>
+        % }
+        Older
       </div>
     </div>
-    <div class="border-gray" style="width:938px;overflow-x:scroll;border-top:none">
-      <table style="min-width:938px">
+    <div class="file-header">
+      <div class="file-header-left">
+        <i class="icon-file icon-white"></i>
+        <%= @$blame_lines %> lines
+        <span style="color:#dcdcdc">|</span>
+        <%= $file_size %>kb
+      </div>
+      <div class="file-header-right">
+        <ul>
+          <li>
+            <a class="btn btn-small" href="<%= url_for("/$user/$project/raw/$rev/$file") %>">Raw</a>
+          </li>
+          <li>
+            <a class="btn btn-small" href="<%= url_for("/$user/$project/blob/$rev/$file") %>">Normal View</a>
+          </li>
+          <li>
+            <a class="btn btn-small" href="<%= url_for("/$user/$project/commits/$rev/$file") %>">History</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="blame-body-container">
+      <table class="blame-body">
         % for my $line (@$blame_lines) {
-          % my $blame_commit = $line->{commit};
-          % my $summary = $line->{summary};
-          % my $summary_short= length $summary > 28 ? substr($summary, 0, 28) . '...' : $summary;
-          % my $time_rate = $blame_max_author_time == $blame_min_author_time
-          %  ? 1
-          %  : ($blame_max_author_time - $line->{author_time}) / ($blame_max_author_time - $blame_min_author_time);
-          % my $color_number = int($time_rate * 10);
-          % $color_number = 9 if $color_number == 10;
-          % my $hot_color = $colors->[$color_number];
+          <%
+            my $blame_commit = $line->{commit};
+            my $summary = $line->{summary};
+            my $summary_short= length $summary > 28 ? substr($summary, 0, 28) . '...' : $summary;
+            my $time_rate = $blame_max_author_time == $blame_min_author_time
+             ? 1
+             : ($blame_max_author_time - $line->{author_time}) / ($blame_max_author_time - $blame_min_author_time);
+            my $color_number = int($time_rate * 10);
+            $color_number = 9 if $color_number == 10;
+            my $hot_color = $colors->[$color_number];
+          %>
           <tr id="L<%= $line->{number} %>">
             % if ($line->{before_same_commit}) {
-              <td nowrap class="border-gray" style="padding:5px 10px; background:#f7f7f7;vertical-align:middle;border-left:none;border-top:none;border-bottom:none;border-right:2px solid <%= $hot_color %>" >
-              </td>
+              <td class="blame-body-left" nowrap style="border-right:2px solid <%= $hot_color %>"></td>
             % } else {
-              <td nowrap class="border-gray" style="padding:5px 10px; background:#f7f7f7;vertical-align:middle;border-left:none;border-bottom:none;border-right:2px solid <%= $hot_color %>" >
-                  <div style="margin-bottom:0;padding-botttom:0">
-                    <a href="<%= url_for("/$user/$project/commit/$blame_commit") %>" ><%= substr($blame_commit, 0, 8) %></a>
-                    <a href="<%= url_for("/$user/$project/blame/$blame_commit/$file") %>" >»</a>
-                    <span title="<%= $line->{author_mail} %>"><%= $line->{author} %></span>
-                  </div>
-                  <div style="margin-top:0;padding-top:0">
-                    <%= $line->{author_age_string_date_local} %>
+              <td class="blame-body-left" nowrap style="border-right:2px solid <%= $hot_color %>">
+                <div class="blame-summary-container">
+                  <div class="blame-summary">
                     <%= $summary_short %>
                   </div>
+                  <div class="blame-commit-id">
+                    <a href="<%= url_for("/$user/$project/commit/$blame_commit") %>" ><%= substr($blame_commit, 0, 7) %></a>
+                  </div>
+                </div>
+                <div class="blame-author">
+                  <span title="<%= $line->{author_mail} %>"><%= $line->{author} %></span>
+                  authored on
+                  <%= $line->{author_age_string_date_local} %>
+                </div>
               </td>
             % }
-            <td nowrap class="border-gray" style="padding:5px 10px;color:gray;font-size:12px;vertical-align:middle;">
+            <td class="blame-body-center" nowrap>
               <%= $line->{number} %>
             </td>
-            <td nowrap class="border-gray" style="padding:5px 10px;vertical-align:middle;white-space: nowrap;border-right:none">
+            <td nowrap class="blame-body-right">
               <pre style="border:none;background:white;margin:0;padding:0;white-space: nowrap;"><%= $line->{content} %></pre>
             </td>
           </tr>

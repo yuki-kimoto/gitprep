@@ -10,7 +10,7 @@
  
 /*
   Default values
-    border-color: #d8d8d8;
+    border:1px solid #d8d8d8;
     border-radius: 3px;
     
     Text Gray
@@ -1919,4 +1919,71 @@ button.close {
 
 .pagenation li:last-child {
   border-radius:0 3px 3px 0;
+}
+
+.blame-page-path {
+  overflow:hidden;
+}
+
+.blame-page-path .page-path {
+  float:left;
+  margin-left:0;
+}
+
+.blame-gradation {
+  float:right;
+  text-align:right:
+}
+
+.blame-body-container {
+  overflow-x:scroll;
+  border:1px solid #d8d8d8;
+  border-radius:0 0 3px 3px;
+}
+
+.blame-body {
+  width:100%;
+  border-collapse: collapse;
+}
+
+.blame-body-left {
+  padding:3px 7px;
+  vertical-align:middle;
+  border-left:none;
+  border-bottom:none;
+}
+
+.blame-body-center {
+  padding:5px 10px;
+  color:gray;
+  font-size:12px;
+  vertical-align:middle;
+  border-right:1px solid #d8d8d8;
+}
+
+.blame-body-right {
+  padding:5px 10px;
+  vertical-align:middle;
+  white-space: nowrap;
+  border-right:none
+}
+
+.blame-summary-container {
+  overflow:hidden;
+}
+
+.blame-summary {
+  display:inline-block;
+  float:left;
+  font-weight:bold;
+}
+
+.blame-commit-id {
+  display:inline-block;
+  float:right;
+  font-size:90%;
+}
+
+.blame-author {
+  color:#767676;
 }

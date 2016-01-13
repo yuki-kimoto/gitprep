@@ -431,9 +431,6 @@ note 'blame';
   # Commit link
   $t->content_like(qr#/commit/0929b1a4ee79d0f104fd9ef7d6d410d501a273cf#);
   
-  # Blame link
-  $t->content_like(qr#/blame/0929b1a4ee79d0f104fd9ef7d6d410d501a273cf/README#);
-  
   # Lines
   $t->content_like(qr#http://foo1#);
 }

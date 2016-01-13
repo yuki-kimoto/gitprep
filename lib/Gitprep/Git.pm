@@ -201,6 +201,8 @@ sub blame {
         $min_author_time = $author_time if !$min_author_time || $author_time < $min_author_time;
         my $author_age_string_date = $self->_age_string_date($author_time);
         $blame_line->{author_age_string_date} = $author_age_string_date;
+        my $author_age_string_date_local = $self->_age_string_date_local($author_time);
+        $blame_line->{author_age_string_date_local} = $author_age_string_date_local;
       }
       elsif ($line =~ /^summary +(.+)/) {
         $blame_line->{summary} = $1;
@@ -241,6 +243,17 @@ sub _age_string_date {
   my $age_string_date = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
   
   return $age_string_date;
+}
+
+sub _age_string_date_local {
+  my ($self, $age) = @_;
+  
+  my $time_zone_second = $self->time_zone_second || 0;
+  
+  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($age + $time_zone_second);
+  my $age_string_date_local = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
+  
+  return $age_string_date_local;
 }
 
 sub blob {
