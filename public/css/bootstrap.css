@@ -12,6 +12,14 @@
   Default values
     border:1px solid #d8d8d8;
     border-radius: 3px;
+  
+  input[type=text] 
+    border:1px solid #d8d8d8;
+    border-radius: 3px;
+    padding:6px 5px;
+    width:100%;
+    margin:5px 0;
+    
     
     Text Gray
     #767676
@@ -893,6 +901,33 @@ button.close {
 .btn-info[disabled] {
   color: #ffffff;
   background-color: #2f96b4;
+}
+
+.btn-success {
+  color: #ffffff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background-color: #5bb75b;
+  background-image: linear-gradient(to bottom, #62c462, #51a351);
+  background-repeat: repeat-x;
+  border-color: #51a351 #51a351 #387038;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff62c462', endColorstr='#ff51a351', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+}
+
+.btn-success:hover,
+.btn-success:focus,
+.btn-success:active,
+.btn-success.active,
+.btn-success.disabled,
+.btn-success[disabled] {
+  color: #ffffff;
+  background-color: #51a351;
+}
+
+.btn-success:active,
+.btn-success.active {
+  background-color: #408140 \9;
 }
 
 /* alert */
@@ -1991,7 +2026,7 @@ button.close {
 .login-form {
   border:1px solid #d8d8d8;
   border-radius: 3px;
-  padding:15px 0;
+  padding:25px 0;
   width:300px;
   margin-left:auto;
   margin-right:auto
@@ -2005,13 +2040,17 @@ button.close {
 .login-form input[type=text], .login-form input[type=password] {
   border:1px solid #d8d8d8;
   border-radius: 3px;
-  padding:6px 5px;
+  padding:7px 5px;
   width:100%;
   margin:5px 0;
 }
 
 .login-form input[type=checkbox] {
   margin:6px 0 9px 0;
+}
+
+.login-form button {
+  width:100%;
 }
 
 .header-bottom {

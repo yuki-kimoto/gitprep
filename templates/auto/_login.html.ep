@@ -148,7 +148,7 @@
         </div>
         <div>
           <div>
-            <button type="submit" class="btn">Sign in</button>
+            <button type="submit" class="btn btn-success">Sign in</button>
           </div>
         </div>
       </div>
