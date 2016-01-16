@@ -88,9 +88,14 @@
 % layout 'common', title => 'Sign in';
 
   <!-- Login page -->
-  <div class="text-center" style="margin:15px 0;font-size:18px;">
-    Sign in to GitPrep
+  <div class="header">
+    <div class="container">
+      <div class="header-left">
+        <div class="title"><a href="<%= url_for('/') %>">GitPrep</a></div>
+      </div>
+    </div>
   </div>
+  <div class="header-bottom"></div>
 
   <div class="container">
     % my $id = '';
@@ -117,35 +122,37 @@
         <div><%= $error %></div>
       </div>
     % }
+
+    <div class="topic1" style="text-align:center">
+      Sign in to GitPrep
+    </div>
     
-    <div class="well border-gray"
-      style="background:white;padding-top:15px;padding-left:60px;width:300px;margin-left:auto;margin-right:auto"
-    >
-      <form action="<%= url_for->query(op => 'login') %>" method="post">
-        <div class="control-group">
-          <label class="control-label" for="user-name">Username</label>
-          <div class="controls">
+    <form class="login-form" action="<%= url_for->query(op => 'login') %>" method="post">
+      <div class="login-form-container">
+        <div>
+          <label>Username</label>
+          <div>
             <%= input_tag id => $id, type => 'text', placeholder => 'User', id =>'user-name'%>
           </div>
         </div>
-        <div class="control-group">
-          <label class="control-label" for="input-password">Password</label>
-          <div class="controls">
+        <div>
+          <labelfor="input-password">Password</label>
+          <div>
             <%= password_field 'password', id => 'input-password', placeholder => 'Password' %>
           </div>
         </div>
-        <div class="control-group">
-          <label class="checkbox">
+        <div>
+          <label>
             <input type="checkbox" name="save" value="1"> Save
           </label>
         </div>
-        <div class="control-group">
-          <div class="controls">
+        <div>
+          <div>
             <button type="submit" class="btn">Sign in</button>
           </div>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
   </div>
 
   %= include '/include/footer';

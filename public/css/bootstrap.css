@@ -1987,3 +1987,34 @@ button.close {
 .blame-author {
   color:#767676;
 }
+
+.login-form {
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  padding:15px 0;
+  width:300px;
+  margin-left:auto;
+  margin-right:auto
+}
+
+.login-form-container {
+  width:70%;
+  margin:0 auto;
+}
+
+.login-form input[type=text], .login-form input[type=password] {
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  padding:6px 5px;
+  width:100%;
+  margin:5px 0;
+}
+
+.login-form input[type=checkbox] {
+  margin:6px 0 9px 0;
+}
+
+.header-bottom {
+  margin-bottom:15px;
+  min-height:1px;
+}

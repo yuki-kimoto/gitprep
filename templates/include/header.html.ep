@@ -110,4 +110,6 @@
       </div>
     </div>
   </div>
+% } else {
+  <div style="min-height:1px;margin-bottom:10px"></div>
 % }
