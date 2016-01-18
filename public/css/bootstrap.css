@@ -930,6 +930,33 @@ button.close {
   background-color: #408140 \9;
 }
 
+.btn-danger {
+  color: #ffffff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background-color: #da4f49;
+  background-image: linear-gradient(to bottom, #ee5f5b, #bd362f);
+  background-repeat: repeat-x;
+  border-color: #bd362f #bd362f #802420;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffee5f5b', endColorstr='#ffbd362f', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+}
+
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger:active,
+.btn-danger.active,
+.btn-danger.disabled,
+.btn-danger[disabled] {
+  color: #ffffff;
+  background-color: #bd362f;
+}
+
+.btn-danger:active,
+.btn-danger.active {
+  background-color: #942a25 \9;
+}
+
 /* alert */
 .alert {
   padding: 8px 35px 8px 14px;
@@ -2056,4 +2083,88 @@ button.close {
 .header-bottom {
   margin-bottom:15px;
   min-height:1px;
+}
+
+.project-settings {
+  overflow:hidden;
+}
+
+.project-settings .left {
+  float:left;
+  width:15%;
+  padding-right:10px;
+}
+
+.project-settings .left li {
+  border:1px solid #d8d8d8;
+  border-top:none;
+  padding:5px 10px;
+}
+
+.project-settings .left li:first-child {
+  border-top:1px solid #d8d8d8;
+}
+
+.project-settings .right {
+  float:left;
+  width:85%;
+}
+
+.project-settings-main {
+  margin-bottom:20px;
+}
+
+.project-settings-main li {
+  border:1px solid #d8d8d8;
+  border-top:none;
+  padding:10px 10px;
+}
+
+.project-settings-main li:first-child {
+  border-top:1px solid #d8d8d8;
+  background: #eee;
+  border-radius:3px 3px 0 0;
+  font-size:17px;
+}
+
+.project-settings-main input[type=text] {
+    border:1px solid #d8d8d8;
+    border-radius: 3px;
+    padding:6px 5px;
+    width:100%;
+    margin:5px 0;
+}
+
+.project-settings-main input[type=checkbox] {
+  margin:0 5px;
+}
+
+.project-settings-main select {
+    border:1px solid #d8d8d8;
+    border-radius: 3px;
+    padding:6px 5px;
+    width:30%;
+    margin:5px 0;
+}
+
+.project-settings-danger li {
+  border:1px solid #d8d8d8;
+  border-top:none;
+  padding:10px 10px;
+}
+
+.project-settings-danger li:first-child {
+  border-top:1px solid #d8d8d8;
+  background: #eee;
+  border-radius:3px 3px 0 0;
+  font-size:17px;
+  background:red;
+}
+
+#delete-confirm input {
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  padding:6px 5px;
+  margin:5px 0;
+  width:70%;
 }
