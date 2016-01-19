@@ -2190,3 +2190,52 @@ button.close {
   margin:5px 0;
   width:10%;
 }
+
+.user-settings {
+  overflow:hidden;
+}
+
+.user-settings .left {
+  float:left;
+  width:15%;
+  padding-right:10px;
+}
+
+.user-settings .left li {
+  border:1px solid #d8d8d8;
+  border-top:none;
+  padding:5px 10px;
+}
+
+.user-settings .left li:first-child {
+  border-top:1px solid #d8d8d8;
+}
+
+.user-settings .left li.active a {
+  color:black;
+  font-weight:bold;
+  text-decoration:none;
+}
+
+.user-settings .right {
+  float:left;
+  width:85%;
+}
+
+.profile > div {
+  border:1px solid #d8d8d8;
+  padding:10px 10px;
+  font-size:120%;
+}
+
+.profile > div:first-child {
+  border-bottom:none;
+  background: #eee;
+  border-radius:3px 3px 0 0;
+  font-size:17px;
+  font-weight:bold;
+}
+
+.profile li {
+  padding:5px 5px;
+}

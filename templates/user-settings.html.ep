@@ -18,26 +18,32 @@
   %= include '/include/header';
   
   <div class="container">
-    <div class="row">
-      <div class="span2">
-        <ul class="nav nav-tabs nav-stacked">
-          <li class="active" style="font-weight:bold">
+    <div class="user-settings">
+      <div class="left">
+        <ul>
+          <li class="active">
             <a href="<%= url_for("/$user/_settings") %>">Profile</a>
           </li>
-          <li class="" style="">
+          <li>
             <a href="<%= url_for("/$user/_settings/ssh") %>">SSH keys</a>
           </li>
         </ul>
       </div>
-      <div class="span10">
-        <div class="border-gray bk-gray-light radius-top" style="padding:5px;font-weight:bold;font-size:17px">
-          Profile
-        </div>
-        <div class="border-gray" style="margin-bottom:30px;border-top:none;padding:10px">
-          <div style="margin-bottom:10px;font-size:15px">
-            <b>ID</b>: <%= $user %>
+      <div class="right">
+        <div class="profile">
+          <div>
+            Profile
           </div>
-          <a class="btn btn-small" href="<%= url_for("/reset-password")->query(user => $user) %>">Reset Password</a>
+          <div>
+            <ul>
+              <li>
+                <b>ID</b>: <%= $user %>
+              </li>
+              <li>
+                <a class="btn btn-small" href="<%= url_for("/reset-password")->query(user => $user) %>">Reset Password</a>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
