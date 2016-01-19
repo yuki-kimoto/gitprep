@@ -107,36 +107,39 @@
     %= include '/include/errors', errors => $errors;
     %= include '/include/message', message => flash('message');
     
-    <div class="row">
-      <div class="span2">
-        <ul class="unstyled" style="font-size:13px;">
-          <li class="border-gray" style="padding:6px;"><a href="<%= url_for("/$user/$project/settings") %>">Options</a></li>
-          <li class="border-gray" style="border-top:none;padding:5px;"><b>Collaborators</b></li>
+    <div class="project-settings">
+      <div class="left">
+        <ul>
+          <li><a href="<%= url_for("/$user/$project/settings") %>">Options</a></li>
+          <li><b>Collaborators</b></li>
         </ul>
       </div>
-      <div class="span10">
-        <div style="font-size:16px;margin-top:10px;margin-bottom:10px"><b>Manage Collaborators</b></div>
-        % if (@$collaborators) {
-          <table class="table" style="margin-bottom:0">
-            % for my $collaborator (@$collaborators) {
-              <tr>
-                <td>
-                  <a href="<%= url_for("/$collaborator") %>"><%= $collaborator %></a>
-                  <form action="<%= url_for->query(op => 'remove') %>" method="post" style="display:inline-block">
-                    <%= hidden_field 'collaborator' => $collaborator %>
-                    (<a href="javascript:void(0)" onclick="$(this).closest('form').submit();" style="color:red">remove</a>)
-                  </form>
-                </td>
-              </tr>
+      <div class="right">
+        <div class="collaboration">
+          <div>Manage Collaborators</div>
+            % if (@$collaborators) {
+              <table>
+                % for my $collaborator (@$collaborators) {
+                  <tr>
+                    <td>
+                      <a href="<%= url_for("/$collaborator") %>"><%= $collaborator %></a>
+                      <form action="<%= url_for->query(op => 'remove') %>" method="post" style="display:inline-block">
+                        <%= hidden_field 'collaborator' => $collaborator %>
+                        (<a href="javascript:void(0)" onclick="$(this).closest('form').submit();" style="color:red">remove</a>)
+                      </form>
+                    </td>
+                  </tr>
+                % }
+              </table>
             % }
-          </table>
-        % }
-        <form action="<%= url_for->query(op => 'add') %>" method="post">
-          <div class="well" style="padding:5px">
-            <%= text_field 'collaborator', style => 'margin-bottom:0' %>
-            <input type="submit" value="Add"" >
+            <form action="<%= url_for->query(op => 'add') %>" method="post">
+              <div>
+                <%= text_field 'collaborator' %>
+                <input type="submit" value="Add"" >
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   </div>

@@ -2168,3 +2168,25 @@ button.close {
   margin:5px 0;
   width:70%;
 }
+
+.collaboration > div:first-child {
+  font-size:17px;
+  padding:5px;
+  border-bottom:1px solid #d8d8d8;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+
+.collaboration input[type=text] {
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  padding:6px 5px;
+  margin:5px 0;
+  width:40%;
+}
+
+.collaboration input[type=submit] {
+  padding:6px 5px;
+  margin:5px 0;
+  width:10%;
+}
