@@ -2222,20 +2222,43 @@ button.close {
   width:85%;
 }
 
-.profile > div {
+.user-settings-container > div {
   border:1px solid #d8d8d8;
   padding:10px 10px;
   font-size:120%;
+  margin-bottom:20px;
 }
 
-.profile > div:first-child {
+.user-settings-container > div:first-child {
   border-bottom:none;
   background: #eee;
   border-radius:3px 3px 0 0;
-  font-size:17px;
+  font-size:14px;
   font-weight:bold;
+  margin-bottom:0;
 }
 
 .profile li {
   padding:5px 5px;
+}
+
+.ssh-keys form {
+  margin:5px 0;
+}
+
+.ssh-key-add input[type=text] {
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  padding:6px 5px;
+  margin:5px 0;
+  width:60%;
+}
+
+.ssh-key-add textarea {
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  padding:6px 5px;
+  margin:5px 0;
+  width:100%;
+  min-height:200px;
 }

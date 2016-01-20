@@ -30,7 +30,7 @@
         </ul>
       </div>
       <div class="right">
-        <div class="profile">
+        <div class="user-settings-container profile">
           <div>
             Profile
           </div>

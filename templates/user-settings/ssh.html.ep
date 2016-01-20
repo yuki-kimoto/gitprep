@@ -157,88 +157,71 @@
   %= include '/include/header';
   
   <div class="container">
-    <ul class="breadcrumb" style="margin-top:10px">
-      <li><a href="<%= url_for('/') %>">Home</a></li>
-      /
-      <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
-    </ul>
-    <div style="margin-bottom:30px">
-      <div class="row">
-        <div class="span2">
-          <ul class="nav nav-tabs nav-stacked">
-            <li class="" style="font-weight:bold">
-              <a href="<%= url_for("/$user/_settings") %>">Profile</a>
-            </li>
-            <li class="active" style="">
-              <a href="<%= url_for("/$user/_settings/ssh") %>">SSH keys</a>
-            </li>
-          </ul>
-        </div>
-        <div class="span10">
-          <%= include '/include/errors', errors => $errors %>
-          <%= include '/include/message', message => flash('message') %>
-          
-          <div class="border-gray bk-gray-light radius-top" style="padding:5px;">
-            <div style="padding:5px">
-              <span style="font-size:15px;font-weight:bold;">SSH Keys</span> (<a href="<%= url_for("/$user.keys") %>">see</a>)
+    <div class="user-settings">
+      <div class="left">
+        <ul>
+          <li>
+            <a href="<%= url_for("/$user/_settings") %>">Profile</a>
+          </li>
+          <li class="active">
+            <a href="<%= url_for("/$user/_settings/ssh") %>">SSH keys</a>
+          </li>
+        </ul>
+      </div>
+      <div class="right">
+        <%= include '/include/errors', errors => $errors %>
+        <%= include '/include/message', message => flash('message') %>
+        
+        <div class="user-settings-container ssh-keys">
+          <div>
+            <div>
+              <span>SSH Keys</span> (<a href="<%= url_for("/$user.keys") %>">see</a>)
             </div>
           </div>
-          <div style="margin-bottom:30px">
+          <div>
             % if (@$keys > 0) {
-              <div class="border-gray" style="border-top:none;padding:10px">
+              <div>
                 This is a list of SSH keys associated with your account. Remove any keys that you do not recognize.
               </div>
               % for my $key (@$keys) {
-                <form action="<%= url_for->query(op => 'delete') %>" method="post" style="margin:0;padding:0">
-                  <div class="border-gray" style="border-top:none;">
-                    <div class="row">
-                      <div class="span7" style="width:600px">
-                        <div style="font-size:15px;padding:10px">
-                          <div>
-                            <b><%= $key->{title} %></b>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="span2">
-                        <div style="padding:5px;text-align:right">
-                          <a class="btn btn-danger" href="javascript:void(0)" onclick="$(this).closest('form').submit()">Delete</a>
-                          <%= hidden_field 'row-id' => $key->{row_id} %>
-                        </div>
-                      </div>
-                    </div>
+                <form action="<%= url_for->query(op => 'delete') %>" method="post">
+                  <div>
+                    <b><%= $key->{title} %></b>
+                    <a class="btn btn-small btn-danger" href="javascript:void(0)" onclick="$(this).closest('form').submit()">Delete</a>
+                    <%= hidden_field 'row-id' => $key->{row_id} %>
                   </div>
                 </form>
               % }
             % } else {
-              <div class="border-gray" style="margin-bottom:30px;border-top:none;padding:10px">
+              <div>
                 SSH key don't exists.
               </div>
             % }
           </div>
-          
+        </div>
+        
+        <div class="user-settings-container ssh-key-add">
           <div>
-            <div class="border-gray bk-gray-light radius-top" style="padding:5px;font-weight:bold;font-size:17px">
-              <div style="font-size:15px;padding:5px">
-                Add an SSH Key
+            <div>
+              Add an SSH Key
+            </div>
+          </div>
+          <div>
+            <form action="<%= url_for->query(op => 'add') %>" method="post" %>
+              <div>
+                Title
               </div>
-            </div>
-            <div class="border-gray" style="margin-bottom:30px;border-top:none;padding:10px">
-              <form action="<%= url_for->query(op => 'add') %>" method="post" %>
-                <div style="margin-bottom:5px">
-                  Title
-                </div>
-                <div>
-                  <%= text_field 'title', style => "width:400px" %>
-                </div>
-                <div style="margin-bottom:5px">
-                  Key
-                </div>
-                <div>
-                  <%= text_area 'key', style => "width:730px;height:200px" %>
-                </div>
-                <input type="submit" class="btn btn-success" value="Add key">
-              </form>
-            </div>
+              <div>
+                <%= text_field 'title' %>
+              </div>
+              <div>
+                Key
+              </div>
+              <div>
+                <%= text_area 'key' %>
+              </div>
+              <input type="submit" class="btn btn-success" value="Add key">
+            </form>
           </div>
         </div>
       </div>
