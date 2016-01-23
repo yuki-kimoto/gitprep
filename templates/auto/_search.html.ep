@@ -56,97 +56,96 @@
   
   %= include '/include/header', title => 'Gitprep';
   <!-- Index page -->
-  <div class="container" style="min-heigth:500px">
-    <div class="row">
-      <div class="span2">
-        <h3 style="font-size:19px;display:inline-block;margin-top:5px;margin-bottom:0;padding-bottom:0;padding-top:0">Search</h3>
-      </div>
-      <div class="span10" style="height:30px">
-        <form action="<%= url_for %>">
-          <%= text_field 'q', style => "width:600px;margin-top:10px;margin-right:3px" %>
-          <input class="btn" type="submit" value="Search">
-          % if ($type_exists) {
-            %= hidden_field type => $type;
-          % }
-        </form>
-      </div>
+  <div class="container">
+    <div class="search-top">
+      <div>Search</div>
+      <form action="<%= url_for %>">
+        <%= text_field 'q', style => "width:600px;margin-top:10px;margin-right:3px" %>
+        <input class="btn" type="submit" value="Search">
+        % if ($type_exists) {
+          %= hidden_field type => $type;
+        % }
+      </form>
     </div>
   </div>
-  <hr>
-  <div class="container" style="min-heigth:500px">
-    <div class="row">
-      <div class="span2">
-        <ul class="nav nav-tabs nav-stacked">
-          <li class="<%= $type eq 'repositories' ? 'active' : '' %>" style="<%= $type eq 'repositories' ? 'font-weight:bold' : '' %>">
+  <div class="container">
+    <div class="search-result">
+      <div class="left">
+        <ul>
+          <li class="<%= $type eq 'repositories' ? 'active' : '' %>">
             <a href="<%= url_with->query([type => 'repositories']) %>">Repositories</a>
           </li>
-          <li class="<%= $type eq 'users' ? 'active' : '' %>" style="<%= $type eq 'users' ? 'font-weight:bold' : '' %>">
+          <li class="<%= $type eq 'users' ? 'active' : '' %>">
             <a href="<%= url_with->query([type => 'users']) %>">Users</a>
           </li>
         </ul>
       </div>
-      <div class="span10">
+      <div class="right">
         % if ($type eq 'users') {
           % if (@$rows) {
-            <div style="font-size:18px;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #EEEEEE">
-              <b>We've found <%= $total %> user results</b>
+            <div>
+              We've found <%= $total %> user results
             </div>
-            % for my $user (@$rows) {
-              % my $user = $user->{id};
-              <div>
-                <div>
-                  <a style="font-size:19px" href="<%= url_for("/$user") %>"><%= $user %></a>
-                </div>
-                <hr style="margin:10px 0;padding:0">
-              </div>
-            % }
+            <ul>
+              % for my $user (@$rows) {
+                % my $user = $user->{id};
+                <li>
+                  <div>
+                    <a style="font-size:19px" href="<%= url_for("/$user") %>"><%= $user %></a>
+                  </div>
+                </li>
+              % }
+            </ul>
           % } else {
-            <div class="well">
-              <b>We couldn't find any users matching '<%= $q %>'</b>
+            <div>
+              We couldn't find any users matching '<%= $q %>'
             </div>
           % }
         % } else {
           % if (@$rows) {
-            <div style="font-size:18px;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #EEEEEE">
-              <b>We've found <%= $total %> repository results</b>
+            <div>
+              We've found <%= $total %> repository results
             </div>
-            % for my $project (@$rows) {
-              % my $user = $project->{user_id};
-              % my $project = $project->{name};
-              % my $rev = app->manager->default_branch($user, $project);
-              % my $desc = app->git->description($user, $project);
-              % my $branches = app->git->branches($user, $project);
-              % my $commit;
-              % if (@$branches) {
-                % $commit = app->git->get_commit($user, $project, $rev);
+            <ul>
+              % for my $project (@$rows) {
+                <%
+                  my $user = $project->{user_id};
+                  my $project = $project->{name};
+                  my $rev = app->manager->default_branch($user, $project);
+                  my $desc = app->git->description($user, $project);
+                  my $branches = app->git->branches($user, $project);
+                  my $commit;
+                  if (@$branches) {
+                    $commit = app->git->get_commit($user, $project, $rev);
+                  }
+                %>
+                
+                <li>
+                  <div>
+                    <a style="font-size:19px" href="<%= url_for("/$user/$project") %>"><%= $user %>/<%= $project %></a>
+                  </div>
+                  <div>
+                    <%= $desc %>
+                  </div>
+                  <div class="text-gray" style="font-size:13px;">
+                    % if ($commit) {
+                      <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %>
+                    % } else {
+                      <span >Repositry is not yet created.
+                    % }
+                  </div>
+                </li>
               % }
-              
-              <div>
-                <div>
-                  <a style="font-size:19px" href="<%= url_for("/$user/$project") %>"><%= $user %>/<%= $project %></a>
-                </div>
-                <div>
-                  <span style="font-size:15px;color:#333333"><%= $desc %></span>
-                </div>
-                <div>
-                  % if ($commit) {
-                    <span style="font-size:13px" class="muted" title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
-                  % } else {
-                    <span style="font-size:13px" class="muted">Repositry is not yet created.</span>
-                  % }
-                </div>
-                <hr style="margin:10px 0;padding:0">
-              </div>
-            % }
+            </ul>
           % } else {
-            <div class="well">
-              <b>We couldn't find any repositories matching '<%= $q %>'</b>
+            <div>
+              We couldn't find any repositories matching '<%= $q %>'
             </div>
           % }
         % }
 
         % if (@$rows && $pager->last_page != 1) {
-          <div class="pagination">
+          <div class="pagination-num">
             <ul>
               % if ($pager->previous_page) {
                 <li><a href="<%= url_with->query([page => $pager->previous_page]) %>">&laquo;</a></li>
