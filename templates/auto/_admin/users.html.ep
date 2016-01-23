@@ -88,29 +88,29 @@
       </div>
     % }
     
-    <div><h3>Admin Users</h3></div>
+    <h3 class="topic1">Admin Users</h3>
     <div style="margin-bottom:10px"><a class="btn" href="<%= url_for('/_admin/user/create') %>">Create User</a></div>
     <div class="container">
-      <table class="table">
+      <ul class="admin-users">
         % for my $user (@$users) {
           % my $uid = $user->{id};
-          <tr>
-            <td>
+          <li>
+            <div>
               <a href="#"><%= $uid %></a>
-            </td>
-            <td style="text-align:right">
+            </div>
+            <div class="last-child">
               <a class="btn btn-mini" href="<%= url_for('/reset-password')->query(user => $uid) %>">Reset Password</a>
-              <form style="display:inline-block" action="<%= url_for->query(op => 'delete') %>" method="post">
+              <form action="<%= url_for->query(op => 'delete') %>" method="post">
                 %= hidden_field user => $uid;
                 <input type="submit" class="btn btn-mini delete-btn" user="<%= $uid %>" value="Delete">
               </form>
-            </td>
-          </tr>
+            </div>
+          </li>
         % }
       </table>
     </div>
   </div>
-  <div class="text-center" style="margin-bottom:20px"><big><a href="<%= url_for('/_admin') %>">Admin page</a></big></div>
+  <div style="text-align:center;margin:20px 0"><big><a href="<%= url_for('/_admin') %>">Admin page</a></big></div>
   
   %= include '/include/footer';
   

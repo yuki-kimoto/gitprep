@@ -43,6 +43,36 @@ input[type=text], input[type=password] {
   padding:6px 5px;
 }
 
+.admin-users {
+  width:70%;
+}
+
+.admin-users div {
+  display:inline-block;
+}
+
+.admin-users form {
+  display:inline-block;
+}
+
+.admin-users li {
+  border-bottom:1px solid #d8d8d8;
+  padding:8px 0;
+}
+
+.admin-users li:first-child {
+  border-top:1px solid #d8d8d8;
+}
+
+.admin-users li > div:first-child {
+  width:20%;
+}
+
+.admin-users li > div.last-child {
+  width:78%;
+  text-align:right;
+}
+
 .container {
   width: 980px;
   margin:0 auto;

@@ -1,8 +1,8 @@
 % layout 'common', title => 'Admin';
   
   %= include '/include/header';
-  <div class="container" style="min-heigth:500px">
-    <h3>Admin</h3>
+  <div class="container">
+    <h3 class="topic1">Admin</h3>
     <ul class="nav nav-tabs nav-stacked">
       <li><a href="<%= url_for('/_admin/users') %>">Users</a></li>
     </ul>
