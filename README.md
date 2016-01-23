@@ -461,19 +461,19 @@ These are my Perl web application projects.
 
 ## Bug
 
-If you find bug, plese tell me on GitHub issue.
+If you find bug, plese tell me on GitHub issue. 
+
+Please post only bug information.
 
 * [Github Issue](https://github.com/yuki-kimoto/gitprep/issues?state=open)
 
-## Request
-
-If you want new features, pelese tell me on GitHub issue.
-
-## Support
-
-You can ask questions about usage of GitPrep at Google GitPrep Group.
+## Mailing list (Asking questions and feature requests)
 
 * [Google GitPrep Group](https://groups.google.com/forum/#!forum/gitprep)
+
+You can ask questions about usage of GitPrep in this mailing list.
+
+If you want new features, please post the request to this mailing list.
 
 ## Copyright & license
 
