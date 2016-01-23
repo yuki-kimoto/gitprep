@@ -2184,7 +2184,7 @@ button.close {
   color:#767676;
 }
 
-.login-form {
+.user-form {
   border:1px solid #d8d8d8;
   border-radius: 3px;
   padding:25px 0;
@@ -2193,24 +2193,21 @@ button.close {
   margin-right:auto
 }
 
-.login-form-container {
+.user-form-container {
   width:70%;
   margin:0 auto;
 }
 
-.login-form input[type=text], .login-form input[type=password] {
-  border:1px solid #d8d8d8;
-  border-radius: 3px;
-  padding:7px 5px;
+.user-form input[type=text], .user-form input[type=password] {
   width:100%;
   margin:5px 0;
 }
 
-.login-form input[type=checkbox] {
+.user-form input[type=checkbox] {
   margin:6px 0 9px 0;
 }
 
-.login-form button {
+.user-form button {
   width:100%;
 }
 

@@ -75,29 +75,29 @@
       </div>
     % }
     
-    <div class="text-center"><h3>Create User</h3></div>
-    <div class="well" style="background:white;padding-top:15px;padding-left:60px;width:300px;margin-left:auto;margin-right:auto">
-      <form action="<%= url_for->query(op => 'create') %>" method="post">
-        <div class="control-group">
-          <label class="control-label" for="user-name">User name</label>
-          <div class="controls">
+    <div class="topic1" style="text-align:center">Create User</div>
+    <form class="user-form" action="<%= url_for->query(op => 'create') %>" method="post">
+      <div class="user-form-container">
+        <div>
+          <div>User name</div>
+          <div>
             <%= text_field id => $id, placeholder => 'User', id =>'user-name'%>
           </div>
         </div>
-        <div class="control-group">
-          <label class="control-label" for="input-password">Password</label>
-          <div class="controls">
+        <div>
+          <div>Password</div>
+          <div>
             <%= password_field 'password', id => 'input-password', placeholder => 'Password' %>
             <%= password_field 'password2', id => 'input-password', placeholder => 'Password Again' %>
           </div>
         </div>
-        <div class="control-group">
-          <div class="controls">
-            <button type="submit" class="btn">Create User</button>
+        <div>
+          <div>
+            <button type="submit" class="btn btn-success" style="margin-top:20px">Create User</button>
           </div>
         </div>
-      </form>
-    </div>
-    <div class="text-center" style="margin-bottom:20px"><big><a href="<%= url_for('/_admin/users') %>">Users</a></big></div>
+      </div>
+    </form>
+    <div style="text-align:center;margin:20px 0"><big><a href="<%= url_for('/_admin/users') %>">Users</a></big></div>
   </div>
   %= include '/include/footer';

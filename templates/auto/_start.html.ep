@@ -70,29 +70,27 @@
         % }
       </div>
     % }
-    <div class="text-center"><h3>Create Admin User</h3></div>
-    <div class="well" style="background:white;padding-top:15px;padding-left:60px;width:300px;margin-left:auto;margin-right:auto">
-      <form action="<%= url_for->query(op => 'create') %>" method="post">
-        <div class="control-group">
-          <label class="control-label" for="user-name">User name</label>
-          <div>
+    <div class="topic1" style="text-align:center"><h3>Create Admin User</h3></div>
+    <form class="user-form" action="<%= url_for->query(op => 'create') %>" method="post">
+      <div class="user-form-container">
+        <div>
+          <div>User name</div>
+          <div style="margin-bottom:10px;">
             <b>admin</b>
           </div>
         </div>
-        <div class="control-group">
-          <label class="control-label" for="input-password">Password</label>
-          <div class="controls">
+        <div>
+          <div>Password</div>
+          <div>
             <%= password_field 'password', id => 'input-password', placeholder => 'Password' %>
             <%= password_field 'password2', id => 'input-password', placeholder => 'Password Again' %>
           </div>
         </div>
-        <div class="control-group">
-          <div class="controls">
-            <button type="submit" class="btn">Create Admin User</button>
-          </div>
+        <div>
+          <button type="submit" class="btn btn-success" style="margin-top:20px">Create Admin User</button>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
   </div>
 
   %= include '/include/footer';

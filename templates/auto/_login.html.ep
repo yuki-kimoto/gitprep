@@ -127,24 +127,24 @@
       Sign in to GitPrep
     </div>
     
-    <form class="login-form" action="<%= url_for->query(op => 'login') %>" method="post">
-      <div class="login-form-container">
+    <form class="user-form" action="<%= url_for->query(op => 'login') %>" method="post">
+      <div class="user-form-container">
         <div>
-          <label>Username</label>
+          <div>Username</div>
           <div>
             <%= input_tag id => $id, type => 'text', placeholder => 'User', id =>'user-name'%>
           </div>
         </div>
         <div>
-          <labelfor="input-password">Password</label>
+          <div>Password</div>
           <div>
             <%= password_field 'password', id => 'input-password', placeholder => 'Password' %>
           </div>
         </div>
         <div>
-          <label>
+          <div>
             <input type="checkbox" name="save" value="1"> Save
-          </label>
+          </div>
         </div>
         <div>
           <div>
