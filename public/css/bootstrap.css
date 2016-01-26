@@ -44,7 +44,9 @@ input[type=text], input[type=password] {
 }
 
 .project-tabs {
-  
+  position:relative;
+  z-index:1;
+  top:1px;  
 }
 
 .project-tabs ul {
@@ -55,11 +57,15 @@ input[type=text], input[type=password] {
   display:block;
   float:left;
   width:80px;
-  border:1px solid #d8d8d8;
-  border-bottom:white;
-  border-top:3px #d26911 solid;
-  border-radius:3px 3px 0 0;
   margin-bottom:0px;
+}
+
+.project-tabs li.active {
+  background:white;
+  border:1px solid #d8d8d8;
+  border-top:3px #d26911 solid;
+  border-bottom:white;
+  border-radius:3px 3px 0 0;
 }
 
 .project-tabs li a {
@@ -69,10 +75,6 @@ input[type=text], input[type=password] {
   padding:5px 10px 7px 10px;
   text-align:center;
   color:#565656;
-}
-
-.project-tabs .active {
-  background:white;
 }
 
 .admin-users {

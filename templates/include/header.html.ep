@@ -110,13 +110,18 @@
       </div>
     </div>
     <div class="container">
-      <div class="project-tabs" style="position:relative;z-index:1;top:1px;">
+      <div class="project-tabs">
         <div class="container">
           <ul>
             <li class="active">
               <a href="<%= url_for("/$user/$project") %>">
                 <i class="icon-chevron-right"></i>
                 Code
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                aaa
               </a>
             </li>
           </ul>
