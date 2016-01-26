@@ -56,7 +56,7 @@ input[type=text], input[type=password] {
 .project-tabs li {
   display:block;
   float:left;
-  width:80px;
+  width:90px;
   margin-bottom:0px;
 }
 
@@ -72,9 +72,13 @@ input[type=text], input[type=password] {
   display:block;
   width:100%;
   text-decoration:none;
-  padding:5px 10px 7px 10px;
+  padding:8px 10px 7px 10px;
   text-align:center;
   color:#565656;
+}
+
+.project-tabs li.active a {
+  padding:5px 10px 7px 10px;
 }
 
 .admin-users {
@@ -1580,11 +1584,11 @@ button.close {
 
 /* bread */
 .breadcrumb {
-  padding: 8px 15px;
   margin: 0 0 20px;
   list-style: none;
   background-color: #f5f5f5;
   border-radius: 4px;
+  font-size:18px;
 }
 
 .breadcrumb > li {

@@ -62,7 +62,7 @@
   <div class="project-header">
     <div class="container" style="overflow:hidden">
       <div class="project-header-left">
-        <ul class="breadcrumb" style="margin:0;background:none;padding-left:0;font-size:16px;">
+        <ul class="breadcrumb" style="margin:0;background:none;padding-left:0;font-size:18px;">
           <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>
           /
           <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
@@ -89,45 +89,46 @@
         <div class="project-header-right-container">
           % if (defined $project) {
             <div class="project-header-btn-container">
-              <a class="btn" href="<%= url_for("/$user/$project/network") %>" >Network</a>
-            </div>
-            <div class="project-header-btn-container">
               % if ($logined && $current_user ne $user ) {
                 <a href="<%= url_for("/$user/$project/fork") %>" class="btn">Fork</a>
               % } else {
                 <button class="btn disabled" disabled>Fork</button>
               % }
             </div>
-            <div class="project-header-btn-container">
-              % if ($logined && $user eq session('user')) {
-                <a class="btn" href="<%= url_for("/$user/$project/settings") %>">Settings</a>
-              % } else {
-                <button class="btn disabled" disabled>Settings</button>
-              % }
-            </div>
           % }
         </div>
       </div>
     </div>
-    <div class="container">
-      <div class="project-tabs">
-        <div class="container">
-          <ul>
-            <li class="active">
-              <a href="<%= url_for("/$user/$project") %>">
-                <i class="icon-chevron-right"></i>
-                Code
-              </a>
-            </li>
-            <li>
-              <a href="#">
-                aaa
-              </a>
-            </li>
-          </ul>
+    % if (defined $project) {
+      <div class="container">
+        <div class="project-tabs">
+          <div class="container">
+            <ul>
+              <li class="active">
+                <a href="<%= url_for("/$user/$project") %>">
+                  <i class="icon-chevron-right"></i>
+                  Code
+                </a>
+              </li>
+              <li>
+                <a href="<%= url_for("/$user/$project/network") %>" >
+                  <i class="icon-align-center"></i>
+                  Graph
+                </a>
+              </li>
+              % if ($logined && $user eq session('user')) {
+                <li>
+                  <a href="<%= url_for("/$user/$project/settings") %>">
+                    <i class="icon-cog"></i>
+                    Settings
+                  </a>
+                </li>
+              % }
+            </ul>
+          </div>
         </div>
       </div>
-    </div>
+    % }
     <hr style="position:relative;background:#d8d8d8;height:1px;border:none">
   </div>
 % } else {
