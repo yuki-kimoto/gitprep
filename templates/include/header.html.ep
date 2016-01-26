@@ -62,7 +62,7 @@
   <div class="project-header">
     <div class="container" style="overflow:hidden">
       <div class="project-header-left">
-        <ul class="breadcrumb" style="margin:0;background:none;padding-left:0;font-size:18px;">
+        <ul class="breadcrumb">
           <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>
           /
           <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
@@ -100,24 +100,27 @@
       </div>
     </div>
     % if (defined $project) {
+      <%
+        my $tab = stash('tab') || 'code';
+      %>
       <div class="container">
         <div class="project-tabs">
           <div class="container">
             <ul>
-              <li class="active">
+              <li class="<%= $tab eq 'code' ? 'active' :  '' %>">
                 <a href="<%= url_for("/$user/$project") %>">
                   <i class="icon-chevron-right"></i>
                   Code
                 </a>
               </li>
-              <li>
+              <li class="<%= $tab eq 'graph' ? 'active' :  '' %>">
                 <a href="<%= url_for("/$user/$project/network") %>" >
                   <i class="icon-align-center"></i>
                   Graph
                 </a>
               </li>
               % if ($logined && $user eq session('user')) {
-                <li>
+                <li class="<%= $tab eq 'settings' ? 'active' :  '' %>">
                   <a href="<%= url_for("/$user/$project/settings") %>">
                     <i class="icon-cog"></i>
                     Settings

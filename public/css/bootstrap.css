@@ -72,13 +72,13 @@ input[type=text], input[type=password] {
   display:block;
   width:100%;
   text-decoration:none;
-  padding:8px 10px 7px 10px;
+  padding:8px 0px 7px 0px;
   text-align:center;
   color:#565656;
 }
 
 .project-tabs li.active a {
-  padding:5px 10px 7px 10px;
+  padding:5px 0px 7px 0px;
 }
 
 .admin-users {
@@ -1584,11 +1584,12 @@ button.close {
 
 /* bread */
 .breadcrumb {
-  margin: 0 0 20px;
+  margin-bottom:10px;
   list-style: none;
   background-color: #f5f5f5;
   border-radius: 4px;
   font-size:18px;
+  background:none;
 }
 
 .breadcrumb > li {
@@ -1744,7 +1745,8 @@ button.close {
 .project-header {
   background:#fafafa;
   border-bottom: none;
-  margin-bottom:10px;
+  margin-top:3px;
+  margin-bottom:12px;
   overflow:hidden;
   padding:14px 0 0 0;
 }
@@ -1838,10 +1840,11 @@ button.close {
   border-radius:0;
 }
 
-.git-url-container input {
+.git-url-container input[type=text] {
   width:550px;
   padding:5px 0 5px 5px;
   border:1px solid #d8d8d8;
+  border-radius:0 3px 3px 0;
 }
 
 .page-path-container {

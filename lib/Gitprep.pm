@@ -347,19 +347,29 @@ sub startup {
             $r->get('/compare/(*rev1)...(*rev2)' => template '/compare');
             
             # Settings
-            $r->any('/settings' => template '/settings');
-            
-            # Collaboration
-            $r->any('/settings/collaboration' => template '/settings/collaboration');
+            {
+              my $r = $r->route('/settings')->to(tab => 'settings');
+              
+              # Settings
+              $r->any('/' => template '/settings');
+              
+              # Collaboration
+              $r->any('/collaboration' => template '/settings/collaboration');
+            }
             
             # Fork
             $r->any('/fork' => template '/fork');
-
+            
             # Network
-            $r->get('/network' => template '/network');
+            {
+              my $r = $r->route('/network')->to(tab => 'graph');
+              
+              # Network
+              $r->get('/' => template '/network');
 
-            # Network Graph
-            $r->get('/network/graph/(*rev1)...(*rev2_abs)' => template '/network/graph');
+              # Network Graph
+              $r->get('/graph/(*rev1)...(*rev2_abs)' => template '/network/graph');
+            }
 
             # Import branch
             $r->any('/import-branch/:remote_user/:remote_project' => template '/import-branch');
