@@ -131,44 +131,41 @@
     % for my $branch_type (@$branch_types) {
       % my $branches = $branches_h->{$branch_type};
       % if (@$branches) {
-        <div>
-          % if ($branch_type eq 'default') {
-            Default branch
-          % } elsif ($branch_type eq 'active') {
-            Active branch
-          % } elsif ($branch_type eq 'stale') {
-            Stale branch
-          % } elsif ($branch_type eq 'all') {
-            All branches
-          % }
-        </div>
-        <ul>
+        <ul class="branches">
+          <li>
+            % if ($branch_type eq 'default') {
+              Default branch
+            % } elsif ($branch_type eq 'active') {
+              Active branch
+            % } elsif ($branch_type eq 'stale') {
+              Stale branch
+            % } elsif ($branch_type eq 'all') {
+              All branches
+            % }
+          </li>
           % for (my $i = 0; $i < @$branches; $i++) {
             % my $branch = $branches->[$i];
             % my $bname = $branch->{name};
             <li>
-              <div class="row">
-                <div class="span5" style="line-height:1.2em">
-                  <div style="font-size:16px;">
+              <ul>
+                <li>
+                  <div class="branches-name">
                     <a href="<%= url_for("/$user/$project/tree/$bname") %>">
-                      <b><%= $bname %></b>
+                      <%= $bname %>
                     </a>
                   </div>
-                  <div style="font-size:12px">
-                    Updated
-                    <span title="<%= $branch->{commit}{age_string_datetime_local} %>">
-                      <%= $branch->{commit}{age_string} %>
-                    </span>
-                    by
-                    <span title="<%= $branch->{commit}{author_email} %>">
-                      <%= $branch->{commit}{author_name} %>
-                    </span>
+                  <div class="branches-age" title="<%= $branch->{commit}{age_string_datetime_local} %>">
+                    Updated <%= $branch->{commit}{age_string} %> by
                   </div>
-                </div>
-                <div class="span3 muted" style="line-height:1em;font-size:11px">
+                  <div class="branches-author"  title="<%= $branch->{commit}{author_email} %>">
+                    <%= $branch->{commit}{author_name} %>
+                  </div>
+                </li>
+                <li class="second-child">
                   <table>
                     <tr>
                       <td>
+                        <%= $branch->{status}{behind} %> behind
                       </td>
                       <td style="background:#333">
                       </td>
@@ -186,34 +183,25 @@
                         <div style="background:#b2d0dd;width:<%= $max != 0 ? 100 * ($branch->{status}{ahead} / $max) : 0 %>%;height:8px"></div>
                       </td>
                     </tr>
-                    <tr>
-                      <td>
-                        <%= $branch->{status}{behind} %> behind
-                      </td>
-                      <td style="background:#333">
-                      </td>
-                      <td>
-                      </td>
-                    </tr>
                   </table>
-                </div>
-                <div class="span4 text-right" style="padding-top:0px">
+                </li>
+                <li class="last-child">
+                  <a class="btn btn-small" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname") %>">
+                    Compare
+                  </a>
                   % if ($api->logined($user)) {
                     <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
-                      <input type="submit" class="btn delete-branch" style="color:#900;" value="Delete branch">
+                      <input type="submit" class="btn btn-small delete-branch" style="color:#900;" value="Delete">
                       %= hidden_field branch => $bname;
                     </form>
                   % }
-                  <a class="btn" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname") %>">
-                    Compare
-                  </a>
                   % if (app->config->{basic}{show_ignore_space_change_link}) {
                     (<a style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname?w=") %>">
                       ignore space
                     </a>)
                   % }
-                </div>
-              </div>
+                </li>
+              </ul>
             </li>
           % }
         </ul>

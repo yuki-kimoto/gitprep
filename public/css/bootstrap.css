@@ -2320,3 +2320,61 @@ button.close {
   border-top-right-radius:4px;
   border-bottom-right-radius:4px;
 }
+
+/* Branches */
+.branches {
+  overflow:hidden;
+  margin-bottom:15px;
+}
+.branches > li {
+  border:1px solid #d8d8d8;
+  border-top:none;
+  padding:5px 8px;
+}
+.branches > li:first-child {
+  border-radius: 3px 3px 0 0;
+  border-top:1px solid #d8d8d8;
+  background: #f5f5f5;
+  text-shadow: 0 1px 0 #fff;
+}
+.branches > li:last-child {
+  border-radius: 0 0 3px 3px;
+}
+.branches > li > ul {
+  overflow:hidden;
+}
+.branches > li > ul > li:first-child {
+  float:left;
+  width:50%;
+  overflow:hidden;
+  padding-top:16px;
+}
+.branches > li > ul > li.second-child{
+  float:left;
+  width:25%;
+}
+.branches > li > ul > li.last-child {
+  float:left;
+  width:25%;
+  text-align:right;
+  padding-top:13px;
+}
+
+.branches-name {
+  display:inline-block;
+}
+.branches-name a {
+  color: #4078c0;
+  border-radius:3px;
+  background:rgba(209,227,237,0.5);
+  padding:2px 6px;
+}
+
+.branches-age {
+  display:inline-block;
+}
+
+.branches-author {
+  display:inline-block;
+}
+

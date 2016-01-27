@@ -452,7 +452,7 @@ note 'Delete branch';
   my $cmd = "git --git-dir=$rep_home/kimoto1/t2.git branch tmp_branch";
   system($cmd) == 0 or die "Can't execute git branch";
   $t->get_ok("/kimoto1/t2/branches");
-  $t->content_like(qr/Delete branch/);
+  $t->content_like(qr/Delete/);
   $t->content_like(qr/tmp_branch/);
   
   # Delete branch
