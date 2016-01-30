@@ -2445,3 +2445,18 @@ button.close {
   border-radius:3px;
   padding:1px 3px;
 }
+
+.branches .branches-overview-more {
+  text-align:center;
+  padding:0;
+}
+.branches-overview-more a {
+  width:100%;
+  display:block;
+  background: #f1f7fa;
+  padding:8px;
+}
+
+.branches-overview-more a:hover {
+  background:#e0ffff;
+}

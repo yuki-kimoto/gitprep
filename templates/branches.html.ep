@@ -167,79 +167,91 @@
           </li>
           % if (@$branches) {
             % for (my $i = 0; $i < @$branches; $i++) {
-              % my $branch = $branches->[$i];
-              % my $bname = $branch->{name};
-              <li>
-                <ul>
-                  <li>
-                    <div class="branches-name">
-                      <a href="<%= url_for("/$user/$project/tree/$bname") %>">
-                        <%= $bname %>
-                      </a>
-                    </div>
-                    <div class="branches-age" title="<%= $branch->{commit}{age_string_datetime_local} %>">
-                      Updated <%= $branch->{commit}{age_string} %> by
-                    </div>
-                    <div class="branches-author"  title="<%= $branch->{commit}{author_email} %>">
-                      <%= $branch->{commit}{author_name} %>
-                    </div>
-                  </li>
-                  <li class="second-child">
-                    % if ($bname eq $default_branch_name) {
-                      <div style="padding-left:80px;padding-top:3px">
-                        <div class="branches-default">
-                          Default
-                        </div>
+              <%
+                my $branch = $branches->[$i];
+                my $bname = $branch->{name};
+              %>
+              % if ($display eq 'overview' && $i > 4) {
+                <li class="branches-overview-more">
+                  <a href="<%= url_for("/$user/$project/branches/$branch_type") %>">
+                    View more <%= $branch_type %> branches
+                  </a>
+                </li>
+                % last;
+              % } else {
+
+                <li>
+                  <ul>
+                    <li>
+                      <div class="branches-name">
+                        <a href="<%= url_for("/$user/$project/tree/$bname") %>">
+                          <%= $bname %>
+                        </a>
                       </div>
-                    % } else {
-                      <table class="ahead-behind">
-                        <tr>
-                          <td class="ahead-behind-behind-count">
-                            <%= $branch->{status}{behind} %>
-                          </td>
-                          <td class="ahead-behind-separate">
-                          </td>
-                          <td style="padding-left:3px">
-                            <%= $branch->{status}{ahead} %>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td style="width:100px">
-                            <div style="margin-left:auto;margin-right:0;background:#dcdcdc;width:<%= $max != 0 ? 100 * ($branch->{status}{behind} / $max) : 0 %>%;height:4px"></div>
-                          </td>
-                          <td class="ahead-behind-separate">
-                          </td>
-                          <td style="width:100px">
-                            <div style="background:#dcdcdc;width:<%= $max != 0 ? 100 * ($branch->{status}{ahead} / $max) : 0 %>%;height:4px"></div>
-                          </td>
-                        </tr>
-                      </table>
-                    % }
-                  </li>
-                  <li class="last-child">
-                    % if ($bname eq $default_branch_name) {
-                      % if ($api->logined($user)) {
-                        <a href="<%= url_for("/$user/$project/settings") %>" type="submit" class="btn btn-small">Change default branch</a>
+                      <div class="branches-age" title="<%= $branch->{commit}{age_string_datetime_local} %>">
+                        Updated <%= $branch->{commit}{age_string} %> by
+                      </div>
+                      <div class="branches-author"  title="<%= $branch->{commit}{author_email} %>">
+                        <%= $branch->{commit}{author_name} %>
+                      </div>
+                    </li>
+                    <li class="second-child">
+                      % if ($bname eq $default_branch_name) {
+                        <div style="padding-left:80px;padding-top:3px">
+                          <div class="branches-default">
+                            Default
+                          </div>
+                        </div>
+                      % } else {
+                        <table class="ahead-behind">
+                          <tr>
+                            <td class="ahead-behind-behind-count">
+                              <%= $branch->{status}{behind} %>
+                            </td>
+                            <td class="ahead-behind-separate">
+                            </td>
+                            <td style="padding-left:3px">
+                              <%= $branch->{status}{ahead} %>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="width:100px">
+                              <div style="margin-left:auto;margin-right:0;background:#dcdcdc;width:<%= $max != 0 ? 100 * ($branch->{status}{behind} / $max) : 0 %>%;height:4px"></div>
+                            </td>
+                            <td class="ahead-behind-separate">
+                            </td>
+                            <td style="width:100px">
+                              <div style="background:#dcdcdc;width:<%= $max != 0 ? 100 * ($branch->{status}{ahead} / $max) : 0 %>%;height:4px"></div>
+                            </td>
+                          </tr>
+                        </table>
                       % }
-                    % } else {
-                      <a class="btn btn-small" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname") %>">
-                        Compare
-                      </a>
-                      % if ($api->logined($user)) {
-                        <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
-                          <input type="submit" class="btn btn-small delete-branch" style="color:#900;" value="Delete">
-                          %= hidden_field branch => $bname;
-                        </form>
+                    </li>
+                    <li class="last-child">
+                      % if ($bname eq $default_branch_name) {
+                        % if ($api->logined($user)) {
+                          <a href="<%= url_for("/$user/$project/settings") %>" type="submit" class="btn btn-small">Change default branch</a>
+                        % }
+                      % } else {
+                        <a class="btn btn-small" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname") %>">
+                          Compare
+                        </a>
+                        % if ($api->logined($user)) {
+                          <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
+                            <input type="submit" class="btn btn-small delete-branch" style="color:#900;" value="Delete">
+                            %= hidden_field branch => $bname;
+                          </form>
+                        % }
+                        % if (app->config->{basic}{show_ignore_space_change_link}) {
+                          (<a style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname?w=") %>">
+                            ignore space
+                          </a>)
+                        % }
                       % }
-                      % if (app->config->{basic}{show_ignore_space_change_link}) {
-                        (<a style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname?w=") %>">
-                          ignore space
-                        </a>)
-                      % }
-                    % }
-                  </li>
-                </ul>
-              </li>
+                    </li>
+                  </ul>
+                </li>
+              % }
             % }
           % } else {
             <li style="text-align:center;text-color:#767676">
