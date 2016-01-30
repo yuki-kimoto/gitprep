@@ -162,25 +162,25 @@
                   </div>
                 </li>
                 <li class="second-child">
-                  <table>
+                  <table class="ahead-behind">
                     <tr>
-                      <td>
-                        <%= $branch->{status}{behind} %> behind
+                      <td class="ahead-behind-behind-count">
+                        <%= $branch->{status}{behind} %>
                       </td>
-                      <td style="background:#333">
+                      <td class="ahead-behind-separate">
                       </td>
                       <td style="padding-left:3px">
-                        <%= $branch->{status}{ahead} %> ahead
+                        <%= $branch->{status}{ahead} %>
                       </td>
                     </tr>
                     <tr>
                       <td style="width:100px">
-                        <div style="margin-left:auto;margin-right:0;background:#b2d0dd;width:<%= $max != 0 ? 100 * ($branch->{status}{behind} / $max) : 0 %>%;height:8px"></div>
+                        <div style="margin-left:auto;margin-right:0;background:#dcdcdc;width:<%= $max != 0 ? 100 * ($branch->{status}{behind} / $max) : 0 %>%;height:4px"></div>
                       </td>
-                      <td style="background:#333">
+                      <td class="ahead-behind-separate">
                       </td>
                       <td style="width:100px">
-                        <div style="background:#b2d0dd;width:<%= $max != 0 ? 100 * ($branch->{status}{ahead} / $max) : 0 %>%;height:8px"></div>
+                        <div style="background:#dcdcdc;width:<%= $max != 0 ? 100 * ($branch->{status}{ahead} / $max) : 0 %>%;height:4px"></div>
                       </td>
                     </tr>
                   </table>

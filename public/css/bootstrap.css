@@ -2329,7 +2329,7 @@ button.close {
 .branches > li {
   border:1px solid #d8d8d8;
   border-top:none;
-  padding:5px 8px;
+  padding:8px 8px;
 }
 .branches > li:first-child {
   border-radius: 3px 3px 0 0;
@@ -2347,7 +2347,7 @@ button.close {
   float:left;
   width:50%;
   overflow:hidden;
-  padding-top:16px;
+  padding-top:4px;
 }
 .branches > li > ul > li.second-child{
   float:left;
@@ -2357,7 +2357,6 @@ button.close {
   float:left;
   width:25%;
   text-align:right;
-  padding-top:13px;
 }
 
 .branches-name {
@@ -2372,10 +2371,12 @@ button.close {
 
 .branches-age {
   display:inline-block;
+  color:#aaa;;
 }
 
 .branches-author {
   display:inline-block;
+  color:#767676;
 }
 
 .branches-select {
@@ -2417,4 +2418,20 @@ button.close {
 }
 .branches-select li.active a {
   background-color: #4078c0;
+}
+
+.ahead-behind {
+  color:#767676;
+  font-size:12px;
+  border-collapse:collapse;
+}
+
+.ahead-behind-behind-count {
+  text-align:right;
+  padding-right:3px;
+}
+
+.ahead-behind-separate {
+  width:1px;
+  background:#c0c0c0;
 }
