@@ -2435,3 +2435,13 @@ button.close {
   width:1px;
   background:#c0c0c0;
 }
+
+.branches-default {
+  font-size:12px;
+  text-align:center;
+  display:inline-block;
+  background-color: #767676;
+  color: #fff;
+  border-radius:3px;
+  padding:1px 3px;
+}

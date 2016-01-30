@@ -72,28 +72,35 @@
     $max = $branch->{status}{ahead} if $max < $branch->{status}{ahead};
     $max = $branch->{status}{behind} if $max < $branch->{status}{behind};
     
-    my $is_active = $branch->{commit}{age} < 60 * 60 * 24 * (365 * 3);
+    my $branch_type;
+    if ($branch->{name} eq $default_branch_name) {
+      $branch_type = 'default';
+    }
+    elsif ($branch->{commit}{age} < 60 * 60 * 24 * (365 * 3)) {
+      $branch_type = 'active';
+    }
+    else {
+      $branch_type = 'stale';
+    }
     
     if ($display eq 'overview') {
-      if ($branch->{name} eq $default_branch_name) {
+      if ($branch_type eq 'default') {
         push @{$branches_h->{default}}, $branch;
       }
-      else {
-        if ($is_active) {
-          push @{$branches_h->{active}}, $branch;
-        }
-        else {
-          push @{$branches_h->{stale}}, $branch;
-        }
+      elsif ($branch_type eq 'active') {
+        push @{$branches_h->{active}}, $branch;
+      }
+      elsif ($branch_type eq 'stale') {
+        push @{$branches_h->{stale}}, $branch;
       }
     }
     elsif ($display eq 'active') {
-      if ($is_active) {
+      if ($branch_type eq 'active') {
         push @{$branches_h->{active}}, $branch;
       }
     }
     elsif ($display eq 'stale') {
-      unless ($is_active) {
+      if ($branch_type eq 'stale') {
         push @{$branches_h->{stale}}, $branch;
       }
     }
@@ -162,43 +169,57 @@
                   </div>
                 </li>
                 <li class="second-child">
-                  <table class="ahead-behind">
-                    <tr>
-                      <td class="ahead-behind-behind-count">
-                        <%= $branch->{status}{behind} %>
-                      </td>
-                      <td class="ahead-behind-separate">
-                      </td>
-                      <td style="padding-left:3px">
-                        <%= $branch->{status}{ahead} %>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="width:100px">
-                        <div style="margin-left:auto;margin-right:0;background:#dcdcdc;width:<%= $max != 0 ? 100 * ($branch->{status}{behind} / $max) : 0 %>%;height:4px"></div>
-                      </td>
-                      <td class="ahead-behind-separate">
-                      </td>
-                      <td style="width:100px">
-                        <div style="background:#dcdcdc;width:<%= $max != 0 ? 100 * ($branch->{status}{ahead} / $max) : 0 %>%;height:4px"></div>
-                      </td>
-                    </tr>
-                  </table>
+                  % if ($bname eq $default_branch_name) {
+                    <div style="padding-left:80px;padding-top:3px">
+                      <div class="branches-default">
+                        Default
+                      </div>
+                    </div>
+                  % } else {
+                    <table class="ahead-behind">
+                      <tr>
+                        <td class="ahead-behind-behind-count">
+                          <%= $branch->{status}{behind} %>
+                        </td>
+                        <td class="ahead-behind-separate">
+                        </td>
+                        <td style="padding-left:3px">
+                          <%= $branch->{status}{ahead} %>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="width:100px">
+                          <div style="margin-left:auto;margin-right:0;background:#dcdcdc;width:<%= $max != 0 ? 100 * ($branch->{status}{behind} / $max) : 0 %>%;height:4px"></div>
+                        </td>
+                        <td class="ahead-behind-separate">
+                        </td>
+                        <td style="width:100px">
+                          <div style="background:#dcdcdc;width:<%= $max != 0 ? 100 * ($branch->{status}{ahead} / $max) : 0 %>%;height:4px"></div>
+                        </td>
+                      </tr>
+                    </table>
+                  % }
                 </li>
                 <li class="last-child">
-                  <a class="btn btn-small" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname") %>">
-                    Compare
-                  </a>
-                  % if ($api->logined($user)) {
-                    <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
-                      <input type="submit" class="btn btn-small delete-branch" style="color:#900;" value="Delete">
-                      %= hidden_field branch => $bname;
-                    </form>
-                  % }
-                  % if (app->config->{basic}{show_ignore_space_change_link}) {
-                    (<a style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname?w=") %>">
-                      ignore space
-                    </a>)
+                  % if ($bname eq $default_branch_name) {
+                    % if ($api->logined($user)) {
+                      <a href="<%= url_for("/$user/$project/settings") %>" type="submit" class="btn btn-small">Change default branch</a>
+                    % }
+                  % } else {
+                    <a class="btn btn-small" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname") %>">
+                      Compare
+                    </a>
+                    % if ($api->logined($user)) {
+                      <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
+                        <input type="submit" class="btn btn-small delete-branch" style="color:#900;" value="Delete">
+                        %= hidden_field branch => $bname;
+                      </form>
+                    % }
+                    % if (app->config->{basic}{show_ignore_space_change_link}) {
+                      (<a style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname?w=") %>">
+                        ignore space
+                      </a>)
+                    % }
                   % }
                 </li>
               </ul>
