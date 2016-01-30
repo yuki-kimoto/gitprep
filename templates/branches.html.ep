@@ -113,17 +113,17 @@
     
     <!-- Branches (for tests) -->
     
-    <ul>
-      <li>
+    <ul class="branches-select">
+      <li class="<%= $display eq 'overview' ? 'active' : '' %>">
         <a href="<%= url_for("/$user/$project/branches") %>">Overview</a>
       </li>
-      <li>
+      <li class="<%= $display eq 'active' ? 'active' : '' %>">
         <a href="<%= url_for("/$user/$project/branches/active") %>">Active</a>
       </li>
-      <li>
+      <li class="<%= $display eq 'stale' ? 'active' : '' %>">
         <a href="<%= url_for("/$user/$project/branches/stale") %>">Stale</a>
       </li>
-      <li>
+      <li class="<%= $display eq 'all' ? 'active' : '' %>">
         <a href="<%= url_for("/$user/$project/branches/all") %>">All branches</a>
       </li>
     </ul>

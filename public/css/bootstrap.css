@@ -2378,3 +2378,43 @@ button.close {
   display:inline-block;
 }
 
+.branches-select {
+  overflow:hidden;
+  margin:20px 0;
+}
+
+.branches-select li {
+  border:1px solid #d8d8d8;
+  float:left;
+  border-left:none;
+}
+
+.branches-select li:first-child {
+  border-left:1px solid #d8d8d8;
+  border-radius:3px 0 0 3px;
+}
+
+.branches-select li:last-child {
+  border-radius:0 3px 3px 0;
+}
+
+.branches-select li a {
+  padding: 7px 14px;
+  font-weight: bold;
+  width:100%;
+  display:block;
+  color: #666;
+}
+
+.branches-select li a:hover {
+  text-decoration:none;
+  background:#f5f5f5;
+}
+
+.branches-select li.active a {
+  background-color: #4078c0;
+  color: #fff;
+}
+.branches-select li.active a {
+  background-color: #4078c0;
+}
