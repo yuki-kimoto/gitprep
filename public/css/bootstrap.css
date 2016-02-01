@@ -2503,3 +2503,40 @@ button.close {
   color:#767676;
   font-size:13px;
 }
+
+.commits-summary > :first-child {
+  overflow:hidden;
+  padding: 10px;
+  line-height: 20px;
+  background-color: #e6f1f6;
+  border: 1px solid #c1dce9;
+  border-radius: 3px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-top:13px;
+}
+
+.commits-summary > .last-child {
+  padding: 5px 10px;
+  background-color: #fff;
+  border: 1px solid #c1dce9;
+  border-top:none;
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+  color:#68777d;
+}
+
+.commits-summary-header {
+  overflow:hidden;
+}
+.commits-summary-header > :first-child {
+  float:left;
+  width:80%;
+}
+.commits-summary-header > .last-child {
+  float:right;
+  width:20%;
+  text-align:right;
+}
+
+
