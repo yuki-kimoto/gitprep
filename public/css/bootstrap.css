@@ -2458,5 +2458,48 @@ button.close {
 }
 
 .branches-overview-more a:hover {
-  background:#e0ffff;
+  background:#e6e6fa;
+}
+
+.tags {
+  
+}
+
+.tags > li {
+  border-bottom:1px solid #d8d8d8;
+  padding:10px 0;
+}
+
+.tags > li:first-child {
+  border-top:1px solid #d8d8d8;
+}
+
+.tags-item {
+  overflow:hidden;
+}
+
+.tags-item > li:first-child {
+  display:block;
+  width:30%;
+  float:left;
+  color:#767676;
+}
+
+.tags-item > li.last-child {
+  display:block;
+  width:70%;
+  float:left;
+}
+
+.tags-name a {
+  color:#333;
+}
+
+.tags-links {
+  padding-top:3px;
+}
+
+.tags-links a {
+  color:#767676;
+  font-size:13px;
 }

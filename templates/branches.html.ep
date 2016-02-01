@@ -8,6 +8,7 @@
   my $project = param('project');
   my $op = param('op') || '';
   my $display = param('display') || 'overview';
+  my $page = param('page') || 1;
   
   # Git
   my $git = $self->app->git;
@@ -64,9 +65,16 @@
     stale => [],
     all => []
   };
+
+  # Pagenation
+  my $page_count = 20;
+  my $skip = $page_count * ($page - 1);
   
   my $branches = $git->branches($user, $project);
   my $max = 0;
+  my $active_count = 0;
+  my $stale_count = 0;
+  my $all_count = 0;
   for my $branch (@$branches) {
     $branch->{status} = $git->branch_status($user, $project, $default_branch->{name}, $branch->{name});
     $max = $branch->{status}{ahead} if $max < $branch->{status}{ahead};
@@ -96,18 +104,28 @@
     }
     elsif ($display eq 'active') {
       if ($branch_type eq 'active') {
-        push @{$branches_h->{active}}, $branch;
+        if ($active_count >= $skip && $active_count < $skip + $page_count) {
+          push @{$branches_h->{active}}, $branch;
+        }
+        $active_count++;
       }
     }
     elsif ($display eq 'stale') {
       if ($branch_type eq 'stale') {
-        push @{$branches_h->{stale}}, $branch;
+        if ($stale_count >= $skip && $stale_count < $skip + $page_count) {
+          push @{$branches_h->{stale}}, $branch;
+        }
+        $stale_count++;
       }
     }
     elsif ($display eq 'all') {
-      push @{$branches_h->{all}}, $branch;
+      if ($all_count >= $skip && $all_count < $skip + $page_count) {
+        push @{$branches_h->{all}}, $branch;
+      }
+      $all_count++;
     }
   }
+  
 %>
 
 % layout 'common', title => "branches  \x{30fb} $user/$project";
@@ -166,6 +184,7 @@
             % }
           </li>
           % if (@$branches) {
+            % my $branches_count;
             % for (my $i = 0; $i < @$branches; $i++) {
               <%
                 my $branch = $branches->[$i];
@@ -252,6 +271,31 @@
                   </ul>
                 </li>
               % }
+              % $branches_count++;
+            % }
+
+
+            % if ($display ne 'overview') {
+              <div class="pagenation-container" style="margin-top:20px">
+                <ul class="pagenation">
+                  % if ($page == 1) {
+                    <li><span>Newer</span></li>
+                  % } else {
+                    % my $newer_page = $page - 1;
+                    <li>
+                      <a href="<%= url_for("/$user/$project/branches/$display?page=$newer_page") %>">Newer</a>
+                    </li>
+                  % }
+                  % if ($branches_count < $page_count) {
+                    <li><span>Older</span></li>
+                  % } else {
+                    % my $older_page = $page + 1;
+                    <li>
+                      <a href="<%= url_for("/$user/$project/branches/$display?page=$older_page") %>">Older</a>
+                    </li>
+                  % }
+                </ul>
+              </div>
             % }
           % } else {
             <li style="text-align:center;text-color:#767676">

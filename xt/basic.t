@@ -220,7 +220,7 @@ note 'History page';
 note 'Tags page';
 {
   # Page access
-  $t->get_ok("/$user/$project/tags");
+  $t->get_ok("/$user/$project/tags?page=2");
   
   # Commit datetime
   $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);

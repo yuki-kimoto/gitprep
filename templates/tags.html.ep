@@ -12,7 +12,7 @@
   
   # Ref names
   my $limit = app->config->{basic}{tags_limit};
-  my $page_count = 50;
+  my $page_count = 20;
   my $tags = $git->tags(
     $user,
     $project,
@@ -29,21 +29,21 @@
 
   <div class="container">
     
-    <h3 style="font-size:20px">Tags</h3>
+    <h3 class="topic1">Tags</h3>
     
     % if (@$tags) {
-      <div style="margin-bottom:30px">
+      <ul class="tags">
         % for (my $i = 0; $i < @$tags; $i++) {
           % my $tag = $tags->[$i];
           % my $name = $tag->{name};
           % my $tag_class = $i == @$tags - 1 ? 'tag tag_last' : 'tag';
-          <div class="border-gray" style="padding:7px 5px;border-left:none;border-right:none;border-bottom:none;">
-            <div class="row">
-              <div class="span3">
-                <span class="muted" href="<%= url_for("/$user/$project/tree/$name") %>" title="<%= $tag->{commit}{age_string_datetime_local} %>"><%= $tag->{commit}{age_string} %></span>
-              </div>
-              <div class="span8">
-                <div>
+          <li>
+            <ul class="tags-item">
+              <li>
+                <span title="<%= $tag->{commit}{age_string_datetime_local} %>">on <%= $tag->{commit}{age_string_date_local} %></span>
+              </li>
+              <li class="last-child">
+                <div class="tags-name">
                   <a class="font-black" href="<%= url_for("/$user/$project/tree/$name") %>">
                     <b><%= $name %></b>
                     % if (defined $tag->{comment_short}) {
@@ -51,7 +51,7 @@
                     % }
                   </a>
                 </div>
-                <div>
+                <div class="tags-links">
                   % my $commit_id = $tag->{commit}{id};
                   <a class="muted" href="<%= url_for("/$user/$project/commit/$commit_id") %>">
                     <i class="icon-share-alt"></i>
@@ -62,44 +62,49 @@
                       ignore space
                     </a>)
                   % }
-                  <a class="muted" href="<%= url_for("/$user/$project/archive/$name.zip") %>">
+                  <a href="<%= url_for("/$user/$project/archive/$name.zip") %>">
                     <i class="icon-file"></i>
                     zip
                   </a>
-                  <a class="muted" href="<%= url_for("/$user/$project/archive/$name.tar.gz") %>">
+                  <a href="<%= url_for("/$user/$project/archive/$name.tar.gz") %>">
                     <i class="icon-file"></i>
                     tar.gz
                   </a>
                 </div>
-              </div>
-            </div>
-          </div>
+              </li>
+            </ul>
+          </li>
         % }
-        % if ($tags_count > $page_count) {
-          <ul class="pager" style="text-align:left">
+      </ul>
+
+      % if ($tags_count > $page_count) {
+        <div class="pagenation-container" style="margin-top:20px">
+          <ul class="pagenation">
             % if ($page == 1) {
-              <li class="disabled">&laquo; Newer</li>
+              <li><span>Newer</span></li>
             % } else {
               % my $newer_page = $page - 1;
               <li class="disable">
-                <a href="<%= url_for("/$user/$project/tags?page=$newer_page") %>">&laquo; Newer</a>
+                <a href="<%= url_for("/$user/$project/tags?page=$newer_page") %>">Newer</a>
               </li>
             % }
             % if (@$tags < $page_count) {
-              <li class="disabled">Older &raquo;</li>
+              <li><span>Older</span></li>
             % } else {
               % my $older_page = $page + 1;
               <li>
-                <a href="<%= url_for("/$user/$project/tags?page=$older_page") %>">Older &raquo;</a>
+                <a href="<%= url_for("/$user/$project/tags?page=$older_page") %>">Older</a>
               </li>
             % }
           </ul>
-        % }
-      </div>
+        </div>
+      % }
     % } else {
-      <div class="well">
-        No Tags.
-      </div>
+      <ul class="tags">
+        <li>
+          No Tags.
+        </li>
+      </ul>
     % }
   </div>
   
