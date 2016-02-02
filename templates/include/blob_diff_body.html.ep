@@ -46,36 +46,32 @@
   }
 %>
 
-  <div style="margin-bottom:20px;">
-    <div class="border-gray bk-gray-light" style="padding:5px">
-      <div class="row">
-        <div class="span8" style="padding-top:3px">
-          <div class="radius-top radius-bottom" style="padding:1px 3px;margin-right:5px;border:1px solid #ccc;display:inline-block;background:#f7f7f7">
-            %= include '/include/diff_status_bar', diff_tree => $diff_tree;
-          </div>
-          % if ($status eq 'R' || $status eq 'C') {
-            <%= $from_file %> → <%= $file %>
-          % } else {
-            <%= $file %>
-          % }
-          % if ($status ne 'A' && $status ne 'D' && $from_mode_str ne $to_mode_str) {
-            <%= "100$from_mode_str → 100$to_mode_str" %>
-          % }
-        </div>
-        <div class="text-right">
-          % if ($status eq 'D') {
-            <a class="btn" href="<%= url_for("/$user/$project/blob/$from_rev/$file") %>">
-              View file @ <%= substr($from_rev, 0, 7) %>
-            </a>
-          % } else {
-            <a class="btn" href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
-              View file @ <%= substr($rev, 0, 7) %>
-            </a>
-          % }
-        </div>
+  <div class="commit-diff">
+    <div class="commit-diff-header">
+      <div>
+        %= include '/include/diff_status_bar', diff_tree => $diff_tree;
+        % if ($status eq 'R' || $status eq 'C') {
+          <%= $from_file %> → <%= $file %>
+        % } else {
+          <%= $file %>
+        % }
+        % if ($status ne 'A' && $status ne 'D' && $from_mode_str ne $to_mode_str) {
+          <%= "100$from_mode_str → 100$to_mode_str" %>
+        % }
+      </div>
+      <div class="last-child">
+        % if ($status eq 'D') {
+          <a class="btn" href="<%= url_for("/$user/$project/blob/$from_rev/$file") %>">
+            <b>View</b>
+          </a>
+        % } else {
+          <a class="btn" href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
+            <b>View</b>
+          </a>
+        % }
       </div>
     </div>
-    <table class="border-gray" style="border-top:none">
+    <table>
       % my $not_shown;
       % my $from_rev_shown;
       % my $rev_shown;

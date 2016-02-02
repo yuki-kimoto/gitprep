@@ -56,6 +56,6 @@
     <div style="display:inline-block;background:#bd2c00;width:8px;height:9px;float:left;margin:1px"></div>
   % }
   % for (my $i = 0; $i < 5 - $add_block_count - $delete_block_count; $i++) {
-    <div style="display:inline-block;background:#eee;width:8px;height:9px;float:left;margin:1px"></div>
+    <div style="display:inline-block;background:#ddd;;width:8px;height:9px;float:left;margin:1px"></div>
   % }
 </<%= $tag %>>

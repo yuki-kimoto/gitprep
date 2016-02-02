@@ -2621,3 +2621,23 @@ button.close {
   line-height:100%;
   padding:0 2px;
 }
+
+.commit-diff > :first-child {
+  border:1px solid #d8d8d8;
+  border-radius:3px 3px 0 0;
+  padding:7px;
+  background-color: #f7f7f7;
+}
+.commit-diff-header {
+  overflow:hidden;
+}
+.commit-diff-header > :first-child {
+  float:left;
+  width:80%;
+  padding-top:6px;
+}
+.commit-diff-header > .last-child {
+  float:left;
+  width:20%;
+  text-align:right;
+}
