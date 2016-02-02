@@ -100,43 +100,43 @@
       </ul>
     </li>
     <li class="last-child">
-      <div>
-        <span><b><%= $commit->{author_name} %></b></span>
-        <span>authored <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
-      </div>
-      <div>
-        % my $parents = $commit->{parents};
-        
-        % if (@$parents == 0) {
-          <div>
-            0 <span class="muted" style="padding-right:10px">parent</span>
-            <span class="muted">commit</span> <%= $commit->{id} %>
+      <ul class="commits-summary-body">
+        <li>
+          <span class="commits-summary-author"><%= $commit->{author_name} %></span>
+          <span>commited on <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string_date_local} %></span>
+        </li>
+        <li class="last-child">
+          % my $parents = $commit->{parents};
+          
+          % if (@$parents == 0) {
+            <div class="commits-summary-parent">
+              <span>0 parent</span>
+            </div>
+          % } elsif (@$parents == 1) {
+            <div class="commits-summary-parent">
+              <span>1 parent</span>
+              <a href="<%= url_for("/$user/$project/commit/$parents->[0]") %>">
+                <%= substr($parents->[0], 0, 7) %>
+              </a>
+            </div>
+          % } else {
+            <div class="commits-summary-parent">
+              <span>2 parents</span>:
+              
+              <a class="font-black" href="<%= url_for("/$user/$project/commit/$parents->[0]") %>">
+                <%= substr($parents->[0], 0, 7) %>
+              </a>
+              +
+              <a class="font-black" href="<%= url_for("/$user/$project/commit/$parents->[1]") %>">
+                <%= substr($parents->[1], 0, 7) %>
+              </a>
+            </div>
+          % }
+          <div class="commits-summary-commit-id">
+            commit <span><%= $commit->{id} %></span>
           </div>
-        % } elsif (@$parents == 1) {
-          <div>
-            1 <span class="muted">parent</span>
-            <a class="font-black" style="padding-right:10px" href="<%= url_for("/$user/$project/commit/$parents->[0]") %>">
-              <%= substr($parents->[0], 0, 7) %>
-            </a>
-            <span class="muted">commit</span> <%= $commit->{id} %>
-          </div>
-        % } else {
-          <div>
-            <span class="muted">commit</span> <%= $commit->{id} %>
-          </div>
-          <div>
-            2 <span class="muted">parents</span>:
-            
-            <a class="font-black" href="<%= url_for("/$user/$project/commit/$parents->[0]") %>">
-              <%= substr($parents->[0], 0, 7) %>
-            </a>
-            +
-            <a class="font-black" href="<%= url_for("/$user/$project/commit/$parents->[1]") %>">
-              <%= substr($parents->[1], 0, 7) %>
-            </a>
-          </div>
-        % }
-      </div>
+        </li>
+      </ul>
     </li>
   </ul>
 

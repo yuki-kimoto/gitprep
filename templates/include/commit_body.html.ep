@@ -59,7 +59,6 @@
         $('#diff_tree').css('display', 'none');
       }
       else {
-        $(this).text('Hide Diff Stats');
         $('#diff_tree').css('display', 'block');
       }
       diff_tree_show = !diff_tree_show;
@@ -67,19 +66,16 @@
   });
 % end
 
-<div class="row" style="margin-bottom:10px">
-  <div class="span8" style="padding-top:5px">
-    Showing <b><%= @$diff_trees %> changed files</b>
+<div class="commit-changes">
+  <div>
+    Showing <b><a id="diff-stats-btn" href="javascript:void;"><%= @$diff_trees %> changed files</a></b>
     with
     <b><%= $total_add_line_count %> additions</b>
     and
     <b><%= $total_delete_line_count %> deletions</b>
   </div>
-  <div class="text-right">
-    <button id="diff-stats-btn" class="btn">Show Diff Stats</button>
-  </div>
 </div>
-<div id="diff_tree" style="display:none">
+<div id="diff_tree">
   <%= include '/include/diff_tree', id => $rev, from_id => $from_rev,
     diff_trees => $diff_trees %>
 </div>

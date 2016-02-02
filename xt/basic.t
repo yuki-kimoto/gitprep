@@ -91,7 +91,7 @@ note 'Commit page';
     $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
     
     # Parent not eixsts
-    $t->content_like(qr/0 <span .*?>parent/);
+    $t->content_like(qr/<span>0 parent/);
     
     # Commit id
     $t->content_like(qr/4b0e81c462088b16fefbe545e00b993fd7e6f884/);
@@ -113,7 +113,7 @@ note 'Commit page';
   note 'rename';
   {
     $t->get_ok("/$user/$project/commit/15ea9d711617abda5eed7b4173a3349d30bca959");
-    $t->content_like(qr#1 <span class="muted">parent</span>.*1b59896#s);
+    $t->content_like(qr#<span>1 parent</span>.*1b59896#s);
     $t->content_like(qr/File renamed without changes/);
     $t->content_like(qr/a.txt → a_renamed.txt/);
     $t->content_like(qr/class="file-renamed"/);

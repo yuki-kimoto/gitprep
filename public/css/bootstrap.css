@@ -2523,7 +2523,6 @@ button.close {
   border-top:none;
   border-bottom-left-radius: 3px;
   border-bottom-right-radius: 3px;
-  color:#68777d;
 }
 
 .commits-summary-header {
@@ -2538,5 +2537,87 @@ button.close {
   width:20%;
   text-align:right;
 }
+.commits-summary-body {
+  overflow:hidden;
+  padding:4px 0;
+}
+.commits-summary-body > :first-child {
+  width:40%;
+  float:left;
+}
+.commits-summary-body > .last-child {
+  width:60%;
+  float:left;
+  text-align:right;
+}
+.commits-summary-author {
+  font-weight:bold;
+}
+.commits-summary-parent {
+  display:inline-block;
+  color:#767676;
+  margin-right:10px;
+}
+.commits-summary-parent a {
+  color:#333333;
+  text-decoration:underline;
+}
+.commits-summary-commit-id {
+  display:inline-block;
+  color:#767676;
+}
+.commits-summary-commit-id > span {
+  color:#333333;
+}
 
+.commit-changes {
+  margin:15px 0;
+}
 
+.file-add {
+  color:#32CD32;
+  border:2px #32CD32 solid;
+  margin-left:3px;
+  font-weight:bold;
+  text-align:center;
+  font-size:13px;
+  padding:0;
+  line-height:100%;
+  padding:0 2px;
+}
+
+.file-del {
+  color:red;
+  border:2px red solid;
+  margin-left:3px;
+  font-weight:bold;
+  text-align:center;
+  font-size:13px;
+  padding:0;
+  line-height:100%;
+  padding:0 2px;
+}
+
+.file-modified {
+  color:#DAA520;
+  border:2px #DAA520 solid;
+  margin-left:3px;
+  font-weight:bold;
+  text-align:center;
+  font-size:13px;
+  padding:0;
+  line-height:100%;
+  padding:0 2px;
+}
+
+.file-renamed {
+  color:#677a85;
+  border:2px #677a85 solid;
+  margin-left:3px;
+  font-weight:bold;
+  text-align:center;
+  font-size:13px;
+  padding:0;
+  line-height:100%;
+  padding:0 2px;
+}
