@@ -2622,6 +2622,9 @@ button.close {
   padding:0 2px;
 }
 
+.commit-diff {
+  margin-bottom:30px;
+}
 .commit-diff > :first-child {
   border:1px solid #d8d8d8;
   border-radius:3px 3px 0 0;
@@ -2640,4 +2643,23 @@ button.close {
   float:left;
   width:20%;
   text-align:right;
+}
+
+.commit-diff-body {
+  border:1px solid #d8d8d8;
+  border-top:none;
+  border-radius: 0 0 3px 3px;
+  margin-bottom:30px;
+}
+.commit-diff-body > table {
+  border-collapse:collapse;
+}
+.commit-diff-plain {
+  padding:10px;
+}
+.commit-diff-image {
+  background:#ddd;
+  text-align:center;
+  padding-top:40px;
+  padding-bottom:40px;
 }

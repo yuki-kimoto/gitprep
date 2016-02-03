@@ -71,79 +71,84 @@
         % }
       </div>
     </div>
-    <table>
-      % my $not_shown;
-      % my $from_rev_shown;
-      % my $rev_shown;
-      
+    <div class="commit-diff-body">
+        <%
+          my $not_shown;
+          my $from_rev_shown;
+          my $rev_shown;
+        %>
+        
 
-      % if ($blob_diff->{binary}) {
-        % if ($binary_not_shown) {
-          <div class="border-gray" style="padding:10px;margin-bottom:30px;border-top:none">
-            Binary file not shown.
-          </div>
-        % } else {
-          <div class="border-gray" style="border-top:none;background:#ddd;text-align:center;padding-top:30px;padding-bottom:30px">
-            % if ($binary_from_rev_shown) {
-              <a href="<%= url_for("/$user/$project/blob/$from_rev/$file") %>">
-                <img src="<%= url_for("/$user/$project/raw/$from_rev/$file") %>" style="border:1px solid red;padding:1px;margin-right:20px">
-              </a>          
-            % }
-            
-            % if ($binary_rev_shown) {
-              <a href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
-                <img src="<%= url_for("/$user/$project/raw/$rev/$file") %>" style="border:1px solid green;padding:1px;margin-left:20px">
-              </a>
-            % }
-          </div>
-        % }
-      % } elsif (@$lines) {
-        % for my $line (@$lines) {
-          % my $class = $line->{class};
-          % my $value = $line->{value};
-
-          <%
-            my $bk_color_line = '';
-            my $bk_color = '';
-            my $border_color;
-            if ($value =~ /^@/) {
-              $bk_color_line = '#f3f3ff';
-              $border_color = '#e4e4ff';
-              $bk_color = '#f8f8ff';
-            } elsif ($value =~ /^\+/) {
-              $bk_color_line = '#ceffce';
-              $border_color = '#b4e2b4';
-              $bk_color = '#dfd';
-            } elsif ($value =~ /^-/) {
-              $bk_color_line = '#f7c8c8';
-              $border_color = '#e9aeae';
-              $bk_color = '#fdd';
-            } else {
-              $border_color = '#e5e5e5';
-            }
-          %>
-          <tr >
-            <td style="font-size:12px;color:#aaa;padding:0 7px;border-right:1px <%= $border_color %> solid;background:<%= $bk_color_line %>;">
-              <%= $line->{before_line_num} %>
-            </td>
-            <td style="font-size:12px;color:#aaa;padding:0 7px;border-right:1px <%= $border_color %> solid;background:<%= $bk_color_line %>;">
-              <%= $line->{after_line_num} %>
-            </td>
-            <td style="width:100%;padding-left:7px;background:<%= $bk_color %>;">
-              <pre style="border:none;background:none;padding:0;margin:0"><%= $value %></pre>
-            </td>
-          </tr>
-        % }
-      % } else {
-        <div class="border-gray" style="padding:10px;margin-bottom:30px;border-top:none">
-          % if ($status eq 'R') {
-            File renamed without changes.
-          % } elsif ($status eq 'A' || $status eq 'D') {
-             No changes.
-          % } elsif ($from_mode_str ne $to_mode_str) {
-            File mode changed.
+        % if ($blob_diff->{binary}) {
+          % if ($binary_not_shown) {
+            <div class="commit-diff-plain">
+              Binary file not shown.
+            </div>
+          % } else {
+            <div class="commit-diff-image">
+              % if ($binary_from_rev_shown) {
+                <a href="<%= url_for("/$user/$project/blob/$from_rev/$file") %>">
+                  <img src="<%= url_for("/$user/$project/raw/$from_rev/$file") %>" style="border:1px solid red;padding:1px;margin-right:20px">
+                </a>          
+              % }
+              
+              % if ($binary_rev_shown) {
+                <a href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
+                  <img src="<%= url_for("/$user/$project/raw/$rev/$file") %>" style="border:1px solid green;padding:1px;margin-left:20px">
+                </a>
+              % }
+            </div>
           % }
-        </div>
-      % }
-    </table>
+        % } elsif (@$lines) {
+          <table>
+
+            % for my $line (@$lines) {
+              % my $class = $line->{class};
+              % my $value = $line->{value};
+
+              <%
+                my $bk_color_line = '';
+                my $bk_color = '';
+                my $border_color;
+                if ($value =~ /^@/) {
+                  $bk_color_line = '#f3f3ff';
+                  $border_color = '#e4e4ff';
+                  $bk_color = '#f8f8ff';
+                } elsif ($value =~ /^\+/) {
+                  $bk_color_line = '#ceffce';
+                  $border_color = '#b4e2b4';
+                  $bk_color = '#dfd';
+                } elsif ($value =~ /^-/) {
+                  $bk_color_line = '#f7c8c8';
+                  $border_color = '#e9aeae';
+                  $bk_color = '#fdd';
+                } else {
+                  $border_color = '#e5e5e5';
+                }
+              %>
+              <tr >
+                <td style="font-size:12px;color:#aaa;padding:0 7px;border-right:1px <%= $border_color %> solid;background:<%= $bk_color_line %>;">
+                  <%= $line->{before_line_num} %>
+                </td>
+                <td style="font-size:12px;color:#aaa;padding:0 7px;border-right:1px <%= $border_color %> solid;background:<%= $bk_color_line %>;">
+                  <%= $line->{after_line_num} %>
+                </td>
+                <td style="width:100%;padding-left:7px;background:<%= $bk_color %>;">
+                  <pre style="border:none;background:none;padding:0;margin:0"><%= $value %></pre>
+                </td>
+              </tr>
+            % }
+          </table>
+        % } else {
+          <div class="commit-diff-plain">
+            % if ($status eq 'R') {
+              File renamed without changes.
+            % } elsif ($status eq 'A' || $status eq 'D') {
+               No changes.
+            % } elsif ($from_mode_str ne $to_mode_str) {
+              File mode changed.
+            % }
+          </div>
+        % }
+    </div>
   </div>
