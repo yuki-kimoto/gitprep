@@ -40,93 +40,89 @@
   my $branches = $git->branches($user, $project);
   @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
   
-  # Global variables
-  stash(
-    id => $end_commit->{id},
-    from_id => $start_commit->{id},
-    rev => $end_commit->{id},
-    from_rev => $start_commit->{id},
-  );
+  # Variables
+  stash id => $end_commit->{id};
+  stash from_id => $start_commit->{id};
+  stash rev => $end_commit->{id};
+  stash from_rev => $start_commit->{id};
+
+  layout 'common', title => "Comparing $rev1...$rev2 \x{30fb} $user/$project";
 %>
 
-% layout 'common', title => "Comparing $rev1...$rev2 \x{30fb} $user/$project";
 
-  %= javascript begin
-    $(document).ready(function () {
-      
-      // Change base branch
-      $('#base-branch-btn').on('click', function () {
-        $('#base-branch-popup')
-          .css('display', 'block')
-          .css('top', '40px')
-          .css('left', '10px')
-        ;
-      });
-      $('#base-branch-close').on('click', function () {
-        $('#base-branch-popup').css('display', 'none');
-      });
-      $('[name=base-branch]').on('keypress', function (e) {
-        // Enter
-        if (e.which == 13) {
-          location.href = '<%= url_for("/$user/$project/compare/") %>' + $(this).val() + '...<%= $rev %>';
-        }
-      });
-
-      // Change compare branch
-      $('#compare-branch-btn').on('click', function () {
-        $('#compare-branch-popup')
-          .css('display', 'block')
-          .css('top', '40px')
-          .css('left', '96px')
-        ;
-      });
-      $('#compare-branch-close').on('click', function () {
-        $('#compare-branch-popup').css('display', 'none');
-      });
-      $('[name=compare-branch]').on('keypress', function (e) {
-        // Enter
-        if (e.which == 13) {
-          location.href = '<%= url_for("/$user/$project/compare/") %>' + '<%= $from_rev %>...' + $(this).val();
-        }
-      });
+%= javascript begin
+  $(document).ready(function () {
+    
+    // Change base branch
+    $('#base-branch-btn').on('click', function () {
+      $('#base-branch-popup')
+        .css('display', 'block')
+        .css('top', '40px')
+        .css('left', '10px')
+      ;
     });
-  % end
+    $('#base-branch-close').on('click', function () {
+      $('#base-branch-popup').css('display', 'none');
+    });
+    $('[name=base-branch]').on('keypress', function (e) {
+      // Enter
+      if (e.which == 13) {
+        location.href = '<%= url_for("/$user/$project/compare/") %>' + $(this).val() + '...<%= $rev %>';
+      }
+    });
 
-  %= include '/include/header';
+    // Change compare branch
+    $('#compare-branch-btn').on('click', function () {
+      $('#compare-branch-popup')
+        .css('display', 'block')
+        .css('top', '40px')
+        .css('left', '96px')
+      ;
+    });
+    $('#compare-branch-close').on('click', function () {
+      $('#compare-branch-popup').css('display', 'none');
+    });
+    $('[name=compare-branch]').on('keypress', function (e) {
+      // Enter
+      if (e.which == 13) {
+        location.href = '<%= url_for("/$user/$project/compare/") %>' + '<%= $from_rev %>...' + $(this).val();
+      }
+    });
+  });
+% end
 
-  <div class="container">
-    <h2>Compare View</h2>
-    <div class="well" style="padding:9px 10px 9px 10px;margin-bottom:5px;position:relative">
-      <div class="row">
-        <div class="span8">
-          <button id="base-branch-btn" class="btn" style="padding:2px 10px">
-            <%= $from_rev %>
-          </button>
-          ...
-          <button id="compare-branch-btn" class="btn" style="padding:2px 10px">
-            <%= $rev %>
-          </button>
-        </div>
-        <div class="text-right">
-          <a href="<%= url_for("/$user/$project/compare/$rev...$from_rev") %>" class="btn" style="padding:2px 10px">Switch base branch</a>
-        </div>
+%= include '/include/header';
+
+<div class="container">
+  <div class="topic1">Compare View</div>
+  <div class="compare-select">
+    <div>
+      <div>
+        <button id="base-branch-btn" class="btn btn-small">
+          <span>base:</span><b> <%= $from_rev %></b><i class="icon-arrow-down"></i>
+        </button>
+        ...
+        <button id="compare-branch-btn" class="btn btn-small">
+          <span>compare:</span> <b><%= $rev %></b><i class="icon-arrow-down"></i>
+        </button>
       </div>
+    </div>
 
-      <div id="base-branch-popup" style="display:none;width:330px;position:absolute">
-        <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
-          <div class="row">
-            <div class="span3">
-              <b>Choose a base branch</b>
-            </div>
-            <div class="text-right">
-              <i id="base-branch-close" class="icon-remove-circle"></i>
-            </div>
+    <div id="base-branch-popup" style="display:none;width:330px;position:absolute">
+      <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
+        <div style="overflow:hidden">
+          <div style="float:left;width:90%;">
+            <b>Choose a base branch</b>
+          </div>
+          <div style="float:left:width:10%;text-align:right;">
+            <i id="base-branch-close" class="icon-remove-circle"></i>
           </div>
         </div>
-        <div class="border-gray" style="background:#F5F5F5;border-top:none;border-bottom:none;text-align:center;padding:10px 0">
-          %= text_field 'base-branch', style => 'margin-bottom:0;width:270px', placeholder => 'Branch, tag, commit, or history marker';
-        </div>
-        <div style="background:white;max-height:500px;overflow:auto;">
+      </div>
+      <div class="border-gray" style="background:#F5F5F5;border-top:none;border-bottom:none;text-align:center;padding:10px 0">
+        %= text_field 'base-branch', style => 'margin-bottom:0;width:270px', placeholder => 'Branch, tag, commit, or history marker';
+      </div>
+      <div style="background:white;max-height:500px;overflow:auto;">
         <ul class="nav nav-tabs nav-stacked">
           % for (my $i = 0; $i < @$branches; $i++) {
             % my $branch = $branches->[$i];
@@ -137,89 +133,89 @@
               </li>
           % }
         </ul>
-        </div>
       </div>
-
-      <div id="compare-branch-popup" style="display:none;width:330px;position:absolute">
-        <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
-          <div class="row">
-            <div class="span3">
-              <b>Choose a compare branch</b>
-            </div>
-            <div class="text-right">
-              <i id="compare-branch-close" class="icon-remove-circle"></i>
-            </div>
-          </div>
-        </div>
-        <div class="border-gray" style="background:#F5F5F5;border-top:none;border-bottom:none;text-align:center;padding:10px 0">
-          %= text_field 'compare-branch', style => 'margin-bottom:0;width:270px', placeholder => 'Branch, tag, commit, or history marker';
-        </div>
-        <div style="background:white;max-height:500px;overflow:auto;">
-        <ul class="nav nav-tabs nav-stacked">
-          % for (my $i = 0; $i < @$branches; $i++) {
-            % my $branch = $branches->[$i];
-              <li>
-                <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= url_for("/$user/$project/compare/$from_rev...$branch->{name}") %>">
-                  <%= $branch->{name} %>
-                </a>
-              </li>
-          % }
-        </ul>
-        </div>
-      </div>
-
     </div>
 
-    <div style="margin-bottom:20px">From here you can compare two points in history. You can even compare tag names and commits.</div>
-    
-    <hr style="margin-top:5px">
-
-    % if (keys %$commits_date) {
-
-      <div>
-        Showing <%= @$commits %> commits by <%= $authors_count %> author.
+    <div id="compare-branch-popup" style="display:none;width:330px;position:absolute">
+      <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
+        <div style="overflow:hidden">
+          <div style="float:left;width:90%;">
+            <b>Choose a compare branch</b>
+          </div>
+          <div style="float:left:width:10%;text-align:right;">
+            <i id="compare-branch-close" class="icon-remove-circle"></i>
+          </div>
+        </div>
       </div>
+      <div class="border-gray" style="background:#F5F5F5;border-top:none;border-bottom:none;text-align:center;padding:10px 0">
+        %= text_field 'compare-branch', style => 'margin-bottom:0;width:270px', placeholder => 'Branch, tag, commit, or history marker';
+      </div>
+      <div style="background:white;max-height:500px;overflow:auto;">
+      <ul class="nav nav-tabs nav-stacked">
+        % for (my $i = 0; $i < @$branches; $i++) {
+          % my $branch = $branches->[$i];
+            <li>
+              <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= url_for("/$user/$project/compare/$from_rev...$branch->{name}") %>">
+                <%= $branch->{name} %>
+              </a>
+            </li>
+        % }
+      </ul>
+      </div>
+    </div>
+  </div>
 
+  % if (keys %$commits_date) {
+    <ul class="compare-header">
+      <li>
+        <b><%= @$commits %></b> <span>commit</span>
+      </li>
+      <li>
+        <b><%= $authors_count %></b> <span>contributor</span>
+      </li>
+      <li>
+        
+      </li>
+      <li>
+        
+      </li>
+    </ul>
+    
+    <div class="commits">
       % for my $date (reverse sort keys %$commits_date) {
         % my $commits = $commits_date->{$date};
         
-        <div class="bk-gray-light border-gray" style="padding:5px;">
-          <%= $date %>
+        <div class="commit-date">
+          <i class="icon-off"></i><span>Commits on <%= $date %></span>
         </div>
         
-        <div style="margin-bottom:20px">
+        <ul class="compare-commits-date-container">
           % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
-            <div class="border-gray" style="padding:5px;border-top:none">
-              <div class="row">
-                <div class="span2">
-                  <span title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>
-                </div>
-                <div class="span7">
-                  <a style="color:#333" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                    <%= $commit->{title_short} %>
-                  </a>
-                </div>
-                <div class="span2 text-right" style="margin-left:80px">
-                  <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-                    <%= substr($commit->{id}, 0, 7) %>
-                  </a>
-                </div>
+            <li>
+              <div class="compare-commits-author">
+                <span title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>
               </div>
-            </div>
+              <div class="compare-commits-commit-title">
+                <a style="color:#333" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                  <%= $commit->{title_short} %>
+                </a>
+              </div>
+              <div class="compare-commits-commit-id">
+                <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                  <%= substr($commit->{id}, 0, 7) %>
+                </a>
+              </div>
+            </li>
           % }
-        </div>
+        </ul>
       % }
-    
-      %= include '/include/commit_body';
-    % } else {
-      <div class="well" style="padding:35px">
-        <div class="text-center" style="margin-bottom:15px"><b>There isn't anything to compare.</b></div>
-
-        <div class="text-center muted">
-          <b><%= $from_rev %></b> is up to date with all commits from <b><%= $rev %></b>.
-          Try <a href="<%= url_for("/$user/$project/compare/$rev...$from_rev") %>">switching the base</a> for your comparison.
-        </div>
-      </div>
-    % }
-  </div>
-  %= include '/include/footer';
+    </div>
+  
+    %= include '/include/commit_body';
+  % } else {
+    <div>
+      <b>There isn't anything to compare.</b>
+    </div>
+  % }
+</div>
+%= include '/include/footer';

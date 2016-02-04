@@ -1785,14 +1785,6 @@ button.close {
   padding:10px 0;
 }
 
-.commit-date {
-  color: #767676;
-}
-
-.commit-date i {
-  margin-right:15px;
-}
-
 .commits-date-container li:first-child {
   border-top: 1px solid #e5e5e5;
 }
@@ -1803,6 +1795,14 @@ button.close {
   border-top:none;
   padding:8px 20px 8px 15px;
   overflow:hidden;
+}
+
+.commit-date {
+  color: #767676;
+}
+
+.commit-date i {
+  margin-right:15px;
 }
 
 .commit-left {
@@ -2662,4 +2662,64 @@ button.close {
   text-align:center;
   padding-top:40px;
   padding-bottom:40px;
+}
+
+.compare-select {
+  padding:12px 10px;
+  margin-bottom:5px;
+  position:relative;
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  background-color: #fafafa;
+}
+
+.compare-header {
+  border:1px solid #d8d8d8;
+  overflow:hidden;
+  border-radius: 3px;
+  padding:10px;
+  margin-top:10px;
+}
+
+.compare-header li {
+  width:25%;
+  float:left;
+  text-align:center;
+}
+.compare-header li span {
+  color: #767676;
+}
+.compare-commits-date-container {
+  border-left:#f3f3f3 2px solid;
+  margin:3px 6px;
+  padding:10px 0;
+}
+
+.compare-commits-date-container li:first-child {
+}
+
+.compare-commits-date-container li {
+  margin-left:20px;
+  overflow:hidden;
+}
+
+.compare-commits-author {
+  width:30%;
+  float:left;
+  font-weight:bold;
+  font-size:90%;
+}
+
+.compare-commits-commit-title {
+  width:50%;
+  float:left;
+}
+
+.compare-commits-commit-id {
+  width:20%;
+  float:left;
+  text-align:right;
+}
+.compare-commits-commit-id a {
+  color:#767676;
 }
