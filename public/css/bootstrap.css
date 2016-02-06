@@ -1498,7 +1498,6 @@ button.close {
   font-size:19px;
   font-weight:bold;
   margin:20px 0 15px 0;
-  padding-left:8px;
 }
 
 .project-header {
@@ -2788,4 +2787,24 @@ button.close {
   float:left;
   width:20%;
   text-align:right;
+}
+.graph-diff {
+  width:800px;
+  overflow:auto;
+  padding-left:10px;
+  padding-right:10px;
+
+  background-color: #f5f5f5;
+  border: 1px solid #e3e3e3;
+  padding:10px 10px 14px 10px;
+  margin-bottom:20px;
+  border-radius:3px;
+}
+.graph-document pre {
+  background:#333333;
+  color:white;
+  padding:20px 20px 0px 20px;
+  border-radius:3px;
+  margin-bottom:15px;
+  margin-top:3px;
 }

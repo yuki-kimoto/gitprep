@@ -18,9 +18,9 @@
   
   # Default branch
   my $default_branch = app->manager->default_branch($user, $project);
-%>
 
-% layout 'common', title => "Network \x{30fb} $user/$project";
+  layout 'common', title => "Network \x{30fb} $user/$project";
+%>
 
   %= javascript begin
     $(document).ready(function () {
