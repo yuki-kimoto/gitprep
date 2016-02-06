@@ -52,10 +52,10 @@
   
   %= include '/include/header';
 
-  <div class="container" style="min-heigth:500px">
-    <h3>Members of the <%= $project %> Network</h3>
-    <div class="well" style="padding:5px 10px 0 10px;margin-bottom:20px">
-      <span class="label label-info">My branch</span>
+  <div class="container">
+    <div class="topic1">Members of the <%= $project %> Network</div>
+    <div class="network-mybranch">
+      <span class="network-mybranch-label">My branch</span>
       <a href="<%= url_for("/$user") %>"><%= $user %></a>
       <span>/</span>
       <a href="<%= url_for("/$user/$project") %>"><%= $project %></a>
@@ -63,35 +63,34 @@
       % param('branch', $default_branch);
       %= select_field 'branch' => $branches, style => 'margin-top:5px;width:150px';
     </div>
-    <div style="margin-bottom:30px">
+    <ul class="network-member-branch">
       % if (@$members) {
         % for my $member (@$members) {
-          <div class="row" name="remote" style="font-size:18px;">
+          <li name="remote">
             % my $mid = $member->{id};
             % my $mproject = $member->{project};
             % my $mbranches = $member->{branches};
-            <div class="span8" style="padding-left:5px">
-              <span class="label label-success">Member branch</span>
+            <div>
+              <span class="network-member-branch-label">Member branch</span>
               <a name="remote-member" href="<%= url_for("/$mid") %>"><%= $mid %></a>
               <span>/</span>
               <a name="remote-project" href="<%= url_for("/$mid/$mproject") %>"><%= $mproject %></a>
               <span>/</span>
               %= select_field 'remote-branch' => $mbranches, style => 'margin-top:5px;margin-bottom:7px;width:150px';
             </div>
-            <div class="text-right">
+            <div class="last-child">
               <button name="compare-btn" class="btn" style="margin-top:5px">Compare</button>
-            % if ($api->logined($user)) {
+              % if ($api->logined($user)) {
                 <button name="import-btn" class="btn" style="margin-top:5px">Import</button>
-            % }
+              % }
             </div>
-          </div>
-          <hr style="margin:0">
+          </li>
         % }
       % } else {
-        <div class="well">
+        <li>
           No Members.
-        </div>
+        </li>
       % }
-    </div>
+    </ul>
   </div>
   %= include '/include/footer';
