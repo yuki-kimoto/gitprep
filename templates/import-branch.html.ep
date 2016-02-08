@@ -96,9 +96,10 @@
       $errors = $vresult->messages;
     }
   }
+
+  layout 'common', title => "Import branch";
 %>
 
-% layout 'common', title => "Import branch";
   %= include 'include/header';
 
   %= javascript begin
@@ -106,7 +107,7 @@
       
       // Select remote branch
       $('[name=copy-branch-name]').on('click', function () {
-        $('[name=branch]').val($('[name=remote_branch]').val());
+        $('[name=branch]').val($('[name=remote-branch]').val());
         return false;
       });
     });
@@ -127,45 +128,43 @@
         % }
       </div>
     % }
-    <h3>Import branch</h3>
+    <h3 class="topic1">Import branch</h3>
     <form action="<%= url_for("/$user/$project/import-branch/$remote_user/$remote_project")->query(op => 'import') %>" method="post">
-      <div class="row" style="font-size:22px">
-        <div class="span6">
-          <div class="well" style="text-align:center">
-            <div style="color:blue;margin-bottom:15px">
+      <div class="import-branch">
+        <div class="left">
+          <div class="import-branch-to">
+            <div>
               %= "$user / $project";
             </div>
             <div>
-              %= text_field 'branch', placeholder => "Branch name", style => "margin-top:12px;width:250px";
+              %= text_field 'branch', placeholder => "Branch name", style => "width:250px";
               <button name="copy-branch-name", class="btn" style="font-size:12px; padding-left:3px;padding-right:3px;color:#666">Copy Branch Name</button>
             </div>
-            <table style="width:100%">
-              <tr>
-                <td style="width:80px;text-align:right">
-                  %= submit_button 'Import', class => "btn";
-                </td>
-                <td style="width:20px;">
-                  <%= check_box force => 1 %> 
-                </td>
-                <td style="font-size:13px;padding-top:7px;text-align:left">
-                  Force
-                </td>
-              </tr>
-            </table>
+            <div class="import-branch-button-panel">
+              <div>
+                %= submit_button 'Import', class => "btn btn-info";
+              </div>
+              <div>
+                <%= check_box force => 1 %> 
+              </div>
+              <div>
+                Force
+              </div>
+            </div>
           </div>
         </div>
-        <div class="span1">
-          <div style="padding: 19px;text-align:center;font-size:26px">
-            &lArr;
-          </div>
+        <div class="center">
+          &lArr;
         </div>
-        <div class="span5">
-          <div class="well" style="text-align:center">
-            <div style="color:green;margin-bottom:15px">
+        <div class="right">
+          <div  class="import-branch-from">
+            <div>
               %= "$remote_user / $remote_project";
             </div>
-            % param(remote_branch => $remote_branch);
-            %= select_field 'remote-branch' => $remote_branch_names, style => "width:250px";
+            <div>
+              % param('remote-branch' => $remote_branch);
+              %= select_field 'remote-branch' => $remote_branch_names, style => "width:250px";
+            </div>
           </div>
         </div>
       </div>

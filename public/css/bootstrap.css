@@ -2808,3 +2808,52 @@ button.close {
   margin-bottom:15px;
   margin-top:3px;
 }
+
+.import-branch {
+  overflow:hidden;
+}
+.import-branch > .left {
+  float:left;
+  width:45%;
+}
+.import-branch > .center {
+  float:left;
+  width:10%;
+  text-align:center;
+  padding: 19px;
+  text-align:center;
+  font-size:26px;
+}
+.import-branch > .right {
+  float:left;
+  width:45%;
+}
+.import-branch select {
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  padding:6px 5px;
+  width:30%;
+}
+.import-branch-from, .import-branch-to {
+  border:1px solid #d8d8d8;
+  border-radius:3px;
+  padding:25px 15px;
+}
+.import-branch-to > :first-child {
+  font-size:20px;
+  color:blue;
+  margin-bottom:10px;
+}
+.import-branch-from > :first-child {
+  font-size:20px;
+  color:green;
+  margin-bottom:10px;
+}
+.import-branch-button-panel {
+  margin-top:10px;
+}
+.import-branch-button-panel > div {
+  display:table-cell;
+  vertical-align:middle;
+  padding:0 3px;
+}
