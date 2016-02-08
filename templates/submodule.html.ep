@@ -36,32 +36,36 @@
   }
 
   # Variables for included template
-  stash(id => $rev, project => $project, rev => $rev);
+  stash id => $rev;
+  stash project => $project;
+  stash rev => $rev;
+
+  layout 'common' , title => "$project/$file at $rev \x{30fb} $user/$project";
 %>
 
-<% layout 'common' , title => "$project/$file at $rev \x{30fb} $user/$project",
-     stylesheets => ['/js/google-code-prettify/prettify.css']; %>
 
   %= include '/include/header';
 
   <div class="container">
     %= include '/include/page_path', type => 'blob', Path => $file;
-        
-    <div class="border-gray bk-gray-light" style="padding:5px; border-bottom:none">
-      <div class="row">
-        <div class="span7" style="padding-top:5px">
-          <%= $file_base %> (Sub Module)
+    
+    <div class="submodule">
+      <div>
+        <div>
+          <div>
+            <%= $file_base %> <small>[submodule]</small>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="border-gray" style="font-size:16px;padding:15px;margin-bottom:30px">
-      % if ($submodule_rep_url) {
-        % if ($submodule_rep_url =~ /^http/) {
-          <a href="<%= $submodule_rep_url %>"><%= $submodule_rep_url %></a>
-        % } else {
-          <%= $submodule_rep_url %>
+      <div class="last-child">
+        % if ($submodule_rep_url) {
+          % if ($submodule_rep_url =~ /^http/) {
+            <a href="<%= $submodule_rep_url %>"><%= $submodule_rep_url %></a>
+          % } else {
+            <%= $submodule_rep_url %>
+          % }
         % }
-      % }
+      </div>
     </div>
   </div>
   

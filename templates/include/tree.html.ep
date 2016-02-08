@@ -36,7 +36,8 @@
             <i class="icon-folder-close"></i>
             <a href="<%= url_for("/$user/$project/submodule/$rev/$child_dir") %>">
               <%= $name %>
-            </a>              
+            </a>
+            <small>[submodule]</small>              
           % } elsif ($type eq 'blob') {
             % my $file = defined $dir && $dir ne '' ? "$dir/$name" : $name;
             <i class="icon-file"></i>
