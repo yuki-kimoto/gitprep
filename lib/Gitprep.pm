@@ -167,6 +167,11 @@ sub startup {
     
     return ($value || '') =~ /[a-zA-Z0-9_\-\.]+$/;
   });
+  $vc->add_check(user_name => sub {
+    my ($vc, $value) = @_;
+    
+    return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/;
+  });
   
   # Basic auth plugin
   $self->plugin('BasicAuth');
