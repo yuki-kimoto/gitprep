@@ -159,6 +159,15 @@ sub startup {
     }
   );
   
+  $vc->add_check(project_name => sub {
+    my ($vc, $value) = @_;
+    
+    return 0 unless defined $value;
+    return 0 if $value eq '.' || $value eq '..';
+    
+    return ($value || '') =~ /[a-zA-Z0-9_\-\.]+$/;
+  });
+  
   # Basic auth plugin
   $self->plugin('BasicAuth');
 

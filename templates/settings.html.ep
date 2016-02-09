@@ -18,40 +18,41 @@
   my $errors;
   my $post = lc $self->req->method eq 'post';
   if ($op eq 'rename-project' && $post) {
-  
-    # Validation
-    my $params = $api->params;
-    my $rule = [
-      'to-project' => [
-        ['not_blank' => 'Repository name is empty.'],
-        ['project_name' => 'Repository name contains invalid charactor.']
-      ]
-    ];
-    my $vresult = app->vc->validate($params, $rule);
     
-    if ($vresult->is_ok) {
-      # Valida parameters
-      my $data = $vresult->data;
-      my $to_project = $data->{'to-project'};
-      
+    # Parameters
+    my $to_project = param('to-project');
+    
+    # Validator
+    my $vc = app->vc;
+    
+    # Validation result
+    my $validation = $vc->validation;
+    
+    # "to-project" check
+    if (!length $to_project) {
+      $validation->add_failed('to-project' => 'Repository name is empty.');
+    }
+    elsif (!$vc->check($to_project, 'project_name')) {
+      $validation->add_failed('to-project' => 'Repository name contains invalid charactor.');
+    }
+    elsif (app->manager->exists_project($user, $to_project)) {
+      $validation->add_failed('to-project' => "$to_project is already exists");
+    }
+    
+    if ($validation->is_valid) {
       # Rename
-      if (app->manager->exists_project($user, $to_project)) {
-        $errors = ["$to_project is already exists"];
+      eval { app->manager->rename_project($user, $project, $to_project) };
+      if (my $e = $@) {
+        app->log->error($e);
+        $errors = ['Internal Error'];
       }
       else {
-        eval { app->manager->rename_project($user, $project, $to_project) };
-        if (my $e = $@) {
-          app->log->error($e);
-          $errors = ['Internal Error'];
-        }
-        else {
-          flash(message => "Repository name is renamed to $to_project");
-          $self->redirect_to("/$user/$to_project/settings");
-          return;
-        }
+        flash(message => "Repository name is renamed to $to_project");
+        $self->redirect_to("/$user/$to_project/settings");
+        return;
       }
     }
-    else { $errors = $vresult->messages }
+    else { $errors = $validation->messages }
   }
   
   # Change description
