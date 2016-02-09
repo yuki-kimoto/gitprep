@@ -21,7 +21,7 @@
     
     
     Text Gray
-    #767676
+    color:#767676
 */
 
 * {
@@ -2875,4 +2875,31 @@ button.close {
   padding:15px;
   margin-bottom:30px;
   border-radius: 0 0 3px 3px;
+}
+
+pre.command-line {
+  background:#333333;
+  color:white;
+  padding:15px 20px 15px 20px;
+  border-radius:3px;
+  margin-bottom:15px;
+  margin-top:3px;
+}
+.private {
+  background:white;
+  text-align:center;
+  font-size:20px;
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  padding:20px 0;
+  color:#767676
+}
+
+.not-yet-created {
+  background:white;
+  margin-bottom:30px;
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  color:#767676;
+  padding:15px 10px;
 }

@@ -3,7 +3,7 @@
   %= include '/include/header';
   
   <div class="container">
-    <div class="well" style="background:white;text-align:center;font-size:20px;">
+    <div class="private">
       <%= $project %> is private repository
     </div>
   </div>

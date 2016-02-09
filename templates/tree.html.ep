@@ -174,13 +174,13 @@
       
     % } elsif ($state eq 'init' && $api->logined($user)) {
       
-      <h4>SSH</h4>
+      <h4 class="topic1">SSH</h4>
       
       <div class="text-center" style="margin-bottom:10px">
         <b>Create a new repository on the command line via ssh</b>
       </div>
       
-      <pre style="margin-bottom:30px">
+      <pre class="command-line">
 touch README
 git init
 git add README
@@ -192,20 +192,20 @@ git push -u origin master</pre>
         <b>Push an existing repository from the command line via ssh</b>
       </div>
       
-      <pre style="margin-bottom:30px">
+      <pre class="command-line">
 git remote add origin <%= $ssh_rep_url %>
 git push -u origin master</pre>
 
       <hr>
 
       % my $http_rep_url = url_for("$user/$project.git")->to_abs;
-      <h4><%= uc url_for->to_abs->scheme %></h4>
+      <h4 class="topic1"><%= uc url_for->to_abs->scheme %></h4>
 
       <div class="text-center" style="margin-bottom:10px">
         <b>Create a new repository on the command line via <%= url_for->to_abs->scheme %></b>
       </div>
       
-      <pre style="margin-bottom:30px">
+      <pre class="command-line">
 touch README
 git init
 git add README
@@ -217,11 +217,11 @@ git push -u origin master</pre>
         <b>Push an existing repository from the command line via <%= url_for->to_abs->scheme %></b>
       </div>
       
-      <pre style="margin-bottom:30px">
+      <pre class="command-line">
 git remote add origin <%= $http_rep_url %>
 git push -u origin master</pre>
     % } else {
-      <div class="well text-center muted" style="background:white;margin-bottom:30px">
+      <div class="not-yet-created">
         <b>Repository is not yet created.</b>
       </div>
     % }
