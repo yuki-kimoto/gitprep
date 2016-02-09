@@ -29,7 +29,7 @@
     my $validation = $vc->validation;
     
     # "to-project" check
-    if (!length $to_project) {
+    if (!(defined $project && length $to_project)) {
       $validation->add_failed('to-project' => 'Repository name is empty.');
     }
     elsif (!$vc->check($to_project, 'project_name')) {

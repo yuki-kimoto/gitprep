@@ -4,22 +4,22 @@
   
   my $errors;
   if ($op eq 'delete' && lc $self->req->method eq 'post') {
-
-    # Validation
-    my $params = $api->params;
-    my $vc = $self->app->vc;
-    my $rule = [
-      user => [
-        ['not_blank' => 'User name is empty.'],
-      ]
-    ];
-    my $vresult = $vc->validate($params, $rule);
     
-    if ($vresult->is_ok) {
-      
-      # Valid parameters
-      my $params = $vresult->data;
-      my $user = $params->{user};
+    # Parameters
+    my $user = param('user');
+    
+    # Validator
+    my $vc = app->vc;
+    
+    # Validation result
+    my $validation = $vc->validation;
+    
+    # "user" check
+    if (!(defined $user && length $user)) {
+      $validation->add_failed(user => 'User name is empty.');
+    }
+
+    if ($validation->is_valid) {
       
       # Delete user
       my $count;
@@ -38,7 +38,7 @@
         return;
       }
     }
-    else { $errors = $vresult->messages }
+    else { $errors = $validation->messages }
   }
   
   my $users = app->manager->users;
