@@ -19,29 +19,31 @@
   my $errors;
   if (lc $self->req->method eq 'post') {
     if ($op eq 'add') {
-      my $params = $api->params;
-      my $rule = [
-        collaborator => [
-          ['not_blank' => 'collaborator is empty.'],
-          # Check user
-          sub {
-            my $collaborator = shift || '';
-            
-            if ($collaborator eq $user) {
-              return {result => 0, message => "User $collaborator is yourself"};
-            }
-            else {
-              my $row = app->dbi->model('user')->select(id => $collaborator)->one;
-              
-              return $row ? 1 : {result => 0, message => "User $collaborator don't exists"};
-            }
-          }
-        ]
-      ];
-      my $vresult = app->vc->validate($params, $rule);
-      if ($vresult->is_ok) {
-        my $safe_params = $vresult->data;
-        my $collaborator = $safe_params->{collaborator};
+      my $collaborator = param('collaborator');
+      
+      # Validator
+      my $vc = app->vc;
+      
+      # Validation result
+      my $validation = $vc->validation;
+      
+      # collaborator check
+      if (!length $collaborator) {
+        $validation->add_failed(collaborator => "collaborator is empty");
+      }
+      elsif ($collaborator eq $user) {
+        $validation->add_failed(collaborator => "User $collaborator is yourself");
+      }
+      else {
+        my $row = app->dbi->model('user')->select(
+          where => {id => $collaborator}
+        )->one;
+        if (!$row) {
+          $validation->add_failed(collaborator => "User $collaborator don't exists");
+        }
+      }
+      
+      if ($validation->is_valid) {
         
         # Insert
         eval {
@@ -64,7 +66,7 @@
         }
       }
       else {
-        $errors = $vresult->messages;
+        $errors = $validation->messages;
       }
     }
     elsif ($op eq 'remove') {
