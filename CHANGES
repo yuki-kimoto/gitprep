@@ -1,3 +1,5 @@
+1.12
+  Catch up latest Github design.
 1.11
   - support relative path in README.md and blob html.
   - support git version 2
