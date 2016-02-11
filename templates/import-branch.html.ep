@@ -22,46 +22,55 @@
   my $op = param('op') || '';
   my $errors;
   if ($op eq 'import' && lc $self->req->method eq 'post') {
-  
-    # Validation
-    my $api = gitprep_api;
-    my $params = $api->params;
-    my $rule = [
-      user => [
-        ['user_name' => 'User name is invalid.']
-      ],
-      project => [
-        ['project_name' => 'Repository name is invalid.']
-      ],
-      branch => [
-        ['not_blank' => 'Branch name is empty.']
-      ],
-      remote_user => [
-        ['user_name' => 'Remote User name is invalid.']
-      ],
-      remote_project => [
-        ['project_name' => 'Remote repository is invalid.']
-      ],
-      'remote-branch' => [
-        ['not_blank' => 'Remote branch name is empty.']
-      ],
-      force => {require => 0} => [
-        'any'
-      ]
-    ];
-    my $vresult = app->vc->validate($params, $rule);
+    # Parameters
+    my $user = param('user');
+    my $project = param('project');
+    my $branch = param('branch');
+    my $remote_user = param('remote_user');
+    my $remote_project = param('remote_project');
+    my $remote_branch = param('remote-branch');
+    my $force = param('force');
     
-    if ($vresult->is_ok) {
-      my $safe_params = $vresult->data;
-      
-      # Valid paramters
-      my $user = $safe_params->{user};
-      my $project = $safe_params->{project};
-      my $branch = $safe_params->{branch};
-      my $remote_user = $safe_params->{remote_user};
-      my $remote_project = $safe_params->{remote_project};
-      my $remote_branch = $safe_params->{'remote-branch'};
-      my $force = $safe_params->{force};
+    # Validator
+    my $vc = app->vc;
+    
+    # Validation result
+    my $validation = $vc->validation;
+    
+    # "user"
+    if (!$vc->check($user, 'user_name')) {
+      $validation->add_failed('User name is invalid.');
+    }
+    
+    # "project"
+    if (!$vc->check($project, 'project_name')) {
+      $validation->add_failed('Repository name is invalid.');
+    }
+    
+    # "branch"
+    if (!(defined $branch && length $branch)) {
+      $validation->add_failed('Branch name is empty.');
+    }
+    
+    # "remote_user"
+    if (!$vc->check($remote_user, 'user_name')) {
+      $validation->add_failed('Remote User name is invalid.');
+    }
+    
+    # "remote_project"
+    if (!$vc->check($remote_project, 'project_name')) {
+      $validation->add_failed('Remote repository is invalid.');
+    }
+    
+    # "remote-branch"
+    if (!(defined $remote_branch && length $remote_branch)) {
+      $validation->add_failed('Remote branch name is empty.');
+    }
+    
+    # "force"
+    $force = $force ? 1 : 0;
+    
+    if ($validation->is_valid) {
       
       # Check branch name
       my $branches = $git->branches($user, $project);
@@ -82,8 +91,9 @@
           );
         };
         
-        if ($@) {
+        if (my $e = $@) {
           $errors = ['Internal Error'];
+          app->log->error(url_for . ": $e");
         }
         else {
           flash(message => "Success: " . ($force ? 'force ' : '') . "import \"$remote_user / $remote_project / $remote_branch\" into \"$user / $project / $branch\"");
@@ -93,7 +103,7 @@
       }
     }
     else {
-      $errors = $vresult->messages;
+      $errors = $validation->messages;
     }
   }
 
