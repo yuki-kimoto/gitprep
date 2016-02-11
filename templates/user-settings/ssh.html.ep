@@ -17,91 +17,88 @@
   if (lc $self->req->method eq 'post') {
     # Add ssh key
     if ($op eq 'add') {
+      # Paramerters
+      my $title = param('title');
+      my $original_key = param('key');
       
-      # Paramters
-      my $params = $api->params;
+      # Validator
+      my $vc = app->vc;
       
-      # Rule
-      my $rule = [
-        title => [
-          ['not_blank' => 'title is empty'],
-          ['ascii' => 'title contains invalid character'],
-        ],
-        key => [
-          ['not_blank' => 'key is empty'],
-          # Check if key format is valid
-          sub {
-            my ($original_key, $args, $vc) = @_;
-            
-            my $type;
-            my $original_key_edit;
-            if ($original_key =~ /^(ssh-rsa|ssh-dss|ecdsa-sha2-nistp25|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) +(\S+)/) {
-              $type = $1;
-              $original_key_edit = $2;
-            }
-            
-            if ($type) {
-              if ($vc->constraints->{ascii}->($original_key_edit)) {
-                my $key = "$type $original_key_edit";
-                
-                my $row = app->dbi->model('ssh_public_key')->select(id => $key)->one;
-                
-                if ($row) {
-                  return {result => 0, message => 'Key already exists'};
-                }
-                else {
-                  my $key_is_contained;
-                  my $authorized_keys_file = app->manager->authorized_keys_file;
-                  if (defined $authorized_keys_file) {
-                    my $result
-                      = app->manager->parse_authorized_keys_file($authorized_keys_file);
+      # Validation result
+      my $validation = $vc->validation;
+      
+      # "title"
+      if (!(defined $title && length $title)) {
+        $validation->add_failed(title => 'title is empty');
+      }
+      elsif (!$vc->check($title, 'ascii_graphic')) {
+        $validation->add_failed(title => 'title contains invalid character');
+      }
+      else {
+        my $ssh_public_key = app->dbi->model('ssh_public_key')->select(
+          where => {title => $title}
+        )->one;
+        
+        if ($ssh_public_key) {
+          $validation->add_failed(title => 'title already exists');
+        }
+      }
+      
+      # "key"
+      my $key;
+      if (!(defined $original_key && length $original_key)) {
+        $validation->add_failed(key => 'key is empty');
+      }
+      else {
+        my $type;
+        my $original_key_edit;
+        if ($original_key =~ /^(ssh-rsa|ssh-dss|ecdsa-sha2-nistp25|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) +(\S+)/) {
+          $type = $1;
+          $original_key_edit = $2;
+        }
+        
+        if (!$type) {
+          my $message = "Key is invalid. It must begin with 'ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256',"
+            . "'ecdsa-sha2-nistp384', or 'ecdsa-sha2-nistp521'. Check that you're copying the public half of the key";
+          $validation->add_failed(key => $message);
+        }
+        elsif (!$vc->check($original_key_edit, 'ascii_graphic')) {
+          $validation->add_failed(key => 'Key contains invalid character.');
+        }
+        else {
+          $key = "$type $original_key_edit";
+          
+          my $row = app->dbi->model('ssh_public_key')->select(
+            where => {key => $key}
+          )->one;
+          
+          if ($row) {
+            $validation->add_failed(key => 'Key already exists');
+          }
+          else {
+            my $key_is_contained;
+            my $authorized_keys_file = app->manager->authorized_keys_file;
+            if (defined $authorized_keys_file) {
+              my $result
+                = app->manager->parse_authorized_keys_file($authorized_keys_file);
 
-                    my $before_part = $result->{before_part};
-                    my $after_part = $result->{after_part};
-                    my $other_part = "$before_part\n$after_part";
-                    if ($other_part =~ /\s\Q$original_key_edit\E(\s|$)/) {
-                      $key_is_contained = 1;
-                    }
-                  }
-                  
-                  if ($key_is_contained) {
-                    return {
-                      result => 0,
-                      message => "authorized_keys file already contain this key"
-                    };
-                  }
-                  else {
-                    return {result => 1, output => $key}
-                  }
-                }
-              }
-              else {
-                return {
-                  result => 0,
-                  message => "Key contains invalid character."
-                }
+              my $before_part = $result->{before_part};
+              my $after_part = $result->{after_part};
+              my $other_part = "$before_part\n$after_part";
+              if ($other_part =~ /\s\Q$original_key_edit\E(\s|$)/) {
+                $key_is_contained = 1;
               }
             }
-            else {
-              return {
-                result => 0,
-                message => "Key is invalid. It must begin with 'ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256',"
-                  . "'ecdsa-sha2-nistp384', or 'ecdsa-sha2-nistp521'. Check that you're copying the public half of the key"
-              };
+            
+            if ($key_is_contained) {
+              $validation->add_failed(key => "authorized_keys file already contain this key");
             }
           }
-        ]
-      ];
-      
-      # Validation
-      my $vresult = app->vc->validate($params, $rule);
+        }
+      }
       
       # Register ssh key
-      if ($vresult->is_ok) {
-        my $safe_params = $vresult->data;
-        my $title = $safe_params->{title};
-        my $key = $safe_params->{key};
-        
+      if ($validation->is_valid) {
         my $p = {
           user_id => $user,
           title => $title,
@@ -125,7 +122,7 @@
         }
       }
       else {
-        $errors = $vresult->messages;
+        $errors = $validation->messages;
       }
     }
     # Delete ssh public key
