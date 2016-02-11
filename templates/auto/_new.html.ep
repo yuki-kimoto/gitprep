@@ -13,70 +13,65 @@
   
   my $errors;
   if ($op eq 'create') {
-    # API
-    my $api = gitprep_api;
+    # Parameters
+    my $project = param('project');
+    my $description = param('description');
+    my $readme = param('readme');
+    my $private = param('private');
+    
+    # Validator
+    my $vc = app->vc;
     
     # Validation
-    my $params = $api->params;
-    my $rule = [
-      project => [
-        ['not_blank' => 'Repository name is empty'],
-        ['project_name' => 'Invalid repository name']
-      ],
-      description => {require => 0} => [
-        'any'
-      ],
-      readme => {require => 0} => [
-        'any'
-      ],
-      private => {require => 0} => [
-        'any'
-      ]
-    ];
-    my $vc = app->vc;
-    my $vresult = $vc->validate($params, $rule);
+    my $validation = $vc->validation;
+    
+    # "project"
+    if (!(defined $project && length $project)) {
+      $validation->add_failed(project => 'Repository name is empty');
+    }
+    elsif (!$vc->check($project, 'project_name')) {
+      $validation->add_failed(project => 'Invalid repository name');
+    }
+    elsif (app->manager->exists_project($session_user, $project)) {
+      $validation->add_failed(project => 'Repository already exists');
+    }
+    
+    # "description"
+    $description ||= '';
+    
+    # "readme"
+    $readme = $readme ? 1 :0;
+    
+    # "private"
+    $private = $private ? 1 : 0;
     
     # Git
-    my $git = app->git;
-    if ($vresult->is_ok) {
+    if ($validation->is_valid) {
       # Not logined
       unless ($api->logined) {
         return $self->render_exception;
       }
       
-      my $data = $vresult->data;
-      my $project = $data->{project};
-      my $description = $data->{description};
-      $description = '' unless defined $description;
-      my $readme = $data->{readme};
-      my $private = $data->{private};
-      $private ||= 0;
-      
       my $manager = app->manager;
-      if ($manager->exists_project($session_user, $project)) {
-        $errors = ['Repository already exists'];
+      # Create repository
+      eval {
+        $manager->create_project(
+          $session_user,
+          $project,
+          {description => $description, readme => $readme, private => $private}
+        );
+      };
+      
+      if (my $e = $@) {
+        app->log->error(url_for . ": $e");
+        $errors = ['Internal error'];
       }
       else {
-        # Create repository
-        eval {
-          $manager->create_project(
-            $session_user,
-            $project,
-            {description => $description, readme => $readme, private => $private}
-          );
-        };
-        
-        if (my $e = $@) {
-          app->log->error(url_for . ": $e");
-          $errors = ['Internal error'];
-        }
-        else {
-          $self->redirect_to("/$session_user/$project");
-          return;
-        }
+        $self->redirect_to("/$session_user/$project");
+        return;
       }
     }
-    else { $errors = $vresult->messages }
+    else { $errors = $validation->messages }
   }
 %>
 
