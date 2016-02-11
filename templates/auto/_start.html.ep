@@ -14,50 +14,56 @@
   my $errors;
   if ($op eq 'create') {
     
-    # Check existence admin user
-    my $admin_user = app->manager->admin_user;
-    if (defined $admin_user) { $errors = ['Admin user already exists.'] }
-    else {
-      # Validation
-      my $params = $api->params;
-      my $rule = [
-        password => [
-          ['not_blank' => 'Password is empty.'],
-          ['ascii' => 'Password contains invalid character.']
-        ],
-        {password_check => [qw/password password2/]}
-          => {copy => 0}
-          => [
-            ['duplication' => "Two password don't match."]
-          ]
-      ];
-      my $vresult = $self->app->vc->validate($params, $rule);
-      
-      if ($vresult->is_ok) {
-        
-        # Valida parameters
-        my $params = $vresult->data;
-        my $user = 'admin';
-        $params->{admin} = 1;
-        my ($password_encryped, $salt)
-          = $api->encrypt_password($params->{password});
-        $params->{password} = $password_encryped;
-        $params->{salt} = $salt;
-        
-        # Create admin user
-        $self->app->dbi->model('user')->insert($params, id => $user);
-        
-        # Redirect
-        $self->flash(admin_user_created => 1);
-        $self->redirect_to('/_login');
-        return;
-      }
-      else { $errors = $vresult->messages }
+    # Parameters
+    my $password = param('password');
+    my $password2 = param('password2');
+    
+    # Validator
+    my $vc = app->vc;
+    
+    # Validation
+    my $validation = $vc->validation;
+    
+    # "user"
+    if (defined $admin_user) {
+      $validation->add_failed('Admin user already exists.');
     }
+    
+    # "password"
+    if (!(defined $password && length $password)) {
+      $validation->add_failed('Password is empty.');
+    }
+    elsif (!$vc->check($password, 'ascii_graphic')) {
+      $validation->add_failed("Password contains invalid character.");
+    }
+    elsif ($password ne $password2) {
+      $validation->add_failed("Two password don't match.");
+    }
+    
+    if ($validation->is_valid) {
+      
+      # Valida parameters
+      my $new_user = {};
+      $new_user->{id} = 'admin';
+      $new_user->{admin} = 1;
+      my ($password_encryped, $salt) = $api->encrypt_password($password);
+      $new_user->{password} = $password_encryped;
+      $new_user->{salt} = $salt;
+      
+      # Create admin user
+      $self->app->dbi->model('user')->insert($new_user);
+      
+      # Redirect
+      $self->flash(admin_user_created => 1);
+      $self->redirect_to('/_login');
+      return;
+    }
+    else { $errors = $validation->messages }
   }
+
+  layout 'common', title => 'Start page';
 %>
 
-% layout 'common', title => 'Start page';
 
   %= include '/include/header';
   <!-- Start page -->
