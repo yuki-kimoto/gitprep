@@ -13,59 +13,53 @@
   
   # Login
   if ($op eq 'login') {
+  
+    # Paramerters
+    my $id = param('id');
+    my $password = param('password');
+    my $save = param('save');
     
-    # Validation
-    my $params = $api->params;
-    my $vc = $self->app->vc;
-    my $password_check = sub {
-      my $values = shift;
-      
-      my ($id, $password) = @$values;
-      
-      my $row
-        = $dbi->model('user')->select(['password', 'salt'], id => $id)->one;
-      
-      return unless defined $password;
-
+    # Validator
+    my $vc = app->vc;
+    
+    # Validation result
+    my $validation = $vc->validation;
+    
+    # "id"
+    $id = '' unless defined $id;
+    
+    # "user" and "password"
+    $password = '' unless defined $password;
+    my $user = $dbi->model('user')->select(
+      ['password', 'salt', 'admin'],
+      where => {id => $id}
+    )->one;
+    if (!$user) {
+      $validation->add_failed("User name or password is wrong");
+    }
+    else {
       my $is_valid = $api->check_password(
         $password,
-        $row->{salt},
-        $row->{password}
+        $user->{salt},
+        $user->{password}
       );
-      
-      return $is_valid;
-    };
-    my $rule = [
-      id => [
-        'any'
-      ],
-      password => [
-        'any'
-      ],
-      {password_check => [qw/id password/]}
-        => {copy => 0},
-        => [
-          $password_check
-        ],
-      save => {require => 0} => [
-        'defined'
-      ]
-    ];
-    my $vresult = $self->app->vc->validate($params, $rule);
+      if (!$is_valid) {
+        $validation->add_failed("User name or password is wrong");
+      }
+    }
     
-    if ($vresult->is_ok) {
+    # "save"
+    $save = $save ? 1 : 0;
+    
+    if ($validation->is_valid) {
       
       # Login success
-      my $safe_params = $vresult->data;
-      my $id = $safe_params->{id};
-      my $password = $safe_params ->{password};
-      my $row = $self->app->dbi->model('user')->select(['admin', 'password'], id => $id)->one;
-      my $password_encrypted = $row->{password};
-      my $admin = $row->{admin};
+      my $password_encrypted = $user->{password};
+      my $admin = $user->{admin};
       session(user => $id);
       session(password => $password_encrypted);
       
-      if ($safe_params->{save}) {
+      if ($save) {
         # 2 weeks save
         session(expires => time + 60 * 60 * 24 * 14);
       }
