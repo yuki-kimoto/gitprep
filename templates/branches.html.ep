@@ -22,22 +22,22 @@
       $self->redirect_to('/');
       return;    
     }
+    
+    # Parameters
+    my $branch = param('branch');
+    
+    # Validator
+    my $vc = app->vc;
+    
+    # Validation result
+    my $validation = $vc->validation;
+    
+    # "branch"
+    if (!(defined $branch && length $branch)) {
+      $validation->add_failed(branch => 'Branch name is empty');
+    }
 
-    # Validation
-    my $params = $api->params;
-    my $vc = $self->app->vc;
-    my $rule = [
-      branch => [
-        [not_blank => 'Branch name is empty']
-      ]
-    ];
-    my $vresult = $vc->validate($params, $rule);
-
-    if ($vresult->is_ok) {
-      # Valid parameters
-      my $params = $vresult->data;
-      my $branch = $params->{branch};
-      
+    if ($validation->is_valid) {
       # Delete branch
       eval { $git->delete_branch($user, $project, $branch) };
       if (my $e = $@) {
@@ -50,7 +50,7 @@
         return;
       }
     }
-    else { $errors = $vresult->messages }
+    else { $errors = $validation->messages }
   }
   
   # Default branch
