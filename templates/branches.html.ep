@@ -80,6 +80,21 @@
     $max = $branch->{status}{ahead} if $max < $branch->{status}{ahead};
     $max = $branch->{status}{behind} if $max < $branch->{status}{behind};
     
+    if ($branch->{status}{ahead} > 100) {
+      $branch->{status}{ahead_bar} = 100;
+    }
+    else {
+      $branch->{status}{ahead_bar} = $branch->{status}{ahead};
+    }
+    if ($branch->{status}{behind} > 100) {
+      $branch->{status}{behind_bar} = 100;
+    }
+    else {
+      $branch->{status}{behind_bar} = $branch->{status}{behind};
+    }
+    
+    $max = 100 if $max > 100;
+    
     my $branch_type;
     if ($branch->{name} eq $default_branch_name) {
       $branch_type = 'default';
@@ -235,12 +250,12 @@
                           </tr>
                           <tr>
                             <td style="width:100px">
-                              <div style="margin-left:auto;margin-right:0;background:#dcdcdc;width:<%= $max != 0 ? 100 * ($branch->{status}{behind} / $max) : 0 %>%;height:4px"></div>
+                              <div style="margin-left:auto;margin-right:0;background:#dcdcdc;width:<%= $branch->{status}{behind_bar} %>%;height:4px"></div>
                             </td>
                             <td class="ahead-behind-separate">
                             </td>
                             <td style="width:100px">
-                              <div style="background:#dcdcdc;width:<%= $max != 0 ? 100 * ($branch->{status}{ahead} / $max) : 0 %>%;height:4px"></div>
+                              <div style="background:#dcdcdc;width:<%= $branch->{status}{ahead_bar} %>%;height:4px"></div>
                             </td>
                           </tr>
                         </table>
