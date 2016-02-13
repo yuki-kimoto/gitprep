@@ -106,8 +106,8 @@
       % if ($file =~ /\.md$/) {
         <%
           my $readme = join "\n", @$lines;
-          $readme =~ s#^(\[.*\]:)(?!\s*https?://)\s*(\S*)#$1 /$user/$project/raw/$rev/$2#mg;
-          $readme =~ s#^(!\[.*\]\()(?!https?://)(\S*)#$1/$user/$project/raw/$rev/$2#mg;
+          $readme =~ s#^(\[.*\]:)(?!\s*https?://)\s*(\S*)#{"$1 " . url_for("/$user/$project/raw/$rev/$2")}#mge;
+          $readme =~ s#^(!\[.*\]\()(?!https?://)(\S*)#{$1 . url_for("/$user/$project/raw/$rev/$2")}#mge;
           my $readme_e = Text::Markdown::Hoedown::markdown($readme, extensions => HOEDOWN_EXT_FENCED_CODE);
         %>
         <div class="readme-frame">
