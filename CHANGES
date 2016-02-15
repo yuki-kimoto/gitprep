@@ -1,5 +1,6 @@
 1.12
   Catch up latest Github design.
+  Fix bug that relative image path in README.md and blob html.
 1.11
   - support relative path in README.md and blob html.
   - support git version 2
