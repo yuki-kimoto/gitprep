@@ -38,45 +38,45 @@ Once account is created change admin login and password to reflect actual one:
 # Sample output
 
     vagrant@Debian-jessie-amd64-netboot:~/my/gitprep/swat$ swat
-    /home/vagrant/.swat/.cache/5401/prove/virtual/user-create/00.GET.t ..
+    /home/vagrant/.swat/.cache/5778/prove/virtual/user-create/00.GET.t ..
     ok 1 - POST 127.0.0.1:10020/_login succeeded
-    # http headers saved to /home/vagrant/.swat/.cache/5401/prove/PnYO4zo07n.hdr
-    # body saved to /home/vagrant/.swat/.cache/5401/prove/PnYO4zo07n
+    # http headers saved to /home/vagrant/.swat/.cache/5778/prove/IAyBpsQx1G.hdr
+    # body saved to /home/vagrant/.swat/.cache/5778/prove/IAyBpsQx1G
     ok 2 - output match '<!-- Logined as admin -->'
     ok 3 - POST 127.0.0.1:10020/_admin/users succeeded
-    # http headers saved to /home/vagrant/.swat/.cache/5401/prove/TGBO407hLu.hdr
-    # body saved to /home/vagrant/.swat/.cache/5401/prove/TGBO407hLu
+    # http headers saved to /home/vagrant/.swat/.cache/5778/prove/a4T_M7ke3I.hdr
+    # body saved to /home/vagrant/.swat/.cache/5778/prove/a4T_M7ke3I
     ok 4 - output match '200 OK'
     ok 5 - POST 127.0.0.1:10020/_admin/user/create succeeded
-    # http headers saved to /home/vagrant/.swat/.cache/5401/prove/Ko0uAq3HsW.hdr
-    # body saved to /home/vagrant/.swat/.cache/5401/prove/Ko0uAq3HsW
+    # http headers saved to /home/vagrant/.swat/.cache/5778/prove/0IUy2nxSlD.hdr
+    # body saved to /home/vagrant/.swat/.cache/5778/prove/0IUy2nxSlD
     ok 6 - output match '200 OK'
     ok 7 - POST 127.0.0.1:10020/_login/ succeeded
-    # http headers saved to /home/vagrant/.swat/.cache/5401/prove/9rloDnrVEx.hdr
-    # body saved to /home/vagrant/.swat/.cache/5401/prove/9rloDnrVEx
-    ok 8 - output match /Location:\s+\S+/swat-user/
-    ok 9 - GET 127.0.0.1:10020/swat-user succeeded
-    # http headers saved to /home/vagrant/.swat/.cache/5401/prove/ZQgAKjP6H4.hdr
-    # body saved to /home/vagrant/.swat/.cache/5401/prove/ZQgAKjP6H4
-    ok 10 - output match '<!-- Logined as swat-user -->'
+    # http headers saved to /home/vagrant/.swat/.cache/5778/prove/l4Of35vXqU.hdr
+    # body saved to /home/vagrant/.swat/.cache/5778/prove/l4Of35vXqU
+    ok 8 - output match /Location:\s+\S+/swat100/
+    ok 9 - GET 127.0.0.1:10020/swat100 succeeded
+    # http headers saved to /home/vagrant/.swat/.cache/5778/prove/4kO86s8H8M.hdr
+    # body saved to /home/vagrant/.swat/.cache/5778/prove/4kO86s8H8M
+    ok 10 - output match '<!-- Logined as swat100 -->'
     ok 11 - server response is spoofed
-    # response saved to /home/vagrant/.swat/.cache/5401/prove/XVnAUYRkgU
+    # response saved to /home/vagrant/.swat/.cache/5778/prove/Ia41rWdvhF
     ok 12 - output match 'OK'
     1..12
     ok
-    /home/vagrant/.swat/.cache/5401/prove/virtual/login/00.GET.t ........
+    /home/vagrant/.swat/.cache/5778/prove/virtual/login/00.GET.t ........
     ok 1 - server response is spoofed
-    # response saved to /home/vagrant/.swat/.cache/5401/prove/n0gWgTYNkH
+    # response saved to /home/vagrant/.swat/.cache/5778/prove/2l6drNXXnf
     ok 2 - output match 'admin already logged in'
     ok 3 - server response is spoofed
-    # response saved to /home/vagrant/.swat/.cache/5401/prove/M_GQEYmlca
+    # response saved to /home/vagrant/.swat/.cache/5778/prove/W3WP2iTToW
     ok 4 - output match 'OK'
     1..4
     ok
     All tests successful.
-    Files=2, Tests=16,  0 wallclock secs ( 0.03 usr  0.00 sys +  0.12 cusr  0.02 csys =  0.17 CPU)
+    Files=2, Tests=16,  0 wallclock secs ( 0.02 usr  0.01 sys +  0.10 cusr  0.02 csys =  0.15 CPU)
     Result: PASS
-    
+        
 
 # Author
 
