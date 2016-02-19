@@ -5,7 +5,7 @@
 # Check list:
 
 * log in as admin user
-* create user account ( remove before is necessary )
+* create user account ( remove old one if necessary )
 * login as regular user 
 
 # Installation
@@ -15,8 +15,9 @@
 
 # Configuration
 
-Change admin login and password to whatever you need:
+Admin account _SHOULD BE_ pre installed, test suite does not create one.
 
+Once account is created change admin login and password to reflect actual one:
 
     nano suite.ini
 
@@ -24,7 +25,7 @@ Change admin login and password to whatever you need:
     
     admin_user = admin
     admin_pass = admin
-    
+
 
 # Running tests
 
