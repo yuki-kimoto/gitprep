@@ -1,1 +1,1 @@
-modify_resource( sub { '/users' } )
+modify_resource( sub { '/_admin/users' } )
