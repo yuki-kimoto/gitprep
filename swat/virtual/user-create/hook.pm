@@ -11,15 +11,15 @@ run_swat_module(
 run_swat_module(
     POST => "/user-delete",
     {
-        user => 'swat-user'
+        user => config()->{main}->{reg_user}
     }
 );
 
 run_swat_module(
     POST => "/user-create",
     {
-        id => 'swat-user',
-        password => 'swat-pass'
+        id          => config()->{main}->{reg_user},
+        password    => config()->{main}->{reg_user_pass}
     }
 );
 
@@ -27,15 +27,15 @@ run_swat_module(
 run_swat_module(
     POST => "_user_login",
     {
-        id => 'swat-user',
-        password => 'swat-pass'
+        id          => config()->{main}->{reg_user},
+        password    => config()->{main}->{reg_user_pass}
     }
 );
 
 run_swat_module(
     GET => "/user-page",
     {
-        id => 'swat-user'
+        id => config()->{main}->{reg_user}
     }
 );
 
