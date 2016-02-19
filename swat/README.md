@@ -37,7 +37,6 @@ Once account is created change admin login and password to reflect actual one:
 
 # Sample output
 
-    vagrant@Debian-jessie-amd64-netboot:~/my/gitprep/swat$ nano admin-login/hook.pm
     vagrant@Debian-jessie-amd64-netboot:~/my/gitprep/swat$ swat
     /home/vagrant/.swat/.cache/6053/prove/virtual/user-create/00.GET.t ..
     ok 1 - POST 127.0.0.1:10020/_login/ succeeded
