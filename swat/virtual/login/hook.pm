@@ -1,5 +1,5 @@
 run_swat_module(
-    POST => "_login",
+    POST => "admin_login",
     {
         id => config()->{main}->{admin_user},
         password => config()->{main}->{admin_pass}

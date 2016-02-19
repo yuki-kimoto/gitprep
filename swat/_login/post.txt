@@ -1,7 +1,0 @@
-generator: [                                                \
-    our $logged_in      ?                                   \
-        (module_variable(qq{id})).' already logged in'      \
-                        :                                   \
-        '<!-- Logined as '.(module_variable('id')).' -->'   \
-]
-
