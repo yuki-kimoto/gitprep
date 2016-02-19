@@ -1,3 +1,2 @@
-200 OK
-<!-- Logined as admin -->
+generator: [ our $logged_in ? 'already logged in' : '<!-- Logined as admin -->' ]
 
