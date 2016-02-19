@@ -4,9 +4,9 @@
 
 # Check list:
 
-* log in as admin user
-* create user account ( remove old one if necessary )
-* login as regular user 
+* verify that one is able to log in as admin user
+* verify that admin is able to create user account ( remove old one if necessary )
+* verify that one is able to log in as regular user
 
 # Installation
 
