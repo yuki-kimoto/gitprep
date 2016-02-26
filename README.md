@@ -447,7 +447,7 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 * [DBI](http://search.cpan.org/dist/DBI/DBI.pm)
 * [DBIx::Connector](http://search.cpan.org/dist/DBIx-Connector/lib/DBIx/Connector.pm)
 * [DBIx::Custom](http://search.cpan.org/dist/DBIx-Custom/lib/DBIx/Custom.pm)
-* [Mojolicious](http://search.cpan.org/~kimoto/DBIx-Custom/lib/DBIx/Custom.pm)
+* [Mojolicious](http://search.cpan.org/~sri/Mojolicious/lib/Mojolicious.pm)
 * [Mojolicious::Plugin::INIConfig](http://search.cpan.org/dist/Mojolicious-Plugin-INIConfig/lib/Mojolicious/Plugin/INIConfig.pm)
 * [mojo-legacy](https://github.com/jamadam/mojo-legacy)
 * [Object::Simple](http://search.cpan.org/dist/Object-Simple/lib/Object/Simple.pm)
