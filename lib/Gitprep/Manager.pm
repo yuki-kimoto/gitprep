@@ -652,11 +652,13 @@ sub _create_rep {
     # Add README and commit
     if ($opts->{readme}) {
       # Create working directory
-      my $temp_dir =  File::Temp->newdir;
+      my $home_tmp_dir = $self->app->home->rel_file('tmp');
+      
+      my $temp_dir =  File::Temp->newdir(DIR => $home_tmp_dir);
       my $temp_work = "$temp_dir/work";
       mkdir $temp_work
         or croak "Can't create directory $temp_work: $!";
-
+      
       # Git init
       my @git_init_cmd = $git->cmd_rep($temp_work, 'init', '-q');
       Gitprep::Util::run_command(@git_init_cmd)

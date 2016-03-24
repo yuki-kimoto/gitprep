@@ -1,7 +1,7 @@
-1.12
+1.12 (7 Feb 2016)
   Catch up latest Github design.
   Fix bug that relative image path in README.md and blob html.
-1.11
+1.11 (7 Nov 2015)
   - support relative path in README.md and blob html.
   - support git version 2
 1.10 (27 Jun 2015)
