@@ -13,7 +13,7 @@
   
   # Projects
   unless (app->manager->exists_user($user)) {
-    $self->render_not_found;
+    $self->reply->not_found;
     return;
   }
   my $projects = app->manager->projects($user);

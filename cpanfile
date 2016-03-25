@@ -29,3 +29,7 @@ requires 'Class::Accessor', '== 0.34';
 requires 'Test::Exception', '== 0.32';
 requires 'Sub::Uplevel', '== 0.24';
 requires 'Data::Page::Navigation', '== 0.06';
+requires 'Data::Page::Navigation', '== 0.06';
+requires 'Mojolicious::Plugin::BasicAuth', '== 0.08';
+requires 'Mojolicious::Plugin::AutoRoute', '== 0.18';
+requires 'Mojolicious::Plugin::INIConfig', '== 0.03';

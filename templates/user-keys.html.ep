@@ -1,7 +1,9 @@
 <%
   my $user = param('user');
+  
+  warn param('user.keys');
+  
   my $keys = app->dbi->model('ssh_public_key')->select(where => {user_id => $user})->all;
-  warn dumper $keys;
   my $keys_str = '';
   for my $key (@$keys) {
     $keys_str .= "$key->{key}\n";

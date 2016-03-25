@@ -1,7 +1,7 @@
 #!/bin/sh
 
 DIR=$(dirname $0)
-PERL5LIB="$DIR/mojo/lib:$DIR/extlib/lib/perl5"
+PERL5LIB="$DIR/extlib/lib/perl5"
 export PERL5LIB
-exec $DIR/mojo/script/hypnotoad $* $DIR/script/gitprep
+exec $DIR/extlib/bin/hypnotoad $* $DIR/script/gitprep
 

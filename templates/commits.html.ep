@@ -20,7 +20,7 @@
 
   # Not found
   unless ($commit) {
-    $self->render_not_found;
+    $self->reply->not_found;
     return;
   }
     

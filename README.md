@@ -11,14 +11,14 @@ See GitPrep example site. [GitPrep example site](http://perlcodesample.sakura.ne
 * Github clone: GitPrep has the same interface as GitHub.
 * Portable: You can install GitPrep on your own Unix/Linux server.
 * Supports Windows installation via cygwin for Windows (need gcc4 package).
-* Only needs Perl 5.8.7+.
+* Only needs Perl 5.10.1+.
 * Smart HTTP support: you can pull and push via HTTP
 * CGI support, built-in web server, and reverse proxy support.
 * SSL support.
 
 ## Check Perl Version
 
-Check Perl version. You can use GitPrep if the Perl version is 5.8.7+;
+Check Perl version. You can use GitPrep if the Perl version is 5.10.1+;
 
     perl -v
 
@@ -420,6 +420,26 @@ You can start and stop the application with the following command.
     # Stop
     /webapp/gitprep --stop
 
+### I want to use GitPrep on Perl 5.8.7 system
+
+GitPrep 2.0 drop support Perl 5.8.7 because latest Mojolicious don't support Perl 5.8.
+
+You can choice two selection.
+
+**1. use GitPrep 1.xx**
+
+GitPrep 1.xx support Perl 5.8.7+. You can use GitPrep v1.12.
+
+https://github.com/yuki-kimoto/gitprep/archive/v1.12.tar.gz
+
+**2. You can install your local perl by perlbrew.**
+
+http://perlbrew.pl/
+
+perlbrew is very useful perl installation tools without breaking your system perl.
+
+If you install perl 5.10.1+ by perlbrew, you can install latest GitPrep.
+
 ## For Developer
 
 If you are a developer, you can start the application in development mode.
@@ -449,6 +469,8 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 * [DBIx::Custom](http://search.cpan.org/dist/DBIx-Custom/lib/DBIx/Custom.pm)
 * [Mojolicious](http://search.cpan.org/~kimoto/DBIx-Custom/lib/DBIx/Custom.pm)
 * [Mojolicious::Plugin::INIConfig](http://search.cpan.org/dist/Mojolicious-Plugin-INIConfig/lib/Mojolicious/Plugin/INIConfig.pm)
+* [Mojolicious::Plugin::AutoRoute](http://search.cpan.org/dist/Mojolicious-Plugin-AutoRoute/lib/Mojolicious/Plugin/AutoRoute.pm)
+* [Mojolicious::Plugin::BasicAuth](http://search.cpan.org/dist/Mojolicious-Plugin-BasicAuth/README.pod)
 * [mojo-legacy](https://github.com/jamadam/mojo-legacy)
 * [Object::Simple](http://search.cpan.org/dist/Object-Simple/lib/Object/Simple.pm)
 * [Text::Markdown::Hoedown](http://search.cpan.org/~tokuhirom/Text-Markdown-Hoedown-1.01/lib/Text/Markdown/Hoedown.pm)

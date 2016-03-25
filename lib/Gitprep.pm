@@ -216,7 +216,7 @@ sub startup {
       # Custom routes
       {
         # Show ssh keys
-        $r->get('/:user.keys' => template '/user-keys');
+        $r->get('/(:user).keys' => template '/user-keys');
         
         # User
         my $r = $r->route('/:user');

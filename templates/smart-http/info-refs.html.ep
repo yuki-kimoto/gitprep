@@ -42,7 +42,7 @@
     
     if ($err) {
       app->log->error($err);
-      $self->render_exception($err);
+      $self->reply->exception($err);
       return;
     }
     

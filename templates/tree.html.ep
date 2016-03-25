@@ -24,7 +24,7 @@
   }
   
   unless (app->manager->exists_project($user, $project)) {
-    $self->render_not_found;
+    $self->reply->not_found;
     return;
   }
 

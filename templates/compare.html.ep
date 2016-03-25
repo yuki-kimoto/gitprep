@@ -32,7 +32,7 @@
   my $end_commit = $git->get_commit($user, $project, $rev);
   
   if (!$start_commit || !$end_commit) {
-    $self->render_not_found;
+    $self->reply->not_found;
     return;
   }
   

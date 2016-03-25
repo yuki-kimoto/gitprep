@@ -49,7 +49,7 @@
     if ($validation->is_valid) {
       # Not logined
       unless ($api->logined) {
-        return $self->render_exception;
+        return $self->reply->exception;
       }
       
       my $manager = app->manager;
