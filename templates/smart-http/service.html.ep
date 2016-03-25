@@ -64,7 +64,8 @@
     else {
       $c->finish;
       waitpid($pid, 0);
-      app->log->error(url_for . ": $error") if defined $error;
+
+      $c->app->log->error($c->url_for . ": $error") if defined $error;
       undef $cb;
       return;
     }
