@@ -18,7 +18,7 @@ use Mojolicious::Plugin::AutoRoute::Util 'template';
   eval {require Digest::SHA; import Digest::SHA qw(sha1 sha1_hex)};
 }
 
-our $VERSION = 'v1.12';
+our $VERSION = 'v2.00_dev';
 
 has 'dbi';
 has 'git';
@@ -180,6 +180,7 @@ sub startup {
     my $r = $self->routes;
 
     # DBViewer(only development)
+    # /dbviewer
     if ($self->mode eq 'development') {
       eval {
         $self->plugin(

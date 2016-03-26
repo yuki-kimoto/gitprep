@@ -33,3 +33,4 @@ requires 'Data::Page::Navigation', '== 0.06';
 requires 'Mojolicious::Plugin::BasicAuth', '== 0.08';
 requires 'Mojolicious::Plugin::AutoRoute', '== 0.19';
 requires 'Mojolicious::Plugin::INIConfig', '== 0.03';
+requires 'Mojolicious::Plugin::DBViewer', '== 0.28';
