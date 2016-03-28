@@ -2,6 +2,7 @@
   - drop Perl 5.8 support, now require Perl 5.10.1
   - use own temparaly directory when creating repositoy with readme file. Now not use /tmp.
   - add Mojolicious::Plugin::DBViewer to cpanfile
+  - X-Forwarded-HTTPS header is DEPRECATED! use X-Forwarded-Proto header instead.
 1.12 (7 Feb 2016)
   - Catch up latest Github design.
   - Fix bug that relative image path in README.md and blob html.

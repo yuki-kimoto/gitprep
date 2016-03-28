@@ -253,7 +253,7 @@ You can use Name virtual host.
       ProxyPreserveHost On
       ProxyPass / http://localhost:10020/ keepalive=On
       ProxyPassReverse / http://localhost:10020/
-      RequestHeader set X-Forwarded-HTTPS "0"
+      RequestHeader set X-Forwarded-Proto "https"
         
     </VirtualHost>
 
@@ -272,7 +272,7 @@ If you use GitPrep vis https, you should set X-Forwarded-HTTPS Request Header.
       ProxyPreserveHost On
       ProxyPass / http://localhost:10020/ keepalive=On
       ProxyPassReverse / http://localhost:10020/
-      RequestHeader set X-Forwarded-HTTPS "1"
+      RequestHeader set X-Forwarded-Proto "https"
     </VirtualHost>
 
 ### How to use reverse proxy with sub directory?
@@ -304,8 +304,8 @@ Next you set http server config file. The following is apache example.
 
       ProxyPass /app2 http://localhost:10021/app2 keepalive=On
       ProxyPassReverse /app2 http://localhost:3001/app2
-
-      RequestHeader set X-Forwarded-HTTPS "0"
+      
+      RequestHeader set X-Forwarded-Proto "https"
     </VirtualHost>
 
 ### How to import already existing repositories?
@@ -439,6 +439,16 @@ http://perlbrew.pl/
 perlbrew is very useful perl installation tools without breaking your system perl.
 
 If you install perl 5.10.1+ by perlbrew, you can install latest GitPrep.
+
+### I know information about GitPrep 2.0 upgrading.
+
+1. X-Forwarded-HTTPS header is deprecated. use  X-Forwarded-Proto header.
+    
+    # This is deprecated in GitPrep 2.0
+    RequestHeader set X-Forwarded-HTTPS "1"
+    
+    # Use X-Forwarded-Proto instead
+    RequestHeader set X-Forwarded-Proto "https"
 
 ## For Developer
 
