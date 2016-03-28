@@ -89,25 +89,6 @@ note 'Smart HTTP';
   $t->content_like(qr/^001e# service=git-upload-pack/);
   $t->content_like(qr/multi_ack_detailed/);
   
-  # /git-upload-pack
-  {
-    my $content = <<EOS;
-006fwant 6410316f2ed260666a8a6b9a223ad3c95d7abaed multi_ack_detailed no-done side-band-64k thin-pack ofs-delta
-0032want 6410316f2ed260666a8a6b9a223ad3c95d7abaed
-00000009done
-EOS
-    $t->post_ok(
-      '/kimoto/t1.git/git-upload-pack',
-      {
-        'Content-Type' => 'application/x-git-upload-pack-request',
-        'Content-Length' => 174,
-        'Content'        => $content
-      }
-    );
-    $t->status_is(200);
-    $t->content_type_is('application/x-git-upload-pack-result');
-  }
-
   # /info/refs recieve-pack request(Basic authentication)
   $t->get_ok('/kimoto/t1.git/info/refs?service=git-receive-pack');
   $t->status_is(401);
@@ -135,6 +116,26 @@ EOS
   );
   $t->status_is(200);
   $t->content_type_is('application/x-git-receive-pack-result');
+
+  # /git-upload-pack
+  {
+    $main::ppp = 1;
+    my $content = <<EOS;
+006fwant 6410316f2ed260666a8a6b9a223ad3c95d7abaed multi_ack_detailed no-done side-band-64k thin-pack ofs-delta
+0032want 6410316f2ed260666a8a6b9a223ad3c95d7abaed
+00000009done
+EOS
+    $t->post_ok(
+      '/kimoto/t1.git/git-upload-pack',
+      {
+        'Content-Type' => 'application/x-git-upload-pack-request',
+        'Content-Length' => 174,
+        'Content'        => $content
+      }
+    );
+    $t->status_is(200);
+    $t->content_type_is('application/x-git-upload-pack-result');
+  }
 }
 
 note 'Private repository and collaborator';
