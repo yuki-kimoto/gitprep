@@ -20,14 +20,7 @@ my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/import_rep_user";
 
 $ENV{GITPREP_NO_MYCONFIG} = 1;
 
-
 use Gitprep;
-
-# For perl 5.8
-{
-  no warnings 'redefine';
-  sub note { print STDERR "# $_[0]\n" unless $ENV{HARNESS_ACTIVE} }
-}
 
 note 'import_rep';
 {
