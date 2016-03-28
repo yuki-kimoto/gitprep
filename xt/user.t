@@ -4,7 +4,6 @@ use warnings;
 
 use FindBin;
 use utf8;
-use lib "$FindBin::Bin/../mojo/lib";
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use File::Path 'rmtree';

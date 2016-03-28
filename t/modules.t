@@ -1,7 +1,6 @@
 use Test::More 'no_plan';
 
 use FindBin;
-use lib "$FindBin::Bin/../mojo/lib";
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 
@@ -11,7 +10,6 @@ use_ok('Object::Simple');
 use_ok('DBIx::Custom');
 use_ok('Config::Tiny');
 use_ok('Time::HiRes');
-use_ok('Test::Simple');
 use_ok('Validator::Custom');
 use_ok('DBIx::Connector');
 use_ok('Module::Build');
