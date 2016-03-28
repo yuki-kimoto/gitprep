@@ -9,8 +9,6 @@ use Gitprep::Git;
 use Gitprep::Manager;
 use Scalar::Util 'weaken';
 use Validator::Custom;
-use Mojolicious::Plugin::AutoRoute::Util 'template';
-
 
 # Digest::SHA loading to Mojo::Util if not loaded
 {
@@ -217,19 +215,19 @@ sub startup {
       # Custom routes
       {
         # Show ssh keys
-        $r->get('/(:user).keys' => template '/user-keys');
+        $r->get('/(:user).keys' => sub { shift->render_maybe('/user-keys') });
         
         # User
         my $r = $r->route('/:user');
         {
           # Home
-          $r->get('/' => [format => 0] => template '/user');
+          $r->get('/' => [format => 0] => sub { shift->render_maybe('/user') });
           
           # Settings
-          $r->get('/_settings' => template '/user-settings');
+          $r->get('/_settings' => sub { shift->render_maybe('/user-settings') });
           
           # SSH keys
-          $r->any('/_settings/ssh' => template '/user-settings/ssh');
+          $r->any('/_settings/ssh' => sub { shift->render_maybe('/user-settings/ssh') });
         }
 
         # Smart HTTP
@@ -282,16 +280,16 @@ sub startup {
             });
             
             # /info/refs
-            $r->get('/info/refs' => template 'smart-http/info-refs');
+            $r->get('/info/refs' => sub { shift->render_maybe('smart-http/info-refs') });
             
             # /git-upload-pack or /git-receive-pack
             $r->any('/git-(:service)'
               => [service => qr/(?:upload-pack|receive-pack)/]
-              => template 'smart-http/service'
+              => sub { shift->render_maybe('smart-http/service') }
             );
             
             # Static file
-            $r->get('/(*Path)' => template 'smart-http/static');
+            $r->get('/(*Path)' => sub { shift->render_maybe('smart-http/static') });
           }
         }
                 
@@ -325,72 +323,73 @@ sub startup {
             });
             
             # Home
-            $r->get('/' => template '/tree');
+            $r->get('/' => sub { shift->render_maybe('/tree') });
             
             # Commit
-            $r->get('/commit/*diff' => template '/commit');
+            $r->get('/commit/*diff' => sub { shift->render_maybe('/commit') });
 
             # Commits
-            $r->get('/commits/*rev_file' => template '/commits');
+            $r->get('/commits/*rev_file' => sub { shift->render_maybe('/commits') });
             
             # Branches
-            $r->any('/branches/:display' => {display => undef} => template '/branches');
+            $r->any('/branches/:display' => {display => undef} => sub { shift->render_maybe('/branches') });
 
             # Tags
-            $r->get('/tags' => template '/tags');
+            $r->get('/tags' => sub { shift->render_maybe('/tags') });
 
             # Tree
-            $r->get('/tree/*rev_dir' => template '/tree');
+            $r->get('/tree/*rev_dir' => sub { shift->render_maybe('/tree') });
             
             # Blob
-            $r->get('/blob/*rev_file' => template '/blob');
+            $r->get('/blob/*rev_file' => sub { shift->render_maybe('/blob') });
             
             # Sub module
-            $r->get('/submodule/*rev_file' => template '/submodule');
+            $r->get('/submodule/*rev_file' => sub { shift->render_maybe('/submodule') });
 
             # Raw
-            $r->get('/raw/*rev_file' => template '/raw');
+            $r->get('/raw/*rev_file' => sub { shift->render_maybe('/raw') });
 
             # Blame
-            $r->get('/blame/*rev_file' => template '/blame');
+            $r->get('/blame/*rev_file' => sub { shift->render_maybe('/blame') });
             
             # Archive
-            $r->get('/archive/(*rev).tar.gz' => template '/archive')->to(archive_type => 'tar');
-            $r->get('/archive/(*rev).zip' => template '/archive')->to(archive_type => 'zip' );
+            # Archive
+            $r->get('/archive/(*rev).tar.gz' => sub { shift->render_maybe('/archive') })->to(archive_type => 'tar');
+            $r->get('/archive/(*rev).zip' => sub { shift->render_maybe('/archive') })->to(archive_type => 'zip' );
             
             # Compare
-            $r->get('/compare/(*rev1)...(*rev2)' => template '/compare');
+            $r->get('/compare/(*rev1)...(*rev2)' => sub { shift->render_maybe('/compare') });
             
             # Settings
             {
               my $r = $r->route('/settings')->to(tab => 'settings');
               
               # Settings
-              $r->any('/' => template '/settings');
+              $r->any('/' => sub { shift->render_maybe('/settings') });
               
               # Collaboration
-              $r->any('/collaboration' => template '/settings/collaboration');
+              $r->any('/collaboration' => sub { shift->render_maybe('/settings/collaboration') });
             }
             
             # Fork
-            $r->any('/fork' => template '/fork');
+            $r->any('/fork' => sub { shift->render_maybe('/fork') });
             
             # Network
             {
               my $r = $r->route('/network')->to(tab => 'graph');
               
               # Network
-              $r->get('/' => template '/network');
+              $r->get('/' => sub { shift->render_maybe('/network') });
 
               # Network Graph
-              $r->get('/graph/(*rev1)...(*rev2_abs)' => template '/network/graph');
+              $r->get('/graph/(*rev1)...(*rev2_abs)' => sub { shift->render_maybe('/network/graph') });
             }
 
             # Import branch
-            $r->any('/import-branch/:remote_user/:remote_project' => template '/import-branch');
+            $r->any('/import-branch/:remote_user/:remote_project' => sub { shift->render_maybe('/import-branch') });
             
             # Get branches and tags
-            $r->get('/api/revs' => template '/api/revs');
+            $r->get('/api/revs' => sub { shift->render_maybe('/api/revs') });
           }
         }
       }

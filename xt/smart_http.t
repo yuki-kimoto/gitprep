@@ -119,7 +119,6 @@ note 'Smart HTTP';
 
   # /git-upload-pack
   {
-    $main::p = 1;
     my $content = <<EOS;
 006fwant 6410316f2ed260666a8a6b9a223ad3c95d7abaed multi_ack_detailed no-done side-band-64k thin-pack ofs-delta
 0032want 6410316f2ed260666a8a6b9a223ad3c95d7abaed
