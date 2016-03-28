@@ -36,18 +36,15 @@
   my $s = IO::Select->new($cout, $cerr);
   my $buffer_size = $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE};
   my $error;
-  my $output;
   my @ready;
   my $cb;
   $cb = sub {
     my $c = shift;
     if (@ready = $s->can_read) {
-      $output = '';
+      my $output = '';
       for my $handle (@ready) {
         
         if (sysread($handle, my $buf, $buffer_size)) {
-          #warn `ps axuww|grep gitprep` if $k % 3000 == 0;
-          
           if ($handle == $cerr) {
             $error .= $buf;
           }
