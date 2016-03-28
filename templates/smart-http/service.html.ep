@@ -42,21 +42,24 @@
   $cb = sub {
     my $c = shift;
     if (@ready = $s->can_read) {
+      $output = '';
       for my $handle (@ready) {
         
         if (sysread($handle, my $buf, $buffer_size)) {
+          #warn `ps axuww|grep gitprep` if $k % 3000 == 0;
+          
           if ($handle == $cerr) {
-            $error .= $buf if defined $buf;
+            $error .= $buf;
           }
           else {
-            $output .= $buf if defined $buf;
+            $output .= $buf;
           }
         }
         else {
           $s->remove($handle);
         }
       }
-      $c->write_chunk($output, $cb) if defined $output;
+      $c->write_chunk($output, $cb);
     }
     else {
       $c->finish;
