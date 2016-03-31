@@ -199,23 +199,30 @@
             </form>
           </li>
         </ul>
+
+        <ul class="project-settings-main">
+          <li>
+            <h4>
+              Description
+            </h4>
+          </li>
+          <li>
+            <form action="<%= url_for->query(op => 'change-description') %>" method="post">
+              <div>
+                % my $description = $git->description($user, $project);
+                % $description = '' unless defined $description;
+                %= text_field 'description' => $description, style => "width:90%";
+                <input type="submit" class="btn" value="Save">
+              </div>
+            </form>
+          </li>
+        </ul>
         
         <ul class="project-settings-main">
           <li>
             <h4>
               Settings
             </h4>
-          </li>
-          <li>
-            <form action="<%= url_for->query(op => 'change-description') %>" method="post">
-              <div >Description</div>
-              <div>
-                % my $description = $git->description($user, $project);
-                % $description = '' unless defined $description;
-                %= text_field 'description' => $description;
-                <input type="submit" class="btn" value="Save">
-              </div>
-            </form>
           </li>
           <li>
             <form id="form-default-branch" action="<%= url_for->query(op => 'default-branch') %>" method="post">
