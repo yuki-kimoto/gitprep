@@ -16,123 +16,124 @@
   # Rename project
   my $git = app->git;
   my $errors;
-  my $post = lc $self->req->method eq 'post';
-  if ($op eq 'rename-project' && $post) {
-    
-    # Parameters
-    my $to_project = param('to-project');
-    
-    # Validator
-    my $vc = app->vc;
-    
-    # Validation result
-    my $validation = $vc->validation;
-    
-    # "to-project" check
-    if (!(defined $to_project && length $to_project)) {
-      $validation->add_failed('to-project' => 'Repository name is empty.');
+  if (lc $self->req->method eq 'post') {
+    if ($op eq 'rename-project') {
+      
+      # Parameters
+      my $to_project = param('to-project');
+      
+      # Validator
+      my $vc = app->vc;
+      
+      # Validation result
+      my $validation = $vc->validation;
+      
+      # "to-project" check
+      if (!(defined $to_project && length $to_project)) {
+        $validation->add_failed('to-project' => 'Repository name is empty.');
+      }
+      elsif (!$vc->check($to_project, 'project_name')) {
+        $validation->add_failed('to-project' => 'Repository name contains invalid charactor.');
+      }
+      elsif (app->manager->exists_project($user, $to_project)) {
+        $validation->add_failed('to-project' => "$to_project is already exists");
+      }
+      
+      if ($validation->is_valid) {
+        # Rename
+        eval { app->manager->rename_project($user, $project, $to_project) };
+        if (my $e = $@) {
+          app->log->error($e);
+          $errors = ['Internal Error'];
+        }
+        else {
+          flash(message => "Repository name is renamed to $to_project");
+          $self->redirect_to("/$user/$to_project/settings");
+          return;
+        }
+      }
+      else { $errors = $validation->messages }
     }
-    elsif (!$vc->check($to_project, 'project_name')) {
-      $validation->add_failed('to-project' => 'Repository name contains invalid charactor.');
-    }
-    elsif (app->manager->exists_project($user, $to_project)) {
-      $validation->add_failed('to-project' => "$to_project is already exists");
-    }
     
-    if ($validation->is_valid) {
-      # Rename
-      eval { app->manager->rename_project($user, $project, $to_project) };
+    # Change description
+    elsif ($op eq 'change-description') {
+      my $description = param('description');
+      $description = '' unless defined $description;
+      
+      eval { $git->description($user, $project, $description) };
       if (my $e = $@) {
-        app->log->error($e);
+        app->log->error("/$user/$project/settings?op=description: $e");
         $errors = ['Internal Error'];
       }
       else {
-        flash(message => "Repository name is renamed to $to_project");
-        $self->redirect_to("/$user/$to_project/settings");
+        flash(message => 'Description is saved.');
+        $self->redirect_to('current');
         return;
       }
     }
-    else { $errors = $validation->messages }
-  }
-  
-  # Change description
-  elsif ($op eq 'change-description' && $post) {
-    my $description = param('description');
-    $description = '' unless defined $description;
     
-    eval { $git->description($user, $project, $description) };
-    if (my $e = $@) {
-      app->log->error("/$user/$project/settings?op=description: $e");
-      $errors = ['Internal Error'];
+    # Change default branch
+    elsif ($op eq 'default-branch') {
+      my $default_branch = param('default-branch');
+      
+      my $dbi = app->dbi;
+      eval {
+        $dbi->model('project')->update(
+          {default_branch => $default_branch},
+          where => {user_id => $user, name => $project}
+        );
+      };
+      
+      if (my $e = $@) {
+        app->log->error("/$user/$project/settings?op=default-branch: $e");
+        $errors = ['Internal Error'];
+      }
+      else {
+        flash(message => "Default branch is changed to $default_branch.");
+        $self->redirect_to('current');
+        return;
+      }
     }
-    else {
-      flash(message => 'Description is saved.');
-      $self->redirect_to('current');
-      return;
-    }
-  }
-  
-  # Change default branch
-  elsif ($op eq 'default-branch' && $post) {
-    my $default_branch = param('default-branch');
     
-    my $dbi = app->dbi;
-    eval {
-      $dbi->model('project')->update(
-        {default_branch => $default_branch},
-        where => {user_id => $user, name => $project}
-      );
-    };
+    # Private repository
+    elsif ($op eq 'private') {
+      my $private = param('private') ? 1 : 0;
+      
+      eval {
+        app->dbi->model('project')->update(
+          {private => $private},
+          id => [$user, $project]
+        );
+      };
+      if (my $e = $@) {
+        app->log->error("/$user/$project/settings?op=private: $e");
+        $errors = ['Internal Error'];
+      }
+      else {
+        my $message = 'Private status is saved. Repository is '
+          . ($private ? 'private' : 'public');
+        flash(message => $message);
+        $self->redirect_to('current');
+        return;
+      }
+    }
     
-    if (my $e = $@) {
-      app->log->error("/$user/$project/settings?op=default-branch: $e");
-      $errors = ['Internal Error'];
-    }
-    else {
-      flash(message => "Default branch is changed to $default_branch.");
-      $self->redirect_to('current');
-      return;
-    }
-  }
-  
-  # Private repository
-  elsif ($op eq 'private' && $post) {
-    my $private = param('private') ? 1 : 0;
-    
-    eval {
-      app->dbi->model('project')->update(
-        {private => $private},
-        id => [$user, $project]
-      );
-    };
-    if (my $e = $@) {
-      app->log->error("/$user/$project/settings?op=private: $e");
-      $errors = ['Internal Error'];
-    }
-    else {
-      my $message = 'Private status is saved. Repository is '
-        . ($private ? 'private' : 'public');
-      flash(message => $message);
-      $self->redirect_to('current');
-      return;
-    }
-  }
-  
-  # Delete project
-  elsif ($op eq 'delete-project' && $post) {
-    
-    my $user = param('user');
-    my $project = param('project');
-    
-    eval { app->manager->delete_project($user, $project) };
-    if (my $e = $@) {
-      app->log->error("/$user/$project/settings: $e");
-      $errors = ['Internal Error'];
-    }
-    else {
-      flash(message => "Repository $project is deleted.");
-      $self->redirect_to("/$user");
-      return;
+    # Delete project
+    elsif ($op eq 'delete-project') {
+      
+      my $user = param('user');
+      my $project = param('project');
+      
+      eval { app->manager->delete_project($user, $project) };
+      if (my $e = $@) {
+        app->log->error("/$user/$project/settings: $e");
+        $errors = ['Internal Error'];
+      }
+      else {
+        flash(message => "Repository $project is deleted.");
+        $self->redirect_to("/$user");
+        return;
+      }
     }
   }
 %>
