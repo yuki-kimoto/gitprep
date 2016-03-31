@@ -75,7 +75,15 @@
   # Change default branch
   elsif ($op eq 'default-branch' && $post) {
     my $default_branch = param('default-branch');
-    eval { app->manager->default_branch($user, $project, $default_branch) };
+    
+    my $dbi = app->dbi;
+    eval {
+      $dbi->model('project')->update(
+        {default_branch => $default_branch},
+        where => {user_id => $user, name => $project}
+      );
+    };
+    
     if (my $e = $@) {
       app->log->error("/$user/$project/settings?op=default-branch: $e");
       $errors = ['Internal Error'];
