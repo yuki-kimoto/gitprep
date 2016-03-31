@@ -181,22 +181,30 @@
         </ul>
       </div>
       <div class="right">
+
         <ul class="project-settings-main">
           <li>
             <h4>
-              Settings
+              Repository name
             </h4>
           </li>
           <li>
             <form id="form-rename-project" action="<%= url_for->query(op => 'rename-project') %>" method="post">
-              <div >Repository Name</div>
               <div>
-                %= text_field 'to-project' => $project;
+                %= text_field 'to-project' => $project, style => "width:80%";
                 <a href="#rename-confirm" role="button" class="btn" data-toggle="modal">
                   Rename
                 </a>
               </div>
             </form>
+          </li>
+        </ul>
+        
+        <ul class="project-settings-main">
+          <li>
+            <h4>
+              Settings
+            </h4>
           </li>
           <li>
             <form action="<%= url_for->query(op => 'change-description') %>" method="post">
@@ -234,7 +242,7 @@
             </form>
           </li>
         </ul>
-        
+
         <ul class="project-settings-danger">
           <li style="background:red;padding-left:5px">
             <h4 style="color:white">Danger Zone</h4>
