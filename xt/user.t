@@ -365,8 +365,13 @@ note 'Profile';
       system($cmd) == 0 or die "Can't execute git branch";
       $t->get_ok('/kimoto1/t2/settings');
       $t->content_like(qr/b1/);
-      $t->post_ok("/kimoto1/t2/settings?op=default-branch", form => {'default-branch' => 'b1'});
-      $t->content_like(qr/Default branch is changed to b1/);
+      $t->post_ok("/kimoto1/t2/settings?op=save-settings", form => {'default-branch' => 'b1'});
+      $t->content_like(qr/Settings is saved/);
+      my $changed = $t->app->dbi->model('project')->select(
+        'default_branch',
+        where => {user_id => 'kimoto1', name => 't2'}
+      )->value;
+      is($changed, 'b1');
     }
     
     note 'Delete project';
@@ -552,8 +557,13 @@ note 'Private repository and collaborator';
   $t->content_like(qr/README/);
   
   # Check private repository
-  $t->post_ok("/kimoto/t1/settings?op=private", form => {private => 1});
-  $t->content_like(qr/Repository is private/);
+  $t->post_ok("/kimoto/t1/settings?op=save-settings", form => {private => 1});
+  $t->content_like(qr/Settings is saved/);
+  my $is_private = $t->app->dbi->model('project')->select(
+    'private',
+    where => {user_id => 'kimoto', name => 't1'}
+  )->value;
+  is($is_private, 1);
   
   # Can access repository myself
   $t->get_ok("/kimoto/t1");

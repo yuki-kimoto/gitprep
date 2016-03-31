@@ -162,8 +162,8 @@ note 'Private repository and collaborator';
   $t->content_like(qr/README/);
   
   # Check private repository
-  $t->post_ok("/kimoto/t1/settings?op=private", form => {private => 1});
-  $t->content_like(qr/Repository is private/);
+  $t->post_ok("/kimoto/t1/settings?op=save-settings", form => {private => 1});
+  $t->content_like(qr/Settings is saved/);
   
   # Can access private repository from myself
   $t->get_ok(
