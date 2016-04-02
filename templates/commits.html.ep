@@ -138,11 +138,6 @@
                     <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
                       <b><%= $commit->{title_short} %></b>
                     </a>
-                    % if (app->config->{basic}{show_ignore_space_change_link}) {
-                      (<a href="<%= url_for("/$user/$project/commit/$commit->{id}?w=") %>">
-                        ignore space
-                      </a>)
-                    % }
                   </div>
                   <div class="commit-left-author">
                     <span title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>

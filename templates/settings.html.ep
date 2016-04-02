@@ -78,6 +78,8 @@
       # Parameters
       my $default_branch = param('default-branch');
       my $private = param('private');
+      my $ignore_space_change = param('ignore_space_change');
+      
       my $params = {};
       if (defined $default_branch) {
         $params->{default_branch} = $default_branch;
@@ -85,6 +87,9 @@
       if (defined $private) {
         $params->{private} = $private ? 1 : 0;
       };
+      if (defined $ignore_space_change) {
+        $params->{ignore_space_change} = $ignore_space_change ? 1 : 0;
+      }
       
       my $dbi = app->dbi;
       eval {
@@ -234,7 +239,21 @@
               % if ($private) {
                 % param('private', 1);
               % }
+              %= hidden_field 'private' => 0;
               %= check_box 'private' => 1;
+            </li>
+            <li>
+              <%
+                my $ignore_space_change = app->dbi->model('project')->select(
+                  'ignore_space_change',
+                  where => {user_id => $user, name => $project}
+                )->value;
+                my @checked = $ignore_space_change ? (checked => undef) : ();
+              %>
+              <span>Ignore space change in diff</span>
+              
+              %= hidden_field 'ignore_space_change' => 0;
+              %= check_box 'ignore_space_change' => 1, @checked;
             </li>
             <li>
               <input type="submit" class="btn" value="Save">

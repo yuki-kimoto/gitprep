@@ -73,7 +73,6 @@
             <div>
               % for (my $i = 1; $i < @{$commit->{comment}}; $i++) {
                 <div>
-                  % warn $commit->{comment}[$i];
                   <%= $commit->{comment}[$i] %>
                 </div>
               % }

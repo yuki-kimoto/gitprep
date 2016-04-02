@@ -57,11 +57,6 @@
                     <i class="icon-share-alt"></i>
                     <%= substr($commit_id, 0, 7) %>
                   </a>
-                  % if (app->config->{basic}{show_ignore_space_change_link}) {
-                    (<a style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/commit/$commit_id?w=") %>">
-                      ignore space
-                    </a>)
-                  % }
                   <a href="<%= url_for("/$user/$project/archive/$name.zip") %>">
                     <i class="icon-file"></i>
                     zip

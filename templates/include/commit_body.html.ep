@@ -4,7 +4,16 @@
   my $from_rev = stash('from_rev');
 
   my $param_ignore_space_change = param('w');
-  my $ignore_space_change = defined $param_ignore_space_change;
+  my $ignore_space_change;
+  if ($param_ignore_space_change) {
+    $ignore_space_change = 1;
+  }
+  else {
+    $ignore_space_change = app->dbi->model('project')->select(
+      'ignore_space_change',
+      where => {user_id => $user, name => $project}
+    )->value;
+  }
   
   # Git
   my $git = app->git;

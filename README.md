@@ -442,13 +442,24 @@ If you install perl 5.10.1+ by perlbrew, you can install latest GitPrep.
 
 ### I know information about GitPrep 2.0 upgrading.
 
-1. X-Forwarded-HTTPS header is deprecated. use  X-Forwarded-Proto header.
+**1. X-Forwarded-HTTPS header is deprecated. use  X-Forwarded-Proto header.**
     
     # This is deprecated in GitPrep 2.0
     RequestHeader set X-Forwarded-HTTPS "1"
     
     # Use X-Forwarded-Proto instead
     RequestHeader set X-Forwarded-Proto "https"
+
+**2. remove [basic]show_ignore_space_change_link option**
+
+remove [basic]show_ignore_space_change_link option.
+but enable this feature on in project settings page.
+
+    # Go to settings page in your project
+    /kimoto/gitprep/settings
+    
+    # And see the following section
+    Ignore space change in diff
 
 ## For Developer
 

@@ -55,11 +55,6 @@
           <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
             <%= $commit->{title_short} %>
           </a>
-          % if (app->config->{basic}{show_ignore_space_change_link}) {
-            (<a href="<%= url_for("/$user/$project/commit/$commit->{id}?w=") %>">
-              ignore space
-            </a>)
-          % }
         </div>
         <div class="file-list-age">
           <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>

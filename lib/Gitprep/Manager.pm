@@ -376,7 +376,8 @@ EOS
     "default_branch not null default 'master'",
     "original_user not null default ''",
     "original_pid integer not null default 0",
-    "private not null default 0"
+    "private not null default 0",
+    "ignore_space_change not null default 0"
   ];
   for my $column (@$project_columns) {
     eval { $dbi->execute("alter table project add column $column") };
