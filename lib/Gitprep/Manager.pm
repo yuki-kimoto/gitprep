@@ -377,14 +377,20 @@ EOS
     "original_user not null default ''",
     "original_pid integer not null default 0",
     "private not null default 0",
-    "ignore_space_change not null default 0"
+    "ignore_space_change not null default 0",
+    "guess_encoding not null default ''"
   ];
   for my $column (@$project_columns) {
     eval { $dbi->execute("alter table project add column $column") };
   }
 
   # Check project table
-  eval { $dbi->select([qw/default_branch original_user original_pid/], table => 'project') };
+  eval {
+    $dbi->select(
+      [qw/default_branch original_user original_pid private ignore_space_change guess_encoding/],
+      table => 'project'
+    );
+  };
   if ($@) {
     my $error = "Can't create project table properly: $@";
     $self->app->log->error($error);

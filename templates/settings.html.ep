@@ -79,6 +79,7 @@
       my $default_branch = param('default-branch');
       my $private = param('private');
       my $ignore_space_change = param('ignore_space_change');
+      my $guess_encoding = param('guess_encoding');
       
       my $params = {};
       if (defined $default_branch) {
@@ -89,6 +90,9 @@
       };
       if (defined $ignore_space_change) {
         $params->{ignore_space_change} = $ignore_space_change ? 1 : 0;
+      }
+      if (defined $guess_encoding) {
+        $params->{guess_encoding} = $guess_encoding;
       }
       
       my $dbi = app->dbi;
@@ -248,12 +252,25 @@
                   'ignore_space_change',
                   where => {user_id => $user, name => $project}
                 )->value;
-                my @checked = $ignore_space_change ? (checked => undef) : ();
+                my @ignore_space_change_checked = $ignore_space_change ? (checked => undef) : ();
               %>
               <span>Ignore space change in diff</span>
               
               %= hidden_field 'ignore_space_change' => 0;
-              %= check_box 'ignore_space_change' => 1, @checked;
+              %= check_box 'ignore_space_change' => 1, @ignore_space_change_checked;
+            </li>
+            <li>
+              <%
+                my $guess_encoding = app->dbi->model('project')->select(
+                  'guess_encoding',
+                  where => {user_id => $user, name => $project}
+                )->value;
+              %>
+              <div>Guess encoding</div>
+              (Guess encoding from the following encoding list. default is "UTF-8".
+              if your source code is different from UTF-8, set comma separated encoding list.
+              For example "cp932,UTF-8")
+              %= text_field 'guess_encoding' => $guess_encoding;
             </li>
             <li>
               <input type="submit" class="btn" value="Save">
