@@ -1735,12 +1735,24 @@ sub _chop_str {
 
 sub _dec_guess {
   my ($self, $str) = @_;
-
-  my $enc = Encode::Guess->guess($str, @{$self->encoding_suspects});
-  # fallback default encoding if multile guess result
-  # http://perl-users.jp/articles/advent-calendar/2009/casual/10.html
-  $enc = $self->default_encoding unless ref $enc;
-
+  
+  my $encoding_suspects = $self->encoding_suspects;
+  
+  my $enc;
+  if (@$encoding_suspects) {
+    for my $encoding_suspect (@$encoding_suspects) {
+      my $ret = Encode::Guess->guess($str, $encoding_suspect);
+      if (ref $ret) {
+        $enc = $encoding_suspect;
+        last;
+      }
+    }
+    $enc //= $self->default_encoding;
+  }
+  else {
+    $enc = $self->default_encoding;
+  }
+  
   my $new_str;
   eval { $new_str = decode($enc, $str) };
 
