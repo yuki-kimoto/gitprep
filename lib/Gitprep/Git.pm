@@ -1762,10 +1762,9 @@ sub _dec {
   
   my $enc = $self->default_encoding;
   
-  my $new_str;
-  eval { $new_str = decode($enc, $str) };
+  $str = decode($enc, $str);
   
-  return $@ ? $str : $new_str;
+  return $str;
 }
 
 sub _enc {
