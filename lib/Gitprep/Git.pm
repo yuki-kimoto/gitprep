@@ -19,6 +19,7 @@ has 'encoding_suspects';
 has 'rep_home';
 has text_exts => sub { ['txt'] };
 has 'time_zone_second';
+has 'app';
 
 sub branch {
   my ($self, $user, $project, $branch_name) = @_;
@@ -67,7 +68,9 @@ sub no_merged_branch_h {
     
     my @cmd = $self->cmd($user, $project, 'branch', '--no-merged');
     open my $fh, '-|', @cmd or return;
-    while (my $branch_name = $self->_dec(scalar <$fh>)) {
+    my @lines = <$fh>;
+    for my $branch_name (@lines) {
+      $branch_name = $self->_dec($branch_name);
       $branch_name =~ s/^\*//;
       $branch_name =~ s/^\s*//;
       $branch_name =~ s/\s*$//;
@@ -87,7 +90,9 @@ sub branches {
   my $branches = [];
   my $start;
   my $no_merged_branches_h;
-  while (my $branch_name = $self->_dec(scalar <$fh>)) {
+  my @lines = <$fh>;
+  for my $branch_name (@lines) {
+    $branch_name = $self->_dec($branch_name);
     $branch_name =~ s/^\*//;
     $branch_name =~ s/^\s*//;
     $branch_name =~ s/\s*$//;
@@ -102,7 +107,6 @@ sub branches {
     push @$branches, $branch;
   }
   @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
-  
   
   return $branches;
 }
@@ -151,7 +155,9 @@ sub authors {
   open my $fh, "-|", @cmd
     or croak 500, "Open git-cat-file failed";
   my $authors = {};
-  while (my $line = $self->_dec(<$fh>)) {
+  my @lines = <$fh>;
+  for my $line (@lines) {
+    $line = $self->_dec($line);
     $line =~ s/[\r\n]//g;
     $authors->{$line} = 1;
   }
@@ -184,7 +190,9 @@ sub blame {
   my $blame_line;
   my $max_author_time;
   my $min_author_time;
-  while (my $line = $self->_dec_guess(scalar <$fh>)) {
+  my @lines = <$fh>;
+  for my $line (@lines) {
+    $line = $self->_dec_guess($line);
     chomp $line;
     
     if ($blame_line) {
@@ -273,13 +281,15 @@ sub blob {
     or croak "Can't cat $file, $hash";
   
   # Format lines
-  my $lines =[];
-  while (my $line = $self->_dec_guess(scalar <$fh>)) {
+  my @lines = <$fh>;
+  my @new_lines;
+  for my $line (@lines) {
+    $line = $self->_dec_guess($line);
     chomp $line;
-    push @$lines, $line;
+    push @new_lines, $line;
   }
   
-  return $lines;
+  return \@new_lines;
 }
 
 sub blob_diffs {
@@ -308,7 +318,9 @@ sub blob_diffs {
   open my $fh, '-|', @cmd
     or croak('Open self-diff-tree failed');
   my @diff_tree;
-  while (my $line = $self->_dec_guess(scalar <$fh>)) {
+  my @diff_treelines = <$fh>;
+  for my $line (@diff_treelines) {
+    $line = $self->_dec_guess($line);
     chomp $line;
     push @diff_tree, $line if $line =~ /^:/;
     last if $line =~ /^\n/;
@@ -342,7 +354,8 @@ sub blob_diffs {
     );
     open my $fh, '-|', @cmd
       or croak('Open self-diff-tree failed');
-    my @lines = map { $self->_dec_guess($_) } <$fh>;
+    my @lines = <$fh>;
+    @lines = map { $self->_dec_guess($_) } @lines;
     close $fh;
     my ($lines, $diff_info) = $self->parse_blob_diff_lines(\@lines);
     my $blob_diff = {
@@ -442,7 +455,8 @@ sub blob_mode {
   );
   open my $fh, '-|', @cmd
     or croak 'Open git-ls-tree failed';
-  my $line = $self->_dec(scalar <$fh>);
+  my $line = <$fh>;
+  $line = $self->_dec($line);
   close $fh or return;
   my ($mode) = ($line || '') =~ m/^([0-9]+) /;
   
@@ -477,7 +491,8 @@ sub blob_size {
   );
   open my $fh, "-|", @cmd
     or croak 500, "Open cat-file failed";
-  my $size = $self->_dec(scalar <$fh>);
+  my $size = <$fh>;
+  $size = $self->_dec($size);
   chomp $size;
   close $fh or croak 'Reading cat-file failed';
   
@@ -504,7 +519,8 @@ sub commits_number {
   my @cmd = $self->cmd($user, $project, 'shortlog', '-s', $ref);
   open my $fh, "-|", @cmd
     or croak 500, "Open git-shortlog failed";
-  my @commits_infos = map { chomp; $self->_dec($_) } <$fh>;
+  my @commits_infos = <$fh>;
+  @commits_infos = map { chomp; $self->_dec($_) } @commits_infos;
   close $fh or croak 'Reading git-shortlog failed';
   
   my $commits_num = 0;
@@ -570,7 +586,8 @@ sub description {
   else {
     # Read description
     return unless -f $file;
-    my $description = $self->_dec($self->_slurp($file) || '');
+    my $description = $self->_slurp($file) || '';
+    $description = $self->_dec($description);
     return $description;
   }
 }
@@ -600,7 +617,8 @@ sub diff_tree {
   
   open my $fh, "-|", @cmd
     or croak 500, "Open git-diff-tree failed";
-  my @diff_tree = map { chomp; $self->_dec($_) } <$fh>;
+  my @diff_tree = <$fh>;
+  @diff_tree = map { chomp; $self->_dec($_) } @diff_tree;
   close $fh or croak 'Reading git-diff-tree failed';
   
   # Parse "git diff-tree" output
@@ -711,7 +729,8 @@ sub path_to_hash {
   );
   open my $fh, '-|', @cmd
     or croak 'Open git-ls-tree failed';
-  my $line = $self->_dec(scalar <$fh>);
+  my $line = <$fh>;
+  $line = $self->_dec($line);
   close $fh or return;
   my ($t, $id) = ($line || '') =~ m/^[0-9]+ (.+) ([0-9a-fA-F]{40})\t/;
   $t ||= '';
@@ -734,7 +753,8 @@ sub last_activity {
     '--count=1', 'refs/heads'
   );
   open my $fh, '-|', @cmd or return;
-  my $most_recent = $self->_dec(scalar <$fh>);
+  my $most_recent = <$fh>;
+  $most_recent = $self->_dec($most_recent);
   close $fh or return;
   
   # Parse most recent
@@ -771,9 +791,10 @@ sub path_by_id {
 
   # Get path
   local $/ = "\0";
-  while (my $line = <$fh>) {
-    chomp $line;
+  my @lines = <$fh>;
+  for my $line (@lines) {
     $line = $self->_dec($line);
+    chomp $line;
 
     if ($line =~ m/(?:[0-9]+) (?:.+) $hash\t(.+)$/) {
       close $fh;
@@ -798,7 +819,9 @@ sub parse_rev_path {
   open my $fh, '-|', @cmd
     or return;
   my $refs = [];
-  while (my $line = $self->_dec(scalar <$fh>)) {
+  my @lines = <$fh>;
+  for my $line (@lines) {
+    $line = $self->_dec($line);
     chomp $line;
     if ($line =~ m!^[0-9a-fA-F]{40}\s(refs/((?:heads|tags)/(.*)))$!) {
       push @$refs, $1, $2, $3;
@@ -845,7 +868,8 @@ sub object_type {
     $rev
   );
   open my $fh, '-|', @cmd  or return;
-  my $type = $self->_dec(scalar <$fh>);
+  my $type = <$fh>;
+  $type = $self->_dec($type);
   close $fh or return;
   chomp $type;
   
@@ -868,7 +892,8 @@ sub project_urls {
   # Project URLs
   open my $fh, '<', "$project/cloneurl"
     or return;
-  my @urls = map { chomp; $self->_dec($_) } <$fh>;
+  my @urls = <$fh>;
+  @urls = map { chomp; $self->_dec($_) } @urls;
   close $fh;
 
   return \@urls;
@@ -918,7 +943,9 @@ sub references {
   # Parse references
   my %refs;
   my $type_re = $type ? $type : '(?:heads|tags)';
-  while (my $line = $self->_dec(scalar <$fh>)) {
+  my @lines = <$fh>;
+  for my $line (@lines) {
+    $line = $self->_dec($line);
     chomp $line;
     if ($line =~ m!^([0-9a-fA-F]{40})\srefs/$type_re/(.*)$!) {
       my $rev = $1;
@@ -1005,7 +1032,9 @@ sub tags {
   # Parse Tags
   my @tags;
   my $line_num = 1;
-  while (my $line = $self->_dec(scalar <$fh>)) {
+  my @lines = <$fh>;
+  for my $line (@lines) {
+    $line = $self->_dec($line);
     
     if ($line_num > $offset && $line_num < $offset + $count + 1) {
     
@@ -1092,7 +1121,8 @@ sub last_change_commit {
     or croak 'Open git-log failed';
   
   local $/;
-  my $commit_log_text = $self->_dec(scalar <$fh>);
+  my $commit_log_text = <$fh>;
+  $commit_log_text = $self->_dec($commit_log_text);
   
   my $commit;
   if ($commit_log_text =~ /^([0-9a-zA-Z]+)/) {
@@ -1202,7 +1232,8 @@ sub get_commit {
   
   # Parse commit
   local $/ = "\0";
-  my $content = $self->_dec(scalar <$fh>);
+  my $content = <$fh>;
+  $content = $self->_dec($content);
   return unless defined $content;
   my $commit = $self->parse_commit_text($content, 1);
   close $fh;
@@ -1339,7 +1370,9 @@ sub get_commits {
   # Prase Commits text
   local $/ = "\0";
   my @commits;
-  while (my $line = $self->_dec(scalar <$fh>)) {
+  my @lines = <$fh>;
+  for my $line (@lines) {
+    $line = $self->_dec($line);
     my $commit = $self->parse_commit_text($line);
     push @commits, $commit;
   }
@@ -1593,7 +1626,8 @@ sub trees {
     or $self->croak('Open git-ls-tree failed');
   {
     local $/ = "\0";
-    @entries = map { chomp; $self->_dec($_) } <$fh>;
+    @entries = <$fh>;
+    @entries = map { chomp; $self->_dec($_) } @entries;
   }
   close $fh
     or $self->croak(404, "Reading tree failed");

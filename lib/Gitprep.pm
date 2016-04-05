@@ -45,6 +45,8 @@ sub startup {
   
   # Git
   my $git = Gitprep::Git->new;
+  $git->app($self);
+  weaken $git->{app};
   my $git_bin
     = $conf->{basic}{git_bin} ? $conf->{basic}{git_bin} : $git->search_bin;
   if (!$git_bin || ! -e $git_bin) {
@@ -58,12 +60,13 @@ sub startup {
   
   # Encoding suspects list for Git
   my $encoding_suspects
-    = $conf->{basic}{encoding_suspects} ||= 'utf8';
+    = $conf->{basic}{encoding_suspects} ||= 'UTF-8';
   $encoding_suspects = [split /,/, $encoding_suspects] unless ref $encoding_suspects eq 'ARRAY';
   $git->encoding_suspects($encoding_suspects);
 
   # Repository Manager
-  my $manager = Gitprep::Manager->new(app => $self);
+  my $manager = Gitprep::Manager->new;
+  $manager->app($self);
   weaken $manager->{app};
   $self->manager($manager);
   
