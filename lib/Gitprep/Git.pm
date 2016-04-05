@@ -1740,23 +1740,21 @@ sub _dec_guess {
   
   my $enc;
   if (@$encoding_suspects) {
-    for my $encoding_suspect (@$encoding_suspects) {
-      my $ret = Encode::Guess->guess($str, $encoding_suspect);
-      if (ref $ret) {
-        $enc = $encoding_suspect;
-        last;
-      }
+    my $ret = Encode::Guess->guess($str, @$encoding_suspects);
+    if (ref $ret) {
+      $enc = $ret->name;
     }
-    $enc //= $self->default_encoding;
+    else {
+      $enc = $self->default_encoding
+    }
   }
   else {
     $enc = $self->default_encoding;
   }
   
-  my $new_str;
-  eval { $new_str = decode($enc, $str) };
+  $str = decode($enc, $str);
 
-  return $@ ? $str : $new_str;
+  return $str;
 }
 
 sub _dec {
