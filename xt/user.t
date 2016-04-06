@@ -26,6 +26,7 @@ note 'Start page';
   unlink $db_file;
 
   my $app = Gitprep->new;
+  $app->manager->setup_database;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
   
@@ -63,6 +64,7 @@ note 'Admin pages';
   unlink $db_file;
 
   my $app = Gitprep->new;
+  $app->manager->setup_database;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
 
@@ -188,6 +190,7 @@ note 'Reset password';
   unlink $db_file;
 
   my $app = Gitprep->new;
+  $app->manager->setup_database;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
 
@@ -247,6 +250,7 @@ note 'Profile';
   rmtree $rep_home;
 
   my $app = Gitprep->new;
+  $app->manager->setup_database;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
 
@@ -387,6 +391,7 @@ note 'Profile';
 note 'fork';
 {
   my $app = Gitprep->new;
+  $app->manager->setup_database;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
   
@@ -412,6 +417,7 @@ note 'fork';
 note 'Network';
 {
   my $app = Gitprep->new;
+  $app->manager->setup_database;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
 
@@ -431,6 +437,7 @@ note 'Network';
 note 'Delete branch';
 {
   my $app = Gitprep->new;
+  $app->manager->setup_database;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
   
@@ -462,6 +469,7 @@ note 'Delete branch';
 note 'import-branch';
 {
   my $app = Gitprep->new;
+  $app->manager->setup_database;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
 
@@ -531,6 +539,7 @@ note 'Private repository and collaborator';
   rmtree $rep_home;
 
   my $app = Gitprep->new;
+  $app->manager->setup_database;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
 

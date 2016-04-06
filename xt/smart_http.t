@@ -28,6 +28,7 @@ note 'Smart HTTP';
   rmtree $rep_home;
 
   my $app = Gitprep->new;
+  $app->manager->setup_database;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
 
@@ -136,6 +137,7 @@ note 'Private repository and collaborator';
   rmtree $rep_home;
 
   my $app = Gitprep->new;
+  $app->manager->setup_database;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
 

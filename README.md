@@ -37,7 +37,11 @@ Download tar.gz archive, expand it and change directory:
 
 Setup. Needed module is installed.
 
-    ./setup.sh
+    ./setup_module
+
+Setup database.
+
+    ./setup_database
 
 If you install git in your local directry,
 you must add the correct git command path to the **gitprep.conf** config file.

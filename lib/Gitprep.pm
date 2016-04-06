@@ -123,9 +123,6 @@ sub startup {
     chown -1, $gid, $db_file;
   }
   
-  # Setup database
-  $self->manager->setup_database;
-  
   # Model
   my $models = [
     {table => 'user', primary_key => 'id'},

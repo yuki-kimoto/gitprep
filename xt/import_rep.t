@@ -27,6 +27,7 @@ note 'import_rep';
   rmtree $rep_home;
 
   my $app = Gitprep->new;
+  $app->manager->setup_database;
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
   
