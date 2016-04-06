@@ -4,7 +4,10 @@
   - add Mojolicious::Plugin::DBViewer to cpanfile
   - X-Forwarded-HTTPS header is DEPRECATED! use X-Forwarded-Proto header instead.
   - remove [basic]show_ignore_space_change_link option.
-    and enable this feature on in project settings page.
+    and move this feature to project settings page.
+  - remove [basic]encoding_suspects option
+    and move this feature to project settings page.
+  
 1.12 (7 Feb 2016)
   - Catch up latest Github design.
   - Fix bug that relative image path in README.md and blob html.

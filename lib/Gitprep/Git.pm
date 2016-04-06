@@ -15,7 +15,6 @@ use Gitprep::Util;
 # Attributes
 has 'bin';
 has default_encoding => 'UTF-8';
-has 'encoding_suspects';
 has 'rep_home';
 has text_exts => sub { ['txt'] };
 has 'time_zone_second';
@@ -191,8 +190,10 @@ sub blame {
   my $max_author_time;
   my $min_author_time;
   my @lines = <$fh>;
+  
+  my $enc = $self->decide_encoding($user, $project, \@lines);
   for my $line (@lines) {
-    $line = $self->_dec_guess($line);
+    $line = decode($enc, $line);
     chomp $line;
     
     if ($blame_line) {
@@ -283,8 +284,9 @@ sub blob {
   # Format lines
   my @lines = <$fh>;
   my @new_lines;
+  my $enc = $self->decide_encoding($user, $project, \@lines);
   for my $line (@lines) {
-    $line = $self->_dec_guess($line);
+    $line = decode($enc, $line);
     chomp $line;
     push @new_lines, $line;
   }
@@ -318,9 +320,10 @@ sub blob_diffs {
   open my $fh, '-|', @cmd
     or croak('Open self-diff-tree failed');
   my @diff_tree;
-  my @diff_treelines = <$fh>;
-  for my $line (@diff_treelines) {
-    $line = $self->_dec_guess($line);
+  my @diff_tree_lines = <$fh>;
+  my $diff_tree_enc = $self->decide_encoding($user, $project, \@diff_tree_lines);
+  for my $line (@diff_tree_lines) {
+    $line = decode($diff_tree_enc, $line);
     chomp $line;
     push @diff_tree, $line if $line =~ /^:/;
     last if $line =~ /^\n/;
@@ -355,7 +358,8 @@ sub blob_diffs {
     open my $fh, '-|', @cmd
       or croak('Open self-diff-tree failed');
     my @lines = <$fh>;
-    @lines = map { $self->_dec_guess($_) } @lines;
+    my $enc = $self->decide_encoding($user, $project, \@lines);
+    @lines = map { decode($enc, $_) } @lines;
     close $fh;
     my ($lines, $diff_info) = $self->parse_blob_diff_lines(\@lines);
     my $blob_diff = {
@@ -1733,28 +1737,43 @@ sub _chop_str {
   }
 }
 
-sub _dec_guess {
-  my ($self, $str) = @_;
+sub decide_encoding {
+  my ($self, $user, $project, $lines) = @_;
   
-  my $encoding_suspects = $self->encoding_suspects;
+  my $guess_encoding_str = $self->app->dbi->model('project')->select(
+    'guess_encoding',
+    where => {user_id => $user, name => $project}
+  )->value;
   
-  my $enc;
-  if (@$encoding_suspects) {
-    my $ret = Encode::Guess->guess($str, @$encoding_suspects);
+  my @guess_encodings;
+  if (length $guess_encoding_str) {
+    @guess_encodings = split(/\s*,\s*/, $guess_encoding_str);
+  }
+  
+  my $encoding;
+  if (@guess_encodings) {
+    my @new_lines;
+    for (my $i = 0; $i < 100; $i++) {
+      last unless defined $lines->[$i];
+      push @new_lines, $lines->[$i];
+    }
+    
+    my $str = join('', @new_lines);
+
+    my $ret = Encode::Guess->guess($str, @guess_encodings);
+    
     if (ref $ret) {
-      $enc = $ret->name;
+      $encoding = $ret->name;
     }
     else {
-      $enc = $self->default_encoding
+      $encoding = $self->default_encoding
     }
   }
   else {
-    $enc = $self->default_encoding;
+    $encoding = $self->default_encoding;
   }
   
-  $str = decode($enc, $str);
-
-  return $str;
+  return $encoding;
 }
 
 sub _dec {

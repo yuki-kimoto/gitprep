@@ -453,13 +453,26 @@ If you install perl 5.10.1+ by perlbrew, you can install latest GitPrep.
 **2. remove [basic]show_ignore_space_change_link option**
 
 remove [basic]show_ignore_space_change_link option.
+and move this feature to project settings page.
+
+    # Go to settings page in your project
+    /kimoto/gitprep/settings
+
+**2. remove [basic]show_ignore_space_change_link option**
+
+remove [basic]show_ignore_space_change_link option.
 but enable this feature on in project settings page.
 
     # Go to settings page in your project
     /kimoto/gitprep/settings
-    
-    # And see the following section
-    Ignore space change in diff
+
+**3. remove [basic]encoding_suspects option**
+
+remove [basic]encoding_suspects option
+and move this feature to project settings page.
+
+    # Go to settings page in your project
+    /kimoto/gitprep/settings
 
 ## For Developer
 
