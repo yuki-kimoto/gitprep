@@ -446,6 +446,13 @@ If you install perl 5.10.1+ by perlbrew, you can install latest GitPrep.
 
 ### I know information about GitPrep 2.0 upgrading.
 
+You can upgrade GitPrep 2.0 the following command.
+
+    ./setup_module
+    ./setup_database
+
+And you should know the following small changes.
+
 **1. X-Forwarded-HTTPS header is deprecated. use  X-Forwarded-Proto header.**
     
     # This is deprecated in GitPrep 2.0
@@ -462,7 +469,7 @@ and move this feature to project settings page.
     # Go to settings page in your project
     /kimoto/gitprep/settings
 
-**2. remove [basic]show_ignore_space_change_link option**
+**3. remove [basic]show_ignore_space_change_link option**
 
 remove [basic]show_ignore_space_change_link option.
 but enable this feature on in project settings page.
@@ -470,13 +477,17 @@ but enable this feature on in project settings page.
     # Go to settings page in your project
     /kimoto/gitprep/settings
 
-**3. remove [basic]encoding_suspects option**
+**4. remove [basic]encoding_suspects option**
 
 remove [basic]encoding_suspects option
 and move this feature to project settings page.
 
     # Go to settings page in your project
     /kimoto/gitprep/settings
+
+**5. mail is required for user registration.
+
+mail address is require for user registration.
 
 ## For Developer
 

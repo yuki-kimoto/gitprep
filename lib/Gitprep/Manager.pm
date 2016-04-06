@@ -311,6 +311,13 @@ create table user (
 EOS
     $dbi->execute($sql);
   };
+  
+  # Check mail column
+  my $not_exists_user_mail;
+  eval { $dbi->select('mail', table => 'user') };
+  if ($@) {
+    $not_exists_user_mail = 1;
+  }
 
   # Create user columns
   my $user_columns = [
@@ -323,7 +330,7 @@ EOS
   for my $column (@$user_columns) {
     eval { $dbi->execute("alter table user add column $column") };
   }
-  
+
   # Check user table
   eval { $dbi->select([qw/row_id id admin password salt mail name/], table => 'user') };
   if ($@) {
@@ -331,7 +338,20 @@ EOS
     $self->app->log->error($error);
     croak $error;
   }
-
+  
+  # If mail is empty, id is copied to mail for uniqueness
+  my $user_ids = $dbi->select('id', table => 'user', where => {mail => ''})->values;
+  for my $user_id (@$user_ids) {
+    $dbi->update({mail => "$user_id\@gitprep.example"}, table => 'user', where => {id => $user_id});
+  }
+  
+  # add unique to mail
+  eval { $dbi->execute("create unique index user__mail on user(mail)") };
+  my $created_user_mail_index = $dbi->execute("select * from sqlite_master where type = 'index' and name = 'user__mail'")->one;
+  unless ($created_user_mail_index) {
+    croak "Can't create user__mail index";
+  }
+  
   # Create ssh_public_key table
   eval {
     my $sql = <<"EOS";
