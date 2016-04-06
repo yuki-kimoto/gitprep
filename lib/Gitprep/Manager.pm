@@ -316,14 +316,16 @@ EOS
   my $user_columns = [
     "admin not null default '0'",
     "password not null default ''",
-    "salt not null default ''"
+    "salt not null default ''",
+    "mail not null default ''",
+    "name not null default ''"
   ];
   for my $column (@$user_columns) {
     eval { $dbi->execute("alter table user add column $column") };
   }
   
   # Check user table
-  eval { $dbi->select([qw/row_id id admin password salt/], table => 'user') };
+  eval { $dbi->select([qw/row_id id admin password salt mail name/], table => 'user') };
   if ($@) {
     my $error = "Can't create user table properly: $@";
     $self->app->log->error($error);
