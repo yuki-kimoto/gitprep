@@ -10,7 +10,7 @@
   - setup.sh is renamed to setup_module
   - separete database creating logic to setup_database script
   - add name and mail column to user table. mail is required for user registration.
-  
+  - add user update page
 1.12 (7 Feb 2016)
   - Catch up latest Github design.
   - Fix bug that relative image path in README.md and blob html.
