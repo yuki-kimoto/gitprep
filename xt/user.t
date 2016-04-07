@@ -127,7 +127,7 @@ note 'Admin pages';
     $t->content_like(qr/Two password/);
     
     # Create user
-    $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', mail => 'kimoto@foo.com', password => 'a', password2 => 'a'});
+    $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', name => 'Kimoto', mail => 'kimoto@foo.com', password => 'a', password2 => 'a'});
     $t->content_like(qr/Success.*created/);
   }
     
@@ -135,6 +135,8 @@ note 'Admin pages';
   $t->get_ok('/_admin/users');
   $t->content_like(qr/Admin Users/);
   $t->content_like(qr/kimoto/);
+  $t->content_like(qr/Kimoto/);
+  $t->content_like(qr/kimoto\@foo\.com/);
   
   note 'Reset password page';
   {
