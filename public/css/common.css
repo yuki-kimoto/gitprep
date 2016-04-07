@@ -43,6 +43,33 @@ input[type=text], input[type=password] {
   padding:6px 5px;
 }
 
+.repositories-container {
+  overflow:hidden;
+}
+.repositories-left {
+  padding-top:20px;
+  padding-left:10px;
+  padding-right:25px;
+  width:25%;
+  float:left;
+}
+.repositories-right {
+  width:75%;
+  float:left;
+}
+.repositories-user-name {
+  font-weight:bold;
+  font-size:22px;
+}
+.repositories-user-id {
+  padding:5px 0 7px 2px;
+  font-size:18px;
+  color:#767676;
+  border-bottom:1px solid #d8d8d8;
+}
+.repositories-user-mail {
+  padding:5px 0;
+}
 .project-tabs {
   position:relative;
   z-index:1;
