@@ -2,16 +2,15 @@
   my $api = gitprep_api;
   
   my $op = param('op') || '';
+  my $user_id = param('id');
   
   my $errors;
-  if ($op eq 'create') {
+  if ($op eq 'update') {
   
     # Parameters
     my $id = param('id');
     my $name = param('name');
     my $mail = param('mail');
-    my $password = param('password');
-    my $password2 = param('password2');
     
     # Validator
     my $vc = app->vc;
@@ -22,18 +21,6 @@
     # "id" check
     if (!(defined $id && length $id)) {
       $validation->add_failed(id => 'User id is empty.');
-    }
-    elsif (!$vc->check($id, 'user_name')) {
-      $validation->add_failed(id => 'User id contain invalid character.');
-    }
-    elsif (length $id > 20) {
-      $validation->add_failed(id => 'User id is too long.');
-    }
-    else {
-      my $row = app->dbi->model('user')->select(where => {id => $id})->one;
-      if ($row) {
-        $validation->add_failed(id => "User id $id already exists");
-      }
     }
     
     # "name" check
@@ -47,36 +34,34 @@
       $validation->add_failed(mail => "Invalid mail address");
     }
     else {
-      my $row = app->dbi->model('user')->select(where => {mail => $mail})->one;
+      my $where = app->dbi->where;
+      my $clause = [
+        'and',
+        ':mail{=}',
+        ':id{<>}'
+      ];
+      my $param = {
+        mail => $mail,
+        id => $user_id
+      };
+      $where->clause($clause);
+      $where->param($param);
+      
+      my $row = app->dbi->model('user')->select(where => $where)->one;
       if ($row) {
         $validation->add_failed(mail => "Mail $mail already exists");
       }
     }
     
-    # "password" check
-    $password2 ||= '';
-    if (!(defined $password && length $password)) {
-      $validation->add_failed(password => 'Password is empty.');
-    }
-    elsif (!$vc->check($password, 'ascii_graphic')) {
-      $validation->add_failed(password => 'Password contain invalid character.');
-    }
-    elsif ($password ne $password2) {
-      $validation->add_failed(password => "Two password don't match");
-    }
-    
     if ($validation->is_valid) {
       
       # Encrypt password
-      my ($password_encrypted, $salt) = $api->encrypt_password($password);
       my $params = {};
-      $params->{password} = $password_encrypted;
-      $params->{salt} = $salt;
       $params->{name} = $name;
       $params->{mail} = $mail;
       
-      # Create user
-      eval { app->manager->create_user($id, $params) };
+      # Update user
+      eval { app->dbi->model('user')->update($params, where => {id => $id}) };
       if (my $e = $@) {
         app->log->error(url_for . ": $e");
         $errors = ['Internal Error'];
@@ -84,14 +69,18 @@
       else {
         $self->flash(success => 1);
         $self->flash(id => $id);
-        $self->redirect_to('current');
+        $self->redirect_to(url_for->query(id => $id));
       }
     }
     else { $errors = $validation->messages }
   }
+  
+  my $user = app->dbi->model('user')->select(
+    where => {id => $user_id, admin => 0}
+  )->one;
 %>
 
-% layout 'common', title => 'Create User';
+% layout 'common', title => 'Update User';
 
   %= include '/include/header';
 
@@ -100,7 +89,7 @@
     % if (flash('success')) {
       <div class="alert alert-success">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
-        Success: User <b><%= flash('id') %></b> is created.
+        Success: User <b><%= flash('id') %></b> is updated.
       </div>
     % }
     
@@ -113,37 +102,31 @@
       </div>
     % }
     
-    <div class="topic1" style="text-align:center">Create User</div>
-    <form class="user-form" action="<%= url_for->query(op => 'create') %>" method="post">
+    <div class="topic1" style="text-align:center">Update User</div>
+    <form class="user-form" action="<%= url_for->query(id => $user_id) %>" method="post">
+      %= hidden_field op => 'update';
       <div class="user-form-container">
         <div>
-          <div>ID</div>
+          <div><b>ID</b></div>
           <div>
-            <%= text_field 'id', placeholder => 'ID' %>
+            <%= $user->{id} %>
           </div>
         </div>
         <div>
-          <div>Name</div>
+          <div><b>Name</b></div>
           <div>
-            <%= text_field 'name', placeholder => 'Name' %>
+            <%= text_field 'name' => $user->{name}, placeholder => 'Name' %>
           </div>
         </div>
         <div>
-          <div>Mail</div>
+          <div><b>Mail</b></div>
           <div>
-            <%= text_field 'mail', placeholder => 'Mail' %>
-          </div>
-        </div>
-        <div>
-          <div>Password</div>
-          <div>
-            <%= password_field 'password', id => 'input-password', placeholder => 'Password' %>
-            <%= password_field 'password2', id => 'input-password', placeholder => 'Password Again' %>
+            <%= text_field 'mail' => $user->{mail}, placeholder => 'Mail' %>
           </div>
         </div>
         <div>
           <div>
-            <button type="submit" class="btn btn-success" style="margin-top:20px">Create User</button>
+            <button type="submit" class="btn btn-success" style="margin-top:20px">Update User</button>
           </div>
         </div>
       </div>

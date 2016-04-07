@@ -114,10 +114,11 @@
               <%= $user->{mail} %>
             </td>
             <td>
-              <a class="btn btn-mini" href="<%= url_for('/reset-password')->query(user => $uid) %>">Reset Password</a>
+              <a class="btn btn-small" href="<%= url_for('/_admin/user/update')->query(id => $uid) %>">Settings</a>
+              <a class="btn btn-small" href="<%= url_for('/reset-password')->query(user => $uid) %>">Reset Password</a>
               <form action="<%= url_for->query(op => 'delete') %>" method="post">
                 %= hidden_field user => $uid;
-                <input type="submit" class="btn btn-mini delete-btn" user="<%= $uid %>" value="Delete">
+                <input type="submit" class="btn btn-small delete-btn" style="color:red" user="<%= $uid %>" value="Delete">
               </form>
             </td>
           </tr>

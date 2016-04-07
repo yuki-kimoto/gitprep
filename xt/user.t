@@ -104,15 +104,15 @@ note 'Admin pages';
     
     # User name is empty
     $t->post_ok('/_admin/user/create?op=create', form => {id => ''});
-    $t->content_like(qr/User name is empty/);
+    $t->content_like(qr/User id is empty/);
 
     # User name contain invalid character
     $t->post_ok('/_admin/user/create?op=create', form => {id => '&'});
-    $t->content_like(qr/User name contain invalid character/);
+    $t->content_like(qr/User id contain invalid character/);
 
     # User name is too long
     $t->post_ok('/_admin/user/create?op=create', form => {id => 'a' x 21});
-    $t->content_like(qr/User name is too long/);
+    $t->content_like(qr/User id is too long/);
 
     # Password is empty
     $t->post_ok('/_admin/user/create?op=create', form => {id => 'a', password => ''});
