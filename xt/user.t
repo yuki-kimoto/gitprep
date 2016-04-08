@@ -59,7 +59,7 @@ note 'Start page';
   $t->content_like(qr/Users/);
 }
 
-note 'Admin pages';
+note 'Admin page';
 {
   unlink $db_file;
 
@@ -84,19 +84,19 @@ note 'Admin pages';
   $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'a'});
   $t->content_like(qr/Admin/);
   
-  note 'Admin page';
+  note 'Admin page - top';
   {
     $t->post_ok('/_admin');
     $t->content_like(qr/Admin/);
   }
   
-  note 'Admin User page';
+  note 'Admin page -  User page';
   {
     $t->get_ok('/_admin/users');
     $t->content_like(qr/Admin Users/);
   }
 
-  note 'Create User page';
+  note 'Admin page - Create User';
   {
     # Page access
     $t->get_ok('/_admin/user/create');
@@ -131,14 +131,14 @@ note 'Admin pages';
     $t->content_like(qr/Success.*created/);
   }
     
-  note 'Admin Users page';
+  note 'Admin page - Users page';
   $t->get_ok('/_admin/users');
   $t->content_like(qr/Admin Users/);
   $t->content_like(qr/kimoto/);
   $t->content_like(qr/Kimoto/);
   $t->content_like(qr/kimoto\@foo\.com/);
   
-  note 'Reset password page';
+  note 'Admin page - Reset password';
   {
     # Page access
     $t->get_ok('/reset-password?user=kimoto');
@@ -162,7 +162,19 @@ note 'Admin pages';
     $t->content_like(qr/Success.*changed/);
   }
 
-  note 'Delete user';
+  note 'Admin page - Update user';
+  {
+    # Create user
+    $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto-update', name => 'Kimoto-Update', mail => 'kimoto-update@foo.com', password => 'a', password2 => 'a'});
+    $t->content_like(qr/kimoto-update/);
+    
+    # Update user
+    $t->post_ok('/_admin/user/update?op=update', form => {id => 'kimoto-update', name => 'Kimoto-Update2', mail => 'kimoto-update2@foo.com'});
+    $t->content_like(qr/Kimoto-Update2/);
+    $t->content_like(qr/kimoto-update2\@foo\.com/);
+  }
+
+  note 'Admin page - Delete user';
   {
     # Create user
     $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto-tmp', mail => 'kimoto-tmp@foo.com', password => 'a', password2 => 'a'});
