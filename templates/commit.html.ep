@@ -26,6 +26,11 @@
   $commit->{committer_date} = $git->timestamp($committer_date);
   $from_rev = $commit->{parent} unless defined $from_rev;
   my $commit_short_id = substr($commit->{id}, 0, 7, );
+  my $commit_author_mail = $commit->{author_email};
+  my $commit_author_id = app->dbi->model('user')->select(
+    'id',
+    where => {mail => $commit_author_mail}
+  )->value;
   
   # Branches
   my $branch_refs = $git->references($user, $project, 'heads');
@@ -102,7 +107,13 @@
     <li class="last-child">
       <ul class="commits-summary-body">
         <li>
-          <span class="commits-summary-author"><%= $commit->{author_name} %></span>
+          <span class="commits-summary-author">
+            % if (defined $commit_author_id) {
+              <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+            % } else {
+              <%= $commit->{author_name} %>
+            % }
+          </span>
           <span>commited on <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string_date_local} %></span>
         </li>
         <li class="last-child">

@@ -2171,7 +2171,11 @@ button.close {
   color: #767676;
   margin-top:1px;
 }
-
+.commit-left-author a {
+  color:#767676;
+  font-weight:bold;
+  font-size:98%;
+}
 .commit-right {
   float:left;
   width:30%;

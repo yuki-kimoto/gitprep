@@ -23,6 +23,11 @@
     $self->reply->not_found;
     return;
   }
+  my $commit_author_mail = $commit->{author_email};
+  my $commit_author_id = app->dbi->model('user')->select(
+    'id',
+    where => {mail => $commit_author_mail}
+  )->value;
     
   # Commits
   my $page_count = 30;
@@ -140,7 +145,13 @@
                     </a>
                   </div>
                   <div class="commit-left-author">
-                    <span title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>
+                    <span title="<%= $commit->{author_email} %>">
+                      % if (defined $commit_author_id) {
+                        <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+                      % } else {
+                        <%= $commit->{author_name} %>
+                      % }
+                    </span>
                     <span class="muted" title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
                   </div>
                 </div>

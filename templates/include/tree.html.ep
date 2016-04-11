@@ -1,11 +1,22 @@
 <%
   my $dir = stash('dir');
+  my $commit_author_mail = $commit->{author_email};
+  my $commit_author_id = app->dbi->model('user')->select(
+    'id',
+    where => {mail => $commit_author_mail}
+  )->value;
 %>
 
 <div>
   <div class="commit-summary">
     <div class="commit-summary-left-container">
-      <span class="commit-summary-author" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>
+      <span class="commit-summary-author" title="<%= $commit->{author_email} %>">
+        % if (defined $commit_author_id) {
+          <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+        % } else {
+          <%= $commit->{author_name} %>
+        % }
+      </span>
       <a href="<%= url_for("/$user/$project/commit/$rev") %>">
         <%= $commit->{title} %>
       </a>

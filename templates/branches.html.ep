@@ -204,6 +204,13 @@
               <%
                 my $branch = $branches->[$i];
                 my $bname = $branch->{name};
+
+                my $commit_author_mail = $branch->{commit}{author_email};
+                my $commit_author_id = app->dbi->model('user')->select(
+                  'id',
+                  where => {mail => $commit_author_mail}
+                )->value;
+                
               %>
               % if ($display eq 'overview' && $i > 4) {
                 <li class="branches-overview-more">
@@ -226,7 +233,11 @@
                         Updated <%= $branch->{commit}{age_string} %> by
                       </div>
                       <div class="branches-author"  title="<%= $branch->{commit}{author_email} %>">
-                        <%= $branch->{commit}{author_name} %>
+                        % if (defined $commit_author_id) {
+                          <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+                        % } else {
+                          <%= $branch->{commit}{author_name} %>
+                        % }
                       </div>
                     </li>
                     <li class="second-child">
