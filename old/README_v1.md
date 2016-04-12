@@ -2,6 +2,8 @@
 
 Github clone. You can install portable github system into Unix/Linux.
 
+**This is GitPrep version v1.12 document**
+
 See GitPrep example site. [GitPrep example site](http://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)
 
 ![GitPrep Image](gitprep_image.png "Gitprep image example")
@@ -11,14 +13,14 @@ See GitPrep example site. [GitPrep example site](http://perlcodesample.sakura.ne
 * Github clone: GitPrep has the same interface as GitHub.
 * Portable: You can install GitPrep on your own Unix/Linux server.
 * Supports Windows installation via cygwin for Windows (need gcc4 package).
-* Only needs Perl 5.10.1+.
+* Only needs Perl 5.8.7+.
 * Smart HTTP support: you can pull and push via HTTP
 * CGI support, built-in web server, and reverse proxy support.
 * SSL support.
 
 ## Check Perl Version
 
-Check Perl version. You can use GitPrep if the Perl version is 5.10.1+;
+Check Perl version. You can use GitPrep if the Perl version is 5.8.7+;
 
     perl -v
 
@@ -37,11 +39,7 @@ Download tar.gz archive, expand it and change directory:
 
 Setup. Needed module is installed.
 
-    ./setup_module
-
-Setup database.
-
-    ./setup_database
+    ./setup.sh
 
 If you install git in your local directry,
 you must add the correct git command path to the **gitprep.conf** config file.
@@ -220,6 +218,18 @@ Please increase the value of http.postBuffer.
     # 1GB
     git config http.postBuffer 1024000000
 
+### I can't create repository and see error message when I create repository with readme
+
+If you see the following error message in log/production.log
+
+    [Wed Feb 12 15:27:02 2014] [error] ... Can't execute git commit ...
+
+you need to set User name and Email of git.
+Please set user.name and user.email.
+
+    git config --global user.name "gitprep"
+    git config --global user.email "gitprep@example.com"
+
 ### How to use reverse proxy?
 
 You can use GitPrep via reverse proxy access
@@ -245,7 +255,7 @@ You can use Name virtual host.
       ProxyPreserveHost On
       ProxyPass / http://localhost:10020/ keepalive=On
       ProxyPassReverse / http://localhost:10020/
-      RequestHeader set X-Forwarded-Proto "https"
+      RequestHeader set X-Forwarded-HTTPS "0"
         
     </VirtualHost>
 
@@ -264,7 +274,7 @@ If you use GitPrep vis https, you should set X-Forwarded-HTTPS Request Header.
       ProxyPreserveHost On
       ProxyPass / http://localhost:10020/ keepalive=On
       ProxyPassReverse / http://localhost:10020/
-      RequestHeader set X-Forwarded-Proto "https"
+      RequestHeader set X-Forwarded-HTTPS "1"
     </VirtualHost>
 
 ### How to use reverse proxy with sub directory?
@@ -296,8 +306,8 @@ Next you set http server config file. The following is apache example.
 
       ProxyPass /app2 http://localhost:10021/app2 keepalive=On
       ProxyPassReverse /app2 http://localhost:3001/app2
-      
-      RequestHeader set X-Forwarded-Proto "https"
+
+      RequestHeader set X-Forwarded-HTTPS "0"
     </VirtualHost>
 
 ### How to import already existing repositories?
@@ -412,75 +422,6 @@ You can start and stop the application with the following command.
     # Stop
     /webapp/gitprep --stop
 
-### I want to use GitPrep on Perl 5.8.7 system
-
-GitPrep 2.0 drop support Perl 5.8.7 because latest Mojolicious don't support Perl 5.8.
-
-You can choice two selection.
-
-**1. use GitPrep 1.xx**
-
-GitPrep 1.xx support Perl 5.8.7+. You can use GitPrep v1.12.
-
-https://github.com/yuki-kimoto/gitprep/archive/v1.12.tar.gz
-
-You can see version 1.12 document.
-
-[GitPrep version 1 Document](old/README_v1.md)
-
-**2. You can install your local perl by perlbrew.**
-
-http://perlbrew.pl/
-
-perlbrew is very useful perl installation tools without breaking your system perl.
-
-If you install perl 5.10.1+ by perlbrew, you can install latest GitPrep.
-
-### I know information about GitPrep 2.0 upgrading.
-
-You can upgrade GitPrep 2.0 the following command.
-
-    ./setup_module
-    ./setup_database
-
-And you should know the following small changes.
-
-**1. X-Forwarded-HTTPS header is deprecated. use  X-Forwarded-Proto header.**
-    
-    # This is deprecated in GitPrep 2.0
-    RequestHeader set X-Forwarded-HTTPS "1"
-    
-    # Use X-Forwarded-Proto instead
-    RequestHeader set X-Forwarded-Proto "https"
-
-**2. remove [basic]show_ignore_space_change_link option**
-
-remove [basic]show_ignore_space_change_link option.
-and move this feature to project settings page.
-
-    # Go to settings page in your project
-    /kimoto/gitprep/settings
-
-**3. remove [basic]show_ignore_space_change_link option**
-
-remove [basic]show_ignore_space_change_link option.
-but enable this feature on in project settings page.
-
-    # Go to settings page in your project
-    /kimoto/gitprep/settings
-
-**4. remove [basic]encoding_suspects option**
-
-remove [basic]encoding_suspects option
-and move this feature to project settings page.
-
-    # Go to settings page in your project
-    /kimoto/gitprep/settings
-
-**5. mail is required for user registration.
-
-mail address is require for user registration.
-
 ## For Developer
 
 If you are a developer, you can start the application in development mode.
@@ -510,13 +451,10 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 * [DBIx::Custom](http://search.cpan.org/dist/DBIx-Custom/lib/DBIx/Custom.pm)
 * [Mojolicious](http://search.cpan.org/~sri/Mojolicious/lib/Mojolicious.pm)
 * [Mojolicious::Plugin::INIConfig](http://search.cpan.org/dist/Mojolicious-Plugin-INIConfig/lib/Mojolicious/Plugin/INIConfig.pm)
-* [Mojolicious::Plugin::AutoRoute](http://search.cpan.org/dist/Mojolicious-Plugin-AutoRoute/lib/Mojolicious/Plugin/AutoRoute.pm)
-* [Mojolicious::Plugin::BasicAuth](http://search.cpan.org/dist/Mojolicious-Plugin-BasicAuth/README.pod)
-* [Mojolicious::Plugin::DBViewer](http://search.cpan.org/dist/Mojolicious-Plugin-DBViewer/lib/Mojolicious/Plugin/DBViewer.pm)
+* [mojo-legacy](https://github.com/jamadam/mojo-legacy)
 * [Object::Simple](http://search.cpan.org/dist/Object-Simple/lib/Object/Simple.pm)
 * [Text::Markdown::Hoedown](http://search.cpan.org/~tokuhirom/Text-Markdown-Hoedown-1.01/lib/Text/Markdown/Hoedown.pm)
 * [Validator::Custom](http://search.cpan.org/dist/Validator-Custom/lib/Validator/Custom.pm)
-* [mojo-legacy](https://github.com/jamadam/mojo-legacy) (until v1.12)
 
 
 ## Sister project
