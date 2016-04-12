@@ -356,7 +356,12 @@ sub startup {
             
             # Compare
             $r->get('/compare' => sub { shift->render_maybe('/compare') });
-            $r->get('/compare/(*rev1)...(*rev2)' => sub { shift->render_maybe('/compare') });
+            $r->get(
+              '/compare/(:rev1)...(:rev2)'
+              => [rev1 => qr/[^\.]+/, rev2 => qr/[^\.]+/]
+              => sub { shift->render_maybe('/compare') }
+            );
+            $r->get('/compare/(:rev2)' => sub { shift->render_maybe('/compare') });
             
             # Settings
             {

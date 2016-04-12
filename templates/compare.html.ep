@@ -9,6 +9,10 @@
   my $rev = param('rev2');
   my $page = param('page') || 0;
   
+  unless ($from_rev) {
+    $from_rev = app->manager->default_branch($user, $project);
+  }
+  
   # Git
   my $git = $self->app->git;
   
