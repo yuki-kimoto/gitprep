@@ -6,7 +6,7 @@ Github clone. You can install portable github system into Unix/Linux.
 
 See GitPrep example site. [GitPrep example site](http://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)
 
-![GitPrep Image](gitprep_image.png "Gitprep image example")
+![GitPrep Image](../gitprep_image.png "Gitprep image example")
 
 ## Features
 
