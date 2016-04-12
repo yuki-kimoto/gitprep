@@ -35,6 +35,27 @@
   box-sizing: border-box;
 }
 
+.pulls-button-container {
+  text-align:right;
+  margin-bottom:10px;
+}
+.pulls-header {
+  border:1px solid #d8d8d8;
+  background:#fafafa;
+  padding:10px;
+}
+.pulls-body {
+  border:1px solid #d8d8d8;
+  border-top:none;
+  background:#fafafa;
+  text-align:center;
+}
+.pulls-no-request {
+  padding:30px;
+  margin:1px auto;
+  width:600px;
+}
+
 .text-gray { color:#767676 }
 
 input[type=text], input[type=password] {
@@ -83,7 +104,6 @@ input[type=text], input[type=password] {
 .project-tabs li {
   display:block;
   float:left;
-  width:90px;
   margin-bottom:0px;
 }
 
@@ -99,13 +119,13 @@ input[type=text], input[type=password] {
   display:block;
   width:100%;
   text-decoration:none;
-  padding:8px 0px 7px 0px;
+  padding:8px 11px 7px 11px;
   text-align:center;
   color:#565656;
 }
 
 .project-tabs li.active a {
-  padding:5px 0px 7px 0px;
+  padding:5px 11px 7px 11px;
 }
 
 .admin-users {

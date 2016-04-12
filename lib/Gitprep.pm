@@ -318,6 +318,9 @@ sub startup {
             
             # Home
             $r->get('/' => sub { shift->render_maybe('/tree') });
+
+            # Tags
+            $r->get('/pulls' => sub { shift->render_maybe('/pulls') })->to(tab => 'pulls');
             
             # Commit
             $r->get('/commit/*diff' => sub { shift->render_maybe('/commit') });
@@ -352,6 +355,7 @@ sub startup {
             $r->get('/archive/(*rev).zip' => sub { shift->render_maybe('/archive') })->to(archive_type => 'zip' );
             
             # Compare
+            $r->get('/compare' => sub { shift->render_maybe('/compare') });
             $r->get('/compare/(*rev1)...(*rev2)' => sub { shift->render_maybe('/compare') });
             
             # Settings

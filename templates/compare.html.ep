@@ -46,7 +46,7 @@
   stash rev => $end_commit->{id};
   stash from_rev => $start_commit->{id};
 
-  layout 'common', title => "Comparing $rev1...$rev2 \x{30fb} $user/$project";
+  layout 'common', title => "Comparing $from_rev...$rev \x{30fb} $user/$project";
 %>
 
 

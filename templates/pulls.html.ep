@@ -1,0 +1,46 @@
+<%
+  # API
+  my $api = Gitprep::API->new($self);
+
+  # Parameters
+  my $user = param('user');
+  my $project = param('project');
+  my $page = param('page') || 1;
+  
+  # Git
+  my $git = $self->app->git;
+  
+  # Ref names
+  my $limit = app->config->{basic}{tags_limit};
+  my $page_count = 20;
+  my $tags = $git->tags(
+    $user,
+    $project,
+    $limit,
+    $page_count,
+    $page_count * ($page - 1)
+  );
+  my $tags_count = $git->tags_count($user, $project);
+%>
+
+% layout 'common', title => "Tags \x{30fb} $user/$project";
+  
+  %= include '/include/header';
+  
+  <div class="container">
+    <div class="pulls-button-container">
+      <a href="<%= url_for("/$user/$project/compare") %>" class="btn btn-success">New pull request</a>
+    </div>
+    <div class="pulls">
+      <div class="pulls-header">
+        Open Close
+      </div>
+      <div class="pulls-body">
+        <div class="pulls-no-request">
+          <div style="font-size:18px"><b>There aren’t any open pull requests.</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  %= include '/include/footer';
