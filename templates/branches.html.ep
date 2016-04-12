@@ -278,7 +278,7 @@
                           <a href="<%= url_for("/$user/$project/settings#form-default-branch") %>" type="submit" class="btn btn-small">Change default branch</a>
                         % }
                       % } else {
-                        <a class="btn btn-small" href="<%= url_for("/$user/$project/compare/$bname") %>">
+                        <a class="btn btn-small" href="<%= url_for("/$user/$project/compare/$bname")->query(expand => 1) %>">
                           % if ($api->logined) {
                             New pull request
                           % } else {

@@ -230,8 +230,13 @@
   
     %= include '/include/commit_body';
   % } else {
-    <div>
-      <b>There isn't anything to compare.</b>
+    <div class="compare-nothing">
+      <div>
+        <b><big>There isn't anything to compare.</big></b>
+      </div>
+      <div>
+        <b><%= $from_rev %></b> is up to date with all commits from <b><%= $rev %></b>. Try <a href="<%= url_for("/$user/$project/compare/$rev...$from_rev") %>">switching the base</a> for your comparison.
+      </div>
     </div>
   % }
 </div>

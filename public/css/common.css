@@ -35,6 +35,15 @@
   box-sizing: border-box;
 }
 
+.compare-nothing {
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  background:#fafafa;
+  padding:25px 0 30px 0;
+  text-align:center;
+  line-height:150%;
+}
+
 .pulls-button-container {
   text-align:right;
   margin-bottom:10px;
