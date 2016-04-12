@@ -226,7 +226,7 @@
                 Settings
               </h4>
             </li>
-            <li>
+            <li id="default-branch">
               Default Branch
               <%
                 my $branches = $git->branches($user, $project);

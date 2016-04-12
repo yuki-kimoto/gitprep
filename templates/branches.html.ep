@@ -275,7 +275,7 @@
                     <li class="last-child">
                       % if ($bname eq $default_branch_name) {
                         % if ($api->logined($user)) {
-                          <a href="<%= url_for("/$user/$project/settings") %>" type="submit" class="btn btn-small">Change default branch</a>
+                          <a href="<%= url_for("/$user/$project/settings#form-default-branch") %>" type="submit" class="btn btn-small">Change default branch</a>
                         % }
                       % } else {
                         <a class="btn btn-small" href="<%= url_for("/$user/$project/compare/$bname") %>">
