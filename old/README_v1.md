@@ -1,8 +1,6 @@
-# GitPrep
+# GitPrep version v1.12 document
 
 Github clone. You can install portable github system into Unix/Linux.
-
-**This is GitPrep version v1.12 document**
 
 See GitPrep example site. [GitPrep example site](http://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)
 
