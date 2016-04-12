@@ -220,18 +220,6 @@ Please increase the value of http.postBuffer.
     # 1GB
     git config http.postBuffer 1024000000
 
-### I can't create repository and see error message when I create repository with readme
-
-If you see the following error message in log/production.log
-
-    [Wed Feb 12 15:27:02 2014] [error] ... Can't execute git commit ...
-
-you need to set User name and Email of git.
-Please set user.name and user.email.
-
-    git config --global user.name "gitprep"
-    git config --global user.email "gitprep@example.com"
-
 ### How to use reverse proxy?
 
 You can use GitPrep via reverse proxy access
