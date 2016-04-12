@@ -8,6 +8,7 @@
   my $from_rev = param('rev1');
   my $rev = param('rev2');
   my $page = param('page') || 0;
+  my $expand = param('expand');
   
   unless ($from_rev) {
     $from_rev = app->manager->default_branch($user, $project);
@@ -49,7 +50,13 @@
   stash from_id => $start_commit->{id};
   stash rev => $end_commit->{id};
   stash from_rev => $start_commit->{id};
-
+  
+  # Can open pull request
+  my $can_open_pull_request;
+  if (keys %$commits_date && $expand) {
+    $can_open_pull_request = 1;
+  }
+  
   layout 'common', title => "Comparing $from_rev...$rev \x{30fb} $user/$project";
 %>
 
@@ -98,7 +105,13 @@
 %= include '/include/header';
 
 <div class="container">
-  <div class="topic1">Comparing changes</div>
+  <div class="topic1">
+    % if ($can_open_pull_request) {
+      Open a pull request
+    % } else {
+      Comparing changes
+    % }
+  </div>
   <div class="compare-select">
     <div>
       <div>
@@ -168,6 +181,22 @@
       </div>
     </div>
   </div>
+  
+  % if ($can_open_pull_request) {
+    <div class="compare-open-pull-request">
+      <form>
+        <div class="compare-open-pull-request-title">
+          <%= text_field 'title' %>
+        </div>
+        <div class="compare-open-pull-request-message">
+          <%= text_area 'message' %>
+        </div>
+        <div class="compare-open-pull-request-button">
+          <%= submit_button 'Create pull request', class => 'btn btn-success' %>
+        </div>
+      </form>
+    </div>
+  % }
 
   % if (keys %$commits_date) {
     <ul class="compare-header">

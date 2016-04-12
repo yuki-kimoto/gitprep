@@ -35,6 +35,30 @@
   box-sizing: border-box;
 }
 
+.compare-open-pull-request {
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  width:80%;
+}
+.compare-open-pull-request-title {
+  border-bottom:1px solid #d8d8d8;
+  padding:10px;
+}
+.compare-open-pull-request-message {
+  padding:10px;
+}
+.compare-open-pull-request [type=text] {
+  width:100%;
+}
+.compare-open-pull-request textarea {
+  width:100%;
+  min-height:200px;
+}
+.compare-open-pull-request-button {
+  padding:10px;
+  text-align:right;
+}
+
 .compare-nothing {
   border:1px solid #d8d8d8;
   border-radius: 3px;
