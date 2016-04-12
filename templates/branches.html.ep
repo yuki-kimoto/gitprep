@@ -279,7 +279,11 @@
                         % }
                       % } else {
                         <a class="btn btn-small" href="<%= url_for("/$user/$project/compare/$bname") %>">
-                          Compare
+                          % if ($api->logined) {
+                            New pull request
+                          % } else {
+                            Compare
+                          % }
                         </a>
                         % if ($api->logined($user)) {
                           <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">

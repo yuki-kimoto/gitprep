@@ -127,7 +127,7 @@ note 'Admin page';
     $t->content_like(qr/Two password/);
     
     # Create user
-    $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', name => 'Kimoto', mail => 'kimoto@foo.com', password => 'a', password2 => 'a'});
+    $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', name => 'Kimoto', mail => 'kimoto@gitprep.example', password => 'a', password2 => 'a'});
     $t->content_like(qr/Success.*created/);
   }
     
@@ -136,7 +136,7 @@ note 'Admin page';
   $t->content_like(qr/Admin Users/);
   $t->content_like(qr/kimoto/);
   $t->content_like(qr/Kimoto/);
-  $t->content_like(qr/kimoto\@foo\.com/);
+  $t->content_like(qr/kimoto\@gitprep\.example/);
   
   note 'Admin page - Reset password';
   {
@@ -165,19 +165,19 @@ note 'Admin page';
   note 'Admin page - Update user';
   {
     # Create user
-    $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto-update', name => 'Kimoto-Update', mail => 'kimoto-update@foo.com', password => 'a', password2 => 'a'});
+    $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto-update', name => 'Kimoto-Update', mail => 'kimoto-update@gitprep.example', password => 'a', password2 => 'a'});
     $t->content_like(qr/kimoto-update/);
     
     # Update user
-    $t->post_ok('/_admin/user/update?op=update', form => {id => 'kimoto-update', name => 'Kimoto-Update2', mail => 'kimoto-update2@foo.com'});
+    $t->post_ok('/_admin/user/update?op=update', form => {id => 'kimoto-update', name => 'Kimoto-Update2', mail => 'kimoto-update2@gitprep.example'});
     $t->content_like(qr/Kimoto-Update2/);
-    $t->content_like(qr/kimoto-update2\@foo\.com/);
+    $t->content_like(qr/kimoto-update2\@gitprep\.example/);
   }
 
   note 'Admin page - Delete user';
   {
     # Create user
-    $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto-tmp', mail => 'kimoto-tmp@foo.com', password => 'a', password2 => 'a'});
+    $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto-tmp', mail => 'kimoto-tmp@gitprep.example', password => 'a', password2 => 'a'});
     $t->content_like(qr/kimoto-tmp/);
     $t->get_ok('/_admin/users');
     $t->content_like(qr/kimoto-tmp/);
@@ -229,9 +229,9 @@ note 'Reset password';
   $t->content_like(qr/Admin/);
   
   # Create user
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto1', mail => 'kimoto1@foo.com', password => 'a', password2 => 'a'});
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto1', mail => 'kimoto1@gitprep.example', password => 'a', password2 => 'a'});
   $t->content_like(qr/kimoto1/);
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', mail => 'kimoto2@foo.com', password => 'a', password2 => 'a'});
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', mail => 'kimoto2@gitprep.example', password => 'a', password2 => 'a'});
   $t->content_like(qr/kimoto2/);
   
   # Logout
@@ -276,9 +276,9 @@ note 'Profile';
   $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'a'});
 
   # Create user
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto1', mail => 'kimoto1@foo.com', password => 'a', password2 => 'a'});
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto1', mail => 'kimoto1@gitprep.example', password => 'a', password2 => 'a'});
   $t->content_like(qr/kimoto1/);
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', mail => 'kimoto2@foo.com', password => 'a', password2 => 'a'});
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', mail => 'kimoto2@gitprep.example', password => 'a', password2 => 'a'});
   $t->content_like(qr/kimoto2/);
   
   # Login as kimoto1
@@ -323,7 +323,7 @@ note 'Profile';
     $t->content_like(qr/first commit/);
     $t->content_like(qr/t2\.git/);
     $t->content_like(qr/README\.md/);
-    $t->content_like(qr/kimoto1\@localhost/);
+    $t->content_like(qr/kimoto1\@gitprep\.example/);
     $t->content_like(qr/Hello/);
 
     # Settings page(don't has README)
@@ -566,9 +566,9 @@ note 'Private repository and collaborator';
   $t->content_like(qr/Admin/);
   
   # Create user
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', mail => 'kimoto@foo.com', password => 'a', password2 => 'a'});
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', mail => 'kimoto@gitprep.example', password => 'a', password2 => 'a'});
   $t->content_like(qr/Success.*created/);
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', mail => 'kimoto2@foo.com', password => 'a', password2 => 'a'});
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', mail => 'kimoto2@gitprep.example', password => 'a', password2 => 'a'});
   $t->content_like(qr/Success.*created/);
 
   # Login as kimoto

@@ -710,14 +710,35 @@ sub _create_rep {
       Gitprep::Util::run_command(@git_add_cmd)
         or croak "Can't execute git add: @git_add_cmd";
       
+      # Set user name
+      my @git_config_user_name = $git->cmd_rep(
+        $temp_work,
+        "--work-tree=$temp_work",
+        'config',
+        'user.name',
+        $user
+      );
+      Gitprep::Util::run_command(@git_config_user_name)
+        or croak "Can't execute git config: @git_config_user_name";
+      
+      # Set user mail
+      my $user_mail = $self->app->dbi->model('user')->select('mail', where => {id => $user})->value;
+      my @git_config_user_mail = $git->cmd_rep(
+        $temp_work,
+        "--work-tree=$temp_work",
+        'config',
+        'user.email',
+        "$user_mail"
+      );
+      Gitprep::Util::run_command(@git_config_user_mail)
+        or croak "Can't execute git config: @git_config_user_mail";
+      
       # Commit
-      my $author = "$user <$user\@localhost>";
       my @git_commit_cmd = $git->cmd_rep(
         $temp_work,
         "--work-tree=$temp_work",
         'commit',
         '-q',
-        "--author=$author",
         '-m',
         'first commit'
       );
