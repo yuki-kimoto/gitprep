@@ -98,7 +98,7 @@
 %= include '/include/header';
 
 <div class="container">
-  <div class="topic1">Compare View</div>
+  <div class="topic1">Comparing changes</div>
   <div class="compare-select">
     <div>
       <div>
