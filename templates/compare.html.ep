@@ -57,6 +57,12 @@
     $can_open_pull_request = 1;
   }
   
+  # Can merge
+  my $can_merge;
+  if ($can_open_pull_request) {
+    
+  }
+  
   layout 'common', title => "Comparing $from_rev...$rev \x{30fb} $user/$project";
 %>
 
@@ -186,7 +192,7 @@
     <div class="compare-open-pull-request">
       <form>
         <div class="compare-open-pull-request-title">
-          <%= text_field 'title' %>
+          <%= text_field 'title' => $commits->[0]{title_short}  %>
         </div>
         <div class="compare-open-pull-request-message">
           <%= text_area 'message' %>
