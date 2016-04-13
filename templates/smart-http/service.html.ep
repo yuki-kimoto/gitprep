@@ -10,7 +10,7 @@
   my $git = app->git;
   
   my $rep_dir = $git->rep($user, $project);
-  my @cmd = $git->cmd_remote($user, $project, $service, '--stateless-rpc', $rep_dir);
+  my @cmd = $git->cmd($user, $project, $service, '--stateless-rpc', $rep_dir);
   
   # Command
   my ($cout, $cerr) = (Symbol::gensym, Symbol::gensym);

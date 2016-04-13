@@ -664,7 +664,7 @@ sub _create_rep {
   eval {
     # Git init
     {
-      my @git_init_cmd = $git->cmd_remote_dir($rep, 'init', '--bare');
+      my @git_init_cmd = $git->cmd_dir($rep, 'init', '--bare');
       Gitprep::Util::run_command(@git_init_cmd)
         or croak  "Can't execute git init --bare:@git_init_cmd";
     }
@@ -677,7 +677,7 @@ sub _create_rep {
     }
     
     # HTTP support
-    my @git_update_server_info_cmd = $git->cmd_remote_dir(
+    my @git_update_server_info_cmd = $git->cmd_dir(
       $rep,
       '--bare',
       'update-server-info'
@@ -710,7 +710,7 @@ sub _create_rep {
         or croak "Can't create directory $temp_work: $!";
       
       # Git init
-      my @git_init_cmd = $git->cmd_remote_dir($temp_work, 'init', '-q');
+      my @git_init_cmd = $git->cmd_dir($temp_work, 'init', '-q');
       Gitprep::Util::run_command(@git_init_cmd)
         or croak "Can't execute git init: @git_init_cmd";
       
@@ -722,9 +722,8 @@ sub _create_rep {
       print $readme_fh "\n" . encode('UTF-8', $description) . "\n";
       close $readme_fh;
       
-      my @git_add_cmd = $git->cmd_remote_dir(
+      my @git_add_cmd = $git->cmd_working_dir(
         $temp_work,
-        "--work-tree=$temp_work",
         'add',
         'README.md'
       );
@@ -732,9 +731,8 @@ sub _create_rep {
         or croak "Can't execute git add: @git_add_cmd";
       
       # Set user name
-      my @git_config_user_name = $git->cmd_remote_dir(
+      my @git_config_user_name = $git->cmd_working_dir(
         $temp_work,
-        "--work-tree=$temp_work",
         'config',
         'user.name',
         $user
@@ -744,9 +742,8 @@ sub _create_rep {
       
       # Set user mail
       my $user_mail = $self->app->dbi->model('user')->select('mail', where => {id => $user})->value;
-      my @git_config_user_mail = $git->cmd_remote_dir(
+      my @git_config_user_mail = $git->cmd_working_dir(
         $temp_work,
-        "--work-tree=$temp_work",
         'config',
         'user.email',
         "$user_mail"
@@ -755,9 +752,8 @@ sub _create_rep {
         or croak "Can't execute git config: @git_config_user_mail";
       
       # Commit
-      my @git_commit_cmd = $git->cmd_remote_dir(
+      my @git_commit_cmd = $git->cmd_working_dir(
         $temp_work,
-        "--work-tree=$temp_work",
         'commit',
         '-q',
         '-m',
@@ -768,9 +764,8 @@ sub _create_rep {
       
       # Push
       {
-        my @git_push_cmd = $git->cmd_remote_dir(
+        my @git_push_cmd = $git->cmd_working_dir(
           $temp_work,
-          "--work-tree=$temp_work",
           'push',
           '-q',
           $rep,
