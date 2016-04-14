@@ -12,7 +12,7 @@ use Encode qw/encode decode/;
 use Test::Mojo;
 
 # Data directory
-my $data_dir = "$FindBin::Bin/user";
+my $data_dir =  $ENV{GITPREP_DATA_DIR} = "$FindBin::Bin/user";
 
 # Test DB
 my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/user/gitprep.db";
@@ -29,7 +29,6 @@ note 'Start page';
   unlink $db_file;
 
   my $app = Gitprep->new;
-  $app->config(data_dir => $data_dir);
   $app->manager->setup_database;
   
   my $t = Test::Mojo->new($app);
@@ -69,7 +68,6 @@ note 'Admin page';
   unlink $db_file;
 
   my $app = Gitprep->new;
-  $app->config(data_dir => $data_dir);
   $app->manager->setup_database;
 
   my $t = Test::Mojo->new($app);
@@ -211,7 +209,6 @@ note 'Reset password';
   unlink $db_file;
 
   my $app = Gitprep->new;
-  $app->config(data_dir => $data_dir);
   $app->manager->setup_database;
 
   my $t = Test::Mojo->new($app);
@@ -273,7 +270,6 @@ note 'Profile';
   rmtree $rep_home;
 
   my $app = Gitprep->new;
-  $app->config(data_dir => $data_dir);
   $app->manager->setup_database;
 
   my $t = Test::Mojo->new($app);
@@ -416,7 +412,6 @@ note 'Profile';
 note 'fork';
 {
   my $app = Gitprep->new;
-  $app->config(data_dir => $data_dir);
   $app->manager->setup_database;
 
   my $t = Test::Mojo->new($app);
@@ -444,7 +439,6 @@ note 'fork';
 note 'Network';
 {
   my $app = Gitprep->new;
-  $app->config(data_dir => $data_dir);
   $app->manager->setup_database;
 
   my $t = Test::Mojo->new($app);
@@ -466,7 +460,6 @@ note 'Network';
 note 'Delete branch';
 {
   my $app = Gitprep->new;
-  $app->config(data_dir => $data_dir);
   $app->manager->setup_database;
 
   my $t = Test::Mojo->new($app);
@@ -500,7 +493,6 @@ note 'Delete branch';
 note 'import-branch';
 {
   my $app = Gitprep->new;
-  $app->config(data_dir => $data_dir);
   $app->manager->setup_database;
 
   my $t = Test::Mojo->new($app);
@@ -572,7 +564,6 @@ note 'Private repository and collaborator';
   rmtree $rep_home;
 
   my $app = Gitprep->new;
-  $app->config(data_dir => $data_dir);
   $app->manager->setup_database;
 
   my $t = Test::Mojo->new($app);

@@ -84,9 +84,8 @@ sub startup {
   $conf->{hypnotoad}{listen} = $listen;
   
   # Data directory
-  unless ($self->config('data_dir')) {
-    $self->config('data_dir' => $self->home->rel_file('data'));
-  }
+  my $data_dir = $ENV{GITPREP_DATA_DIR} ? $ENV{GITPREP_DATA_DIR} : $self->home->rel_file('data');
+  $self->config(data_dir => $data_dir);
   
   # Git
   my $git = Gitprep::Git->new;

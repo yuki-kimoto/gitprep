@@ -10,9 +10,10 @@ use Getopt::Long;
 use File::Basename 'basename';
 use Gitprep;
 use Encode 'decode';
+use Mojo::Server;
 
 no warnings;
-my $app = Gitprep->new;
+my $app = Mojo::Server->new->load_app("$FindBin::Bin/gitprep");
 my $dbi = $app->dbi;
 my $manager = $app->manager;
 my $git = $app->git;
