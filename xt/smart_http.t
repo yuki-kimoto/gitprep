@@ -13,10 +13,10 @@ use MIME::Base64 'encode_base64';
 use Test::Mojo;
 
 # Test DB
-my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/smart_http.db";
+my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/smart_http/gitprep.db";
 
 # Test Repository home
-my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/smart_http";
+my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/smart_http/rep";
 
 $ENV{GITPREP_NO_MYCONFIG} = 1;
 

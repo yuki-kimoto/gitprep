@@ -12,10 +12,10 @@ use Encode qw/encode decode/;
 use Test::Mojo;
 
 # Test DB
-my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/user.db";
+my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/user/gitprep.db";
 
 # Test Repository home
-my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/user";
+my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/user/rep";
 
 $ENV{GITPREP_NO_MYCONFIG} = 1;
 

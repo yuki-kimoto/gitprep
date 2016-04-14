@@ -12,10 +12,10 @@ use Encode qw/encode decode/;
 use Test::Mojo;
 
 # Test DB
-my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/import_rep.db";
+my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/import_rep/gitprep.db";
 
 # Test Repository home
-my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/import_rep_user";
+my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/import_rep/rep";
 
 $ENV{GITPREP_NO_MYCONFIG} = 1;
 
@@ -52,12 +52,12 @@ note 'import_rep';
     or die "Command fail: @cmd";
   
   # Branch
-  ok(-f "$FindBin::Bin/import_rep_user/kimoto/gitprep_t.git/refs/heads/b1");
+  ok(-f "$rep_home/kimoto/gitprep_t.git/refs/heads/b1");
 
   # Tag
-  ok(-f "$FindBin::Bin/import_rep_user/kimoto/gitprep_t.git/refs/tags/t1");
+  ok(-f "$rep_home/kimoto/gitprep_t.git/refs/tags/t1");
   
   # Description
-  ok(-f "$FindBin::Bin/import_rep_user/kimoto/gitprep_t.git/description");
+  ok(-f "$rep_home/kimoto/gitprep_t.git/description");
 }
 

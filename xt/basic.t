@@ -9,7 +9,7 @@ use Encode qw/encode decode/;
 use Test::Mojo;
 
 # Test DB
-$ENV{GITPREP_DB_FILE} = "$FindBin::Bin/basic.db";
+$ENV{GITPREP_DB_FILE} = "$FindBin::Bin/basic/gitprep.db";
 
 # Test Repository home
 $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/../../gitprep_t_rep_home";

@@ -31,12 +31,6 @@ setup/log/*
 setup/latest-build
 setup/work/*
 setup/build.log
-xt/admin.db
-xt/admin
-xt/user.db
-xt/user
-xt/log
-xt/import_rep.db
-xt/import_rep_user
-xt/smart_http.db
-xt/smart_http
+xt/user/*
+xt/import_rep/*
+xt/smart_http/*
