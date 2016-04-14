@@ -12,7 +12,10 @@ use Test::Mojo;
 $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/basic/gitprep.db";
 
 # Test Repository home
-$ENV{GITPREP_REP_HOME} = "$FindBin::Bin/../../gitprep_t_rep_home";
+# You must clone "gitprep_t"
+# cd basic/rep/kimoto
+# git clone --bare https://github.com/yuki-kimoto/gitprep_t.git
+$ENV{GITPREP_REP_HOME} = "$FindBin::Bin/basic/rep";
 
 $ENV{GITPREP_NO_MYCONFIG} = 1;
 
@@ -55,7 +58,7 @@ note 'Project page';
   $t->get_ok("/$user/$project");
   
   # Description
-  $t->content_like(qr/gitprep test repository/);
+  $t->content_like(qr/Unnamed repository/);
   
   # Commit datetime
   $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
