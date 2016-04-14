@@ -25,6 +25,7 @@
     my $rep = app->git->repository($user_id, $project->{name}) || {none => 1};
     $rep->{name} = $project->{name};
     $rep->{private} = $project->{private};
+    $rep->{age} //= 0;
     push @$reps, $rep;
   }
 %>
