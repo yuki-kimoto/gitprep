@@ -23,8 +23,47 @@ has 'git';
 has 'manager';
 has 'vc';
 
-
 use constant BUFFER_SIZE => 8192;
+
+sub data_dir {
+  my $self = shift;
+  
+  my $data_dir = $self->config('data_dir');
+  
+  return $data_dir;
+}
+
+sub rep_home {
+  my $self = shift;
+  
+  my $rep_home = $self->data_dir . "/rep";
+  
+  return $rep_home;
+}
+
+sub rep_path {
+  my ($self, $user, $project) = @_;
+  
+  my $rep_path = $self->rep_home . "/$user/$project.git";
+  
+  return $rep_path
+}
+
+sub rep_work_home {
+  my $self = shift;
+  
+  my $work_home = $self->work_home . "/work";
+  
+  return $work_home;
+}
+
+sub rep_work_path {
+  my ($self, $user, $project) = @_;
+  
+  my $rep_path = $self->rep_work_home . "/$user/$project";
+  
+  return $rep_path
+}
 
 sub startup {
   my $self = shift;
@@ -43,6 +82,11 @@ sub startup {
   my $listen = $conf->{hypnotoad}{listen} ||= ['http://*:10020'];
   $listen = [split /,/, $listen] unless ref $listen eq 'ARRAY';
   $conf->{hypnotoad}{listen} = $listen;
+  
+  # Data directory
+  unless ($self->config('data_dir')) {
+    $self->config('data_dir' => $self->home->rel_file('data'));
+  }
   
   # Git
   my $git = Gitprep::Git->new;
