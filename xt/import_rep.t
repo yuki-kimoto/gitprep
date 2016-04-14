@@ -49,7 +49,7 @@ note 'import_rep';
   $t->content_like(qr/Success.*created/);
   
   # Import repositories
-  my $rep_dir = "$FindBin::Bin/../../gitprep_t_rep_home/kimoto";
+  my $rep_dir = "$FindBin::Bin/basic/rep/kimoto";
   chdir "$FindBin::Bin/../script"
     or die "Can't change directory: $!";
   my @cmd = ('./import_rep', '-u', 'kimoto', $rep_dir);
