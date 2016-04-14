@@ -90,7 +90,7 @@ for my $rep (glob "$rep_dir/*") {
     # Push repository
     chdir $rep
       or warn "Can't change directory $rep: $!\n";
-    my $remote_rep = $git->rep($user, $project);
+    my $remote_rep = $app->rep_path($user, $project);
     
     # push branches
     {

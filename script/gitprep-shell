@@ -18,7 +18,7 @@ my $session_user = shift;
 die "User not specifed" unless defined $session_user;
 
 # Application
-my $app = Gitprep->new;
+my $app = Mojo::Server->new->load_app("$FindBin::Bin/gitprep");
 
 # Git
 my $git = $app->git;
@@ -66,8 +66,8 @@ die qq|User "$session_user" can't access repository "$user/$project.git"\n|
   unless $can_access; 
 
 # Command
-my $rep_home = $git->rep_home;
-my $repository = "'$rep_home/$user/$project.git'";
+my $rep = $app->rep_path($user, $project);
+my $repository = "'$rep'";
 my @git_shell_cmd = ("git", "shell", "-c", "$verb $repository");
 warn "@git_shell_cmd" if $debug;
 unless ($debug) {

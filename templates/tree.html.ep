@@ -63,7 +63,7 @@
   my $url = url_for->to_abs;
   $url->base(undef);
   my $ssh_port = config->{basic}{ssh_port};
-  my $rep_home = app->git->rep_home;
+  my $rep_home = app->rep_home;
   my $execute_user = getpwuid($>);
   my $ssh_rep_url_base = defined app->config->{basic}{'ssh_rep_url_base'}
     ? app->config->{basic}{'ssh_rep_url_base'} : $rep_home;

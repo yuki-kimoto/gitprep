@@ -124,7 +124,6 @@ sub startup {
   
   # Repository home
   my $rep_home = $ENV{GITPREP_REP_HOME} || $self->home->rel_file('data/rep');
-  $git->rep_home($rep_home);
   unless (-d $rep_home) {
     mkdir $rep_home
       or croak "Can't create directory $rep_home: $!";

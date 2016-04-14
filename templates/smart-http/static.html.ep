@@ -31,8 +31,8 @@
     $content_type = 'application/x-git-packed-objects-toc';
   }
   
-  my $rep_home = app->git->rep_home;
-  my $file = "$rep_home/$user/$project.git/$path";
+  my $rep = app->rep_path($user, $project);
+  my $file = "$rep/$path";
   if (-f $file) {
     my $asset = Mojo::Asset::File->new(path => $file);
     my $content = $asset->slurp;

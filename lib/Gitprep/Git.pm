@@ -15,7 +15,6 @@ use Gitprep::Util;
 # Attributes
 has 'bin';
 has default_encoding => 'UTF-8';
-has 'rep_home';
 has text_exts => sub { ['txt'] };
 has 'time_zone_second';
 has 'app';
@@ -126,8 +125,7 @@ sub cmd_clone {
   my ($self, $user, $project) = @_;
 
   # Repository
-  my $home = $self->rep_home;
-  my $rep = "$home/$user/$project.git";
+  my $rep = $self->app->rep_path($user, $project);
   
   # Working directory
   my $working_dir = $self->app->home->rel_file("/data/work/$user/$project");
@@ -138,8 +136,7 @@ sub cmd {
   my ($self, $user, $project, @cmd) = @_;
   
   # Git command
-  my $home = $self->rep_home;
-  my $rep = "$home/$user/$project.git";
+  my $rep = $self->app->rep_path($user, $project);
   
   return $self->cmd_dir($rep, @cmd);
 }
@@ -568,7 +565,6 @@ sub exists_branch {
   my ($self, $user, $project) = @_;
   
   # Exists branch
-  my $home = $self->rep_home;
   my @cmd = $self->cmd($user, $project, 'branch');
   open my $fh, "-|", @cmd
     or croak 'git branch failed';
@@ -989,14 +985,6 @@ sub references {
   close $fh or return;
   
   return \%refs;
-}
-
-sub rep {
-  my ($self, $user, $project) = @_;
-  
-  my $home = $self->rep_home;
-  
-  return "$home/$user/$project.git";
 }
 
 sub short_id {

@@ -657,7 +657,7 @@ sub _create_rep {
   
   # Create repository directory
   my $git = $self->app->git;
-  my $rep = $git->rep($user, $project);
+  my $rep = $self->app->rep_path($user, $project);
   mkdir $rep
     or croak "Can't create directory $rep: $!";
   
@@ -794,7 +794,7 @@ sub _create_user_dir {
   my ($self, $user) = @_;
   
   # Create user directory
-  my $rep_home = $self->app->git->rep_home;
+  my $rep_home = $self->app->rep_home;
   my $user_dir = "$rep_home/$user";
   mkpath $user_dir;
 }
@@ -812,7 +812,7 @@ sub _delete_user_dir {
   my ($self, $user) = @_;
   
   # Delete user directory
-  my $rep_home = $self->app->git->rep_home;
+  my $rep_home = $self->app->rep_home;
   my $user_dir = "$rep_home/$user";
   rmtree $user_dir;
 }
@@ -829,7 +829,7 @@ sub _delete_rep {
   my ($self, $user, $project) = @_;
 
   # Delete repository
-  my $rep_home = $self->app->git->rep_home;
+  my $rep_home = $self->app->rep_home;
   croak "Can't remove repository. repository home is empty"
     if !defined $rep_home || $rep_home eq '';
   my $rep = "$rep_home/$user/$project.git";
@@ -861,7 +861,7 @@ sub _exists_rep {
   my ($self, $user, $project) = @_;
   
   # Exists repository
-  my $rep = $self->app->git->rep($user, $project);
+  my $rep = $self->app->rep_path($user, $project);
   
   return -e $rep;
 }
@@ -871,8 +871,8 @@ sub _fork_rep {
   
   # Fork repository
   my $git = $self->app->git;
-  my $rep = $git->rep($user, $project);
-  my $to_rep = $git->rep($to_user, $to_project);
+  my $rep = $self->app->rep_path($user, $project);
+  my $to_rep = $self->app->rep_path($to_user, $to_project);
   my @cmd = (
     $git->bin,
     'clone',
@@ -912,8 +912,8 @@ sub _rename_rep {
     unless defined $user && defined $project && defined $renamed_project;
 
   # Rename repository
-  my $rep = $self->app->git->rep($user, $project);
-  my $renamed_rep = $self->app->git->rep($user, $renamed_project);
+  my $rep = $self->app->rep_path($user, $project);
+  my $renamed_rep = $self->app->rep_path($user, $renamed_project);
   move($rep, $renamed_rep)
     or croak "Can't move $rep to $renamed_rep: $!";
 }

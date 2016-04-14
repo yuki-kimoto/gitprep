@@ -14,7 +14,7 @@
     my $service_cmd = $service;
     substr($service_cmd, 0, 4, '');
     
-    my $rep = $git->rep($user, $project);
+    my $rep = app->rep_path($user, $project);
     my @cmd = $git->cmd($user, $project, $service_cmd, '--stateless-rpc', '--advertise-refs', $rep);
     
     my ($cout, $cerr) = (Symbol::gensym, Symbol::gensym);
@@ -65,8 +65,8 @@
       or die "Can't close pipe for @cmd:$!";
     
     my $content_type = 'text/plain; charset=UTF-8';
-    my $rep_home = app->git->rep_home;
-    my $file = "$rep_home/$user/$project.git/info/refs";
+    my $rep = app->rep_path($user, $project);
+    my $file = "$rep/info/refs";
     if (-f $file) {
       my $asset = Mojo::Asset::File->new(path => $file);
       my $content = $asset->slurp;
