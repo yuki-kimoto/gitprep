@@ -8,6 +8,9 @@ use Encode qw/encode decode/;
 
 use Test::Mojo;
 
+# Data directory
+my $data_dir = "$FindBin::Bin/basic";
+
 # Test DB
 $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/basic/gitprep.db";
 
@@ -22,6 +25,9 @@ $ENV{GITPREP_NO_MYCONFIG} = 1;
 use Gitprep;
 
 my $app = Gitprep->new;
+$app->config(data_dir => $data_dir);
+$app->manager->setup_database;
+
 my $t = Test::Mojo->new($app);
 
 my $user = 'kimoto';

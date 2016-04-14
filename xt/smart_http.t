@@ -12,6 +12,9 @@ use MIME::Base64 'encode_base64';
 
 use Test::Mojo;
 
+# Data directory
+my $data_dir = "$FindBin::Bin/smart_http";
+
 # Test DB
 my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/smart_http/gitprep.db";
 
@@ -28,7 +31,9 @@ note 'Smart HTTP';
   rmtree $rep_home;
 
   my $app = Gitprep->new;
+  $app->config(data_dir => $data_dir);
   $app->manager->setup_database;
+
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
 
@@ -137,7 +142,9 @@ note 'Private repository and collaborator';
   rmtree $rep_home;
 
   my $app = Gitprep->new;
+  $app->config(data_dir => $data_dir);
   $app->manager->setup_database;
+
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
 
