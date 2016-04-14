@@ -15,27 +15,6 @@ use Gitprep::Util;
 has 'app';
 has 'authorized_keys_file';
 
-sub working_home {
-  my ($self, $user, $project) = @_;
-  
-  my $working_home = $self->app->home->rel_file("data/work/$user/$project");
-  
-  return $working_home;
-}
-
-sub create_working_repository {
-  my ($self, $user, $project) = @_;
-  
-  my $working_home = $self->working_home($user, $project);
-  
-  mkpath $working_home;
-  
-  chdir $working_home
-    or croak "Can't change working directory $working_home: $!";
-  
-  
-}
-
 sub admin_user {
   my $self = shift;
   
@@ -722,7 +701,7 @@ sub _create_rep {
       print $readme_fh "\n" . encode('UTF-8', $description) . "\n";
       close $readme_fh;
       
-      my @git_add_cmd = $git->cmd_working_dir(
+      my @git_add_cmd = $git->cmd_work_dir(
         $temp_work,
         'add',
         'README.md'
@@ -731,7 +710,7 @@ sub _create_rep {
         or croak "Can't execute git add: @git_add_cmd";
       
       # Set user name
-      my @git_config_user_name = $git->cmd_working_dir(
+      my @git_config_user_name = $git->cmd_work_dir(
         $temp_work,
         'config',
         'user.name',
@@ -742,7 +721,7 @@ sub _create_rep {
       
       # Set user mail
       my $user_mail = $self->app->dbi->model('user')->select('mail', where => {id => $user})->value;
-      my @git_config_user_mail = $git->cmd_working_dir(
+      my @git_config_user_mail = $git->cmd_work_dir(
         $temp_work,
         'config',
         'user.email',
@@ -752,7 +731,7 @@ sub _create_rep {
         or croak "Can't execute git config: @git_config_user_mail";
       
       # Commit
-      my @git_commit_cmd = $git->cmd_working_dir(
+      my @git_commit_cmd = $git->cmd_work_dir(
         $temp_work,
         'commit',
         '-q',
@@ -764,7 +743,7 @@ sub _create_rep {
       
       # Push
       {
-        my @git_push_cmd = $git->cmd_working_dir(
+        my @git_push_cmd = $git->cmd_work_dir(
           $temp_work,
           'push',
           '-q',

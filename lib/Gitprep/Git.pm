@@ -39,7 +39,7 @@ sub branch_status {
   
   # Branch status
   my $status = {ahead => 0, behind => 0};
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'rev-list',
@@ -64,7 +64,7 @@ sub no_merged_branch_h {
   {
     my $rep = $self->app->rep_path($user, $project);
     
-    my @cmd = $self->cmd($user, $project, 'branch', '--no-merged');
+    my @cmd = $self->cmd_rep($user, $project, 'branch', '--no-merged');
     open my $fh, '-|', @cmd or return;
     my @lines = <$fh>;
     for my $branch_name (@lines) {
@@ -83,7 +83,7 @@ sub branches {
   my ($self, $user, $project) = @_;
   
   # Branches
-  my @cmd = $self->cmd($user, $project, 'branch');
+  my @cmd = $self->cmd_rep($user, $project, 'branch');
   open my $fh, '-|', @cmd or return;
   my $branches = [];
   my $start;
@@ -113,7 +113,7 @@ sub branches_count {
   my ($self, $user, $project) = @_;
   
   # Branches count
-  my @cmd = $self->cmd($user, $project, 'branch');
+  my @cmd = $self->cmd_rep($user, $project, 'branch');
   open my $fh, '-|', @cmd or return;
   my @branches = <$fh>;
   my $branches_count = @branches;
@@ -128,11 +128,12 @@ sub cmd_clone {
   my $rep = $self->app->rep_path($user, $project);
   
   # Working directory
-  my $working_dir = $self->app->home->rel_file("/data/work/$user/$project");
+  my $rep_work = $self->app->rep_work_path($user, $project);
   
-  return ($self->bin, 'clone', $rep, $working_dir)
+  return ($self->bin, 'clone', $rep, $rep_work)
 }
-sub cmd {
+
+sub cmd_rep {
   my ($self, $user, $project, @cmd) = @_;
   
   # Git command
@@ -147,16 +148,16 @@ sub cmd_dir {
   return ($self->bin, "--git-dir=$dir", @cmd);
 }
 
-sub cmd_working {
+sub cmd_rep_work {
   my ($self, $user, $project, @cmd) = @_;
   
-  # Git command
-  my $working_dir = $self->home->rel_file("/data/work/$user/$project");
+  # Working directory
+  my $rep_work = $self->app->rep_work_path($user, $project);
   
-  return $self->cmd_working_dir($working_dir, @cmd);
+  return $self->cmd_work_dir($rep_work, @cmd);
 }
 
-sub cmd_working_dir {
+sub cmd_work_dir {
   my ($self, $dir, @cmd) = @_;
   
   return ($self->bin, "--git-dir=$dir", "--work-tree=$dir",  @cmd);
@@ -166,7 +167,7 @@ sub authors {
   my ($self, $user, $project, $rev, $file) = @_;
   
   # Authors
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'log',
@@ -196,7 +197,7 @@ sub blame {
     or croak 'Cannot find file';
   
   # Git blame
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'blame',
@@ -295,7 +296,7 @@ sub blob {
   # Blob
   my $hash = $self->path_to_hash($user, $project, $rev, $file, 'blob')
     or croak 'Cannot find file';
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'cat-file',
@@ -327,7 +328,7 @@ sub blob_diffs {
   return unless defined $rev1 && defined $rev2;
   
   # Diff tree
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'diff-tree',
@@ -365,7 +366,7 @@ sub blob_diffs {
     my $file = $diffinfo->{to_file};
     
     # Blob diff
-    my @cmd = $self->cmd(
+    my @cmd = $self->cmd_rep(
       $user,
       $project,
       'diff-tree',
@@ -428,7 +429,7 @@ sub blob_mime_type {
   # Blob
   my $hash = $self->path_to_hash($user, $project, $rev, $file, 'blob')
     or croak 'Cannot find file';
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'cat-file',
@@ -473,7 +474,7 @@ sub blob_mode {
   
   # Blob mode
   $file =~ s#/+$##;
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'ls-tree',
@@ -495,7 +496,7 @@ sub blob_raw {
   my ($self, $user, $project, $rev, $path) = @_;
   
   # Blob raw
-  my @cmd = $self->cmd($user, $project, 'cat-file', 'blob', "$rev:$path");
+  my @cmd = $self->cmd_rep($user, $project, 'cat-file', 'blob', "$rev:$path");
   open my $fh, "-|", @cmd
     or croak 500, "Open git-cat-file failed";
   local $/;
@@ -510,7 +511,7 @@ sub blob_size {
   my ($self, $user, $project, $rev, $file) = @_;
   
   # Blob size(KB)
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'cat-file',
@@ -544,7 +545,7 @@ sub commits_number {
   my ($self, $user, $project, $ref) = @_;
   
   # Command "git diff-tree"
-  my @cmd = $self->cmd($user, $project, 'shortlog', '-s', $ref);
+  my @cmd = $self->cmd_rep($user, $project, 'shortlog', '-s', $ref);
   open my $fh, "-|", @cmd
     or croak 500, "Open git-shortlog failed";
   my @commits_infos = <$fh>;
@@ -565,7 +566,7 @@ sub exists_branch {
   my ($self, $user, $project) = @_;
   
   # Exists branch
-  my @cmd = $self->cmd($user, $project, 'branch');
+  my @cmd = $self->cmd_rep($user, $project, 'branch');
   open my $fh, "-|", @cmd
     or croak 'git branch failed';
   local $/;
@@ -587,7 +588,7 @@ sub delete_branch {
   }
   
   if ($exists) {
-    my @cmd = $self->cmd($user, $project, 'branch', '-D', $branch);
+    my @cmd = $self->cmd_rep($user, $project, 'branch', '-D', $branch);
     Gitprep::Util::run_command(@cmd)
       or croak "Branch deleting failed. Can't delete branch $branch";
   }
@@ -629,7 +630,7 @@ sub diff_tree {
   $parent = '--root' unless defined $parent;
 
   # Get diff tree
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     "diff-tree",
@@ -720,7 +721,7 @@ sub forward_commits {
   my ($self, $user, $project, $rev1, $rev2) = @_;
   
   # Forwarding commits
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'rev-list',
@@ -746,7 +747,7 @@ sub path_to_hash {
   
   # Get blob id or tree id (command "git ls-tree")
   $path =~ s#/+$##;
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'ls-tree',
@@ -771,7 +772,7 @@ sub last_activity {
   my ($self, $user, $project) = @_;
   
   # Command "git for-each-ref"
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'for-each-ref',
@@ -798,7 +799,7 @@ sub last_activity {
 sub no_merged_branches_count {
   my ($self, $user, $project) = @_;
   
-  my @cmd = $self->cmd($user, $project, 'branch', '--no-merged');
+  my @cmd = $self->cmd_rep($user, $project, 'branch', '--no-merged');
   open my $fh, '-|', @cmd or return;
   my @branches = <$fh>;
   my $branches_count = @branches;
@@ -813,7 +814,7 @@ sub path_by_id {
   return unless $hash;
   
   # Command "git ls-tree"
-  my @cmd = $self->cmd($user, $project, 'ls-tree', '-r', '-t', '-z', $base);
+  my @cmd = $self->cmd_rep($user, $project, 'ls-tree', '-r', '-t', '-z', $base);
   open my $fh, '-|', @cmd or return;
 
   # Get path
@@ -837,7 +838,7 @@ sub parse_rev_path {
   my ($self, $user, $project, $rev_path) = @_;
   
   # References
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'show-ref',
@@ -887,7 +888,7 @@ sub object_type {
   my ($self, $user, $project, $rev) = @_;
   
   # Get object type
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'cat-file',
@@ -952,7 +953,7 @@ sub references {
   $type ||= '';
   
   # Branches or tags
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'show-ref',
@@ -1012,7 +1013,7 @@ sub tags_count {
   my $limit = 1000;
   
   # Get tags
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'for-each-ref',
@@ -1035,7 +1036,7 @@ sub tags {
   $offset ||= 0;
   
   # Get tags
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'for-each-ref',
@@ -1124,7 +1125,7 @@ sub last_change_commit {
   my $commit_log = {};
   $file = '' unless defined $file;
   
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     '--no-pager',
@@ -1236,7 +1237,7 @@ sub get_commit {
   my ($self, $user, $project, $id) = @_;
   
   # Git rev-list
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'rev-list',
@@ -1371,7 +1372,7 @@ sub get_commits {
   # Get Commits
   $maxcount ||= 1;
   $skip ||= 0;
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'rev-list',
@@ -1508,7 +1509,7 @@ sub import_branch {
   
   # Git pull
   my $remote_rep = $self->app->rep_path($remote_user, $remote_project);
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'fetch',
@@ -1548,7 +1549,7 @@ sub separated_commit {
   my ($self, $user, $project, $rev1, $rev2) = @_;
   
   # Command "git diff-tree"
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'show-branch',
@@ -1633,7 +1634,7 @@ sub trees {
   }
   my @entries = ();
   my $show_sizes = 0;
-  my @cmd = $self->cmd(
+  my @cmd = $self->cmd_rep(
     $user,
     $project,
     'ls-tree',

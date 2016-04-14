@@ -40,7 +40,7 @@
     );
   };
   my $cmd = $quote->(
-    $git->cmd(
+    $git->cmd_rep(
       $user,
       $project,
       'archive',
