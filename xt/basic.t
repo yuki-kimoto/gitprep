@@ -369,7 +369,6 @@ note 'Compare page';
   # Page access (branch name long)
   $t->get_ok("/$user/$project/compare/refs/heads/b1...refs/heads/master");
   $t->content_like(qr#renamed dir/a\.txt to dir/b\.txt and added text#);
-
 }
 
 note 'API References';

@@ -61,6 +61,10 @@
   my $can_merge;
   if ($can_open_pull_request) {
     
+    # Clone repository to working directory if it don't exist
+    # my @git_clone_cmd = $self->app->git->cmd_clone($user, $project);
+    # Gitprep::Util::run_command(@git_clone_cmd)
+    #  or die "Can't git clone: @git_clone_cmd";
   }
   
   layout 'common', title => "Comparing $from_rev...$rev \x{30fb} $user/$project";

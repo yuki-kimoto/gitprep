@@ -18,7 +18,7 @@ has 'authorized_keys_file';
 sub working_home {
   my ($self, $user, $project) = @_;
   
-  my $working_home = app->home->rel_file("data/work/$user/$project");
+  my $working_home = $self->app->home->rel_file("data/work/$user/$project");
   
   return $working_home;
 }

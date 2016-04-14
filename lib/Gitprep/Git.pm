@@ -122,6 +122,18 @@ sub branches_count {
   return $branches_count;
 }
 
+sub cmd_clone {
+  my ($self, $user, $project) = @_;
+
+  # Repository
+  my $home = $self->rep_home;
+  my $rep = "$home/$user/$project.git";
+  
+  # Working directory
+  my $working_dir = $self->app->home->rel_file("/data/work/$user/$project");
+  
+  return ($self->bin, 'clone', $rep, $working_dir)
+}
 sub cmd {
   my ($self, $user, $project, @cmd) = @_;
   
