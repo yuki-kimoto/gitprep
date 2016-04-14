@@ -63,7 +63,7 @@ sub no_merged_branch_h {
   # No merged branches
   my $no_merged_branches_h = {};
   {
-    my $rep = $self->rep($user, $project);
+    my $rep = $self->app->rep_path($user, $project);
     
     my @cmd = $self->cmd($user, $project, 'branch', '--no-merged');
     open my $fh, '-|', @cmd or return;
@@ -603,7 +603,7 @@ sub delete_branch {
 sub description {
   my ($self, $user, $project, $description) = @_;
   
-  my $rep = $self->rep($user, $project);
+  my $rep = $self->app->rep_path($user, $project);
   my $file = "$rep/description";
   
   if (defined $description) {
@@ -933,7 +933,7 @@ sub project_urls {
 sub repository {
   my ($self, $user, $project) = @_;
 
-  return unless -d $self->rep($user, $project);
+  return unless -d $self->app->rep_path($user, $project);
   
 
   my $rep = {};
@@ -1519,7 +1519,7 @@ sub import_branch {
   my $force = $opt->{force};
   
   # Git pull
-  my $remote_rep = $self->rep($remote_user, $remote_project);
+  my $remote_rep = $self->app->rep_path($remote_user, $remote_project);
   my @cmd = $self->cmd(
     $user,
     $project,
