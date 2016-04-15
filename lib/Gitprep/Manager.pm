@@ -15,6 +15,48 @@ use Gitprep::Util;
 has 'app';
 has 'authorized_keys_file';
 
+sub create_rep_work {
+  my ($self, $user, $project) = @_;
+  
+  # Create working repository if it don't exist
+  my $rep_work = $self->app->rep_work_path($user, $project);
+  unless (-e $rep_work) {
+    # Repository
+    my $rep = $self->app->rep_path($user, $project);
+    
+    # Working directory
+    my $rep_work = $self->app->rep_work_path($user, $project);
+    
+    # git clone
+    my @git_clone_cmd = ($self->app->git->bin, 'clone', $rep, $rep_work);
+    Gitprep::Util::run_command(@git_clone_cmd)
+      or croak "Can't git clone: @git_clone_cmd";
+    
+    warn $rep_work;
+
+    # Set user name
+    my @git_config_user_name = $self->app->git->cmd_work_dir(
+      $rep_work,
+      'config',
+      'user.name',
+      $user
+    );
+    Gitprep::Util::run_command(@git_config_user_name)
+      or croak "Can't execute git config: @git_config_user_name";
+    
+    # Set user mail
+    my $user_mail = $self->app->dbi->model('user')->select('mail', where => {id => $user})->value;
+    my @git_config_user_mail = $self->app->git->cmd_work_dir(
+      $rep_work,
+      'config',
+      'user.email',
+      "$user_mail"
+    );
+    Gitprep::Util::run_command(@git_config_user_mail)
+      or croak "Can't execute git config: @git_config_user_mail";
+  }
+}
+
 sub admin_user {
   my $self = shift;
   
@@ -689,7 +731,7 @@ sub _create_rep {
         or croak "Can't create directory $temp_work: $!";
       
       # Git init
-      my @git_init_cmd = $git->cmd_dir($temp_work, 'init', '-q');
+      my @git_init_cmd = $git->cmd_work_dir($temp_work, 'init', '-q');
       Gitprep::Util::run_command(@git_init_cmd)
         or croak "Can't execute git init: @git_init_cmd";
       
@@ -706,6 +748,7 @@ sub _create_rep {
         'add',
         'README.md'
       );
+      
       Gitprep::Util::run_command(@git_add_cmd)
         or croak "Can't execute git add: @git_add_cmd";
       

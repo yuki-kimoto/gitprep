@@ -52,7 +52,7 @@ sub rep_path {
 sub rep_work_home {
   my $self = shift;
   
-  my $work_home = $self->work_home . "/work";
+  my $work_home = $self->data_dir . "/work";
   
   return $work_home;
 }

@@ -121,18 +121,6 @@ sub branches_count {
   return $branches_count;
 }
 
-sub cmd_clone {
-  my ($self, $user, $project) = @_;
-
-  # Repository
-  my $rep = $self->app->rep_path($user, $project);
-  
-  # Working directory
-  my $rep_work = $self->app->rep_work_path($user, $project);
-  
-  return ($self->bin, 'clone', $rep, $rep_work)
-}
-
 sub cmd_rep {
   my ($self, $user, $project, @cmd) = @_;
   
@@ -160,7 +148,7 @@ sub cmd_rep_work {
 sub cmd_work_dir {
   my ($self, $dir, @cmd) = @_;
   
-  return ($self->bin, "--git-dir=$dir", "--work-tree=$dir",  @cmd);
+  return ($self->bin, "--git-dir=$dir/.git", "--work-tree=$dir",  @cmd);
 }
 
 sub authors {
