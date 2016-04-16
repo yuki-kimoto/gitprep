@@ -478,14 +478,14 @@ sub blob_mode {
 }
 
 sub blob_raw {
-  my ($self, $user, $project, $rev, $path) = @_;
+  my ($self, $rep, $rev, $path) = @_;
   
   # Blob raw
-  my @cmd = $self->cmd_rep($user, $project, 'cat-file', 'blob', "$rev:$path");
+  my @cmd = $self->cmd($rep, 'cat-file', 'blob', "$rev:$path");
   open my $fh, "-|", @cmd
     or croak 500, "Open git-cat-file failed";
   local $/;
-  my $blob_raw = scalar <$fh>;
+  my $blob_raw = <$fh>;
 
   close $fh or croak 'Reading git-shortlog failed';
   

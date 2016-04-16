@@ -9,7 +9,7 @@
   my ($rev, $file) = $git->parse_rev_path($user, $project, $rev_file);
   
   # Blob raw
-  my $blob_raw = $git->blob_raw($user, $project, $rev, $file);
+  my $blob_raw = $git->blob_raw(app->rep_info($user, $project), $rev, $file);
   
   # Content type
   my $type = $git->blob_content_type(app->rep_info($user, $project), $rev, $file);
