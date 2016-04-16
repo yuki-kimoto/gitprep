@@ -456,13 +456,12 @@ sub blob_content_type {
 }
 
 sub blob_mode {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my ($self, $rep, $rev, $file) = @_;
   
   # Blob mode
   $file =~ s#/+$##;
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep,
     'ls-tree',
     $rev,
     '--',
