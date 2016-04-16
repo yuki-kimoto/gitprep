@@ -46,7 +46,7 @@
       $trees = $git->trees($user, $project, $rev);
     }
     # Commits number
-    $commits_number = $git->commits_number($user, $project, $rev);
+    $commits_number = $git->commits_number(app->rep_info($user, $project), $rev);
     
     # Variable for included template
     stash(
