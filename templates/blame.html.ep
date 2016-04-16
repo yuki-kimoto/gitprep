@@ -28,7 +28,7 @@
   my $mime_type = $git->blob_mime_type($user, $project, $rev, $file);
 
   # Blame
-  my $blame = $git->blame($user, $project, $rev, $file);
+  my $blame = $git->blame(%{app->rep_info($user, $project)}, rev => $rev, file => $file);
   my $blame_lines = $blame->{lines};
   my $blame_min_author_time = $blame->{min_author_time};
   my $blame_max_author_time = $blame->{max_author_time};

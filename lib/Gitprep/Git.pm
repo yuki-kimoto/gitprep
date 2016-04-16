@@ -219,21 +219,21 @@ sub authors {
 }
 
 sub blame {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my ($self, %opt) = @_;
   
-  # Blob
-  my $hash = $self->path_to_hash($user, $project, $rev, $file, 'blob')
-    or croak 'Cannot find file';
+  my $rev = $opt{rev};
+  my $file = $opt{file};
   
   # Git blame
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
-    'blame',
-    '--line-porcelain',
-    $rev,
-    '--',
-    $file
+  my @cmd = $self->cmd(
+    %opt,
+    command => [
+      'blame',
+      '--line-porcelain',
+      $rev,
+      '--',
+      $file
+    ]
   );
   open my $fh, '-|', @cmd
     or croak "Can't git blame --line-porcelain";
@@ -245,7 +245,7 @@ sub blame {
   my $min_author_time;
   my @lines = <$fh>;
   
-  my $enc = $self->decide_encoding($user, $project, \@lines);
+  my $enc = $self->decide_encoding($opt{user}, $opt{project}, \@lines);
   for my $line (@lines) {
     $line = decode($enc, $line);
     chomp $line;
@@ -1814,7 +1814,7 @@ sub decide_encoding {
   )->value;
   
   my @guess_encodings;
-  if (length $guess_encoding_str) {
+  if (defined $guess_encoding_str && length $guess_encoding_str) {
     @guess_encodings = split(/\s*,\s*/, $guess_encoding_str);
   }
   
