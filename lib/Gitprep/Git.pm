@@ -840,7 +840,7 @@ sub object_type {
 sub repository {
   my ($self, $rep_info) = @_;
 
-  return unless -d $self->app->rep_path($rep_info->{user}, $rep_info->{project});
+  return unless -d $rep_info->{git_dir};
   
   my $rep = {};
   my @activity = $self->last_activity($rep_info);
