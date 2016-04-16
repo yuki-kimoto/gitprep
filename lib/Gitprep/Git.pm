@@ -149,15 +149,6 @@ sub cmd {
   return @command_all;
 }
 
-sub cmd_rep {
-  my ($self, $user, $project, @cmd) = @_;
-  
-  # Git command
-  my $rep_info = $self->app->rep_info($user, $project);
-  
-  return $self->cmd($rep_info, @cmd);
-}
-
 sub authors {
   my ($self, $rep_info, $rev, $file) = @_;
   

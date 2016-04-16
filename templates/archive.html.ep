@@ -40,9 +40,8 @@
     );
   };
   my $cmd = $quote->(
-    $git->cmd_rep(
-      $user,
-      $project,
+    $git->cmd(
+      app->rep_info($user, $project),
       'archive',
       "--format=$format",
       "--prefix=$name/",
