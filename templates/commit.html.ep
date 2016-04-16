@@ -12,7 +12,7 @@
   my $git = app->git;
   
   # Commit
-  my $commit = $git->get_commit($user, $project, $rev);
+  my $commit = $git->get_commit(app->rep_info($user, $project), $rev);
   
   unless ($commit) {
     $self->reply->not_found;

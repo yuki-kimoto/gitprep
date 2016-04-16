@@ -31,10 +31,10 @@
   my $authors_count = keys %$authors;
 
   # Start commit
-  my $start_commit = $git->separated_commit($user, $project, $from_rev, $rev);
+  my $start_commit = $git->separated_commit(app->rep_info($user, $project), $from_rev, $rev);
 
   # End commit
-  my $end_commit = $git->get_commit($user, $project, $rev);
+  my $end_commit = $git->get_commit(app->rep_info($user, $project), $rev);
   
   if (!$start_commit || !$end_commit) {
     $self->reply->not_found;

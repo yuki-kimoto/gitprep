@@ -35,15 +35,15 @@
   my $commits_number;
   if ($git->exists_branch(app->rep_info($user, $project))) {
     # Commit
-    my $commit = $git->get_commit($user, $project, $rev);
+    my $commit = $git->get_commit(app->rep_info($user, $project), $rev);
     
     # Tree
     my $trees;
     if (defined $dir && length $dir) {
-      $trees = $git->trees($user, $project, $rev, $dir);
+      $trees = $git->trees(app->rep_info($user, $project), $rev, $dir);
     }
     else {
-      $trees = $git->trees($user, $project, $rev);
+      $trees = $git->trees(app->rep_info($user, $project), $rev);
     }
     # Commits number
     $commits_number = $git->commits_number(app->rep_info($user, $project), $rev);

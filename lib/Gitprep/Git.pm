@@ -41,7 +41,7 @@ sub branch {
   $branch_name =~ s/\s*$//;
   my $branch = {};
   $branch->{name} = $branch_name;
-  my $commit = $self->get_commit_new($rep_info, $branch_name);
+  my $commit = $self->get_commit($rep_info, $branch_name);
   $branch->{commit} = $commit;
 
   return $branch;
@@ -716,7 +716,7 @@ sub forward_commits {
   while (my $line = <$fh>) {
     if ($line =~ /^>(.+)\s/) {
       my $rev = $1;
-      my $commit = $self->get_commit_new($rep_info, $rev);
+      my $commit = $self->get_commit($rep_info, $rev);
       push @$commits, $commit;
     }
   }
@@ -993,7 +993,7 @@ sub tags {
       $tag{comment_short} = $self->_chop_str($tag{subject}, 30, 5)
         if $tag{subject};
 
-      $tag{commit} = $self->get_commit_new($rep_info, $name);
+      $tag{commit} = $self->get_commit($rep_info, $name);
 
       push @tags, \%tag;
     }
@@ -1032,7 +1032,7 @@ sub last_change_commit {
   my $commit;
   if ($commit_log_text =~ /^([0-9a-zA-Z]+)/) {
     my $rev = $1;
-    $commit = $self->get_commit_new($rep_info, $rev);
+    $commit = $self->get_commit($rep_info, $rev);
   }
   
   return $commit;
@@ -1119,42 +1119,11 @@ sub parse_blob_diff_lines {
 }
 
 sub get_commit {
-  my ($self, $user, $project, $id) = @_;
-  
-  # Git rev-list
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
-    'rev-list',
-    '--parents',
-    '--header',
-    '--max-count=1',
-    $id,
-    '--'
-  );
-  open my $fh, '-|', @cmd
-    or croak 'Open git-rev-list failed';
-  
-  # Parse commit
-  local $/ = "\0";
-  my $content = <$fh>;
-  $content = $self->_dec($content);
-  return unless defined $content;
-  my $commit = $self->parse_commit_text($content, 1);
-  close $fh;
-
-  return $commit;
-}
-
-sub get_commit_new {
-  my ($self, $rep, $id) = @_;
-  
-  my $git_dir = $rep->{git_dir};
-  my $work_tree = $rep->{work_tree};
+  my ($self, $rep_info, $id) = @_;
   
   # Git rev-list
   my @cmd = $self->cmd(
-    $rep,
+    $rep_info,
     'rev-list',
     '--parents',
     '--header',
@@ -1461,12 +1430,11 @@ sub search_bin {
 }
 
 sub separated_commit {
-  my ($self, $user, $project, $rev1, $rev2) = @_;
+  my ($self, $rep_info, $rev1, $rev2) = @_;
   
   # Command "git diff-tree"
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep_info,
     'show-branch',
     $rev1,
     $rev2
@@ -1481,7 +1449,7 @@ sub separated_commit {
   my $commit;
   if (defined $last_line) {
       my ($id) = $last_line =~ /^.*?\[(.+)?\]/;
-      $commit = $self->get_commit($user, $project, $id);
+      $commit = $self->get_commit($rep_info, $id);
   }
 
   return $commit;
@@ -1535,23 +1503,22 @@ sub timestamp {
 }
 
 sub trees {
-  my ($self, $user, $project, $rev, $dir) = @_;
+  my ($self, $rep_info, $rev, $dir) = @_;
   $dir = '' unless defined $dir;
   
   # Get tree
   my $tid;
   if (defined $dir && $dir ne '') {
-    $tid = $self->path_to_hash($self->app->rep_info($user, $project), $rev, $dir, 'tree');
+    $tid = $self->path_to_hash($rep_info, $rev, $dir, 'tree');
   }
   else {
-    my $commit = $self->get_commit($user, $project, $rev);
+    my $commit = $self->get_commit($rep_info, $rev);
     $tid = $commit->{tree};
   }
   my @entries = ();
   my $show_sizes = 0;
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep_info,
     'ls-tree',
     '-z',
     ($show_sizes ? '-l' : ()),
@@ -1575,7 +1542,7 @@ sub trees {
     
     # Commit log
     my $path = defined $dir && $dir ne '' ? "$dir/$tree->{name}" : $tree->{name};
-    my $commit = $self->last_change_commit($self->app->rep_info($user, $project), $rev, $path);
+    my $commit = $self->last_change_commit($rep_info, $rev, $path);
     $tree->{commit} = $commit;
     
     push @$trees, $tree;

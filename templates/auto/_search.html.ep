@@ -116,7 +116,7 @@
                   my $branches = app->git->branches($self->app->rep_info($user, $project));
                   my $commit;
                   if (@$branches) {
-                    $commit = app->git->get_commit($user, $project, $rev);
+                    $commit = app->git->get_commit(app->rep_info($user, $project), $rev);
                   }
                 %>
                 

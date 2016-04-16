@@ -16,7 +16,7 @@
   my $page = param('page') || 0;
   
   # Commit
-  my $commit = $git->get_commit($user, $project, $rev);
+  my $commit = $git->get_commit(app->rep_info($user, $project), $rev);
 
   # Not found
   unless ($commit) {
