@@ -29,11 +29,11 @@
   }
 
   # Repository description
-  my $desc = $git->description($user, $project);
+  my $desc = $git->description(app->rep_info($user, $project));
   
   # Check exsitence
   my $commits_number;
-  if ($git->exists_branch($user, $project)) {
+  if ($git->exists_branch(app->rep_info($user, $project))) {
     # Commit
     my $commit = $git->get_commit($user, $project, $rev);
     

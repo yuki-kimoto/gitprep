@@ -82,7 +82,7 @@ for my $rep (glob "$rep_dir/*") {
       }
     };
     $description = decode('UTF-8', $description);
-    eval {$git->description($user, $project, $description) };
+    eval {$git->description(app->rep_info($user, $project), $description) };
     if ($@) {
       warn "Can't update description $project\n";
     }

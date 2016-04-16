@@ -39,7 +39,7 @@
 
     if ($validation->is_valid) {
       # Delete branch
-      eval { $git->delete_branch($user, $project, $branch) };
+      eval { $git->delete_branch(app->rep_info($user, $project), $branch) };
       if (my $e = $@) {
         app->log->error(url_with . ": $e");
         $errors = ['Internal Error'];

@@ -60,7 +60,7 @@
       my $description = param('description');
       $description = '' unless defined $description;
       
-      eval { $git->description($user, $project, $description) };
+      eval { $git->description(app->rep_info($user, $project), $description) };
       if (my $e = $@) {
         app->log->error("/$user/$project/settings?op=description: $e");
         $errors = ['Internal Error'];
@@ -209,7 +209,7 @@
           <li>
             <form action="<%= url_for->query(op => 'change-description') %>" method="post">
               <div>
-                % my $description = $git->description($user, $project);
+                % my $description = $git->description(app->rep_info($user, $project));
                 % $description = '' unless defined $description;
                 %= text_field 'description' => $description, style => "width:90%";
                 <input type="submit" class="btn" value="Save">

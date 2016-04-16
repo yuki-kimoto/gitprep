@@ -547,22 +547,22 @@ sub commits_number {
 }
 
 sub exists_branch {
-  my ($self, $user, $project) = @_;
+  my ($self, $rep) = @_;
   
   # Exists branch
-  my @cmd = $self->cmd_rep($user, $project, 'branch');
+  my @cmd = $self->cmd($rep, 'branch');
   open my $fh, "-|", @cmd
     or croak 'git branch failed';
   local $/;
-  my $branches = <$fh>;
+  my $branch = <$fh>;
   
-  return $branches ne '' ? 1 : 0;
+  return $branch ne '' ? 1 : 0;
 }
 
 sub delete_branch {
-  my ($self, $user, $project, $branch) = @_;
+  my ($self, $rep, $branch) = @_;
   
-  my $branches = $self->branches($self->app->rep_info($user, $project));
+  my $branches = $self->branches($rep);
   my $exists;
   for my $b (@$branches) {
     if ($branch eq $b->{name}) {
@@ -572,7 +572,7 @@ sub delete_branch {
   }
   
   if ($exists) {
-    my @cmd = $self->cmd_rep($user, $project, 'branch', '-D', $branch);
+    my @cmd = $self->cmd($rep, 'branch', '-D', $branch);
     Gitprep::Util::run_command(@cmd)
       or croak "Branch deleting failed. Can't delete branch $branch";
   }
@@ -582,10 +582,10 @@ sub delete_branch {
 }
 
 sub description {
-  my ($self, $user, $project, $description) = @_;
+  my ($self, $rep, $description) = @_;
   
-  my $rep = $self->app->rep_path($user, $project);
-  my $file = "$rep/description";
+  my $git_dir = $rep->{git_dir};
+  my $file = "$git_dir/description";
   
   if (defined $description) {
     # Write description
@@ -914,7 +914,7 @@ sub repository {
   }
   else { $rep->{age} = 0 }
   
-  my $description = $self->description($user, $project) || '';
+  my $description = $self->description($self->app->rep_info($user, $project)) || '';
   $rep->{description} = $self->_chop_str($description, 25, 5);
   
   return $rep;
