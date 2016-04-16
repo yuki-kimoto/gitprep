@@ -55,7 +55,7 @@
   
   # Default branch
   my $default_branch_name = app->manager->default_branch($user, $project);
-  my $default_branch = $git->branch_new(%{$self->app->rep_info($user, $project)}, name => $default_branch_name);
+  my $default_branch = $git->branch(%{$self->app->rep_info($user, $project)}, name => $default_branch_name);
   
   # Branches
   my $branch_types;
@@ -76,7 +76,11 @@
   my $stale_count = 0;
   my $all_count = 0;
   for my $branch (@$branches) {
-    $branch->{status} = $git->branch_status($user, $project, $default_branch->{name}, $branch->{name});
+    $branch->{status} = $git->branch_status(
+      %{$self->app->rep_info($user, $project)},
+      from => $default_branch->{name},
+      to => $branch->{name}
+    );
     $max = $branch->{status}{ahead} if $max < $branch->{status}{ahead};
     $max = $branch->{status}{behind} if $max < $branch->{status}{behind};
     

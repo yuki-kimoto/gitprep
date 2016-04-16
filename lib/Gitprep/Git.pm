@@ -19,22 +19,20 @@ has text_exts => sub { ['txt'] };
 has 'time_zone_second';
 has 'app';
 
-sub branch {
-  my ($self, $user, $project, $branch_name) = @_;
+sub rep_work_current_branch {
+  my ($self, $user, $project) = @_;
   
-  # Branch
-  $branch_name =~ s/^\*//;
-  $branch_name =~ s/^\s*//;
-  $branch_name =~ s/\s*$//;
-  my $branch = {};
-  $branch->{name} = $branch_name;
-  my $commit = $self->get_commit($user, $project, $branch_name);
-  $branch->{commit} = $commit;
-
-  return $branch;
+  my @cmd = $self->cmd_work_rep($user, $project, 'rev-parse',  '--abbrev-ref', 'HEAD');
+  
+  open my $fh, '-|', @cmd
+    or croak "Can't get current branch: @cmd";
+  my $current_branch = <$fh>;
+  chomp $current_branch;
+  
+  return $current_branch;
 }
 
-sub branch_new {
+sub branch {
   my ($self, %opt) = @_;
   my $git_dir = $opt{git_dir};
   my $branch_name = $opt{name};
@@ -51,27 +49,17 @@ sub branch_new {
   return $branch;
 }
 
-sub rep_work_current_branch {
-  my ($self, $user, $project) = @_;
-  
-  my @cmd = $self->cmd_work_rep($user, $project, 'rev-parse',  '--abbrev-ref', 'HEAD');
-  
-  open my $fh, '-|', @cmd
-    or croak "Can't get current branch: @cmd";
-  my $current_branch = <$fh>;
-  chomp $current_branch;
-  
-  return $current_branch;
-}
-
 sub branch_status {
-  my ($self, $user, $project, $branch1, $branch2) = @_;
+  my ($self, %opt) = @_;
+  
+  my $git_dir = $opt{git_dir};
+  my $branch1 = $opt{from};
+  my $branch2 = $opt{to};
   
   # Branch status
   my $status = {ahead => 0, behind => 0};
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd_dir(
+    $git_dir,
     'rev-list',
     '--left-right',
     "$branch1...$branch2"
@@ -130,7 +118,7 @@ sub branches {
       unless $start++;
     
     # Branch
-    my $branch = $self->branch_new(%{$self->app->rep_info($user, $project)}, name => $branch_name);
+    my $branch = $self->branch(%{$self->app->rep_info($user, $project)}, name => $branch_name);
     $branch->{no_merged} = 1 if $no_merged_branches_h->{$branch_name};
     push @$branches, $branch;
   }
