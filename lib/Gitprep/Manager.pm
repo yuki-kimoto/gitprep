@@ -18,25 +18,25 @@ has 'authorized_keys_file';
 sub create_rep_work {
   my ($self, $user, $project) = @_;
   
+  # Remote repository
+  my $rep_info = $self->app->rep_info($user, $project);
+  my $rep_git_dir = $rep_info->{git_dir};
+  
+  # Working repository
+  my $work_rep_info = $self->app->work_rep_info($user, $project);
+  my $work_tree = $work_rep_info->{work_tree};
+  
   # Create working repository if it don't exist
-  my $rep_work = $self->app->rep_work_path($user, $project);
-  unless (-e $rep_work) {
-    # Repository
-    my $rep = $self->app->rep_path($user, $project);
-    
-    # Working directory
-    my $rep_work = $self->app->rep_work_path($user, $project);
-    
+  unless (-e $work_tree) {
+
     # git clone
-    my @git_clone_cmd = ($self->app->git->bin, 'clone', $rep, $rep_work);
+    my @git_clone_cmd = ($self->app->git->bin, 'clone', $rep_git_dir, $work_tree);
     Gitprep::Util::run_command(@git_clone_cmd)
       or croak "Can't git clone: @git_clone_cmd";
-    
-    warn $rep_work;
 
     # Set user name
-    my @git_config_user_name = $self->app->git->cmd_work_dir(
-      $rep_work,
+    my @git_config_user_name = $self->app->git->cmd(
+      $work_rep_info,
       'config',
       'user.name',
       $user
@@ -46,8 +46,8 @@ sub create_rep_work {
     
     # Set user mail
     my $user_mail = $self->app->dbi->model('user')->select('mail', where => {id => $user})->value;
-    my @git_config_user_mail = $self->app->git->cmd_work_dir(
-      $rep_work,
+    my @git_config_user_mail = $self->app->git->cmd(
+      $work_rep_info,
       'config',
       'user.email',
       "$user_mail"

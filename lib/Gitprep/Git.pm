@@ -164,15 +164,6 @@ sub cmd_dir {
   return ($self->bin, "--git-dir=$dir", @cmd);
 }
 
-sub cmd_rep_work {
-  my ($self, $user, $project, @cmd) = @_;
-  
-  # Working directory
-  my $work_rep_info = $self->app->rep_work_path($user, $project);
-  
-  return $self->cmd_work_dir($work_rep_info, @cmd);
-}
-
 sub cmd_work_dir {
   my ($self, $dir, @cmd) = @_;
   

@@ -44,6 +44,18 @@ sub rep_info {
   return $info;
 }
 
+sub work_rep_info {
+  my ($self, $user, $project) = @_;
+  
+  my $info = {};
+  $info->{user} = $user;
+  $info->{project} = $project;
+  $info->{git_dir} = $self->rep_work_home . "/$user/$project/.git";
+  $info->{work_tree} = $self->rep_work_home . "/$user/$project";
+  
+  return $info;
+}
+
 sub rep_home {
   my $self = shift;
   
