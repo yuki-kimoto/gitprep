@@ -55,7 +55,7 @@
   
   # Default branch
   my $default_branch_name = app->manager->default_branch($user, $project);
-  my $default_branch = $git->branch($user, $project, $default_branch_name);
+  my $default_branch = $git->branch_new(%{$self->app->rep_info($user, $project)}, name => $default_branch_name);
   
   # Branches
   my $branch_types;

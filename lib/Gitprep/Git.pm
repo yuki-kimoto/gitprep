@@ -34,6 +34,36 @@ sub branch {
   return $branch;
 }
 
+sub branch_new {
+  my ($self, %opt) = @_;
+  my $git_dir = $opt{git_dir};
+  my $branch_name = $opt{name};
+  
+  # Branch
+  $branch_name =~ s/^\*//;
+  $branch_name =~ s/^\s*//;
+  $branch_name =~ s/\s*$//;
+  my $branch = {};
+  $branch->{name} = $branch_name;
+  my $commit = $self->get_commit_new(git_dir => $git_dir, id => $branch_name);
+  $branch->{commit} = $commit;
+
+  return $branch;
+}
+
+sub rep_work_current_branch {
+  my ($self, $user, $project) = @_;
+  
+  my @cmd = $self->cmd_work_rep($user, $project, 'rev-parse',  '--abbrev-ref', 'HEAD');
+  
+  open my $fh, '-|', @cmd
+    or croak "Can't get current branch: @cmd";
+  my $current_branch = <$fh>;
+  chomp $current_branch;
+  
+  return $current_branch;
+}
+
 sub branch_status {
   my ($self, $user, $project, $branch1, $branch2) = @_;
   
@@ -100,7 +130,7 @@ sub branches {
       unless $start++;
     
     # Branch
-    my $branch = $self->branch($user, $project, $branch_name);
+    my $branch = $self->branch_new(%{$self->app->rep_info($user, $project)}, name => $branch_name);
     $branch->{no_merged} = 1 if $no_merged_branches_h->{$branch_name};
     push @$branches, $branch;
   }
@@ -1228,6 +1258,36 @@ sub get_commit {
   my @cmd = $self->cmd_rep(
     $user,
     $project,
+    'rev-list',
+    '--parents',
+    '--header',
+    '--max-count=1',
+    $id,
+    '--'
+  );
+  open my $fh, '-|', @cmd
+    or croak 'Open git-rev-list failed';
+  
+  # Parse commit
+  local $/ = "\0";
+  my $content = <$fh>;
+  $content = $self->_dec($content);
+  return unless defined $content;
+  my $commit = $self->parse_commit_text($content, 1);
+  close $fh;
+
+  return $commit;
+}
+
+sub get_commit_new {
+  my ($self, %opt) = @_;
+  
+  my $git_dir = $opt{git_dir};
+  my $id = $opt{id};
+  
+  # Git rev-list
+  my @cmd = $self->cmd_dir(
+    $git_dir,
     'rev-list',
     '--parents',
     '--header',

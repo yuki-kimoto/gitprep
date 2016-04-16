@@ -33,6 +33,15 @@ sub data_dir {
   return $data_dir;
 }
 
+sub rep_info {
+  my ($self, $user, $project) = @_;
+  
+  my $info = {};
+  $info->{git_dir} = $self->rep_home . "/$user/$project.git";
+  
+  return $info;
+}
+
 sub rep_home {
   my $self = shift;
   
