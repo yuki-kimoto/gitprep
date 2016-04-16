@@ -284,7 +284,7 @@ sub blob {
   my ($self, $rep_info, $rev, $file) = @_;
   
   # Blob
-  my $hash = $self->path_to_hash($rep_info->{user}, $rep_info->{project}, $rev, $file, 'blob')
+  my $hash = $self->path_to_hash($rep_info, $rev, $file, 'blob')
     or croak 'Cannot find file';
   my @cmd = $self->cmd(
     $rep_info,
@@ -414,7 +414,7 @@ sub blob_mime_type {
   my ($self, $rep_info, $rev, $file) = @_;
   
   # Blob
-  my $hash = $self->path_to_hash($rep_info->{user}, $rep_info->{project}, $rev, $file, 'blob')
+  my $hash = $self->path_to_hash($rep_info, $rev, $file, 'blob')
     or croak 'Cannot find file';
   my @cmd = $self->cmd(
     $rep_info,
@@ -605,7 +605,7 @@ sub description {
 }
 
 sub diff_tree {
-  my ($self, $user, $project, $rev, $parent, $opt) = @_;
+  my ($self, $rep_info, $rev, $parent, $opt) = @_;
   
   $opt ||= {};
   my $ignore_space_change = $opt->{ignore_space_change};
@@ -614,9 +614,8 @@ sub diff_tree {
   $parent = '--root' unless defined $parent;
 
   # Get diff tree
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep_info,
     "diff-tree",
     '-r',
     '--no-commit-id',
@@ -702,12 +701,11 @@ sub file_type_long {
 }
 
 sub forward_commits {
-  my ($self, $user, $project, $rev1, $rev2) = @_;
+  my ($self, $rep_info, $rev1, $rev2) = @_;
   
   # Forwarding commits
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep_info,
     'rev-list',
     '--left-right',
     "$rev1...$rev2"
@@ -718,7 +716,7 @@ sub forward_commits {
   while (my $line = <$fh>) {
     if ($line =~ /^>(.+)\s/) {
       my $rev = $1;
-      my $commit = $self->get_commit($user, $project, $rev);
+      my $commit = $self->get_commit_new($rep_info, $rev);
       push @$commits, $commit;
     }
   }
@@ -727,13 +725,12 @@ sub forward_commits {
 }
 
 sub path_to_hash {
-  my ($self, $user, $project, $rev, $path, $type) = @_;
+  my ($self, $rep_info, $rev, $path, $type) = @_;
   
   # Get blob id or tree id (command "git ls-tree")
   $path =~ s#/+$##;
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep_info,
     'ls-tree',
     $rev,
     '--',
@@ -753,12 +750,11 @@ sub path_to_hash {
 
 
 sub last_activity {
-  my ($self, $user, $project) = @_;
+  my ($self, $rep) = @_;
   
   # Command "git for-each-ref"
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep,
     'for-each-ref',
     '--format=%(committer)',
     '--sort=-committerdate',
@@ -776,33 +772,6 @@ sub last_activity {
     my $age = time - $timestamp;
     return ($age, $self->_age_string($age));
   }
-  
-  return;
-}
-
-sub path_by_id {
-  my ($self, $user, $project, $base, $hash) = @_;
-  
-  return unless $base;
-  return unless $hash;
-  
-  # Command "git ls-tree"
-  my @cmd = $self->cmd_rep($user, $project, 'ls-tree', '-r', '-t', '-z', $base);
-  open my $fh, '-|', @cmd or return;
-
-  # Get path
-  local $/ = "\0";
-  my @lines = <$fh>;
-  for my $line (@lines) {
-    $line = $self->_dec($line);
-    chomp $line;
-
-    if ($line =~ m/(?:[0-9]+) (?:.+) $hash\t(.+)$/) {
-      close $fh;
-      return $1;
-    }
-  }
-  close $fh;
   
   return;
 }
@@ -907,7 +876,7 @@ sub repository {
   
 
   my $rep = {};
-  my @activity = $self->last_activity($user, $project);
+  my @activity = $self->last_activity($self->app->rep_info($user, $project));
   if (@activity) {
     $rep->{age} = $activity[0];
     $rep->{age_string} = $activity[1];
@@ -1629,7 +1598,7 @@ sub trees {
   # Get tree
   my $tid;
   if (defined $dir && $dir ne '') {
-    $tid = $self->path_to_hash($user, $project, $rev, $dir, 'tree');
+    $tid = $self->path_to_hash($self->app->rep_info($user, $project), $rev, $dir, 'tree');
   }
   else {
     my $commit = $self->get_commit($user, $project, $rev);

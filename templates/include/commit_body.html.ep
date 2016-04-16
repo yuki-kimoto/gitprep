@@ -20,8 +20,7 @@
   
   # Diff tree
   my $diff_trees = $git->diff_tree(
-    $user,
-    $project,
+    app->rep_info($user, $project),
     $rev,
     $from_rev,
     {ignore_space_change => $ignore_space_change}
