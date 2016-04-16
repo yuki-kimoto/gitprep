@@ -493,12 +493,11 @@ sub blob_raw {
 }
 
 sub blob_size {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my ($self, $rep, $rev, $file) = @_;
   
   # Blob size(KB)
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep,
     'cat-file',
     '-s',
     "$rev:$file"
