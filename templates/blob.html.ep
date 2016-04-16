@@ -14,7 +14,7 @@
   my ($rev, $file) = $git->parse_rev_path(app->rep_info($user, $project), $rev_file);
 
   # Commit
-  my $commit = $git->last_change_commit($user, $project, $rev, $file);
+  my $commit = $git->last_change_commit(app->rep_info($user, $project), $rev, $file);
   my $commit_author_mail = $commit->{author_email};
   my $commit_author_id = app->dbi->model('user')->select(
     'id',

@@ -226,7 +226,7 @@ sub blame {
   my $min_author_time;
   my @lines = <$fh>;
   
-  my $enc = $self->decide_encoding($rep_info->{user}, $rep_info->{project}, \@lines);
+  my $enc = $self->decide_encoding($rep_info, \@lines);
   for my $line (@lines) {
     $line = decode($enc, $line);
     chomp $line;
@@ -298,7 +298,7 @@ sub blob {
   # Format lines
   my @lines = <$fh>;
   my @new_lines;
-  my $enc = $self->decide_encoding($rep_info->{user}, $rep_info->{project}, \@lines);
+  my $enc = $self->decide_encoding($rep_info, \@lines);
   for my $line (@lines) {
     $line = decode($enc, $line);
     chomp $line;
@@ -334,7 +334,7 @@ sub blob_diffs {
     or croak('Open self-diff-tree failed');
   my @diff_tree;
   my @diff_tree_lines = <$fh>;
-  my $diff_tree_enc = $self->decide_encoding($rep_info->{user}, $rep_info->{project}, \@diff_tree_lines);
+  my $diff_tree_enc = $self->decide_encoding($rep_info, \@diff_tree_lines);
   for my $line (@diff_tree_lines) {
     $line = decode($diff_tree_enc, $line);
     chomp $line;
@@ -370,7 +370,7 @@ sub blob_diffs {
     open my $fh, '-|', @cmd
       or croak('Open self-diff-tree failed');
     my @lines = <$fh>;
-    my $enc = $self->decide_encoding($rep_info->{user}, $rep_info->{project}, \@lines);
+    my $enc = $self->decide_encoding($rep_info, \@lines);
     @lines = map { decode($enc, $_) } @lines;
     close $fh;
     my ($lines, $diff_info) = $self->parse_blob_diff_lines(\@lines);
@@ -910,27 +910,14 @@ sub short_id {
   return $self->id($project, @_, '--short=7');
 }
 
-sub tag {
-  my ($self, $project, $name) = @_;
-  
-  # Tag
-  my $tags = $self->tags($project);
-  for my $tag (@$tags) {
-    return $tag if $tag->{name} eq $name;
-  }
-  
-  return;
-}
-
 sub tags_count {
-  my ($self, $user, $project) = @_;
+  my ($self, $rep_info) = @_;
   
   my $limit = 1000;
   
   # Get tags
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep_info,
     'for-each-ref',
     ($limit ? '--count='.($limit+1) : ()),
     'refs/tags'
@@ -1018,30 +1005,14 @@ sub tags {
   return \@tags;
 }
 
-sub is_deleted {
-  my ($self, $diffinfo) = @_;
-  
-  # Check if deleted
-  return $diffinfo->{to_id} eq ('0' x 40);
-}
-
-sub id_set_multi {
-  my ($self, $rev, $key, $value) = @_;
-
-  if (!exists $rev->{$key}) { $rev->{$key} = $value }
-  elsif (!ref $rev->{$key}) { $rev->{$key} = [ $rev->{$key}, $value ] }
-  else { push @{$rev->{$key}}, $value }
-}
-
 sub last_change_commit {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my ($self, $rep_info, $rev, $file) = @_;
   
   my $commit_log = {};
   $file = '' unless defined $file;
   
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep_info,
     '--no-pager',
     'log',
     '-n',
@@ -1061,7 +1032,7 @@ sub last_change_commit {
   my $commit;
   if ($commit_log_text =~ /^([0-9a-zA-Z]+)/) {
     my $rev = $1;
-    $commit = $self->get_commit($user, $project, $rev);
+    $commit = $self->get_commit_new($rep_info, $rev);
   }
   
   return $commit;
@@ -1604,7 +1575,7 @@ sub trees {
     
     # Commit log
     my $path = defined $dir && $dir ne '' ? "$dir/$tree->{name}" : $tree->{name};
-    my $commit = $self->last_change_commit($user, $project, $rev, $path);
+    my $commit = $self->last_change_commit($self->app->rep_info($user, $project), $rev, $path);
     $tree->{commit} = $commit;
     
     push @$trees, $tree;
@@ -1698,11 +1669,11 @@ sub _chop_str {
 }
 
 sub decide_encoding {
-  my ($self, $user, $project, $lines) = @_;
+  my ($self, $rep_info, $lines) = @_;
   
   my $guess_encoding_str = $self->app->dbi->model('project')->select(
     'guess_encoding',
-    where => {user_id => $user, name => $project}
+    where => {user_id => $rep_info->{user}, name => $rep_info->{project}}
   )->value;
   
   my @guess_encodings;
