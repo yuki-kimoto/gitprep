@@ -71,11 +71,11 @@
       or Carp::croak "Can't execute git fetch: @git_fetch_cmd";
     
     # git checkout -b origin/$from_rev
-    my $gitprep_tmp_branch_name = '__gitprep_tmp_branch_name__';
-    my @git_checkout_tmp_branch = $self->app->git->cmd_rep_work(
-      $user, $project, 'checkout', '-b', $gitprep_tmp_branch_name, "origin/$from_rev");
-    Gitprep::Util::run_command(@git_checkout_tmp_branch)
-      or Carp::croak "Can't execute git checkout: @git_checkout_tmp_branch";
+    # my $gitprep_tmp_branch_name = '__gitprep_tmp_branch_name__';
+    # my @git_checkout_tmp_branch = $self->app->git->cmd_rep_work(
+    #  $user, $project, 'checkout', '-b', $gitprep_tmp_branch_name, "origin/$from_rev");
+    # Gitprep::Util::run_command(@git_checkout_tmp_branch)
+    #  or Carp::croak "Can't execute git checkout: @git_checkout_tmp_branch";
   }
   
   layout 'common', title => "Comparing $from_rev...$rev \x{30fb} $user/$project";
