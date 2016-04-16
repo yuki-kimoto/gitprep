@@ -128,10 +128,10 @@ sub branches {
 }
 
 sub branches_count {
-  my ($self, $user, $project) = @_;
+  my ($self, %opt) = @_;
   
   # Branches count
-  my @cmd = $self->cmd_rep($user, $project, 'branch');
+  my @cmd = $self->cmd(%opt, command => ['branch']);
   open my $fh, '-|', @cmd or return;
   my @branches = <$fh>;
   my $branches_count = @branches;
@@ -819,17 +819,6 @@ sub last_activity {
   }
   
   return;
-}
-
-sub no_merged_branches_count {
-  my ($self, $user, $project) = @_;
-  
-  my @cmd = $self->cmd_rep($user, $project, 'branch', '--no-merged');
-  open my $fh, '-|', @cmd or return;
-  my @branches = <$fh>;
-  my $branches_count = @branches;
-  
-  return $branches_count;
 }
 
 sub path_by_id {

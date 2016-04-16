@@ -71,7 +71,7 @@
     . ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user/$project.git";
 
   my $branches = stash('branches');
-  my $branches_count = app->git->branches_count($user, $project);
+  my $branches_count = app->git->branches_count(%{$self->app->rep_info($user, $project)});
   my $default_branch_name = app->manager->default_branch($user, $project);
   my $tags_count = app->git->tags_count($user, $project);
   
