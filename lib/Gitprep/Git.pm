@@ -58,11 +58,13 @@ sub branch_status {
   
   # Branch status
   my $status = {ahead => 0, behind => 0};
-  my @cmd = $self->cmd_dir(
-    $git_dir,
-    'rev-list',
-    '--left-right',
-    "$branch1...$branch2"
+  my @cmd = $self->cmd(
+    git_dir => $git_dir,
+    command => [
+      'rev-list',
+      '--left-right',
+      "$branch1...$branch2"
+    ]
   );
   open my $fh, '-|', @cmd
     or croak "Can't get branch status: @cmd";
@@ -137,6 +139,25 @@ sub branches_count {
   my $branches_count = @branches;
   
   return $branches_count;
+}
+
+sub cmd {
+  my ($self, %opt) = @_;
+  
+  my $git_dir = $opt{git_dir};
+  my $work_tree = $opt{work_tree};
+  my $command = $opt{command};
+  
+  my @command_all = ($self->bin);
+  if (defined $git_dir) {
+    push @command_all, "--git-dir=$git_dir";
+  }
+  if (defined $work_tree) {
+    push @command_all, "--work-tree=$work_tree";
+  }
+  push @command_all, @$command;
+  
+  return @command_all;
 }
 
 sub cmd_rep {
@@ -1271,17 +1292,21 @@ sub get_commit_new {
   my ($self, %opt) = @_;
   
   my $git_dir = $opt{git_dir};
+  my $work_tree = $opt{work_tree};
   my $id = $opt{id};
   
   # Git rev-list
-  my @cmd = $self->cmd_dir(
-    $git_dir,
-    'rev-list',
-    '--parents',
-    '--header',
-    '--max-count=1',
-    $id,
-    '--'
+  my @cmd = $self->cmd(
+    git_dir => $git_dir,
+    work_tree => $work_tree,
+    command => [
+      'rev-list',
+      '--parents',
+      '--header',
+      '--max-count=1',
+      $id,
+      '--'
+    ]
   );
   open my $fh, '-|', @cmd
     or croak 'Open git-rev-list failed';
