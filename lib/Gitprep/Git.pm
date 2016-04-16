@@ -77,14 +77,12 @@ sub branch_status {
 }
 
 sub no_merged_branch_h {
-  my ($self, $user, $project) = @_;
+  my ($self, %opt) = @_;
   
   # No merged branches
   my $no_merged_branches_h = {};
   {
-    my $rep = $self->app->rep_path($user, $project);
-    
-    my @cmd = $self->cmd_rep($user, $project, 'branch', '--no-merged');
+    my @cmd = $self->cmd(%opt, command => ['branch', '--no-merged']);
     open my $fh, '-|', @cmd or return;
     my @lines = <$fh>;
     for my $branch_name (@lines) {
@@ -116,7 +114,7 @@ sub branches {
     $branch_name =~ s/\s*$//;
     
     # No merged branch
-    $no_merged_branches_h = $self->no_merged_branch_h($user, $project)
+    $no_merged_branches_h = $self->no_merged_branch_h(%{$self->app->rep_info($user, $project)})
       unless $start++;
     
     # Branch
