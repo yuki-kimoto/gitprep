@@ -33,9 +33,7 @@ sub rep_work_current_branch {
 }
 
 sub branch {
-  my ($self, %opt) = @_;
-  my $git_dir = $opt{git_dir};
-  my $branch_name = $opt{name};
+  my ($self, $rep, $branch_name) = @_;
   
   # Branch
   $branch_name =~ s/^\*//;
@@ -43,28 +41,22 @@ sub branch {
   $branch_name =~ s/\s*$//;
   my $branch = {};
   $branch->{name} = $branch_name;
-  my $commit = $self->get_commit_new(git_dir => $git_dir, id => $branch_name);
+  my $commit = $self->get_commit_new($rep, $branch_name);
   $branch->{commit} = $commit;
 
   return $branch;
 }
 
 sub branch_status {
-  my ($self, %opt) = @_;
-  
-  my $git_dir = $opt{git_dir};
-  my $branch1 = $opt{from};
-  my $branch2 = $opt{to};
+  my ($self, $rep, $branch1, $branch2) = @_;
   
   # Branch status
   my $status = {ahead => 0, behind => 0};
   my @cmd = $self->cmd(
-    git_dir => $git_dir,
-    command => [
-      'rev-list',
-      '--left-right',
-      "$branch1...$branch2"
-    ]
+    $rep,
+    'rev-list',
+    '--left-right',
+    "$branch1...$branch2"
   );
   open my $fh, '-|', @cmd
     or croak "Can't get branch status: @cmd";
@@ -77,12 +69,12 @@ sub branch_status {
 }
 
 sub no_merged_branch_h {
-  my ($self, %opt) = @_;
+  my ($self, $rep) = @_;
   
   # No merged branches
   my $no_merged_branches_h = {};
   {
-    my @cmd = $self->cmd(%opt, command => ['branch', '--no-merged']);
+    my @cmd = $self->cmd($rep, 'branch', '--no-merged');
     open my $fh, '-|', @cmd or return;
     my @lines = <$fh>;
     for my $branch_name (@lines) {
@@ -98,10 +90,10 @@ sub no_merged_branch_h {
 }
 
 sub branches {
-  my ($self, %opt) = @_;
+  my ($self, $rep) = @_;
   
   # Branches
-  my @cmd = $self->cmd(%opt, command => ['branch']);
+  my @cmd = $self->cmd($rep, 'branch');
   open my $fh, '-|', @cmd or return;
   my $branches = [];
   my $start;
@@ -114,11 +106,11 @@ sub branches {
     $branch_name =~ s/\s*$//;
     
     # No merged branch
-    $no_merged_branches_h = $self->no_merged_branch_h(%opt)
+    $no_merged_branches_h = $self->no_merged_branch_h($rep)
       unless $start++;
     
     # Branch
-    my $branch = $self->branch(%opt, name => $branch_name);
+    my $branch = $self->branch($rep, $branch_name);
     $branch->{no_merged} = 1 if $no_merged_branches_h->{$branch_name};
     push @$branches, $branch;
   }
@@ -128,10 +120,10 @@ sub branches {
 }
 
 sub branches_count {
-  my ($self, %opt) = @_;
+  my ($self, $rep) = @_;
   
   # Branches count
-  my @cmd = $self->cmd(%opt, command => ['branch']);
+  my @cmd = $self->cmd($rep, 'branch');
   open my $fh, '-|', @cmd or return;
   my @branches = <$fh>;
   my $branches_count = @branches;
@@ -140,11 +132,10 @@ sub branches_count {
 }
 
 sub cmd {
-  my ($self, %opt) = @_;
+  my ($self, $rep, @command) = @_;
   
-  my $git_dir = $opt{git_dir};
-  my $work_tree = $opt{work_tree};
-  my $command = $opt{command};
+  my $git_dir = $rep->{git_dir};
+  my $work_tree = $rep->{work_tree};
   
   my @command_all = ($self->bin);
   if (defined $git_dir) {
@@ -153,7 +144,7 @@ sub cmd {
   if (defined $work_tree) {
     push @command_all, "--work-tree=$work_tree";
   }
-  push @command_all, @$command;
+  push @command_all, @command;
   
   return @command_all;
 }
@@ -189,21 +180,16 @@ sub cmd_work_dir {
 }
 
 sub authors {
-  my ($self, %opt) = @_;
-  
-  my $rev = $opt{rev};
-  my $file = $opt{file};
+  my ($self, $rep, $rev, $file) = @_;
   
   # Authors
   my @cmd = $self->cmd(
-    %opt,
-    command => [
-      'log',
-      '--format=%an',
-      $rev,
-      '--',
-      $file
-    ]
+    $rep,
+    'log',
+    '--format=%an',
+    $rev,
+    '--',
+    $file
   );
   open my $fh, "-|", @cmd
     or croak 500, "Open git-cat-file failed";
@@ -219,21 +205,16 @@ sub authors {
 }
 
 sub blame {
-  my ($self, %opt) = @_;
-  
-  my $rev = $opt{rev};
-  my $file = $opt{file};
+  my ($self, $rep, $rev, $file) = @_;
   
   # Git blame
   my @cmd = $self->cmd(
-    %opt,
-    command => [
-      'blame',
-      '--line-porcelain',
-      $rev,
-      '--',
-      $file
-    ]
+    $rep,
+    'blame',
+    '--line-porcelain',
+    $rev,
+    '--',
+    $file
   );
   open my $fh, '-|', @cmd
     or croak "Can't git blame --line-porcelain";
@@ -245,7 +226,7 @@ sub blame {
   my $min_author_time;
   my @lines = <$fh>;
   
-  my $enc = $self->decide_encoding($opt{user}, $opt{project}, \@lines);
+  my $enc = $self->decide_encoding($rep->{user}, $rep->{project}, \@lines);
   for my $line (@lines) {
     $line = decode($enc, $line);
     chomp $line;
@@ -300,21 +281,16 @@ sub blame {
 }
 
 sub blob {
-  my ($self, %opt) = @_;
-  
-  my $rev = $opt{rev};
-  my $file = $opt{file};
+  my ($self, $rep, $rev, $file) = @_;
   
   # Blob
-  my $hash = $self->path_to_hash($opt{user}, $opt{project}, $rev, $file, 'blob')
+  my $hash = $self->path_to_hash($rep->{user}, $rep->{project}, $rev, $file, 'blob')
     or croak 'Cannot find file';
   my @cmd = $self->cmd(
-    %opt,
-    command => [
-      'cat-file',
-      'blob',
-      $hash
-    ]
+    $rep,
+    'cat-file',
+    'blob',
+    $hash
   );
   open my $fh, '-|', @cmd
     or croak "Can't cat $file, $hash";
@@ -322,7 +298,7 @@ sub blob {
   # Format lines
   my @lines = <$fh>;
   my @new_lines;
-  my $enc = $self->decide_encoding($opt{user}, $opt{project}, \@lines);
+  my $enc = $self->decide_encoding($rep->{user}, $rep->{project}, \@lines);
   for my $line (@lines) {
     $line = decode($enc, $line);
     chomp $line;
@@ -333,36 +309,32 @@ sub blob {
 }
 
 sub blob_diffs {
-  my ($self, %opt) = @_;
+  my ($self, $rep, $rev1, $rev2, $diff_trees, $opt) = @_;
   
-  my $rev1 = $opt{from};
-  my $rev2 = $opt{to};
-  my $diff_trees = $opt{diff_trees};
-  my $ignore_space_change = $opt{ignore_space_change};
+  $opt //= {};
+  my $ignore_space_change = $opt->{ignore_space_change};
   
   return unless defined $rev1 && defined $rev2;
   
   # Diff tree
   my @cmd = $self->cmd(
-    %opt,
-    command => [
-      'diff-tree',
-      '-r',
-      '-M',
-      '--no-commit-id',
-      '--patch-with-raw',
-      ($ignore_space_change ? '--ignore-space-change' : ()),
-      $rev1,
-      $rev2,
-      '--'
-    ]
+    $rep,
+    'diff-tree',
+    '-r',
+    '-M',
+    '--no-commit-id',
+    '--patch-with-raw',
+    ($ignore_space_change ? '--ignore-space-change' : ()),
+    $rev1,
+    $rev2,
+    '--'
   );
   
   open my $fh, '-|', @cmd
     or croak('Open self-diff-tree failed');
   my @diff_tree;
   my @diff_tree_lines = <$fh>;
-  my $diff_tree_enc = $self->decide_encoding($opt{user}, $opt{project}, \@diff_tree_lines);
+  my $diff_tree_enc = $self->decide_encoding($rep->{user}, $rep->{project}, \@diff_tree_lines);
   for my $line (@diff_tree_lines) {
     $line = decode($diff_tree_enc, $line);
     chomp $line;
@@ -383,24 +355,22 @@ sub blob_diffs {
     
     # Blob diff
     my @cmd = $self->cmd(
-      %opt,
-      command => [
-        'diff-tree',
-        '-r',
-        '-M',
-        '-p',
-        ($ignore_space_change ? '--ignore-space-change' : ()),
-        $rev1,
-        $rev2,
-        '--',
-        (defined $from_file ? $from_file : ()),
-        $file
-      ]
+      $rep,
+      'diff-tree',
+      '-r',
+      '-M',
+      '-p',
+      ($ignore_space_change ? '--ignore-space-change' : ()),
+      $rev1,
+      $rev2,
+      '--',
+      (defined $from_file ? $from_file : ()),
+      $file
     );
     open my $fh, '-|', @cmd
       or croak('Open self-diff-tree failed');
     my @lines = <$fh>;
-    my $enc = $self->decide_encoding($opt{user}, $opt{project}, \@lines);
+    my $enc = $self->decide_encoding($rep->{user}, $rep->{project}, \@lines);
     @lines = map { decode($enc, $_) } @lines;
     close $fh;
     my ($lines, $diff_info) = $self->parse_blob_diff_lines(\@lines);
@@ -433,22 +403,21 @@ sub blob_diffs {
 }
 
 sub blob_is_image {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my $self = shift;
   
-  my $mime_type = $self->blob_mime_type($user, $project, $rev, $file);
+  my $mime_type = $self->blob_mime_type(@_);
   
   return ($mime_type || '') =~ m#^image/#;
 }
 
 sub blob_mime_type {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my ($self, $rep, $rev, $file) = @_;
   
   # Blob
-  my $hash = $self->path_to_hash($user, $project, $rev, $file, 'blob')
+  my $hash = $self->path_to_hash($rep->{user}, $rep->{project}, $rev, $file, 'blob')
     or croak 'Cannot find file';
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep,
     'cat-file',
     'blob',
     $hash
@@ -475,10 +444,10 @@ sub blob_mime_type {
 }
 
 sub blob_content_type {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my $self = shift;
   
   # Content type
-  my $type = $self->blob_mime_type($user, $project, $rev, $file);
+  my $type = $self->blob_mime_type(@_);
   if ($type eq 'text/plain') {
     $type .= "; charset=" . $self->default_encoding;
   }
@@ -595,7 +564,7 @@ sub exists_branch {
 sub delete_branch {
   my ($self, $user, $project, $branch) = @_;
   
-  my $branches = $self->branches(%{$self->app->rep_info($user, $project)});
+  my $branches = $self->branches($self->app->rep_info($user, $project));
   my $exists;
   for my $b (@$branches) {
     if ($branch eq $b->{name}) {
@@ -1268,24 +1237,20 @@ sub get_commit {
 }
 
 sub get_commit_new {
-  my ($self, %opt) = @_;
+  my ($self, $rep, $id) = @_;
   
-  my $git_dir = $opt{git_dir};
-  my $work_tree = $opt{work_tree};
-  my $id = $opt{id};
+  my $git_dir = $rep->{git_dir};
+  my $work_tree = $rep->{work_tree};
   
   # Git rev-list
   my @cmd = $self->cmd(
-    git_dir => $git_dir,
-    work_tree => $work_tree,
-    command => [
-      'rev-list',
-      '--parents',
-      '--header',
-      '--max-count=1',
-      $id,
-      '--'
-    ]
+    $rep,
+    'rev-list',
+    '--parents',
+    '--header',
+    '--max-count=1',
+    $id,
+    '--'
   );
   open my $fh, '-|', @cmd
     or croak 'Open git-rev-list failed';

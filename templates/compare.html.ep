@@ -42,7 +42,7 @@
   }
   
   # Branches
-  my $branches = $git->branches($user, $project);
+  my $branches = $git->branches(app->rep_info($user, $project));
   @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
   
   # Variables

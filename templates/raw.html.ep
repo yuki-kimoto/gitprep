@@ -12,7 +12,7 @@
   my $blob_raw = $git->blob_raw($user, $project, $rev, $file);
   
   # Content type
-  my $type = $git->blob_content_type($user, $project, $rev, $file);
+  my $type = $git->blob_content_type(app->rep_info($user, $project), $rev, $file);
 
   # File name
   my $file_name = $rev;

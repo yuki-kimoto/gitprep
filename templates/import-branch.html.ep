@@ -16,7 +16,7 @@
   
   # Branches
   my $git = app->git;
-  my $remote_branches = $git->branches(%{$self->app->rep_info($remote_user, $remote_project)});
+  my $remote_branches = $git->branches($self->app->rep_info($remote_user, $remote_project));
   my $remote_branch_names = [map { $_->{name} } @$remote_branches];
   
   my $op = param('op') || '';
@@ -73,7 +73,7 @@
     if ($validation->is_valid) {
       
       # Check branch name
-      my $branches = $git->branches(%{$self->app->rep_info($user, $project)});
+      my $branches = $git->branches($self->app->rep_info($user, $project));
       
       if (!$force && grep { $branch eq $_->{name} } @$branches) {
         $errors = ["Branch \"$branch\" is already exists. If you want to import this branch, check force option."];

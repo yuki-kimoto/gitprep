@@ -5,7 +5,7 @@
   my $git = app->git;
   
   # Branches
-  my $branches = $git->branches(%{$self->app->rep_info($user, $project)}) || [];
+  my $branches = $git->branches($self->app->rep_info($user, $project)) || [];
   my @branch_names = map { $_->{name} } @$branches;
   
   # Tags

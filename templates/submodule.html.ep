@@ -15,7 +15,7 @@
   my $file_base = File::Basename::basename $file;
 
   # Blob lines
-  my $lines = $git->blob(%{app->rep_info($user, $project)}, rev => $rev, file => '.gitmodules');
+  my $lines = $git->blob(app->rep_info($user, $project), $rev, '.gitmodules');
   
   my $submodule_rep_url;
   my $match;

@@ -21,21 +21,22 @@
   
   if ($blob_diff->{binary}) {
     if ($status eq 'A') {
-      if ($git->blob_is_image($user, $project, $rev, $file)) {
+      if ($git->blob_is_image(app->rep_info($user, $project), $rev, $file)) {
         $binary_rev_shown = 1;
       }
       else {
         $binary_not_shown = 1;
       }
     } elsif ($status eq 'D') {
-      if ($git->blob_is_image($user, $project, $from_rev, $file)) {
+      if ($git->blob_is_image(app->rep_info($user, $project), $from_rev, $file)) {
         $binary_from_rev_shown = 1;
       }
       else {
         $binary_not_shown = 1;
       }
     } else {
-      if ($git->blob_is_image($user, $project, $from_rev, $file) && $git->blob_is_image($user, $project, $from_rev, $file)) {
+      if ($git->blob_is_image(app->rep_info($user, $project), $from_rev, $file)
+        && $git->blob_is_image(app->rep_info($user, $project), $from_rev, $file)) {
         $binary_from_rev_shown = 1;
         $binary_rev_shown = 1;
       }

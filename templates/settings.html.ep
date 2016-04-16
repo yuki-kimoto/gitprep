@@ -229,7 +229,7 @@
             <li id="default-branch">
               Default Branch
               <%
-                my $branches = $git->branches(%{$self->app->rep_info($user, $project)});
+                my $branches = $git->branches($self->app->rep_info($user, $project));
                 my $branch_names = [map { $_->{name} } @$branches];
                 my $default_branch = app->manager->default_branch($user, $project);
                 push @$branch_names, $default_branch unless @$branch_names;
