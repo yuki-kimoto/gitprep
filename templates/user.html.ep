@@ -22,7 +22,7 @@
   my $projects = app->manager->projects($user_id);
   my $reps = [];
   for my $project (@$projects) {
-    my $rep = app->git->repository($user_id, $project->{name}) || {none => 1};
+    my $rep = app->git->repository(app->rep_info($user_id, $project->{name})) || {none => 1};
     $rep->{name} = $project->{name};
     $rep->{private} = $project->{private};
     $rep->{age} //= 0;

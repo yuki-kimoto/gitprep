@@ -10,8 +10,7 @@
   
   # Tags
   my $tags = $git->tags(
-    $user,
-    $project,
+    app->rep_info($user, $project),
     app->config->{basic}{tags_limit} || 1000,
     app->config->{basic}{tags_limit} || 1000
   ) || [];

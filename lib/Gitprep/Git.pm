@@ -777,11 +777,11 @@ sub last_activity {
 }
 
 sub parse_rev_path {
-  my ($self, $rep,, $rev_path) = @_;
+  my ($self, $rep_info, $rev_path) = @_;
   
   # References
   my @cmd = $self->cmd(
-    $rep,
+    $rep_info,
     'show-ref',
     '--dereference'
   );
@@ -826,12 +826,11 @@ sub parse_rev_path {
 }
 
 sub object_type {
-  my ($self, $user, $project, $rev) = @_;
+  my ($self, $rep_info, $rev) = @_;
   
   # Get object type
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep_info,
     'cat-file',
     '-t',
     $rev
@@ -845,58 +844,33 @@ sub object_type {
   return $type;
 }
 
-sub project_owner {
-  my ($self, $project) = @_;
-  
-  # Project owner
-  my $user_id = (stat $project)[4];
-  my $user = getpwuid $user_id;
-  
-  return $user;
-}
-
-sub project_urls {
-  my ($self, $project) = @_;
-  
-  # Project URLs
-  open my $fh, '<', "$project/cloneurl"
-    or return;
-  my @urls = <$fh>;
-  @urls = map { chomp; $self->_dec($_) } @urls;
-  close $fh;
-
-  return \@urls;
-}
-
 sub repository {
-  my ($self, $user, $project) = @_;
+  my ($self, $rep_info) = @_;
 
-  return unless -d $self->app->rep_path($user, $project);
+  return unless -d $self->app->rep_path($rep_info->{user}, $rep_info->{project});
   
-
   my $rep = {};
-  my @activity = $self->last_activity($self->app->rep_info($user, $project));
+  my @activity = $self->last_activity($rep_info);
   if (@activity) {
     $rep->{age} = $activity[0];
     $rep->{age_string} = $activity[1];
   }
   else { $rep->{age} = 0 }
   
-  my $description = $self->description($self->app->rep_info($user, $project)) || '';
+  my $description = $self->description($rep_info) || '';
   $rep->{description} = $self->_chop_str($description, 25, 5);
   
   return $rep;
 }
 
 sub references {
-  my ($self, $user, $project, $type) = @_;
+  my ($self, $rep_info, $type) = @_;
   
   $type ||= '';
   
   # Branches or tags
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep_info,
     'show-ref',
     '--dereference',
     (
@@ -970,16 +944,15 @@ sub tags_count {
 }
 
 sub tags {
-  my ($self, $user, $project, $limit, $count, $offset) = @_;
+  my ($self, $rep_info, $limit, $count, $offset) = @_;
   
   $limit ||= 1000;
   $count ||= 50;
   $offset ||= 0;
   
   # Get tags
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep_info,
     'for-each-ref',
     ($limit ? '--count='.($limit+1) : ()),
     '--sort=-creatordate',
@@ -1033,7 +1006,7 @@ sub tags {
       $tag{comment_short} = $self->_chop_str($tag{subject}, 30, 5)
         if $tag{subject};
 
-      $tag{commit} = $self->get_commit($user, $project, $name);
+      $tag{commit} = $self->get_commit_new($rep_info, $name);
 
       push @tags, \%tag;
     }

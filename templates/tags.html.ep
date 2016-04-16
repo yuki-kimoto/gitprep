@@ -14,8 +14,7 @@
   my $limit = app->config->{basic}{tags_limit};
   my $page_count = 20;
   my $tags = $git->tags(
-    $user,
-    $project,
+    app->rep_info($user, $project),
     $limit,
     $page_count,
     $page_count * ($page - 1)

@@ -26,7 +26,7 @@
   my $git = app->git;
 
   # Object type
-  my $type = $git->object_type($user, $project, "$rev^{}");
+  my $type = $git->object_type(app->rep_info($user, $project), "$rev^{}");
   if (!$type || $type eq 'blob') {
     $self->reply->not_found;
     return;

@@ -33,11 +33,11 @@
   )->value;
   
   # Branches
-  my $branch_refs = $git->references($user, $project, 'heads');
+  my $branch_refs = $git->references(app->rep_info($user, $project), 'heads');
   my $branches = $branch_refs->{$commit->{id}} || [];
   
   # Tags
-  my $tag_refs = $git->references($user, $project, 'tags');
+  my $tag_refs = $git->references(app->rep_info($user, $project), 'tags');
   my $tags = $tag_refs->{$commit->{id}} || [];
   
   # Global variable for included template
