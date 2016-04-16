@@ -15,10 +15,10 @@ use Test::Mojo;
 my $data_dir =  $ENV{GITPREP_DATA_DIR} = "$FindBin::Bin/import_rep";
 
 # Test DB
-my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/import_rep/gitprep.db";
+my $db_file = "$data_dir/gitprep.db";
 
 # Test Repository home
-my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/import_rep/rep";
+my $rep_home = "$data_dir/rep";
 
 $ENV{GITPREP_NO_MYCONFIG} = 1;
 

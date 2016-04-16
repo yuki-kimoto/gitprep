@@ -134,7 +134,7 @@ sub startup {
   }
   
   # Repository home
-  my $rep_home = $ENV{GITPREP_REP_HOME} || $self->home->rel_file('data/rep');
+  my $rep_home = "$data_dir/rep";
   unless (-d $rep_home) {
     mkdir $rep_home
       or croak "Can't create directory $rep_home: $!";
@@ -158,8 +158,7 @@ sub startup {
   $self->git($git);
   
   # DBI
-  my $db_file = $ENV{GITPREP_DB_FILE}
-    || $self->home->rel_file('data/gitprep.db');
+  my $db_file = "$data_dir/gitprep.db";
   my $dbi = DBIx::Custom->connect(
     dsn => "dbi:SQLite:database=$db_file",
     connector => 1,

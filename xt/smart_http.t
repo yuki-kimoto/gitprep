@@ -16,10 +16,10 @@ use Test::Mojo;
 my $data_dir =  $ENV{GITPREP_DATA_DIR} = "$FindBin::Bin/smart_http";
 
 # Test DB
-my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/smart_http/gitprep.db";
+my $db_file = "$data_dir/gitprep.db";
 
 # Test Repository home
-my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/smart_http/rep";
+my $rep_home = "$data_dir/rep";
 
 $ENV{GITPREP_NO_MYCONFIG} = 1;
 

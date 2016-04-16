@@ -11,14 +11,9 @@ use Test::Mojo;
 # Data directory
 my $data_dir =  $ENV{GITPREP_DATA_DIR} = "$FindBin::Bin/basic";
 
-# Test DB
-$ENV{GITPREP_DB_FILE} = "$FindBin::Bin/basic/gitprep.db";
-
-# Test Repository home
 # You must clone "gitprep_t"
 # cd basic/rep/kimoto
 # git clone --bare https://github.com/yuki-kimoto/gitprep_t.git
-$ENV{GITPREP_REP_HOME} = "$FindBin::Bin/basic/rep";
 
 $ENV{GITPREP_NO_MYCONFIG} = 1;
 
