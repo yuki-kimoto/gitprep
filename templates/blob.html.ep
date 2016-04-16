@@ -36,7 +36,7 @@
 
   # Blob lines(only text)
   my $lines;
-  $lines = $git->blob($user, $project, $rev, $file) if $mime_type =~ /^text/;
+  $lines = $git->blob(%{app->rep_info($user, $project)}, rev => $rev, file => $file) if $mime_type =~ /^text/;
 
   # Variables for included template
   stash(id => $rev, project => $project, rev => $rev);

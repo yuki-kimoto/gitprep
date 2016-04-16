@@ -15,8 +15,8 @@
   my $file_base = File::Basename::basename $file;
 
   # Blob lines
-  my $lines = $git->blob($user, $project, $rev, '.gitmodules');
-
+  my $lines = $git->blob(%{app->rep_info($user, $project)}, rev => $rev, file => '.gitmodules');
+  
   my $submodule_rep_url;
   my $match;
   my $file_q = quotemeta $file;
@@ -42,7 +42,6 @@
 
   layout 'common' , title => "$project/$file at $rev \x{30fb} $user/$project";
 %>
-
 
   %= include '/include/header';
 

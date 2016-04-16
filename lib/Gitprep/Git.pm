@@ -300,17 +300,21 @@ sub blame {
 }
 
 sub blob {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my ($self, %opt) = @_;
+  
+  my $rev = $opt{rev};
+  my $file = $opt{file};
   
   # Blob
-  my $hash = $self->path_to_hash($user, $project, $rev, $file, 'blob')
+  my $hash = $self->path_to_hash($opt{user}, $opt{project}, $rev, $file, 'blob')
     or croak 'Cannot find file';
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
-    'cat-file',
-    'blob',
-    $hash
+  my @cmd = $self->cmd(
+    %opt,
+    command => [
+      'cat-file',
+      'blob',
+      $hash
+    ]
   );
   open my $fh, '-|', @cmd
     or croak "Can't cat $file, $hash";
@@ -318,7 +322,7 @@ sub blob {
   # Format lines
   my @lines = <$fh>;
   my @new_lines;
-  my $enc = $self->decide_encoding($user, $project, \@lines);
+  my $enc = $self->decide_encoding($opt{user}, $opt{project}, \@lines);
   for my $line (@lines) {
     $line = decode($enc, $line);
     chomp $line;
