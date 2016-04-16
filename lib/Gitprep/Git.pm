@@ -153,9 +153,11 @@ sub cmd_rep {
   my ($self, $user, $project, @cmd) = @_;
   
   # Git command
-  my $rep_info = $self->app->rep_path($user, $project);
+  my $rep_info = $self->app->rep_info($user, $project);
   
-  return $self->cmd_dir($rep_info, @cmd);
+  my $rep_git_dir = $rep_info->{git_dir};
+  
+  return $self->cmd_dir($rep_git_dir, @cmd);
 }
 
 sub cmd_dir {

@@ -15,7 +15,7 @@ use Gitprep::Util;
 has 'app';
 has 'authorized_keys_file';
 
-sub create_rep_work {
+sub create_work_rep {
   my ($self, $user, $project) = @_;
   
   # Remote repository
