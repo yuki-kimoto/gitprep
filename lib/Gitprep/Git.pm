@@ -299,26 +299,6 @@ sub blame {
   return $blame;
 }
 
-sub _age_string_date {
-  my ($self, $age) = @_;
-
-  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($age);
-  my $age_string_date = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
-  
-  return $age_string_date;
-}
-
-sub _age_string_date_local {
-  my ($self, $age) = @_;
-  
-  my $time_zone_second = $self->time_zone_second || 0;
-  
-  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($age + $time_zone_second);
-  my $age_string_date_local = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
-  
-  return $age_string_date_local;
-}
-
 sub blob {
   my ($self, $user, $project, $rev, $file) = @_;
   
@@ -1842,6 +1822,26 @@ sub decide_encoding {
   }
   
   return $encoding;
+}
+
+sub _age_string_date {
+  my ($self, $age) = @_;
+
+  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($age);
+  my $age_string_date = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
+  
+  return $age_string_date;
+}
+
+sub _age_string_date_local {
+  my ($self, $age) = @_;
+  
+  my $time_zone_second = $self->time_zone_second || 0;
+  
+  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($age + $time_zone_second);
+  my $age_string_date_local = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
+  
+  return $age_string_date_local;
 }
 
 sub _dec {
