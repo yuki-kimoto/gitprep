@@ -9,7 +9,7 @@
   my $user = param('user');
   my $project = param('project');
   my $rev_file = param('rev_file');
-  my ($rev, $file) = $git->parse_rev_path($user, $project, $rev_file);
+  my ($rev, $file) = $git->parse_rev_path(app->rep_info($user, $project), $rev_file);
 
   # Commit
   my $commit = $git->last_change_commit($user, $project, $rev, $file);

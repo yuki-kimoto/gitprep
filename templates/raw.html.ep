@@ -6,7 +6,7 @@
   my $user = param('user');
   my $project = param('project');
   my $rev_file = param('rev_file');
-  my ($rev, $file) = $git->parse_rev_path($user, $project, $rev_file);
+  my ($rev, $file) = $git->parse_rev_path(app->rep_info($user, $project), $rev_file);
   
   # Blob raw
   my $blob_raw = $git->blob_raw(app->rep_info($user, $project), $rev, $file);

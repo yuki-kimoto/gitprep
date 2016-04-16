@@ -777,12 +777,11 @@ sub last_activity {
 }
 
 sub parse_rev_path {
-  my ($self, $user, $project, $rev_path) = @_;
+  my ($self, $rep,, $rev_path) = @_;
   
   # References
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep,
     'show-ref',
     '--dereference'
   );

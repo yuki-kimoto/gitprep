@@ -17,7 +17,7 @@
   my $dir;
   my $rev_dir = param('rev_dir');
   if (defined $rev_dir) {
-    ($rev, $dir) = $git->parse_rev_path($user, $project, $rev_dir);
+    ($rev, $dir) = $git->parse_rev_path(app->rep_info($user, $project), $rev_dir);
   }
   else {
     $rev = app->manager->default_branch($user, $project);

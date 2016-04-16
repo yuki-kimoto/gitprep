@@ -12,7 +12,7 @@
   
   my $render_atom_feed = $rev_file =~ s/\.atom$// ? 1 : 0;
   
-  my ($rev, $file) = $git->parse_rev_path($user, $project, $rev_file);
+  my ($rev, $file) = $git->parse_rev_path(app->rep_info($user, $project), $rev_file);
   my $page = param('page') || 0;
   
   # Commit
