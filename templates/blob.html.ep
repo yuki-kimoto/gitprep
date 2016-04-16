@@ -22,7 +22,7 @@
   )->value;
 
   # Authors
-  my $authors = $git->authors($user, $project, $rev, $file);
+  my $authors = $git->authors(%{$self->app->rep_info($user, $project)}, rev => $rev, file => $file);
   
   # File size
   my $file_size = $git->blob_size($user, $project, $rev, $file);

@@ -189,17 +189,21 @@ sub cmd_work_dir {
 }
 
 sub authors {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my ($self, %opt) = @_;
+  
+  my $rev = $opt{rev};
+  my $file = $opt{file};
   
   # Authors
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
-    'log',
-    '--format=%an',
-    $rev,
-    '--',
-    $file
+  my @cmd = $self->cmd(
+    %opt,
+    command => [
+      'log',
+      '--format=%an',
+      $rev,
+      '--',
+      $file
+    ]
   );
   open my $fh, "-|", @cmd
     or croak 500, "Open git-cat-file failed";
