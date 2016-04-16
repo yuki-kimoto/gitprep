@@ -98,10 +98,10 @@ sub no_merged_branch_h {
 }
 
 sub branches {
-  my ($self, $user, $project) = @_;
+  my ($self, %opt) = @_;
   
   # Branches
-  my @cmd = $self->cmd_rep($user, $project, 'branch');
+  my @cmd = $self->cmd(%opt, command => ['branch']);
   open my $fh, '-|', @cmd or return;
   my $branches = [];
   my $start;
@@ -114,11 +114,11 @@ sub branches {
     $branch_name =~ s/\s*$//;
     
     # No merged branch
-    $no_merged_branches_h = $self->no_merged_branch_h(%{$self->app->rep_info($user, $project)})
+    $no_merged_branches_h = $self->no_merged_branch_h(%opt)
       unless $start++;
     
     # Branch
-    my $branch = $self->branch(%{$self->app->rep_info($user, $project)}, name => $branch_name);
+    my $branch = $self->branch(%opt, name => $branch_name);
     $branch->{no_merged} = 1 if $no_merged_branches_h->{$branch_name};
     push @$branches, $branch;
   }
@@ -603,7 +603,7 @@ sub exists_branch {
 sub delete_branch {
   my ($self, $user, $project, $branch) = @_;
   
-  my $branches = $self->branches($user, $project);
+  my $branches = $self->branches(%{$self->app->rep_info($user, $project)});
   my $exists;
   for my $b (@$branches) {
     if ($branch eq $b->{name}) {

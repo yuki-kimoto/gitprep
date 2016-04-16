@@ -70,7 +70,7 @@
   my $page_count = 20;
   my $skip = $page_count * ($page - 1);
   
-  my $branches = $git->branches($user, $project);
+  my $branches = $git->branches(%{$self->app->rep_info($user, $project)});
   my $max = 0;
   my $active_count = 0;
   my $stale_count = 0;

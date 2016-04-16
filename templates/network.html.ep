@@ -3,7 +3,7 @@
   my $api = gitprep_api;
   
   # Branches
-  my $branches = [map { $_->{name} } @{app->git->branches($user, $project)}];
+  my $branches = [map { $_->{name} } @{app->git->branches(%{$self->app->rep_info($user, $project)})}];
   
   # Members
   my $members = app->manager->members($user, $project);
@@ -11,7 +11,7 @@
   # Members branches
   for my $member (@$members) {
     my $branches = [
-      map { $_->{name} } @{app->git->branches($member->{id}, $member->{project})}
+      map { $_->{name} } @{app->git->branches(%{$self->app->rep_info($member->{id}, $member->{project})})}
     ];
     $member->{branches} = $branches;
   }
