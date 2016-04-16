@@ -76,12 +76,14 @@
           % }
           
           % if (defined $original_project) {
-            (
-              forked from
-              <a href="<%= url_for("/$original_user/$original_project") %>">
-                <%= "$original_user/$original_project" %>
-              </a>
-            )
+            <small>
+              (
+                forked from
+                <a href="<%= url_for("/$original_user/$original_project") %>">
+                  <%= "$original_user/$original_project" %>
+                </a>
+              )
+            </small>
           % }
         </ul>
       </div>

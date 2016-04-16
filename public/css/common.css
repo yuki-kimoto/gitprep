@@ -1917,13 +1917,13 @@ button.close {
 
 .project-header-left {
   float:left;
-  width:50%;
+  width:80%;
   overflow:hidden;
 }
 
 .project-header-right {
   float:left;
-  width:50%;
+  width:20%;
   overflow:hidden;
 }
 

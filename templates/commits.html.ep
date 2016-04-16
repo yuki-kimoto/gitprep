@@ -32,8 +32,7 @@
   # Commits
   my $page_count = 30;
   my $commits = $git->get_commits(
-    $user,
-    $project,
+    app->rep_info($user, $project),
     $commit->{id},
     $page_count,
     $page_count * $page,

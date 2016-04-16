@@ -1251,14 +1251,13 @@ sub parse_commit_text {
 }
 
 sub get_commits {
-  my ($self, $user, $project, $rev, $maxcount, $skip, $file, @args) = @_;
+  my ($self, $rep_info, $rev, $maxcount, $skip, $file, @args) = @_;
 
   # Get Commits
   $maxcount ||= 1;
   $skip ||= 0;
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my @cmd = $self->cmd(
+    $rep_info,
     'rev-list',
     '--header',
     @args,
@@ -1387,15 +1386,14 @@ sub parse_ls_tree_line {
 }
 
 sub import_branch {
-  my ($self, $user, $project, $branch, $remote_user, $remote_project, $remote_branch, $opt) = @_;
+  my ($self, $rep_info, $branch, $remote_rep_info, $remote_branch, $opt) = @_;
   
   my $force = $opt->{force};
   
   # Git pull
-  my $remote_rep = $self->app->rep_path($remote_user, $remote_project);
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
+  my $remote_rep = $remote_rep_info->{git_dir};
+  my @cmd = $self->cmd(
+    $rep_info,
     'fetch',
     $remote_rep,
     ($force ? '+' : '') . "refs/heads/$remote_branch:refs/heads/$branch"

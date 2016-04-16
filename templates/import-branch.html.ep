@@ -81,11 +81,9 @@
       else {
         eval {
           $git->import_branch(
-            $user,
-            $project,
+            app->rep_info($user, $project),
             $branch,
-            $remote_user,
-            $remote_project,
+            app->rep_info($remote_user, $remote_project),
             $remote_branch,
             {force => $force}
           );
