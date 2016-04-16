@@ -333,33 +333,36 @@ sub blob {
 }
 
 sub blob_diffs {
-  my ($self, $user, $project, $rev1, $rev2, $diff_trees, $opt) = @_;
-
-  $opt ||= {};
-  my $ignore_space_change = $opt->{ignore_space_change};
+  my ($self, %opt) = @_;
+  
+  my $rev1 = $opt{from};
+  my $rev2 = $opt{to};
+  my $diff_trees = $opt{diff_trees};
+  my $ignore_space_change = $opt{ignore_space_change};
   
   return unless defined $rev1 && defined $rev2;
   
   # Diff tree
-  my @cmd = $self->cmd_rep(
-    $user,
-    $project,
-    'diff-tree',
-    '-r',
-    '-M',
-    '--no-commit-id',
-    '--patch-with-raw',
-    ($ignore_space_change ? '--ignore-space-change' : ()),
-    $rev1,
-    $rev2,
-    '--'
+  my @cmd = $self->cmd(
+    %opt,
+    command => [
+      'diff-tree',
+      '-r',
+      '-M',
+      '--no-commit-id',
+      '--patch-with-raw',
+      ($ignore_space_change ? '--ignore-space-change' : ()),
+      $rev1,
+      $rev2,
+      '--'
+    ]
   );
   
   open my $fh, '-|', @cmd
     or croak('Open self-diff-tree failed');
   my @diff_tree;
   my @diff_tree_lines = <$fh>;
-  my $diff_tree_enc = $self->decide_encoding($user, $project, \@diff_tree_lines);
+  my $diff_tree_enc = $self->decide_encoding($opt{user}, $opt{project}, \@diff_tree_lines);
   for my $line (@diff_tree_lines) {
     $line = decode($diff_tree_enc, $line);
     chomp $line;
@@ -379,24 +382,25 @@ sub blob_diffs {
     my $file = $diffinfo->{to_file};
     
     # Blob diff
-    my @cmd = $self->cmd_rep(
-      $user,
-      $project,
-      'diff-tree',
-      '-r',
-      '-M',
-      '-p',
-      ($ignore_space_change ? '--ignore-space-change' : ()),
-      $rev1,
-      $rev2,
-      '--',
-      (defined $from_file ? $from_file : ()),
-      $file
+    my @cmd = $self->cmd(
+      %opt,
+      command => [
+        'diff-tree',
+        '-r',
+        '-M',
+        '-p',
+        ($ignore_space_change ? '--ignore-space-change' : ()),
+        $rev1,
+        $rev2,
+        '--',
+        (defined $from_file ? $from_file : ()),
+        $file
+      ]
     );
     open my $fh, '-|', @cmd
       or croak('Open self-diff-tree failed');
     my @lines = <$fh>;
-    my $enc = $self->decide_encoding($user, $project, \@lines);
+    my $enc = $self->decide_encoding($opt{user}, $opt{project}, \@lines);
     @lines = map { decode($enc, $_) } @lines;
     close $fh;
     my ($lines, $diff_info) = $self->parse_blob_diff_lines(\@lines);
