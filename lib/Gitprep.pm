@@ -33,6 +33,14 @@ sub data_dir {
   return $data_dir;
 }
 
+sub rep_home {
+  my $self = shift;
+  
+  my $rep_home = $self->data_dir . "/rep";
+  
+  return $rep_home;
+}
+
 sub rep_info {
   my ($self, $user, $project) = @_;
   
@@ -42,6 +50,14 @@ sub rep_info {
   $info->{git_dir} = $self->rep_home . "/$user/$project.git";
   
   return $info;
+}
+
+sub work_rep_home {
+  my $self = shift;
+  
+  my $work_rep_home = $self->data_dir . "/work";
+  
+  return $work_rep_home;
 }
 
 sub work_rep_info {
@@ -56,34 +72,10 @@ sub work_rep_info {
   return $info;
 }
 
-sub rep_home {
-  my $self = shift;
-  
-  my $rep_home = $self->data_dir . "/rep";
-  
-  return $rep_home;
-}
-
 sub rep_path {
   my ($self, $user, $project) = @_;
   
   my $rep_path = $self->rep_home . "/$user/$project.git";
-  
-  return $rep_path
-}
-
-sub rep_work_home {
-  my $self = shift;
-  
-  my $work_home = $self->data_dir . "/work";
-  
-  return $work_home;
-}
-
-sub rep_work_path {
-  my ($self, $user, $project) = @_;
-  
-  my $rep_path = $self->rep_work_home . "/$user/$project";
   
   return $rep_path
 }
