@@ -728,26 +728,35 @@ sub _create_rep {
       # Create working directory
       my $home_tmp_dir = $self->app->home->rel_file('tmp');
       
+      # Temp directory
       my $temp_dir =  File::Temp->newdir(DIR => $home_tmp_dir);
-      my $temp_work = "$temp_dir/work";
-      mkdir $temp_work
-        or croak "Can't create directory $temp_work: $!";
+      
+      # Working repository
+      my $work_rep_work_tree = "$temp_dir/work";
+      my $work_rep_git_dir = "$work_rep_work_tree/.git";
+      my $work_rep_info = {
+        work_tree => $work_rep_work_tree,
+        git_dir => $work_rep_git_dir
+      };
+      
+      mkdir $work_rep_work_tree
+        or croak "Can't create directory $work_rep_work_tree: $!";
       
       # Git init
-      my @git_init_cmd = $git->cmd_work_dir($temp_work, 'init', '-q');
+      my @git_init_cmd = $git->cmd($work_rep_info, 'init', '-q');
       Gitprep::Util::run_command(@git_init_cmd)
         or croak "Can't execute git init: @git_init_cmd";
       
       # Add README
-      my $file = "$temp_work/README.md";
+      my $file = "$work_rep_work_tree/README.md";
       open my $readme_fh, '>', $file
         or croak "Can't create $file: $!";
       print $readme_fh "# $project\n";
       print $readme_fh "\n" . encode('UTF-8', $description) . "\n";
       close $readme_fh;
       
-      my @git_add_cmd = $git->cmd_work_dir(
-        $temp_work,
+      my @git_add_cmd = $git->cmd(
+        $work_rep_info,
         'add',
         'README.md'
       );
@@ -756,8 +765,8 @@ sub _create_rep {
         or croak "Can't execute git add: @git_add_cmd";
       
       # Set user name
-      my @git_config_user_name = $git->cmd_work_dir(
-        $temp_work,
+      my @git_config_user_name = $git->cmd(
+        $work_rep_info,
         'config',
         'user.name',
         $user
@@ -767,8 +776,8 @@ sub _create_rep {
       
       # Set user mail
       my $user_mail = $self->app->dbi->model('user')->select('mail', where => {id => $user})->value;
-      my @git_config_user_mail = $git->cmd_work_dir(
-        $temp_work,
+      my @git_config_user_mail = $git->cmd(
+        $work_rep_info,
         'config',
         'user.email',
         "$user_mail"
@@ -777,8 +786,8 @@ sub _create_rep {
         or croak "Can't execute git config: @git_config_user_mail";
       
       # Commit
-      my @git_commit_cmd = $git->cmd_work_dir(
-        $temp_work,
+      my @git_commit_cmd = $git->cmd(
+        $work_rep_info,
         'commit',
         '-q',
         '-m',
@@ -789,8 +798,8 @@ sub _create_rep {
       
       # Push
       {
-        my @git_push_cmd = $git->cmd_work_dir(
-          $temp_work,
+        my @git_push_cmd = $git->cmd(
+          $work_rep_info,
           'push',
           '-q',
           $rep_git_dir,
