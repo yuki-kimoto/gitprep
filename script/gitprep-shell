@@ -66,8 +66,9 @@ die qq|User "$session_user" can't access repository "$user/$project.git"\n|
   unless $can_access; 
 
 # Command
-my $rep = $app->rep_path($user, $project);
-my $repository = "'$rep'";
+my $rep_info = $app->rep_info($user, $project);
+my $rep_git_dir = $rep_info->{git_dir};
+my $repository = "'$rep_git_dir'";
 my @git_shell_cmd = ("git", "shell", "-c", "$verb $repository");
 warn "@git_shell_cmd" if $debug;
 unless ($debug) {

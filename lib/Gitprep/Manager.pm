@@ -678,41 +678,44 @@ sub _create_rep {
   
   # Create repository directory
   my $git = $self->app->git;
-  my $rep = $self->app->rep_path($user, $project);
-  mkdir $rep
-    or croak "Can't create directory $rep: $!";
+  
+  my $rep_info = $self->app->rep_info($user, $project);
+  my $rep_git_dir = $rep_info->{git_dir};
+  
+  mkdir $rep_git_dir
+    or croak "Can't create directory $rep_git_dir: $!";
   
   eval {
     # Git init
     {
-      my @git_init_cmd = $git->cmd_dir($rep, 'init', '--bare');
+      my @git_init_cmd = $git->cmd_dir($rep_git_dir, 'init', '--bare');
       Gitprep::Util::run_command(@git_init_cmd)
         or croak  "Can't execute git init --bare:@git_init_cmd";
     }
     
     # Add git-daemon-export-ok
     {
-      my $file = "$rep/git-daemon-export-ok";
+      my $file = "$rep_git_dir/git-daemon-export-ok";
       open my $fh, '>', $file
         or croak "Can't create git-daemon-export-ok: $!"
     }
     
     # HTTP support
     my @git_update_server_info_cmd = $git->cmd_dir(
-      $rep,
+      $rep_git_dir,
       '--bare',
       'update-server-info'
     );
     Gitprep::Util::run_command(@git_update_server_info_cmd)
       or croak "Can't execute git --bare update-server-info";
-    move("$rep/hooks/post-update.sample", "$rep/hooks/post-update")
+    move("$rep_git_dir/hooks/post-update.sample", "$rep_git_dir/hooks/post-update")
       or croak "Can't move post-update";
     
     # Description
     my $description = $opts->{description};
     $description = '' unless defined $description;
     {
-      my $file = "$rep/description";
+      my $file = "$rep_git_dir/description";
       open my $fh, '>', $file
         or croak "Can't open $file: $!";
       print $fh encode('UTF-8', $description)
@@ -790,7 +793,7 @@ sub _create_rep {
           $temp_work,
           'push',
           '-q',
-          $rep,
+          $rep_git_dir,
           'master'
         );
         # (This is bad, but --quiet option can't supress in old git)
@@ -800,7 +803,7 @@ sub _create_rep {
     }
   };
   if (my $e = $@) {
-    rmtree $rep;
+    rmtree $rep_git_dir;
     croak $e;
   }
 }
@@ -883,9 +886,10 @@ sub _exists_rep {
   my ($self, $user, $project) = @_;
   
   # Exists repository
-  my $rep = $self->app->rep_path($user, $project);
+  my $rep_info = $self->app->rep_info($user, $project);
+  my $rep_git_dir = $rep_info->{git_dir};
   
-  return -e $rep;
+  return -e $rep_git_dir;
 }
 
 sub _fork_rep {
@@ -893,21 +897,26 @@ sub _fork_rep {
   
   # Fork repository
   my $git = $self->app->git;
-  my $rep = $self->app->rep_path($user, $project);
-  my $to_rep = $self->app->rep_path($to_user, $to_project);
+  
+  my $rep_info = $self->app->rep_info($user, $project);
+  my $rep_git_dir = $rep_info->{git_dir};
+  
+  my $to_rep_info = $self->app->rep_info($to_user, $to_project);
+  my $to_rep_git_dir = $to_rep_info->{git_dir};
+
   my @cmd = (
     $git->bin,
     'clone',
     '-q',
     '--bare',
-    $rep,
-    $to_rep
+    $rep_git_dir,
+    $to_rep_git_dir
   );
   Gitprep::Util::run_command(@cmd)
     or croak "Can't fork repository(_fork_rep): @cmd";
   
   # Copy description
-  copy "$rep/description", "$to_rep/description"
+  copy "$rep_git_dir/description", "$to_rep_git_dir/description"
     or croak "Can't copy description file(_fork_rep)";
 }
 
@@ -934,10 +943,14 @@ sub _rename_rep {
     unless defined $user && defined $project && defined $renamed_project;
 
   # Rename repository
-  my $rep = $self->app->rep_path($user, $project);
-  my $renamed_rep = $self->app->rep_path($user, $renamed_project);
-  move($rep, $renamed_rep)
-    or croak "Can't move $rep to $renamed_rep: $!";
+  my $rep_info = $self->app->rep_info($user, $project);
+  my $rep_git_dir = $rep_info->{git_dir};
+  
+  my $renamed_rep_info = $self->app->rep_info($user, $renamed_project);
+  my $renamed_rep_git_dir = $renamed_rep_info->{git_dir};
+
+  move($rep_git_dir, $renamed_rep_git_dir)
+    or croak "Can't move $rep_git_dir to $renamed_rep_git_dir: $!";
 }
 
 1;

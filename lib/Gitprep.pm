@@ -72,14 +72,6 @@ sub work_rep_info {
   return $info;
 }
 
-sub rep_path {
-  my ($self, $user, $project) = @_;
-  
-  my $rep_path = $self->rep_home . "/$user/$project.git";
-  
-  return $rep_path
-}
-
 sub startup {
   my $self = shift;
   

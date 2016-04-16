@@ -90,18 +90,20 @@ for my $rep (glob "$rep_dir/*") {
     # Push repository
     chdir $rep
       or warn "Can't change directory $rep: $!\n";
-    my $remote_rep = $app->rep_path($user, $project);
+    
+    my $remote_rep_info = $app->rep_info($user, $project);
+    my $remote_rep_git_dir = $remote_rep_info->{git_dir};
     
     # push branches
     {
-      my @cmd = ('git', 'push', $remote_rep, '--all');
+      my @cmd = ('git', 'push', $remote_rep_git_dir, '--all');
       system(@cmd) == 0
         or warn "Can't push branches: @cmd";
     }
     
     # push tags
     {
-      my @cmd = ('git', 'push', $remote_rep, '--tags');
+      my @cmd = ('git', 'push', $remote_rep_git_dir, '--tags');
       system(@cmd) == 0
         or warn "Can't push tags: @cmd";
     }
