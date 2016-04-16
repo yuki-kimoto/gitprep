@@ -155,21 +155,7 @@ sub cmd_rep {
   # Git command
   my $rep_info = $self->app->rep_info($user, $project);
   
-  my $rep_git_dir = $rep_info->{git_dir};
-  
-  return $self->cmd_dir($rep_git_dir, @cmd);
-}
-
-sub cmd_dir {
-  my ($self, $dir, @cmd) = @_;
-  
-  return ($self->bin, "--git-dir=$dir", @cmd);
-}
-
-sub cmd_work_dir {
-  my ($self, $dir, @cmd) = @_;
-  
-  return ($self->bin, "--git-dir=$dir/.git", "--work-tree=$dir",  @cmd);
+  return $self->cmd($rep_info, @cmd);
 }
 
 sub authors {

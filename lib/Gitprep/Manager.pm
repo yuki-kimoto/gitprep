@@ -688,7 +688,7 @@ sub _create_rep {
   eval {
     # Git init
     {
-      my @git_init_cmd = $git->cmd_dir($rep_git_dir, 'init', '--bare');
+      my @git_init_cmd = $git->cmd($rep_info, 'init', '--bare');
       Gitprep::Util::run_command(@git_init_cmd)
         or croak  "Can't execute git init --bare:@git_init_cmd";
     }
@@ -701,8 +701,8 @@ sub _create_rep {
     }
     
     # HTTP support
-    my @git_update_server_info_cmd = $git->cmd_dir(
-      $rep_git_dir,
+    my @git_update_server_info_cmd = $git->cmd(
+      $rep_info,
       '--bare',
       'update-server-info'
     );
