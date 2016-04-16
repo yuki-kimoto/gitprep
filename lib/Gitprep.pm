@@ -37,6 +37,8 @@ sub rep_info {
   my ($self, $user, $project) = @_;
   
   my $info = {};
+  $info->{user} = $user;
+  $info->{project} = $user;
   $info->{git_dir} = $self->rep_home . "/$user/$project.git";
   
   return $info;
