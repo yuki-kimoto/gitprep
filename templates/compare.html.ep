@@ -70,10 +70,11 @@
     Gitprep::Util::run_command(@git_fetch_cmd)
       or Carp::croak "Can't execute git fetch: @git_fetch_cmd";
     
-    # git checkout -b origin/$from_rev
-    my $gitprep_tmp_branch_name = '__gitprep_tmp_branch__';
+    # Lock repository
+    my $lock = $self->app->manager->lock_rep($work_rep_info);
     
     # Checkout tmp branch and git reset --hard from my remote branch
+    my $gitprep_tmp_branch_name = '__gitprep_tmp_branch__';
     my @git_checkout_tmp_branch = $self->app->git->cmd(
       $work_rep_info,
       'checkout',

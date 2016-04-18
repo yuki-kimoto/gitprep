@@ -15,6 +15,21 @@ use Gitprep::Util;
 has 'app';
 has 'authorized_keys_file';
 
+sub lock_rep {
+  my ($self, $rep_info) = @_;
+  
+  my $git_dir = $rep_info->{git_dir};
+  my $lock_file = "$git_dir/config";
+  
+  open my $lock_fh, '<', $lock_file
+    or croak "Can't open lock file $lock_file: $!";
+    
+  flock $lock_fh, LOCK_EX
+    or croak "Can't lock $lock_file";
+  
+  return $lock_fh;
+}
+
 sub check_merge_automatical {
   my ($self, $rep_info, $branch1, $branch2) = @_;
   
@@ -631,10 +646,6 @@ sub update_authorized_keys_file {
       or croak "Can't chmod authorized_keys tmp file: $output_file";
     move $output_file, $authorized_keys_file
       or croak "Can't replace $authorized_keys_file by $output_file";
-    
-    # Unlock file
-    flock $lock_fh, LOCK_EX
-      or croak "Can't unlock $lock_file"
   }
   else {
     croak qq/authorized_keys file "$authorized_keys_file" is not found./;
