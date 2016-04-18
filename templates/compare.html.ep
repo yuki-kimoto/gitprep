@@ -122,10 +122,14 @@
     $('[name=base-branch]').on('keypress', function (e) {
       // Enter
       if (e.which == 13) {
-        location.href = '<%= url_for("/$user/$project/compare/") %>' + $(this).val() + '...<%= $rev %>';
+        var href = '<%= url_for("/$user/$project/compare/") %>' + $(this).val() + '...<%= $rev %>';
+        if (<%= $expand ? 1 : 0 %>) {
+          href = href + '?expand=1';
+        }
+        location.href = href;
       }
     });
-
+    
     // Change compare branch
     $('#compare-branch-btn').on('click', function () {
       $('#compare-branch-popup')
@@ -140,7 +144,11 @@
     $('[name=compare-branch]').on('keypress', function (e) {
       // Enter
       if (e.which == 13) {
-        location.href = '<%= url_for("/$user/$project/compare/") %>' + '<%= $from_rev %>...' + $(this).val();
+        var href = '<%= url_for("/$user/$project/compare/") %>' + '<%= $from_rev %>...' + $(this).val();
+        if (<%= $expand ? 1 : 0 %>) {
+          href = href + '?expand=1';
+        }
+        location.href = href;
       }
     });
   });
@@ -167,43 +175,49 @@
           <span>compare:</span> <b><%= $rev %></b><i class="icon-arrow-down"></i>
         </button>
         
-        % if ($merge_automatical) {
-          <span style="margin-left:10px">
-            <span style="color:green;font-weight:bold"><%= "\x{2714}" %>Able to merge.</span> These branches can be automatically merged.
-          </span>
+        % if ($can_open_pull_request) {
+          % if ($merge_automatical) {
+            <span style="margin-left:10px">
+              <span style="color:green;font-weight:bold"><%= "\x{2714}" %>Able to merge.</span> These branches can be automatically merged.
+            </span>
+          % } else {
+            <span style="margin-left:10px">
+              <span style="color:red;font-weight:bold"><%= "×" %>Not able to merge.</span> These branches can't be automatically merged.
+            </span>
+          % }
         % }
       </div>
     </div>
-    
-    % if ($merge_automatical) {
-      <div id="base-branch-popup" style="display:none;width:330px;position:absolute">
-        <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
-          <div style="overflow:hidden">
-            <div style="float:left;width:90%;">
-              <b>Choose a base branch</b>
-            </div>
-            <div style="float:left:width:10%;text-align:right;">
-              <i id="base-branch-close" class="icon-remove-circle"></i>
-            </div>
+
+    <div id="base-branch-popup" style="display:none;width:330px;position:absolute">
+      <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
+        <div style="overflow:hidden">
+          <div style="float:left;width:90%;">
+            <b>Choose a base branch</b>
+          </div>
+          <div style="float:left:width:10%;text-align:right;">
+            <i id="base-branch-close" class="icon-remove-circle"></i>
           </div>
         </div>
-        <div class="border-gray" style="background:#F5F5F5;border-top:none;border-bottom:none;text-align:center;padding:10px 0">
-          %= text_field 'base-branch', style => 'margin-bottom:0;width:270px', placeholder => 'Branch, tag, commit, or history marker';
-        </div>
-        <div style="background:white;max-height:500px;overflow:auto;">
-          <ul class="nav nav-tabs nav-stacked">
-            % for (my $i = 0; $i < @$branches; $i++) {
-              % my $branch = $branches->[$i];
-                <li>
-                  <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= url_for("/$user/$project/compare/$branch->{name}...$rev") %>">
-                    <%= $branch->{name} %>
-                  </a>
-                </li>
-            % }
-          </ul>
-        </div>
       </div>
-    % }
+      <div class="border-gray" style="background:#F5F5F5;border-top:none;border-bottom:none;text-align:center;padding:10px 0">
+        %= text_field 'base-branch', style => 'margin-bottom:0;width:270px', placeholder => 'Branch, tag, commit, or history marker';
+      </div>
+      <div style="background:white;max-height:500px;overflow:auto;">
+        <ul class="nav nav-tabs nav-stacked">
+          % for (my $i = 0; $i < @$branches; $i++) {
+            % my $branch = $branches->[$i];
+              <li>
+                <a style="border-top-left-radius:0px;border-top-right-radius:0px;"
+                  href="<%= url_with("/$user/$project/compare/$branch->{name}...$rev") %>">
+                  <%= $branch->{name} %>
+                </a>
+              </li>
+          % }
+        </ul>
+      </div>
+    </div>
+
     <div id="compare-branch-popup" style="display:none;width:330px;position:absolute">
       <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
         <div style="overflow:hidden">
@@ -223,7 +237,8 @@
         % for (my $i = 0; $i < @$branches; $i++) {
           % my $branch = $branches->[$i];
             <li>
-              <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= url_for("/$user/$project/compare/$from_rev...$branch->{name}") %>">
+              <a style="border-top-left-radius:0px;border-top-right-radius:0px;"
+                href="<%= url_with("/$user/$project/compare/$from_rev...$branch->{name}") %>">
                 <%= $branch->{name} %>
               </a>
             </li>
@@ -233,7 +248,7 @@
     </div>
   </div>
   
-  % if ($can_open_pull_request) {
+  % if ($merge_automatical) {
     <div class="compare-open-pull-request">
       <form>
         <div class="compare-open-pull-request-title">
@@ -315,7 +330,10 @@
         <b><big>There isn't anything to compare.</big></b>
       </div>
       <div>
-        <b><%= $from_rev %></b> is up to date with all commits from <b><%= $rev %></b>. Try <a href="<%= url_for("/$user/$project/compare/$rev...$from_rev") %>">switching the base</a> for your comparison.
+        <b>
+          <%= $from_rev %></b> is up to date with all commits from
+          <b><%= $rev %></b>.
+          Try <a href="<%= url_for("/$user/$project/compare/$rev...$from_rev") %>">switching the base</a> for your comparison.
       </div>
     </div>
   % }
