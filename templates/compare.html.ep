@@ -65,16 +65,33 @@
     $self->app->manager->create_work_rep($user, $project);
     
     # Fetch repository
-    my @git_fetch_cmd = $self->app->git->cmd(app->work_rep_info($user, $project), 'fetch');
+    my $work_rep_info = app->work_rep_info($user, $project);
+    my @git_fetch_cmd = $self->app->git->cmd($work_rep_info, 'fetch');
     Gitprep::Util::run_command(@git_fetch_cmd)
       or Carp::croak "Can't execute git fetch: @git_fetch_cmd";
     
     # git checkout -b origin/$from_rev
-    # my $gitprep_tmp_branch_name = '__gitprep_tmp_branch_name__';
-    # my @git_checkout_tmp_branch = $self->app->git->cmd(
-    #  app->work_rep_info($user, $project), 'checkout', '-b', $gitprep_tmp_branch_name, "origin/$from_rev");
-    # Gitprep::Util::run_command(@git_checkout_tmp_branch)
-    #  or Carp::croak "Can't execute git checkout: @git_checkout_tmp_branch";
+    my $gitprep_tmp_branch_name = '__gitprep_tmp_branch__';
+    
+    # Checkout tmp branch and git reset --hard from my remote branch
+    my @git_checkout_tmp_branch = $self->app->git->cmd(
+      $work_rep_info,
+      'checkout',
+      $gitprep_tmp_branch_name,
+    );
+    Gitprep::Util::run_command(@git_checkout_tmp_branch)
+      or Carp::croak "Can't execute git checkout: @git_checkout_tmp_branch";
+    
+    # git reset --hard
+    my @git_reset_hard_cmd = $self->app->git->cmd(
+      $work_rep_info,
+      'reset',
+      '--hard',
+      "origin/$from_rev"
+    );
+    Gitprep::Util::run_command(@git_reset_hard_cmd)
+      or Carp::croak "Can't execute git reset --hard: @git_reset_hard_cmd";
+    
   }
   
   layout 'common', title => "Comparing $from_rev...$rev \x{30fb} $user/$project";

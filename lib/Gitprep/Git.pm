@@ -19,10 +19,10 @@ has text_exts => sub { ['txt'] };
 has 'time_zone_second';
 has 'app';
 
-sub rep_work_current_branch {
-  my ($self, $user, $project) = @_;
+sub current_branch {
+  my ($self, $rep_info) = @_;
   
-  my @cmd = $self->cmd_work_rep($user, $project, 'rev-parse',  '--abbrev-ref', 'HEAD');
+  my @cmd = $self->cmd($rep_info, 'rev-parse',  '--abbrev-ref', 'HEAD');
   
   open my $fh, '-|', @cmd
     or croak "Can't get current branch: @cmd";
@@ -30,6 +30,27 @@ sub rep_work_current_branch {
   chomp $current_branch;
   
   return $current_branch;
+}
+
+sub branch_names {
+  my ($self, $rep_info) = @_;
+  
+  # Branch names
+  my @cmd = $self->cmd($rep_info, 'branch');
+  open my $fh, '-|', @cmd or return;
+  
+  my @lines = <$fh>;
+  my @branch_names;
+  for my $branch_name (@lines) {
+    chomp $branch_name;
+    $branch_name =~ s/^\*//;
+    $branch_name =~ s/^\s*//;
+    $branch_name =~ s/\s*$//;
+    
+    push @branch_names, $branch_name;
+  }
+  
+  return \@branch_names;
 }
 
 sub branch {

@@ -33,6 +33,16 @@ sub create_work_rep {
     my @git_clone_cmd = ($self->app->git->bin, 'clone', $rep_git_dir, $work_tree);
     Gitprep::Util::run_command(@git_clone_cmd)
       or croak "Can't git clone: @git_clone_cmd";
+    
+    # Create temparary branch
+    my $gitprep_tmp_branch_name = '__gitprep_tmp_branch__';
+    my @git_branch_cmd = $self->app->git->cmd(
+      $work_rep_info,
+      'branch',
+      $gitprep_tmp_branch_name,
+    );
+    Gitprep::Util::run_command(@git_branch_cmd)
+      or Carp::croak "Can't execute git branch: @git_branch_cmd";
 
     # Set user name
     my @git_config_user_name = $self->app->git->cmd(

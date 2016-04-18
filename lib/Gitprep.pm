@@ -66,8 +66,8 @@ sub work_rep_info {
   my $info = {};
   $info->{user} = $user;
   $info->{project} = $project;
-  $info->{git_dir} = $self->rep_work_home . "/$user/$project/.git";
-  $info->{work_tree} = $self->rep_work_home . "/$user/$project";
+  $info->{git_dir} = $self->work_rep_home . "/$user/$project/.git";
+  $info->{work_tree} = $self->work_rep_home . "/$user/$project";
   
   return $info;
 }
