@@ -15,6 +15,40 @@ use Gitprep::Util;
 has 'app';
 has 'authorized_keys_file';
 
+sub check_merge_automatical {
+  my ($self, $rep_info, $branch1, $branch2) = @_;
+  
+  # Create patch
+  my @git_format_patch_cmd = $self->app->git->cmd(
+    $rep_info,
+    'format-patch',
+    "$branch1..$branch2",
+    "--stdout"
+  );
+  open my $git_format_patch_fh, '-|', @git_format_patch_cmd
+    or Carp::croak "Can't execute git format-patch: @git_format_patch_cmd";
+  my $patch_str = do { local $/; <$git_format_patch_fh> };
+  
+  # Write patch to file
+  my $tmp_dir = File::Temp->newdir(DIR => $self->app->home->rel_file('/tmp'));
+  my $patch_file = "$tmp_dir/test.patch";
+  open my $patch_fh, '>', $patch_file
+    or Carp::croak "Can't open patch file $patch_file: $!";
+  print $patch_fh $patch_str;
+  close $patch_fh;
+  
+  # Check if this patch can be applied
+  my @git_apply_cmd = $self->app->git->cmd(
+    $rep_info,
+    'apply',
+    $patch_file,
+    '--check'
+  );
+  my $automatical = Gitprep::Util::run_command(@git_apply_cmd);
+  
+  return $automatical;
+}
+
 sub create_work_rep {
   my ($self, $user, $project) = @_;
   

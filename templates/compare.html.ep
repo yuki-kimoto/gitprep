@@ -58,7 +58,7 @@
   }
   
   # Can merge
-  my $can_merge;
+  my $merge_automatical;
   if ($can_open_pull_request) {
     
     # Create working repository if it don't exist
@@ -92,6 +92,12 @@
     Gitprep::Util::run_command(@git_reset_hard_cmd)
       or Carp::croak "Can't execute git reset --hard: @git_reset_hard_cmd";
     
+    # Check merge automatically
+    $merge_automatical = $self->app->manager->check_merge_automatical(
+      app->work_rep_info($user, $project),
+      $gitprep_tmp_branch_name,
+      "origin/$rev"
+    );
   }
   
   layout 'common', title => "Comparing $from_rev...$rev \x{30fb} $user/$project";
@@ -159,6 +165,12 @@
         <button id="compare-branch-btn" class="btn btn-small">
           <span>compare:</span> <b><%= $rev %></b><i class="icon-arrow-down"></i>
         </button>
+        
+        % if ($merge_automatical) {
+          <span style="margin-left:10px">
+            <span style="color:green;font-weight:bold"><%= "\x{2714}" %>Able to merge.</span> These branches can be automatically merged.
+          </span>
+        % }
       </div>
     </div>
 
