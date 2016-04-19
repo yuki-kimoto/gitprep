@@ -17,6 +17,53 @@
   # Git
   my $git = $self->app->git;
   
+  if (lc $self->req->method eq 'post') {
+    my $op = param('op');
+    
+    if ($op eq 'create-pull-request') {
+      my $title = param('title');
+      my $message = param('message');
+      
+      my $project_row_id = app->dbi->model('project')->select(
+        'row_id',
+        where => {user_id => $user, name => $project}
+      )->value;
+      
+      my $pull_request = app->dbi->model('pull_request')->select(
+        where => {project => $project_row_id, branch1 => $from_rev, branch2 => $rev}
+      )->one;
+      
+      if ($pull_request) {
+        $self->redirect_to("/$user/$project/pulls/$pull_request->{row_id}");
+        return;
+      }
+      else {
+        my $new_pull_request_params = {
+          project => $project_row_id,
+          branch1 => $from_rev,
+          branch2 => $rev,
+          title => $title,
+          message => $message
+        };
+        
+        app->dbi->model('pull_request')->insert($new_pull_request_params);
+        
+        my $new_pull_request_row_id = app->dbi->model('pull_request')->select(
+          'row_id',
+          where => {
+            project => $project_row_id,
+            branch1 => $from_rev,
+            branch2 => $rev
+          }
+        )->value;
+        
+        $self->redirect_to("/$user/$project/pulls/$new_pull_request_row_id");
+        return;
+      }
+      
+    }
+  }
+  
   # Commits
   my $commits = $git->forward_commits(app->rep_info($user, $project), $from_rev, $rev);
   my $commits_count = @$commits;
@@ -250,7 +297,8 @@
   
   % if ($merge_automatical) {
     <div class="compare-open-pull-request">
-      <form>
+      <form action="<%= url_for %>" method="post">
+        <%= hidden_field op => 'create-pull-request' %>
         <div class="compare-open-pull-request-title">
           <%= text_field 'title' => $commits->[0]{title_short}  %>
         </div>

@@ -178,7 +178,8 @@ sub startup {
     {table => 'ssh_public_key', primary_key => 'key'},
     {table => 'project', primary_key => ['user_id', 'name']},
     {table => 'number', primary_key => 'key'},
-    {table => 'collaboration', primary_key => ['user_id', 'project_name', 'collaborator_id']}
+    {table => 'collaboration', primary_key => ['user_id', 'project_name', 'collaborator_id']},
+    {table => 'pull_request'}
   ];
   $dbi->create_model($_) for @$models;
 
@@ -404,13 +405,13 @@ sub startup {
             $r->get('/archive/(*rev).zip' => sub { shift->render_maybe('/archive') })->to(archive_type => 'zip' );
             
             # Compare
-            $r->get('/compare' => sub { shift->render_maybe('/compare') });
-            $r->get(
+            $r->any('/compare' => sub { shift->render_maybe('/compare') });
+            $r->any(
               '/compare/(:rev1)...(:rev2)'
               => [rev1 => qr/[^\.]+/, rev2 => qr/[^\.]+/]
               => sub { shift->render_maybe('/compare') }
             );
-            $r->get('/compare/(:rev2)' => sub { shift->render_maybe('/compare') });
+            $r->any('/compare/(:rev2)' => sub { shift->render_maybe('/compare') });
             
             # Settings
             {

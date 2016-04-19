@@ -569,7 +569,7 @@ EOS
     croak $error;
   }
   
-  # Original project id numbert
+  # Original project id number
   eval { $dbi->insert({key => 'original_pid'}, table => 'number') };
   my $original_pid = $dbi->select(
     'key',
@@ -578,6 +578,37 @@ EOS
   )->value;
   unless (defined $original_pid) {
     my $error = "Can't create original_pid row in number table";
+    $self->app->log->error($error);
+    croak $error;
+  }
+
+  # Create pull_request table
+  eval {
+    my $sql = <<"EOS";
+create table pull_request (
+  row_id integer primary key autoincrement,
+  project integer not null default 0,
+  branch1 not null default '',
+  branch2 not null default '',
+  unique(project, branch1, branch2)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Create pull_request columns
+  my @pull_request_columns = (
+    "title not null default ''",
+    "message not null default ''"
+  );
+  for my $column (@pull_request_columns) {
+    eval { $dbi->execute("alter table pull_request add column $column") };
+  }
+
+  # Check pull_request table
+  eval { $dbi->select([qw/row_id project branch1 branch2 title/], table => 'pull_request') };
+  if ($@) {
+    my $error = "Can't create pull_request table properly: $@";
     $self->app->log->error($error);
     croak $error;
   }
