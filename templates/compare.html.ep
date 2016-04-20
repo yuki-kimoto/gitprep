@@ -43,7 +43,8 @@
           branch1 => $from_rev,
           branch2 => $rev,
           title => $title,
-          message => $message
+          message => $message,
+          open => 1
         };
         
         app->dbi->model('pull_request')->insert($new_pull_request_params);

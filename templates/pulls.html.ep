@@ -1,28 +1,25 @@
 <%
   # API
-  my $api = Gitprep::API->new($self);
+  my $api = gitprep_api;
 
   # Parameters
   my $user = param('user');
   my $project = param('project');
-  my $page = param('page') || 1;
   
   # Git
   my $git = $self->app->git;
   
-  # Ref names
-  my $limit = app->config->{basic}{tags_limit};
-  my $page_count = 20;
-  my $tags = $git->tags(
-    app->rep_info($user, $project),
-    $limit,
-    $page_count,
-    $page_count * ($page - 1)
-  );
-  my $tags_count = $git->tags_count(app->rep_info($user, $project));
+  # Pull requests
+  my $pull_requests = app->dbi->model('pull_request')->select(where => {open => 1})->all;
+  
+  # Open count
+  my $open_count = app->dbi->model('pull_request')->select('count(*)', where => {open => 1})->value;
+  
+  # Close count
+  my $close_count = app->dbi->model('pull_request')->select('count(*)', where => {open => 0})->value;
 %>
 
-% layout 'common', title => "Tags \x{30fb} $user/$project";
+% layout 'common', title => "Pull Requests Tags \x{30fb} $user/$project";
   
   %= include '/include/header';
   
@@ -32,12 +29,29 @@
     </div>
     <div class="pulls">
       <div class="pulls-header">
-        Open Close
+        <b><%= $open_count %> Open</b> <span style="margin-left:5px;color:#767676"><%= "\x{2714}" %><%= $close_count %> Closed</span>
       </div>
       <div class="pulls-body">
-        <div class="pulls-no-request">
-          <div style="font-size:18px"><b>There aren’t any open pull requests.</b></div>
-        </div>
+        % if (@$pull_requests) {
+          <ul>
+            % for my $pull_request (@$pull_requests) {
+              % my $branch2 = $pull_request->{branch2};
+              % my $commit = app->git->get_commit(app->rep_info($user, $project), $branch2);
+              <li>
+                <div class="pulls-title">
+                  <b><%= $pull_request->{title} %></b>
+                </div>
+                <div class="pulls-description">
+                  #<%= $pull_request->{row_id} %> <%= $pull_request->{open} ? 'opened' : 'closed' %>
+                </div>
+              </li>
+            % }
+          </ul>
+        % } else {
+          <div class="pulls-no-request">
+            <div style="font-size:18px"><b>There aren’t any open pull requests.</b></div>
+          </div>
+        % }
       </div>
     </div>
   </div>
