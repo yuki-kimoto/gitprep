@@ -601,7 +601,7 @@ EOS
     "title not null default ''",
     "message not null default ''",
     "open integer default 0",
-    "open_time integer default 0'",
+    "open_time integer default 0",
     "open_user integer default 0"
   );
   for my $column (@pull_request_columns) {
@@ -609,7 +609,7 @@ EOS
   }
 
   # Check pull_request table
-  eval { $dbi->select([qw/row_id project branch1 branch2 title message open/], table => 'pull_request') };
+  eval { $dbi->select([qw/row_id project branch1 branch2 title message open open_time open_user/], table => 'pull_request') };
   if ($@) {
     my $error = "Can't create pull_request table properly: $@";
     $self->app->log->error($error);

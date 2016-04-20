@@ -38,13 +38,22 @@
         return;
       }
       else {
+        my $now_tm = Time::Moment->now_utc;
+        my $now_epoch = $now_tm->epoch;
+        my $user_row_id = app->dbi->model('user')->select(
+          'row_id',
+          where => {id => $user}
+        )->value;
+        
         my $new_pull_request_params = {
           project => $project_row_id,
           branch1 => $from_rev,
           branch2 => $rev,
           title => $title,
           message => $message,
-          open => 1
+          open => 1,
+          open_time => $now_epoch,
+          open_user => $user_row_id
         };
         
         app->dbi->model('pull_request')->insert($new_pull_request_params);

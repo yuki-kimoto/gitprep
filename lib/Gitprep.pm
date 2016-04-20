@@ -180,9 +180,13 @@ sub startup {
     {table => 'project', primary_key => ['user_id', 'name']},
     {table => 'number', primary_key => 'key'},
     {table => 'collaboration', primary_key => ['user_id', 'project_name', 'collaborator_id']},
-    {table => 'pull_request'}
+    {
+      table => 'pull_request',
+      join => ['left join user on pull_request.open_user = user.row_id']
+    }
   ];
   $dbi->create_model($_) for @$models;
+  $dbi->setup_model;
 
   # Validator
   my $vc = Validator::Custom->new;
