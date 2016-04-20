@@ -501,7 +501,7 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 
 [GitPrep Web Site](http://gitprep.yukikimoto.com/)
 
-## Internally Using Library
+## Internally Using Modules
 
 * [Config::Tiny](http://search.cpan.org/dist/Config-Tiny/lib/Config/Tiny.pm)
 * [DBD::SQLite](http://search.cpan.org/dist/DBD-SQLite/lib/DBD/SQLite.pm)
@@ -516,8 +516,7 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 * [Object::Simple](http://search.cpan.org/dist/Object-Simple/lib/Object/Simple.pm)
 * [Text::Markdown::Hoedown](http://search.cpan.org/~tokuhirom/Text-Markdown-Hoedown-1.01/lib/Text/Markdown/Hoedown.pm)
 * [Validator::Custom](http://search.cpan.org/dist/Validator-Custom/lib/Validator/Custom.pm)
-* [mojo-legacy](https://github.com/jamadam/mojo-legacy) (until v1.12)
-
+* [Time-Moment](http://search.cpan.org/dist/Time-Moment/lib/Time/Moment.pod)
 
 ## Sister project
 
