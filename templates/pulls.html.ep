@@ -45,7 +45,7 @@
                 my $branch2 = $pull_request->{branch2};
                 my $commit = app->git->get_commit(app->rep_info($user, $project), $branch2);
                 my $open_time = $pull_request->{open_time};
-                my $open_time_age = Time::Moment->now_utc->epoch - $open_time;
+                my $open_time_age = Time::Moment->now->epoch - $open_time;
                 my $open_time_age_string = $self->app->git->_age_string($open_time_age);
               %>
               <li>
