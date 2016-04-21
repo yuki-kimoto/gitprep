@@ -103,16 +103,16 @@ sub create_work_rep {
     Gitprep::Util::run_command(@git_config_user_name)
       or croak "Can't execute git config: @git_config_user_name";
     
-    # Set user mail
-    my $user_mail = $self->app->dbi->model('user')->select('mail', where => {id => $user})->value;
-    my @git_config_user_mail = $self->app->git->cmd(
+    # Set user email
+    my $user_email = $self->app->dbi->model('user')->select('email', where => {id => $user})->value;
+    my @git_config_user_email = $self->app->git->cmd(
       $work_rep_info,
       'config',
       'user.email',
-      "$user_mail"
+      "$user_email"
     );
-    Gitprep::Util::run_command(@git_config_user_mail)
-      or croak "Can't execute git config: @git_config_user_mail";
+    Gitprep::Util::run_command(@git_config_user_email)
+      or croak "Can't execute git config: @git_config_user_email";
   }
 }
 
@@ -406,21 +406,6 @@ sub is_database_v1 {
   return $is_v1;
 }
 
-=pod
-  # If mail is empty, id is copied to mail for uniqueness
-  my $user_ids = $dbi->select('id', table => 'user', where => {mail => ''})->values;
-  for my $user_id (@$user_ids) {
-    $dbi->update({mail => "$user_id\@gitprep.example"}, table => 'user', where => {id => $user_id});
-  }
-  
-  # add unique to mail
-  eval { $dbi->execute("create unique index user__mail on user(mail)") };
-  my $created_user_mail_index = $dbi->execute("select * from sqlite_master where type = 'index' and name = 'user__mail'")->one;
-  unless ($created_user_mail_index) {
-    croak "Can't create user__mail index";
-  }
-=cut
-
 sub setup_database {
   my $self = shift;
   
@@ -577,228 +562,6 @@ EOS
     croak $error;
   }
 }
-
-=pod
-sub setup_database_v1 {
-  my $self = shift;
-  
-  my $dbi = $self->app->dbi;
-  
-  # Create user table
-  eval {
-    my $sql = <<"EOS";
-create table user (
-  row_id integer primary key autoincrement,
-  id not null unique default ''
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Check mail column
-  my $not_exists_user_mail;
-  eval { $dbi->select('mail', table => 'user') };
-  if ($@) {
-    $not_exists_user_mail = 1;
-  }
-
-  # Create user columns
-  my $user_columns = [
-    "admin not null default '0'",
-    "password not null default ''",
-    "salt not null default ''",
-    "mail not null default ''",
-    "name not null default ''"
-  ];
-  for my $column (@$user_columns) {
-    eval { $dbi->execute("alter table user add column $column") };
-  }
-
-  # Check user table
-  eval { $dbi->select([qw/row_id id admin password salt mail name/], table => 'user') };
-  if ($@) {
-    my $error = "Can't create user table properly: $@";
-    $self->app->log->error($error);
-    croak $error;
-  }
-  
-  # If mail is empty, id is copied to mail for uniqueness
-  my $user_ids = $dbi->select('id', table => 'user', where => {mail => ''})->values;
-  for my $user_id (@$user_ids) {
-    $dbi->update({mail => "$user_id\@gitprep.example"}, table => 'user', where => {id => $user_id});
-  }
-  
-  # add unique to mail
-  eval { $dbi->execute("create unique index user__mail on user(mail)") };
-  my $created_user_mail_index = $dbi->execute("select * from sqlite_master where type = 'index' and name = 'user__mail'")->one;
-  unless ($created_user_mail_index) {
-    croak "Can't create user__mail index";
-  }
-  
-  # Create ssh_public_key table
-  eval {
-    my $sql = <<"EOS";
-create table ssh_public_key (
-  row_id integer primary key autoincrement,
-  key not null unique default ''
-);
-EOS
-    $dbi->execute($sql);
-  };
-
-  # Create ssh_public_key columns
-  my $ssh_public_key_columns = [
-    "user_id not null default ''",
-    "title not null default ''"
-  ];
-  for my $column (@$ssh_public_key_columns) {
-    eval { $dbi->execute("alter table ssh_public_key add column $column") };
-  }
-  
-  # Check ssh_public_key table
-  eval { $dbi->select([qw/row_id user_id key title/], table => 'ssh_public_key') };
-  if ($@) {
-    my $error = "Can't create ssh_public_key table properly: $@";
-    $self->app->log->error($error);
-    croak $error;
-  }
-  
-  # Create project table
-  eval {
-    my $sql = <<"EOS";
-create table project (
-  row_id integer primary key autoincrement,
-  user_id not null,
-  name not null,
-  unique(user_id, name)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Create Project columns
-  my $project_columns = [
-    "default_branch not null default 'master'",
-    "original_user not null default ''",
-    "original_project integer not null default 0",
-    "private not null default 0",
-    "ignore_space_change not null default 0",
-    "guess_encoding not null default ''"
-  ];
-  for my $column (@$project_columns) {
-    eval { $dbi->execute("alter table project add column $column") };
-  }
-
-  # Check project table
-  eval {
-    $dbi->select(
-      [qw/default_branch original_user original_project private ignore_space_change guess_encoding/],
-      table => 'project'
-    );
-  };
-  if ($@) {
-    my $error = "Can't create project table properly: $@";
-    $self->app->log->error($error);
-    croak $error;
-  }
-
-  # Create collaboration table
-  eval {
-    my $sql = <<"EOS";
-create table collaboration (
-  row_id integer primary key autoincrement,
-  user_id not null default '',
-  project_name not null default '',
-  collaborator_id not null default '',
-  unique(user_id, project_name, collaborator_id)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Check collaboration table
-  eval { $dbi->select([qw/row_id user_id project_name collaborator_id/], table => 'collaboration') };
-  if ($@) {
-    my $error = "Can't create collaboration table properly: $@";
-    $self->app->log->error($error);
-    croak $error;
-  }
-
-  # Create number table
-  eval {
-    my $sql = <<"EOS";
-create table number (
-  row_id integer primary key autoincrement,
-  key not null unique
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Create number columns
-  my $number_columns = [
-    "value integer not null default '0'"
-  ];
-  for my $column (@$number_columns) {
-    eval { $dbi->execute("alter table number add column $column") };
-  }
-
-  # Check number table
-  eval { $dbi->select([qw/row_id key value/], table => 'number') };
-  if ($@) {
-    my $error = "Can't create number table properly: $@";
-    $self->app->log->error($error);
-    croak $error;
-  }
-  
-  # Original project id number
-  eval { $dbi->insert({key => 'original_project'}, table => 'number') };
-  my $original_project = $dbi->select(
-    'key',
-    table => 'number',
-    where => {key => 'original_project'}
-  )->value;
-  unless (defined $original_project) {
-    my $error = "Can't create original_project row in number table";
-    $self->app->log->error($error);
-    croak $error;
-  }
-
-  # Create pull_request table
-  eval {
-    my $sql = <<"EOS";
-create table pull_request (
-  row_id integer primary key autoincrement,
-  project integer not null default 0,
-  branch1 not null default '',
-  branch2 not null default '',
-  unique(project, branch1, branch2)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Create pull_request columns
-  my @pull_request_columns = (
-    "title not null default ''",
-    "message not null default ''",
-    "open integer default 0",
-    "open_time integer default 0",
-    "open_user integer default 0"
-  );
-  for my $column (@pull_request_columns) {
-    eval { $dbi->execute("alter table pull_request add column $column") };
-  }
-
-  # Check pull_request table
-  eval { $dbi->select([qw/row_id project branch1 branch2 title message open open_time open_user/], table => 'pull_request') };
-  if ($@) {
-    my $error = "Can't create pull_request table properly: $@";
-    $self->app->log->error($error);
-    croak $error;
-  }
-}
-=cut
 
 sub update_authorized_keys_file {
   my $self = shift;
@@ -1043,16 +806,16 @@ sub _create_rep {
       Gitprep::Util::run_command(@git_config_user_name)
         or croak "Can't execute git config: @git_config_user_name";
       
-      # Set user mail
-      my $user_mail = $self->app->dbi->model('user')->select('mail', where => {id => $user})->value;
-      my @git_config_user_mail = $git->cmd(
+      # Set user email
+      my $user_email = $self->app->dbi->model('user')->select('email', where => {id => $user})->value;
+      my @git_config_user_email = $git->cmd(
         $work_rep_info,
         'config',
         'user.email',
-        "$user_mail"
+        "$user_email"
       );
-      Gitprep::Util::run_command(@git_config_user_mail)
-        or croak "Can't execute git config: @git_config_user_mail";
+      Gitprep::Util::run_command(@git_config_user_email)
+        or croak "Can't execute git config: @git_config_user_email";
       
       # Commit
       my @git_commit_cmd = $git->cmd(
