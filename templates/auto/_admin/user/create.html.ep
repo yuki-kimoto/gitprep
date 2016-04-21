@@ -9,7 +9,7 @@
     # Parameters
     my $id = param('id');
     my $name = param('name');
-    my $mail = param('mail');
+    my $email = param('email');
     my $password = param('password');
     my $password2 = param('password2');
     
@@ -39,17 +39,17 @@
     # "name" check
     $name //= '';
     
-    # "mail" check
-    if (!(defined $mail && length $mail)) {
-      $validation->add_failed(mail => "Mail must be not empty");
+    # "email" check
+    if (!(defined $email && length $email)) {
+      $validation->add_failed(email => "Mail must be not empty");
     }
-    elsif ($mail !~ /\@/) {
-      $validation->add_failed(mail => "Invalid mail address");
+    elsif ($email !~ /\@/) {
+      $validation->add_failed(email => "Invalid mail address");
     }
     else {
-      my $row = app->dbi->model('user')->select(where => {mail => $mail})->one;
+      my $row = app->dbi->model('user')->select(where => {email => $email})->one;
       if ($row) {
-        $validation->add_failed(mail => "Mail $mail already exists");
+        $validation->add_failed(email => "Mail $email already exists");
       }
     }
     
@@ -73,7 +73,7 @@
       $params->{password} = $password_encrypted;
       $params->{salt} = $salt;
       $params->{name} = $name;
-      $params->{mail} = $mail;
+      $params->{email} = $email;
       
       # Create user
       eval { app->manager->create_user($id, $params) };
@@ -131,7 +131,7 @@
         <div>
           <div>Mail</div>
           <div>
-            <%= text_field 'mail', placeholder => 'Mail' %>
+            <%= text_field 'email', placeholder => 'Mail' %>
           </div>
         </div>
         <div>

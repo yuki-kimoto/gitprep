@@ -10,7 +10,7 @@
     # Parameters
     my $id = param('id');
     my $name = param('name');
-    my $mail = param('mail');
+    my $email = param('email');
     
     # Validator
     my $vc = app->vc;
@@ -26,22 +26,22 @@
     # "name" check
     $name //= '';
     
-    # "mail" check
-    if (!(defined $mail && length $mail)) {
-      $validation->add_failed(mail => "Mail must be not empty");
+    # "email" check
+    if (!(defined $email && length $email)) {
+      $validation->add_failed(email => "Mail must be not empty");
     }
-    elsif ($mail !~ /\@/) {
-      $validation->add_failed(mail => "Invalid mail address");
+    elsif ($email !~ /\@/) {
+      $validation->add_failed(email => "Invalid mail address");
     }
     else {
       my $where = app->dbi->where;
       my $clause = [
         'and',
-        ':mail{=}',
+        ':email{=}',
         ':id{<>}'
       ];
       my $param = {
-        mail => $mail,
+        email => $email,
         id => $user_id
       };
       $where->clause($clause);
@@ -49,7 +49,7 @@
       
       my $row = app->dbi->model('user')->select(where => $where)->one;
       if ($row) {
-        $validation->add_failed(mail => "Mail $mail already exists");
+        $validation->add_failed(email => "Mail $email already exists");
       }
     }
     
@@ -58,7 +58,7 @@
       # Encrypt password
       my $params = {};
       $params->{name} = $name;
-      $params->{mail} = $mail;
+      $params->{email} = $email;
       
       # Update user
       eval { app->dbi->model('user')->update($params, where => {id => $id}) };
@@ -121,7 +121,7 @@
         <div>
           <div><b>Mail</b></div>
           <div>
-            <%= text_field 'mail' => $user->{mail}, placeholder => 'Mail' %>
+            <%= text_field 'email' => $user->{email}, placeholder => 'Mail' %>
           </div>
         </div>
         <div>

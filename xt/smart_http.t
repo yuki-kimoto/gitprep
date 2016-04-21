@@ -45,7 +45,7 @@ note 'Smart HTTP';
   $t->content_like(qr/Admin/);
   
   # Create user
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', mail => 'kimoto@foo.com', password => 'a', password2 => 'a'});
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', email => 'kimoto@foo.com', password => 'a', password2 => 'a'});
   $t->content_like(qr/Success.*created/);
 
   # Login as kimoto
@@ -155,9 +155,9 @@ note 'Private repository and collaborator';
   $t->content_like(qr/Admin/);
   
   # Create user
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', mail => 'kimoto@foo.com', password => 'a', password2 => 'a'});
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', email => 'kimoto@foo.com', password => 'a', password2 => 'a'});
   $t->content_like(qr/Success.*created/);
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', mail => 'kimoto2@foo.com', password => 'a', password2 => 'a'});
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', email => 'kimoto2@foo.com', password => 'a', password2 => 'a'});
   $t->content_like(qr/Success.*created/);
 
   # Login as kimoto
