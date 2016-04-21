@@ -115,6 +115,42 @@ unless ($new_project_count) {
   }
 }
 
+# Copy ssh_public_key data
+my $old_ssh_public_keys = $old_dbi->select(table => 'ssh_public_key')->all;
+my $new_ssh_public_key_count = $new_dbi->select('count(*)', table => 'ssh_public_key')->value;
+unless ($new_ssh_public_key_count) {
+  for my $old_ssh_public_key (@$old_ssh_public_keys) {
+    
+    my @new_ssh_public_key_columns = qw(
+      row_id
+      key
+      title
+    );
+    
+    my $new_ssh_public_key = {};
+    for my $new_ssh_public_key_column (@new_ssh_public_key_columns) {
+      if (exists $old_ssh_public_key->{$new_ssh_public_key_column}) {
+        $new_ssh_public_key->{$new_ssh_public_key_column} = $old_ssh_public_key->{$new_ssh_public_key_column};
+      }
+    }
+
+    # user_id is copied to user, which is converted to user.row_id
+    my $user_row_id = $old_dbi->select(
+      'row_id',
+      table => 'user',
+      where => {id => $old_ssh_public_key->{user_id}}
+    )->value;
+    if (defined $user_row_id) {
+      $new_ssh_public_key->{user} = $user_row_id;
+    }
+    else {
+      next;
+    }
+
+    $new_dbi->insert($new_ssh_public_key, table => 'ssh_public_key');
+  }
+}
+
 =pod
 collaboration
 ssh_public_key
