@@ -434,7 +434,8 @@ sub setup_database {
     my $sql = <<"EOS";
 create table user (
   row_id integer primary key autoincrement,
-  id not null unique default ''
+  id not null unique default '',
+  email not null unique default ''
 );
 EOS
     $dbi->execute($sql);
@@ -445,7 +446,6 @@ EOS
     "admin integer not null default 0",
     "password not null default ''",
     "salt not null default ''",
-    "email not null default ''",
     "name not null default ''"
   ];
   for my $column (@$user_columns) {

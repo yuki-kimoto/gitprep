@@ -1,5 +1,8 @@
 #!/usr/bin/env perl
 
+use strict;
+use warnings;
+
 use FindBin;
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use DBIx::Custom;
@@ -22,17 +25,41 @@ my %new_dbi_args = (
 );
 my $new_dbi = DBIx::Custom->connect(%new_dbi_args);
 
-# Copy number data
-my $numbers = $old_dbi->select(table => 'number')->all;
-for my $number (@$numbers) {
-  $new_dbi->insert($number, table => 'number');
+# Copy user data
+my $old_users = $old_dbi->select(table => 'user')->all;
+my $new_user_count = $new_dbi->select('count(*)', table => 'user')->value;
+unless ($new_user_count) {
+  for my $old_user (@$old_users) {
+    
+    my @new_user_columns = qw(
+      row_id
+      id
+      email
+      admin
+      password
+      salt
+      name
+    );
+    
+    my $new_user = {};
+    for my $new_user_column (@new_user_columns) {
+      if (exists $old_user->{$new_user_column}) {
+        $new_user->{$new_user_column} = $old_user->{$new_user_column};
+      }
+    }
+    
+    unless (exists $new_user->{email}) {
+      $new_user->{email} = $old_user->{id} . '@gitprep.example';
+    }
+    
+    $new_dbi->insert($new_user, table => 'user');
+  }
 }
 
 =pod
+user
 collaboration
-number
 project
 pull_request
 ssh_public_key
-user	
 =cut
