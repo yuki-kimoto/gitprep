@@ -209,8 +209,9 @@ sub is_private_project {
   my $user_row_id = $self->api->get_user_row_id($user_id);
   
   # Is private
-  my $private = $self->app->dbi->model('project')
-    ->select('private', where => {user => $user_row_id, project_id => $project_id})->value;
+  my $private = $self->app->dbi->model('project')->select(
+    'private', where => {user => $user_row_id, id => $project_id}
+  )->value;
   
   return $private;
 }
