@@ -8,6 +8,7 @@ use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use File::Path 'rmtree';
 use Encode qw/encode decode/;
+use Mojo::Server;
 
 use Test::Mojo;
 
@@ -27,9 +28,10 @@ use Gitprep;
 note 'Start page';
 {
   unlink $db_file;
-
-  my $app = Gitprep->new;
-  $app->manager->setup_database;
+  
+  system("$FindBin::Bin/../setup_database", $db_file) == 0
+    or die "Can't setup $db_file";
+  my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
   
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
@@ -67,8 +69,9 @@ note 'Admin page';
 {
   unlink $db_file;
 
-  my $app = Gitprep->new;
-  $app->manager->setup_database;
+  system("$FindBin::Bin/../setup_database", $db_file) == 0
+    or die "Can't setup $db_file";
+  my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
 
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
@@ -208,8 +211,9 @@ note 'Reset password';
 {
   unlink $db_file;
 
-  my $app = Gitprep->new;
-  $app->manager->setup_database;
+  system("$FindBin::Bin/../setup_database", $db_file) == 0
+    or die "Can't setup $db_file";
+  my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
 
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
@@ -269,8 +273,9 @@ note 'Profile';
   unlink $db_file;
   rmtree $rep_home;
 
-  my $app = Gitprep->new;
-  $app->manager->setup_database;
+  system("$FindBin::Bin/../setup_database", $db_file) == 0
+    or die "Can't setup $db_file";
+  my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
 
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
@@ -312,6 +317,7 @@ note 'Profile';
     $t->post_ok('/_login?op=login', form => {id => 'kimoto1', password => 'a'});
     
     # Create repository
+    $main::x = 1;
     $t->post_ok('/_new?op=create', form => {project => 't1', description => 'Hello'});
     $t->content_like(qr/Create a new repository on the command line/);
     $t->content_like(qr/t1\.git/);
@@ -411,8 +417,9 @@ note 'Profile';
 
 note 'fork';
 {
-  my $app = Gitprep->new;
-  $app->manager->setup_database;
+  system("$FindBin::Bin/../setup_database", $db_file) == 0
+    or die "Can't setup $db_file";
+  my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
 
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
@@ -438,8 +445,9 @@ note 'fork';
 
 note 'Network';
 {
-  my $app = Gitprep->new;
-  $app->manager->setup_database;
+  system("$FindBin::Bin/../setup_database", $db_file) == 0
+    or die "Can't setup $db_file";
+  my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
 
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
@@ -459,8 +467,9 @@ note 'Network';
 
 note 'Delete branch';
 {
-  my $app = Gitprep->new;
-  $app->manager->setup_database;
+  system("$FindBin::Bin/../setup_database", $db_file) == 0
+    or die "Can't setup $db_file";
+  my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
 
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
@@ -492,8 +501,9 @@ note 'Delete branch';
 
 note 'import-branch';
 {
-  my $app = Gitprep->new;
-  $app->manager->setup_database;
+  system("$FindBin::Bin/../setup_database", $db_file) == 0
+    or die "Can't setup $db_file";
+  my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
 
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
@@ -563,8 +573,9 @@ note 'Private repository and collaborator';
   unlink $db_file;
   rmtree $rep_home;
 
-  my $app = Gitprep->new;
-  $app->manager->setup_database;
+  system("$FindBin::Bin/../setup_database", $db_file) == 0
+    or die "Can't setup $db_file";
+  my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
 
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);

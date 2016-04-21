@@ -29,8 +29,9 @@ note 'import_rep';
   unlink $db_file;
   rmtree $rep_home;
 
-  my $app = Gitprep->new;
-  $app->manager->setup_database;
+  system("$FindBin::Bin/../setup_database", $db_file) == 0
+    or die "Can't setup $db_file";
+  my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
 
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
