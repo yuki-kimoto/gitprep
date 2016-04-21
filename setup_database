@@ -7,4 +7,10 @@ use lib "$FindBin::Bin/extlib/lib/perl5";
 use Gitprep;
 
 my $app = Gitprep->new;
-$app->manager->setup_database;
+
+if ($app->manager->is_database_v1) {
+  die "Can't setup database. you maybe need upgrade database";
+}
+else {
+  $app->manager->setup_database;
+}
