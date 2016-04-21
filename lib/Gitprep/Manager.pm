@@ -564,7 +564,6 @@ EOS
   # Create pull_request columns
   my @pull_request_columns = (
     "title not null default ''",
-    "message not null default ''",
     "open integer default 0",
     "open_time integer default 0",
     "open_user integer default 0"
@@ -574,36 +573,9 @@ EOS
   }
 
   # Check pull_request table
-  eval { $dbi->select([qw/row_id project branch1 branch2 title message open open_time open_user/], table => 'pull_request') };
+  eval { $dbi->select([qw/row_id project branch1 branch2 title open open_time open_user/], table => 'pull_request') };
   if ($@) {
     my $error = "Can't create pull_request table properly: $@";
-    $self->app->log->error($error);
-    croak $error;
-  }
-
-  # Create number table
-  eval {
-    my $sql = <<"EOS";
-create table number (
-  row_id integer primary key autoincrement,
-  key not null unique
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Create number columns
-  my $number_columns = [
-    "value integer not null default '0'"
-  ];
-  for my $column (@$number_columns) {
-    eval { $dbi->execute("alter table number add column $column") };
-  }
-
-  # Check number table
-  eval { $dbi->select([qw/row_id key value/], table => 'number') };
-  if ($@) {
-    my $error = "Can't create number table properly: $@";
     $self->app->log->error($error);
     croak $error;
   }

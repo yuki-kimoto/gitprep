@@ -1,0 +1,38 @@
+#!/usr/bin/env perl
+
+use FindBin;
+use lib "$FindBin::Bin/../extlib/lib/perl5";
+use DBIx::Custom;
+
+my ($old_database_file, $new_database_file) = @ARGV;
+
+# Old DBI
+my %old_dbi_args = (
+  dsn => "dbi:SQLite:database=$old_database_file",
+  connector => 1,
+  option => {sqlite_unicode => 1, sqlite_use_immediate_transaction => 1}
+);
+my $old_dbi = DBIx::Custom->connect(%old_dbi_args);
+
+# New DBI
+my %new_dbi_args = (
+  dsn => "dbi:SQLite:database=$new_database_file",
+  connector => 1,
+  option => {sqlite_unicode => 1, sqlite_use_immediate_transaction => 1}
+);
+my $new_dbi = DBIx::Custom->connect(%new_dbi_args);
+
+# Copy number data
+my $numbers = $old_dbi->select(table => 'number')->all;
+for my $number (@$numbers) {
+  $new_dbi->insert($number, table => 'number');
+}
+
+=pod
+collaboration
+number
+project
+pull_request
+ssh_public_key
+user	
+=cut

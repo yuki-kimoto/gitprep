@@ -47,7 +47,7 @@ If you used Gitprep version 1 from now, you need upgrade database.
 
     mv data/gitprep.db data/gitprep_v1bak.db
     ./setup_database
-    ./copy_database_v1_to_v2 data/gitprep_v1bak.db data/gitprep.db
+    old/copy_database_v1_to_v2 data/gitprep_v1bak.db data/gitprep.db
 
 If you install git in your local directry,
 you must add the correct git command path to the **gitprep.conf** config file.
