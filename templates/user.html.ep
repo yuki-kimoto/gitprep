@@ -22,8 +22,8 @@
   my $projects = app->manager->projects($user_id);
   my $reps = [];
   for my $project (@$projects) {
-    my $rep = app->git->repository(app->rep_info($user_id, $project->{name})) || {none => 1};
-    $rep->{name} = $project->{name};
+    my $rep = app->git->repository(app->rep_info($user_id, $project->{id})) || {none => 1};
+    $rep->{id} = $project->{id};
     $rep->{private} = $project->{private};
     $rep->{age} //= 0;
     push @$reps, $rep;
@@ -53,12 +53,12 @@
         
         <ul class="repositories">
           % for my $rep (sort { $a->{age} <=> $b->{age} } @$reps) {
-            % if (!$rep->{private} || $api->can_access_private_project($user_id, $rep->{name})) {
+            % if (!$rep->{private} || $api->can_access_private_project($user_id, $rep->{id})) {
               <li>
-                % my $pname = $rep->{name};
+                % my $project_id = $rep->{id};
                 <div class="repositories-name">
-                  <a href="<%= url_for("/$user_id/$pname") %>">
-                    <%= $rep->{name} %>
+                  <a href="<%= url_for("/$user_id/$project_id") %>">
+                    <%= $rep->{id} %>
                   </a>
                   % if ($rep->{private}) {
                     <i class="icon icon-lock"></i>
@@ -71,7 +71,7 @@
                   % my $age = $rep->{age_string};
                   % if ($rep->{none}) {
                     <span style="color:red">Repository not exists</span>
-                    <a href="<%= "/$user_id/$rep->{name}/settings" %>" class="btn btn-mini">Settings</a>
+                    <a href="<%= "/$user_id/$rep->{id}/settings" %>" class="btn btn-mini">Settings</a>
                   % } else {
                     <%= $age ? "last updated $age" : 'new repository' %>
                   % }

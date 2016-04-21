@@ -356,12 +356,14 @@ sub original_user {
 }
 
 sub projects {
-  my ($self, $user) = @_;
-
+  my ($self, $user_id) = @_;
+  
+  my $user_row_id = $self->app->dbi->model('user')->select('row_id', where => {id => $user_id})->value;
+  
   # Projects
   my $projects = $self->app->dbi->model('project')->select(
-    where => {user_id => $user},
-    append => 'order by name'
+    where => {user => $user_row_id},
+    append => 'order by id'
   )->all;
   
   return $projects;
