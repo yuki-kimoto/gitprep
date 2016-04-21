@@ -7,6 +7,8 @@
   my $project = param('project');
   my $row_id = param('row_id');
   
+  my $user_row_id = app->dbi->model('user')->select('row_id', where => {id => $user})->value;
+  
   # Git
   my $git = $self->app->git;
   
@@ -46,6 +48,9 @@
   stash from_id => $start_commit->{id};
   stash rev => $end_commit->{id};
   stash from_rev => $start_commit->{id};
+  
+  # Allow pull request
+  
 %>
 
 % layout 'common', title => "Pull Requests Tags \x{30fb} $user/$project";
@@ -141,28 +146,31 @@
       </div>
       
       %= include '/include/commit_body';
-      <form action="<%= url_for %>" method="post">
-        <div class="pull-request-form">
-          <div style="overflow:hidden">
-            <div style="float:left;padding:10px;padding-right:0">
-              <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#95c97e;color:white;padding-top:5px;"><%= "\x{2714}" %></div>
-            </div>
-            <div style="float:left">
-              <div class="pull-request-form-title">
-                <div>
-                  <b>This branch has no conflicts with the base branch</b>
-                </div>
-                <div>
-                  <span style="color:#767676">Merging can be performed automatically.</span>
+      
+      % if (session('user_row_id') eq $user_row_id) {
+        <form action="<%= url_for %>" method="post">
+          <div class="pull-request-form">
+            <div style="overflow:hidden">
+              <div style="float:left;padding:10px;padding-right:0">
+                <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#95c97e;color:white;padding-top:5px;"><%= "\x{2714}" %></div>
+              </div>
+              <div style="float:left">
+                <div class="pull-request-form-title">
+                  <div>
+                    <b>This branch has no conflicts with the base branch</b>
+                  </div>
+                  <div>
+                    <span style="color:#767676">Merging can be performed automatically.</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div class="pull-request-form-button">
-            <%= submit_button 'Merge pull request', class => "btn btn-success" %>
+            <div class="pull-request-form-button">
+              <%= submit_button 'Merge pull request', class => "btn btn-success" %>
+            </div>
           </div>
         </div>
-      </div>
+      % }
     </div>
   </div>
 

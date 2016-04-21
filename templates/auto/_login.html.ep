@@ -31,7 +31,7 @@
     # "user" and "password"
     $password = '' unless defined $password;
     my $user = $dbi->model('user')->select(
-      ['password', 'salt', 'admin'],
+      ['row_id', 'password', 'salt', 'admin'],
       where => {id => $id}
     )->one;
     if (!$user) {
@@ -56,7 +56,8 @@
       # Login success
       my $password_encrypted = $user->{password};
       my $admin = $user->{admin};
-      session(user => $id);
+      session(user => $id); # Deprecated!
+      session(user_row_id => $user->{row_id});
       session(password => $password_encrypted);
       
       if ($save) {
