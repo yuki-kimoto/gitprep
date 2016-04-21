@@ -50,7 +50,9 @@
               %>
               <li>
                 <div class="pulls-title">
-                  <b><%= $pull_request->{title} %></b>
+                  <a href="<%= "/$user/$project/pull/$pull_request->{row_id}" %>">
+                    <b><%= $pull_request->{title} %></b>
+                  </a>
                 </div>
                 <div class="pulls-description">
                   #<%= $pull_request->{row_id} %> <%= $pull_request->{open} ? 'opened' : 'closed' %>

@@ -374,8 +374,11 @@ sub startup {
             # Home
             $r->get('/' => sub { shift->render_maybe('/tree') });
 
-            # Tags
+            # Pull requests
             $r->get('/pulls' => sub { shift->render_maybe('/pulls') })->to(tab => 'pulls');
+            
+            # Pull request
+            $r->any('/pull/:row_id' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls');
             
             # Commit
             $r->get('/commit/*diff' => sub { shift->render_maybe('/commit') });

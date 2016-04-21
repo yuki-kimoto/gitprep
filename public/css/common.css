@@ -35,6 +35,28 @@
   box-sizing: border-box;
 }
 
+.pull-request-form {
+  border:1px solid #95c97e;
+  border-radius:3px;
+}
+.pull-request-form-title {
+  padding:10px;
+}
+.pull-request-form-description {
+  padding:10px;
+  color:#767676;
+}
+.pull-request-form-button {
+  padding:10px;
+  border-top:1px solid #d8d8d8;
+}
+.pulls-title a {
+  color:black;
+}
+.pulls-title a:hover {
+  color:blue;
+}
+
 .pulls-button-container {
   text-align:right;
   margin-bottom:10px;
