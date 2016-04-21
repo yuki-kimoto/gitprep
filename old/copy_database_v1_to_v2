@@ -56,10 +56,66 @@ unless ($new_user_count) {
   }
 }
 
+# Copy project data
+my $old_projects = $old_dbi->select(table => 'project')->all;
+my $new_project_count = $new_dbi->select('count(*)', table => 'project')->value;
+unless ($new_project_count) {
+  for my $old_project (@$old_projects) {
+    
+    my @new_project_columns = qw(
+      row_id
+      id
+      default_branch
+      private integer
+      ignore_space_change
+      guess_encoding
+    );
+    
+    my $new_project = {};
+    for my $new_project_column (@new_project_columns) {
+      if (exists $old_project->{$new_project_column}) {
+        $new_project->{$new_project_column} = $old_project->{$new_project_column};
+      }
+    }
+    
+    # name is copied to id
+    if (exists $old_project->{name}) {
+      $new_project->{id} = $old_project->{name};
+    }
+    
+    # original_pid is copied to original_project, which is converted to project.row_id
+    if (exists $old_project->{original_pid}) {
+      my $project_row_id = $old_dbi->select(
+        'row_id',
+        table => 'project',
+        where => {
+          original_pid => $old_project->{original_pid}
+        },
+        append => 'order by row_id'
+      )->value;
+      if ($project_row_id && $project_row_id ne $new_project->{row_id}) {
+        $new_project->{original_project} = $project_row_id;
+      }
+    }
+    
+    # user_id is copied to user, which is converted to user.row_id
+    my $user_row_id = $old_dbi->select(
+      'row_id',
+      table => 'user',
+      where => {id => $old_project->{user_id}}
+    )->value;
+    if (defined $user_row_id) {
+      $new_project->{user} = $user_row_id;
+    }
+    else {
+      next;
+    }
+    
+    $new_dbi->insert($new_project, table => 'project');
+  }
+}
+
 =pod
-user
 collaboration
-project
-pull_request
 ssh_public_key
 =cut
