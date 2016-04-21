@@ -46,7 +46,7 @@
           % }
         </div>
         <div class="repositories-user-id"><%= $user->{id} %></div>
-        <div class="repositories-user-mail"><i class="icon icon-envelope"></i> <a href="mailto:<%= $user->{mail} %>"><%= $user->{mail} %></a></div>
+        <div class="repositories-user-mail"><i class="icon icon-envelope"></i> <a href="mailto:<%= $user->{email} %>"><%= $user->{email} %></a></div>
       </div>
       <div class="repositories-right">
         <div class="topic1">Repositories</div>

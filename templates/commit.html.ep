@@ -26,10 +26,10 @@
   $commit->{committer_date} = $git->timestamp($committer_date);
   $from_rev = $commit->{parent} unless defined $from_rev;
   my $commit_short_id = substr($commit->{id}, 0, 7, );
-  my $commit_author_mail = $commit->{author_email};
+  my $commit_author_email = $commit->{author_email};
   my $commit_author_id = app->dbi->model('user')->select(
     'id',
-    where => {mail => $commit_author_mail}
+    where => {email => $commit_author_email}
   )->value;
   
   # Branches

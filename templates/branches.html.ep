@@ -212,7 +212,7 @@
                 my $commit_author_mail = $branch->{commit}{author_email};
                 my $commit_author_id = app->dbi->model('user')->select(
                   'id',
-                  where => {mail => $commit_author_mail}
+                  where => {email => $commit_author_email}
                 )->value;
                 
               %>

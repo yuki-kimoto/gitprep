@@ -227,7 +227,7 @@ sub blame {
         $blame_line->{author} = $1;
       }
       elsif ($line =~ /^author-mail +(.+)/) {
-        $blame_line->{author_mail} = $1;
+        $blame_line->{author_email} = $1;
       }
       elsif ($line =~ /^author-time +(.+)/) {
         my $author_time = $1;

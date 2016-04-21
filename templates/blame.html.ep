@@ -116,7 +116,7 @@
                   </div>
                 </div>
                 <div class="blame-author">
-                  <span title="<%= $line->{author_mail} %>"><%= $line->{author} %></span>
+                  <span title="<%= $line->{author_email} %>"><%= $line->{author} %></span>
                   authored on
                   <%= $line->{author_age_string_date_local} %>
                 </div>

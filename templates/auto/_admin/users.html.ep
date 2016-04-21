@@ -111,7 +111,7 @@
               <%= $user->{name} %>
             </td>
             <td>
-              <%= $user->{mail} %>
+              <%= $user->{email} %>
             </td>
             <td>
               <a class="btn btn-small" href="<%= url_for('/_admin/user/update')->query(id => $uid) %>">Settings</a>
