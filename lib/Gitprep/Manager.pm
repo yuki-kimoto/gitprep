@@ -218,7 +218,7 @@ sub is_private_project {
 sub api { shift->app->gitprep_api }
 
 
-sub members {
+sub member_projects {
   my ($self, $user_id, $project_id) = @_;
   
   my $user_row_id = $self->api->get_user_row_id($user_id);
@@ -227,25 +227,19 @@ sub members {
   my $dbi = $self->app->dbi;
   
   # Original project id
-  my $original_project = $dbi->model('project')
-    ->select('original_project', where => {user => $user_row_id, id => $project_id})->value;
+  my $project_row_id = $dbi->model('project')
+    ->select('row_id', where => {user => $user_row_id, id => $project_id})->value;
   
   # Members
   my $members = $dbi->model('project')->select(
     [
-      {__MY__ => '*'},
+      {__MY__ => ['id']},
       {user => ['id']}
     ],
-    where => [
-      ['and',
-        ':original_project{=}',
-        ['or', ':user_id{<>}', ':name{<>}']
-      ],
-      {
-        original_project => $original_project,
-      }
-    ],
-    append => 'order by user_id, name'
+    where => {
+      original_project => $project_row_id,
+    },
+    append => 'order by user.id, project.id'
   )->all;
 
   return $members;
