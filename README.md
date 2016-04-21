@@ -43,7 +43,8 @@ Setup database.
 
     ./setup_database
 
-If you used Gitprep version 1 from now, you need upgrade database.
+If you used Gitprep version 1 and upgrage it to version 2, you need upgrade database
+by the following command.
 
     mv data/gitprep.db data/gitprep_v1bak.db
     ./setup_database

@@ -151,7 +151,52 @@ unless ($new_ssh_public_key_count) {
   }
 }
 
+# Copy collaboration data
+my $old_collaborations = $old_dbi->select(table => 'collaboration')->all;
+my $new_collaboration_count = $new_dbi->select('count(*)', table => 'collaboration')->value;
+unless ($new_collaboration_count) {
+  for my $old_collaboration (@$old_collaborations) {
+    
+    my @new_collaboration_columns = qw(
+      row_id
+    );
+    
+    my $new_collaboration = {};
+    for my $new_collaboration_column (@new_collaboration_columns) {
+      if (exists $old_collaboration->{$new_collaboration_column}) {
+        $new_collaboration->{$new_collaboration_column} = $old_collaboration->{$new_collaboration_column};
+      }
+    }
+
+    # collaborator_id is copied to collaborator, which is converted to user.row_id
+    my $user_row_id = $old_dbi->select(
+      'row_id',
+      table => 'user',
+      where => {id => $old_collaboration->{collaborator_id}}
+    )->value;
+    if (defined $user_row_id) {
+      $new_collaboration->{collaborator} = $user_row_id;
+    }
+    else {
+      next;
+    }
+    
+    my $project_row_id = $old_dbi->select(
+      'row_id',
+      table => 'project',
+      where => {name => $old_collaboration->{project_name}}
+    )->value;
+    if (defined $project_row_id) {
+      $new_collaboration->{project} = $project_row_id;
+    }
+    else {
+      next;
+    }
+    
+    $new_dbi->insert($new_collaboration, table => 'collaboration');
+  }
+}
+
 =pod
 collaboration
-ssh_public_key
 =cut
