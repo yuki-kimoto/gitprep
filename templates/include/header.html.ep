@@ -2,20 +2,21 @@
   my $api = gitprep_api;
   my $logined = $api->logined;
 
-  my $current_user = session('user');
-  my $user = $self->param('user');
+  my $current_user_row_id = session('user_row_id');
+  my $current_user = app->dbi->model('user')->select(where => {row_id => $current_user_row_id})->one;
+  
+  my $user_id = $self->param('user');
 
-  my $project = param('project');
-  my $original_user;
+  my $project_id = param('project');
+  
   my $original_project;
   my $is_private_project;
   
   my $no_project_header = stash('no_project_header');
   
-  if (!$no_project_header && defined $project) {
-    $original_user = app->manager->original_user($user, $project);
-    $original_project = app->manager->original_project($user, $project);
-    $is_private_project = app->manager->is_private_project($user, $project);
+  if (!$no_project_header && defined $project_id) {
+    $original_project = app->manager->original_project($user_id, $project_id);
+    $is_private_project = app->manager->is_private_project($user_id, $project_id);
   }
 %>
 
@@ -32,21 +33,21 @@
     <div class="header-right">
       <div class="header-rigth-container">
         % if ($api->logined) {
-          % unless ($current_user eq 'admin') {
+          % unless ($current_user->{id} eq 'admin') {
             <div class="header-btn-container">
               <a class="btn btn-small" href="<%= url_for("/_new") %>">Create a new repo</a>
             </div>
             <div class="header-btn-container">
-              <a class="btn btn-small" href="<%= url_for("/$current_user/_settings") %>">Account Settings</a>
+              <a class="btn btn-small" href="<%= url_for("/$current_user->{id}/_settings") %>">Account Settings</a>
             </div>
           % }
           % my $url = url_with->to_abs;
           <div class="header-btn-container">
             <a class="btn btn-small" href="<%= url_for("/_logout?from=$url") %>">Sign out</a>
           </div>
-          <!-- Logined as <%= $current_user %> -->
+          <!-- Logined as <%= $current_user->{id} %> -->
           <div class="header-login-container">
-            <i class="icon-user"></i><a href="<%= url_for("/$current_user") %>"><%= $current_user %></a>
+            <i class="icon-user"></i><a href="<%= url_for("/$current_user->{id}") %>"><%= $current_user->{id} %></a>
           </div>
         % } else {
           <div class="header-btn-container">
@@ -58,17 +59,17 @@
   </div>
 </div>
 
-% if (!$no_project_header && (defined $user || defined $project)) {
+% if (!$no_project_header && (defined $user_id || defined $project_id)) {
   <div class="project-header">
     <div class="container" style="overflow:hidden">
       <div class="project-header-left">
         <ul class="breadcrumb">
           <li><a href="<%= url_for('/') %>"><i class="icon-home"></i></a></li>
           /
-          <li><a href="<%= url_for("/$user") %>"><%= $user %></a></li>
-          % if (defined $project) {
+          <li><a href="<%= url_for("/$user_id") %>"><%= $user_id %></a></li>
+          % if (defined $project_id) {
             /
-            <li><b><a href="<%= url_for("/$user/$project") %>"><%= $project %></a></b></li>
+            <li><b><a href="<%= url_for("/$user_id/$project_id") %>"><%= $project_id %></a></b></li>
           % }
           
           % if ($is_private_project) {
@@ -79,8 +80,8 @@
             <small>
               (
                 forked from
-                <a href="<%= url_for("/$original_user/$original_project") %>">
-                  <%= "$original_user/$original_project" %>
+                <a href="<%= url_for("/$original_project->{'user.id'}/$original_project->{id}") %>">
+                  <%= "$original_project->{'user.id'}/$original_project->{id}" %>
                 </a>
               )
             </small>
@@ -89,10 +90,10 @@
       </div>
       <div class="project-header-right">
         <div class="project-header-right-container">
-          % if (defined $project) {
+          % if (defined $project_id) {
             <div class="project-header-btn-container">
-              % if ($logined && $current_user ne $user ) {
-                <a href="<%= url_for("/$user/$project/fork") %>" class="btn">Fork</a>
+              % if ($logined && $current_user->{id} ne $user_id ) {
+                <a href="<%= url_for("/$user_id/$project_id/fork") %>" class="btn">Fork</a>
               % } else {
                 <button class="btn disabled" disabled>Fork</button>
               % }
@@ -101,7 +102,7 @@
         </div>
       </div>
     </div>
-    % if (defined $project) {
+    % if (defined $project_id) {
       <%
         my $tab = stash('tab') || 'code';
       %>
@@ -110,26 +111,26 @@
           <div class="container">
             <ul>
               <li class="<%= $tab eq 'code' ? 'active' :  '' %>">
-                <a href="<%= url_for("/$user/$project") %>">
+                <a href="<%= url_for("/$user_id/$project_id") %>">
                   <i class="icon-chevron-right"></i>
                   Code
                 </a>
               </li>
               <li class="<%= $tab eq 'pulls' ? 'active' :  '' %>">
-                <a href="<%= url_for("/$user/$project/pulls") %>">
+                <a href="<%= url_for("/$user_id/$project_id/pulls") %>">
                   <i class="icon-retweet"></i>
                   Pull request
                 </a>
               </li>
               <li class="<%= $tab eq 'graph' ? 'active' :  '' %>">
-                <a href="<%= url_for("/$user/$project/network") %>" >
+                <a href="<%= url_for("/$user_id/$project_id/network") %>" >
                   <i class="icon-align-center"></i>
                   Graph
                 </a>
               </li>
-              % if ($logined && $user eq session('user')) {
+              % if ($logined && $user_id eq session('user')) {
                 <li class="<%= $tab eq 'settings' ? 'active' :  '' %>">
-                  <a href="<%= url_for("/$user/$project/settings") %>">
+                  <a href="<%= url_for("/$user_id/$project_id/settings") %>">
                     <i class="icon-cog"></i>
                     Settings
                   </a>

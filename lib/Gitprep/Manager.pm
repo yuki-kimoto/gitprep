@@ -127,20 +127,22 @@ sub admin_user {
 }
 
 sub default_branch {
-  my ($self, $user, $project, $default_branch) = @_;
+  my ($self, $user_id, $project_id, $default_branch) = @_;
+  
+  my $user_row_id = $self->api->get_user_row_id($user_id);
   
   # Set default branch
   my $dbi = $self->app->dbi;
   if (defined $default_branch) {
     $dbi->model('project')->update(
       {default_branch => $default_branch},
-      id => [$user, $project]
+      where => {user => $user_row_id, id => $project_id}
     );
   }
   else {
     # Get default branch
     my $default_branch = $dbi->model('project')
-      ->select('default_branch', id => [$user, $project])
+      ->select('default_branch', where => {user => $user_row_id, id => $project_id})
       ->value;
     
     return $default_branch;
@@ -158,14 +160,14 @@ sub fork_project {
       
       # Original project id
       my $project_info = $dbi->model('project')->select(
-        ['original_pid', 'private'],
-        id => [$original_user, $project]
+        ['original_project', 'private'],
+        where => {user => $original_user, id => $project}
       )->one;
       
-      my $original_pid = $project_info->{original_pid};
+      my $original_project = $project_info->{original_project};
       
       croak "Can't get original project id"
-        unless defined $original_pid && $original_pid > 0;
+        unless defined $original_project && $original_project > 0;
       
       # Create project
       eval {
@@ -174,7 +176,7 @@ sub fork_project {
           $project,
           {
             original_user => $original_user,
-            original_pid => $original_pid,
+            original_project => $original_project,
             private => $project_info->{private}
           }
         );
@@ -192,47 +194,55 @@ sub fork_project {
 }
 
 sub is_admin {
-  my ($self, $user) = @_;
+  my ($self, $user_id) = @_;
   
   # Check admin
   my $is_admin = $self->app->dbi->model('user')
-    ->select('admin', id => $user)->value;
+    ->select('admin', where => {id => $user_id})->value;
   
   return $is_admin;
 }
 
 sub is_private_project {
-  my ($self, $user, $project) = @_;
+  my ($self, $user_id, $project_id) = @_;
+  
+  my $user_row_id = $self->api->get_user_row_id($user_id);
   
   # Is private
   my $private = $self->app->dbi->model('project')
-    ->select('private', id => [$user, $project])->value;
+    ->select('private', where => {user => $user_row_id, project_id => $project_id})->value;
   
   return $private;
 }
 
+sub api { shift->app->gitprep_api }
+
+
 sub members {
-  my ($self, $user, $project) = @_;
+  my ($self, $user_id, $project_id) = @_;
+  
+  my $user_row_id = $self->api->get_user_row_id($user_id);
   
   # DBI
   my $dbi = $self->app->dbi;
   
   # Original project id
-  my $original_pid = $dbi->model('project')
-    ->select('original_pid', id => [$user, $project])->value;
+  my $original_project = $dbi->model('project')
+    ->select('original_project', where => {user => $user_row_id, id => $project_id})->value;
   
   # Members
   my $members = $dbi->model('project')->select(
-    ['user_id as id', 'name as project'],
+    [
+      {__MY__ => '*'},
+      {user => ['id']}
+    ],
     where => [
       ['and',
-        ':original_pid{=}',
+        ':original_project{=}',
         ['or', ':user_id{<>}', ':name{<>}']
       ],
       {
-        original_pid => $original_pid,
-        user_id => $user,
-        name => $project
+        original_project => $original_project,
       }
     ],
     append => 'order by user_id, name'
@@ -318,41 +328,33 @@ sub delete_user {
 }
 
 sub original_project {
-  my ($self, $user, $project) = @_;
+  my ($self, $user_id, $project_id) = @_;
+  
+  my $user_row_id = $self->api->get_user_row_id($user_id);
   
   # Original project id
   my $dbi = $self->app->dbi;
-  my $row = $dbi->model('project')->select(
-    ['original_user', 'original_pid'],
-    id => [$user, $project]
-  )->one;
+  my $original_project_row_id = $dbi->model('project')->select(
+    'original_project',
+    where => {user => $user_row_id, id => $project_id}
+  )->value;
   
-  croak "Original project don't eixsts." unless $row;
+  croak "Original project don't eixsts." unless defined $original_project_row_id;
   
   # Original project
   my $original_project = $dbi->model('project')->select(
-    'name',
+    [
+      {__MY__ => '*'},
+      {user => ['id']}
+    ],
     where => {
-      user_id => $row->{original_user},
-      original_pid => $row->{original_pid}
+      'project.row_id' => $original_project_row_id
     }
-  )->value;
+  )->one;
   
-  return unless defined $original_project && length $original_project;
+  return unless defined $original_project;
   
   return $original_project;
-}
-
-sub original_user {
-  my ($self, $user, $project) = @_;
-  
-  # Orginal user
-  my $original_user = $self->app->dbi->model('project')
-    ->select('original_user', id => [$user, $project])
-    ->value;
-  return unless defined $original_user && length $original_user;
-  
-  return $original_user;
 }
 
 sub projects {
@@ -685,7 +687,7 @@ EOS
   my $project_columns = [
     "default_branch not null default 'master'",
     "original_user not null default ''",
-    "original_pid integer not null default 0",
+    "original_project integer not null default 0",
     "private not null default 0",
     "ignore_space_change not null default 0",
     "guess_encoding not null default ''"
@@ -697,7 +699,7 @@ EOS
   # Check project table
   eval {
     $dbi->select(
-      [qw/default_branch original_user original_pid private ignore_space_change guess_encoding/],
+      [qw/default_branch original_user original_project private ignore_space_change guess_encoding/],
       table => 'project'
     );
   };
@@ -757,14 +759,14 @@ EOS
   }
   
   # Original project id number
-  eval { $dbi->insert({key => 'original_pid'}, table => 'number') };
-  my $original_pid = $dbi->select(
+  eval { $dbi->insert({key => 'original_project'}, table => 'number') };
+  my $original_project = $dbi->select(
     'key',
     table => 'number',
-    where => {key => 'original_pid'}
+    where => {key => 'original_project'}
   )->value;
-  unless (defined $original_pid) {
-    my $error = "Can't create original_pid row in number table";
+  unless (defined $original_project) {
+    my $error = "Can't create original_project row in number table";
     $self->app->log->error($error);
     croak $error;
   }
@@ -939,12 +941,6 @@ sub _create_project {
   # Create project
   my $dbi = $self->app->dbi;
   $dbi->connector->txn(sub {
-    unless (defined $params->{original_pid}) {
-      my $number = $dbi->model('number')->select('value', where => {key => 'original_pid'})->value;
-      $number++;
-      $dbi->model('number')->update({value => $number}, where => {key => 'original_pid'});
-      $params->{original_pid} = $number;
-    }
     $dbi->model('project')->insert($params, id => [$user, $project]);
   });
 }
@@ -1094,10 +1090,12 @@ sub _create_rep {
 }
 
 sub _create_db_user {
-  my ($self, $user, $data) = @_;
+  my ($self, $user_id, $data) = @_;
+  
+  $data->{id} = $user_id;
   
   # Create database user
-  $self->app->dbi->model('user')->insert($data, id => $user);
+  $self->app->dbi->model('user')->insert($data);
 }
 
 sub _create_user_dir {
@@ -1110,10 +1108,10 @@ sub _create_user_dir {
 }
 
 sub _delete_db_user {
-  my ($self, $user) = @_;
+  my ($self, $user_id) = @_;
   
   # Delete database user
-  my $count = $self->app->dbi->model('user')->delete(id => $user);
+  my $count = $self->app->dbi->model('user')->delete(where => {id => $user_id});
   
   return $count;
 }
@@ -1128,11 +1126,13 @@ sub _delete_user_dir {
 }
 
 sub _delete_project {
-  my ($self, $user, $project) = @_;
+  my ($self, $user_id, $project_id) = @_;
+  
+  my $user_row_id = $self->api->get_user_row_id($user_id);
   
   # Delete project
   my $dbi = $self->app->dbi;
-  $dbi->model('project')->delete(id => [$user, $project]);
+  $dbi->model('project')->delete(where => {user => $user_row_id, id => $project_id});
 }
 
 sub _delete_rep {
@@ -1149,20 +1149,22 @@ sub _delete_rep {
 }
 
 sub exists_project {
-  my ($self, $user, $project) = @_;
+  my ($self, $user_id, $project_id) = @_;
+  
+  my $user_row_id = $self->api->get_user_row_id($user_id);
   
   # Exists project
   my $dbi = $self->app->dbi;
-  my $row = $dbi->model('project')->select(id => [$user, $project])->one;
+  my $row = $dbi->model('project')->select(where => {user => $user_row_id, id => $project_id})->one;
   
   return $row ? 1 : 0;
 }
 
 sub exists_user {
-  my ($self, $user) = @_;
+  my ($self, $user_id) = @_;
   
   # Exists project
-  my $row = $self->app->dbi->model('user')->select(id => $user)->one;
+  my $row = $self->app->dbi->model('user')->select(where => {id => $user_id})->one;
   
   return $row ? 1 : 0;
 }
@@ -1206,17 +1208,19 @@ sub _fork_rep {
 }
 
 sub _rename_project {
-  my ($self, $user, $project, $renamed_project) = @_;
+  my ($self, $user_id, $project_id, $renamed_project_id) = @_;
+  
+  my $user_row_id = $self->api->get_user_row_id($user_id);
   
   # Check arguments
   croak "Invalid parameters(_rename_project)"
-    unless defined $user && defined $project && defined $renamed_project;
+    unless defined $user_id && defined $project_id && defined $renamed_project_id;
   
   # Rename project
   my $dbi = $self->app->dbi;
   $dbi->model('project')->update(
-    {name => $renamed_project},
-    id => [$user, $project]
+    {id => $renamed_project_id},
+    where => {user => $user_row_id, id => $project_id}
   );
 }
 

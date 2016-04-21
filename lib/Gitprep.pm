@@ -175,14 +175,38 @@ sub startup {
   
   # Model
   my $models = [
-    {table => 'user', primary_key => 'id'},
-    {table => 'ssh_public_key', primary_key => 'key'},
-    {table => 'project', primary_key => ['user_id', 'name']},
-    {table => 'number', primary_key => 'key'},
-    {table => 'collaboration', primary_key => ['user_id', 'project_name', 'collaborator_id']},
+    {
+      table => 'user',
+      primary_key => 'row_id'
+    },
+    {
+      table => 'ssh_public_key',
+      primary_key => 'row_id',
+      join => [
+        'left join user on ssh_public_key.user = user.row_id'
+      ]
+    },
+    {
+      table => 'project',
+      primary_key => 'row_id',
+      join => [
+        'left join user on project.user = user.row_id'
+      ]
+    },
+    {
+      table => 'collaboration',
+      primary_key => 'row_id',
+      join => [
+        'left join user on collaboration.collaborator = user.row_id',
+        'left join project on collaboration.project = project.row_id'
+      ]
+    },
     {
       table => 'pull_request',
-      join => ['left join user on pull_request.open_user = user.row_id']
+      primary_key => 'row_id',
+      join => [
+        'left join user on pull_request.open_user = user.row_id'
+      ]
     }
   ];
   $dbi->create_model($_) for @$models;

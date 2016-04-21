@@ -5,6 +5,26 @@ use Digest::MD5 'md5_hex';
 
 has 'cntl';
 
+sub get_user_row_id {
+  my ($self, $user_id) = @_;
+  
+  my $user_row_id = $self->app->dbi->model('user')->select('row_id', where => {id => $user_id})->value;
+  
+  return $user_row_id;
+}
+
+sub get_project_row_id {
+  my ($self, $user_id, $project_id) = @_;
+  
+  my $user_row_id = $self->app->dbi->model('user')->select('row_id', where => {id => $user_id})->value;
+  my $project_row_id = $self->app->dbi->model('project')->model('project')->select(
+    'row_id',
+    where => {user => $user_row_id, id => $project_id}
+  )->value;
+  
+  return $project_row_id;
+}
+
 sub app { shift->cntl->app }
 
 sub encrypt_password {
