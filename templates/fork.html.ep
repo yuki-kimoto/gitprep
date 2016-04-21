@@ -2,10 +2,13 @@
   # API
   my $api = gitprep_api;
   
-  # Paramters
-  my $user = param('user');
-  my $project = param('project');
-  my $current_user = session('user');
+  # Parameters
+  my $user_id = param('user');
+  my $project_id = param('project');
+  my $session_user_row_id = session('user_row_id');
+  my $session_user = app->dbi->model('user')->select(
+    where => {row_id => $session_user_row_id}
+  )->one;
   
   # Can fork?
   unless ($api->logined) {
@@ -14,20 +17,20 @@
   }
   
   # Repository is already exists
-  if (app->manager->exists_project($current_user, $project)) {
-    $self->redirect_to("/$current_user/$project");
+  if (app->manager->exists_project($session_user->{id}, $project_id)) {
+    $self->redirect_to("/$session_user->{id}/$project_id");
     return;
   }
   # Fork
   else {
-    eval { app->manager->fork_project($current_user, $user, $project) };
+    eval { app->manager->fork_project($session_user->{id}, $user_id, $project_id) };
     if (my $e = $@) {
       $self->reply->exception('Internal Error');
       app->log->error(url_for . ": $e");
     }
     else {
-      flash(message => "Repository is forked from /$user/$project.");
-      $self->redirect_to("/$current_user/$project");
+      flash(message => "Repository is forked from /$user_id/$project_id.");
+      $self->redirect_to("/$session_user->{id}/$project_id");
     }
     return;
   }

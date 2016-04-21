@@ -56,7 +56,6 @@
       # Login success
       my $password_encrypted = $user->{password};
       my $admin = $user->{admin};
-      session(user => $id); # Deprecated!
       session(user_row_id => $user->{row_id});
       session(password => $password_encrypted);
       

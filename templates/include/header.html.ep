@@ -2,8 +2,8 @@
   my $api = gitprep_api;
   my $logined = $api->logined;
 
-  my $current_user_row_id = session('user_row_id');
-  my $current_user = app->dbi->model('user')->select(where => {row_id => $current_user_row_id})->one;
+  my $session_user_row_id = session('user_row_id');
+  my $session_user = app->dbi->model('user')->select(where => {row_id => $session_user_row_id})->one;
   
   my $user_id = $self->param('user');
 
@@ -33,21 +33,21 @@
     <div class="header-right">
       <div class="header-rigth-container">
         % if ($api->logined) {
-          % unless ($current_user->{id} eq 'admin') {
+          % unless ($session_user->{id} eq 'admin') {
             <div class="header-btn-container">
               <a class="btn btn-small" href="<%= url_for("/_new") %>">Create a new repo</a>
             </div>
             <div class="header-btn-container">
-              <a class="btn btn-small" href="<%= url_for("/$current_user->{id}/_settings") %>">Account Settings</a>
+              <a class="btn btn-small" href="<%= url_for("/$session_user->{id}/_settings") %>">Account Settings</a>
             </div>
           % }
           % my $url = url_with->to_abs;
           <div class="header-btn-container">
             <a class="btn btn-small" href="<%= url_for("/_logout?from=$url") %>">Sign out</a>
           </div>
-          <!-- Logined as <%= $current_user->{id} %> -->
+          <!-- Logined as <%= $session_user->{id} %> -->
           <div class="header-login-container">
-            <i class="icon-user"></i><a href="<%= url_for("/$current_user->{id}") %>"><%= $current_user->{id} %></a>
+            <i class="icon-user"></i><a href="<%= url_for("/$session_user->{id}") %>"><%= $session_user->{id} %></a>
           </div>
         % } else {
           <div class="header-btn-container">
@@ -92,7 +92,7 @@
         <div class="project-header-right-container">
           % if (defined $project_id) {
             <div class="project-header-btn-container">
-              % if ($logined && $current_user->{id} ne $user_id ) {
+              % if ($logined && $session_user->{id} ne $user_id ) {
                 <a href="<%= url_for("/$user_id/$project_id/fork") %>" class="btn">Fork</a>
               % } else {
                 <button class="btn disabled" disabled>Fork</button>
@@ -128,7 +128,7 @@
                   Graph
                 </a>
               </li>
-              % if ($logined && $user_id eq session('user')) {
+              % if ($logined && $user_id eq $session_user->{id}) {
                 <li class="<%= $tab eq 'settings' ? 'active' :  '' %>">
                   <a href="<%= url_for("/$user_id/$project_id/settings") %>">
                     <i class="icon-cog"></i>
