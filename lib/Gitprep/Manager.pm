@@ -150,7 +150,9 @@ sub default_branch {
 }
 
 sub fork_project {
-  my ($self, $user, $original_user, $project) = @_;
+  my ($self, $user_id, $original_user_id, $project_id) = @_;
+  
+  my $original_user_row_id = $self->api->get_user_row_id($original_user_id);
   
   # Fork project
   my $dbi = $self->app->dbi;
@@ -159,25 +161,21 @@ sub fork_project {
     $dbi->connector->txn(sub {
       
       # Original project id
-      my $project_info = $dbi->model('project')->select(
-        ['original_project', 'private'],
-        where => {user => $original_user, id => $project}
+      my $project = $dbi->model('project')->select(
+        ['row_id', 'private'],
+        where => {user => $original_user_row_id, id => $project_id}
       )->one;
       
-      my $original_project = $project_info->{original_project};
-      
-      croak "Can't get original project id"
-        unless defined $original_project && $original_project > 0;
+      use D;d [$original_user_row_id, $project_id, $project];
       
       # Create project
       eval {
         $self->_create_project(
-          $user,
-          $project,
+          $user_id,
+          $project_id,
           {
-            original_user => $original_user,
-            original_project => $original_project,
-            private => $project_info->{private}
+            original_project => $project->{row_id},
+            private => $project->{private}
           }
         );
       };
@@ -185,7 +183,7 @@ sub fork_project {
       
       # Create repository
       eval {
-        $self->_fork_rep($original_user, $project, $user, $project);
+        $self->_fork_rep($original_user_id, $project_id, $user_id, $project_id);
       };
       croak $error = $@ if $@;
     });
@@ -247,7 +245,7 @@ sub member_projects {
 }
 
 sub create_project {
-  my ($self, $user, $project, $opts) = @_;
+  my ($self, $user_id, $project_id, $opts) = @_;
   
   my $params = {};
   if ($opts->{private}) {
@@ -259,9 +257,9 @@ sub create_project {
   my $error;
   eval {
     $dbi->connector->txn(sub {
-      eval { $self->_create_project($user, $project, $params) };
+      eval { $self->_create_project($user_id, $project_id, $params) };
       croak $error = $@ if $@;
-      eval {$self->_create_rep($user, $project, $opts) };
+      eval {$self->_create_rep($user_id, $project_id, $opts) };
       croak $error = $@ if $@;
     });
   };
@@ -930,13 +928,17 @@ sub parse_authorized_keys_file {
 }
 
 sub _create_project {
-  my ($self, $user, $project, $params) = @_;
+  my ($self, $user_id, $project_id, $params) = @_;
+  
+  my $user_row_id = $self->api->get_user_row_id($user_id);
   $params ||= {};
+  $params->{user} = $user_row_id;
+  $params->{id} = $project_id;
   
   # Create project
   my $dbi = $self->app->dbi;
   $dbi->connector->txn(sub {
-    $dbi->model('project')->insert($params, id => [$user, $project]);
+    $dbi->model('project')->insert($params);
   });
 }
 
@@ -1175,15 +1177,15 @@ sub _exists_rep {
 }
 
 sub _fork_rep {
-  my ($self, $user, $project, $to_user, $to_project) = @_;
+  my ($self, $user_id, $project_id, $to_user_id, $to_project_id) = @_;
   
   # Fork repository
   my $git = $self->app->git;
   
-  my $rep_info = $self->app->rep_info($user, $project);
+  my $rep_info = $self->app->rep_info($user_id, $project_id);
   my $rep_git_dir = $rep_info->{git_dir};
   
-  my $to_rep_info = $self->app->rep_info($to_user, $to_project);
+  my $to_rep_info = $self->app->rep_info($to_user_id, $to_project_id);
   my $to_rep_git_dir = $to_rep_info->{git_dir};
 
   my @cmd = (
