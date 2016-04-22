@@ -46,10 +46,10 @@ sub check_password {
 }
 
 sub check_user_and_password {
-  my ($self, $user, $password) = @_;
+  my ($self, $user_id, $password) = @_;
   
   my $row
-    = $self->app->dbi->model('user')->select(['password', 'salt'], id => $user)->one;
+    = $self->app->dbi->model('user')->select(['password', 'salt'], where => {id => $user_id})->one;
   
   return unless $row;
   
