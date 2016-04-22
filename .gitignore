@@ -21,10 +21,10 @@ script/hypnotoad.pid
 script/hypnotoad.pid
 extlib/*
 gitprep.my.conf
+data/*
 data/rep/*
 data/work/*
 !data/work/.gitignore
-data/gitprep.db
 !data/rep/.gitignore
 setup/log/*
 !setup/log/.gitignore

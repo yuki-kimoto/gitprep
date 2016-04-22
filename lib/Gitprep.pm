@@ -496,7 +496,14 @@ sub startup {
       $c->app->log->warn("X-Forwarded-HTTPS header is DEPRECATED! use X-Forwarded-Proto instead.");
     }
   });
-  
+
+  # Set auto_decompress for Smart HTTP(I don't know this reasone)
+  $self->hook('after_build_tx' => sub {
+    my ($tx, $app) = @_;
+    
+    $tx->req->content->auto_decompress(1);
+  });
+
   # Reverse proxy support
   my $reverse_proxy_on = $self->config->{reverse_proxy}{on};
   my $path_depth = $self->config->{reverse_proxy}{path_depth};
