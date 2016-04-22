@@ -175,7 +175,7 @@ unless ($new_collaboration_count) {
       where => {id => $old_collaboration->{collaborator_id}}
     )->value;
     if (defined $user_row_id) {
-      $new_collaboration->{collaborator} = $user_row_id;
+      $new_collaboration->{user} = $user_row_id;
     }
     else {
       next;

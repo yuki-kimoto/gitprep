@@ -197,8 +197,8 @@ sub startup {
       table => 'collaboration',
       primary_key => 'row_id',
       join => [
-        'left join user on collaboration.collaborator = user.row_id',
-        'left join project on collaboration.project = project.row_id'
+        'left join user on collaboration.user = user.row_id',
+        'left join project on collaboration.project = project.row_id',
       ]
     },
     {

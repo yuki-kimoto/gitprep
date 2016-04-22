@@ -65,8 +65,7 @@ EOS
   eval { $dbi->select([qw/row_id id admin password salt email name/], table => 'user') };
   if ($@) {
     my $error = "Can't create user table properly: $@";
-    $self->app->log->error($error);
-    croak $error;
+    die $error;
   }
   
   # Create project table
@@ -103,8 +102,7 @@ EOS
   };
   if ($@) {
     my $error = "Can't create project table properly: $@";
-    $self->app->log->error($error);
-    croak $error;
+    die $error;
   }
 
   # Create ssh_public_key table
@@ -131,8 +129,7 @@ EOS
   eval { $dbi->select([qw/row_id user key title/], table => 'ssh_public_key') };
   if ($@) {
     my $error = "Can't create ssh_public_key table properly: $@";
-    $self->app->log->error($error);
-    croak $error;
+    die $error;
   }
 
   # Create collaboration table
@@ -141,19 +138,18 @@ EOS
 create table collaboration (
   row_id integer primary key autoincrement,
   project integer not null default 0,
-  collaborator integer not null default 0,
-  unique(project, collaborator)
+  user integer not null default 0,
+  unique(project, user)
 );
 EOS
     $dbi->execute($sql);
   };
   
   # Check collaboration table
-  eval { $dbi->select([qw/row_id project collaborator/], table => 'collaboration') };
+  eval { $dbi->select([qw/row_id project user/], table => 'collaboration') };
   if ($@) {
     my $error = "Can't create collaboration table properly: $@";
-    $self->app->log->error($error);
-    croak $error;
+    die $error;
   }
 
   # Create pull_request table
@@ -185,7 +181,6 @@ EOS
   eval { $dbi->select([qw/row_id project branch1 branch2 title open open_time open_user/], table => 'pull_request') };
   if ($@) {
     my $error = "Can't create pull_request table properly: $@";
-    $self->app->log->error($error);
-    croak $error;
+    die $error;
   }
 }
