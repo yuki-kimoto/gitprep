@@ -14,8 +14,8 @@ my $debug = 0;
 my $project_re = qr/[a-zA-Z0-9_\-\.]+$/;
 
 # User
-my $session_user = shift;
-die "User not specifed" unless defined $session_user;
+my $session_user_id = shift;
+die "User not specifed" unless defined $session_user_id;
 
 # Application
 my $app = Mojo::Server->new->load_app("$FindBin::Bin/gitprep");
@@ -47,26 +47,22 @@ die "I don't like newlines in the command: $ssh_original_command\n"
   if $ssh_original_command ne $ssh_original_command_tmp;
 
 # Project
-my ($verb, $user, $project) = parse_ssh_original_command($ssh_original_command);
-sanity($project);
+my ($verb, $user_id, $project_id) = parse_ssh_original_command($ssh_original_command);
+sanity($project_id);
 
 # Can access
 my $can_access;
-if ($session_user eq $user) {
+if ($session_user_id eq $user_id) {
   $can_access = 1;
 }
 else {
-  my $row = $app->dbi->model('collaboration')->select(
-    id => [$user, $project, $session_user]
-  )->one;
-  
-  $can_access = $row ? 1 : 0;
+  $can_access = $app->gitprep_api->is_collaborator($user_id, $project_id, $session_user_id);
 }
-die qq|User "$session_user" can't access repository "$user/$project.git"\n|
+die qq|User "$session_user_id" can't access repository "$user_id/$project_id.git"\n|
   unless $can_access; 
 
 # Command
-my $rep_info = $app->rep_info($user, $project);
+my $rep_info = $app->rep_info($user_id, $project_id);
 my $rep_git_dir = $rep_info->{git_dir};
 my $repository = "'$rep_git_dir'";
 my @git_shell_cmd = ("git", "shell", "-c", "$verb $repository");
@@ -83,10 +79,10 @@ sub parse_ssh_original_command {
 
   my $git_commands = "git-upload-pack|git-receive-pack|git-upload-archive";
   if ($ssh_original_command =~ m(^($git_commands) '.*/([a-zA-Z1-9_]+)/([^\/]+?)\.git'$)) {
-    my ($verb, $user, $project) = ($1, $2, $3);
-    warn "User:$user, Project:$project" if $debug;
-    die "invalid repo name: '$project'\n" if $project !~ $project_re;
-    return ($verb, $user, $project);
+    my ($verb, $user_id, $project_id) = ($1, $2, $3);
+    warn "User:$user_id, Project:$project_id" if $debug;
+    die "invalid repo name: '$project_id'\n" if $project_id !~ $project_re;
+    return ($verb, $user_id, $project_id);
   }
   else {
     die "Invalid command: $ssh_original_command\n";
@@ -94,10 +90,10 @@ sub parse_ssh_original_command {
 }
 
 sub sanity {
-  my $project = shift;
-  die "'$project' contains bad characters\n" if $project !~ $project_re;
-  die "'$project' ends with a '/'\n"         if $project =~ m(/$);
-  die "'$project' contains '..'\n"           if $project =~ m(\.\.);
+  my $project_id = shift;
+  die "'$project_id' contains bad characters\n" if $project_id !~ $project_re;
+  die "'$project_id' ends with a '/'\n"         if $project_id =~ m(/$);
+  die "'$project_id' contains '..'\n"           if $project_id =~ m(\.\.);
 }
 
 =head1 NAME
