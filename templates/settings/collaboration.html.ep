@@ -114,8 +114,6 @@
     where => {project => $project_row_id},
     append => 'order by collaboration.user'
   )->all;
-  
-  use D;d [$user_id, $project_id, $collaborators];
 %>
 
 % layout 'common', title => 'Collaboration';

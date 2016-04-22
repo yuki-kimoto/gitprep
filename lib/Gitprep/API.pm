@@ -72,7 +72,7 @@ sub is_collaborator {
   my $collaborator_row_id = $self->get_user_row_id($collaborator_id);
   
   my $row = $self->app->dbi->model('collaboration')->select(
-    where => {project => $project_row_id, collaborator => $collaborator_row_id}
+    where => {project => $project_row_id, user => $collaborator_row_id}
   )->one;
   
   return $row ? 1 : 0;
