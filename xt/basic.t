@@ -17,10 +17,7 @@ my $data_dir =  $ENV{GITPREP_DATA_DIR} = "$FindBin::Bin/basic";
 
 $ENV{GITPREP_NO_MYCONFIG} = 1;
 
-use Gitprep;
-
-my $app = Gitprep->new;
-$app->manager->setup_database;
+my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
 
 my $t = Test::Mojo->new($app);
 

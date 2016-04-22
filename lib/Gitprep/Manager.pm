@@ -150,9 +150,9 @@ sub default_branch {
 }
 
 sub fork_project {
-  my ($self, $user_id, $original_user_id, $project_id) = @_;
+  my ($self, $forked_user_id, $user_id, $project_id) = @_;
   
-  my $original_user_row_id = $self->api->get_user_row_id($original_user_id);
+  my $user_row_id = $self->api->get_user_row_id($user_id);
   
   # Fork project
   my $dbi = $self->app->dbi;
@@ -162,16 +162,14 @@ sub fork_project {
       
       # Original project id
       my $project = $dbi->model('project')->select(
-        ['row_id', 'private'],
-        where => {user => $original_user_row_id, id => $project_id}
+        {__MY__ => ['row_id', 'private']},
+        where => {'user.id' => $user_id, 'project.id' => $project_id}
       )->one;
-      
-      use D;d [$original_user_row_id, $project_id, $project];
       
       # Create project
       eval {
         $self->_create_project(
-          $user_id,
+          $forked_user_id,
           $project_id,
           {
             original_project => $project->{row_id},
@@ -183,7 +181,7 @@ sub fork_project {
       
       # Create repository
       eval {
-        $self->_fork_rep($original_user_id, $project_id, $user_id, $project_id);
+        $self->_fork_rep($user_id, $project_id, $forked_user_id, $project_id);
       };
       croak $error = $@ if $@;
     });
@@ -220,17 +218,17 @@ sub api { shift->app->gitprep_api }
 sub member_projects {
   my ($self, $user_id, $project_id) = @_;
   
-  my $user_row_id = $self->api->get_user_row_id($user_id);
-  
   # DBI
   my $dbi = $self->app->dbi;
   
-  # Original project id
-  my $project_row_id = $dbi->model('project')
-    ->select('row_id', where => {user => $user_row_id, id => $project_id})->value;
+  # project id
+  my $project_row_id = $dbi->model('project')->select(
+    'project.row_id',
+    where => {'user.id' => $user_id, 'project.id' => $project_id}
+  )->value;
   
   # Members
-  my $members = $dbi->model('project')->select(
+  my $member_projects = $dbi->model('project')->select(
     [
       {__MY__ => ['id']},
       {user => ['id']}
@@ -241,7 +239,7 @@ sub member_projects {
     append => 'order by user.id, project.id'
   )->all;
 
-  return $members;
+  return $member_projects;
 }
 
 sub create_project {

@@ -209,7 +209,7 @@
                 my $branch = $branches->[$i];
                 my $bname = $branch->{name};
 
-                my $commit_author_mail = $branch->{commit}{author_email};
+                my $commit_author_email = $branch->{commit}{author_email};
                 my $commit_author_id = app->dbi->model('user')->select(
                   'id',
                   where => {email => $commit_author_email}

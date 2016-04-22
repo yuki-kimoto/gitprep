@@ -6,7 +6,7 @@
   # Parameters
   my $op = param('op') || '';
   my $user = param('user') || '';
-  my $project = param('project');
+  my $project_id = param('project');
   
   # Authentication
   unless ($api->logined($user)) {
@@ -15,9 +15,9 @@
   }
   
   my $user_row_id = app->dbi->model('user')->select('row_id', where => {id => $user})->value;
-  my $project_row_id = app->dbi->model('project')->model('project')->select(
+  my $project_id_row_id = app->dbi->model('project')->model('project')->select(
     'row_id',
-    where => {user => $user_row_id, id => $proejct}
+    where => {user => $user_row_id, id => $project_id}
   )->value;
   
   # Rename project
@@ -55,9 +55,8 @@
         eval {
           app->dbi->model('collaboration')->insert(
             {
-              user_id => $user,
-              project_name => $project,
-              collaborator_id => $collaborator
+              project => $project_id_row_id,
+              collaborator => $collaborator
             }
           );
         };
@@ -83,7 +82,7 @@
         app->dbi->model('collaboration')->delete(
           where => {
             user_id => $user,
-            project_name => $project,
+            project_name => $project_id,
             collaborator_id => $collaborator
           }
         );
@@ -102,7 +101,7 @@
   
   my $collaborators = app->dbi->model('collaboration')->select(
     'collaborator_id',
-    where => {user_id => $user, project_name => $project},
+    where => {user_id => $user, project_name => $project_id},
     append => 'order by collaborator_id'
   )->values;
 %>
@@ -118,7 +117,7 @@
     <div class="project-settings">
       <div class="left">
         <ul>
-          <li><a href="<%= url_for("/$user/$project/settings") %>">Options</a></li>
+          <li><a href="<%= url_for("/$user/$project_id/settings") %>">Options</a></li>
           <li><b>Collaborators</b></li>
         </ul>
       </div>
