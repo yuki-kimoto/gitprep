@@ -10,8 +10,36 @@
   # Branches
   my $branches = [map { $_->{name} } @{app->git->branches($rep_info)}];
   
+  # Original project id
+  my $original_project_id = app->dbi->model('project')->select(
+    'original_project',
+    where => {'user.id' => $user_id, 'project.id' => $project_id}
+  )->value;
+  
+  # Original project
+  my $original_project;
+  if ($original_project_id) {
+    $original_project = app->dbi->model('project')->select(
+      [
+        {__MY__ => '*'},
+        {user => ['id']}
+      ],
+      where => {'project.row_id' => $original_project_id}
+    )->one;
+  }
+  else {
+    $original_project = app->dbi->model('project')->select(
+      [
+        {__MY__ => '*'},
+        {user => ['id']}
+      ],
+      where => {'user.id' => $user_id, 'project.id' => $project_id}
+    )->one;
+  }
+  
   # Members
-  my $member_projects = app->manager->member_projects($user_id, $project_id);
+  my $member_projects = app->manager->member_projects($original_project->{'user.id'}, $original_project->{id});
+  unshift @$member_projects, $original_project;
   
   # Members branches
   for my $member_project (@$member_projects) {
@@ -73,10 +101,14 @@
     <ul class="network-member-branch">
       % if (@$member_projects) {
         % for my $member_project (@$member_projects) {
+          <%
+            my $member_project_id = $member_project->{id};
+            my $member_id = $member_project->{'user.id'};
+            my $member_branches = $member_project->{branches};
+            
+            next if $member_id eq $user_id;
+          %>
           <li name="remote">
-            % my $member_project_id = $member_project->{id};
-            % my $member_id = $member_project->{'user.id'};
-            % my $member_branches = $member_project->{branches};
             <div>
               <span class="network-member-branch-label">Member branch</span>
               <a name="remote-member" href="<%= url_for("/$member_id") %>"><%= $member_id %></a>
