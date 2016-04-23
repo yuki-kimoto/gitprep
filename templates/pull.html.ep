@@ -3,11 +3,9 @@
   my $api = gitprep_api;
 
   # Parameters
-  my $user = param('user');
-  my $project = param('project');
+  my $user_id = param('user');
+  my $project_id = param('project');
   my $row_id = param('row_id');
-  
-  my $user_row_id = app->dbi->model('user')->select('row_id', where => {id => $user})->value;
   
   # Git
   my $git = $self->app->git;
@@ -21,11 +19,11 @@
     where => {'pull_request.row_id' => $row_id}
   )->one;
   
-  my $from_rev = $pull_request->{branch1};
-  my $rev = $pull_request->{branch2};
+  my $branch1 = $pull_request->{branch1};
+  my $branch2 = $pull_request->{branch2};
   
   # Commits
-  my $commits = $git->forward_commits(app->rep_info($user, $project), $from_rev, $rev);
+  my $commits = $git->forward_commits(app->rep_info($user_id, $project_id), $branch1, $branch2);
   my $commits_count = @$commits;
   my $commits_date = {};
   my $authors = {};
@@ -38,17 +36,12 @@
   my $authors_count = keys %$authors;
 
   # Start commit
-  my $start_commit = $git->separated_commit(app->rep_info($user, $project), $from_rev, $rev);
+  my $start_commit = $git->separated_commit(app->rep_info($user_id, $project_id), $branch1, $branch2);
 
   # End commit
-  my $end_commit = $git->get_commit(app->rep_info($user, $project), $rev);
-
-  # Variables
-  stash id => $end_commit->{id};
-  stash from_id => $start_commit->{id};
-  stash rev => $end_commit->{id};
-  stash from_rev => $start_commit->{id};
+  my $end_commit = $git->get_commit(app->rep_info($user_id, $project_id), $branch2);
   
+  # Pull request first message 
   my $pull_request_message_first = app->dbi->model('pull_request_message')->select(
     [
       {__MY__ => '*'},
@@ -56,9 +49,17 @@
     ],
     where => {pull_request => $row_id, number => 1}
   )->one;
+  
+  # Commit body arguments
+  my %commit_body_args = (
+    id => $end_commit->{id},
+    from_id => $start_commit->{id},
+    rev => $end_commit->{id},
+    from_rev => $start_commit->{id}
+  );
 %>
 
-% layout 'common', title => "Pull Requests Tags \x{30fb} $user/$project";
+% layout 'common', title => "Pull Requests Tags \x{30fb} $user_id/$project_id";
   
   %= include '/include/header';
   
@@ -154,12 +155,12 @@
                   </span>
                 </div>
                 <div class="compare-commits-commit-title">
-                  <a style="color:#333" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                  <a style="color:#333" href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
                     <%= $commit->{title_short} %>
                   </a>
                 </div>
                 <div class="compare-commits-commit-id">
-                  <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                  <a href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
                     <%= substr($commit->{id}, 0, 7) %>
                   </a>
                 </div>
@@ -168,10 +169,11 @@
           </ul>
         % }
       </div>
+
+  
+      %= include '/include/commit_body', %commit_body_args;
       
-      %= include '/include/commit_body';
-      
-      % if (session('user_row_id') eq $user_row_id) {
+      % if ($api->logined($user_id)) {
         <form action="<%= url_for %>" method="post">
           <div class="pull-request-form">
             <div style="overflow:hidden">
