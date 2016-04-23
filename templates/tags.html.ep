@@ -14,13 +14,12 @@
   my $limit = app->config->{basic}{tags_limit};
   my $page_count = 20;
   my $tags = $git->tags(
-    $user,
-    $project,
+    app->rep_info($user, $project),
     $limit,
     $page_count,
     $page_count * ($page - 1)
   );
-  my $tags_count = $git->tags_count($user, $project);
+  my $tags_count = $git->tags_count(app->rep_info($user, $project));
 %>
 
 % layout 'common', title => "Tags \x{30fb} $user/$project";
@@ -57,11 +56,6 @@
                     <i class="icon-share-alt"></i>
                     <%= substr($commit_id, 0, 7) %>
                   </a>
-                  % if (app->config->{basic}{show_ignore_space_change_link}) {
-                    (<a style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/commit/$commit_id?w=") %>">
-                      ignore space
-                    </a>)
-                  % }
                   <a href="<%= url_for("/$user/$project/archive/$name.zip") %>">
                     <i class="icon-file"></i>
                     zip

@@ -8,7 +8,7 @@
   my $type = '';
   my $lines;
   my $readme_path = (defined $dir && $dir ne '') ? "$dir/README" : 'README';
-  eval { $lines = app->git->blob($user, $project, $rev, $readme_path) };
+  eval { $lines = app->git->blob(app->rep_info($user, $project), $rev, $readme_path) };
   my $readme_e;
   
   if ($lines) {
@@ -18,7 +18,7 @@
     $readme_e =~ s#(^|\s|[^\x00-\x7F])(http(?:s)?://.+?)($|\s|[^\x00-\x7F])#$1<a href="$2">$2</a>$3#msg;
   }
   else {
-    eval { $lines = app->git->blob($user, $project, $rev, "$readme_path.md") };
+    eval { $lines = app->git->blob(app->rep_info($user, $project), $rev, "$readme_path.md") };
     if ($lines) {
       $type = 'markdown';
       my $readme = join "\n", @$lines;

@@ -1,11 +1,22 @@
 <%
   my $dir = stash('dir');
+  my $commit_author_email = $commit->{author_email};
+  my $commit_author_id = app->dbi->model('user')->select(
+    'id',
+    where => {email => $commit_author_email}
+  )->value;
 %>
 
 <div>
   <div class="commit-summary">
     <div class="commit-summary-left-container">
-      <span class="commit-summary-author" title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>
+      <span class="commit-summary-author" title="<%= $commit->{author_email} %>">
+        % if (defined $commit_author_id) {
+          <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+        % } else {
+          <%= $commit->{author_name} %>
+        % }
+      </span>
       <a href="<%= url_for("/$user/$project/commit/$rev") %>">
         <%= $commit->{title} %>
       </a>
@@ -55,11 +66,6 @@
           <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
             <%= $commit->{title_short} %>
           </a>
-          % if (app->config->{basic}{show_ignore_space_change_link}) {
-            (<a href="<%= url_for("/$user/$project/commit/$commit->{id}?w=") %>">
-              ignore space
-            </a>)
-          % }
         </div>
         <div class="file-list-age">
           <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>

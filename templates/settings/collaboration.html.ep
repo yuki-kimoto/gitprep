@@ -5,21 +5,26 @@
 
   # Parameters
   my $op = param('op') || '';
-  my $user = param('user') || '';
-  my $project = param('project');
+  my $user_id = param('user') || '';
+  my $project_id = param('project');
   
   # Authentication
-  unless ($api->logined($user)) {
+  unless ($api->logined($user_id)) {
     $self->redirect_to('/');
     return;
   }
+  
+  my $project_row_id = app->dbi->model('project')->select(
+    'project.row_id',
+    where => {'user.id' => $user_id, 'project.id' => $project_id}
+  )->value;
   
   # Rename project
   my $git = app->git;
   my $errors;
   if (lc $self->req->method eq 'post') {
     if ($op eq 'add') {
-      my $collaborator = param('collaborator');
+      my $collaborator_id = param('collaborator');
       
       # Validator
       my $vc = app->vc;
@@ -28,30 +33,39 @@
       my $validation = $vc->validation;
       
       # collaborator check
-      if (!length $collaborator) {
+      if (!length $collaborator_id) {
         $validation->add_failed(collaborator => "collaborator is empty");
       }
-      elsif ($collaborator eq $user) {
-        $validation->add_failed(collaborator => "User $collaborator is yourself");
+      elsif ($collaborator_id eq $user_id) {
+        $validation->add_failed(collaborator => "User $collaborator_id is yourself");
       }
       else {
         my $row = app->dbi->model('user')->select(
-          where => {id => $collaborator}
+          where => {id => $collaborator_id}
         )->one;
         if (!$row) {
-          $validation->add_failed(collaborator => "User $collaborator don't exists");
+          $validation->add_failed(collaborator => "User $collaborator_id don't exists");
+        }
+        else {
+          my $row = app->dbi->model('collaboration')->select(
+            where => {project => $project_row_id, 'user.id' => $collaborator_id}
+          )->one;
+          if ($row) {
+            $validation->add_failed(collaborator => "Collaborator $collaborator_id already exists");
+          }
         }
       }
       
       if ($validation->is_valid) {
         
+        my $collaborator_row_id = $api->get_user_row_id($collaborator_id);
+        
         # Insert
         eval {
           app->dbi->model('collaboration')->insert(
             {
-              user_id => $user,
-              project_name => $project,
-              collaborator_id => $collaborator
+              project => $project_row_id,
+              user => $collaborator_row_id
             }
           );
         };
@@ -60,7 +74,7 @@
           $errors = ['Internal Error'];
         }
         else {
-          flash(message => "Collaborator $collaborator is added.");
+          flash(message => "Collaborator $collaborator_id is added.");
           $self->redirect_to('current');
           return;
         }
@@ -70,15 +84,16 @@
       }
     }
     elsif ($op eq 'remove') {
-      my $collaborator = param('collaborator');
+      my $collaborator_id = param('collaborator');
+      
+      my $collaborator_row_id = $api->get_user_row_id($collaborator_id);
       
       # Delete
       eval {
         app->dbi->model('collaboration')->delete(
           where => {
-            user_id => $user,
-            project_name => $project,
-            collaborator_id => $collaborator
+            project => $project_row_id,
+            user => $collaborator_row_id
           }
         );
       };
@@ -87,7 +102,7 @@
         $errors = ['Internal Error'];
       }
       else {
-        flash(message => "Collaborator $collaborator is removed.");
+        flash(message => "Collaborator $collaborator_id is removed.");
         $self->redirect_to('current');
         return;
       }
@@ -95,10 +110,10 @@
   }
   
   my $collaborators = app->dbi->model('collaboration')->select(
-    'collaborator_id',
-    where => {user_id => $user, project_name => $project},
-    append => 'order by collaborator_id'
-  )->values;
+    {user => ['id']},
+    where => {project => $project_row_id},
+    append => 'order by collaboration.user'
+  )->all;
 %>
 
 % layout 'common', title => 'Collaboration';
@@ -112,7 +127,7 @@
     <div class="project-settings">
       <div class="left">
         <ul>
-          <li><a href="<%= url_for("/$user/$project/settings") %>">Options</a></li>
+          <li><a href="<%= url_for("/$user_id/$project_id/settings") %>">Options</a></li>
           <li><b>Collaborators</b></li>
         </ul>
       </div>
@@ -124,9 +139,9 @@
                 % for my $collaborator (@$collaborators) {
                   <tr>
                     <td>
-                      <a href="<%= url_for("/$collaborator") %>"><%= $collaborator %></a>
+                      <a href="<%= url_for("/$collaborator->{'user.id'}") %>"><%= $collaborator->{'user.id'} %></a>
                       <form action="<%= url_for->query(op => 'remove') %>" method="post" style="display:inline-block">
-                        <%= hidden_field 'collaborator' => $collaborator %>
+                        <%= hidden_field 'collaborator' => $collaborator->{'user.id'} %>
                         (<a href="javascript:void(0)" onclick="$(this).closest('form').submit();" style="color:red">remove</a>)
                       </form>
                     </td>

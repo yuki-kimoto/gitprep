@@ -17,36 +17,36 @@
   my $dir;
   my $rev_dir = param('rev_dir');
   if (defined $rev_dir) {
-    ($rev, $dir) = $git->parse_rev_path($user, $project, $rev_dir);
+    ($rev, $dir) = $git->parse_rev_path(app->rep_info($user, $project), $rev_dir);
   }
   else {
     $rev = app->manager->default_branch($user, $project);
   }
   
   unless (app->manager->exists_project($user, $project)) {
-    $self->render_not_found;
+    $self->reply->not_found;
     return;
   }
 
   # Repository description
-  my $desc = $git->description($user, $project);
+  my $desc = $git->description(app->rep_info($user, $project));
   
   # Check exsitence
   my $commits_number;
-  if ($git->exists_branch($user, $project)) {
+  if ($git->exists_branch(app->rep_info($user, $project))) {
     # Commit
-    my $commit = $git->get_commit($user, $project, $rev);
+    my $commit = $git->get_commit(app->rep_info($user, $project), $rev);
     
     # Tree
     my $trees;
     if (defined $dir && length $dir) {
-      $trees = $git->trees($user, $project, $rev, $dir);
+      $trees = $git->trees(app->rep_info($user, $project), $rev, $dir);
     }
     else {
-      $trees = $git->trees($user, $project, $rev);
+      $trees = $git->trees(app->rep_info($user, $project), $rev);
     }
     # Commits number
-    $commits_number = $git->commits_number($user, $project, $rev);
+    $commits_number = $git->commits_number(app->rep_info($user, $project), $rev);
     
     # Variable for included template
     stash(
@@ -63,7 +63,7 @@
   my $url = url_for->to_abs;
   $url->base(undef);
   my $ssh_port = config->{basic}{ssh_port};
-  my $rep_home = app->git->rep_home;
+  my $rep_home = app->rep_home;
   my $execute_user = getpwuid($>);
   my $ssh_rep_url_base = defined app->config->{basic}{'ssh_rep_url_base'}
     ? app->config->{basic}{'ssh_rep_url_base'} : $rep_home;
@@ -71,9 +71,9 @@
     . ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user/$project.git";
 
   my $branches = stash('branches');
-  my $branches_count = app->git->branches_count($user, $project);
+  my $branches_count = app->git->branches_count($self->app->rep_info($user, $project));
   my $default_branch_name = app->manager->default_branch($user, $project);
-  my $tags_count = app->git->tags_count($user, $project);
+  my $tags_count = app->git->tags_count(app->rep_info($user, $project));
   
   my $logined = $api->logined;
   

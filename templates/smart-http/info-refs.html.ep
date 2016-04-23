@@ -14,8 +14,9 @@
     my $service_cmd = $service;
     substr($service_cmd, 0, 4, '');
     
-    my $rep = $git->rep($user, $project);
-    my @cmd = $git->cmd($user, $project, $service_cmd, '--stateless-rpc', '--advertise-refs', $rep);
+    my $rep_info = app->rep_info($user, $project);
+    my $rep_git_dir = $rep_info->{git_dir};
+    my @cmd = $git->cmd(app->rep_info($user, $project), $service_cmd, '--stateless-rpc', '--advertise-refs', $rep_git_dir);
     
     my ($cout, $cerr) = (Symbol::gensym, Symbol::gensym);
     my $pid = IPC::Open3::open3(my $cin, $cout, $cerr, @cmd );
@@ -42,7 +43,7 @@
     
     if ($err) {
       app->log->error($err);
-      $self->render_exception($err);
+      $self->reply->exception($err);
       return;
     }
     
@@ -58,15 +59,16 @@
   # Dumb HTTP
   else {
     # Update server info
-    my @cmd = $git->cmd($user, $project, 'update-server-info');
+    my @cmd = $git->cmd(app->rep_info($user, $project), 'update-server-info');
     open my $fh, '-|', @cmd
       or die "Can't open pipe for @cmd:$!";
     close $fh
       or die "Can't close pipe for @cmd:$!";
     
     my $content_type = 'text/plain; charset=UTF-8';
-    my $rep_home = app->git->rep_home;
-    my $file = "$rep_home/$user/$project.git/info/refs";
+    my $rep_info = app->rep_info($user, $project);
+    my $rep_git_dir = $rep_info->{git_dir};
+    my $file = "$rep_git_dir/info/refs";
     if (-f $file) {
       my $asset = Mojo::Asset::File->new(path => $file);
       my $content = $asset->slurp;

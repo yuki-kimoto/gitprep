@@ -4,8 +4,8 @@
   my $api = gitprep_api;
 
   # Parameters
-  my $user = param('user');
-  my $project = param('project');
+  my $user_id = param('user');
+  my $project_id = param('project');
   my $op = param('op') || '';
   my $display = param('display') || 'overview';
   my $page = param('page') || 1;
@@ -18,7 +18,7 @@
   if ($op eq 'delete' && lc $self->req->method eq 'post') {
     
     # Forbbiden
-    unless ($api->logined($user)) {
+    unless ($api->logined($user_id)) {
       $self->redirect_to('/');
       return;    
     }
@@ -39,7 +39,7 @@
 
     if ($validation->is_valid) {
       # Delete branch
-      eval { $git->delete_branch($user, $project, $branch) };
+      eval { $git->delete_branch(app->rep_info($user_id, $project_id), $branch) };
       if (my $e = $@) {
         app->log->error(url_with . ": $e");
         $errors = ['Internal Error'];
@@ -54,8 +54,8 @@
   }
   
   # Default branch
-  my $default_branch_name = app->manager->default_branch($user, $project);
-  my $default_branch = $git->branch($user, $project, $default_branch_name);
+  my $default_branch_name = app->manager->default_branch($user_id, $project_id);
+  my $default_branch = $git->branch($self->app->rep_info($user_id, $project_id), $default_branch_name);
   
   # Branches
   my $branch_types;
@@ -70,13 +70,17 @@
   my $page_count = 20;
   my $skip = $page_count * ($page - 1);
   
-  my $branches = $git->branches($user, $project);
+  my $branches = $git->branches($self->app->rep_info($user_id, $project_id));
   my $max = 0;
   my $active_count = 0;
   my $stale_count = 0;
   my $all_count = 0;
   for my $branch (@$branches) {
-    $branch->{status} = $git->branch_status($user, $project, $default_branch->{name}, $branch->{name});
+    $branch->{status} = $git->branch_status(
+      $self->app->rep_info($user_id, $project_id),
+      $default_branch->{name},
+      $branch->{name}
+    );
     $max = $branch->{status}{ahead} if $max < $branch->{status}{ahead};
     $max = $branch->{status}{behind} if $max < $branch->{status}{behind};
     
@@ -143,7 +147,7 @@
   
 %>
 
-% layout 'common', title => "branches  \x{30fb} $user/$project";
+% layout 'common', title => "branches  \x{30fb} $user_id/$project_id";
 
   %= include '/include/header';
   
@@ -155,16 +159,16 @@
     
     <ul class="branches-select">
       <li class="<%= $display eq 'overview' ? 'active' : '' %>">
-        <a href="<%= url_for("/$user/$project/branches") %>">Overview</a>
+        <a href="<%= url_for("/$user_id/$project_id/branches") %>">Overview</a>
       </li>
       <li class="<%= $display eq 'active' ? 'active' : '' %>">
-        <a href="<%= url_for("/$user/$project/branches/active") %>">Active</a>
+        <a href="<%= url_for("/$user_id/$project_id/branches/active") %>">Active</a>
       </li>
       <li class="<%= $display eq 'stale' ? 'active' : '' %>">
-        <a href="<%= url_for("/$user/$project/branches/stale") %>">Stale</a>
+        <a href="<%= url_for("/$user_id/$project_id/branches/stale") %>">Stale</a>
       </li>
       <li class="<%= $display eq 'all' ? 'active' : '' %>">
-        <a href="<%= url_for("/$user/$project/branches/all") %>">All branches</a>
+        <a href="<%= url_for("/$user_id/$project_id/branches/all") %>">All branches</a>
       </li>
     </ul>
     <%
@@ -203,11 +207,27 @@
             % for (my $i = 0; $i < @$branches; $i++) {
               <%
                 my $branch = $branches->[$i];
-                my $bname = $branch->{name};
+                my $branch_name = $branch->{name};
+
+                my $commit_author_email = $branch->{commit}{author_email};
+                my $commit_author_id = app->dbi->model('user')->select(
+                  'id',
+                  where => {email => $commit_author_email}
+                )->value;
+
+                my $pull_request = app->dbi->model('pull_request')->select(
+                  {__MY__ => ['row_id', 'open']},
+                  where => {
+                    'project.id' => $project_id,
+                    'project_user.id' => $user_id,
+                    branch1 => $default_branch_name,
+                    branch2 => $branch_name
+                  }
+                )->one;
               %>
               % if ($display eq 'overview' && $i > 4) {
                 <li class="branches-overview-more">
-                  <a href="<%= url_for("/$user/$project/branches/$branch_type") %>">
+                  <a href="<%= url_for("/$user_id/$project_id/branches/$branch_type") %>">
                     View more <%= $branch_type %> branches
                   </a>
                 </li>
@@ -218,19 +238,23 @@
                   <ul>
                     <li>
                       <div class="branches-name">
-                        <a href="<%= url_for("/$user/$project/tree/$bname") %>">
-                          <%= $bname %>
+                        <a href="<%= url_for("/$user_id/$project_id/tree/$branch_name") %>">
+                          <%= $branch_name %>
                         </a>
                       </div>
                       <div class="branches-age" title="<%= $branch->{commit}{age_string_datetime_local} %>">
                         Updated <%= $branch->{commit}{age_string} %> by
                       </div>
                       <div class="branches-author"  title="<%= $branch->{commit}{author_email} %>">
-                        <%= $branch->{commit}{author_name} %>
+                        % if (defined $commit_author_id) {
+                          <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+                        % } else {
+                          <%= $branch->{commit}{author_name} %>
+                        % }
                       </div>
                     </li>
                     <li class="second-child">
-                      % if ($bname eq $default_branch_name) {
+                      % if ($branch_name eq $default_branch_name) {
                         <div style="padding-left:80px;padding-top:3px">
                           <div class="branches-default">
                             Default
@@ -262,24 +286,40 @@
                       % }
                     </li>
                     <li class="last-child">
-                      % if ($bname eq $default_branch_name) {
-                        % if ($api->logined($user)) {
-                          <a href="<%= url_for("/$user/$project/settings") %>" type="submit" class="btn btn-small">Change default branch</a>
+                      % if ($branch_name eq $default_branch_name) {
+                        % if ($api->logined($user_id)) {
+                          <a href="<%= url_for("/$user_id/$project_id/settings#form-default-branch") %>" type="submit" class="btn btn-small">Change default branch</a>
                         % }
                       % } else {
-                        <a class="btn btn-small" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname") %>">
-                          Compare
-                        </a>
-                        % if ($api->logined($user)) {
-                          <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
-                            <input type="submit" class="btn btn-small delete-branch" style="color:#900;" value="Delete">
-                            %= hidden_field branch => $bname;
-                          </form>
+                        % if ($api->logined) {
+                          % if ($pull_request) {
+                            % if ($pull_request->{open}) {
+                              #<%= $pull_request->{row_id} %>
+                              <a class="branches-open" href="<%= url_for("/$user/$project/pull/$pull_request->{row_id}") %>">
+                                open
+                              </a>
+                            % } else {
+                              closed
+                            % }
+                          % } else {
+                            <a class="btn btn-small" href="<%= url_for("/$user_id/$project_id/compare/$branch_name")->query(expand => 1) %>">
+                              New pull request
+                            </a>
+                          % }
+                        % } else {
+                          <a class="btn btn-small" href="<%= url_for("/$user_id/$project_id/compare/$branch_name")->query(expand => 1) %>">
+                            Compare
+                          </a>
                         % }
-                        % if (app->config->{basic}{show_ignore_space_change_link}) {
-                          (<a style="font-size:90%;color:#9999FF" href="<%= url_for("/$user/$project/compare/$default_branch->{name}...$bname?w=") %>">
-                            ignore space
-                          </a>)
+                        % if ($api->logined($user_id)) {
+                          % if ($pull_request && $pull_request->{open}) {
+                            <button class="btn btn-small disabled delete-branch"value="Delete">Delete</button>
+                          % } else {
+                            <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
+                              <input type="submit" class="btn btn-small delete-branch" style="color:#900;" value="Delete">
+                              %= hidden_field branch => $branch_name;
+                            </form>
+                          % }
                         % }
                       % }
                     </li>
@@ -298,7 +338,7 @@
                   % } else {
                     % my $newer_page = $page - 1;
                     <li>
-                      <a href="<%= url_for("/$user/$project/branches/$display?page=$newer_page") %>">Newer</a>
+                      <a href="<%= url_for("/$user_id/$project_id/branches/$display?page=$newer_page") %>">Newer</a>
                     </li>
                   % }
                   % if ($branches_count < $page_count) {
@@ -306,7 +346,7 @@
                   % } else {
                     % my $older_page = $page + 1;
                     <li>
-                      <a href="<%= url_for("/$user/$project/branches/$display?page=$older_page") %>">Older</a>
+                      <a href="<%= url_for("/$user_id/$project_id/branches/$display?page=$older_page") %>">Older</a>
                     </li>
                   % }
                 </ul>

@@ -4,7 +4,6 @@ use warnings;
 
 use FindBin;
 use utf8;
-use lib "$FindBin::Bin/../mojo/lib";
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use File::Path 'rmtree';
@@ -13,28 +12,28 @@ use MIME::Base64 'encode_base64';
 
 use Test::Mojo;
 
+# Data directory
+my $data_dir =  $ENV{GITPREP_DATA_DIR} = "$FindBin::Bin/smart_http";
+
 # Test DB
-my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/smart_http.db";
+my $db_file = "$data_dir/gitprep.db";
 
 # Test Repository home
-my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/smart_http";
+my $rep_home = "$data_dir/rep";
 
 $ENV{GITPREP_NO_MYCONFIG} = 1;
 
 use Gitprep;
-
-# For perl 5.8
-{
-  no warnings 'redefine';
-  sub note { print STDERR "# $_[0]\n" unless $ENV{HARNESS_ACTIVE} }
-}
 
 note 'Smart HTTP';
 {
   unlink $db_file;
   rmtree $rep_home;
 
-  my $app = Gitprep->new;
+  system("$FindBin::Bin/../setup_database", $db_file) == 0
+    or die "Can't setup $db_file";
+  my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
+
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
 
@@ -47,7 +46,7 @@ note 'Smart HTTP';
   $t->content_like(qr/Admin/);
   
   # Create user
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', password => 'a', password2 => 'a'});
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', email => 'kimoto@foo.com', password => 'a', password2 => 'a'});
   $t->content_like(qr/Success.*created/);
 
   # Login as kimoto
@@ -89,25 +88,6 @@ note 'Smart HTTP';
   $t->content_like(qr/^001e# service=git-upload-pack/);
   $t->content_like(qr/multi_ack_detailed/);
   
-  # /git-upload-pack
-  {
-    my $content = <<EOS;
-006fwant 6410316f2ed260666a8a6b9a223ad3c95d7abaed multi_ack_detailed no-done side-band-64k thin-pack ofs-delta
-0032want 6410316f2ed260666a8a6b9a223ad3c95d7abaed
-00000009done
-EOS
-    $t->post_ok(
-      '/kimoto/t1.git/git-upload-pack',
-      {
-        'Content-Type' => 'application/x-git-upload-pack-request',
-        'Content-Length' => 174,
-        'Content'        => $content
-      }
-    );
-    $t->status_is(200);
-    $t->content_type_is('application/x-git-upload-pack-result');
-  }
-
   # /info/refs recieve-pack request(Basic authentication)
   $t->get_ok('/kimoto/t1.git/info/refs?service=git-receive-pack');
   $t->status_is(401);
@@ -135,6 +115,25 @@ EOS
   );
   $t->status_is(200);
   $t->content_type_is('application/x-git-receive-pack-result');
+
+  # /git-upload-pack
+  {
+    my $content = <<EOS;
+006fwant 6410316f2ed260666a8a6b9a223ad3c95d7abaed multi_ack_detailed no-done side-band-64k thin-pack ofs-delta
+0032want 6410316f2ed260666a8a6b9a223ad3c95d7abaed
+00000009done
+EOS
+    $t->post_ok(
+      '/kimoto/t1.git/git-upload-pack',
+      {
+        'Content-Type' => 'application/x-git-upload-pack-request',
+        'Content-Length' => 174,
+        'Content'        => $content
+      }
+    );
+    $t->status_is(200);
+    $t->content_type_is('application/x-git-upload-pack-result');
+  }
 }
 
 note 'Private repository and collaborator';
@@ -142,7 +141,10 @@ note 'Private repository and collaborator';
   unlink $db_file;
   rmtree $rep_home;
 
-  my $app = Gitprep->new;
+  system("$FindBin::Bin/../setup_database", $db_file) == 0
+    or die "Can't setup $db_file";
+  my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
+
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
 
@@ -155,9 +157,9 @@ note 'Private repository and collaborator';
   $t->content_like(qr/Admin/);
   
   # Create user
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', password => 'a', password2 => 'a'});
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', email => 'kimoto@foo.com', password => 'a', password2 => 'a'});
   $t->content_like(qr/Success.*created/);
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', password => 'a', password2 => 'a'});
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto2', email => 'kimoto2@foo.com', password => 'a', password2 => 'a'});
   $t->content_like(qr/Success.*created/);
 
   # Login as kimoto
@@ -169,8 +171,8 @@ note 'Private repository and collaborator';
   $t->content_like(qr/README/);
   
   # Check private repository
-  $t->post_ok("/kimoto/t1/settings?op=private", form => {private => 1});
-  $t->content_like(qr/Repository is private/);
+  $t->post_ok("/kimoto/t1/settings?op=save-settings", form => {private => 1});
+  $t->content_like(qr/Settings is saved/);
   
   # Can access private repository from myself
   $t->get_ok(
@@ -190,7 +192,7 @@ note 'Private repository and collaborator';
     }
   );
   $t->status_is(401);
-  
+
   # Add collaborator
   $t->post_ok("/kimoto/t1/settings/collaboration?op=add", form => {collaborator => 'kimoto2'});
   $t->content_like(qr/Collaborator kimoto2 is added/);
@@ -205,3 +207,6 @@ note 'Private repository and collaborator';
   $t->header_is("Content-Type", "application/x-git-receive-pack-advertisement");
   $t->content_like(qr/^001f# service=git-receive-pack/);
 }
+
+# Fix test error(why?)
+__END__

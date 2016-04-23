@@ -26,9 +26,9 @@
   my $git = app->git;
 
   # Object type
-  my $type = $git->object_type($user, $project, "$rev^{}");
+  my $type = $git->object_type(app->rep_info($user, $project), "$rev^{}");
   if (!$type || $type eq 'blob') {
-    $self->render_not_found;
+    $self->reply->not_found;
     return;
   }
   
@@ -41,8 +41,7 @@
   };
   my $cmd = $quote->(
     $git->cmd(
-      $user,
-      $project,
+      app->rep_info($user, $project),
       'archive',
       "--format=$format",
       "--prefix=$name/",

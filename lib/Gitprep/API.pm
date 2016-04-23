@@ -5,6 +5,36 @@ use Digest::MD5 'md5_hex';
 
 has 'cntl';
 
+sub age_string {
+  my ($self, $epoch_time) = @_;
+  
+  my $age = time - $epoch_time;
+  
+  my $age_string = $self->cntl->app->git->_age_string($age);
+  
+  return $age_string;
+}
+
+sub get_user_row_id {
+  my ($self, $user_id) = @_;
+  
+  my $user_row_id = $self->app->dbi->model('user')->select('row_id', where => {id => $user_id})->value;
+  
+  return $user_row_id;
+}
+
+sub get_project_row_id {
+  my ($self, $user_id, $project_id) = @_;
+  
+  my $user_row_id = $self->app->dbi->model('user')->select('row_id', where => {id => $user_id})->value;
+  my $project_row_id = $self->app->dbi->model('project')->model('project')->select(
+    'row_id',
+    where => {user => $user_row_id, id => $project_id}
+  )->value;
+  
+  return $project_row_id;
+}
+
 sub app { shift->cntl->app }
 
 sub encrypt_password {
@@ -26,10 +56,10 @@ sub check_password {
 }
 
 sub check_user_and_password {
-  my ($self, $user, $password) = @_;
+  my ($self, $user_id, $password) = @_;
   
   my $row
-    = $self->app->dbi->model('user')->select(['password', 'salt'], id => $user)->one;
+    = $self->app->dbi->model('user')->select(['password', 'salt'], where => {id => $user_id})->one;
   
   return unless $row;
   
@@ -43,26 +73,31 @@ sub check_user_and_password {
 }
 
 sub is_collaborator {
-  my ($self, $user, $project, $session_user) = @_;
-
-  $session_user = $self->cntl->session('user') unless defined $session_user;
-  return unless $session_user;
+  my ($self, $user_id, $project_id, $collaborator_id) = @_;
+  
+  my $user_row_id = $self->get_user_row_id($user_id);
+  my $project_row_id = $self->app->dbi->model('project')->select(
+    where => {user => $user_row_id, id => $project_id}
+  )->value;
+  my $collaborator_row_id = $self->get_user_row_id($collaborator_id);
   
   my $row = $self->app->dbi->model('collaboration')->select(
-    id => [$user, $project, $session_user]
+    where => {project => $project_row_id, user => $collaborator_row_id}
   )->one;
   
   return $row ? 1 : 0;
 }
 
 sub can_access_private_project {
-  my ($self, $user, $project) = @_;
+  my ($self, $user_id, $project_id) = @_;
 
-  my $session_user = $self->cntl->session('user');
-  $session_user = '' unless defined $session_user;
+  my $session_user_row_id = $self->cntl->session('user_row_id');
+  my $session_user_id = $self->app->dbi->model('user')->select(
+    'id', where => {row_id => $session_user_row_id}
+  )->value;
   
   my $is_valid =
-    ($user eq $session_user || $self->is_collaborator($user, $project))
+    ($user_id eq $session_user_id || $self->is_collaborator($user_id, $project_id, $session_user_id))
     && $self->logined;
   
   return $is_valid;
@@ -83,30 +118,42 @@ sub logined_admin {
   my $c = $self->cntl;
   
   # Check logined as admin
-  my $user = $c->session('user');
+  my $session_user_id = $self->session_user_id;
   
-  return $self->app->manager->is_admin($user) && $self->logined($user);
+  return $self->app->manager->is_admin($session_user_id) && $self->logined($session_user_id);
+}
+
+sub session_user_id {
+  my $self = shift;
+  
+  my $session_user_row_id = $self->cntl->session('user_row_id');
+  my $session_user_id = $self->app->dbi->model('user')->select(
+    'id', where => {row_id => $session_user_row_id}
+  )->value;
+  
+  return $session_user_id;
 }
 
 sub logined {
-  my ($self, $user) = @_;
+  my ($self, $user_id) = @_;
   
   my $c = $self->cntl;
-  
   my $dbi = $c->app->dbi;
   
-  my $current_user = $c->session('user');
+  my $session_user_row_id = $c->session('user_row_id');
+  my $session_user_id = $self->session_user_id;
   my $password = $c->session('password');
   return unless defined $password;
   
-  my $correct_password
-    = $dbi->model('user')->select('password', id => $current_user)->value;
+  my $correct_password = $dbi->model('user')->select(
+    'password',
+    where => {row_id => $session_user_row_id}
+  )->value;
   return unless defined $correct_password;
   
   my $logined;
-  
-  if (defined $user) {
-    $logined = $user eq $current_user && $password eq $correct_password;
+  if (defined $user_id) {
+    $logined = $user_id eq $session_user_id && $password eq $correct_password;
   }
   else {
     $logined = $password eq $correct_password

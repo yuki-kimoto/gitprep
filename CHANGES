@@ -1,7 +1,21 @@
-1.12
-  Catch up latest Github design.
-  Fix bug that relative image path in README.md and blob html.
-1.11
+2.00_dev ()
+  - drop Perl 5.8 support, now require Perl 5.10.1
+  - use own temparaly directory when creating repositoy with readme file. Now not use /tmp.
+  - add Mojolicious::Plugin::DBViewer to cpanfile
+  - X-Forwarded-HTTPS header is DEPRECATED! use X-Forwarded-Proto header instead.
+  - remove [basic]show_ignore_space_change_link option.
+    and move this feature to project settings page.
+  - remove [basic]encoding_suspects option
+    and move this feature to project settings page.
+  - setup.sh is renamed to setup_module
+  - separete database creating logic to setup_database script
+  - add name and mail column to user table. mail is required for user registration.
+  - add user update page
+  - fix bug that repository with read can't be created when git global user name and email
+1.12 (7 Feb 2016)
+  - Catch up latest Github design.
+  - Fix bug that relative image path in README.md and blob html.
+1.11 (7 Nov 2015)
   - support relative path in README.md and blob html.
   - support git version 2
 1.10 (27 Jun 2015)

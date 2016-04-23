@@ -5,7 +5,7 @@
 
   # Protect directory traversal
   if ($path =~ m#\.\.#) {
-    $self->render_exception('Invalid URL');
+    $self->reply->exception('Invalid URL');
     return;
   }
 
@@ -31,8 +31,9 @@
     $content_type = 'application/x-git-packed-objects-toc';
   }
   
-  my $rep_home = app->git->rep_home;
-  my $file = "$rep_home/$user/$project.git/$path";
+  my $rep_info = app->rep_info($user, $project);
+  my $rep_git_dir = $rep_info->{git_dir};
+  my $file = "$rep_git_dir/$path";
   if (-f $file) {
     my $asset = Mojo::Asset::File->new(path => $file);
     my $content = $asset->slurp;

@@ -35,6 +35,117 @@
   box-sizing: border-box;
 }
 
+.branches-open {
+  color:white;
+  background:#6cc644;
+  padding:5px 8px;
+  border-radius:3px;
+  margin-right:4px;
+  border-radius:3px;
+  text-align:center;
+}
+.branches-open:hover {
+  color:white;
+  text-decoration:none;
+}
+
+.pull-comment {
+  border:1px solid #eee;
+  margin-top:15px;
+  border-radius:3px;
+}
+.pull-comment-header {
+  background:#f2f8fa;
+  padding:7px 12px;
+  border-bottom:1px solid #eee;
+}
+.pull-comment-body {
+  padding:13px 12px;
+  
+}
+.pull-request-form {
+  border:1px solid #95c97e;
+  border-radius:3px;
+}
+.pull-request-form-title {
+  padding:10px;
+}
+.pull-request-form-description {
+  padding:10px;
+  color:#767676;
+}
+.pull-request-form-button {
+  padding:10px;
+  border-top:1px solid #d8d8d8;
+}
+.pulls-title a {
+  color:black;
+}
+.pulls-title a:hover {
+  color:blue;
+}
+
+.pulls-button-container {
+  text-align:right;
+  margin-bottom:10px;
+}
+.pulls-header {
+  border:1px solid #d8d8d8;
+  background:#fafafa;
+  padding:10px;
+}
+.pulls-body {
+  border:1px solid #d8d8d8;
+  border-top:none;
+  background:#fafafa;
+  background:white;
+}
+.pulls-body li {
+  padding:10px;
+}
+.pulls-no-request {
+  padding:30px;
+  margin:1px auto;
+  width:600px;
+  text-align:center;
+}
+
+.pulls-description {
+  color:#767676;
+}
+.compare-open-pull-request {
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  width:80%;
+}
+.compare-open-pull-request-title {
+  border-bottom:1px solid #d8d8d8;
+  padding:10px;
+}
+.compare-open-pull-request-message {
+  padding:10px;
+}
+.compare-open-pull-request [type=text] {
+  width:100%;
+}
+.compare-open-pull-request textarea {
+  width:100%;
+  min-height:200px;
+}
+.compare-open-pull-request-button {
+  padding:10px;
+  text-align:right;
+}
+
+.compare-nothing {
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  background:#fafafa;
+  padding:25px 0 30px 0;
+  text-align:center;
+  line-height:150%;
+}
+
 .text-gray { color:#767676 }
 
 input[type=text], input[type=password] {
@@ -43,6 +154,33 @@ input[type=text], input[type=password] {
   padding:6px 5px;
 }
 
+.repositories-container {
+  overflow:hidden;
+}
+.repositories-left {
+  padding-top:20px;
+  padding-left:10px;
+  padding-right:25px;
+  width:25%;
+  float:left;
+}
+.repositories-right {
+  width:75%;
+  float:left;
+}
+.repositories-user-name {
+  font-weight:bold;
+  font-size:22px;
+}
+.repositories-user-id {
+  padding:5px 0 7px 2px;
+  font-size:18px;
+  color:#767676;
+  border-bottom:1px solid #d8d8d8;
+}
+.repositories-user-mail {
+  padding:5px 0;
+}
 .project-tabs {
   position:relative;
   z-index:1;
@@ -56,7 +194,6 @@ input[type=text], input[type=password] {
 .project-tabs li {
   display:block;
   float:left;
-  width:90px;
   margin-bottom:0px;
 }
 
@@ -72,43 +209,33 @@ input[type=text], input[type=password] {
   display:block;
   width:100%;
   text-decoration:none;
-  padding:8px 0px 7px 0px;
+  padding:8px 11px 7px 11px;
   text-align:center;
   color:#565656;
 }
 
 .project-tabs li.active a {
-  padding:5px 0px 7px 0px;
+  padding:5px 11px 7px 11px;
 }
 
 .admin-users {
-  width:70%;
+  border-collapse:collapse;
+  width:100%;
 }
-
-.admin-users div {
-  display:inline-block;
+.admin-users th, .admin-users td {
+  border:1px solid #d8d8d8;
+  padding:5px;
+}
+.admin-users th {
+  font-weight:bold;
+  text-align:center;
+}
+.admin-users td {
+  
 }
 
 .admin-users form {
   display:inline-block;
-}
-
-.admin-users li {
-  border-bottom:1px solid #d8d8d8;
-  padding:8px 0;
-}
-
-.admin-users li:first-child {
-  border-top:1px solid #d8d8d8;
-}
-
-.admin-users li > div:first-child {
-  width:20%;
-}
-
-.admin-users li > div.last-child {
-  width:78%;
-  text-align:right;
 }
 
 .container {
@@ -1840,7 +1967,6 @@ button.close {
 .project-header {
   background:#fafafa;
   border-bottom: none;
-  margin-top:3px;
   margin-bottom:12px;
   overflow:hidden;
   padding:14px 0 0 0;
@@ -1848,13 +1974,13 @@ button.close {
 
 .project-header-left {
   float:left;
-  width:50%;
+  width:80%;
   overflow:hidden;
 }
 
 .project-header-right {
   float:left;
-  width:50%;
+  width:20%;
   overflow:hidden;
 }
 
@@ -2154,7 +2280,11 @@ button.close {
   color: #767676;
   margin-top:1px;
 }
-
+.commit-left-author a {
+  color:#767676;
+  font-weight:bold;
+  font-size:98%;
+}
 .commit-right {
   float:left;
   width:30%;

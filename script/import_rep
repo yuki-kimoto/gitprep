@@ -4,26 +4,26 @@ use strict;
 use warnings;
 use utf8;
 use FindBin;
-use lib "$FindBin::Bin/../mojo/lib";
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use Getopt::Long;
 use File::Basename 'basename';
 use Gitprep;
 use Encode 'decode';
+use Mojo::Server;
 
 no warnings;
-my $app = Gitprep->new;
+my $app = Mojo::Server->new->load_app("$FindBin::Bin/gitprep");
 my $dbi = $app->dbi;
 my $manager = $app->manager;
 my $git = $app->git;
 
-my $user;
+my $user_id;
 my $only_push;
 my $help;
 
 GetOptions(
-  'user=s' => \$user,
+  'user=s' => \$user_id,
   'help=s' => \$help
 );
 
@@ -42,30 +42,32 @@ my $rep_dir = shift;
 die "$usage\n" if !defined $rep_dir || $help;
 
 # Check user
-my $user_row = $dbi->model('user')->select(id => $user)->one;
-die "User $user is not exists\n" unless $user_row;
+my $user = $dbi->model('user')->select(where => {id => $user_id})->one;
+die "User $user_id is not exists\n" unless $user;
 
 for my $rep (glob "$rep_dir/*") {
 
   if (-d $rep && $rep =~ /\.git$/) {
-    my $project = basename $rep;
-    $project =~ s/\.git$//;
+    my $project_id = basename $rep;
+    $project_id =~ s/\.git$//;
     
-    my $project_row = $dbi->model('project')->select(id => [$user, $project])->one;
+    my $project = $dbi->model('project')->select(
+      where => {'user.id' => $user_id, 'project.id' => $project_id}
+    )->one;
     
     # Create project
-    if ($project_row) {
-      warn "Repository $project Already exists : $@\n";
+    if ($project) {
+      warn "Repository $project_id Already exists : $@\n";
     }
     else {
       eval {
-        $manager->create_project($user, $project);
+        $manager->create_project($user_id, $project_id);
       };       
       if ($@) {
-        warn "Can't creat repository $project: $@\n";
+        warn "Can't creat repository $project_id: $@\n";
       }
       else {
-        warn "Create repository $project\n";
+        warn "Create repository $project_id\n";
       }
     }
     
@@ -82,26 +84,28 @@ for my $rep (glob "$rep_dir/*") {
       }
     };
     $description = decode('UTF-8', $description);
-    eval {$git->description($user, $project, $description) };
+    eval {$git->description(app->rep_info($user_id, $project_id), $description) };
     if ($@) {
-      warn "Can't update description $project\n";
+      warn "Can't update description $project_id\n";
     }
     
     # Push repository
     chdir $rep
       or warn "Can't change directory $rep: $!\n";
-    my $remote_rep = $git->rep($user, $project);
+    
+    my $remote_rep_info = $app->rep_info($user_id, $project_id);
+    my $remote_rep_git_dir = $remote_rep_info->{git_dir};
     
     # push branches
     {
-      my @cmd = ('git', 'push', $remote_rep, '--all');
+      my @cmd = ('git', 'push', $remote_rep_git_dir, '--all');
       system(@cmd) == 0
         or warn "Can't push branches: @cmd";
     }
     
     # push tags
     {
-      my @cmd = ('git', 'push', $remote_rep, '--tags');
+      my @cmd = ('git', 'push', $remote_rep_git_dir, '--tags');
       system(@cmd) == 0
         or warn "Can't push tags: @cmd";
     }

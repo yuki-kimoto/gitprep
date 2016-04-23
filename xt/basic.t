@@ -2,34 +2,27 @@ use Test::More 'no_plan';
 
 use FindBin;
 use utf8;
-use lib "$FindBin::Bin/../mojo/lib";
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use Encode qw/encode decode/;
 
 use Test::Mojo;
 
-# Test DB
-$ENV{GITPREP_DB_FILE} = "$FindBin::Bin/basic.db";
+# Data directory
+my $data_dir =  $ENV{GITPREP_DATA_DIR} = "$FindBin::Bin/basic";
 
-# Test Repository home
-$ENV{GITPREP_REP_HOME} = "$FindBin::Bin/../../gitprep_t_rep_home";
+# You must clone "gitprep_t"
+# cd basic/rep/kimoto
+# git clone --bare https://github.com/yuki-kimoto/gitprep_t.git
 
 $ENV{GITPREP_NO_MYCONFIG} = 1;
 
-use Gitprep;
+my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
 
-my $app = Gitprep->new;
 my $t = Test::Mojo->new($app);
 
 my $user = 'kimoto';
 my $project = 'gitprep_t';
-
-# For perl 5.8
-{
-  no warnings 'redefine';
-  sub note { print STDERR "# $_[0]\n" unless $ENV{HARNESS_ACTIVE} }
-}
 
 note 'Home page';
 {
@@ -62,7 +55,7 @@ note 'Project page';
   $t->get_ok("/$user/$project");
   
   # Description
-  $t->content_like(qr/gitprep test repository/);
+  $t->content_like(qr/Unnamed repository/);
   
   # Commit datetime
   $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
@@ -376,7 +369,6 @@ note 'Compare page';
   # Page access (branch name long)
   $t->get_ok("/$user/$project/compare/refs/heads/b1...refs/heads/master");
   $t->content_like(qr#renamed dir/a\.txt to dir/b\.txt and added text#);
-
 }
 
 note 'API References';
@@ -440,13 +432,4 @@ note 'Markdown normal file';
   # Page access
   $t->get_ok("/$user/$project/blob/12e44f2e4ecf55c5d3a307889829b47c05e216d3/dir/markdown.md");
   $t->content_like(qr#<h1 .*?>Head</h1>#);
-}
-
-note 'encoding_suspects option';
-{
-  my $app = Gitprep->new;
-  $app->git->encoding_suspects(['EUC-jp', 'UTF-8']);
-  my $t = Test::Mojo->new($app);
-  $t->get_ok("/$user/$project/blob/3cf14ade5e28ee0cd83b9a3b1e1c332aed66df53/euc-jp.txt");
-  $t->content_like(qr/あああ/);
 }

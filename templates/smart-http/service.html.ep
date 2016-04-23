@@ -9,8 +9,9 @@
   
   my $git = app->git;
   
-  my $rep_dir = $git->rep($user, $project);
-  my @cmd = $git->cmd($user, $project, $service, '--stateless-rpc', $rep_dir);
+  my $rep_info = app->rep_info($user, $project);
+  my $rep_git_dir = $rep_info->{git_dir};
+  my @cmd = $git->cmd(app->rep_info($user, $project), $service, '--stateless-rpc', $rep_git_dir);
   
   # Command
   my ($cout, $cerr) = (Symbol::gensym, Symbol::gensym);
@@ -36,18 +37,15 @@
   my $s = IO::Select->new($cout, $cerr);
   my $buffer_size = $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE};
   my $error;
-  my $output;
   my @ready;
   my $cb;
   $cb = sub {
     my $c = shift;
     if (@ready = $s->can_read) {
-      $output = '';
+      my $output = '';
       for my $handle (@ready) {
         
         if (sysread($handle, my $buf, $buffer_size)) {
-          #warn `ps axuww|grep gitprep` if $k % 3000 == 0;
-          
           if ($handle == $cerr) {
             $error .= $buf;
           }
@@ -64,7 +62,8 @@
     else {
       $c->finish;
       waitpid($pid, 0);
-      app->log->error(url_for . ": $error") if defined $error;
+
+      $c->app->log->error($c->url_for . ": $error") if defined $error;
       undef $cb;
       return;
     }

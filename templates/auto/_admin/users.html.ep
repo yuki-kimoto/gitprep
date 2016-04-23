@@ -41,7 +41,10 @@
     else { $errors = $validation->messages }
   }
   
-  my $users = app->manager->users;
+  my $users = app->dbi->model('user')->select(
+    where => {admin => 0},
+    append => 'order by id'
+  )->all;
 %>
 
 % layout 'common', title => 'Admin Users';
@@ -91,21 +94,34 @@
     <h3 class="topic1">Admin Users</h3>
     <div style="margin-bottom:10px"><a class="btn" href="<%= url_for('/_admin/user/create') %>">Create User</a></div>
     <div class="container">
-      <ul class="admin-users">
+      <table class="admin-users">
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Mail</th>
+          <th></th>
+        </tr>
         % for my $user (@$users) {
-          % my $uid = $user->{id};
-          <li>
-            <div>
+          <tr>
+            % my $uid = $user->{id};
+            <td>
               <a href="#"><%= $uid %></a>
-            </div>
-            <div class="last-child">
-              <a class="btn btn-mini" href="<%= url_for('/reset-password')->query(user => $uid) %>">Reset Password</a>
+            </td>
+            <td>
+              <%= $user->{name} %>
+            </td>
+            <td>
+              <%= $user->{email} %>
+            </td>
+            <td>
+              <a class="btn btn-small" href="<%= url_for('/_admin/user/update')->query(id => $uid) %>">Settings</a>
+              <a class="btn btn-small" href="<%= url_for('/reset-password')->query(user => $uid) %>">Reset Password</a>
               <form action="<%= url_for->query(op => 'delete') %>" method="post">
                 %= hidden_field user => $uid;
-                <input type="submit" class="btn btn-mini delete-btn" user="<%= $uid %>" value="Delete">
+                <input type="submit" class="btn btn-small delete-btn" style="color:red" user="<%= $uid %>" value="Delete">
               </form>
-            </div>
-          </li>
+            </td>
+          </tr>
         % }
       </table>
     </div>

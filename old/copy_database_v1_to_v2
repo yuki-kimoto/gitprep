@@ -1,0 +1,202 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::Bin/../extlib/lib/perl5";
+use DBIx::Custom;
+
+my ($old_database_file, $new_database_file) = @ARGV;
+
+# Old DBI
+my %old_dbi_args = (
+  dsn => "dbi:SQLite:database=$old_database_file",
+  connector => 1,
+  option => {sqlite_unicode => 1, sqlite_use_immediate_transaction => 1}
+);
+my $old_dbi = DBIx::Custom->connect(%old_dbi_args);
+
+# New DBI
+my %new_dbi_args = (
+  dsn => "dbi:SQLite:database=$new_database_file",
+  connector => 1,
+  option => {sqlite_unicode => 1, sqlite_use_immediate_transaction => 1}
+);
+my $new_dbi = DBIx::Custom->connect(%new_dbi_args);
+
+# Copy user data
+my $old_users = $old_dbi->select(table => 'user')->all;
+my $new_user_count = $new_dbi->select('count(*)', table => 'user')->value;
+unless ($new_user_count) {
+  for my $old_user (@$old_users) {
+    
+    my @new_user_columns = qw(
+      row_id
+      id
+      email
+      admin
+      password
+      salt
+      name
+    );
+    
+    my $new_user = {};
+    for my $new_user_column (@new_user_columns) {
+      if (exists $old_user->{$new_user_column}) {
+        $new_user->{$new_user_column} = $old_user->{$new_user_column};
+      }
+    }
+    
+    unless (exists $new_user->{email}) {
+      $new_user->{email} = $old_user->{id} . '@gitprep.example';
+    }
+    
+    $new_dbi->insert($new_user, table => 'user');
+  }
+}
+
+# Copy project data
+my $old_projects = $old_dbi->select(table => 'project')->all;
+my $new_project_count = $new_dbi->select('count(*)', table => 'project')->value;
+unless ($new_project_count) {
+  for my $old_project (@$old_projects) {
+    
+    my @new_project_columns = qw(
+      row_id
+      id
+      default_branch
+      private integer
+      ignore_space_change
+      guess_encoding
+    );
+    
+    my $new_project = {};
+    for my $new_project_column (@new_project_columns) {
+      if (exists $old_project->{$new_project_column}) {
+        $new_project->{$new_project_column} = $old_project->{$new_project_column};
+      }
+    }
+    
+    # name is copied to id
+    if (exists $old_project->{name}) {
+      $new_project->{id} = $old_project->{name};
+    }
+    
+    # original_pid is copied to original_project, which is converted to project.row_id
+    if (exists $old_project->{original_pid}) {
+      my $project_row_id = $old_dbi->select(
+        'row_id',
+        table => 'project',
+        where => {
+          original_pid => $old_project->{original_pid}
+        },
+        append => 'order by row_id'
+      )->value;
+      if ($project_row_id && $project_row_id ne $new_project->{row_id}) {
+        $new_project->{original_project} = $project_row_id;
+      }
+    }
+    
+    # user_id is copied to user, which is converted to user.row_id
+    my $user_row_id = $old_dbi->select(
+      'row_id',
+      table => 'user',
+      where => {id => $old_project->{user_id}}
+    )->value;
+    if (defined $user_row_id) {
+      $new_project->{user} = $user_row_id;
+    }
+    else {
+      next;
+    }
+    
+    $new_dbi->insert($new_project, table => 'project');
+  }
+}
+
+# Copy ssh_public_key data
+my $old_ssh_public_keys = $old_dbi->select(table => 'ssh_public_key')->all;
+my $new_ssh_public_key_count = $new_dbi->select('count(*)', table => 'ssh_public_key')->value;
+unless ($new_ssh_public_key_count) {
+  for my $old_ssh_public_key (@$old_ssh_public_keys) {
+    
+    my @new_ssh_public_key_columns = qw(
+      row_id
+      key
+      title
+    );
+    
+    my $new_ssh_public_key = {};
+    for my $new_ssh_public_key_column (@new_ssh_public_key_columns) {
+      if (exists $old_ssh_public_key->{$new_ssh_public_key_column}) {
+        $new_ssh_public_key->{$new_ssh_public_key_column} = $old_ssh_public_key->{$new_ssh_public_key_column};
+      }
+    }
+
+    # user_id is copied to user, which is converted to user.row_id
+    my $user_row_id = $old_dbi->select(
+      'row_id',
+      table => 'user',
+      where => {id => $old_ssh_public_key->{user_id}}
+    )->value;
+    if (defined $user_row_id) {
+      $new_ssh_public_key->{user} = $user_row_id;
+    }
+    else {
+      next;
+    }
+
+    $new_dbi->insert($new_ssh_public_key, table => 'ssh_public_key');
+  }
+}
+
+# Copy collaboration data
+my $old_collaborations = $old_dbi->select(table => 'collaboration')->all;
+my $new_collaboration_count = $new_dbi->select('count(*)', table => 'collaboration')->value;
+unless ($new_collaboration_count) {
+  for my $old_collaboration (@$old_collaborations) {
+    
+    my @new_collaboration_columns = qw(
+      row_id
+    );
+    
+    my $new_collaboration = {};
+    for my $new_collaboration_column (@new_collaboration_columns) {
+      if (exists $old_collaboration->{$new_collaboration_column}) {
+        $new_collaboration->{$new_collaboration_column} = $old_collaboration->{$new_collaboration_column};
+      }
+    }
+
+    # collaborator_id is copied to collaborator, which is converted to user.row_id
+    my $user_row_id = $old_dbi->select(
+      'row_id',
+      table => 'user',
+      where => {id => $old_collaboration->{collaborator_id}}
+    )->value;
+    if (defined $user_row_id) {
+      $new_collaboration->{user} = $user_row_id;
+    }
+    else {
+      next;
+    }
+    
+    my $project_row_id = $old_dbi->select(
+      'row_id',
+      table => 'project',
+      where => {name => $old_collaboration->{project_name}}
+    )->value;
+    if (defined $project_row_id) {
+      $new_collaboration->{project} = $project_row_id;
+    }
+    else {
+      next;
+    }
+    
+    $new_dbi->insert($new_collaboration, table => 'collaboration');
+  }
+}
+
+=pod
+collaboration
+=cut

@@ -5,10 +5,12 @@
   
   # Parameters
   my $op = param('op') || '';
-  my $user = param('user') || '';
+  my $user_id = param('user') || '';
+  my $user_row_id = $api->get_user_row_id($user_id);
+  my $project_id = param('project');
   
   # Authentication
-  unless ($api->logined($user)) {
+  unless ($api->logined($user_id)) {
     $self->redirect_to('/');
     return;
   }
@@ -16,115 +18,120 @@
   # Rename project
   my $git = app->git;
   my $errors;
-  my $post = lc $self->req->method eq 'post';
-  if ($op eq 'rename-project' && $post) {
-    
-    # Parameters
-    my $to_project = param('to-project');
-    
-    # Validator
-    my $vc = app->vc;
-    
-    # Validation result
-    my $validation = $vc->validation;
-    
-    # "to-project" check
-    if (!(defined $to_project && length $to_project)) {
-      $validation->add_failed('to-project' => 'Repository name is empty.');
+  if (lc $self->req->method eq 'post') {
+    if ($op eq 'rename-project') {
+      
+      # Parameters
+      my $to_project = param('to-project');
+      
+      # Validator
+      my $vc = app->vc;
+      
+      # Validation result
+      my $validation = $vc->validation;
+      
+      # "to-project" check
+      if (!(defined $to_project && length $to_project)) {
+        $validation->add_failed('to-project' => 'Repository name is empty.');
+      }
+      elsif (!$vc->check($to_project, 'project_name')) {
+        $validation->add_failed('to-project' => 'Repository name contains invalid charactor.');
+      }
+      elsif (app->manager->exists_project($user_id, $to_project)) {
+        $validation->add_failed('to-project' => "$to_project is already exists");
+      }
+      
+      if ($validation->is_valid) {
+        # Rename
+        eval { app->manager->rename_project($user_id, $project_id, $to_project) };
+        if (my $e = $@) {
+          app->log->error($e);
+          $errors = ['Internal Error'];
+        }
+        else {
+          flash(message => "Repository name is renamed to $to_project");
+          $self->redirect_to("/$user_id/$to_project/settings");
+          return;
+        }
+      }
+      else { $errors = $validation->messages }
     }
-    elsif (!$vc->check($to_project, 'project_name')) {
-      $validation->add_failed('to-project' => 'Repository name contains invalid charactor.');
-    }
-    elsif (app->manager->exists_project($user, $to_project)) {
-      $validation->add_failed('to-project' => "$to_project is already exists");
-    }
     
-    if ($validation->is_valid) {
-      # Rename
-      eval { app->manager->rename_project($user, $project, $to_project) };
+    # Change description
+    elsif ($op eq 'change-description') {
+      my $description = param('description');
+      $description = '' unless defined $description;
+      
+      eval { $git->description(app->rep_info($user_id, $project_id), $description) };
       if (my $e = $@) {
-        app->log->error($e);
+        app->log->error("/$user_id/$project_id/settings?op=description: $e");
         $errors = ['Internal Error'];
       }
       else {
-        flash(message => "Repository name is renamed to $to_project");
-        $self->redirect_to("/$user/$to_project/settings");
+        flash(message => 'Description is saved.');
+        $self->redirect_to('current');
         return;
       }
     }
-    else { $errors = $validation->messages }
-  }
-  
-  # Change description
-  elsif ($op eq 'change-description' && $post) {
-    my $description = param('description');
-    $description = '' unless defined $description;
     
-    eval { $git->description($user, $project, $description) };
-    if (my $e = $@) {
-      app->log->error("/$user/$project/settings?op=description: $e");
-      $errors = ['Internal Error'];
+    # Change default branch
+    elsif ($op eq 'save-settings') {
+      
+      # Parameters
+      my $default_branch = param('default-branch');
+      my $private = param('private');
+      my $ignore_space_change = param('ignore_space_change');
+      my $guess_encoding = param('guess_encoding');
+      
+      my $params = {};
+      if (defined $default_branch) {
+        $params->{default_branch} = $default_branch;
+      }
+      if (defined $private) {
+        $params->{private} = $private ? 1 : 0;
+      };
+      if (defined $ignore_space_change) {
+        $params->{ignore_space_change} = $ignore_space_change ? 1 : 0;
+      }
+      if (defined $guess_encoding) {
+        $params->{guess_encoding} = $guess_encoding;
+      }
+      
+      my $dbi = app->dbi;
+      eval {
+        $dbi->model('project')->update(
+          $params,
+          where => {user => $user_row_id, id => $project_id}
+        );
+      };
+      
+      if (my $e = $@) {
+        app->log->error("/$user_id/$project_id/settings?op=save-settings: $e");
+        $errors = ['Internal Error'];
+      }
+      else {
+        flash(message => "Settings is saved");
+        $self->redirect_to('current');
+        return;
+      }
     }
-    else {
-      flash(message => 'Description is saved.');
-      $self->redirect_to('current');
-      return;
-    }
-  }
-  
-  # Change default branch
-  elsif ($op eq 'default-branch' && $post) {
-    my $default_branch = param('default-branch');
-    eval { app->manager->default_branch($user, $project, $default_branch) };
-    if (my $e = $@) {
-      app->log->error("/$user/$project/settings?op=default-branch: $e");
-      $errors = ['Internal Error'];
-    }
-    else {
-      flash(message => "Default branch is changed to $default_branch.");
-      $self->redirect_to('current');
-      return;
-    }
-  }
-  
-  # Private repository
-  elsif ($op eq 'private' && $post) {
-    my $private = param('private') ? 1 : 0;
     
-    eval {
-      app->dbi->model('project')->update(
-        {private => $private},
-        id => [$user, $project]
-      );
-    };
-    if (my $e = $@) {
-      app->log->error("/$user/$project/settings?op=private: $e");
-      $errors = ['Internal Error'];
-    }
-    else {
-      my $message = 'Private status is saved. Repository is '
-        . ($private ? 'private' : 'public');
-      flash(message => $message);
-      $self->redirect_to('current');
-      return;
-    }
-  }
-  
-  # Delete project
-  elsif ($op eq 'delete-project' && $post) {
-    
-    my $user = param('user');
-    my $project = param('project');
-    
-    eval { app->manager->delete_project($user, $project) };
-    if (my $e = $@) {
-      app->log->error("/$user/$project/settings: $e");
-      $errors = ['Internal Error'];
-    }
-    else {
-      flash(message => "Repository $project is deleted.");
-      $self->redirect_to("/$user");
-      return;
+    # Delete project
+    elsif ($op eq 'delete-project') {
+      
+      my $user_id = param('user');
+      my $project_id = param('project');
+      
+      eval { app->manager->delete_project($user_id, $project_id) };
+      if (my $e = $@) {
+        app->log->error("/$user_id/$project_id/settings: $e");
+        $errors = ['Internal Error'];
+      }
+      else {
+        flash(message => "Repository $project_id is deleted.");
+        $self->redirect_to("/$user_id");
+        return;
+      }
     }
   }
 %>
@@ -139,16 +146,11 @@
       $('#rename').on('click', function () {
         $('#form-rename-project').submit();
       });
-      
-      // Select default branch
-      $('[name=default-branch]').on('change', function () {
-        $('#form-default-branch').submit();
-      });
 
       // Check matching deleted project
       $('input[name="deleted-project"]').on('keyup', function () {
         var deleted_project = $(this).val();
-        var project = "<%= $project %>";
+        var project = "<%= $project_id %>";
         
         if (deleted_project == project) {
           $('#delete').attr('class', 'btn btn-danger')
@@ -177,64 +179,105 @@
       <div class="left">
         <ul>
           <li><b>Options</b></li>
-          <li><a href="<%= url_for("/$user/$project/settings/collaboration") %>">Collaborators</a></li>
+          <li><a href="<%= url_for("/$user_id/$project_id/settings/collaboration") %>">Collaborators</a></li>
         </ul>
       </div>
       <div class="right">
+
         <ul class="project-settings-main">
           <li>
             <h4>
-              Settings
+              Repository name
             </h4>
           </li>
           <li>
             <form id="form-rename-project" action="<%= url_for->query(op => 'rename-project') %>" method="post">
-              <div >Repository Name</div>
               <div>
-                %= text_field 'to-project' => $project;
+                %= text_field 'to-project' => $project_id, style => "width:80%";
                 <a href="#rename-confirm" role="button" class="btn" data-toggle="modal">
                   Rename
                 </a>
               </div>
             </form>
           </li>
+        </ul>
+
+        <ul class="project-settings-main">
+          <li>
+            <h4>
+              Description
+            </h4>
+          </li>
           <li>
             <form action="<%= url_for->query(op => 'change-description') %>" method="post">
-              <div >Description</div>
               <div>
-                % my $description = $git->description($user, $project);
+                % my $description = $git->description(app->rep_info($user_id, $project_id));
                 % $description = '' unless defined $description;
-                %= text_field 'description' => $description;
+                %= text_field 'description' => $description, style => "width:90%";
                 <input type="submit" class="btn" value="Save">
               </div>
             </form>
           </li>
-          <li>
-            <form id="form-default-branch" action="<%= url_for->query(op => 'default-branch') %>" method="post">
+        </ul>
+        
+        <form id="form-default-branch" action="<%= url_for %>" method="post">
+          %= hidden_field op => 'save-settings';
+          <ul class="project-settings-main">
+            <li>
+              <h4>
+                Settings
+              </h4>
+            </li>
+            <li id="default-branch">
               Default Branch
               <%
-                my $branches = $git->branches($user, $project);
+                my $branches = $git->branches($self->app->rep_info($user_id, $project_id));
                 my $branch_names = [map { $_->{name} } @$branches];
-                my $default_branch = app->manager->default_branch($user, $project);
+                my $default_branch = app->manager->default_branch($user_id, $project_id);
                 push @$branch_names, $default_branch unless @$branch_names;
                 param('default-branch', $default_branch);
               %>
               %= select_field 'default-branch' => $branch_names;
-            </form>
-          </li>
-          <li>
-            <form id="form-default-branch" action="<%= url_for->query(op => 'private') %>" method="post">
+            </li>
+            <li>
               <span>Make this repository private</span>
-              % my $private = app->manager->is_private_project($user, $project);
-              % if ($private) {
-                % param('private', 1);
-              % }
-              %= check_box 'private' => 1;
+              % my $private = app->manager->is_private_project($user_id, $project_id);
+              % my @private_checked = $private ? (checked => undef) : ();
+              %= hidden_field 'private' => 0;
+              %= check_box 'private' => 1, @private_checked;
+            </li>
+            <li>
+              <%
+                my $ignore_space_change = app->dbi->model('project')->select(
+                  'ignore_space_change',
+                  where => {user => $user_row_id, id => $project_id}
+                )->value;
+                my @ignore_space_change_checked = $ignore_space_change ? (checked => undef) : ();
+              %>
+              <span>Ignore space change in diff</span>
+              
+              %= hidden_field 'ignore_space_change' => 0;
+              %= check_box 'ignore_space_change' => 1, @ignore_space_change_checked;
+            </li>
+            <li>
+              <%
+                my $guess_encoding = app->dbi->model('project')->select(
+                  'guess_encoding',
+                  where => {user => $user_row_id, id => $project_id}
+                )->value;
+              %>
+              <div>Guess encoding</div>
+              (Guess encoding from the following encoding list. default is "UTF-8".
+              if your source code is different from UTF-8, set comma separated encoding list.
+              For example "cp932,UTF-8")
+              %= text_field 'guess_encoding' => $guess_encoding;
+            </li>
+            <li>
               <input type="submit" class="btn" value="Save">
-            </form>
-          </li>
-        </ul>
-        
+            </li>
+          </ul>
+        </form>
+
         <ul class="project-settings-danger">
           <li style="background:red;padding-left:5px">
             <h4 style="color:white">Danger Zone</h4>
@@ -248,8 +291,8 @@
               <a style="color:red" href="#delete-confirm" role="button" class="btn" data-toggle="modal">
                 Delete this repository
               </a>
-              %= hidden_field user => $user;
-              %= hidden_field project => $project;
+              %= hidden_field user => $user_id;
+              %= hidden_field project => $project_id;
             </form>
           </li>
         </ul>
@@ -301,11 +344,11 @@
         Unexpected bad things will happen if you don't read this.
       </p>
       <p>
-        This action <b>CANNOT</b> be undone. This will delete the <b><%= "$user/$project" %></b>
+        This action <b>CANNOT</b> be undone. This will delete the <b><%= "$user_id/$project_id" %></b>
         repository, wiki, issues, and comments permanently.
       </p>
       <p>
-        Please type in the name of the repository(<b><%= $project %></b>) to confirm.
+        Please type in the name of the repository(<b><%= $project_id %></b>) to confirm.
       </p>
       %= text_field 'deleted-project';
     </div>

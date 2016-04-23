@@ -1,0 +1,217 @@
+#!/usr/bin/env perl
+
+use FindBin;
+use lib "$FindBin::Bin/lib";
+use lib "$FindBin::Bin/extlib/lib/perl5";
+use DBIx::Custom;
+
+my $database_file = shift // "$FindBin::Bin/data/gitprep.db";
+
+#  DBI
+my %dbi_args = (
+  dsn => "dbi:SQLite:database=$database_file",
+  connector => 1,
+  option => {sqlite_unicode => 1, sqlite_use_immediate_transaction => 1}
+);
+my $dbi = DBIx::Custom->connect(%dbi_args);
+
+# Database state
+my $database_state;
+if (!-f $database_file) {
+  $database_state = 'empty';
+}
+else {
+  # If project.user_id exists, that database is version 1
+  eval { $dbi->select('user_id', table => 'project', append => 'limit 0, 1') };
+  
+  if ($@) {
+    $database_state = 'current';
+  }
+  else {
+    $database_state = 'v1';
+  }
+}
+
+# Need upgrade
+if ($database_state eq 'v1') {
+  die "Can't setup database. you maybe need upgrade database";
+}
+# Create database
+else {
+  # Create user table
+  eval {
+    my $sql = <<"EOS";
+create table user (
+  row_id integer primary key autoincrement,
+  id not null unique default '',
+  email not null unique default ''
+);
+EOS
+    $dbi->execute($sql);
+  };
+
+  # Create user columns
+  my $user_columns = [
+    "admin integer not null default 0",
+    "password not null default ''",
+    "salt not null default ''",
+    "name not null default ''"
+  ];
+  for my $column (@$user_columns) {
+    eval { $dbi->execute("alter table user add column $column") };
+  }
+
+  # Check user table
+  eval { $dbi->select([qw/row_id id admin password salt email name/], table => 'user') };
+  if ($@) {
+    my $error = "Can't create user table properly: $@";
+    die $error;
+  }
+  
+  # Create project table
+  eval {
+    my $sql = <<"EOS";
+create table project (
+  row_id integer primary key autoincrement,
+  user integer not null default 0,
+  id not null,
+  unique(user, id)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Create Project columns
+  my $project_columns = [
+    "default_branch not null default 'master'",
+    "original_project integer not null default 0",
+    "private integer not null default 0",
+    "ignore_space_change integer not null default 0",
+    "guess_encoding integer not null default ''"
+  ];
+  for my $column (@$project_columns) {
+    eval { $dbi->execute("alter table project add column $column") };
+  }
+
+  # Check project table
+  eval {
+    $dbi->select(
+      [qw/row_id user id default_branch original_project private ignore_space_change guess_encoding/],
+      table => 'project'
+    );
+  };
+  if ($@) {
+    my $error = "Can't create project table properly: $@";
+    die $error;
+  }
+
+  # Create ssh_public_key table
+  eval {
+    my $sql = <<"EOS";
+create table ssh_public_key (
+  row_id integer primary key autoincrement,
+  key not null unique default ''
+);
+EOS
+    $dbi->execute($sql);
+  };
+
+  # Create ssh_public_key columns
+  my $ssh_public_key_columns = [
+    "user integer not null default 0",
+    "title not null default ''"
+  ];
+  for my $column (@$ssh_public_key_columns) {
+    eval { $dbi->execute("alter table ssh_public_key add column $column") };
+  }
+  
+  # Check ssh_public_key table
+  eval { $dbi->select([qw/row_id user key title/], table => 'ssh_public_key') };
+  if ($@) {
+    my $error = "Can't create ssh_public_key table properly: $@";
+    die $error;
+  }
+
+  # Create collaboration table
+  eval {
+    my $sql = <<"EOS";
+create table collaboration (
+  row_id integer primary key autoincrement,
+  project integer not null default 0,
+  user integer not null default 0,
+  unique(project, user)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Check collaboration table
+  eval { $dbi->select([qw/row_id project user/], table => 'collaboration') };
+  if ($@) {
+    my $error = "Can't create collaboration table properly: $@";
+    die $error;
+  }
+
+  # Create pull_request table
+  eval {
+    my $sql = <<"EOS";
+create table pull_request (
+  row_id integer primary key autoincrement,
+  project integer not null default 0,
+  branch1 not null default '',
+  branch2 not null default '',
+  unique(project, branch1, branch2)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Create pull_request columns
+  my @pull_request_columns = (
+    "title not null default ''",
+    "open integer default 0",
+    "open_time integer default 0",
+    "open_user integer default 0"
+  );
+  for my $column (@pull_request_columns) {
+    eval { $dbi->execute("alter table pull_request add column $column") };
+  }
+
+  # Check pull_request table
+  eval { $dbi->select([qw/row_id project branch1 branch2 title open open_time open_user/], table => 'pull_request') };
+  if ($@) {
+    my $error = "Can't create pull_request table properly: $@";
+    die $error;
+  }
+
+  # Create pull_request_message table
+  eval {
+    my $sql = <<"EOS";
+create table pull_request_message (
+  row_id integer primary key autoincrement,
+  pull_request integer not null default 0,
+  number integer not null default 0,
+  unique(pull_request, number)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Create pull_request_message columns
+  my @pull_request_message_columns = (
+    "message not null default ''",
+    "create_time integer default 0",
+    "update_time integer default 0",
+    "user integer not null default 0"
+  );
+  for my $column (@pull_request_message_columns) {
+    eval { $dbi->execute("alter table pull_request_message add column $column") };
+  }
+
+  # Check pull_request_message table
+  eval { $dbi->select([qw/row_id pull_request number message create_time update_time user/], table => 'pull_request_message') };
+  if ($@) {
+    my $error = "Can't create pull_request_message table properly: $@";
+    die $error;
+  }
+}

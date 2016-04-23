@@ -9,26 +9,26 @@
   my $user = param('user');
   my $project = param('project');
   my $rev_file = param('rev_file');
-  my ($rev, $file) = $git->parse_rev_path($user, $project, $rev_file);
+  my ($rev, $file) = $git->parse_rev_path(app->rep_info($user, $project), $rev_file);
 
   # Commit
-  my $commit = $git->last_change_commit($user, $project, $rev, $file);
+  my $commit = $git->last_change_commit(app->rep_info($user, $project), $rev, $file);
   
   # Authors
-  my $authors = $git->authors($user, $project, $rev, $file);
+  my $authors = $git->authors(app->rep_info($user, $project), $rev, $file);
   
   # File size
-  my $file_size = $git->blob_size($user, $project, $rev, $file);
+  my $file_size = $git->blob_size(app->rep_info($user, $project), $rev, $file);
 
   # File mode
-  my $mode = $git->blob_mode($user, $project, $rev, $file);
+  my $mode = $git->blob_mode(app->rep_info($user, $project), $rev, $file);
   my $file_type = $git->file_type_long($mode);
 
   # MIME type
-  my $mime_type = $git->blob_mime_type($user, $project, $rev, $file);
+  my $mime_type = $git->blob_mime_type(app->rep_info($user, $project), $rev, $file);
 
   # Blame
-  my $blame = $git->blame($user, $project, $rev, $file);
+  my $blame = $git->blame(app->rep_info($user, $project), $rev, $file);
   my $blame_lines = $blame->{lines};
   my $blame_min_author_time = $blame->{min_author_time};
   my $blame_max_author_time = $blame->{max_author_time};
@@ -116,7 +116,7 @@
                   </div>
                 </div>
                 <div class="blame-author">
-                  <span title="<%= $line->{author_mail} %>"><%= $line->{author} %></span>
+                  <span title="<%= $line->{author_email} %>"><%= $line->{author} %></span>
                   authored on
                   <%= $line->{author_age_string_date_local} %>
                 </div>

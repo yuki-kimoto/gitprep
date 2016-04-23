@@ -11,12 +11,12 @@
   my $user = param('user');
   my $project = param('project');
   my $rev_file = param('rev_file');
-  my ($rev, $file) = $git->parse_rev_path($user, $project, $rev_file);
+  my ($rev, $file) = $git->parse_rev_path(app->rep_info($user, $project), $rev_file);
   my $file_base = File::Basename::basename $file;
 
   # Blob lines
-  my $lines = $git->blob($user, $project, $rev, '.gitmodules');
-
+  my $lines = $git->blob(app->rep_info($user, $project), $rev, '.gitmodules');
+  
   my $submodule_rep_url;
   my $match;
   my $file_q = quotemeta $file;
@@ -42,7 +42,6 @@
 
   layout 'common' , title => "$project/$file at $rev \x{30fb} $user/$project";
 %>
-
 
   %= include '/include/header';
 

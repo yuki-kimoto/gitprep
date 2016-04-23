@@ -1,7 +1,8 @@
 <%
   # API
   my $api = gitprep_api;
-  my $session_user = session('user');
+  my $session_user_row_id = session('user_row_id');
+  my $session_user = app->dbi->model('user')->select(where => {row_id => $session_user_row_id})->one;
 
   my $op = param('op') || '';
 
@@ -14,7 +15,7 @@
   my $errors;
   if ($op eq 'create') {
     # Parameters
-    my $project = param('project');
+    my $project_id = param('project');
     my $description = param('description');
     my $readme = param('readme');
     my $private = param('private');
@@ -26,13 +27,13 @@
     my $validation = $vc->validation;
     
     # "project"
-    if (!(defined $project && length $project)) {
+    if (!(defined $project_id && length $project_id)) {
       $validation->add_failed(project => 'Repository name is empty');
     }
-    elsif (!$vc->check($project, 'project_name')) {
+    elsif (!$vc->check($project_id, 'project_name')) {
       $validation->add_failed(project => 'Invalid repository name');
     }
-    elsif (app->manager->exists_project($session_user, $project)) {
+    elsif (app->manager->exists_project($session_user->{id}, $project_id)) {
       $validation->add_failed(project => 'Repository already exists');
     }
     
@@ -49,15 +50,15 @@
     if ($validation->is_valid) {
       # Not logined
       unless ($api->logined) {
-        return $self->render_exception;
+        return $self->reply->exception;
       }
       
       my $manager = app->manager;
       # Create repository
       eval {
         $manager->create_project(
-          $session_user,
-          $project,
+          $session_user->{id},
+          $project_id,
           {description => $description, readme => $readme, private => $private}
         );
       };
@@ -67,7 +68,7 @@
         $errors = ['Internal error'];
       }
       else {
-        $self->redirect_to("/$session_user/$project");
+        $self->redirect_to("/$session_user->{id}/$project_id");
         return;
       }
     }
@@ -112,7 +113,7 @@
           </tr>
           <tr>
             <td>
-              <i class="icon-user"></i><%= $session_user %>
+              <i class="icon-user"></i><%= $session_user->{id} %>
             </td>
             <td style="padding:0 10px">
               /

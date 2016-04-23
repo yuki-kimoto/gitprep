@@ -15,13 +15,46 @@ use Gitprep::Util;
 # Attributes
 has 'bin';
 has default_encoding => 'UTF-8';
-has 'encoding_suspects';
-has 'rep_home';
 has text_exts => sub { ['txt'] };
 has 'time_zone_second';
+has 'app';
+
+sub current_branch {
+  my ($self, $rep_info) = @_;
+  
+  my @cmd = $self->cmd($rep_info, 'rev-parse',  '--abbrev-ref', 'HEAD');
+  
+  open my $fh, '-|', @cmd
+    or croak "Can't get current branch: @cmd";
+  my $current_branch = <$fh>;
+  chomp $current_branch;
+  
+  return $current_branch;
+}
+
+sub branch_names {
+  my ($self, $rep_info) = @_;
+  
+  # Branch names
+  my @cmd = $self->cmd($rep_info, 'branch');
+  open my $fh, '-|', @cmd or return;
+  
+  my @lines = <$fh>;
+  my @branch_names;
+  for my $branch_name (@lines) {
+    chomp $branch_name;
+    $branch_name =~ s/^\*//;
+    $branch_name =~ s/^\s*//;
+    $branch_name =~ s/\s*$//;
+    
+    push @branch_names, $branch_name;
+  }
+  
+  return \@branch_names;
+}
 
 sub branch {
-  my ($self, $user, $project, $branch_name) = @_;
+  my ($self, $rep_info, $branch_name) = @_;
   
   # Branch
   $branch_name =~ s/^\*//;
@@ -29,20 +62,19 @@ sub branch {
   $branch_name =~ s/\s*$//;
   my $branch = {};
   $branch->{name} = $branch_name;
-  my $commit = $self->get_commit($user, $project, $branch_name);
+  my $commit = $self->get_commit($rep_info, $branch_name);
   $branch->{commit} = $commit;
 
   return $branch;
 }
 
 sub branch_status {
-  my ($self, $user, $project, $branch1, $branch2) = @_;
+  my ($self, $rep_info, $branch1, $branch2) = @_;
   
   # Branch status
   my $status = {ahead => 0, behind => 0};
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'rev-list',
     '--left-right',
     "$branch1...$branch2"
@@ -58,16 +90,16 @@ sub branch_status {
 }
 
 sub no_merged_branch_h {
-  my ($self, $user, $project) = @_;
+  my ($self, $rep_info) = @_;
   
   # No merged branches
   my $no_merged_branches_h = {};
   {
-    my $rep = $self->rep($user, $project);
-    
-    my @cmd = $self->cmd($user, $project, 'branch', '--no-merged');
+    my @cmd = $self->cmd($rep_info, 'branch', '--no-merged');
     open my $fh, '-|', @cmd or return;
-    while (my $branch_name = $self->_dec(scalar <$fh>)) {
+    my @lines = <$fh>;
+    for my $branch_name (@lines) {
+      $branch_name = $self->_dec($branch_name);
       $branch_name =~ s/^\*//;
       $branch_name =~ s/^\s*//;
       $branch_name =~ s/\s*$//;
@@ -79,39 +111,40 @@ sub no_merged_branch_h {
 }
 
 sub branches {
-  my ($self, $user, $project) = @_;
+  my ($self, $rep_info) = @_;
   
   # Branches
-  my @cmd = $self->cmd($user, $project, 'branch');
+  my @cmd = $self->cmd($rep_info, 'branch');
   open my $fh, '-|', @cmd or return;
   my $branches = [];
   my $start;
   my $no_merged_branches_h;
-  while (my $branch_name = $self->_dec(scalar <$fh>)) {
+  my @lines = <$fh>;
+  for my $branch_name (@lines) {
+    $branch_name = $self->_dec($branch_name);
     $branch_name =~ s/^\*//;
     $branch_name =~ s/^\s*//;
     $branch_name =~ s/\s*$//;
     
     # No merged branch
-    $no_merged_branches_h = $self->no_merged_branch_h($user, $project)
+    $no_merged_branches_h = $self->no_merged_branch_h($rep_info)
       unless $start++;
     
     # Branch
-    my $branch = $self->branch($user, $project, $branch_name);
+    my $branch = $self->branch($rep_info, $branch_name);
     $branch->{no_merged} = 1 if $no_merged_branches_h->{$branch_name};
     push @$branches, $branch;
   }
   @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
   
-  
   return $branches;
 }
 
 sub branches_count {
-  my ($self, $user, $project) = @_;
+  my ($self, $rep_info) = @_;
   
   # Branches count
-  my @cmd = $self->cmd($user, $project, 'branch');
+  my @cmd = $self->cmd($rep_info, 'branch');
   open my $fh, '-|', @cmd or return;
   my @branches = <$fh>;
   my $branches_count = @branches;
@@ -120,28 +153,29 @@ sub branches_count {
 }
 
 sub cmd {
-  my ($self, $user, $project, @cmd) = @_;
+  my ($self, $rep_info, @command) = @_;
   
-  # Git command
-  my $home = $self->rep_home;
-  my $rep = "$home/$user/$project.git";
+  my $git_dir = $rep_info->{git_dir};
+  my $work_tree = $rep_info->{work_tree};
   
-  return $self->cmd_rep($rep, @cmd);
-}
-
-sub cmd_rep {
-  my ($self, $rep, @cmd) = @_;
+  my @command_all = ($self->bin);
+  if (defined $git_dir) {
+    push @command_all, "--git-dir=$git_dir";
+  }
+  if (defined $work_tree) {
+    push @command_all, "--work-tree=$work_tree";
+  }
+  push @command_all, @command;
   
-  return ($self->bin, "--git-dir=$rep", @cmd);
+  return @command_all;
 }
 
 sub authors {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my ($self, $rep_info, $rev, $file) = @_;
   
   # Authors
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'log',
     '--format=%an',
     $rev,
@@ -151,7 +185,9 @@ sub authors {
   open my $fh, "-|", @cmd
     or croak 500, "Open git-cat-file failed";
   my $authors = {};
-  while (my $line = $self->_dec(<$fh>)) {
+  my @lines = <$fh>;
+  for my $line (@lines) {
+    $line = $self->_dec($line);
     $line =~ s/[\r\n]//g;
     $authors->{$line} = 1;
   }
@@ -160,16 +196,11 @@ sub authors {
 }
 
 sub blame {
-  my ($self, $user, $project, $rev, $file) = @_;
-  
-  # Blob
-  my $hash = $self->path_to_hash($user, $project, $rev, $file, 'blob')
-    or croak 'Cannot find file';
+  my ($self, $rep_info, $rev, $file) = @_;
   
   # Git blame
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'blame',
     '--line-porcelain',
     $rev,
@@ -184,7 +215,11 @@ sub blame {
   my $blame_line;
   my $max_author_time;
   my $min_author_time;
-  while (my $line = $self->_dec_guess(scalar <$fh>)) {
+  my @lines = <$fh>;
+  
+  my $enc = $self->decide_encoding($rep_info, \@lines);
+  for my $line (@lines) {
+    $line = decode($enc, $line);
     chomp $line;
     
     if ($blame_line) {
@@ -192,7 +227,7 @@ sub blame {
         $blame_line->{author} = $1;
       }
       elsif ($line =~ /^author-mail +(.+)/) {
-        $blame_line->{author_mail} = $1;
+        $blame_line->{author_email} = $1;
       }
       elsif ($line =~ /^author-time +(.+)/) {
         my $author_time = $1;
@@ -236,35 +271,14 @@ sub blame {
   return $blame;
 }
 
-sub _age_string_date {
-  my ($self, $age) = @_;
-
-  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($age);
-  my $age_string_date = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
-  
-  return $age_string_date;
-}
-
-sub _age_string_date_local {
-  my ($self, $age) = @_;
-  
-  my $time_zone_second = $self->time_zone_second || 0;
-  
-  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($age + $time_zone_second);
-  my $age_string_date_local = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
-  
-  return $age_string_date_local;
-}
-
 sub blob {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my ($self, $rep_info, $rev, $file) = @_;
   
   # Blob
-  my $hash = $self->path_to_hash($user, $project, $rev, $file, 'blob')
+  my $hash = $self->path_to_hash($rep_info, $rev, $file, 'blob')
     or croak 'Cannot find file';
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'cat-file',
     'blob',
     $hash
@@ -273,27 +287,29 @@ sub blob {
     or croak "Can't cat $file, $hash";
   
   # Format lines
-  my $lines =[];
-  while (my $line = $self->_dec_guess(scalar <$fh>)) {
+  my @lines = <$fh>;
+  my @new_lines;
+  my $enc = $self->decide_encoding($rep_info, \@lines);
+  for my $line (@lines) {
+    $line = decode($enc, $line);
     chomp $line;
-    push @$lines, $line;
+    push @new_lines, $line;
   }
   
-  return $lines;
+  return \@new_lines;
 }
 
 sub blob_diffs {
-  my ($self, $user, $project, $rev1, $rev2, $diff_trees, $opt) = @_;
-
-  $opt ||= {};
+  my ($self, $rep_info, $rev1, $rev2, $diff_trees, $opt) = @_;
+  
+  $opt //= {};
   my $ignore_space_change = $opt->{ignore_space_change};
   
   return unless defined $rev1 && defined $rev2;
   
   # Diff tree
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'diff-tree',
     '-r',
     '-M',
@@ -308,7 +324,10 @@ sub blob_diffs {
   open my $fh, '-|', @cmd
     or croak('Open self-diff-tree failed');
   my @diff_tree;
-  while (my $line = $self->_dec_guess(scalar <$fh>)) {
+  my @diff_tree_lines = <$fh>;
+  my $diff_tree_enc = $self->decide_encoding($rep_info, \@diff_tree_lines);
+  for my $line (@diff_tree_lines) {
+    $line = decode($diff_tree_enc, $line);
     chomp $line;
     push @diff_tree, $line if $line =~ /^:/;
     last if $line =~ /^\n/;
@@ -327,8 +346,7 @@ sub blob_diffs {
     
     # Blob diff
     my @cmd = $self->cmd(
-      $user,
-      $project,
+      $rep_info,
       'diff-tree',
       '-r',
       '-M',
@@ -342,7 +360,9 @@ sub blob_diffs {
     );
     open my $fh, '-|', @cmd
       or croak('Open self-diff-tree failed');
-    my @lines = map { $self->_dec_guess($_) } <$fh>;
+    my @lines = <$fh>;
+    my $enc = $self->decide_encoding($rep_info, \@lines);
+    @lines = map { decode($enc, $_) } @lines;
     close $fh;
     my ($lines, $diff_info) = $self->parse_blob_diff_lines(\@lines);
     my $blob_diff = {
@@ -374,22 +394,21 @@ sub blob_diffs {
 }
 
 sub blob_is_image {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my $self = shift;
   
-  my $mime_type = $self->blob_mime_type($user, $project, $rev, $file);
+  my $mime_type = $self->blob_mime_type(@_);
   
   return ($mime_type || '') =~ m#^image/#;
 }
 
 sub blob_mime_type {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my ($self, $rep_info, $rev, $file) = @_;
   
   # Blob
-  my $hash = $self->path_to_hash($user, $project, $rev, $file, 'blob')
+  my $hash = $self->path_to_hash($rep_info, $rev, $file, 'blob')
     or croak 'Cannot find file';
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'cat-file',
     'blob',
     $hash
@@ -416,10 +435,10 @@ sub blob_mime_type {
 }
 
 sub blob_content_type {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my $self = shift;
   
   # Content type
-  my $type = $self->blob_mime_type($user, $project, $rev, $file);
+  my $type = $self->blob_mime_type(@_);
   if ($type eq 'text/plain') {
     $type .= "; charset=" . $self->default_encoding;
   }
@@ -428,13 +447,12 @@ sub blob_content_type {
 }
 
 sub blob_mode {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my ($self, $rep_info, $rev, $file) = @_;
   
   # Blob mode
   $file =~ s#/+$##;
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'ls-tree',
     $rev,
     '--',
@@ -442,7 +460,8 @@ sub blob_mode {
   );
   open my $fh, '-|', @cmd
     or croak 'Open git-ls-tree failed';
-  my $line = $self->_dec(scalar <$fh>);
+  my $line = <$fh>;
+  $line = $self->_dec($line);
   close $fh or return;
   my ($mode) = ($line || '') =~ m/^([0-9]+) /;
   
@@ -450,14 +469,14 @@ sub blob_mode {
 }
 
 sub blob_raw {
-  my ($self, $user, $project, $rev, $path) = @_;
+  my ($self, $rep_info, $rev, $path) = @_;
   
   # Blob raw
-  my @cmd = $self->cmd($user, $project, 'cat-file', 'blob', "$rev:$path");
+  my @cmd = $self->cmd($rep_info, 'cat-file', 'blob', "$rev:$path");
   open my $fh, "-|", @cmd
     or croak 500, "Open git-cat-file failed";
   local $/;
-  my $blob_raw = scalar <$fh>;
+  my $blob_raw = <$fh>;
 
   close $fh or croak 'Reading git-shortlog failed';
   
@@ -465,19 +484,19 @@ sub blob_raw {
 }
 
 sub blob_size {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my ($self, $rep_info, $rev, $file) = @_;
   
   # Blob size(KB)
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'cat-file',
     '-s',
     "$rev:$file"
   );
   open my $fh, "-|", @cmd
     or croak 500, "Open cat-file failed";
-  my $size = $self->_dec(scalar <$fh>);
+  my $size = <$fh>;
+  $size = $self->_dec($size);
   chomp $size;
   close $fh or croak 'Reading cat-file failed';
   
@@ -498,13 +517,14 @@ sub check_head_link {
 }
 
 sub commits_number {
-  my ($self, $user, $project, $ref) = @_;
+  my ($self, $rep_info, $ref) = @_;
   
   # Command "git diff-tree"
-  my @cmd = $self->cmd($user, $project, 'shortlog', '-s', $ref);
+  my @cmd = $self->cmd($rep_info, 'shortlog', '-s', $ref);
   open my $fh, "-|", @cmd
     or croak 500, "Open git-shortlog failed";
-  my @commits_infos = map { chomp; $self->_dec($_) } <$fh>;
+  my @commits_infos = <$fh>;
+  @commits_infos = map { chomp; $self->_dec($_) } @commits_infos;
   close $fh or croak 'Reading git-shortlog failed';
   
   my $commits_num = 0;
@@ -518,23 +538,22 @@ sub commits_number {
 }
 
 sub exists_branch {
-  my ($self, $user, $project) = @_;
+  my ($self, $rep) = @_;
   
   # Exists branch
-  my $home = $self->rep_home;
-  my @cmd = $self->cmd($user, $project, 'branch');
+  my @cmd = $self->cmd($rep, 'branch');
   open my $fh, "-|", @cmd
     or croak 'git branch failed';
   local $/;
-  my $branches = <$fh>;
+  my $branch = <$fh>;
   
-  return $branches ne '' ? 1 : 0;
+  return $branch ne '' ? 1 : 0;
 }
 
 sub delete_branch {
-  my ($self, $user, $project, $branch) = @_;
+  my ($self, $rep, $branch) = @_;
   
-  my $branches = $self->branches($user, $project);
+  my $branches = $self->branches($rep);
   my $exists;
   for my $b (@$branches) {
     if ($branch eq $b->{name}) {
@@ -544,7 +563,7 @@ sub delete_branch {
   }
   
   if ($exists) {
-    my @cmd = $self->cmd($user, $project, 'branch', '-D', $branch);
+    my @cmd = $self->cmd($rep, 'branch', '-D', $branch);
     Gitprep::Util::run_command(@cmd)
       or croak "Branch deleting failed. Can't delete branch $branch";
   }
@@ -554,10 +573,10 @@ sub delete_branch {
 }
 
 sub description {
-  my ($self, $user, $project, $description) = @_;
+  my ($self, $rep, $description) = @_;
   
-  my $rep = $self->rep($user, $project);
-  my $file = "$rep/description";
+  my $git_dir = $rep->{git_dir};
+  my $file = "$git_dir/description";
   
   if (defined $description) {
     # Write description
@@ -570,13 +589,14 @@ sub description {
   else {
     # Read description
     return unless -f $file;
-    my $description = $self->_dec($self->_slurp($file) || '');
+    my $description = $self->_slurp($file) || '';
+    $description = $self->_dec($description);
     return $description;
   }
 }
 
 sub diff_tree {
-  my ($self, $user, $project, $rev, $parent, $opt) = @_;
+  my ($self, $rep_info, $rev, $parent, $opt) = @_;
   
   $opt ||= {};
   my $ignore_space_change = $opt->{ignore_space_change};
@@ -586,8 +606,7 @@ sub diff_tree {
 
   # Get diff tree
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     "diff-tree",
     '-r',
     '--no-commit-id',
@@ -600,7 +619,8 @@ sub diff_tree {
   
   open my $fh, "-|", @cmd
     or croak 500, "Open git-diff-tree failed";
-  my @diff_tree = map { chomp; $self->_dec($_) } <$fh>;
+  my @diff_tree = <$fh>;
+  @diff_tree = map { chomp; $self->_dec($_) } @diff_tree;
   close $fh or croak 'Reading git-diff-tree failed';
   
   # Parse "git diff-tree" output
@@ -672,12 +692,11 @@ sub file_type_long {
 }
 
 sub forward_commits {
-  my ($self, $user, $project, $rev1, $rev2) = @_;
+  my ($self, $rep_info, $rev1, $rev2) = @_;
   
   # Forwarding commits
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'rev-list',
     '--left-right',
     "$rev1...$rev2"
@@ -688,7 +707,7 @@ sub forward_commits {
   while (my $line = <$fh>) {
     if ($line =~ /^>(.+)\s/) {
       my $rev = $1;
-      my $commit = $self->get_commit($user, $project, $rev);
+      my $commit = $self->get_commit($rep_info, $rev);
       push @$commits, $commit;
     }
   }
@@ -697,13 +716,12 @@ sub forward_commits {
 }
 
 sub path_to_hash {
-  my ($self, $user, $project, $rev, $path, $type) = @_;
+  my ($self, $rep_info, $rev, $path, $type) = @_;
   
   # Get blob id or tree id (command "git ls-tree")
   $path =~ s#/+$##;
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'ls-tree',
     $rev,
     '--',
@@ -711,7 +729,8 @@ sub path_to_hash {
   );
   open my $fh, '-|', @cmd
     or croak 'Open git-ls-tree failed';
-  my $line = $self->_dec(scalar <$fh>);
+  my $line = <$fh>;
+  $line = $self->_dec($line);
   close $fh or return;
   my ($t, $id) = ($line || '') =~ m/^[0-9]+ (.+) ([0-9a-fA-F]{40})\t/;
   $t ||= '';
@@ -722,19 +741,19 @@ sub path_to_hash {
 
 
 sub last_activity {
-  my ($self, $user, $project) = @_;
+  my ($self, $rep) = @_;
   
   # Command "git for-each-ref"
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep,
     'for-each-ref',
     '--format=%(committer)',
     '--sort=-committerdate',
     '--count=1', 'refs/heads'
   );
   open my $fh, '-|', @cmd or return;
-  my $most_recent = $self->_dec(scalar <$fh>);
+  my $most_recent = <$fh>;
+  $most_recent = $self->_dec($most_recent);
   close $fh or return;
   
   # Parse most recent
@@ -748,57 +767,21 @@ sub last_activity {
   return;
 }
 
-sub no_merged_branches_count {
-  my ($self, $user, $project) = @_;
-  
-  my @cmd = $self->cmd($user, $project, 'branch', '--no-merged');
-  open my $fh, '-|', @cmd or return;
-  my @branches = <$fh>;
-  my $branches_count = @branches;
-  
-  return $branches_count;
-}
-
-sub path_by_id {
-  my ($self, $user, $project, $base, $hash) = @_;
-  
-  return unless $base;
-  return unless $hash;
-  
-  # Command "git ls-tree"
-  my @cmd = $self->cmd($user, $project, 'ls-tree', '-r', '-t', '-z', $base);
-  open my $fh, '-|', @cmd or return;
-
-  # Get path
-  local $/ = "\0";
-  while (my $line = <$fh>) {
-    chomp $line;
-    $line = $self->_dec($line);
-
-    if ($line =~ m/(?:[0-9]+) (?:.+) $hash\t(.+)$/) {
-      close $fh;
-      return $1;
-    }
-  }
-  close $fh;
-  
-  return;
-}
-
 sub parse_rev_path {
-  my ($self, $user, $project, $rev_path) = @_;
+  my ($self, $rep_info, $rev_path) = @_;
   
   # References
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'show-ref',
     '--dereference'
   );
   open my $fh, '-|', @cmd
     or return;
   my $refs = [];
-  while (my $line = $self->_dec(scalar <$fh>)) {
+  my @lines = <$fh>;
+  for my $line (@lines) {
+    $line = $self->_dec($line);
     chomp $line;
     if ($line =~ m!^[0-9a-fA-F]{40}\s(refs/((?:heads|tags)/(.*)))$!) {
       push @$refs, $1, $2, $3;
@@ -834,75 +817,51 @@ sub parse_rev_path {
 }
 
 sub object_type {
-  my ($self, $user, $project, $rev) = @_;
+  my ($self, $rep_info, $rev) = @_;
   
   # Get object type
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'cat-file',
     '-t',
     $rev
   );
   open my $fh, '-|', @cmd  or return;
-  my $type = $self->_dec(scalar <$fh>);
+  my $type = <$fh>;
+  $type = $self->_dec($type);
   close $fh or return;
   chomp $type;
   
   return $type;
 }
 
-sub project_owner {
-  my ($self, $project) = @_;
-  
-  # Project owner
-  my $user_id = (stat $project)[4];
-  my $user = getpwuid $user_id;
-  
-  return $user;
-}
-
-sub project_urls {
-  my ($self, $project) = @_;
-  
-  # Project URLs
-  open my $fh, '<', "$project/cloneurl"
-    or return;
-  my @urls = map { chomp; $self->_dec($_) } <$fh>;
-  close $fh;
-
-  return \@urls;
-}
-
 sub repository {
-  my ($self, $user, $project) = @_;
+  my ($self, $rep_info) = @_;
 
-  return unless -d $self->rep($user, $project);
+  return unless -d $rep_info->{git_dir};
   
-
   my $rep = {};
-  my @activity = $self->last_activity($user, $project);
+  my @activity = $self->last_activity($rep_info);
   if (@activity) {
     $rep->{age} = $activity[0];
     $rep->{age_string} = $activity[1];
   }
   else { $rep->{age} = 0 }
   
-  my $description = $self->description($user, $project) || '';
+  my $description = $self->description($rep_info) || '';
   $rep->{description} = $self->_chop_str($description, 25, 5);
   
   return $rep;
 }
 
 sub references {
-  my ($self, $user, $project, $type) = @_;
+  my ($self, $rep_info, $type) = @_;
   
   $type ||= '';
   
   # Branches or tags
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'show-ref',
     '--dereference',
     (
@@ -918,7 +877,9 @@ sub references {
   # Parse references
   my %refs;
   my $type_re = $type ? $type : '(?:heads|tags)';
-  while (my $line = $self->_dec(scalar <$fh>)) {
+  my @lines = <$fh>;
+  for my $line (@lines) {
+    $line = $self->_dec($line);
     chomp $line;
     if ($line =~ m!^([0-9a-fA-F]{40})\srefs/$type_re/(.*)$!) {
       my $rev = $1;
@@ -933,14 +894,6 @@ sub references {
   return \%refs;
 }
 
-sub rep {
-  my ($self, $user, $project) = @_;
-  
-  my $home = $self->rep_home;
-  
-  return "$home/$user/$project.git";
-}
-
 sub short_id {
   my ($self, $project) = (shift, shift);
   
@@ -948,27 +901,14 @@ sub short_id {
   return $self->id($project, @_, '--short=7');
 }
 
-sub tag {
-  my ($self, $project, $name) = @_;
-  
-  # Tag
-  my $tags = $self->tags($project);
-  for my $tag (@$tags) {
-    return $tag if $tag->{name} eq $name;
-  }
-  
-  return;
-}
-
 sub tags_count {
-  my ($self, $user, $project) = @_;
+  my ($self, $rep_info) = @_;
   
   my $limit = 1000;
   
   # Get tags
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'for-each-ref',
     ($limit ? '--count='.($limit+1) : ()),
     'refs/tags'
@@ -982,7 +922,7 @@ sub tags_count {
 }
 
 sub tags {
-  my ($self, $user, $project, $limit, $count, $offset) = @_;
+  my ($self, $rep_info, $limit, $count, $offset) = @_;
   
   $limit ||= 1000;
   $count ||= 50;
@@ -990,8 +930,7 @@ sub tags {
   
   # Get tags
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'for-each-ref',
     ($limit ? '--count='.($limit+1) : ()),
     '--sort=-creatordate',
@@ -1005,7 +944,9 @@ sub tags {
   # Parse Tags
   my @tags;
   my $line_num = 1;
-  while (my $line = $self->_dec(scalar <$fh>)) {
+  my @lines = <$fh>;
+  for my $line (@lines) {
+    $line = $self->_dec($line);
     
     if ($line_num > $offset && $line_num < $offset + $count + 1) {
     
@@ -1043,7 +984,7 @@ sub tags {
       $tag{comment_short} = $self->_chop_str($tag{subject}, 30, 5)
         if $tag{subject};
 
-      $tag{commit} = $self->get_commit($user, $project, $name);
+      $tag{commit} = $self->get_commit($rep_info, $name);
 
       push @tags, \%tag;
     }
@@ -1055,30 +996,14 @@ sub tags {
   return \@tags;
 }
 
-sub is_deleted {
-  my ($self, $diffinfo) = @_;
-  
-  # Check if deleted
-  return $diffinfo->{to_id} eq ('0' x 40);
-}
-
-sub id_set_multi {
-  my ($self, $rev, $key, $value) = @_;
-
-  if (!exists $rev->{$key}) { $rev->{$key} = $value }
-  elsif (!ref $rev->{$key}) { $rev->{$key} = [ $rev->{$key}, $value ] }
-  else { push @{$rev->{$key}}, $value }
-}
-
 sub last_change_commit {
-  my ($self, $user, $project, $rev, $file) = @_;
+  my ($self, $rep_info, $rev, $file) = @_;
   
   my $commit_log = {};
   $file = '' unless defined $file;
   
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     '--no-pager',
     'log',
     '-n',
@@ -1092,12 +1017,13 @@ sub last_change_commit {
     or croak 'Open git-log failed';
   
   local $/;
-  my $commit_log_text = $self->_dec(scalar <$fh>);
+  my $commit_log_text = <$fh>;
+  $commit_log_text = $self->_dec($commit_log_text);
   
   my $commit;
   if ($commit_log_text =~ /^([0-9a-zA-Z]+)/) {
     my $rev = $1;
-    $commit = $self->get_commit($user, $project, $rev);
+    $commit = $self->get_commit($rep_info, $rev);
   }
   
   return $commit;
@@ -1184,12 +1110,11 @@ sub parse_blob_diff_lines {
 }
 
 sub get_commit {
-  my ($self, $user, $project, $id) = @_;
+  my ($self, $rep_info, $id) = @_;
   
   # Git rev-list
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'rev-list',
     '--parents',
     '--header',
@@ -1202,7 +1127,8 @@ sub get_commit {
   
   # Parse commit
   local $/ = "\0";
-  my $content = $self->_dec(scalar <$fh>);
+  my $content = <$fh>;
+  $content = $self->_dec($content);
   return unless defined $content;
   my $commit = $self->parse_commit_text($content, 1);
   close $fh;
@@ -1316,14 +1242,13 @@ sub parse_commit_text {
 }
 
 sub get_commits {
-  my ($self, $user, $project, $rev, $maxcount, $skip, $file, @args) = @_;
+  my ($self, $rep_info, $rev, $maxcount, $skip, $file, @args) = @_;
 
   # Get Commits
   $maxcount ||= 1;
   $skip ||= 0;
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'rev-list',
     '--header',
     @args,
@@ -1339,7 +1264,9 @@ sub get_commits {
   # Prase Commits text
   local $/ = "\0";
   my @commits;
-  while (my $line = $self->_dec(scalar <$fh>)) {
+  my @lines = <$fh>;
+  for my $line (@lines) {
+    $line = $self->_dec($line);
     my $commit = $self->parse_commit_text($line);
     push @commits, $commit;
   }
@@ -1450,15 +1377,14 @@ sub parse_ls_tree_line {
 }
 
 sub import_branch {
-  my ($self, $user, $project, $branch, $remote_user, $remote_project, $remote_branch, $opt) = @_;
+  my ($self, $rep_info, $branch, $remote_rep_info, $remote_branch, $opt) = @_;
   
   my $force = $opt->{force};
   
   # Git pull
-  my $remote_rep = $self->rep($remote_user, $remote_project);
+  my $remote_rep = $remote_rep_info->{git_dir};
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'fetch',
     $remote_rep,
     ($force ? '+' : '') . "refs/heads/$remote_branch:refs/heads/$branch"
@@ -1493,12 +1419,11 @@ sub search_bin {
 }
 
 sub separated_commit {
-  my ($self, $user, $project, $rev1, $rev2) = @_;
+  my ($self, $rep_info, $rev1, $rev2) = @_;
   
   # Command "git diff-tree"
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'show-branch',
     $rev1,
     $rev2
@@ -1513,7 +1438,7 @@ sub separated_commit {
   my $commit;
   if (defined $last_line) {
       my ($id) = $last_line =~ /^.*?\[(.+)?\]/;
-      $commit = $self->get_commit($user, $project, $id);
+      $commit = $self->get_commit($rep_info, $id);
   }
 
   return $commit;
@@ -1567,23 +1492,22 @@ sub timestamp {
 }
 
 sub trees {
-  my ($self, $user, $project, $rev, $dir) = @_;
+  my ($self, $rep_info, $rev, $dir) = @_;
   $dir = '' unless defined $dir;
   
   # Get tree
   my $tid;
   if (defined $dir && $dir ne '') {
-    $tid = $self->path_to_hash($user, $project, $rev, $dir, 'tree');
+    $tid = $self->path_to_hash($rep_info, $rev, $dir, 'tree');
   }
   else {
-    my $commit = $self->get_commit($user, $project, $rev);
+    my $commit = $self->get_commit($rep_info, $rev);
     $tid = $commit->{tree};
   }
   my @entries = ();
   my $show_sizes = 0;
   my @cmd = $self->cmd(
-    $user,
-    $project,
+    $rep_info,
     'ls-tree',
     '-z',
     ($show_sizes ? '-l' : ()),
@@ -1593,7 +1517,8 @@ sub trees {
     or $self->croak('Open git-ls-tree failed');
   {
     local $/ = "\0";
-    @entries = map { chomp; $self->_dec($_) } <$fh>;
+    @entries = <$fh>;
+    @entries = map { chomp; $self->_dec($_) } @entries;
   }
   close $fh
     or $self->croak(404, "Reading tree failed");
@@ -1606,7 +1531,7 @@ sub trees {
     
     # Commit log
     my $path = defined $dir && $dir ne '' ? "$dir/$tree->{name}" : $tree->{name};
-    my $commit = $self->last_change_commit($user, $project, $rev, $path);
+    my $commit = $self->last_change_commit($rep_info, $rev, $path);
     $tree->{commit} = $commit;
     
     push @$trees, $tree;
@@ -1699,18 +1624,63 @@ sub _chop_str {
   }
 }
 
-sub _dec_guess {
-  my ($self, $str) = @_;
+sub decide_encoding {
+  my ($self, $rep_info, $lines) = @_;
+  
+  my $guess_encoding_str = $self->app->dbi->model('project')->select(
+    'guess_encoding',
+    where => {user_id => $rep_info->{user}, name => $rep_info->{project}}
+  )->value;
+  
+  my @guess_encodings;
+  if (defined $guess_encoding_str && length $guess_encoding_str) {
+    @guess_encodings = split(/\s*,\s*/, $guess_encoding_str);
+  }
+  
+  my $encoding;
+  if (@guess_encodings) {
+    my @new_lines;
+    for (my $i = 0; $i < 100; $i++) {
+      last unless defined $lines->[$i];
+      push @new_lines, $lines->[$i];
+    }
+    
+    my $str = join('', @new_lines);
 
-  my $enc = Encode::Guess->guess($str, @{$self->encoding_suspects});
-  # fallback default encoding if multile guess result
-  # http://perl-users.jp/articles/advent-calendar/2009/casual/10.html
-  $enc = $self->default_encoding unless ref $enc;
+    my $ret = Encode::Guess->guess($str, @guess_encodings);
+    
+    if (ref $ret) {
+      $encoding = $ret->name;
+    }
+    else {
+      $encoding = $self->default_encoding
+    }
+  }
+  else {
+    $encoding = $self->default_encoding;
+  }
+  
+  return $encoding;
+}
 
-  my $new_str;
-  eval { $new_str = decode($enc, $str) };
+sub _age_string_date {
+  my ($self, $age) = @_;
 
-  return $@ ? $str : $new_str;
+  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($age);
+  my $age_string_date = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
+  
+  return $age_string_date;
+}
+
+sub _age_string_date_local {
+  my ($self, $age) = @_;
+  
+  my $time_zone_second = $self->time_zone_second || 0;
+  
+  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($age + $time_zone_second);
+  my $age_string_date_local = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
+  
+  return $age_string_date_local;
 }
 
 sub _dec {
@@ -1718,10 +1688,9 @@ sub _dec {
   
   my $enc = $self->default_encoding;
   
-  my $new_str;
-  eval { $new_str = decode($enc, $str) };
+  $str = decode($enc, $str);
   
-  return $@ ? $str : $new_str;
+  return $str;
 }
 
 sub _enc {

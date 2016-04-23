@@ -1,4 +1,4 @@
-use 5.008007;
+use 5.010001;
 package Gitprep;
 use Mojo::Base 'Mojolicious';
 
@@ -9,8 +9,7 @@ use Gitprep::Git;
 use Gitprep::Manager;
 use Scalar::Util 'weaken';
 use Validator::Custom;
-use Mojolicious::Plugin::AutoRoute::Util 'template';
-
+use Time::Moment;
 
 # Digest::SHA loading to Mojo::Util if not loaded
 {
@@ -18,7 +17,7 @@ use Mojolicious::Plugin::AutoRoute::Util 'template';
   eval {require Digest::SHA; import Digest::SHA qw(sha1 sha1_hex)};
 }
 
-our $VERSION = 'v1.12';
+our $VERSION = 'v2.00_dev';
 
 has 'dbi';
 has 'git';
@@ -26,6 +25,53 @@ has 'manager';
 has 'vc';
 
 use constant BUFFER_SIZE => 8192;
+
+sub data_dir {
+  my $self = shift;
+  
+  my $data_dir = $self->config('data_dir');
+  
+  return $data_dir;
+}
+
+sub rep_home {
+  my $self = shift;
+  
+  my $rep_home = $self->data_dir . "/rep";
+  
+  return $rep_home;
+}
+
+sub rep_info {
+  my ($self, $user, $project) = @_;
+  
+  my $info = {};
+  $info->{user} = $user;
+  $info->{project} = $project;
+  $info->{git_dir} = $self->rep_home . "/$user/$project.git";
+  
+  return $info;
+}
+
+sub work_rep_home {
+  my $self = shift;
+  
+  my $work_rep_home = $self->data_dir . "/work";
+  
+  return $work_rep_home;
+}
+
+sub work_rep_info {
+  my ($self, $user, $project) = @_;
+  
+  my $info = {};
+  $info->{user} = $user;
+  $info->{project} = $project;
+  $info->{git_dir} = $self->work_rep_home . "/$user/$project/.git";
+  $info->{work_tree} = $self->work_rep_home . "/$user/$project";
+  
+  return $info;
+}
 
 sub startup {
   my $self = shift;
@@ -45,8 +91,14 @@ sub startup {
   $listen = [split /,/, $listen] unless ref $listen eq 'ARRAY';
   $conf->{hypnotoad}{listen} = $listen;
   
+  # Data directory
+  my $data_dir = $ENV{GITPREP_DATA_DIR} ? $ENV{GITPREP_DATA_DIR} : $self->home->rel_file('data');
+  $self->config(data_dir => $data_dir);
+  
   # Git
   my $git = Gitprep::Git->new;
+  $git->app($self);
+  weaken $git->{app};
   my $git_bin
     = $conf->{basic}{git_bin} ? $conf->{basic}{git_bin} : $git->search_bin;
   if (!$git_bin || ! -e $git_bin) {
@@ -58,14 +110,9 @@ sub startup {
   }
   $git->bin($git_bin);
   
-  # Encoding suspects list for Git
-  my $encoding_suspects
-    = $conf->{basic}{encoding_suspects} ||= 'utf8';
-  $encoding_suspects = [split /,/, $encoding_suspects] unless ref $encoding_suspects eq 'ARRAY';
-  $git->encoding_suspects($encoding_suspects);
-
   # Repository Manager
-  my $manager = Gitprep::Manager->new(app => $self);
+  my $manager = Gitprep::Manager->new;
+  $manager->app($self);
   weaken $manager->{app};
   $self->manager($manager);
   
@@ -84,8 +131,7 @@ sub startup {
   }
   
   # Repository home
-  my $rep_home = $ENV{GITPREP_REP_HOME} || $self->home->rel_file('data/rep');
-  $git->rep_home($rep_home);
+  my $rep_home = "$data_dir/rep";
   unless (-d $rep_home) {
     mkdir $rep_home
       or croak "Can't create directory $rep_home: $!";
@@ -109,8 +155,7 @@ sub startup {
   $self->git($git);
   
   # DBI
-  my $db_file = $ENV{GITPREP_DB_FILE}
-    || $self->home->rel_file('data/gitprep.db');
+  my $db_file = "$data_dir/gitprep.db";
   my $dbi = DBIx::Custom->connect(
     dsn => "dbi:SQLite:database=$db_file",
     connector => 1,
@@ -128,18 +173,54 @@ sub startup {
     chown -1, $gid, $db_file;
   }
   
-  # Setup database
-  $self->manager->setup_database;
-  
   # Model
   my $models = [
-    {table => 'user', primary_key => 'id'},
-    {table => 'ssh_public_key', primary_key => 'key'},
-    {table => 'project', primary_key => ['user_id', 'name']},
-    {table => 'number', primary_key => 'key'},
-    {table => 'collaboration', primary_key => ['user_id', 'project_name', 'collaborator_id']}
+    {
+      table => 'user',
+      primary_key => 'row_id'
+    },
+    {
+      table => 'ssh_public_key',
+      primary_key => 'row_id',
+      join => [
+        'left join user on ssh_public_key.user = user.row_id'
+      ]
+    },
+    {
+      table => 'project',
+      primary_key => 'row_id',
+      join => [
+        'left join user on project.user = user.row_id'
+      ]
+    },
+    {
+      table => 'collaboration',
+      primary_key => 'row_id',
+      join => [
+        'left join user on collaboration.user = user.row_id',
+        'left join project on collaboration.project = project.row_id',
+      ]
+    },
+    {
+      table => 'pull_request',
+      primary_key => 'row_id',
+      join => [
+        'left join user on pull_request.open_user = user.row_id',
+        'left join project on pull_request.project = project.row_id',
+        'left join user as project_user on project.user = project_user.row_id'
+      ]
+    },
+    {
+      table => 'pull_request_message',
+      primary_key => 'row_id',
+      join => [
+        'left join user on pull_request_message.user = user.row_id',
+        'left join pull_request on pull_request_message.pull_request = pull_request.row_id'
+      ]
+    }
   ];
   $dbi->create_model($_) for @$models;
+  $dbi->setup_model;
 
   # Validator
   my $vc = Validator::Custom->new;
@@ -180,6 +261,7 @@ sub startup {
     my $r = $self->routes;
 
     # DBViewer(only development)
+    # /dbviewer
     if ($self->mode eq 'development') {
       eval {
         $self->plugin(
@@ -216,19 +298,19 @@ sub startup {
       # Custom routes
       {
         # Show ssh keys
-        $r->get('/:user.keys' => template '/user-keys');
+        $r->get('/(:user).keys' => sub { shift->render_maybe('/user-keys') });
         
         # User
         my $r = $r->route('/:user');
         {
           # Home
-          $r->get('/' => [format => 0] => template '/user');
+          $r->get('/' => [format => 0] => sub { shift->render_maybe('/user') });
           
           # Settings
-          $r->get('/_settings' => template '/user-settings');
+          $r->get('/_settings' => sub { shift->render_maybe('/user-settings') });
           
           # SSH keys
-          $r->any('/_settings/ssh' => template '/user-settings/ssh');
+          $r->any('/_settings/ssh' => sub { shift->render_maybe('/user-settings/ssh') });
         }
 
         # Smart HTTP
@@ -281,16 +363,16 @@ sub startup {
             });
             
             # /info/refs
-            $r->get('/info/refs' => template 'smart-http/info-refs');
+            $r->get('/info/refs' => sub { shift->render_maybe('smart-http/info-refs') });
             
             # /git-upload-pack or /git-receive-pack
             $r->any('/git-(:service)'
               => [service => qr/(?:upload-pack|receive-pack)/]
-              => template 'smart-http/service'
+              => sub { shift->render_maybe('smart-http/service') }
             );
             
             # Static file
-            $r->get('/(*Path)' => template 'smart-http/static');
+            $r->get('/(*Path)' => sub { shift->render_maybe('smart-http/static') });
           }
         }
                 
@@ -324,72 +406,85 @@ sub startup {
             });
             
             # Home
-            $r->get('/' => template '/tree');
+            $r->get('/' => sub { shift->render_maybe('/tree') });
+
+            # Pull requests
+            $r->get('/pulls' => sub { shift->render_maybe('/pulls') })->to(tab => 'pulls');
+            
+            # Pull request
+            $r->any('/pull/:row_id' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls');
             
             # Commit
-            $r->get('/commit/*diff' => template '/commit');
+            $r->get('/commit/*diff' => sub { shift->render_maybe('/commit') });
 
             # Commits
-            $r->get('/commits/*rev_file' => template '/commits');
+            $r->get('/commits/*rev_file' => sub { shift->render_maybe('/commits') });
             
             # Branches
-            $r->any('/branches/:display' => {display => undef} => template '/branches');
+            $r->any('/branches/:display' => {display => undef} => sub { shift->render_maybe('/branches') });
 
             # Tags
-            $r->get('/tags' => template '/tags');
+            $r->get('/tags' => sub { shift->render_maybe('/tags') });
 
             # Tree
-            $r->get('/tree/*rev_dir' => template '/tree');
+            $r->get('/tree/*rev_dir' => sub { shift->render_maybe('/tree') });
             
             # Blob
-            $r->get('/blob/*rev_file' => template '/blob');
+            $r->get('/blob/*rev_file' => sub { shift->render_maybe('/blob') });
             
             # Sub module
-            $r->get('/submodule/*rev_file' => template '/submodule');
+            $r->get('/submodule/*rev_file' => sub { shift->render_maybe('/submodule') });
 
             # Raw
-            $r->get('/raw/*rev_file' => template '/raw');
+            $r->get('/raw/*rev_file' => sub { shift->render_maybe('/raw') });
 
             # Blame
-            $r->get('/blame/*rev_file' => template '/blame');
+            $r->get('/blame/*rev_file' => sub { shift->render_maybe('/blame') });
             
             # Archive
-            $r->get('/archive/(*rev).tar.gz' => template '/archive')->to(archive_type => 'tar');
-            $r->get('/archive/(*rev).zip' => template '/archive')->to(archive_type => 'zip' );
+            # Archive
+            $r->get('/archive/(*rev).tar.gz' => sub { shift->render_maybe('/archive') })->to(archive_type => 'tar');
+            $r->get('/archive/(*rev).zip' => sub { shift->render_maybe('/archive') })->to(archive_type => 'zip' );
             
             # Compare
-            $r->get('/compare/(*rev1)...(*rev2)' => template '/compare');
+            $r->any('/compare' => sub { shift->render_maybe('/compare') });
+            $r->any(
+              '/compare/(:rev1)...(:rev2)'
+              => [rev1 => qr/[^\.]+/, rev2 => qr/[^\.]+/]
+              => sub { shift->render_maybe('/compare') }
+            );
+            $r->any('/compare/(:rev2)' => sub { shift->render_maybe('/compare') });
             
             # Settings
             {
               my $r = $r->route('/settings')->to(tab => 'settings');
               
               # Settings
-              $r->any('/' => template '/settings');
+              $r->any('/' => sub { shift->render_maybe('/settings') });
               
               # Collaboration
-              $r->any('/collaboration' => template '/settings/collaboration');
+              $r->any('/collaboration' => sub { shift->render_maybe('/settings/collaboration') });
             }
             
             # Fork
-            $r->any('/fork' => template '/fork');
+            $r->any('/fork' => sub { shift->render_maybe('/fork') });
             
             # Network
             {
               my $r = $r->route('/network')->to(tab => 'graph');
               
               # Network
-              $r->get('/' => template '/network');
+              $r->get('/' => sub { shift->render_maybe('/network') });
 
               # Network Graph
-              $r->get('/graph/(*rev1)...(*rev2_abs)' => template '/network/graph');
+              $r->get('/graph/(*rev1)...(*rev2_abs)' => sub { shift->render_maybe('/network/graph') });
             }
 
             # Import branch
-            $r->any('/import-branch/:remote_user/:remote_project' => template '/import-branch');
+            $r->any('/import-branch/:remote_user/:remote_project' => sub { shift->render_maybe('/import-branch') });
             
             # Get branches and tags
-            $r->get('/api/revs' => template '/api/revs');
+            $r->get('/api/revs' => sub { shift->render_maybe('/api/revs') });
           }
         }
       }
@@ -402,6 +497,23 @@ sub startup {
     $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
   }
   
+  # set scheme to https when X-Forwarded-HTTPS header is specified
+  # This is for the backword compatible only. Now X-Forwarded-Proto is used for this purpose
+  $self->hook(before_dispatch => sub {
+    my $c = shift;
+    if ($c->req->headers->header('X-Forwarded-HTTPS')) {
+      $c->req->url->base->scheme('https');
+      $c->app->log->warn("X-Forwarded-HTTPS header is DEPRECATED! use X-Forwarded-Proto instead.");
+    }
+  });
+
+  # Set auto_decompress for Smart HTTP(I don't know this reasone)
+  $self->hook('after_build_tx' => sub {
+    my ($tx, $app) = @_;
+    
+    $tx->req->content->auto_decompress(1);
+  });
+
   # Reverse proxy support
   my $reverse_proxy_on = $self->config->{reverse_proxy}{on};
   my $path_depth = $self->config->{reverse_proxy}{path_depth};

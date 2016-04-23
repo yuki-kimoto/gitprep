@@ -1,0 +1,213 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
+  my $user_id = param('user');
+  my $project_id = param('project');
+  my $row_id = param('row_id');
+  
+  # Repository information
+  my $rep_info = app->rep_info($user_id, $project_id);
+  
+  # Git
+  my $git = $self->app->git;
+  
+  # Pull requests
+  my $pull_request = app->dbi->model('pull_request')->select(
+    [
+      {__MY__ => '*'},
+      {user => ['id']}
+    ],
+    where => {'pull_request.row_id' => $row_id}
+  )->one;
+  
+  my $branch1 = $pull_request->{branch1};
+  my $branch2 = $pull_request->{branch2};
+  
+  # Commits
+  my $commits = $git->forward_commits($rep_info, $branch1, $branch2);
+  my $commits_count = @$commits;
+  my $commits_date = {};
+  my $authors = {};
+  for my $commit (@$commits) {
+    my $date = $commit->{age_string_date_local};
+    $commits_date->{$date} ||= [];
+    $authors->{$commit->{author}} = 1;
+    push @{$commits_date->{$date}}, $commit;
+  }
+  my $authors_count = keys %$authors;
+
+  # Start commit
+  my $start_commit = $git->separated_commit($rep_info, $branch1, $branch2);
+
+  # End commit
+  my $end_commit = $git->get_commit($rep_info, $branch2);
+  
+  # Pull request first message 
+  my $pull_request_message_first = app->dbi->model('pull_request_message')->select(
+    [
+      {__MY__ => '*'},
+      {user => ['id']}
+    ],
+    where => {pull_request => $row_id, number => 1}
+  )->one;
+  
+  # Commit body arguments
+  my %commit_body_args = (
+    id => $end_commit->{id},
+    from_id => $start_commit->{id},
+    rev => $end_commit->{id},
+    from_rev => $start_commit->{id}
+  );
+%>
+
+% layout 'common', title => "Pull Requests Tags \x{30fb} $user_id/$project_id";
+  
+  %= include '/include/header';
+  
+  <div class="container">
+    <div style="font-size:23px;margin-top:20px;margin-bottom:9px;">
+      <%
+        my $pull_title = $pull_request->{branch2};
+        $pull_title =~ s/_/ /g;
+        $pull_title = ucfirst $pull_title;
+      %>
+      
+      <%= $pull_title %> <span style="color:#767676;">#<%= $pull_request->{row_id} %></span>
+    </div>
+    <div>
+      <div style="display:inline-block;color:white;margin-right:4px;">
+        % if ($pull_request->{open}) {
+          <div style="background:#6cc644;padding:4px 8px;border-radius:3px;">
+            Open
+          </div>
+        % } else {
+          <div style="background:red;padding:4px 8px;border-radius:3px;">
+            Closed
+          </div>
+        % }
+      </div>
+      % my $open_user_id = $pull_request->{'user.id'};
+      <a style="color:#333333;font-weight:bold" href="<%= url_for("/$open_user_id") %>"><%= $open_user_id %></a> 
+      <span style="color:#767676">
+        wants to merge <%= $commits_count %> commits
+        into
+        <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
+          <%= $pull_request->{branch1} %>
+        </span>
+        from
+        <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
+          <%= $pull_request->{branch2} %>
+        </span>
+      </span>
+    </div>
+    <div>
+      <ul class="compare-header">
+        <li>
+          <b><%= @$commits %></b> <span>commit</span>
+        </li>
+        <li>
+          <b><%= $authors_count %></b> <span>contributor</span>
+        </li>
+        <li>
+          
+        </li>
+        <li>
+          
+        </li>
+      </ul>
+      <div class="pull-comment">
+        <div class="pull-comment-header">
+          <b><%= $pull_request_message_first->{'user.id'} %></b>
+          <span style="color:#767676">
+            commented
+            <%= $api->age_string($pull_request_message_first->{update_time}) %></b>
+          </span>
+        </div>
+        <div class="pull-comment-body">
+          <%= $pull_request_message_first->{message} %>
+        </div>
+      </div>
+      
+      <div class="commits">
+        % for my $date (reverse sort keys %$commits_date) {
+          % my $commits = $commits_date->{$date};
+          
+          <div class="commit-date">
+            <i class="icon-off"></i><span>Commits on <%= $date %></span>
+          </div>
+          
+          <ul class="compare-commits-date-container">
+            % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
+              <%
+                my $commit_author_email = $commit->{author_email};
+                my $commit_author_id = app->dbi->model('user')->select(
+                  'id',
+                  where => {email => $commit_author_email}
+                )->value;
+              %>
+              <li>
+                <div class="compare-commits-author">
+                  <span title="<%= $commit->{author_email} %>">
+                    % if (defined $commit_author_id) {
+                      <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+                    % } else {
+                      <%= $commit->{author_name} %>
+                    % }
+                  </span>
+                </div>
+                <div class="compare-commits-commit-title">
+                  <a style="color:#333" href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
+                    <%= $commit->{title_short} %>
+                  </a>
+                </div>
+                <div class="compare-commits-commit-id">
+                  <a href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
+                    <%= substr($commit->{id}, 0, 7) %>
+                  </a>
+                </div>
+              </li>
+            % }
+          </ul>
+        % }
+      </div>
+
+  
+      %= include '/include/commit_body', %commit_body_args;
+      
+      % if ($api->logined($user_id)) {
+        <form action="<%= url_for %>" method="post">
+          <div class="pull-request-form">
+            <div style="overflow:hidden">
+              <div style="float:left;padding:10px;padding-right:0">
+                <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#95c97e;color:white;padding-top:5px;"><%= "\x{2714}" %></div>
+              </div>
+              <div style="float:left">
+                <div class="pull-request-form-title">
+                  <div>
+                    <b>This branch has no conflicts with the base branch</b>
+                  </div>
+                  <div>
+                    <span style="color:#767676">Merging can be performed automatically.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="pull-request-form-button">
+              <%= submit_button 'Merge pull request', class => "btn btn-success" %>
+            </div>
+          </div>
+        </form>
+        <div style="text-align:right;margin-top:10px;">
+          <form action="<%= url_for %>" method="post">
+            <%= hidden_field op => 'close' %>
+            <%= submit_button 'Close pull request', class => 'btn' %>
+          </form>
+        </div>
+      % }
+    </div>
+  </div>
+
+ 
+  %= include '/include/footer';

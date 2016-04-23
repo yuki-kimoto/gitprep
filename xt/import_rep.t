@@ -4,7 +4,6 @@ use warnings;
 
 use FindBin;
 use utf8;
-use lib "$FindBin::Bin/../mojo/lib";
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use File::Path 'rmtree';
@@ -12,29 +11,28 @@ use Encode qw/encode decode/;
 
 use Test::Mojo;
 
+# Data directory
+my $data_dir =  $ENV{GITPREP_DATA_DIR} = "$FindBin::Bin/import_rep";
+
 # Test DB
-my $db_file = $ENV{GITPREP_DB_FILE} = "$FindBin::Bin/import_rep.db";
+my $db_file = "$data_dir/gitprep.db";
 
 # Test Repository home
-my $rep_home = $ENV{GITPREP_REP_HOME} = "$FindBin::Bin/import_rep_user";
+my $rep_home = "$data_dir/rep";
 
 $ENV{GITPREP_NO_MYCONFIG} = 1;
 
-
 use Gitprep;
-
-# For perl 5.8
-{
-  no warnings 'redefine';
-  sub note { print STDERR "# $_[0]\n" unless $ENV{HARNESS_ACTIVE} }
-}
 
 note 'import_rep';
 {
   unlink $db_file;
   rmtree $rep_home;
 
-  my $app = Gitprep->new;
+  system("$FindBin::Bin/../setup_database", $db_file) == 0
+    or die "Can't setup $db_file";
+  my $app = Mojo::Server->new->load_app("$FindBin::Bin/../script/gitprep");
+
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
   
@@ -47,11 +45,11 @@ note 'import_rep';
   $t->content_like(qr/Admin/);
 
   # Create user
-  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', password => 'a', password2 => 'a'});
+  $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', email => 'kimoto@foo.com', password => 'a', password2 => 'a'});
   $t->content_like(qr/Success.*created/);
   
   # Import repositories
-  my $rep_dir = "$FindBin::Bin/../../gitprep_t_rep_home/kimoto";
+  my $rep_dir = "$FindBin::Bin/basic/rep/kimoto";
   chdir "$FindBin::Bin/../script"
     or die "Can't change directory: $!";
   my @cmd = ('./import_rep', '-u', 'kimoto', $rep_dir);
@@ -59,12 +57,12 @@ note 'import_rep';
     or die "Command fail: @cmd";
   
   # Branch
-  ok(-f "$FindBin::Bin/import_rep_user/kimoto/gitprep_t.git/refs/heads/b1");
+  ok(-f "$rep_home/kimoto/gitprep_t.git/refs/heads/b1");
 
   # Tag
-  ok(-f "$FindBin::Bin/import_rep_user/kimoto/gitprep_t.git/refs/tags/t1");
+  ok(-f "$rep_home/kimoto/gitprep_t.git/refs/tags/t1");
   
   # Description
-  ok(-f "$FindBin::Bin/import_rep_user/kimoto/gitprep_t.git/description");
+  ok(-f "$rep_home/kimoto/gitprep_t.git/description");
 }
 

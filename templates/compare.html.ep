@@ -3,17 +3,105 @@
   my $api = gitprep_api;
 
   # Parameters
-  my $user = param('user');
-  my $project = param('project');
+  my $user_id = param('user');
+  my $project_id = param('project');
   my $from_rev = param('rev1');
   my $rev = param('rev2');
   my $page = param('page') || 0;
+  my $expand = param('expand');
+  
+  unless ($from_rev) {
+    $from_rev = app->manager->default_branch($user_id, $project_id);
+  }
   
   # Git
   my $git = $self->app->git;
   
+  if (lc $self->req->method eq 'post') {
+    my $op = param('op');
+    
+    if ($op eq 'create-pull-request') {
+      my $title = param('title');
+      my $message = param('message');
+      
+      my $project_row_id = app->dbi->model('project')->select(
+        'project.row_id',
+        where => {'user.id' => $user_id, 'project.id' => $project_id}
+      )->value;
+      
+      my $pull_request = app->dbi->model('pull_request')->select(
+        where => {project => $project_row_id, branch1 => $from_rev, branch2 => $rev}
+      )->one;
+      
+      if ($pull_request) {
+        $self->redirect_to("/$user_id/$project_id/pull/$pull_request->{row_id}");
+        return;
+      }
+      else {
+        my $now_tm = Time::Moment->now_utc;
+        my $now_epoch = $now_tm->epoch;
+        my $user_row_id = app->dbi->model('user')->select(
+          'row_id',
+          where => {id => $user_id}
+        )->value;
+        
+        my $new_pull_request_row_id;
+        app->dbi->connector->txn(sub {
+          # New pull request
+          my $new_pull_request_params = {
+            project => $project_row_id,
+            branch1 => $from_rev,
+            branch2 => $rev,
+            title => $title,
+            open => 1,
+            open_time => $now_epoch,
+            open_user => $user_row_id
+          };
+          
+          app->dbi->model('pull_request')->insert($new_pull_request_params);
+          
+          $new_pull_request_row_id = app->dbi->model('pull_request')->select(
+            'row_id',
+            where => {
+              project => $project_row_id,
+              branch1 => $from_rev,
+              branch2 => $rev
+            }
+          )->value;
+          
+          # Get pull request message number
+          my $number = app->dbi->model('pull_request_message')->select(
+            'max(number)',
+            where => {pull_request => $new_pull_request_row_id},
+            append => 'group by number'
+          )->value;
+          
+          $number //= 0;
+          
+          my $new_number = $number + 1;
+          
+          # New pull request message
+          my $new_pull_request_message_params = {
+            pull_request => $new_pull_request_row_id,
+            number => $new_number,
+            message => $message,
+            create_time => $now_epoch,
+            update_time => $now_epoch,
+            user => $user_row_id
+          };
+          
+          app->dbi->model('pull_request_message')->insert($new_pull_request_message_params);
+        });
+        
+        $self->redirect_to("/$user_id/$project_id/pull/$new_pull_request_row_id");
+        return;
+      }
+      
+    }
+  }
+  
   # Commits
-  my $commits = $git->forward_commits($user, $project, $from_rev, $rev);
+  my $commits = $git->forward_commits(app->rep_info($user_id, $project_id), $from_rev, $rev);
   my $commits_count = @$commits;
   my $commits_date = {};
   my $authors = {};
@@ -26,18 +114,18 @@
   my $authors_count = keys %$authors;
 
   # Start commit
-  my $start_commit = $git->separated_commit($user, $project, $from_rev, $rev);
+  my $start_commit = $git->separated_commit(app->rep_info($user_id, $project_id), $from_rev, $rev);
 
   # End commit
-  my $end_commit = $git->get_commit($user, $project, $rev);
+  my $end_commit = $git->get_commit(app->rep_info($user_id, $project_id), $rev);
   
   if (!$start_commit || !$end_commit) {
-    $self->render_not_found;
+    $self->reply->not_found;
     return;
   }
   
   # Branches
-  my $branches = $git->branches($user, $project);
+  my $branches = $git->branches(app->rep_info($user_id, $project_id));
   @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
   
   # Variables
@@ -45,8 +133,58 @@
   stash from_id => $start_commit->{id};
   stash rev => $end_commit->{id};
   stash from_rev => $start_commit->{id};
-
-  layout 'common', title => "Comparing $rev1...$rev2 \x{30fb} $user/$project";
+  
+  # Can open pull request
+  my $can_open_pull_request;
+  if (keys %$commits_date && $expand) {
+    $can_open_pull_request = 1;
+  }
+  
+  # Can merge
+  my $merge_automatical;
+  if ($can_open_pull_request) {
+    
+    # Create working repository if it don't exist
+    $self->app->manager->create_work_rep($user_id, $project_id);
+    
+    # Fetch repository
+    my $work_rep_info = app->work_rep_info($user_id, $project_id);
+    my @git_fetch_cmd = $self->app->git->cmd($work_rep_info, 'fetch');
+    Gitprep::Util::run_command(@git_fetch_cmd)
+      or Carp::croak "Can't execute git fetch: @git_fetch_cmd";
+    
+    # Lock repository
+    my $lock = $self->app->manager->lock_rep($work_rep_info);
+    
+    # Checkout tmp branch and git reset --hard from my remote branch
+    my $gitprep_tmp_branch_name = '__gitprep_tmp_branch__';
+    my @git_checkout_tmp_branch = $self->app->git->cmd(
+      $work_rep_info,
+      'checkout',
+      $gitprep_tmp_branch_name,
+    );
+    Gitprep::Util::run_command(@git_checkout_tmp_branch)
+      or Carp::croak "Can't execute git checkout: @git_checkout_tmp_branch";
+    
+    # git reset --hard
+    my @git_reset_hard_cmd = $self->app->git->cmd(
+      $work_rep_info,
+      'reset',
+      '--hard',
+      "origin/$from_rev"
+    );
+    Gitprep::Util::run_command(@git_reset_hard_cmd)
+      or Carp::croak "Can't execute git reset --hard: @git_reset_hard_cmd";
+    
+    # Check merge automatically
+    $merge_automatical = $self->app->manager->check_merge_automatical(
+      app->work_rep_info($user_id, $project_id),
+      $gitprep_tmp_branch_name,
+      "origin/$rev"
+    );
+  }
+  
+  layout 'common', title => "Comparing $from_rev...$rev \x{30fb} $user_id/$project_id";
 %>
 
 
@@ -67,10 +205,14 @@
     $('[name=base-branch]').on('keypress', function (e) {
       // Enter
       if (e.which == 13) {
-        location.href = '<%= url_for("/$user/$project/compare/") %>' + $(this).val() + '...<%= $rev %>';
+        var href = '<%= url_for("/$user_id/$project_id/compare/") %>' + $(this).val() + '...<%= $rev %>';
+        if (<%= $expand ? 1 : 0 %>) {
+          href = href + '?expand=1';
+        }
+        location.href = href;
       }
     });
-
+    
     // Change compare branch
     $('#compare-branch-btn').on('click', function () {
       $('#compare-branch-popup')
@@ -85,7 +227,11 @@
     $('[name=compare-branch]').on('keypress', function (e) {
       // Enter
       if (e.which == 13) {
-        location.href = '<%= url_for("/$user/$project/compare/") %>' + '<%= $from_rev %>...' + $(this).val();
+        var href = '<%= url_for("/$user_id/$project_id/compare/") %>' + '<%= $from_rev %>...' + $(this).val();
+        if (<%= $expand ? 1 : 0 %>) {
+          href = href + '?expand=1';
+        }
+        location.href = href;
       }
     });
   });
@@ -94,7 +240,13 @@
 %= include '/include/header';
 
 <div class="container">
-  <div class="topic1">Compare View</div>
+  <div class="topic1">
+    % if ($can_open_pull_request) {
+      Open a pull request
+    % } else {
+      Comparing changes
+    % }
+  </div>
   <div class="compare-select">
     <div>
       <div>
@@ -105,6 +257,18 @@
         <button id="compare-branch-btn" class="btn btn-small">
           <span>compare:</span> <b><%= $rev %></b><i class="icon-arrow-down"></i>
         </button>
+        
+        % if ($can_open_pull_request) {
+          % if ($merge_automatical) {
+            <span style="margin-left:10px">
+              <span style="color:green;font-weight:bold"><%= "\x{2714}" %>Able to merge.</span> These branches can be automatically merged.
+            </span>
+          % } else {
+            <span style="margin-left:10px">
+              <span style="color:red;font-weight:bold"><%= "×" %>Not able to merge.</span> These branches can't be automatically merged.
+            </span>
+          % }
+        % }
       </div>
     </div>
 
@@ -127,7 +291,8 @@
           % for (my $i = 0; $i < @$branches; $i++) {
             % my $branch = $branches->[$i];
               <li>
-                <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= url_for("/$user/$project/compare/$branch->{name}...$rev") %>">
+                <a style="border-top-left-radius:0px;border-top-right-radius:0px;"
+                  href="<%= url_with("/$user_id/$project_id/compare/$branch->{name}...$rev") %>">
                   <%= $branch->{name} %>
                 </a>
               </li>
@@ -155,7 +320,8 @@
         % for (my $i = 0; $i < @$branches; $i++) {
           % my $branch = $branches->[$i];
             <li>
-              <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= url_for("/$user/$project/compare/$from_rev...$branch->{name}") %>">
+              <a style="border-top-left-radius:0px;border-top-right-radius:0px;"
+                href="<%= url_with("/$user_id/$project_id/compare/$from_rev...$branch->{name}") %>">
                 <%= $branch->{name} %>
               </a>
             </li>
@@ -164,6 +330,23 @@
       </div>
     </div>
   </div>
+  
+  % if ($merge_automatical) {
+    <div class="compare-open-pull-request">
+      <form action="<%= url_for %>" method="post">
+        <%= hidden_field op => 'create-pull-request' %>
+        <div class="compare-open-pull-request-title">
+          <%= text_field 'title' => $commits->[0]{title_short}  %>
+        </div>
+        <div class="compare-open-pull-request-message">
+          <%= text_area 'message' %>
+        </div>
+        <div class="compare-open-pull-request-button">
+          <%= submit_button 'Create pull request', class => 'btn btn-success' %>
+        </div>
+      </form>
+    </div>
+  % }
 
   % if (keys %$commits_date) {
     <ul class="compare-header">
@@ -191,17 +374,30 @@
         
         <ul class="compare-commits-date-container">
           % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
+            <%
+              my $commit_author_email = $commit->{author_email};
+              my $commit_author_id = app->dbi->model('user')->select(
+                'id',
+                where => {email => $commit_author_email}
+              )->value;
+            %>
             <li>
               <div class="compare-commits-author">
-                <span title="<%= $commit->{author_email} %>"><%= $commit->{author_name} %></span>
+                <span title="<%= $commit->{author_email} %>">
+                  % if (defined $commit_author_id) {
+                    <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+                  % } else {
+                    <%= $commit->{author_name} %>
+                  % }
+                </span>
               </div>
               <div class="compare-commits-commit-title">
-                <a style="color:#333" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                <a style="color:#333" href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
                   <%= $commit->{title_short} %>
                 </a>
               </div>
               <div class="compare-commits-commit-id">
-                <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                <a href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
                   <%= substr($commit->{id}, 0, 7) %>
                 </a>
               </div>
@@ -213,8 +409,16 @@
   
     %= include '/include/commit_body';
   % } else {
-    <div>
-      <b>There isn't anything to compare.</b>
+    <div class="compare-nothing">
+      <div>
+        <b><big>There isn't anything to compare.</big></b>
+      </div>
+      <div>
+        <b>
+          <%= $from_rev %></b> is up to date with all commits from
+          <b><%= $rev %></b>.
+          Try <a href="<%= url_for("/$user_id/$project_id/compare/$rev...$from_rev") %>">switching the base</a> for your comparison.
+      </div>
     </div>
   % }
 </div>

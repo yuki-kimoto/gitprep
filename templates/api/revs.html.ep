@@ -5,13 +5,12 @@
   my $git = app->git;
   
   # Branches
-  my $branches = $git->branches($user, $project) || [];
+  my $branches = $git->branches($self->app->rep_info($user, $project)) || [];
   my @branch_names = map { $_->{name} } @$branches;
   
   # Tags
   my $tags = $git->tags(
-    $user,
-    $project,
+    app->rep_info($user, $project),
     app->config->{basic}{tags_limit} || 1000,
     app->config->{basic}{tags_limit} || 1000
   ) || [];

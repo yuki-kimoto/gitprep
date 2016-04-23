@@ -1,0 +1,74 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
+  my $user = param('user');
+  my $project = param('project');
+  
+  # Git
+  my $git = $self->app->git;
+  
+  # Pull requests
+  my $pull_requests = app->dbi->model('pull_request')->select(
+    [
+      {__MY__ => '*'},
+      {user => ['id']}
+    ],
+    where => {open => 1}
+  )->all;
+  
+  # Open count
+  my $open_count = app->dbi->model('pull_request')->select('count(*)', where => {open => 1})->value;
+  
+  # Close count
+  my $close_count = app->dbi->model('pull_request')->select('count(*)', where => {open => 0})->value;
+%>
+
+% layout 'common', title => "Pull Requests Tags \x{30fb} $user/$project";
+  
+  %= include '/include/header';
+  
+  <div class="container">
+    <div class="pulls-button-container">
+      <a href="<%= url_for("/$user/$project/compare") %>" class="btn btn-success">New pull request</a>
+    </div>
+    <div class="pulls">
+      <div class="pulls-header">
+        <b><%= $open_count %> Open</b> <span style="margin-left:5px;color:#767676"><%= "\x{2714}" %><%= $close_count %> Closed</span>
+      </div>
+      <div class="pulls-body">
+        % if (@$pull_requests) {
+          <ul>
+            % for my $pull_request (@$pull_requests) {
+              <%
+                my $branch2 = $pull_request->{branch2};
+                my $commit = app->git->get_commit(app->rep_info($user, $project), $branch2);
+                my $open_time = $pull_request->{open_time};
+                my $open_time_age = Time::Moment->now->epoch - $open_time;
+                my $open_time_age_string = $self->app->git->_age_string($open_time_age);
+              %>
+              <li>
+                <div class="pulls-title">
+                  <a href="<%= "/$user/$project/pull/$pull_request->{row_id}" %>">
+                    <b><%= $pull_request->{title} %></b>
+                  </a>
+                </div>
+                <div class="pulls-description">
+                  #<%= $pull_request->{row_id} %> <%= $pull_request->{open} ? 'opened' : 'closed' %>
+                  <%= $open_time_age_string %>
+                  by <%= $pull_request->{'user.id'} %>
+                </div>
+              </li>
+            % }
+          </ul>
+        % } else {
+          <div class="pulls-no-request">
+            <div style="font-size:18px"><b>There aren’t any open pull requests.</b></div>
+          </div>
+        % }
+      </div>
+    </div>
+  </div>
+  
+  %= include '/include/footer';

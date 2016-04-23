@@ -2,24 +2,59 @@
   # API
   my $api = gitprep_api;
   
+  my $user_id = param('user');
+  my $project_id = param('project');
+  
+  my $rep_info = $self->app->rep_info($user_id, $project_id);
+  
   # Branches
-  my $branches = [map { $_->{name} } @{app->git->branches($user, $project)}];
+  my $branches = [map { $_->{name} } @{app->git->branches($rep_info)}];
+  
+  # Original project id
+  my $original_project_id = app->dbi->model('project')->select(
+    'original_project',
+    where => {'user.id' => $user_id, 'project.id' => $project_id}
+  )->value;
+  
+  # Original project
+  my $original_project;
+  if ($original_project_id) {
+    $original_project = app->dbi->model('project')->select(
+      [
+        {__MY__ => '*'},
+        {user => ['id']}
+      ],
+      where => {'project.row_id' => $original_project_id}
+    )->one;
+  }
+  else {
+    $original_project = app->dbi->model('project')->select(
+      [
+        {__MY__ => '*'},
+        {user => ['id']}
+      ],
+      where => {'user.id' => $user_id, 'project.id' => $project_id}
+    )->one;
+  }
   
   # Members
-  my $members = app->manager->members($user, $project);
+  my $member_projects = app->manager->member_projects($original_project->{'user.id'}, $original_project->{id});
+  unshift @$member_projects, $original_project;
   
   # Members branches
-  for my $member (@$members) {
-    my $branches = [
-      map { $_->{name} } @{app->git->branches($member->{id}, $member->{project})}
-    ];
-    $member->{branches} = $branches;
+  for my $member_project (@$member_projects) {
+    my $member_rep_info = $self->app->rep_info($member_project->{'user.id'}, $member_project->{id});
+    
+    my $branches = app->git->branches($member_rep_info);
+    $branches = [map { $_->{name} } @$branches];
+
+    $member_project->{branches} = $branches;
   }
   
   # Default branch
-  my $default_branch = app->manager->default_branch($user, $project);
+  my $default_branch = app->manager->default_branch($user_id, $project_id);
 
-  layout 'common', title => "Network \x{30fb} $user/$project";
+  layout 'common', title => "Network \x{30fb} $user_id/$project_id";
 %>
 
   %= javascript begin
@@ -32,7 +67,7 @@
         var remote_project = remote.find('[name=remote-project]').text();
         var remote_branch = remote.find('[name=remote-branch]').val();
         
-        location.href = '<%= url_for("/$user/$project/network/graph/") %>' + branch + '...'
+        location.href = '<%= url_for("/$user_id/$project_id/network/graph/") %>' + branch + '...'
           + remote_member + '/' + remote_project + '/' + remote_branch;
       });
 
@@ -44,7 +79,7 @@
         var remote_project = remote.find('[name=remote-project]').text();
         var remote_branch = remote.find('[name=remote-branch]').val();
         
-        location.href = '<%= url_for("/$user/$project/import-branch/") %>'
+        location.href = '<%= url_for("/$user_id/$project_id/import-branch/") %>'
           + remote_member + '/' + remote_project + '?remote-branch=' + remote_branch;
       });
     });
@@ -53,34 +88,38 @@
   %= include '/include/header';
 
   <div class="container">
-    <div class="topic1">Members of the <%= $project %> Network</div>
+    <div class="topic1">Members of the <%= $project_id %> Network</div>
     <div class="network-mybranch">
       <span class="network-mybranch-label">My branch</span>
-      <a href="<%= url_for("/$user") %>"><%= $user %></a>
+      <a href="<%= url_for("/$user_id") %>"><%= $user_id %></a>
       <span>/</span>
-      <a href="<%= url_for("/$user/$project") %>"><%= $project %></a>
+      <a href="<%= url_for("/$user_id/$project_id") %>"><%= $project_id %></a>
       <span>/</span>
       % param('branch', $default_branch);
       %= select_field 'branch' => $branches, style => 'margin-top:5px;width:150px';
     </div>
     <ul class="network-member-branch">
-      % if (@$members) {
-        % for my $member (@$members) {
+      % if (@$member_projects) {
+        % for my $member_project (@$member_projects) {
+          <%
+            my $member_project_id = $member_project->{id};
+            my $member_id = $member_project->{'user.id'};
+            my $member_branches = $member_project->{branches};
+            
+            next if $member_id eq $user_id;
+          %>
           <li name="remote">
-            % my $mid = $member->{id};
-            % my $mproject = $member->{project};
-            % my $mbranches = $member->{branches};
             <div>
               <span class="network-member-branch-label">Member branch</span>
-              <a name="remote-member" href="<%= url_for("/$mid") %>"><%= $mid %></a>
+              <a name="remote-member" href="<%= url_for("/$member_id") %>"><%= $member_id %></a>
               <span>/</span>
-              <a name="remote-project" href="<%= url_for("/$mid/$mproject") %>"><%= $mproject %></a>
+              <a name="remote-project" href="<%= url_for("/$member_id/$member_project_id") %>"><%= $member_project_id %></a>
               <span>/</span>
-              %= select_field 'remote-branch' => $mbranches, style => 'margin-top:5px;margin-bottom:7px;width:150px';
+              %= select_field 'remote-branch' => $member_branches, style => 'margin-top:5px;margin-bottom:7px;width:150px';
             </div>
             <div class="last-child">
               <button name="compare-btn" class="btn" style="margin-top:5px">Compare</button>
-              % if ($api->logined($user)) {
+              % if ($api->logined($user_id)) {
                 <button name="import-btn" class="btn" style="margin-top:5px">Import</button>
               % }
             </div>

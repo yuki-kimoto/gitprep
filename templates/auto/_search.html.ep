@@ -112,11 +112,11 @@
                   my $user = $project->{user_id};
                   my $project = $project->{name};
                   my $rev = app->manager->default_branch($user, $project);
-                  my $desc = app->git->description($user, $project);
-                  my $branches = app->git->branches($user, $project);
+                  my $desc = app->git->description(app->rep_info($user, $project));
+                  my $branches = app->git->branches($self->app->rep_info($user, $project));
                   my $commit;
                   if (@$branches) {
-                    $commit = app->git->get_commit($user, $project, $rev);
+                    $commit = app->git->get_commit(app->rep_info($user, $project), $rev);
                   }
                 %>
                 
