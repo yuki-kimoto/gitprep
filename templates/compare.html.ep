@@ -69,9 +69,21 @@
             }
           )->value;
           
+          # Get pull request message number
+          my $number = app->dbi->model('pull_request_message')->select(
+            'max(number)',
+            where => {pull_request => $new_pull_request_row_id},
+            append => 'group by number'
+          )->value;
+          
+          $number //= 0;
+          
+          my $new_number = $number + 1;
+          
           # New pull request message
           my $new_pull_request_message_params = {
             pull_request => $new_pull_request_row_id,
+            number => $new_number,
             message => $message,
             create_time => $now_epoch,
             update_time => $now_epoch,
