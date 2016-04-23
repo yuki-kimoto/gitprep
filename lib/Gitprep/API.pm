@@ -103,6 +103,19 @@ sub can_access_private_project {
   return $is_valid;
 }
 
+sub can_write_access {
+  my ($self, $session_user_id, $user_id, $project_id) = @_;
+  
+  my $can_write_access
+    = length $session_user_id &&
+    (
+      $session_user_id eq $user_id
+      || $self->is_collaborator($session_user_id, $user_id, $project_id)
+    );
+  
+  return $can_write_access;
+}
+
 sub new {
   my ($class, $cntl) = @_;
 

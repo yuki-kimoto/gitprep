@@ -17,11 +17,34 @@
   my $git = $self->app->git;
   
   if (lc $self->req->method eq 'post') {
-    my $op = param('op');
     
     # Access controll
+    unless ($api->can_write_access($session_user_id, $user_id, $project_id)) {
+      $self->reply->exception('Forbbiden');
+      return;
+    }
+    
+    # Close pull request
+    my $op = param('op');
     if ($op eq 'close') {
-      
+      app->dbi->model('pull_request')->update(
+        {open => 0},
+        where => {row_id => $row_id}
+      );
+      $self->redirect_to('current');
+      return;
+    }
+    elsif ($op eq 'reopen') {
+      my $open_time = time;
+      app->dbi->model('pull_request')->update(
+        {
+          open => 1,
+          open_time => $open_time
+        },
+        where => {row_id => $row_id}
+      );
+      $self->redirect_to('current');
+      return;
     }
   }
   
@@ -95,7 +118,7 @@
             Open
           </div>
         % } else {
-          <div style="background:red;padding:4px 8px;border-radius:3px;">
+          <div style="background:#bd2c00;padding:4px 8px;border-radius:3px;">
             Closed
           </div>
         % }
@@ -188,35 +211,47 @@
   
       %= include '/include/commit_body', %commit_body_args;
       
-      % if ($api->logined($user_id)) {
-        <form action="<%= url_for %>" method="post">
-          <div class="pull-request-form">
-            <div style="overflow:hidden">
-              <div style="float:left;padding:10px;padding-right:0">
-                <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#95c97e;color:white;padding-top:5px;"><%= "\x{2714}" %></div>
-              </div>
-              <div style="float:left">
-                <div class="pull-request-form-title">
-                  <div>
-                    <b>This branch has no conflicts with the base branch</b>
-                  </div>
-                  <div>
-                    <span style="color:#767676">Merging can be performed automatically.</span>
+      % if ($api->can_write_access($session_user_id, $user_id, $project_id)) {
+        % if ($pull_request->{open}) {
+          <form action="<%= url_for %>" method="post">
+            <div class="pull-request-form">
+              <div style="overflow:hidden">
+                <div style="float:left;padding:10px;padding-right:0">
+                  <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#95c97e;color:white;padding-top:5px;"><%= "\x{2714}" %></div>
+                </div>
+                <div style="float:left">
+                  <div class="pull-request-form-title">
+                    <div>
+                      <b>This branch has no conflicts with the base branch</b>
+                    </div>
+                    <div>
+                      <span style="color:#767676">Merging can be performed automatically.</span>
+                    </div>
                   </div>
                 </div>
               </div>
+              <div class="pull-request-form-button">
+                <%= submit_button 'Merge pull request', class => "btn btn-success" %>
+              </div>
             </div>
-            <div class="pull-request-form-button">
-              <%= submit_button 'Merge pull request', class => "btn btn-success" %>
-            </div>
-          </div>
-        </form>
-        <div style="text-align:right;margin-top:10px;">
-          <form action="<%= url_for %>" method="post">
-            <%= hidden_field op => 'close' %>
-            <%= submit_button 'Close pull request', class => 'btn' %>
           </form>
-        </div>
+        % }
+        
+        % if ($pull_request->{open}) {
+          <div style="text-align:right;margin-top:10px;">
+            <form action="<%= url_for %>" method="post">
+              <%= hidden_field op => 'close' %>
+              <%= submit_button 'Close pull request', class => 'btn' %>
+            </form>
+          </div>
+        % } else {
+          <div style="text-align:right;margin-top:10px;">
+            <form action="<%= url_for %>" method="post">
+              <%= hidden_field op => 'reopen' %>
+              <%= submit_button 'Reopen pull request', class => 'btn' %>
+            </form>
+          </div>
+        % }
       % }
     </div>
   </div>
