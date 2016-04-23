@@ -205,7 +205,9 @@ sub startup {
       table => 'pull_request',
       primary_key => 'row_id',
       join => [
-        'left join user on pull_request.open_user = user.row_id'
+        'left join user on pull_request.open_user = user.row_id',
+        'left join project on pull_request.project = project.row_id',
+        'left join user as project_user on project.user = project_user.row_id'
       ]
     },
     {

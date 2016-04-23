@@ -35,6 +35,20 @@
   box-sizing: border-box;
 }
 
+.branches-open {
+  color:white;
+  background:#6cc644;
+  padding:5px 8px;
+  border-radius:3px;
+  margin-right:4px;
+  border-radius:3px;
+  text-align:center;
+}
+.branches-open:hover {
+  color:white;
+  text-decoration:none;
+}
+
 .pull-comment {
   border:1px solid #eee;
   margin-top:15px;
