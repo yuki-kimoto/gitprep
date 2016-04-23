@@ -49,8 +49,13 @@
   stash rev => $end_commit->{id};
   stash from_rev => $start_commit->{id};
   
-  # Allow pull request
-  
+  my $pull_request_message_first = app->dbi->model('pull_request_message')->select(
+    [
+      {__MY__ => '*'},
+      {user => ['id']}
+    ],
+    where => {pull_request => $row_id, number => 1}
+  )->one;
 %>
 
 % layout 'common', title => "Pull Requests Tags \x{30fb} $user/$project";
@@ -108,6 +113,18 @@
           
         </li>
       </ul>
+      <div class="pull-comment">
+        <div class="pull-comment-header">
+          <b><%= $pull_request_message_first->{'user.id'} %></b>
+          <span style="color:#767676">
+            commented
+            <%= $api->age_string($pull_request_message_first->{update_time}) %></b>
+          </span>
+        </div>
+        <div class="pull-comment-body">
+          <%= $pull_request_message_first->{message} %>
+        </div>
+      </div>
       
       <div class="commits">
         % for my $date (reverse sort keys %$commits_date) {

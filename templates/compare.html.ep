@@ -34,7 +34,7 @@
       )->one;
       
       if ($pull_request) {
-        $self->redirect_to("/$user_id/$project_id/pulls/$pull_request->{row_id}");
+        $self->redirect_to("/$user_id/$project_id/pull/$pull_request->{row_id}");
         return;
       }
       else {

@@ -5,6 +5,16 @@ use Digest::MD5 'md5_hex';
 
 has 'cntl';
 
+sub age_string {
+  my ($self, $epoch_time) = @_;
+  
+  my $age = time - $epoch_time;
+  
+  my $age_string = $self->cntl->app->git->_age_string($age);
+  
+  return $age_string;
+}
+
 sub get_user_row_id {
   my ($self, $user_id) = @_;
   

@@ -35,6 +35,20 @@
   box-sizing: border-box;
 }
 
+.pull-comment {
+  border:1px solid #eee;
+  margin-top:15px;
+  border-radius:3px;
+}
+.pull-comment-header {
+  background:#f2f8fa;
+  padding:7px 12px;
+  border-bottom:1px solid #eee;
+}
+.pull-comment-body {
+  padding:13px 12px;
+  
+}
 .pull-request-form {
   border:1px solid #95c97e;
   border-radius:3px;
