@@ -207,6 +207,14 @@ sub startup {
       join => [
         'left join user on pull_request.open_user = user.row_id'
       ]
+    },
+    {
+      table => 'pull_request_message',
+      primary_key => 'row_id',
+      join => [
+        'left join user on pull_request_message.user = user.row_id',
+        'left join pull_request on pull_request_message.pull_request = pull_request.row_id'
+      ]
     }
   ];
   $dbi->create_model($_) for @$models;

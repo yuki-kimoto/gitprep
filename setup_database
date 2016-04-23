@@ -202,13 +202,14 @@ EOS
     "message not null default ''",
     "create_time integer default 0",
     "update_time integer default 0",
+    "user integer not null default 0"
   );
   for my $column (@pull_request_message_columns) {
     eval { $dbi->execute("alter table pull_request_message add column $column") };
   }
 
   # Check pull_request_message table
-  eval { $dbi->select([qw/row_id pull_request number message create_time update_time/], table => 'pull_request_message') };
+  eval { $dbi->select([qw/row_id pull_request number message create_time update_time user/], table => 'pull_request_message') };
   if ($@) {
     my $error = "Can't create pull_request_message table properly: $@";
     die $error;
