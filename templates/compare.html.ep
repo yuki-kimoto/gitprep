@@ -101,7 +101,8 @@
   }
   
   # Commits
-  my $commits = $git->forward_commits(app->rep_info($user_id, $project_id), $from_rev, $rev);
+  my $rep_info = app->rep_info($user_id, $project_id);
+  my $commits = $git->forward_commits($rep_info, $from_rev, $rev);
   my $commits_count = @$commits;
   my $commits_date = {};
   my $authors = {};
@@ -114,10 +115,10 @@
   my $authors_count = keys %$authors;
 
   # Start commit
-  my $start_commit = $git->separated_commit(app->rep_info($user_id, $project_id), $from_rev, $rev);
+  my $start_commit = $git->separated_commit($rep_info, $from_rev, $rev);
 
   # End commit
-  my $end_commit = $git->get_commit(app->rep_info($user_id, $project_id), $rev);
+  my $end_commit = $git->get_commit($rep_info, $rev);
   
   if (!$start_commit || !$end_commit) {
     $self->reply->not_found;
@@ -125,7 +126,7 @@
   }
   
   # Branches
-  my $branches = $git->branches(app->rep_info($user_id, $project_id));
+  my $branches = $git->branches($rep_info);
   @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
   
   # Variables
@@ -147,41 +148,30 @@
     # Create working repository if it don't exist
     $self->app->manager->create_work_rep($user_id, $project_id);
     
-    # Fetch repository
+    # Lock working repository
     my $work_rep_info = app->work_rep_info($user_id, $project_id);
-    my @git_fetch_cmd = $self->app->git->cmd($work_rep_info, 'fetch');
-    Gitprep::Util::run_command(@git_fetch_cmd)
-      or Carp::croak "Can't execute git fetch: @git_fetch_cmd";
+    my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
     
-    # Lock repository
-    my $lock = $self->app->manager->lock_rep($work_rep_info);
-    
-    # Checkout tmp branch and git reset --hard from my remote branch
-    my $gitprep_tmp_branch_name = '__gitprep_tmp_branch__';
-    my @git_checkout_tmp_branch = $self->app->git->cmd(
+    # Prepare merge
+    $self->app->manager->prepare_merge(
       $work_rep_info,
-      'checkout',
-      $gitprep_tmp_branch_name,
+      $rep_info,
+      $from_rev,
+      $rep_info,
+      $rev
     );
-    Gitprep::Util::run_command(@git_checkout_tmp_branch)
-      or Carp::croak "Can't execute git checkout: @git_checkout_tmp_branch";
-    
-    # git reset --hard
-    my @git_reset_hard_cmd = $self->app->git->cmd(
-      $work_rep_info,
-      'reset',
-      '--hard',
-      "origin/$from_rev"
-    );
-    Gitprep::Util::run_command(@git_reset_hard_cmd)
-      or Carp::croak "Can't execute git reset --hard: @git_reset_hard_cmd";
     
     # Check merge automatically
     $merge_automatical = $self->app->manager->check_merge_automatical(
-      app->work_rep_info($user_id, $project_id),
-      $gitprep_tmp_branch_name,
-      "origin/$rev"
+      $work_rep_info,
+      $rep_info,
+      $from_rev,
+      $rep_info,
+      $rev
     );
+    
+    # Unlock explicitly
+    close $lock_fh;
   }
   
   layout 'common', title => "Comparing $from_rev...$rev \x{30fb} $user_id/$project_id";

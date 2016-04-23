@@ -15,29 +15,74 @@ use Gitprep::Util;
 has 'app';
 has 'authorized_keys_file';
 
-sub lock_rep {
-  my ($self, $rep_info) = @_;
+has '_tmp_branch' => '__gitprep_tmp_branch__';
+
+sub prepare_merge {
+  my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
   
-  my $git_dir = $rep_info->{git_dir};
-  my $lock_file = "$git_dir/config";
+  # Fetch base repository
+  my $base_user_id = $rep_info1->{user};
+  my @git_fetch_base_cmd = $self->app->git->cmd($work_rep_info, 'fetch', 'origin', $base_branch);
+  Gitprep::Util::run_command(@git_fetch_base_cmd)
+    or Carp::croak "Can't execute git fetch: @git_fetch_base_cmd";
   
-  open my $lock_fh, '<', $lock_file
-    or croak "Can't open lock file $lock_file: $!";
-    
-  flock $lock_fh, LOCK_EX
-    or croak "Can't lock $lock_file";
+  # Remeve remote
+  my $target_user_id = $rep_info2->{user};
+  my @git_remote_remove_cmd =  $self->app->git->cmd(
+    $work_rep_info,
+    'remote',
+    'remove',
+    $target_user_id
+  );
+  Gitprep::Util::run_command(@git_remote_remove_cmd);
   
-  return $lock_fh;
+  # Set remote add target repository
+  my $target_git_dir = $rep_info2->{git_dir};
+  my @git_remote_add_cmd = $self->app->git->cmd(
+    $work_rep_info,
+    'remote',
+    'add',
+    $target_user_id,
+    $target_git_dir
+  );
+  Gitprep::Util::run_command(@git_remote_add_cmd)
+    or Carp::croak "Can't execute git remote add: @git_remote_add_cmd";
+  
+  # Fetch target repository
+  my @git_fetch_target_cmd = $self->app->git->cmd($work_rep_info, 'fetch', $target_user_id, $target_branch);
+  Gitprep::Util::run_command(@git_fetch_target_cmd)
+    or Carp::croak "Can't execute git fetch: @git_fetch_target_cmd";
+  
+  # Checkout tmp branch and git reset --hard from my remote branch
+  my @git_checkout_tmp_branch = $self->app->git->cmd(
+    $work_rep_info,
+    'checkout',
+    $self->_tmp_branch
+  );
+  Gitprep::Util::run_command(@git_checkout_tmp_branch)
+    or Carp::croak "Can't execute git checkout: @git_checkout_tmp_branch";
+  
+  # git reset --hard
+  my @git_reset_hard_cmd = $self->app->git->cmd(
+    $work_rep_info,
+    'reset',
+    '--hard',
+    "origin/$base_branch"
+  );
+  Gitprep::Util::run_command(@git_reset_hard_cmd)
+    or Carp::croak "Can't execute git reset --hard: @git_reset_hard_cmd";
 }
 
 sub check_merge_automatical {
-  my ($self, $rep_info, $branch1, $branch2) = @_;
+  my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
   
   # Create patch
+  my $tmp_branch = $self->_tmp_branch;
+  my $target_user_id = $rep_info2->{user};
   my @git_format_patch_cmd = $self->app->git->cmd(
-    $rep_info,
+    $work_rep_info,
     'format-patch',
-    "$branch1..$branch2",
+    "$tmp_branch..$target_user_id/$target_branch",
     "--stdout"
   );
   open my $git_format_patch_fh, '-|', @git_format_patch_cmd
@@ -54,7 +99,7 @@ sub check_merge_automatical {
   
   # Check if this patch can be applied
   my @git_apply_cmd = $self->app->git->cmd(
-    $rep_info,
+    $work_rep_info,
     'apply',
     $patch_file,
     '--check'
@@ -62,6 +107,21 @@ sub check_merge_automatical {
   my $automatical = Gitprep::Util::run_command(@git_apply_cmd);
   
   return $automatical;
+}
+
+sub lock_rep {
+  my ($self, $rep_info) = @_;
+  
+  my $git_dir = $rep_info->{git_dir};
+  my $lock_file = "$git_dir/config";
+  
+  open my $lock_fh, '<', $lock_file
+    or croak "Can't open lock file $lock_file: $!";
+    
+  flock $lock_fh, LOCK_EX
+    or croak "Can't lock $lock_file";
+  
+  return $lock_fh;
 }
 
 sub create_work_rep {
@@ -84,11 +144,10 @@ sub create_work_rep {
       or croak "Can't git clone: @git_clone_cmd";
     
     # Create temparary branch
-    my $gitprep_tmp_branch_name = '__gitprep_tmp_branch__';
     my @git_branch_cmd = $self->app->git->cmd(
       $work_rep_info,
       'branch',
-      $gitprep_tmp_branch_name,
+      $self->_tmp_branch
     );
     Gitprep::Util::run_command(@git_branch_cmd)
       or Carp::croak "Can't execute git branch: @git_branch_cmd";

@@ -88,6 +88,18 @@
     where => {pull_request => $row_id, number => 1}
   )->one;
   
+  # Check merge automatically
+  my $merge_automatical;
+  if ($api->can_write_access($session_user_id, $user_id, $project_id) && $pull_request->{open}) {
+    $merge_automatical = $self->app->manager->check_merge_automatical(
+      app->work_rep_info($user_id, $project_id),
+      $rep_info,
+      $branch1,
+      $rep_info,
+      $branch2
+    );
+  }
+
   # Commit body arguments
   my %commit_body_args = (
     id => $end_commit->{id},
