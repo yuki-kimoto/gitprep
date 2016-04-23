@@ -7,6 +7,9 @@
   my $project_id = param('project');
   my $row_id = param('row_id');
   
+  # Repository information
+  my $rep_info = app->rep_info($user_id, $project_id);
+  
   # Git
   my $git = $self->app->git;
   
@@ -23,7 +26,7 @@
   my $branch2 = $pull_request->{branch2};
   
   # Commits
-  my $commits = $git->forward_commits(app->rep_info($user_id, $project_id), $branch1, $branch2);
+  my $commits = $git->forward_commits($rep_info, $branch1, $branch2);
   my $commits_count = @$commits;
   my $commits_date = {};
   my $authors = {};
@@ -36,10 +39,10 @@
   my $authors_count = keys %$authors;
 
   # Start commit
-  my $start_commit = $git->separated_commit(app->rep_info($user_id, $project_id), $branch1, $branch2);
+  my $start_commit = $git->separated_commit($rep_info, $branch1, $branch2);
 
   # End commit
-  my $end_commit = $git->get_commit(app->rep_info($user_id, $project_id), $branch2);
+  my $end_commit = $git->get_commit($rep_info, $branch2);
   
   # Pull request first message 
   my $pull_request_message_first = app->dbi->model('pull_request_message')->select(
