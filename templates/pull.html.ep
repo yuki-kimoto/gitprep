@@ -83,7 +83,14 @@
       <a style="color:#333333;font-weight:bold" href="<%= url_for("/$open_user_id") %>"><%= $open_user_id %></a> 
       <span style="color:#767676">
         wants to merge <%= $commits_count %> commits
-        into <%= $pull_request->{branch1} %> from <%= $pull_request->{branch2} %>
+        into
+        <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
+          <%= $pull_request->{branch1} %>
+        </span>
+        from
+        <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
+          <%= $pull_request->{branch2} %>
+        </span>
       </span>
     </div>
     <div>
