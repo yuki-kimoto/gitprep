@@ -73,7 +73,7 @@ sub check_user_and_password {
 }
 
 sub is_collaborator {
-  my ($self, $user_id, $project_id, $collaborator_id) = @_;
+  my ($self, $collaborator_id, $user_id, $project_id) = @_;
   
   my $user_row_id = $self->get_user_row_id($user_id);
   my $project_row_id = $self->app->dbi->model('project')->select(
@@ -97,7 +97,7 @@ sub can_access_private_project {
   )->value;
   
   my $is_valid =
-    ($user_id eq $session_user_id || $self->is_collaborator($user_id, $project_id, $session_user_id))
+    ($user_id eq $session_user_id || $self->is_collaborator($session_user_id, $user_id, $project_id))
     && $self->logined;
   
   return $is_valid;

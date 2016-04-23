@@ -43,12 +43,12 @@ sub rep_home {
 }
 
 sub rep_info {
-  my ($self, $user, $project) = @_;
+  my ($self, $user_id, $project_id) = @_;
   
   my $info = {};
-  $info->{user} = $user;
-  $info->{project} = $project;
-  $info->{git_dir} = $self->rep_home . "/$user/$project.git";
+  $info->{user} = $user_id;
+  $info->{project} = $project_id;
+  $info->{git_dir} = $self->rep_home . "/$user_id/$project_id.git";
   
   return $info;
 }
@@ -62,13 +62,13 @@ sub work_rep_home {
 }
 
 sub work_rep_info {
-  my ($self, $user, $project) = @_;
+  my ($self, $user_id, $project_id) = @_;
   
   my $info = {};
-  $info->{user} = $user;
-  $info->{project} = $project;
-  $info->{git_dir} = $self->work_rep_home . "/$user/$project/.git";
-  $info->{work_tree} = $self->work_rep_home . "/$user/$project";
+  $info->{user} = $user_id;
+  $info->{project} = $project_id;
+  $info->{git_dir} = $self->work_rep_home . "/$user_id/$project_id/.git";
+  $info->{work_tree} = $self->work_rep_home . "/$user_id/$project_id";
   
   return $info;
 }
@@ -164,8 +164,8 @@ sub startup {
   $self->dbi($dbi);
   
   # Database file permision
-  if (my $user = $self->config->{hypnotoad}{user}) {
-    my $uid = (getpwnam $user)[2];
+  if (my $user_id = $self->config->{hypnotoad}{user}) {
+    my $uid = (getpwnam $user_id)[2];
     chown $uid, -1, $db_file;
   }
   if (my $group = $self->config->{hypnotoad}{group}) {
@@ -322,27 +322,27 @@ sub startup {
               my $self = shift;
               
               my $api = $self->gitprep_api;
-              my $user = $self->param('user');
-              my $project = $self->param('project');
-              my $private = $self->app->manager->is_private_project($user, $project);
+              my $user_id = $self->param('user');
+              my $project_id = $self->param('project');
+              my $private = $self->app->manager->is_private_project($user_id, $project_id);
               
               # Basic auth when push request
               my $service = $self->param('service') || '';
               if ($service eq 'git-receive-pack' || $private) {
                 
                 $self->basic_auth("Git Area", sub {
-                  my ($auth_user, $auth_password) = @_;
+                  my ($auth_user_id, $auth_password) = @_;
                   
-                  if (!defined $auth_user || !length $auth_user) {
+                  if (!defined $auth_user_id || !length $auth_user_id) {
                     $self->app->log->warn("Authentication: User name is empty");
                   }
                   
-                  $auth_user = '' unless defined $auth_user;
+                  $auth_user_id = '' unless defined $auth_user_id;
                   $auth_password = '' unless defined $auth_password;
                   
                   my $is_valid =
-                    ($user eq $auth_user || $api->is_collaborator($user, $project, $auth_user))
-                    && $api->check_user_and_password($auth_user, $auth_password);
+                    ($user_id eq $auth_user_id || $api->is_collaborator($auth_user_id, $user_id, $project_id))
+                    && $api->check_user_and_password($auth_user_id, $auth_password);
                   
                   return $is_valid;
                 });
@@ -356,10 +356,10 @@ sub startup {
             $r->get('/')->to(cb => sub {
               my $self = shift;
               
-              my $user = $self->param('user');
-              my $project = $self->param('project');
+              my $user_id = $self->param('user');
+              my $project_id = $self->param('project');
               
-              $self->redirect_to("/$user/$project");
+              $self->redirect_to("/$user_id/$project_id");
             });
             
             # /info/refs
@@ -388,11 +388,11 @@ sub startup {
               my $api = $self->gitprep_api;
               
               # Private
-              my $user = $self->param('user');
-              my $project = $self->param('project');
-              my $private = $self->app->manager->is_private_project($user, $project);
+              my $user_id = $self->param('user');
+              my $project_id = $self->param('project');
+              my $private = $self->app->manager->is_private_project($user_id, $project_id);
               if ($private) {
-                if ($api->can_access_private_project($user, $project)) {
+                if ($api->can_access_private_project($user_id, $project_id)) {
                   return 1;
                 }
                 else {
@@ -507,7 +507,9 @@ sub startup {
     }
   });
 
-  # Set auto_decompress for Smart HTTP(I don't know this reasone)
+  # Set auto_decompress for Smart HTTP
+  # HTTP request body of /smart-http/service is compressed.
+  # If auto_decompress is not set, Smart HTTP fail.
   $self->hook('after_build_tx' => sub {
     my ($tx, $app) = @_;
     

@@ -7,11 +7,23 @@
   my $project_id = param('project');
   my $row_id = param('row_id');
   
+  # Session
+  my $session_user_id = $api->session_user_id;
+  
   # Repository information
   my $rep_info = app->rep_info($user_id, $project_id);
   
   # Git
   my $git = $self->app->git;
+  
+  if (lc $self->req->method eq 'post') {
+    my $op = param('op');
+    
+    # Access controll
+    if ($op eq 'close') {
+      
+    }
+  }
   
   # Pull requests
   my $pull_request = app->dbi->model('pull_request')->select(
