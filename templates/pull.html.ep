@@ -13,8 +13,23 @@
   # Repository information
   my $rep_info = app->rep_info($user_id, $project_id);
   
+  # Working repository information
+  my $work_rep_info = app->work_rep_info($user_id, $project_id);
+  
   # Git
   my $git = $self->app->git;
+
+  # Pull requests
+  my $pull_request = app->dbi->model('pull_request')->select(
+    [
+      {__MY__ => '*'},
+      {user => ['id']}
+    ],
+    where => {'pull_request.row_id' => $row_id}
+  )->one;
+  
+  my $branch1 = $pull_request->{branch1};
+  my $branch2 = $pull_request->{branch2};
   
   if (lc $self->req->method eq 'post') {
     
@@ -46,19 +61,47 @@
       $self->redirect_to('current');
       return;
     }
+    elsif ($op eq 'merge') {
+      
+      # Lock working repository
+      my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+
+      # Prepare merge
+      $self->app->manager->prepare_merge(
+        $work_rep_info,
+        $rep_info,
+        $branch1,
+        $rep_info,
+        $branch2
+      );
+      
+      # Check merge automatical
+      my $merge_automatical = $self->app->manager->check_merge_automatical(
+        $work_rep_info,
+        $rep_info,
+        $branch1,
+        $rep_info,
+        $branch2
+      );
+      
+      if ($merge_automatical) {
+        app->manager->merge_and_push(
+          $work_rep_info,
+          $rep_info,
+          $branch1,
+          $rep_info,
+          $branch2
+        );
+        
+        app->dbi->model('pull_request')->update(
+          {open => 0},
+          where => {row_id => $row_id}
+        );
+        
+        $self->redirect_to("/$user_id/$project_id/tree/$branch1");
+      }
+    }
   }
-  
-  # Pull requests
-  my $pull_request = app->dbi->model('pull_request')->select(
-    [
-      {__MY__ => '*'},
-      {user => ['id']}
-    ],
-    where => {'pull_request.row_id' => $row_id}
-  )->one;
-  
-  my $branch1 = $pull_request->{branch1};
-  my $branch2 = $pull_request->{branch2};
   
   # Commits
   my $commits = $git->forward_commits($rep_info, $branch1, $branch2);
@@ -91,8 +134,21 @@
   # Check merge automatically
   my $merge_automatical;
   if ($api->can_write_access($session_user_id, $user_id, $project_id) && $pull_request->{open}) {
+  
+    my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+    
+    # Prepare merge
+    $self->app->manager->prepare_merge(
+      $work_rep_info,
+      $rep_info,
+      $branch1,
+      $rep_info,
+      $branch2
+    );
+    
+    # Check merge automatical
     $merge_automatical = $self->app->manager->check_merge_automatical(
-      app->work_rep_info($user_id, $project_id),
+      $work_rep_info,
       $rep_info,
       $branch1,
       $rep_info,
@@ -224,8 +280,9 @@
       %= include '/include/commit_body', %commit_body_args;
       
       % if ($api->can_write_access($session_user_id, $user_id, $project_id)) {
-        % if ($pull_request->{open}) {
+        % if ($merge_automatical && $pull_request->{open}) {
           <form action="<%= url_for %>" method="post">
+            <%= hidden_field op => 'merge' %>
             <div class="pull-request-form">
               <div style="overflow:hidden">
                 <div style="float:left;padding:10px;padding-right:0">

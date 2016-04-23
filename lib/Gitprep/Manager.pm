@@ -17,6 +17,21 @@ has 'authorized_keys_file';
 
 has '_tmp_branch' => '__gitprep_tmp_branch__';
 
+sub merge_and_push {
+  my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
+  
+  # Merge
+  my $target_user_id = $rep_info2->{user};
+  my @git_merge_cmd = $self->app->git->cmd($work_rep_info, 'merge', "$target_user_id/$target_branch");
+  Gitprep::Util::run_command(@git_merge_cmd)
+    or Carp::croak "Can't execute git merge: @git_merge_cmd";
+  
+  # Push
+  my @git_push_cmd = $self->app->git->cmd($work_rep_info, 'push', 'origin', $base_branch);
+  Gitprep::Util::run_command(@git_push_cmd)
+    or Carp::croak "Can't execute git push: @git_push_cmd";
+}
+
 sub prepare_merge {
   my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
   
@@ -82,7 +97,7 @@ sub check_merge_automatical {
   my @git_format_patch_cmd = $self->app->git->cmd(
     $work_rep_info,
     'format-patch',
-    "$tmp_branch..$target_user_id/$target_branch",
+    "origin/$base_branch..$target_user_id/$target_branch",
     "--stdout"
   );
   open my $git_format_patch_fh, '-|', @git_format_patch_cmd
@@ -104,7 +119,9 @@ sub check_merge_automatical {
     $patch_file,
     '--check'
   );
+  
   my $automatical = Gitprep::Util::run_command(@git_apply_cmd);
+  
   
   return $automatical;
 }
