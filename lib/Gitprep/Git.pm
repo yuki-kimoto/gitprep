@@ -538,10 +538,10 @@ sub commits_number {
 }
 
 sub exists_branch {
-  my ($self, $rep) = @_;
+  my ($self, $rep_info) = @_;
   
   # Exists branch
-  my @cmd = $self->cmd($rep, 'branch');
+  my @cmd = $self->cmd($rep_info, 'branch');
   open my $fh, "-|", @cmd
     or croak 'git branch failed';
   local $/;
@@ -551,9 +551,9 @@ sub exists_branch {
 }
 
 sub delete_branch {
-  my ($self, $rep, $branch) = @_;
+  my ($self, $rep_info, $branch) = @_;
   
-  my $branches = $self->branches($rep);
+  my $branches = $self->branches($rep_info);
   my $exists;
   for my $b (@$branches) {
     if ($branch eq $b->{name}) {
@@ -563,7 +563,7 @@ sub delete_branch {
   }
   
   if ($exists) {
-    my @cmd = $self->cmd($rep, 'branch', '-D', $branch);
+    my @cmd = $self->cmd($rep_info, 'branch', '-D', $branch);
     Gitprep::Util::run_command(@cmd)
       or croak "Branch deleting failed. Can't delete branch $branch";
   }
@@ -573,15 +573,15 @@ sub delete_branch {
 }
 
 sub description {
-  my ($self, $rep, $description) = @_;
+  my ($self, $rep_info, $description) = @_;
   
-  my $git_dir = $rep->{git_dir};
+  my $git_dir = $rep_info->{git_dir};
   my $file = "$git_dir/description";
   
   if (defined $description) {
     # Write description
     open my $fh, '>',$file
-      or croak "Can't open file $rep: $!";
+      or croak "Can't open file $git_dir: $!";
     print $fh encode('UTF-8', $description)
       or croak "Can't write description: $!";
     close $fh;

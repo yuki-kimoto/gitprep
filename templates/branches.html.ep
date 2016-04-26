@@ -1,5 +1,4 @@
 <%
-
   # API
   my $api = gitprep_api;
 
@@ -145,6 +144,21 @@
     }
   }
   
+  my $original_project_row_id = app->dbi->model('project')->select(
+    'original_project',
+    where => {'user.id' => $user_id, 'project.id' => $project_id}
+  )->value;
+  
+  my $original_project;
+  if ($original_project_row_id) {
+    $original_project = app->dbi->model('project')->select(
+      [
+        {__MY__ => '*'},
+        {user => ['id']}
+      ],
+      where => {'project.row_id' => $original_project_row_id}
+    )->one;
+  }
 %>
 
 % layout 'common', title => "branches  \x{30fb} $user_id/$project_id";
@@ -302,7 +316,29 @@
                               closed
                             % }
                           % } else {
-                            <a class="btn btn-small" href="<%= url_for("/$user_id/$project_id/compare/$branch_name")->query(expand => 1) %>">
+                            <% 
+                              my $compare_url;
+                              if ($original_project) {
+                                my $original_user_id = $original_project->{'user.id'};
+                                my $original_project_id = $original_project->{id};
+                                
+                                my $exists_original_branch_name = app->git->exists_branch(
+                                  app->rep_info($original_user_id, $original_project_id),
+                                  $branch_name
+                                );
+                                if ($exists_original_branch_name) {
+                                  $compare_url = url_for("/$original_user_id/$original_project_id/compare/$branch_name...$user_id:$branch_name")->query(expand => 1);
+                                }
+                                else {
+                                  my $original_project_default_branch = app->manager->default_branch($original_user_id, $original_project_id);
+                                  $compare_url = url_for("/$original_user_id/$original_project_id/compare/$original_project_default_branch...$user_id:$branch_name")->query(expand => 1);
+                                }
+                              }
+                              else {
+                                $compare_url = url_for("/$user_id/$project_id/compare/$branch_name")->query(expand => 1);
+                              }
+                            %>
+                            <a class="btn btn-small" href="<%= $compare_url %>">
                               New pull request
                             </a>
                           % }
