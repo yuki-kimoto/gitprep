@@ -108,9 +108,46 @@
       }
     }
   }
+
+  # Can merge
+  my $rep_info = app->rep_info($user_id, $project_id);
+  my $merge_success;
+  my $rep_info2;
+  if ($target_project) {
+    $rep_info2 = app->rep_info($target_user_id, $target_project->{id});
+  }
+  else {
+    $rep_info2 = $rep_info;
+  }
+    
+  # Create working repository if it don't exist
+  $self->app->manager->create_work_rep($user_id, $project_id);
+  
+  # Lock working repository
+  my $work_rep_info = app->work_rep_info($user_id, $project_id);
+  {
+    my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+    
+    # Prepare merge
+    $self->app->manager->prepare_merge(
+      $work_rep_info,
+      $rep_info,
+      $from_rev,
+      $rep_info2,
+      $rev
+    );
+    
+    # Check merge automatically
+    $merge_success = $self->app->manager->merge(
+      $work_rep_info,
+      $rep_info,
+      $from_rev,
+      $rep_info2,
+      $rev
+    );
+  }
   
   # Commits
-  my $rep_info = app->rep_info($user_id, $project_id);
   my $commits = $git->forward_commits($rep_info, $from_rev, $rev);
   my $commits_count = @$commits;
   my $commits_date = {};
@@ -127,7 +164,7 @@
   my $start_commit = $git->separated_commit($rep_info, $from_rev, $rev);
 
   # End commit
-  my $end_commit = $git->get_commit($rep_info, $rev);
+  my $end_commit = $git->get_commit($rep_info2, $rev);
   
   if (!$start_commit || !$end_commit) {
     $self->reply->not_found;
@@ -144,36 +181,6 @@
     $can_open_pull_request = 1;
   }
   
-  # Can merge
-  my $merge_success;
-  if ($can_open_pull_request) {
-    
-    # Create working repository if it don't exist
-    $self->app->manager->create_work_rep($user_id, $project_id);
-    
-    # Lock working repository
-    my $work_rep_info = app->work_rep_info($user_id, $project_id);
-    my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
-    
-    # Prepare merge
-    $self->app->manager->prepare_merge(
-      $work_rep_info,
-      $rep_info,
-      $from_rev,
-      $rep_info,
-      $rev
-    );
-    
-    # Check merge automatically
-    $merge_success = $self->app->manager->merge(
-      $work_rep_info,
-      $rep_info,
-      $from_rev,
-      $rep_info,
-      $rev
-    );
-  }
-
   # commit_body args
   my %commit_body_args = (
     id => $end_commit->{id},
