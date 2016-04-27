@@ -205,9 +205,13 @@ sub startup {
       table => 'pull_request',
       primary_key => 'row_id',
       join => [
-        'left join user on pull_request.open_user = user.row_id',
-        'left join project on pull_request.project = project.row_id',
-        'left join user as project_user on project.user = project_user.row_id'
+        'left join user as pull_request__open_user on pull_request.open_user = pull_request__open_user.row_id',
+        'left join project as pull_request__base_project on pull_request.base_project = pull_request__base_project.row_id',
+        'left join user as pull_request__base_project__user'
+          . ' on pull_request__base_project.user = pull_request__base_project__user.row_id',
+        'left join project as pull_request__target_project on pull_request.target_project = pull_request__target_project.row_id',
+        'left join user as pull_request__target_project__user'
+          . ' on pull_request__target_project.user = pull_request__target_project__user.row_id'
       ]
     },
     {

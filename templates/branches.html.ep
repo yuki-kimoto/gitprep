@@ -232,10 +232,10 @@
                 my $pull_request = app->dbi->model('pull_request')->select(
                   {__MY__ => ['row_id', 'open']},
                   where => {
-                    'project.id' => $project_id,
-                    'project_user.id' => $user_id,
-                    branch1 => $default_branch_name,
-                    branch2 => $branch_name
+                    'pull_request__base_project.id' => $project_id,
+                    'pull_request__base_project__user.id' => $user_id,
+                    base_branch => $default_branch_name,
+                    target_branch => $branch_name
                   }
                 )->one;
               %>

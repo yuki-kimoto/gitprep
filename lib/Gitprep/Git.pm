@@ -19,6 +19,21 @@ has text_exts => sub { ['txt'] };
 has 'time_zone_second';
 has 'app';
 
+sub ref_to_object_id {
+  my ($self, $rep_info, $ref) = @_;
+  
+  my @cmd = $self->cmd($rep_info, 'show-ref', $ref);
+  open my $fh, '-|', @cmd
+    or croak "Can't execute git show-ref: @cmd";
+  my $result = <$fh>;
+  
+  return unless defined $result;
+  
+  my ($object_id) = split /\s+/, $result;
+  
+  return $object_id;
+}
+
 sub current_branch {
   my ($self, $rep_info) = @_;
   
@@ -744,7 +759,6 @@ sub path_to_hash {
 
   return $id;
 }
-
 
 sub last_activity {
   my ($self, $rep) = @_;

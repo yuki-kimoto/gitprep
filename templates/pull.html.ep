@@ -3,38 +3,67 @@
   my $api = gitprep_api;
 
   # Parameters
-  my $user_id = param('user');
-  my $project_id = param('project');
+  my $base_user_id = param('user');
+  my $base_project_id = param('project');
   my $row_id = param('row_id');
-  
-  # Session
-  my $session_user_id = $api->session_user_id;
-  
-  # Repository information
-  my $rep_info = app->rep_info($user_id, $project_id);
-  
-  # Working repository information
-  my $work_rep_info = app->work_rep_info($user_id, $project_id);
-  
-  # Git
-  my $git = $self->app->git;
 
   # Pull requests
   my $pull_request = app->dbi->model('pull_request')->select(
     [
       {__MY__ => '*'},
-      {user => ['id']}
+      {'pull_request__open_user' => ['id']}
     ],
     where => {'pull_request.row_id' => $row_id}
   )->one;
   
-  my $branch1 = $pull_request->{branch1};
-  my $branch2 = $pull_request->{branch2};
+  # Base information
+  my $base_project_row_id = $pull_request->{base_project};
+  my $base_project = app->dbi->model('project')->select(
+    [
+      {__MY__ => '*'},
+      {user => ['id']}
+    ],
+    where => {'project.row_id' => $base_project_row_id}
+  )->one;
+  my $base_branch = $pull_request->{base_branch};
+  
+  Carp::croak "pull_request invalid user id"
+    if $base_user_id ne $base_project->{'user.id'};
+  Carp::croak "pull_request invalid project id"
+    if $base_project_id ne $base_project->{id};
+  
+  # Target information
+  my $target_project_row_id = $pull_request->{target_project};
+  my $target_project = app->dbi->model('project')->select(
+    [
+      {__MY__ => '*'},
+      {user => ['id']}
+    ],
+    where => {'project.row_id' => $target_project_row_id}
+  )->one;
+  my $target_branch = $pull_request->{target_branch};
+  my $target_user_id = $target_project->{'user.id'};
+  my $taregt_project_id = $target_project->{id};
+  
+  # Session
+  my $session_user_id = $api->session_user_id;
+  
+  # Base repository information
+  my $base_rep_info = app->rep_info($base_user_id, $base_project_id);
+  
+  # Target repository information
+  my $target_rep_info = app->rep_info($target_user_id, $base_project_id);
+  
+  # Working repository information
+  my $work_rep_info = app->work_rep_info($base_user_id, $base_project_id);
+  
+  # Git
+  my $git = $self->app->git;
   
   if (lc $self->req->method eq 'post') {
     
     # Access controll
-    unless ($api->can_write_access($session_user_id, $user_id, $project_id)) {
+    unless ($api->can_write_access($session_user_id, $base_user_id, $base_project_id)) {
       $self->reply->exception('Forbbiden');
       return;
     }
@@ -69,38 +98,38 @@
       # Prepare merge
       $self->app->manager->prepare_merge(
         $work_rep_info,
-        $rep_info,
-        $branch1,
-        $rep_info,
-        $branch2
+        $base_rep_info,
+        $base_branch,
+        $target_rep_info,
+        $target_branch
       );
       
       # Merge
       my $merge_success = $self->app->manager->merge(
         $work_rep_info,
-        $rep_info,
-        $branch1,
-        $rep_info,
-        $branch2
+        $base_rep_info,
+        $base_branch,
+        $target_rep_info,
+        $target_branch
       );
       
       
       if ($merge_success) {
         # Push
-        app->manager->push($work_rep_info, $branch1);
+        app->manager->push($work_rep_info, $base_branch);
         
         app->dbi->model('pull_request')->update(
           {open => 0},
           where => {row_id => $row_id}
         );
         
-        $self->redirect_to("/$user_id/$project_id/tree/$branch1");
+        $self->redirect_to("/$base_user_id/$base_project_id/tree/$base_branch");
       }
     }
   }
   
   # Commits
-  my $commits = $git->forward_commits($rep_info, $branch1, $branch2);
+  my $commits = $git->forward_commits($base_rep_info, $base_branch, $target_branch);
   my $commits_count = @$commits;
   my $commits_date = {};
   my $authors = {};
@@ -113,10 +142,10 @@
   my $authors_count = keys %$authors;
 
   # Start commit
-  my $start_commit = $git->separated_commit($rep_info, $branch1, $branch2);
+  my $start_commit = $git->separated_commit($base_rep_info, $base_branch, $target_branch);
 
   # End commit
-  my $end_commit = $git->get_commit($rep_info, $branch2);
+  my $end_commit = $git->get_commit($target_rep_info, $target_branch);
   
   # Pull request first message 
   my $pull_request_message_first = app->dbi->model('pull_request_message')->select(
@@ -129,26 +158,26 @@
   
   # Check merge automatically
   my $merge_success;
-  if ($api->can_write_access($session_user_id, $user_id, $project_id) && $pull_request->{open}) {
-  
+  if ($api->can_write_access($session_user_id, $base_user_id, $base_project_id) && $pull_request->{open}) {
+    
     my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
     
     # Prepare merge
     $self->app->manager->prepare_merge(
       $work_rep_info,
-      $rep_info,
-      $branch1,
-      $rep_info,
-      $branch2
+      $base_rep_info,
+      $base_branch,
+      $target_rep_info,
+      $target_branch
     );
     
     # Check merge automatical
     $merge_success = $self->app->manager->merge(
       $work_rep_info,
-      $rep_info,
-      $branch1,
-      $rep_info,
-      $branch2
+      $base_rep_info,
+      $base_branch,
+      $target_rep_info,
+      $target_branch
     );
   }
 
@@ -161,7 +190,7 @@
   );
 %>
 
-% layout 'common', title => "Pull Requests Tags \x{30fb} $user_id/$project_id";
+% layout 'common', title => "Pull Requests Tags \x{30fb} $base_user_id/$base_project_id";
   
   %= include '/include/header';
   
@@ -187,17 +216,21 @@
           </div>
         % }
       </div>
-      % my $open_user_id = $pull_request->{'user.id'};
+      % my $open_user_id = $pull_request->{'pull_request__open_user.id'};
       <a style="color:#333333;font-weight:bold" href="<%= url_for("/$open_user_id") %>"><%= $open_user_id %></a> 
       <span style="color:#767676">
         wants to merge <%= $commits_count %> commits
         into
         <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
-          <%= $pull_request->{branch1} %>
+          <%= $pull_request->{base_branch} %>
         </span>
         from
         <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
-          <%= $pull_request->{branch2} %>
+          % if ($base_user_id ne $target_user_id) {
+            <%= $target_user_id %>
+            /
+          % }
+          <%= $pull_request->{target_branch} %>
         </span>
       </span>
     </div>
@@ -225,7 +258,7 @@
         </ul>
         <div class="pull-comment">
           <div class="pull-comment-header">
-            <b><%= $pull_request_message_first->{'user.id'} %></b>
+            <b><%= $pull_request_message_first->{'pull_request__open_user.id'} %></b>
             <span style="color:#767676">
               commented
               <%= $api->age_string($pull_request_message_first->{update_time}) %></b>
@@ -264,12 +297,12 @@
                     </span>
                   </div>
                   <div class="compare-commits-commit-title">
-                    <a style="color:#333" href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
+                    <a style="color:#333" href="<%= url_for("/$base_user_id/$base_project_id/commit/$commit->{id}") %>">
                       <%= $commit->{title_short} %>
                     </a>
                   </div>
                   <div class="compare-commits-commit-id">
-                    <a href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
+                    <a href="<%= url_for("/$base_user_id/$base_project_id/commit/$commit->{id}") %>">
                       <%= substr($commit->{id}, 0, 7) %>
                     </a>
                   </div>
@@ -283,7 +316,7 @@
         %= include '/include/commit_body', %commit_body_args;
       % }
       
-      % if ($api->can_write_access($session_user_id, $user_id, $project_id)) {
+      % if ($api->can_write_access($session_user_id, $base_user_id, $base_project_id)) {
         % if ($commits_count && $merge_success && $pull_request->{open}) {
           <form action="<%= url_for %>" method="post">
             <%= hidden_field op => 'merge' %>

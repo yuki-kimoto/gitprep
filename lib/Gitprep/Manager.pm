@@ -17,59 +17,17 @@ has 'authorized_keys_file';
 
 has '_tmp_branch' => '__gitprep_tmp_branch__';
 
-sub merge_and_push {
-  my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
-  
-  # Merge
-  my $target_user_id = $rep_info2->{user};
-  my @git_merge_cmd = $self->app->git->cmd(
-    $work_rep_info,
-    'merge',
-    "--message=merge $target_user_id/$target_branch",
-    "$target_user_id/$target_branch"
-  );
-  Gitprep::Util::run_command(@git_merge_cmd)
-    or Carp::croak "Can't execute git merge: @git_merge_cmd";
-  
-  # Push
-  my @git_push_cmd = $self->app->git->cmd($work_rep_info, 'push', 'origin', $base_branch);
-  Gitprep::Util::run_command(@git_push_cmd)
-    or Carp::croak "Can't execute git push: @git_push_cmd";
-}
-
 sub prepare_merge {
   my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
   
   # Fetch base repository
   my $base_user_id = $rep_info1->{user};
-  my @git_fetch_base_cmd = $self->app->git->cmd($work_rep_info, 'fetch', 'origin', $base_branch);
+  my @git_fetch_base_cmd = $self->app->git->cmd($work_rep_info, 'fetch', 'origin');
   Gitprep::Util::run_command(@git_fetch_base_cmd)
     or Carp::croak "Can't execute git fetch: @git_fetch_base_cmd";
   
-  # Remeve remote
-  my $target_user_id = $rep_info2->{user};
-  my @git_remote_remove_cmd =  $self->app->git->cmd(
-    $work_rep_info,
-    'remote',
-    'remove',
-    $target_user_id
-  );
-  Gitprep::Util::run_command(@git_remote_remove_cmd);
-  
-  # Set remote add target repository
-  my $target_git_dir = $rep_info2->{git_dir};
-  my @git_remote_add_cmd = $self->app->git->cmd(
-    $work_rep_info,
-    'remote',
-    'add',
-    $target_user_id,
-    $target_git_dir
-  );
-  Gitprep::Util::run_command(@git_remote_add_cmd)
-    or Carp::croak "Can't execute git remote add: @git_remote_add_cmd";
-  
   # Fetch target repository
-  my @git_fetch_target_cmd = $self->app->git->cmd($work_rep_info, 'fetch', $target_user_id, $target_branch);
+  my @git_fetch_target_cmd = $self->app->git->cmd($work_rep_info, 'fetch', $rep_info2->{git_dir});
   Gitprep::Util::run_command(@git_fetch_target_cmd)
     or Carp::croak "Can't execute git fetch: @git_fetch_target_cmd";
 
@@ -144,13 +102,15 @@ sub prepare_merge {
 sub merge {
   my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
   
+  my $object_id = $self->app->git->ref_to_object_id($rep_info2, $target_branch);
+  
   # Merge
   my $target_user_id = $rep_info2->{user};
   my @git_merge_cmd = $self->app->git->cmd(
     $work_rep_info,
     'merge',
-    "--message=merge $target_user_id/$target_branch",
-    "$target_user_id/$target_branch"
+    "--message=[merge]$target_user_id/$target_branch",
+    $object_id
   );
   
   my $success = Gitprep::Util::run_command(@git_merge_cmd);
@@ -169,63 +129,9 @@ sub push {
     'origin',
     "$tmp_branch:$base_branch"
   );
-  warn "@git_push_cmd";
   Gitprep::Util::run_command(@git_push_cmd)
     or Carp::croak "Can't execute git push: @git_push_cmd";
 }
-
-=pod
-sub check_merge_automatical {
-  my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
-  
-  # Create patch
-  my $tmp_branch = $self->_tmp_branch;
-  my $target_user_id = $rep_info2->{user};
-  my @git_format_patch_cmd = $self->app->git->cmd(
-    $work_rep_info,
-    'format-patch',
-    "origin/$base_branch..$target_user_id/$target_branch",
-    "--stdout"
-  );
-  open my $git_format_patch_fh, '-|', @git_format_patch_cmd
-    or Carp::croak "Can't execute git format-patch: @git_format_patch_cmd";
-  my $patch_str = do { local $/; <$git_format_patch_fh> };
-  
-  warn "@git_format_patch_cmd";
-  
-  # Write patch to file
-  my $tmp_dir = File::Temp->newdir(DIR => $self->app->home->rel_file('/tmp'));
-  my $patch_file = "$tmp_dir/test.patch";
-  open my $patch_fh, '>', $patch_file
-    or Carp::croak "Can't open patch file $patch_file: $!";
-  print $patch_fh $patch_str;
-  close $patch_fh;
-  
-  # Check if this patch can be applied
-  use Cwd;
-  my $original_cwd = getcwd;
-  chdir $work_rep_info->{work_tree}
-    or croak "Can't change working directory: $work_rep_info->{work_tree}";
-  warn "aaaaaaaaaaaaaaaaa $work_rep_info->{work_tree}";
-  my @git_apply_cmd = $self->app->git->cmd(
-    $work_rep_info,
-    'apply',
-    $patch_file,
-    '--check'
-  );
-  chdir $original_cwd
-    or croak "Can't change working directory: $original_cwd";
-  
-  warn "@git_apply_cmd";
-  
-  # sleep 300;
-  my $automatical = Gitprep::Util::run_command(@git_apply_cmd);
-  
-  warn "bbbbbbbbbbbbbbbbbbbb $automatical";
-  
-  return $automatical;
-}
-=cut
 
 sub lock_rep {
   my ($self, $rep_info) = @_;

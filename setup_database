@@ -157,10 +157,11 @@ EOS
     my $sql = <<"EOS";
 create table pull_request (
   row_id integer primary key autoincrement,
-  project integer not null default 0,
-  branch1 not null default '',
-  branch2 not null default '',
-  unique(project, branch1, branch2)
+  base_project integer not null default 0,
+  base_branch not null default '',
+  target_project integer not null default 0,
+  target_branch not null default '',
+  unique(base_project, base_branch, target_project, target_branch)
 );
 EOS
     $dbi->execute($sql);
@@ -178,7 +179,7 @@ EOS
   }
 
   # Check pull_request table
-  eval { $dbi->select([qw/row_id project branch1 branch2 title open open_time open_user/], table => 'pull_request') };
+  eval { $dbi->select([qw/row_id base_project base_branch target_project target_branch title open open_time open_user/], table => 'pull_request') };
   if ($@) {
     my $error = "Can't create pull_request table properly: $@";
     die $error;
