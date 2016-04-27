@@ -84,15 +84,10 @@
         $branch2
       );
       
+      
       if ($merge_success) {
         # Push
-        app->manager->push(
-          $work_rep_info,
-          $rep_info,
-          $branch1,
-          $rep_info,
-          $branch2
-        );
+        app->manager->push($work_rep_info, $branch1);
         
         app->dbi->model('pull_request')->update(
           {open => 0},

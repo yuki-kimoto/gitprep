@@ -130,15 +130,15 @@ sub prepare_merge {
   Gitprep::Util::run_command(@git_checkout_tmp_branch)
     or Carp::croak "Can't execute git checkout: @git_checkout_tmp_branch";
   
-  # git reset --hard
-  my @git_reset_hard_cmd = $self->app->git->cmd(
+  # git reset --hard 
+  my @git_reset_hard_base_cmd = $self->app->git->cmd(
     $work_rep_info,
     'reset',
     '--hard',
     "origin/$base_branch"
   );
-  Gitprep::Util::run_command(@git_reset_hard_cmd)
-    or Carp::croak "Can't execute git reset --hard: @git_reset_hard_cmd";
+  Gitprep::Util::run_command(@git_reset_hard_base_cmd)
+    or Carp::croak "Can't execute git reset --hard: @git_reset_hard_base_cmd";
 }
 
 sub merge {
@@ -159,14 +159,20 @@ sub merge {
 }
 
 sub push {
-  my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
+  my ($self, $work_rep_info, $base_branch) = @_;
   
   # Push
-  my @git_push_cmd = $self->app->git->cmd($work_rep_info, 'push', 'origin', $base_branch);
+  my $tmp_branch = $self->_tmp_branch;
+  my @git_push_cmd = $self->app->git->cmd(
+    $work_rep_info,
+    'push',
+    'origin',
+    "$tmp_branch:$base_branch"
+  );
+  warn "@git_push_cmd";
   Gitprep::Util::run_command(@git_push_cmd)
     or Carp::croak "Can't execute git push: @git_push_cmd";
 }
-
 
 =pod
 sub check_merge_automatical {
