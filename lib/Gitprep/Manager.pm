@@ -18,16 +18,16 @@ has 'authorized_keys_file';
 has '_tmp_branch' => '__gitprep_tmp_branch__';
 
 sub prepare_merge {
-  my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
+  my ($self, $work_rep_info, $base_rep_info, $base_branch, $target_rep_info, $target_branch) = @_;
   
   # Fetch base repository
-  my $base_user_id = $rep_info1->{user};
+  my $base_user_id = $base_rep_info->{user};
   my @git_fetch_base_cmd = $self->app->git->cmd($work_rep_info, 'fetch', 'origin');
   Gitprep::Util::run_command(@git_fetch_base_cmd)
     or Carp::croak "Can't execute git fetch: @git_fetch_base_cmd";
   
   # Fetch target repository
-  my @git_fetch_target_cmd = $self->app->git->cmd($work_rep_info, 'fetch', $rep_info2->{git_dir});
+  my @git_fetch_target_cmd = $self->app->git->cmd($work_rep_info, 'fetch', $target_rep_info->{git_dir});
   Gitprep::Util::run_command(@git_fetch_target_cmd)
     or Carp::croak "Can't execute git fetch: @git_fetch_target_cmd";
 
@@ -89,23 +89,24 @@ sub prepare_merge {
     or Carp::croak "Can't execute git checkout: @git_checkout_tmp_branch";
   
   # git reset --hard 
+  my $base_object_id = $self->app->git->ref_to_object_id($base_rep_info, $base_branch);
   my @git_reset_hard_base_cmd = $self->app->git->cmd(
     $work_rep_info,
     'reset',
     '--hard',
-    "origin/$base_branch"
+    $base_object_id
   );
   Gitprep::Util::run_command(@git_reset_hard_base_cmd)
     or Carp::croak "Can't execute git reset --hard: @git_reset_hard_base_cmd";
 }
 
 sub merge {
-  my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
+  my ($self, $work_rep_info, $base_rep_info, $base_branch, $target_rep_info, $target_branch) = @_;
   
-  my $object_id = $self->app->git->ref_to_object_id($rep_info2, $target_branch);
+  my $object_id = $self->app->git->ref_to_object_id($target_rep_info, $target_branch);
   
   # Merge
-  my $target_user_id = $rep_info2->{user};
+  my $target_user_id = $target_rep_info->{user};
   my @git_merge_cmd = $self->app->git->cmd(
     $work_rep_info,
     'merge',

@@ -317,7 +317,6 @@ note 'Profile';
     $t->post_ok('/_login?op=login', form => {id => 'kimoto1', password => 'a'});
     
     # Create repository
-    $main::x = 1;
     $t->post_ok('/_new?op=create', form => {project => 't1', description => 'Hello'});
     $t->content_like(qr/Create a new repository on the command line/);
     $t->content_like(qr/t1\.git/);

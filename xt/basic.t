@@ -403,7 +403,6 @@ note 'Branches';
   # Page access
   $t->get_ok("/$user/$project/branches");
   $t->content_like(qr/Branches/);
-  
 }
 
 note 'Compare';
