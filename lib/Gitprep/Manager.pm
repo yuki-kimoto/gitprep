@@ -501,7 +501,6 @@ sub original_project {
   croak "Original project don't eixsts." unless defined $original_project_row_id;
   
   # Original project
-  $DB::single = 1 if $main::x;
   my $original_project = $dbi->model('project')->select(
     [
       {__MY__ => '*'},
@@ -515,6 +514,26 @@ sub original_project {
   return unless defined $original_project;
   
   return $original_project;
+}
+
+sub child_project {
+  my ($self, $user_id, $project_id, $child_user_id) = @_;
+  
+  my $project_row_id = $self->app->dbi->model('project')->select(
+    'project.row_id', where => {'user.id' => $user_id, 'project.id' => $project_id}
+  )->value;
+  
+  my $child_project = $self->app->dbi->model('project')->select(
+    [
+      {__MY__ => '*'},
+    ],
+    where => {
+      'project.original_project' => $project_row_id,
+      'user.id' => $child_user_id
+    }
+  )->one;
+  
+  return $child_project;
 }
 
 sub projects {

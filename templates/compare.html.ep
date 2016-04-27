@@ -10,6 +10,16 @@
   my $page = param('page') || 0;
   my $expand = param('expand');
   
+  # Get target user, project, branch
+  my $target_user_id;
+  my $target_branch;
+  my $target_project;
+  if ($rev =~ /^([^:]+):(.+)/) {
+    $target_user_id = $1;
+    $target_branch = $2;
+    $target_project = $self->app->manager->child_project($user_id, $project_id, $target_user_id);
+  }
+  
   unless ($from_rev) {
     $from_rev = app->manager->default_branch($user_id, $project_id);
   }
@@ -96,7 +106,6 @@
         $self->redirect_to("/$user_id/$project_id/pull/$new_pull_request_row_id");
         return;
       }
-      
     }
   }
   
