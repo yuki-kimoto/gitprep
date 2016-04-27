@@ -201,82 +201,90 @@
         </span>
       </span>
     </div>
-    <div>
-      <ul class="compare-header">
-        <li>
-          <b><%= @$commits %></b> <span>commit</span>
-        </li>
-        <li>
-          <b><%= $authors_count %></b> <span>contributor</span>
-        </li>
-        <li>
-          
-        </li>
-        <li>
-          
-        </li>
-      </ul>
-      <div class="pull-comment">
-        <div class="pull-comment-header">
-          <b><%= $pull_request_message_first->{'user.id'} %></b>
-          <span style="color:#767676">
-            commented
-            <%= $api->age_string($pull_request_message_first->{update_time}) %></b>
-          </span>
-        </div>
-        <div class="pull-comment-body">
-          <%= $pull_request_message_first->{message} %>
+    % if (!$commits_count) {
+      <div class="compare-nothing" style="margin-top:10px">
+        <div>
+          <b><big>There isn't anything to compare.</big></b>
         </div>
       </div>
-      
-      <div class="commits">
-        % for my $date (reverse sort keys %$commits_date) {
-          % my $commits = $commits_date->{$date};
-          
-          <div class="commit-date">
-            <i class="icon-off"></i><span>Commits on <%= $date %></span>
+    % } else {
+      <div>
+        <ul class="compare-header">
+          <li>
+            <b><%= @$commits %></b> <span>commit</span>
+          </li>
+          <li>
+            <b><%= $authors_count %></b> <span>contributor</span>
+          </li>
+          <li>
+            
+          </li>
+          <li>
+            
+          </li>
+        </ul>
+        <div class="pull-comment">
+          <div class="pull-comment-header">
+            <b><%= $pull_request_message_first->{'user.id'} %></b>
+            <span style="color:#767676">
+              commented
+              <%= $api->age_string($pull_request_message_first->{update_time}) %></b>
+            </span>
           </div>
-          
-          <ul class="compare-commits-date-container">
-            % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
-              <%
-                my $commit_author_email = $commit->{author_email};
-                my $commit_author_id = app->dbi->model('user')->select(
-                  'id',
-                  where => {email => $commit_author_email}
-                )->value;
-              %>
-              <li>
-                <div class="compare-commits-author">
-                  <span title="<%= $commit->{author_email} %>">
-                    % if (defined $commit_author_id) {
-                      <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
-                    % } else {
-                      <%= $commit->{author_name} %>
-                    % }
-                  </span>
-                </div>
-                <div class="compare-commits-commit-title">
-                  <a style="color:#333" href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
-                    <%= $commit->{title_short} %>
-                  </a>
-                </div>
-                <div class="compare-commits-commit-id">
-                  <a href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
-                    <%= substr($commit->{id}, 0, 7) %>
-                  </a>
-                </div>
-              </li>
-            % }
-          </ul>
-        % }
-      </div>
+          <div class="pull-comment-body">
+            <%= $pull_request_message_first->{message} %>
+          </div>
+        </div>
+        
+        <div class="commits">
+          % for my $date (reverse sort keys %$commits_date) {
+            % my $commits = $commits_date->{$date};
+            
+            <div class="commit-date">
+              <i class="icon-off"></i><span>Commits on <%= $date %></span>
+            </div>
+            
+            <ul class="compare-commits-date-container">
+              % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
+                <%
+                  my $commit_author_email = $commit->{author_email};
+                  my $commit_author_id = app->dbi->model('user')->select(
+                    'id',
+                    where => {email => $commit_author_email}
+                  )->value;
+                %>
+                <li>
+                  <div class="compare-commits-author">
+                    <span title="<%= $commit->{author_email} %>">
+                      % if (defined $commit_author_id) {
+                        <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+                      % } else {
+                        <%= $commit->{author_name} %>
+                      % }
+                    </span>
+                  </div>
+                  <div class="compare-commits-commit-title">
+                    <a style="color:#333" href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
+                      <%= $commit->{title_short} %>
+                    </a>
+                  </div>
+                  <div class="compare-commits-commit-id">
+                    <a href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
+                      <%= substr($commit->{id}, 0, 7) %>
+                    </a>
+                  </div>
+                </li>
+              % }
+            </ul>
+          % }
+        </div>
 
   
-      %= include '/include/commit_body', %commit_body_args;
+        %= include '/include/commit_body', %commit_body_args;
+      % }
       
       % if ($api->can_write_access($session_user_id, $user_id, $project_id)) {
-        % if ($merge_success && $pull_request->{open}) {
+        % if ($commits_count && $merge_success && $pull_request->{open}) {
           <form action="<%= url_for %>" method="post">
             <%= hidden_field op => 'merge' %>
             <div class="pull-request-form">

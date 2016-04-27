@@ -116,6 +116,10 @@
 }
 .pulls-body li {
   padding:10px;
+  border-top: 1px solid #d8d8d8;
+}
+.pulls-body li:first-child {
+  border-top:none;
 }
 .pulls-no-request {
   padding:30px;

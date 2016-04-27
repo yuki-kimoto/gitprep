@@ -3,8 +3,12 @@
   my $api = gitprep_api;
 
   # Parameters
-  my $user = param('user');
-  my $project = param('project');
+  my $user_id = param('user');
+  my $project_id = param('project');
+  
+  my $is = param('is');
+  
+  my $open = $is eq 'closed' ? 0 : 1;
   
   # Git
   my $git = $self->app->git;
@@ -15,7 +19,7 @@
       {__MY__ => '*'},
       {user => ['id']}
     ],
-    where => {open => 1}
+    where => {open => $open}
   )->all;
   
   # Open count
@@ -25,17 +29,25 @@
   my $close_count = app->dbi->model('pull_request')->select('count(*)', where => {open => 0})->value;
 %>
 
-% layout 'common', title => "Pull Requests Tags \x{30fb} $user/$project";
+% layout 'common', title => "Pull Requests Tags \x{30fb} $user_id/$project_id";
   
   %= include '/include/header';
   
   <div class="container">
     <div class="pulls-button-container">
-      <a href="<%= url_for("/$user/$project/compare") %>" class="btn btn-success">New pull request</a>
+      <a href="<%= url_for("/$user_id/$project_id/compare") %>" class="btn btn-success">New pull request</a>
     </div>
     <div class="pulls">
       <div class="pulls-header">
-        <b><%= $open_count %> Open</b> <span style="margin-left:5px;color:#767676"><%= "\x{2714}" %><%= $close_count %> Closed</span>
+        % if ($open) {
+          <b><%= $open_count %> Open</b>
+          <a href="<%= url_with->query([is => 'closed']) %>" style="margin-left:5px;color:#767676"><%= "\x{2714}" %><%= $close_count %> Closed</a>
+        % } else {
+          <a  style="margin-left:5px;color:#767676" href="<%= url_with->query([is => undef]) %>"><%= $open_count %> Open</a>
+          <b>
+            <span style="margin-left:5px;color:#767676"><%= "\x{2714}" %><%= $close_count %> Closed</span>
+          </b>
+        % }
       </div>
       <div class="pulls-body">
         % if (@$pull_requests) {
@@ -43,14 +55,14 @@
             % for my $pull_request (@$pull_requests) {
               <%
                 my $branch2 = $pull_request->{branch2};
-                my $commit = app->git->get_commit(app->rep_info($user, $project), $branch2);
+                my $commit = app->git->get_commit(app->rep_info($user_id, $project_id), $branch2);
                 my $open_time = $pull_request->{open_time};
                 my $open_time_age = Time::Moment->now->epoch - $open_time;
                 my $open_time_age_string = $self->app->git->_age_string($open_time_age);
               %>
               <li>
                 <div class="pulls-title">
-                  <a href="<%= "/$user/$project/pull/$pull_request->{row_id}" %>">
+                  <a href="<%= "/$user_id/$project_id/pull/$pull_request->{row_id}" %>">
                     <b><%= $pull_request->{title} %></b>
                   </a>
                 </div>
