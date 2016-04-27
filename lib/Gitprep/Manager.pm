@@ -22,7 +22,12 @@ sub merge_and_push {
   
   # Merge
   my $target_user_id = $rep_info2->{user};
-  my @git_merge_cmd = $self->app->git->cmd($work_rep_info, 'merge', "$target_user_id/$target_branch");
+  my @git_merge_cmd = $self->app->git->cmd(
+    $work_rep_info,
+    'merge',
+    "--message=merge $target_user_id/$target_branch",
+    "$target_user_id/$target_branch"
+  );
   Gitprep::Util::run_command(@git_merge_cmd)
     or Carp::croak "Can't execute git merge: @git_merge_cmd";
   
@@ -67,12 +72,60 @@ sub prepare_merge {
   my @git_fetch_target_cmd = $self->app->git->cmd($work_rep_info, 'fetch', $target_user_id, $target_branch);
   Gitprep::Util::run_command(@git_fetch_target_cmd)
     or Carp::croak "Can't execute git fetch: @git_fetch_target_cmd";
+
+  # Ensure no diff
+  my @git_reset_hard_cmd = $self->app->git->cmd(
+    $work_rep_info,
+    'reset',
+    '--hard'
+  );
+  Gitprep::Util::run_command(@git_reset_hard_cmd)
+    or Carp::croak "Can't execute git reset --hard: @git_reset_hard_cmd";
+
+  # Checkout first branch
+  my $tmp_branch = $self->_tmp_branch;
+  my $branch_names = $self->app->git->branch_names($work_rep_info);
+  my $first_branch;
+  for my $branch_name (@$branch_names) {
+    if ($branch_name ne $tmp_branch) {
+      $first_branch = $branch_name;
+      last;
+    }
+  }
+  my @git_checkout_first_branch = $self->app->git->cmd(
+    $work_rep_info,
+    'checkout',
+    $first_branch
+  );
+  Gitprep::Util::run_command(@git_checkout_first_branch)
+    or Carp::croak "Can't execute git checkout: @git_checkout_first_branch";
+  
+  # Delete temparary branch if it eixsts
+  if (grep { $_ eq $tmp_branch } @$branch_names) {
+    my @git_branch_remove_cmd = $self->app->git->cmd(
+      $work_rep_info,
+      'branch',
+      '-D',
+      $tmp_branch
+    );
+    Gitprep::Util::run_command(@git_branch_remove_cmd)
+      or Carp::croak "Can't execute git branch: @git_branch_remove_cmd";
+  }
+
+  # Create temparary branch
+  my @git_branch_cmd = $self->app->git->cmd(
+    $work_rep_info,
+    'branch',
+    $tmp_branch
+  );
+  Gitprep::Util::run_command(@git_branch_cmd)
+    or Carp::croak "Can't execute git branch: @git_branch_cmd";
   
   # Checkout tmp branch and git reset --hard from my remote branch
   my @git_checkout_tmp_branch = $self->app->git->cmd(
     $work_rep_info,
     'checkout',
-    $self->_tmp_branch
+    $tmp_branch
   );
   Gitprep::Util::run_command(@git_checkout_tmp_branch)
     or Carp::croak "Can't execute git checkout: @git_checkout_tmp_branch";
@@ -88,6 +141,34 @@ sub prepare_merge {
     or Carp::croak "Can't execute git reset --hard: @git_reset_hard_cmd";
 }
 
+sub merge {
+  my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
+  
+  # Merge
+  my $target_user_id = $rep_info2->{user};
+  my @git_merge_cmd = $self->app->git->cmd(
+    $work_rep_info,
+    'merge',
+    "--message=merge $target_user_id/$target_branch",
+    "$target_user_id/$target_branch"
+  );
+  
+  my $success = Gitprep::Util::run_command(@git_merge_cmd);
+  
+  return $success;
+}
+
+sub push {
+  my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
+  
+  # Push
+  my @git_push_cmd = $self->app->git->cmd($work_rep_info, 'push', 'origin', $base_branch);
+  Gitprep::Util::run_command(@git_push_cmd)
+    or Carp::croak "Can't execute git push: @git_push_cmd";
+}
+
+
+=pod
 sub check_merge_automatical {
   my ($self, $work_rep_info, $rep_info1, $base_branch, $rep_info2, $target_branch) = @_;
   
@@ -104,6 +185,8 @@ sub check_merge_automatical {
     or Carp::croak "Can't execute git format-patch: @git_format_patch_cmd";
   my $patch_str = do { local $/; <$git_format_patch_fh> };
   
+  warn "@git_format_patch_cmd";
+  
   # Write patch to file
   my $tmp_dir = File::Temp->newdir(DIR => $self->app->home->rel_file('/tmp'));
   my $patch_file = "$tmp_dir/test.patch";
@@ -113,18 +196,30 @@ sub check_merge_automatical {
   close $patch_fh;
   
   # Check if this patch can be applied
+  use Cwd;
+  my $original_cwd = getcwd;
+  chdir $work_rep_info->{work_tree}
+    or croak "Can't change working directory: $work_rep_info->{work_tree}";
+  warn "aaaaaaaaaaaaaaaaa $work_rep_info->{work_tree}";
   my @git_apply_cmd = $self->app->git->cmd(
     $work_rep_info,
     'apply',
     $patch_file,
     '--check'
   );
+  chdir $original_cwd
+    or croak "Can't change working directory: $original_cwd";
   
+  warn "@git_apply_cmd";
+  
+  # sleep 300;
   my $automatical = Gitprep::Util::run_command(@git_apply_cmd);
   
+  warn "bbbbbbbbbbbbbbbbbbbb $automatical";
   
   return $automatical;
 }
+=cut
 
 sub lock_rep {
   my ($self, $rep_info) = @_;
@@ -160,15 +255,6 @@ sub create_work_rep {
     Gitprep::Util::run_command(@git_clone_cmd)
       or croak "Can't git clone: @git_clone_cmd";
     
-    # Create temparary branch
-    my @git_branch_cmd = $self->app->git->cmd(
-      $work_rep_info,
-      'branch',
-      $self->_tmp_branch
-    );
-    Gitprep::Util::run_command(@git_branch_cmd)
-      or Carp::croak "Can't execute git branch: @git_branch_cmd";
-
     # Set user name
     my @git_config_user_name = $self->app->git->cmd(
       $work_rep_info,

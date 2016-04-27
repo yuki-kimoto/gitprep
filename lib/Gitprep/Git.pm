@@ -155,6 +155,8 @@ sub branches_count {
 sub cmd {
   my ($self, $rep_info, @command) = @_;
   
+  $rep_info //= {};
+  
   my $git_dir = $rep_info->{git_dir};
   my $work_tree = $rep_info->{work_tree};
   
@@ -538,16 +540,20 @@ sub commits_number {
 }
 
 sub exists_branch {
-  my ($self, $rep_info) = @_;
+  my ($self, $rep_info, $branch_name) = @_;
   
-  # Exists branch
-  my @cmd = $self->cmd($rep_info, 'branch');
-  open my $fh, "-|", @cmd
-    or croak 'git branch failed';
-  local $/;
-  my $branch = <$fh>;
+  my $branch_names = $self->branch_names($rep_info);
   
-  return $branch ne '' ? 1 : 0;
+  
+  my $exists_branch;
+  if (defined $branch_name) {
+    $exists_branch = grep { $_ eq $branch_name } @$branch_names;
+  }
+  else {
+    $exists_branch = @$branch_names ? 1 : 0;
+  }
+  
+  return $exists_branch;
 }
 
 sub delete_branch {

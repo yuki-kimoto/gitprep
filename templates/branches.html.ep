@@ -313,7 +313,9 @@
                                 open
                               </a>
                             % } else {
-                              closed
+                              <a class="branches-close" href="<%= url_for("/$user/$project/pull/$pull_request->{row_id}") %>">
+                                closed
+                              </a>
                             % }
                           % } else {
                             <% 

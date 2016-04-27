@@ -75,8 +75,8 @@
         $branch2
       );
       
-      # Check merge automatical
-      my $merge_automatical = $self->app->manager->check_merge_automatical(
+      # Merge
+      my $merge_success = $self->app->manager->merge(
         $work_rep_info,
         $rep_info,
         $branch1,
@@ -84,8 +84,9 @@
         $branch2
       );
       
-      if ($merge_automatical) {
-        app->manager->merge_and_push(
+      if ($merge_success) {
+        # Push
+        app->manager->push(
           $work_rep_info,
           $rep_info,
           $branch1,
@@ -132,7 +133,7 @@
   )->one;
   
   # Check merge automatically
-  my $merge_automatical;
+  my $merge_success;
   if ($api->can_write_access($session_user_id, $user_id, $project_id) && $pull_request->{open}) {
   
     my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
@@ -147,7 +148,7 @@
     );
     
     # Check merge automatical
-    $merge_automatical = $self->app->manager->check_merge_automatical(
+    $merge_success = $self->app->manager->merge(
       $work_rep_info,
       $rep_info,
       $branch1,
@@ -280,7 +281,7 @@
       %= include '/include/commit_body', %commit_body_args;
       
       % if ($api->can_write_access($session_user_id, $user_id, $project_id)) {
-        % if ($merge_automatical && $pull_request->{open}) {
+        % if ($merge_success && $pull_request->{open}) {
           <form action="<%= url_for %>" method="post">
             <%= hidden_field op => 'merge' %>
             <div class="pull-request-form">

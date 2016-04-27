@@ -129,12 +129,6 @@
   my $branches = $git->branches($rep_info);
   @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
   
-  # Variables
-  stash id => $end_commit->{id};
-  stash from_id => $start_commit->{id};
-  stash rev => $end_commit->{id};
-  stash from_rev => $start_commit->{id};
-  
   # Can open pull request
   my $can_open_pull_request;
   if (keys %$commits_date && $expand) {
@@ -142,7 +136,7 @@
   }
   
   # Can merge
-  my $merge_automatical;
+  my $merge_success;
   if ($can_open_pull_request) {
     
     # Create working repository if it don't exist
@@ -162,18 +156,23 @@
     );
     
     # Check merge automatically
-    $merge_automatical = $self->app->manager->check_merge_automatical(
+    $merge_success = $self->app->manager->merge(
       $work_rep_info,
       $rep_info,
       $from_rev,
       $rep_info,
       $rev
     );
-    
-    # Unlock explicitly
-    close $lock_fh;
   }
-  
+
+  # commit_body args
+  my %commit_body_args = (
+    id => $end_commit->{id},
+    from_id => $start_commit->{id},
+    rev => $end_commit->{id},
+    from_rev => $start_commit->{id}
+  );
+
   layout 'common', title => "Comparing $from_rev...$rev \x{30fb} $user_id/$project_id";
 %>
 
@@ -249,7 +248,7 @@
         </button>
         
         % if ($can_open_pull_request) {
-          % if ($merge_automatical) {
+          % if ($merge_success) {
             <span style="margin-left:10px">
               <span style="color:green;font-weight:bold"><%= "\x{2714}" %>Able to merge.</span> These branches can be automatically merged.
             </span>
@@ -321,7 +320,7 @@
     </div>
   </div>
   
-  % if ($merge_automatical) {
+  % if ($merge_success) {
     <div class="compare-open-pull-request">
       <form action="<%= url_for %>" method="post">
         <%= hidden_field op => 'create-pull-request' %>
@@ -397,7 +396,7 @@
       % }
     </div>
   
-    %= include '/include/commit_body';
+    %= include '/include/commit_body', %commit_body_args;
   % } else {
     <div class="compare-nothing">
       <div>

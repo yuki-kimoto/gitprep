@@ -49,6 +49,20 @@
   text-decoration:none;
 }
 
+.branches-close {
+  color:white;
+  background:#bd2c00;
+  padding:5px 8px;
+  border-radius:3px;
+  margin-right:4px;
+  border-radius:3px;
+  text-align:center;
+}
+.branches-close:hover {
+  color:white;
+  text-decoration:none;
+}
+
 .pull-comment {
   border:1px solid #eee;
   margin-top:15px;
