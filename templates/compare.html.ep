@@ -191,6 +191,10 @@
     return;
   }
   
+  # Member projects
+  my $member_projects = app->manager->member_projects($base_user_id, $base_project_id);
+  unshift @$member_projects, $base_project;
+  
   # Base branches
   my $base_branches = $git->branches($base_rep_info);
   @$base_branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$base_branches;
@@ -219,7 +223,40 @@
 
 %= javascript begin
   $(document).ready(function () {
-    
+
+    // Change base fork
+    $('#base-fork-btn').on('click', function () {
+      $('#base-fork-popup')
+        .css('display', 'block')
+        .css('top', '40px')
+        .css('left', '10px')
+      ;
+    });
+    $('#base-fork-popup').on('click', function () {
+      $('#base-fork-popup').css('display', 'none');
+    });
+    // close popup
+    $(document).click(function() { $('#base-fork-popup').hide(); });
+    $('#base-fork-btn').click(function() { event.stopPropagation(); });
+    $('#base-fork-popup').click(function() { event.stopPropagation(); });
+
+
+    // Change head fork
+    $('#head-fork-btn').on('click', function () {
+      $('#head-fork-popup')
+        .css('display', 'block')
+        .css('top', '40px')
+        .css('left', '10px')
+      ;
+    });
+    $('#head-fork-popup').on('click', function () {
+      $('#head-fork-popup').css('display', 'none');
+    });
+    // close popup
+    $(document).click(function() { $('#head-fork-popup').hide(); });
+    $('#head-fork-btn').click(function() { event.stopPropagation(); });
+    $('#head-fork-popup').click(function() { event.stopPropagation(); });
+
     // Change base branch
     $('#base-branch-btn').on('click', function () {
       $('#base-branch-popup')
@@ -248,7 +285,7 @@
         location.href = href;
       }
     });
-    // ポップアップを閉じる
+    // close popup
     $(document).click(function() { $('#base-branch-popup').hide(); });
     $('#base-branch-btn').click(function() { event.stopPropagation(); });
     $('#base-branch-popup').click(function() { event.stopPropagation(); });
@@ -274,7 +311,7 @@
         location.href = href;
       }
     });
-    // ポップアップを閉じる
+    // close popup
     $(document).click(function() { $('#target-branch-popup').hide(); });
     $('#target-branch-btn').click(function() { event.stopPropagation(); });
     $('#target-branch-popup').click(function() { event.stopPropagation(); });
@@ -384,29 +421,109 @@
         %= text_field 'target-branch', style => 'margin-bottom:0;width:270px', placeholder => 'Branch, tag, commit, or history marker';
       </div>
       <div style="background:white;max-height:500px;overflow:auto;">
-      <ul class="nav nav-tabs nav-stacked">
-        % for (my $i = 0; $i < @$target_branches; $i++) {
-          % my $target_branch = $target_branches->[$i];
-            <li>
+        <ul class="nav nav-tabs nav-stacked">
+          % for (my $i = 0; $i < @$target_branches; $i++) {
+            % my $target_branch = $target_branches->[$i];
+              <li>
+                <%
+                  my $url;
+                  if ($base_user_id eq $target_user_id) {
+                    $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$target_branch->{name}");
+                  }
+                  else {
+                    $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$target_user_id:$target_branch->{name}");
+                  }
+                %>
+                <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= $url %>">
+                  <%= $target_branch->{name} %>
+                </a>
+              </li>
+          % }
+        </ul>
+      </div>
+    </div>
+
+
+    <div id="base-fork-popup" style="display:none;width:330px;position:absolute">
+      <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
+        <div style="overflow:hidden">
+          <div style="float:left;width:90%;">
+            <b>Choose a base fork</b>
+          </div>
+          <div style="float:left:width:10%;text-align:right;">
+            <i id="member-project-close" class="icon-remove-circle"></i>
+          </div>
+        </div>
+      </div>
+      <div style="background:white;max-height:500px;overflow:auto;">
+        <ul class="nav nav-tabs nav-stacked">
+          % for (my $i = 0; $i < @$member_projects; $i++) {
+            % my $member_project = $member_projects->[$i];
               <%
-                my $url;
-                if ($base_user_id eq $target_user_id) {
-                  $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$target_branch->{name}");
-                }
-                else {
-                  $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$target_user_id:$target_branch->{name}");
-                }
+                my $member_user_id = $member_project->{'__user.id'};
+                my $member_project_id = $member_project->{id};
               %>
-              <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= $url %>">
-                <%= $target_branch->{name} %>
-              </a>
-            </li>
-        % }
-      </ul>
+              <li>
+                <%
+                  my $url;
+                  if ($member_user_id eq $target_user_id) {
+                    $url = url_with("/$member_user_id/$member_project_id/compare/$base_branch...$target_branch");
+                  }
+                  else {
+                    $url = url_with("/$member_user_id/$member_project_id/compare/$base_branch...$target_user_id:$target_branch");
+                  }
+                %>
+                <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= $url %>">
+                  <%= $member_user_id %>/<%= $member_project_id %>
+                </a>
+              </li>
+          % }
+        </ul>
+      </div>
+    </div>
+
+
+
+
+    <div id="head-fork-popup" style="display:none;width:330px;position:absolute">
+      <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
+        <div style="overflow:hidden">
+          <div style="float:left;width:90%;">
+            <b>Choose a head fork</b>
+          </div>
+          <div style="float:left:width:10%;text-align:right;">
+            <i id="member-project-close" class="icon-remove-circle"></i>
+          </div>
+        </div>
+      </div>
+      <div style="background:white;max-height:500px;overflow:auto;">
+        <ul class="nav nav-tabs nav-stacked">
+          % for (my $i = 0; $i < @$member_projects; $i++) {
+            % my $member_project = $member_projects->[$i];
+              <%
+                my $member_user_id = $member_project->{'__user.id'};
+                my $member_project_id = $member_project->{id};
+              %>
+              <li>
+                <%
+                  my $url;
+                  if ($member_user_id eq $base_user_id) {
+                    $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$target_branch");
+                  }
+                  else {
+                    $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$member_user_id:$target_branch");
+                  }
+                %>
+                <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= $url %>">
+                  <%= $member_user_id %>/<%= $member_project_id %>
+                </a>
+              </li>
+          % }
+        </ul>
       </div>
     </div>
   </div>
-  
+ 
   % if ($merge_success) {
     <div class="compare-open-pull-request">
       <form action="<%= url_for %>" method="post">
