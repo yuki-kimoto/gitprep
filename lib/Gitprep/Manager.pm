@@ -433,6 +433,7 @@ sub child_project {
   my $child_project = $self->app->dbi->model('project')->select(
     [
       {__MY__ => '*'},
+      {__user => ['id']}
     ],
     where => {
       'project.original_project' => $project_row_id,
