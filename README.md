@@ -11,8 +11,9 @@ See GitPrep example site. [GitPrep example site](http://perlcodesample.sakura.ne
 * Github clone: GitPrep has the same interface as GitHub.
 * Portable: You can install GitPrep on your own Unix/Linux server.
 * Only needs Perl 5.10.1+.
-* Smart HTTP support: you can pull and push via HTTP
-* Built-in web server, and reverse proxy support, CGI support.
+* Smart HTTP support: you can pull and push via HTTP.
+* Built-in web server, and reverse proxy support.
+* CGI support.
 * SSL support.
 
 ## Check Perl Version
@@ -25,11 +26,9 @@ Check Perl version. You can use GitPrep if the Perl version is 5.10.1+;
 
     git --version
     
-## A. Installation when you run GitPrep as embdded web server
+## A. Run GitPrep by embdded web server
 
-GitPrep has its own web server,
-so you can start using the application very easily.
-In this way, performance is much better than CGI.
+GitPrep has its own web server. You can start GitPrep easily.
 
 ### Create gitprep user
 
@@ -102,38 +101,24 @@ You can stop the application by adding the **--stop** option.
 
     ./gitprep --stop
 
-## B. Installation when you run GitPrep as CGI script
+## B. Run GitPrep as CGI script
 
-Installation process is same as above.
+You can run GitPrep as CGI script as the following site.
+
+[GitPrep example site](http://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)
+
+This is shared server. I assume you can connect the server via SSH and login your own user.
+
+Installation process is same as above except for create user.
+
 If you finish installation, You can access the following URL.
 
     http://yourhost/somepath/gitprep/gitprep.cgi
-
-I recommend SuExec environment for CGI.
 
 ### If you see Internal Server Error
 
 If you see an internal server error, look at the log file (gitprep/log/production.log)
 to see what problem has occurred.
-
-### Additional work when you don't run CGI script by your user.
-
-If CGI script isn't run by your user, you need the following work.
-For example, CGI script is run by apache user.
-
-Change user and group of all files in gitprep directory to apache 
-
-    chown -R apache:apache gitprep
-
-In this case, you server need to execute CGI.
-Check apache config file.
-
-For example, you need the following config.
-
-    <Directory /var/www/html>
-        Options +ExecCGI
-        AddHandler cgi-script .cgi
-    </Directory>
 
 ## FAQ
 
@@ -431,12 +416,7 @@ If you install perl 5.10.1+ by perlbrew, you can install latest GitPrep.
 
 ### I know information about GitPrep 2.0 upgrading.
 
-You can upgrade GitPrep 2.0 the following command.
-
-    ./setup_module
-    ./setup_database
-
-And you should know the following small changes.
+You should know the following small changes.
 
 **1. X-Forwarded-HTTPS header is deprecated. use  X-Forwarded-Proto header.**
     
@@ -535,7 +515,7 @@ If you want new features, please post the request to this mailing list.
 
 ## Copyright & license
 
-Copyright 2012-2014 Yuki Kimoto. All rights reserved.
+Copyright 2012-2016 Yuki Kimoto. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
