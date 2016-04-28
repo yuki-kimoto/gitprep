@@ -46,6 +46,7 @@
   my $taregt_project_id = $target_project->{id};
   
   # Session
+  my $session_user_row_id = $api->session_user_row_id;
   my $session_user_id = $api->session_user_id;
   
   # Base repository information
@@ -72,7 +73,10 @@
     my $op = param('op');
     if ($op eq 'close') {
       app->dbi->model('pull_request')->update(
-        {open => 0},
+        {
+          open => 0,
+          open_user => $session_user_row_id
+        },
         where => {row_id => $row_id}
       );
       $self->redirect_to('current');
@@ -83,7 +87,8 @@
       app->dbi->model('pull_request')->update(
         {
           open => 1,
-          open_time => $open_time
+          open_time => $open_time,
+          open_user => $session_user_row_id
         },
         where => {row_id => $row_id}
       );
@@ -119,7 +124,10 @@
         app->manager->push($work_rep_info, $base_branch);
         
         app->dbi->model('pull_request')->update(
-          {open => 0},
+          {
+            open => 0,
+            open_user => $session_user_row_id
+          },
           where => {row_id => $row_id}
         );
         

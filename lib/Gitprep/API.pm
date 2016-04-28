@@ -138,6 +138,14 @@ sub logined_admin {
   return $self->app->manager->is_admin($session_user_id) && $self->logined($session_user_id);
 }
 
+sub session_user_row_id {
+  my $self = shift;
+  
+  my $session_user_row_id = $self->cntl->session('user_row_id');
+  
+  return $session_user_row_id;
+}
+
 sub session_user_id {
   my $self = shift;
   

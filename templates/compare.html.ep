@@ -74,6 +74,7 @@
         )->value;
         
         my $new_pull_request_row_id;
+        my $session_user_row_id = $api->session_user_row_id;
         app->dbi->connector->txn(sub {
           # New pull request
           my $new_pull_request_params = {
@@ -84,7 +85,7 @@
             title => $title,
             open => 1,
             open_time => $now_epoch,
-            open_user => $user_row_id
+            open_user => $session_user_row_id
           };
           
           app->dbi->model('pull_request')->insert($new_pull_request_params);
@@ -117,7 +118,7 @@
             message => $message,
             create_time => $now_epoch,
             update_time => $now_epoch,
-            user => $user_row_id
+            user => $session_user_row_id
           };
           
           app->dbi->model('pull_request_message')->insert($new_pull_request_message_params);
@@ -343,7 +344,7 @@
           </button>
           ...
         </div>
-        <div style="display:inline-block">
+        <div style="display:inline-block;margin-top:10px;">
           % if ($base_user_id ne $target_user_id) {
             <button id="head-fork-btn" class="btn btn-small">
               <span>head fork:</span><b> <%= $target_project->{'__user.id'} %>/<%= $target_project->{id} %></b><i class="icon-arrow-down"></i>
@@ -524,7 +525,7 @@
     </div>
   </div>
  
-  % if ($merge_success) {
+  % if (keys %$commits_date && $merge_success) {
     <div class="compare-open-pull-request">
       <form action="<%= url_for %>" method="post">
         <%= hidden_field op => 'create-pull-request' %>
