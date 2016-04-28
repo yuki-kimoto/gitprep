@@ -120,8 +120,6 @@
             user => $user_row_id
           };
           
-          use D;d $new_pull_request_message_params;
-          
           app->dbi->model('pull_request_message')->insert($new_pull_request_message_params);
         });
         
@@ -132,14 +130,14 @@
   }
 
   # Can merge
-  my $rep_info = app->rep_info($base_user_id, $base_project_id);
+  my $base_rep_info = app->rep_info($base_user_id, $base_project_id);
   my $merge_success;
-  my $rep_info2;
+  my $target_rep_info;
   if ($target_project) {
-    $rep_info2 = app->rep_info($target_user_id, $target_project->{id});
+    $target_rep_info = app->rep_info($target_user_id, $target_project->{id});
   }
   else {
-    $rep_info2 = $rep_info;
+    $target_rep_info = $base_rep_info;
   }
     
   # Create working repository if it don't exist
@@ -153,24 +151,24 @@
     # Prepare merge
     $self->app->manager->prepare_merge(
       $work_rep_info,
-      $rep_info,
+      $base_rep_info,
       $base_branch,
-      $rep_info2,
+      $target_rep_info,
       $target_branch
     );
     
     # Check merge automatically
     $merge_success = $self->app->manager->merge(
       $work_rep_info,
-      $rep_info,
+      $base_rep_info,
       $base_branch,
-      $rep_info2,
+      $target_rep_info,
       $target_branch
     );
   }
   
   # Commits
-  my $commits = $git->forward_commits($rep_info, $base_branch, $target_branch);
+  my $commits = $git->forward_commits($base_rep_info, $base_branch, $target_branch);
   my $commits_count = @$commits;
   my $commits_date = {};
   my $authors = {};
@@ -183,19 +181,23 @@
   my $authors_count = keys %$authors;
 
   # Start commit
-  my $start_commit = $git->separated_commit($rep_info, $base_branch, $target_branch);
+  my $start_commit = $git->separated_commit($base_rep_info, $base_branch, $target_branch);
 
   # End commit
-  my $end_commit = $git->get_commit($rep_info2, $target_branch);
+  my $end_commit = $git->get_commit($target_rep_info, $target_branch);
   
   if (!$start_commit || !$end_commit) {
     $self->reply->not_found;
     return;
   }
   
-  # Branches
-  my $branches = $git->branches($rep_info);
-  @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
+  # Base branches
+  my $base_branches = $git->branches($base_rep_info);
+  @$base_branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$base_branches;
+
+  # Target branches
+  my $target_branches = $git->branches($target_rep_info);
+  @$target_branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$target_branches;
   
   # Can open pull request
   my $can_open_pull_request;
@@ -232,17 +234,17 @@
     $('[name=base-branch]').on('keypress', function (e) {
       // Enter
       if (e.which == 13) {
-        % use D;d [$base_user_id, $target_user_id];
-        
+        var href;
         % if ($base_user_id eq $target_user_id) {
-          var href = '<%= url_for("/$base_user_id/$base_project_id/compare/") %>' + $(this).val() + '...<%= $target_branch %>';
+          href = '<%= url_for("/$base_user_id/$base_project_id/compare/") %>' + $(this).val() + '...<%= $target_branch %>';
         % } else {
-          var href = '<%= url_for("/$base_user_id/$base_project_id/compare/") %>' + $(this).val() + '...<%= $target_user_id %>:<%= $target_branch %>';
+          href = '<%= url_for("/$base_user_id/$base_project_id/compare/") %>' + $(this).val() + '...<%= $target_user_id %>:<%= $target_branch %>';
         % }
         
         if (<%= $expand ? 1 : 0 %>) {
           href = href + '?expand=1';
         }
+        
         location.href = href;
       }
     });
@@ -252,17 +254,17 @@
     $('#base-branch-popup').click(function() { event.stopPropagation(); });
     
     // Change compare branch
-    $('#compare-branch-btn').on('click', function () {
-      $('#compare-branch-popup')
+    $('#target-branch-btn').on('click', function () {
+      $('#target-branch-popup')
         .css('display', 'block')
         .css('top', '40px')
         .css('left', '96px')
       ;
     });
-    $('#compare-branch-close').on('click', function () {
-      $('#compare-branch-popup').css('display', 'none');
+    $('#target-branch-close').on('click', function () {
+      $('#target-branch-popup').css('display', 'none');
     });
-    $('[name=compare-branch]').on('keypress', function (e) {
+    $('[name=target-branch]').on('keypress', function (e) {
       // Enter
       if (e.which == 13) {
         var href = '<%= url_for("/$base_user_id/$base_project_id/compare/") %>' + '<%= $base_branch %>...' + $(this).val();
@@ -273,9 +275,9 @@
       }
     });
     // ポップアップを閉じる
-    $(document).click(function() { $('#compare-branch-popup').hide(); });
-    $('#compare-branch-btn').click(function() { event.stopPropagation(); });
-    $('#compare-branch-popup').click(function() { event.stopPropagation(); });
+    $(document).click(function() { $('#target-branch-popup').hide(); });
+    $('#target-branch-btn').click(function() { event.stopPropagation(); });
+    $('#target-branch-popup').click(function() { event.stopPropagation(); });
 
   });
 % end
@@ -310,7 +312,7 @@
               <span>head fork:</span><b> <%= $target_project->{'__user.id'} %>/<%= $target_project->{id} %></b><i class="icon-arrow-down"></i>
             </button>
           % }
-          <button id="compare-branch-btn" class="btn btn-small">
+          <button id="target-branch-btn" class="btn btn-small">
             <span>compare:</span> <b><%= $target_branch %></b><i class="icon-arrow-down"></i>
           </button>
         
@@ -345,11 +347,20 @@
       </div>
       <div style="background:white;max-height:500px;overflow:auto;">
         <ul class="nav nav-tabs nav-stacked">
-          % for (my $i = 0; $i < @$branches; $i++) {
-            % my $branch = $branches->[$i];
+          % for (my $i = 0; $i < @$base_branches; $i++) {
+            % my $branch = $base_branches->[$i];
               <li>
+                <%
+                  my $url;
+                  if ($base_user_id eq $target_user_id) {
+                    $url = url_with("/$base_user_id/$base_project_id/compare/$branch->{name}...$target_branch");
+                  }
+                  else {
+                    $url = url_with("/$base_user_id/$base_project_id/compare/$branch->{name}...$target_user_id:$target_branch");
+                  }
+                %>
                 <a style="border-top-left-radius:0px;border-top-right-radius:0px;"
-                  href="<%= url_with("/$base_user_id/$base_project_id/compare/$branch->{name}...$target_branch") %>">
+                  href="<%= $url  %>">
                   <%= $branch->{name} %>
                 </a>
               </li>
@@ -358,28 +369,36 @@
       </div>
     </div>
 
-    <div id="compare-branch-popup" style="display:none;width:330px;position:absolute">
+    <div id="target-branch-popup" style="display:none;width:330px;position:absolute">
       <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
         <div style="overflow:hidden">
           <div style="float:left;width:90%;">
             <b>Choose a compare branch</b>
           </div>
           <div style="float:left:width:10%;text-align:right;">
-            <i id="compare-branch-close" class="icon-remove-circle"></i>
+            <i id="target-branch-close" class="icon-remove-circle"></i>
           </div>
         </div>
       </div>
       <div class="border-gray" style="background:#F5F5F5;border-top:none;border-bottom:none;text-align:center;padding:10px 0">
-        %= text_field 'compare-branch', style => 'margin-bottom:0;width:270px', placeholder => 'Branch, tag, commit, or history marker';
+        %= text_field 'target-branch', style => 'margin-bottom:0;width:270px', placeholder => 'Branch, tag, commit, or history marker';
       </div>
       <div style="background:white;max-height:500px;overflow:auto;">
       <ul class="nav nav-tabs nav-stacked">
-        % for (my $i = 0; $i < @$branches; $i++) {
-          % my $branch = $branches->[$i];
+        % for (my $i = 0; $i < @$target_branches; $i++) {
+          % my $target_branch = $target_branches->[$i];
             <li>
-              <a style="border-top-left-radius:0px;border-top-right-radius:0px;"
-                href="<%= url_with("/$base_user_id/$base_project_id/compare/$base_branch...$branch->{name}") %>">
-                <%= $branch->{name} %>
+              <%
+                my $url;
+                if ($base_user_id eq $target_user_id) {
+                  $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$target_branch->{name}");
+                }
+                else {
+                  $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$target_user_id:$target_branch->{name}");
+                }
+              %>
+              <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= $url %>">
+                <%= $target_branch->{name} %>
               </a>
             </li>
         % }
