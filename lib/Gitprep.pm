@@ -174,6 +174,7 @@ sub startup {
   }
   
   # Model
+  # joined table start "__" and follow column name
   my $models = [
     {
       table => 'user',
@@ -183,43 +184,43 @@ sub startup {
       table => 'ssh_public_key',
       primary_key => 'row_id',
       join => [
-        'left join user on ssh_public_key.user = user.row_id'
+        'left join user as __user on ssh_public_key.user = __user.row_id'
       ]
     },
     {
       table => 'project',
       primary_key => 'row_id',
       join => [
-        'left join user on project.user = user.row_id'
+        'left join user as __user on project.user = __user.row_id'
       ]
     },
     {
       table => 'collaboration',
       primary_key => 'row_id',
       join => [
-        'left join user on collaboration.user = user.row_id',
-        'left join project on collaboration.project = project.row_id',
+        'left join user as __user on collaboration.user = __user.row_id',
+        'left join project as __project on collaboration.project = __project.row_id',
       ]
     },
     {
       table => 'pull_request',
       primary_key => 'row_id',
       join => [
-        'left join user as pull_request__open_user on pull_request.open_user = pull_request__open_user.row_id',
-        'left join project as pull_request__base_project on pull_request.base_project = pull_request__base_project.row_id',
-        'left join user as pull_request__base_project__user'
-          . ' on pull_request__base_project.user = pull_request__base_project__user.row_id',
-        'left join project as pull_request__target_project on pull_request.target_project = pull_request__target_project.row_id',
+        'left join user as __open_user on pull_request.open_user = __open_user.row_id',
+        'left join project as __base_project on pull_request.base_project = __base_project.row_id',
+        'left join user as __base_project__user'
+          . ' on __base_project.user = __base_project__user.row_id',
+        'left join project as __target_project on pull_request.target_project = __target_project.row_id',
         'left join user as pull_request__target_project__user'
-          . ' on pull_request__target_project.user = pull_request__target_project__user.row_id'
+          . ' on __target_project.user = __target_project__user.row_id'
       ]
     },
     {
       table => 'pull_request_message',
       primary_key => 'row_id',
       join => [
-        'left join user on pull_request_message.user = user.row_id',
-        'left join pull_request on pull_request_message.pull_request = pull_request.row_id'
+        'left join user as __user on pull_request_message.user = __user.row_id',
+        'left join pull_request as __pull_request on pull_request_message.pull_request = __pull_request.row_id'
       ]
     }
   ];

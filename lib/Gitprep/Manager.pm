@@ -238,7 +238,7 @@ sub fork_project {
       # Original project id
       my $project = $dbi->model('project')->select(
         {__MY__ => ['row_id', 'private']},
-        where => {'user.id' => $user_id, 'project.id' => $project_id}
+        where => {'__user.id' => $user_id, 'project.id' => $project_id}
       )->one;
       
       # Create project
@@ -299,19 +299,19 @@ sub member_projects {
   # project id
   my $project_row_id = $dbi->model('project')->select(
     'project.row_id',
-    where => {'user.id' => $user_id, 'project.id' => $project_id}
+    where => {'__user.id' => $user_id, 'project.id' => $project_id}
   )->value;
   
   # Members
   my $member_projects = $dbi->model('project')->select(
     [
       {__MY__ => ['id']},
-      {user => ['id']}
+      {__user => ['id']}
     ],
     where => {
       original_project => $project_row_id,
     },
-    append => 'order by user.id, project.id'
+    append => 'order by __user.id, project.id'
   )->all;
 
   return $member_projects;
@@ -411,7 +411,7 @@ sub original_project {
   my $original_project = $dbi->model('project')->select(
     [
       {__MY__ => '*'},
-      {user => ['id']}
+      {__user => ['id']}
     ],
     where => {
       'project.row_id' => $original_project_row_id
@@ -427,7 +427,7 @@ sub child_project {
   my ($self, $user_id, $project_id, $child_user_id) = @_;
   
   my $project_row_id = $self->app->dbi->model('project')->select(
-    'project.row_id', where => {'user.id' => $user_id, 'project.id' => $project_id}
+    'project.row_id', where => {'__user.id' => $user_id, 'project.id' => $project_id}
   )->value;
   
   my $child_project = $self->app->dbi->model('project')->select(
@@ -436,7 +436,7 @@ sub child_project {
     ],
     where => {
       'project.original_project' => $project_row_id,
-      'user.id' => $child_user_id
+      '__user.id' => $child_user_id
     }
   )->one;
   

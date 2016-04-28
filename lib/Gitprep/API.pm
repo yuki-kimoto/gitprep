@@ -92,6 +92,8 @@ sub can_access_private_project {
   my ($self, $user_id, $project_id) = @_;
 
   my $session_user_row_id = $self->cntl->session('user_row_id');
+  return unless defined $session_user_row_id;
+  
   my $session_user_id = $self->app->dbi->model('user')->select(
     'id', where => {row_id => $session_user_row_id}
   )->value;

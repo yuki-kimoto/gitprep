@@ -11,7 +11,7 @@
   my $pull_request = app->dbi->model('pull_request')->select(
     [
       {__MY__ => '*'},
-      {'pull_request__open_user' => ['id']}
+      {'__open_user' => ['id']}
     ],
     where => {'pull_request.row_id' => $row_id}
   )->one;
@@ -21,14 +21,14 @@
   my $base_project = app->dbi->model('project')->select(
     [
       {__MY__ => '*'},
-      {user => ['id']}
+      {__user => ['id']}
     ],
     where => {'project.row_id' => $base_project_row_id}
   )->one;
   my $base_branch = $pull_request->{base_branch};
   
   Carp::croak "pull_request invalid user id"
-    if $base_user_id ne $base_project->{'user.id'};
+    if $base_user_id ne $base_project->{'__user.id'};
   Carp::croak "pull_request invalid project id"
     if $base_project_id ne $base_project->{id};
   
@@ -37,12 +37,12 @@
   my $target_project = app->dbi->model('project')->select(
     [
       {__MY__ => '*'},
-      {user => ['id']}
+      {__user => ['id']}
     ],
     where => {'project.row_id' => $target_project_row_id}
   )->one;
   my $target_branch = $pull_request->{target_branch};
-  my $target_user_id = $target_project->{'user.id'};
+  my $target_user_id = $target_project->{'__user.id'};
   my $taregt_project_id = $target_project->{id};
   
   # Session
@@ -151,7 +151,7 @@
   my $pull_request_message_first = app->dbi->model('pull_request_message')->select(
     [
       {__MY__ => '*'},
-      {user => ['id']}
+      {__user => ['id']}
     ],
     where => {pull_request => $row_id, number => 1}
   )->one;
@@ -197,7 +197,7 @@
   <div class="container">
     <div style="font-size:23px;margin-top:20px;margin-bottom:9px;">
       <%
-        my $pull_title = $pull_request->{branch2};
+        my $pull_title = $pull_request->{target_branch};
         $pull_title =~ s/_/ /g;
         $pull_title = ucfirst $pull_title;
       %>
@@ -216,7 +216,7 @@
           </div>
         % }
       </div>
-      % my $open_user_id = $pull_request->{'pull_request__open_user.id'};
+      % my $open_user_id = $pull_request->{'__open_user.id'};
       <a style="color:#333333;font-weight:bold" href="<%= url_for("/$open_user_id") %>"><%= $open_user_id %></a> 
       <span style="color:#767676">
         wants to merge <%= $commits_count %> commits
@@ -258,7 +258,7 @@
         </ul>
         <div class="pull-comment">
           <div class="pull-comment-header">
-            <b><%= $pull_request_message_first->{'pull_request__open_user.id'} %></b>
+            <b><%= $pull_request_message_first->{'__open_user.id'} %></b>
             <span style="color:#767676">
               commented
               <%= $api->age_string($pull_request_message_first->{update_time}) %></b>

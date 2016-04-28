@@ -16,7 +16,7 @@
   
   my $project_row_id = app->dbi->model('project')->select(
     'project.row_id',
-    where => {'user.id' => $user_id, 'project.id' => $project_id}
+    where => {'__user.id' => $user_id, 'project.id' => $project_id}
   )->value;
   
   # Rename project
@@ -48,7 +48,7 @@
         }
         else {
           my $row = app->dbi->model('collaboration')->select(
-            where => {project => $project_row_id, 'user.id' => $collaborator_id}
+            where => {project => $project_row_id, '__user.id' => $collaborator_id}
           )->one;
           if ($row) {
             $validation->add_failed(collaborator => "Collaborator $collaborator_id already exists");
@@ -110,7 +110,7 @@
   }
   
   my $collaborators = app->dbi->model('collaboration')->select(
-    {user => ['id']},
+    {__user => ['id']},
     where => {project => $project_row_id},
     append => 'order by collaboration.user'
   )->all;
@@ -139,9 +139,9 @@
                 % for my $collaborator (@$collaborators) {
                   <tr>
                     <td>
-                      <a href="<%= url_for("/$collaborator->{'user.id'}") %>"><%= $collaborator->{'user.id'} %></a>
+                      <a href="<%= url_for("/$collaborator->{'__user.id'}") %>"><%= $collaborator->{'__user.id'} %></a>
                       <form action="<%= url_for->query(op => 'remove') %>" method="post" style="display:inline-block">
-                        <%= hidden_field 'collaborator' => $collaborator->{'user.id'} %>
+                        <%= hidden_field 'collaborator' => $collaborator->{'__user.id'} %>
                         (<a href="javascript:void(0)" onclick="$(this).closest('form').submit();" style="color:red">remove</a>)
                       </form>
                     </td>

@@ -146,7 +146,7 @@
   
   my $original_project_row_id = app->dbi->model('project')->select(
     'original_project',
-    where => {'user.id' => $user_id, 'project.id' => $project_id}
+    where => {'__user.id' => $user_id, 'project.id' => $project_id}
   )->value;
   
   my $original_project;
@@ -154,7 +154,7 @@
     $original_project = app->dbi->model('project')->select(
       [
         {__MY__ => '*'},
-        {user => ['id']}
+        {__user => ['id']}
       ],
       where => {'project.row_id' => $original_project_row_id}
     )->one;
@@ -232,8 +232,8 @@
                 my $pull_request = app->dbi->model('pull_request')->select(
                   {__MY__ => ['row_id', 'open']},
                   where => {
-                    'pull_request__base_project.id' => $project_id,
-                    'pull_request__base_project__user.id' => $user_id,
+                    '__base_project.id' => $project_id,
+                    '__base_project__user.id' => $user_id,
                     base_branch => $default_branch_name,
                     target_branch => $branch_name
                   }
@@ -321,7 +321,7 @@
                             <% 
                               my $compare_url;
                               if ($original_project) {
-                                my $original_user_id = $original_project->{'user.id'};
+                                my $original_user_id = $original_project->{'__user.id'};
                                 my $original_project_id = $original_project->{id};
                                 
                                 my $exists_original_branch_name = app->git->exists_branch(

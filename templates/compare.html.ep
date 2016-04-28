@@ -16,7 +16,7 @@
   # Base project
   my $base_project = app->dbi->model('project')->select(
     {__MY__ => '*'},
-    where => {'project.id' => $base_project_id, 'user.id' => $base_user_id}
+    where => {'project.id' => $base_project_id, '__user.id' => $base_user_id}
   )->one;
   
   # Get target user, project, branch
@@ -46,7 +46,7 @@
       
       my $project_row_id = app->dbi->model('project')->select(
         'project.row_id',
-        where => {'user.id' => $base_user_id, 'project.id' => $base_project_id}
+        where => {'__user.id' => $base_user_id, 'project.id' => $base_project_id}
       )->value;
       
       my $pull_request = app->dbi->model('pull_request')->select(

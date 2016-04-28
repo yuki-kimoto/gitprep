@@ -17,7 +17,7 @@
   my $pull_requests = app->dbi->model('pull_request')->select(
     [
       {__MY__ => '*'},
-      {user => ['id']}
+      {__open_user => ['id']}
     ],
     where => {open => $open}
   )->all;
@@ -54,8 +54,8 @@
           <ul>
             % for my $pull_request (@$pull_requests) {
               <%
-                my $branch2 = $pull_request->{branch2};
-                my $commit = app->git->get_commit(app->rep_info($user_id, $project_id), $branch2);
+                my $target_branch = $pull_request->{target_branch};
+                my $commit = app->git->get_commit(app->rep_info($user_id, $project_id), $target_branch);
                 my $open_time = $pull_request->{open_time};
                 my $open_time_age = Time::Moment->now->epoch - $open_time;
                 my $open_time_age_string = $self->app->git->_age_string($open_time_age);
@@ -69,7 +69,7 @@
                 <div class="pulls-description">
                   #<%= $pull_request->{row_id} %> <%= $pull_request->{open} ? 'opened' : 'closed' %>
                   <%= $open_time_age_string %>
-                  by <%= $pull_request->{'user.id'} %>
+                  by <%= $pull_request->{'__open_user.id'} %>
                 </div>
               </li>
             % }
