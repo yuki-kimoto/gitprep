@@ -46,6 +46,12 @@ Setup database.
 If you used Gitprep version 1 and upgrage it to version 2, you need upgrade database
 by the following command.
 
+    # Backup gitprep directory for safety
+    cd ..
+    cp -rp gitprep gitprep.bak
+    
+    # Upgrade database
+    cd gitprep
     mv data/gitprep.db data/gitprep_v1bak.db
     ./setup_database
     old/copy_database_v1_to_v2 data/gitprep_v1bak.db data/gitprep.db
