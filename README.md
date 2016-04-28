@@ -10,10 +10,9 @@ See GitPrep example site. [GitPrep example site](http://perlcodesample.sakura.ne
 
 * Github clone: GitPrep has the same interface as GitHub.
 * Portable: You can install GitPrep on your own Unix/Linux server.
-* Supports Windows installation via cygwin for Windows (need gcc4 package).
 * Only needs Perl 5.10.1+.
 * Smart HTTP support: you can pull and push via HTTP
-* CGI support, built-in web server, and reverse proxy support.
+* Built-in web server, and reverse proxy support, CGI support.
 * SSL support.
 
 ## Check Perl Version
@@ -26,7 +25,19 @@ Check Perl version. You can use GitPrep if the Perl version is 5.10.1+;
 
     git --version
     
-## A. Installation when you run GitPrep as CGI script
+## A. Installation when you run GitPrep as embdded web server
+
+GitPrep has its own web server,
+so you can start using the application very easily.
+In this way, performance is much better than CGI.
+
+### Create gitprep user
+
+Create a **gitprep** user. This is not necessary, but recommended:
+
+    useradd gitprep
+    su - gitprep
+    cd ~
 
 Download tar.gz archive, expand it and change directory:
 
@@ -69,9 +80,36 @@ Check setup. Run the following command.
 
 If "syntax OK" is displayed, setup is sucseed.
 
-You can access the following URL.
+### Start gitprep server
+
+You can start the application by running the provided gitprep script.
+The application is run in the background and the port is **10020** by default.
+
+    ./gitprep
+
+(If you run this command again, gitprep server restart.)
+
+Then access the following URL.
+
+    http://localhost:10020
+
+If you want to change the port, edit gitprep.conf.
+If you cannot access this port, you might change the firewall settings.
+
+### Stop gitprep server
+
+You can stop the application by adding the **--stop** option.
+
+    ./gitprep --stop
+
+## B. Installation when you run GitPrep as CGI script
+
+Installation process is same as above.
+If you finish installation, You can access the following URL.
 
     http://yourhost/somepath/gitprep/gitprep.cgi
+
+I recommend SuExec environment for CGI.
 
 ### If you see Internal Server Error
 
@@ -96,64 +134,6 @@ For example, you need the following config.
         Options +ExecCGI
         AddHandler cgi-script .cgi
     </Directory>
-
-## B. Installation when you run GitPrep as embdded web server
-
-GitPrep has its own web server,
-so you can start using the application very easily.
-In this way, performance is much better than CGI.
-
-### Create gitprep user
-
-Create a **gitprep** user. This is not necessary, but recommended:
-
-    useradd gitprep
-    su - gitprep
-    cd ~
-
-And config global git config
-
-    git config --global user.name "gitprep"
-    git config --global user.email "gitprep@example.com"
-
-### Download
-
-Download tar.gz archive, expand it and change directory:
-
-    curl -kL https://github.com/yuki-kimoto/gitprep/archive/latest.tar.gz > gitprep-latest.tar.gz
-    tar xf gitprep-latest.tar.gz
-    mv gitprep-latest gitprep
-    cd gitprep
-
-Setup. Needed module is installed.
-
-    ./setup.sh
-
-Check setup. Run the following command.
-
-    prove t
-
-If "syntax OK" is displayed, setup is sucseed.
-
-### Start
-
-You can start the application by running the provided gitprep script.
-The application is run in the background and the port is **10020** by default.
-
-    ./gitprep
-
-Then access the following URL.
-
-    http://localhost:10020
-
-If you want to change the port, edit gitprep.conf.
-If you cannot access this port, you might change the firewall settings.
-
-### Stop
-
-You can stop the application by adding the **--stop** option.
-
-    ./gitprep --stop
 
 ## FAQ
 
