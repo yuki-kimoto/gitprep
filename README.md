@@ -59,18 +59,23 @@ Setup. Needed modules are installed.
 
     ./setup_module
 
+If this fail and extlib directory already exists, try to remove "extlib" and run "./setup_module" again.
+
+    rm -rf extlib
+    ./setup_module
+
 Check if module setup success . Run the following command.
 
     prove t
 
-If "syntax OK" is displayed, setup is sucseed.
+If "syntax OK" is displayed, setup is sucseed. 
 
 Setup database.
 
     ./setup_database
 
 If you used Gitprep version 1 and upgrage it to version 2, you need upgrade database
-by the following command.
+by the following command
 
     # Backup gitprep directory for safety
     cd ..
@@ -432,6 +437,11 @@ perlbrew is very useful perl installation tools without breaking your system per
 If you install perl 5.10.1+ by perlbrew, you can install latest GitPrep.
 
 ### I know information about GitPrep 2.0 upgrading.
+
+If you use GitPrep on Perl 5.8 and install newer perl by perlbrew,
+you must remove extlib directory before "./setup_module" command.
+
+  rm -rf extlib
 
 You should know the following small changes.
 
