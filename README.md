@@ -45,9 +45,15 @@ Download tar.gz archive, expand it and change directory:
     mv gitprep-latest gitprep
     cd gitprep
 
-Setup. Needed module is installed.
+Setup. Needed modules are installed.
 
     ./setup_module
+
+Check if module setup success . Run the following command.
+
+    prove t
+
+If "syntax OK" is displayed, setup is sucseed.
 
 Setup database.
 
@@ -72,12 +78,6 @@ you must add the correct git command path to the **gitprep.conf** config file.
     [basic]
     ;;; Git command path
     git_bin=/home/yourname/local/bin/git
-
-Check setup. Run the following command.
-
-    prove t
-
-If "syntax OK" is displayed, setup is sucseed.
 
 ### Start gitprep server
 

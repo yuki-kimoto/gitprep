@@ -36,3 +36,4 @@ xt/import_rep/*
 xt/smart_http/*
 xt/basic/rep/kimoto/*
 !xt/basic/rep/kimoto/.gitignore
+xt/basic/work/*

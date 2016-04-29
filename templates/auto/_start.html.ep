@@ -49,6 +49,7 @@
       my ($password_encryped, $salt) = $api->encrypt_password($password);
       $new_user->{password} = $password_encryped;
       $new_user->{salt} = $salt;
+      $new_user->{email} = '';
       
       # Create admin user
       $self->app->dbi->model('user')->insert($new_user);

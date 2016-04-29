@@ -360,17 +360,6 @@ note 'Aarchive';
   $t->content_type_is('application/x-tar');
 }
 
-note 'Compare page';
-{
-  # Page access (branch name)
-  $t->get_ok("/$user/$project/compare/b1...master");
-  $t->content_like(qr#renamed dir/a\.txt to dir/b\.txt and added text#);
-
-  # Page access (branch name long)
-  $t->get_ok("/$user/$project/compare/refs/heads/b1...refs/heads/master");
-  $t->content_like(qr#renamed dir/a\.txt to dir/b\.txt and added text#);
-}
-
 note 'API References';
 {
   # Page access (branch name)
@@ -405,14 +394,6 @@ note 'Branches';
   $t->content_like(qr/Branches/);
 }
 
-note 'Compare';
-{
-  # Page access
-  $t->get_ok("/$user/$project/compare/master...no_merged");
-  $t->content_like(qr/branch change/);
-  $t->content_like(qr#http://foo5branch change#);
-}
-
 note 'blame';
 {
   # Page access
@@ -431,4 +412,20 @@ note 'Markdown normal file';
   # Page access
   $t->get_ok("/$user/$project/blob/12e44f2e4ecf55c5d3a307889829b47c05e216d3/dir/markdown.md");
   $t->content_like(qr#<h1 .*?>Head</h1>#);
+}
+
+note 'Compare page';
+{
+  # Page access (branch name)
+  $t->get_ok("/$user/$project/compare/b1...master");
+  $t->content_like(qr#renamed dir/a\.txt to dir/b\.txt and added text#);
+
+  # Page access (branch name long)
+  $t->get_ok("/$user/$project/compare/refs/heads/b1...refs/heads/master");
+  $t->content_like(qr#renamed dir/a\.txt to dir/b\.txt and added text#);
+
+  # Page access
+  $t->get_ok("/$user/$project/compare/master...no_merged");
+  $t->content_like(qr/branch change/);
+  $t->content_like(qr#http://foo5branch change#);
 }
