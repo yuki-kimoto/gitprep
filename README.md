@@ -16,16 +16,6 @@ See GitPrep example site. [GitPrep example site](http://perlcodesample.sakura.ne
 * CGI support.
 * SSL support.
 
-## Check Perl Version
-
-Check Perl version. You can use GitPrep if the Perl version is 5.10.1+;
-
-    perl -v
-
-### Checki git command existance
-
-    git --version
-    
 ## A. Run GitPrep by embdded web server
 
 GitPrep has its own web server. You can start GitPrep easily.
@@ -38,6 +28,26 @@ Create a **gitprep** user. This is not necessary, but recommended:
     su - gitprep
     cd ~
 
+### Check git command existance
+
+    git --version
+
+## Check Perl Version
+
+Check Perl version. You can use GitPrep if the Perl version is 5.10.1+;
+
+    perl -v
+
+If your don't have Perl 5.10.1+, you need to install newer perl by perlbrew.
+
+    curl -L http://install.perlbrew.pl | bash
+    echo "source ~/perl5/perlbrew/etc/bashrc" >> ~/.bash_profile
+    source ~/.bash_profile
+    
+    perlbrew install perl-5.16.3
+    perlbrew switch perl-5.16.3
+    perl -v
+    
 Download tar.gz archive, expand it and change directory:
 
     curl -kL https://github.com/yuki-kimoto/gitprep/archive/latest.tar.gz > gitprep-latest.tar.gz
