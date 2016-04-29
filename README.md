@@ -28,7 +28,7 @@ Create a **gitprep** user. This is not necessary, but recommended:
     su - gitprep
     cd ~
 
-### Check git command existance
+### Check if git is installed
 
     git --version
 
@@ -38,17 +38,17 @@ Check Perl version. You can use GitPrep if the Perl version is 5.10.1+;
 
     perl -v
 
-If your don't have Perl 5.10.1+, you need to install newer perl by perlbrew.
+If you don't have Perl 5.10.1+, you need to install a newer perl version with perlbrew.
 
     curl -L http://install.perlbrew.pl | bash
     echo "source ~/perl5/perlbrew/etc/bashrc" >> ~/.bash_profile
     source ~/.bash_profile
     
-    perlbrew install perl-5.16.3
-    perlbrew switch perl-5.16.3
+    perlbrew install perl-5.22.1
+    perlbrew switch perl-5.22.1
     perl -v
     
-Download tar.gz archive, expand it and change directory:
+Download GitPrep .tar.gz archive, expand it and change directory:
 
     curl -kL https://github.com/yuki-kimoto/gitprep/archive/latest.tar.gz > gitprep-latest.tar.gz
     tar xf gitprep-latest.tar.gz
@@ -59,23 +59,23 @@ Setup. Needed modules are installed.
 
     ./setup_module
 
-If this fail and extlib directory already exists, try to remove "extlib" and run "./setup_module" again.
+If this fails and extlib directory already exists, try to remove "extlib" and run "./setup_module" again.
 
     rm -rf extlib
     ./setup_module
 
-Check if module setup success . Run the following command.
+Check if module setup successes. Run the following command.
 
     prove t
 
-If "syntax OK" is displayed, setup is sucseed. 
+If "syntax OK" is displayed, setup was successful. 
 
 Setup database.
 
     ./setup_database
 
-If you used Gitprep version 1 and upgrage it to version 2, you need upgrade database
-by the following command
+If you used Gitprep version 1 and upgrade it to version 2, you need to upgrade database
+with the following command
 
     # Backup gitprep directory for safety
     cd ..
@@ -87,8 +87,8 @@ by the following command
     ./setup_database
     old/copy_database_v1_to_v2 data/gitprep_v1bak.db data/gitprep.db
 
-If you install git in your local directry,
-you must add the correct git command path to the **gitprep.conf** config file.
+If you install git in your local directory,
+you have to add the correct git command path to the **gitprep.conf** config file.
 
     [basic]
     ;;; Git command path
@@ -101,7 +101,7 @@ The application is run in the background and the port is **10020** by default.
 
     ./gitprep
 
-(If you run this command again, gitprep server restart.)
+(If you run this command again, gitprep server restarts.)
 
 Then access the following URL.
 
@@ -122,11 +122,11 @@ You can run GitPrep as CGI script as the following site.
 
 [GitPrep example site](http://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)
 
-This is shared server. I assume you can connect the server via SSH and login your own user.
+This is shared server. I assume you can connect the server via SSH and login with your own user.
 
 Installation process is same as above except for create user.
 
-If you finish installation, You can access the following URL.
+If you finish installation, you can access the following URL.
 
     http://yourhost/somepath/gitprep/gitprep.cgi
 
@@ -137,7 +137,7 @@ to see what problem has occurred.
 
 ## FAQ
 
-## I can't install Gitprep into CentOS
+## I can't install Gitprep on CentOS
 
 After CentOS 6, some perl core modules are not installed by default.
 You can install Perl core modules by the following command.
@@ -146,16 +146,16 @@ You can install Perl core modules by the following command.
 
 ## Can't find git command from GitPrep
 
-If you install git into your local directry,
+If you install git into your local directory,
 you must add the correct git command path to the config file **gitprep.conf** .
 
     [basic]
     ;;; Git command path
     git_bin=/home/yourname/local/bin/git
 
-### blame don't work
+### blame doesn't work
 
-In Gitprep, blame page use "git blame --line-porcelain". In old git, there is no --line-porcelain option.
+In Gitprep, blame page uses "git blame --line-porcelain". In old git, there is no --line-porcelain option.
 We don't know when --line-porcelain was added to git.
 At least, blame page work well in git 1.8.2.1.
 
@@ -249,7 +249,7 @@ You can use Name virtual host.
         
     </VirtualHost>
 
-If you use GitPrep vis https, you should set X-Forwarded-HTTPS Request Header.
+If you use GitPrep via https, you should set X-Forwarded-HTTPS Request Header.
 
     # HTTPS
     <VirtualHost *:443>
@@ -316,14 +316,14 @@ You can import already existing repositories by **script/import_rep** script.
 
 If **description** file exists in git repository, it is copied.
 
-### I can't add collabortor more than one
+### I can't add more than one collaborator
 
-This is GitPrep bug before version 1.5.1.
+This is a GitPrep bug before version 1.5.1.
 Please use after version 1.5.2.
 
 If you continue to use GitPrep before version 1.5.1,
 collaboration table is broken.
-Please fix it by the following way.
+Please fix it the following way.
 
     # Run SQLite client
     sqlite3 data/gitprep.db
@@ -336,7 +336,7 @@ Please fix it by the following way.
 
 ### I want to set time zone.
 
-OK. GitPrep suport time zone. You can set time_zone option in conig file.
+OK. GitPrep supports time zones. You can set time_zone option in conig file.
 
     [basic]
     ;;; Time Zone
@@ -414,9 +414,9 @@ You can start and stop the application with the following command.
 
 ### I want to use GitPrep on Perl 5.8.7 system
 
-GitPrep 2.0 drop support Perl 5.8.7 because latest Mojolicious don't support Perl 5.8.
+GitPrep 2.0 dropped support for Perl 5.8.7 because latest Mojolicious doesn't support Perl 5.8.
 
-You can choice two selection.
+You can choose between those options:
 
 **1. use GitPrep 1.xx**
 
@@ -432,14 +432,14 @@ You can see version 1.12 document.
 
 http://perlbrew.pl/
 
-perlbrew is very useful perl installation tools without breaking your system perl.
+perlbrew is a very useful perl installation tool without breaking your system perl.
 
-If you install perl 5.10.1+ by perlbrew, you can install latest GitPrep.
+If you install perl 5.10.1+ with perlbrew, you can install latest GitPrep.
 
 ### I know information about GitPrep 2.0 upgrading.
 
-If you use GitPrep on Perl 5.8 and install newer perl by perlbrew,
-you must remove extlib directory before "./setup_module" command.
+If you use GitPrep on Perl 5.8 and install newer perl with perlbrew,
+you must remove extlib directory before running the "./setup_module" command.
 
   rm -rf extlib
 
@@ -481,7 +481,7 @@ and move this feature to project settings page.
 
 mail address is require for user registration.
 
-## For Developer
+## For Developers
 
 If you are a developer, you can start the application in development mode.
 
