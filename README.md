@@ -122,6 +122,13 @@ to see what problem has occurred.
 
 ## FAQ
 
+## I can't install Gitprep into CentOS
+
+After CentOS 6, some perl core modules are not installed by default.
+You can install Perl core modules by the following command.
+
+    yum -y install perl-core
+
 ## Can't find git command from GitPrep
 
 If you install git into your local directry,
