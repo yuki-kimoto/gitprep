@@ -112,8 +112,6 @@
       # Merge
       my $merge_success = $self->app->manager->merge(
         $work_rep_info,
-        $base_rep_info,
-        $base_branch,
         $target_rep_info,
         $target_branch
       );
@@ -182,8 +180,6 @@
     # Check merge automatical
     $merge_success = $self->app->manager->merge(
       $work_rep_info,
-      $base_rep_info,
-      $base_branch,
       $target_rep_info,
       $target_branch
     );

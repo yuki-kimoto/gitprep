@@ -101,18 +101,28 @@ sub prepare_merge {
 }
 
 sub merge {
-  my ($self, $work_rep_info, $base_rep_info, $base_branch, $target_rep_info, $target_branch) = @_;
+  my ($self, $work_rep_info, $target_rep_info, $target_branch, $pull_request_number) = @_;
   
   my $object_id = $self->app->git->ref_to_object_id($target_rep_info, $target_branch);
   
-  # Merge
+  my $message;
   my $target_user_id = $target_rep_info->{user};
+  if (defined $pull_request_number) {
+    $message = "Merge pull request #$pull_request_number from $target_user_id/$target_branch";
+  }
+  else {
+    $message = "Merge from $target_user_id/$target_branch";
+  }
+  
+  # Merge
   my @git_merge_cmd = $self->app->git->cmd(
     $work_rep_info,
     'merge',
-    "--message=[merge]$target_user_id/$target_branch",
+    '--no-ff',
+    "--message=$message",
     $object_id
   );
+  # 
   
   my $success = Gitprep::Util::run_command(@git_merge_cmd);
   
