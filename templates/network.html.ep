@@ -70,18 +70,6 @@
         location.href = '<%= url_for("/$user_id/$project_id/network/graph/") %>' + branch + '...'
           + remote_member + '/' + remote_project + '/' + remote_branch;
       });
-
-      // Click import button
-      $('[name=import-btn]').on('click', function () {
-        var branch = $('[name=branch]').val();
-        var remote = $(this).closest('[name=remote]');
-        var remote_member = remote.find('[name=remote-member]').text();
-        var remote_project = remote.find('[name=remote-project]').text();
-        var remote_branch = remote.find('[name=remote-branch]').val();
-        
-        location.href = '<%= url_for("/$user_id/$project_id/import-branch/") %>'
-          + remote_member + '/' + remote_project + '?remote-branch=' + remote_branch;
-      });
     });
   % end
   
@@ -119,9 +107,6 @@
             </div>
             <div class="last-child">
               <button name="compare-btn" class="btn" style="margin-top:5px">Compare</button>
-              % if ($api->logined($user_id)) {
-                <button name="import-btn" class="btn" style="margin-top:5px">Import</button>
-              % }
             </div>
           </li>
         % }
