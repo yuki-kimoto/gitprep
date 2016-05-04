@@ -40,92 +40,121 @@
   # Git
   my $git = $self->app->git;
   
+  my $errors;
   if (lc $self->req->method eq 'post') {
     my $op = param('op');
     
     if ($op eq 'create-pull-request') {
+      
+      # Parameters
       my $title = param('title');
       my $message = param('message');
       
-      my $project_row_id = app->dbi->model('project')->select(
-        'project.row_id',
-        where => {'__user.id' => $base_user_id, 'project.id' => $base_project_id}
-      )->value;
+      # Validation
+      my $vc = app->vc;
+      my $validation = $vc->validation;
       
-      my $pull_request = app->dbi->model('pull_request')->select(
-        where => {
-          base_project => $project_row_id,
-          base_branch => $base_branch,
-          target_project => $target_project->{id},
-          target_branch => $target_branch
-        }
-      )->one;
-      
-      if ($pull_request) {
-        $self->redirect_to("/$base_user_id/$base_project_id/pull/$pull_request->{row_id}");
-        return;
+      # Check title
+      if (!(defined $title && length $title)) {
+        $validation->add_failed(title => 'title is empty');
       }
-      else {
-        my $now_tm = Time::Moment->now_utc;
-        my $now_epoch = $now_tm->epoch;
-        my $user_row_id = app->dbi->model('user')->select(
-          'row_id',
-          where => {id => $base_user_id}
+      elsif (length $title > 300) {
+        $validation->add_failed(title => 'title is too long');
+      }
+      
+      # Message
+      if (!(defined $message && length $message)) {
+        $message = '';
+        if (length $message > 1000) {
+          $validation->add_failed(message => 'message is too long');
+        }
+      }
+      
+      if ($validation->is_valid) {
+      
+        my $project_row_id = app->dbi->model('project')->select(
+          'project.row_id',
+          where => {'__user.id' => $base_user_id, 'project.id' => $base_project_id}
         )->value;
         
-        my $new_pull_request_row_id;
-        my $session_user_row_id = $api->session_user_row_id;
-        app->dbi->connector->txn(sub {
-          # New pull request
-          my $new_pull_request_params = {
+        my $pull_request = app->dbi->model('pull_request')->select(
+          where => {
             base_project => $project_row_id,
             base_branch => $base_branch,
-            target_project => $target_project->{row_id},
-            target_branch => $target_branch,
-            title => $title,
-            open => 1,
-            open_time => $now_epoch,
-            open_user => $session_user_row_id
-          };
-          
-          app->dbi->model('pull_request')->insert($new_pull_request_params);
-          
-          $new_pull_request_row_id = app->dbi->model('pull_request')->select(
+            target_project => $target_project->{id},
+            target_branch => $target_branch
+          }
+        )->one;
+        
+        if ($pull_request) {
+          $self->redirect_to("/$base_user_id/$base_project_id/pull/$pull_request->{row_id}");
+          return;
+        }
+        else {
+          my $now_tm = Time::Moment->now_utc;
+          my $now_epoch = $now_tm->epoch;
+          my $user_row_id = app->dbi->model('user')->select(
             'row_id',
-            where => {
+            where => {id => $base_user_id}
+          )->value;
+          
+          my $new_pull_request_row_id;
+          my $session_user_row_id = $api->session_user_row_id;
+          app->dbi->connector->txn(sub {
+            # New pull request
+            my $new_pull_request_params = {
               base_project => $project_row_id,
               base_branch => $base_branch,
               target_project => $target_project->{row_id},
-              target_branch => $target_branch
-            }
-          )->value;
+              target_branch => $target_branch,
+              title => $title,
+              open => 1,
+              open_time => $now_epoch,
+              open_user => $session_user_row_id
+            };
+            
+            app->dbi->model('pull_request')->insert($new_pull_request_params);
+            
+            $new_pull_request_row_id = app->dbi->model('pull_request')->select(
+              'row_id',
+              where => {
+                base_project => $project_row_id,
+                base_branch => $base_branch,
+                target_project => $target_project->{row_id},
+                target_branch => $target_branch
+              }
+            )->value;
+            
+            # Get pull request message number
+            my $number = app->dbi->model('pull_request_message')->select(
+              'max(number)',
+              where => {pull_request => $new_pull_request_row_id},
+              append => 'group by number'
+            )->value;
+            
+            $number //= 0;
+            
+            my $new_number = $number + 1;
+            
+            # New pull request message
+            my $new_pull_request_message_params = {
+              pull_request => $new_pull_request_row_id,
+              number => $new_number,
+              message => $message,
+              create_time => $now_epoch,
+              update_time => $now_epoch,
+              user => $session_user_row_id
+            };
+            
+            app->dbi->model('pull_request_message')->insert($new_pull_request_message_params);
+          });
           
-          # Get pull request message number
-          my $number = app->dbi->model('pull_request_message')->select(
-            'max(number)',
-            where => {pull_request => $new_pull_request_row_id},
-            append => 'group by number'
-          )->value;
-          
-          $number //= 0;
-          
-          my $new_number = $number + 1;
-          
-          # New pull request message
-          my $new_pull_request_message_params = {
-            pull_request => $new_pull_request_row_id,
-            number => $new_number,
-            message => $message,
-            create_time => $now_epoch,
-            update_time => $now_epoch,
-            user => $session_user_row_id
-          };
-          
-          app->dbi->model('pull_request_message')->insert($new_pull_request_message_params);
-        });
-        
-        $self->redirect_to("/$base_user_id/$base_project_id/pull/$new_pull_request_row_id");
-        return;
+          $self->redirect_to("/$base_user_id/$base_project_id/pull/$new_pull_request_row_id");
+          return;
+        }
+      }
+      else {
+        $errors = $validation->messages;
       }
     }
   }
@@ -321,6 +350,8 @@
 %= include '/include/header';
 
 <div class="container">
+  %= include '/include/errors', errors => $errors;
+  
   <div class="topic1">
     % if ($can_open_pull_request) {
       Open a pull request
