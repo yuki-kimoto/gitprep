@@ -13,66 +13,74 @@
   }
   
   my $errors;
-  if ($op eq 'create') {
-    # Parameters
-    my $project_id = param('project');
-    my $description = param('description');
-    my $readme = param('readme');
-    my $private = param('private');
-    
-    # Validator
-    my $vc = app->vc;
-    
-    # Validation
-    my $validation = $vc->validation;
-    
-    # "project"
-    if (!(defined $project_id && length $project_id)) {
-      $validation->add_failed(project => 'Repository name is empty');
-    }
-    elsif (!$vc->check($project_id, 'project_name')) {
-      $validation->add_failed(project => 'Invalid repository name');
-    }
-    elsif (app->manager->exists_project($session_user->{id}, $project_id)) {
-      $validation->add_failed(project => 'Repository already exists');
-    }
-    
-    # "description"
-    $description ||= '';
-    
-    # "readme"
-    $readme = $readme ? 1 :0;
-    
-    # "private"
-    $private = $private ? 1 : 0;
-    
-    # Git
-    if ($validation->is_valid) {
-      # Not logined
-      unless ($api->logined) {
-        return $self->reply->exception;
+  if (lc $self->req->method eq 'post') {
+    if ($op eq 'create') {
+      # Parameters
+      my $project_id = param('project');
+      my $description = param('description');
+      my $readme = param('readme');
+      my $private = param('private');
+      
+      # Validator
+      my $vc = app->vc;
+      
+      # Validation
+      my $validation = $vc->validation;
+      
+      # "project"
+      if (!(defined $project_id && length $project_id)) {
+        $validation->add_failed(project => 'Repository name is empty');
+      }
+      elsif (length $project_id > 300) {
+        $validation->add_failed(project => 'Repository name is too long');
+      }
+      elsif (!$vc->check($project_id, 'project_name')) {
+        $validation->add_failed(project => 'Invalid repository name');
+      }
+      elsif (app->manager->exists_project($session_user->{id}, $project_id)) {
+        $validation->add_failed(project => 'Repository already exists');
       }
       
-      my $manager = app->manager;
-      # Create repository
-      eval {
-        $manager->create_project(
-          $session_user->{id},
-          $project_id,
-          {description => $description, readme => $readme, private => $private}
-        );
-      };
+      # "description"
+      $description ||= '';
+      if (length $description > 300) {
+        $validation->add_failed(description => 'description is too long');
+      }
       
-      if (my $e = $@) {
-        app->log->error(url_for . ": $e");
-        $errors = ['Internal error'];
+      # "readme"
+      $readme = $readme ? 1 :0;
+      
+      # "private"
+      $private = $private ? 1 : 0;
+      
+      # Git
+      if ($validation->is_valid) {
+        # Not logined
+        unless ($api->logined) {
+          return $self->reply->exception;
+        }
+        
+        my $manager = app->manager;
+        # Create repository
+        eval {
+          $manager->create_project(
+            $session_user->{id},
+            $project_id,
+            {description => $description, readme => $readme, private => $private}
+          );
+        };
+        
+        if (my $e = $@) {
+          app->log->error(url_for . ": $e");
+          $errors = ['Internal error'];
+        }
+        else {
+          $self->redirect_to("/$session_user->{id}/$project_id");
+          return;
+        }
       }
-      else {
-        $self->redirect_to("/$session_user->{id}/$project_id");
-        return;
-      }
+      else { $errors = $validation->messages }
     }
-    else { $errors = $validation->messages }
   }
 %>
 
