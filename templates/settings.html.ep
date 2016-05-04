@@ -34,6 +34,9 @@
       if (!(defined $to_project && length $to_project)) {
         $validation->add_failed('to-project' => 'Repository name is empty.');
       }
+      elsif (length $to_project > 300) {
+        $validation->add_failed('to-project' => 'Repository name is too long.');
+      }
       elsif (!$vc->check($to_project, 'project_name')) {
         $validation->add_failed('to-project' => 'Repository name contains invalid charactor.');
       }
@@ -59,18 +62,32 @@
     
     # Change description
     elsif ($op eq 'change-description') {
+      
+      # Parameters
       my $description = param('description');
       $description = '' unless defined $description;
+ 
+      # Validator
+      my $vc = app->vc;
       
-      eval { $git->description(app->rep_info($user_id, $project_id), $description) };
-      if (my $e = $@) {
-        app->log->error("/$user_id/$project_id/settings?op=description: $e");
-        $errors = ['Internal Error'];
+      # Validation result
+      my $validation = $vc->validation;
+      
+      if (length $description > 300) {
+        $validation->add_failed(description => 'description is too long');
       }
-      else {
-        flash(message => 'Description is saved.');
-        $self->redirect_to('current');
-        return;
+      
+      if ($validation->is_valid) {
+        eval { $git->description(app->rep_info($user_id, $project_id), $description) };
+        if (my $e = $@) {
+          app->log->error("/$user_id/$project_id/settings?op=description: $e");
+          $errors = ['Internal Error'];
+        }
+        else {
+          flash(message => 'Description is saved.');
+          $self->redirect_to('current');
+          return;
+        }
       }
     }
     
@@ -82,16 +99,39 @@
       my $private = param('private');
       my $ignore_space_change = param('ignore_space_change');
       my $guess_encoding = param('guess_encoding');
+
+      # Validator
+      my $vc = app->vc;
+      
+      # Validation result
+      my $validation = $vc->validation;
+      
+      # Check default branch
+      if (length $default_branch > 300) {
+        $validation->add_failed('default-branch' => 'default branch is too long');
+      }
+      
+      # Check private
+      $private = $private ? 1 : 0;
+      
+      # Check ignore space change
+      $ignore_space_change = $ignore_space_change ? 1 : 0;
+      
+      # Check guess encoding
+      $guess_encoding //= '';
+      if (length $guess_encoding > 300) {
+        $validation->add_failed(guess_encoding => 'guess_encoding is too long');
+      }
       
       my $params = {};
       if (defined $default_branch) {
         $params->{default_branch} = $default_branch;
       }
       if (defined $private) {
-        $params->{private} = $private ? 1 : 0;
+        $params->{private} = $private;
       };
       if (defined $ignore_space_change) {
-        $params->{ignore_space_change} = $ignore_space_change ? 1 : 0;
+        $params->{ignore_space_change} = $ignore_space_change;
       }
       if (defined $guess_encoding) {
         $params->{guess_encoding} = $guess_encoding;
