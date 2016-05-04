@@ -6,7 +6,7 @@
   if ($op eq 'delete' && lc $self->req->method eq 'post') {
     
     # Parameters
-    my $user = param('user');
+    my $user_id = param('user');
     
     # Validator
     my $vc = app->vc;
@@ -15,7 +15,7 @@
     my $validation = $vc->validation;
     
     # "user" check
-    if (!(defined $user && length $user)) {
+    if (!(defined $user_id && length $user_id)) {
       $validation->add_failed(user => 'User name is empty.');
     }
 
@@ -23,17 +23,17 @@
       
       # Delete user
       my $count;
-      eval { $count = app->manager->delete_user($user) };
+      eval { $count = app->manager->delete_user($user_id) };
       if (my $e = $@) {
         app->log->error(url_for . ": $e");
         $errors = ['Internal Error'];
       }
       elsif ($count == 0) {
-        app->log->error("/_admin/users?op=delete: User $user not exists");
+        app->log->error("/_admin/users?op=delete: User $user_id not exists");
         $errors = ['Internal Error'];
       }
       else {
-        $self->flash(message => "User $user is deleted.");
+        $self->flash(message => "User $user_id is deleted.");
         $self->redirect_to('current');
         return;
       }
