@@ -5,74 +5,82 @@
   my $user_id = param('id');
   
   my $errors;
-  if ($op eq 'update') {
-  
-    # Parameters
-    my $id = param('id');
-    my $name = param('name');
-    my $email = param('email');
+  if (lc $self->req->method eq 'post') {
+    if ($op eq 'update') {
     
-    # Validator
-    my $vc = app->vc;
-    
-    # Validation result
-    my $validation = $vc->validation;
-    
-    # "id" check
-    if (!(defined $id && length $id)) {
-      $validation->add_failed(id => 'User id is empty.');
-    }
-    
-    # "name" check
-    $name //= '';
-    
-    # "email" check
-    if (!(defined $email && length $email)) {
-      $validation->add_failed(email => "Mail must be not empty");
-    }
-    elsif ($email !~ /\@/) {
-      $validation->add_failed(email => "Invalid mail address");
-    }
-    else {
-      my $where = app->dbi->where;
-      my $clause = [
-        'and',
-        ':email{=}',
-        ':id{<>}'
-      ];
-      my $param = {
-        email => $email,
-        id => $user_id
-      };
-      $where->clause($clause);
-      $where->param($param);
+      # Parameters
+      my $id = param('id');
+      my $name = param('name');
+      my $email = param('email');
       
-      my $row = app->dbi->model('user')->select(where => $where)->one;
-      if ($row) {
-        $validation->add_failed(email => "Mail $email already exists");
+      # Validator
+      my $vc = app->vc;
+      
+      # Validation result
+      my $validation = $vc->validation;
+      
+      # "id" check
+      if (!(defined $id && length $id)) {
+        $validation->add_failed(id => 'User id is empty.');
       }
-    }
-    
-    if ($validation->is_valid) {
+      elsif (length $name > 300) {
+        $validation->add_failed(id => 'User id is too long.');
+      }
       
-      # Encrypt password
-      my $params = {};
-      $params->{name} = $name;
-      $params->{email} = $email;
+      # "name" check
+      $name //= '';
       
-      # Update user
-      eval { app->dbi->model('user')->update($params, where => {id => $id}) };
-      if (my $e = $@) {
-        app->log->error(url_for . ": $e");
-        $errors = ['Internal Error'];
+      # "email" check
+      if (!(defined $email && length $email)) {
+        $validation->add_failed(email => "Mail must be not empty");
+      }
+      elsif (length $email > 300) {
+        $validation->add_failed(email => "Mail is too long");
+      }
+      elsif ($email !~ /\@/) {
+        $validation->add_failed(email => "Invalid mail address");
       }
       else {
-        $self->flash(success => 1);
-        $self->flash(id => $id);
-        $self->redirect_to(url_for->query(id => $id));
+        my $where = app->dbi->where;
+        my $clause = [
+          'and',
+          ':email{=}',
+          ':id{<>}'
+        ];
+        my $param = {
+          email => $email,
+          id => $user_id
+        };
+        $where->clause($clause);
+        $where->param($param);
+        
+        my $row = app->dbi->model('user')->select(where => $where)->one;
+        if ($row) {
+          $validation->add_failed(email => "Mail $email already exists");
+        }
       }
+      
+      if ($validation->is_valid) {
+        
+        # Encrypt password
+        my $params = {};
+        $params->{name} = $name;
+        $params->{email} = $email;
+        
+        # Update user
+        eval { app->dbi->model('user')->update($params, where => {id => $id}) };
+        if (my $e = $@) {
+          app->log->error(url_for . ": $e");
+          $errors = ['Internal Error'];
+        }
+        else {
+          $self->flash(success => 1);
+          $self->flash(id => $id);
+          $self->redirect_to(url_for->query(id => $id));
+        }
+      }
+      else { $errors = $validation->messages }
     }
-    else { $errors = $validation->messages }
   }
   
   my $user = app->dbi->model('user')->select(
