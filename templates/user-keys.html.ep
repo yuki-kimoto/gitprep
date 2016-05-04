@@ -1,9 +1,10 @@
 <%
-  my $user = param('user');
+  my $user_id = param('user');
   
-  warn param('user.keys');
-  
-  my $keys = app->dbi->model('ssh_public_key')->select(where => {user_id => $user})->all;
+  my $keys = app->dbi->model('ssh_public_key')->select(
+    where => {'__user.id' => $user_id},
+    append => 'order by title'
+  )->all;
   my $keys_str = '';
   for my $key (@$keys) {
     $keys_str .= "$key->{key}\n";
