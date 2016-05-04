@@ -15,6 +15,7 @@ See GitPrep example site. [GitPrep example site](http://perlcodesample.sakura.ne
 * Built-in web server, and reverse proxy support.
 * CGI support.
 * SSL support.
+* Public key authentication support
 
 ## A. Run GitPrep by embdded web server
 
