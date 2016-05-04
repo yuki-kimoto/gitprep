@@ -4,10 +4,10 @@
   
   # Parameters
   my $op = param('op') || '';
-  my $user = param('user') || '';
+  my $user_id = param('user') || '';
   
   # Authentication
-  unless ($api->logined($user)) {
+  unless ($api->logined($user_id)) {
     $self->redirect_to('/');
     return;
   }
@@ -48,6 +48,9 @@
       my $key;
       if (!(defined $original_key && length $original_key)) {
         $validation->add_failed(key => 'key is empty');
+      }
+      elsif (length $original_key > 2000) {
+        $validation->add_failed(key => 'key is too long');
       }
       else {
         my $type;
@@ -99,8 +102,9 @@
       
       # Register ssh key
       if ($validation->is_valid) {
+        my $session_user_row_id = $api->session_user_row_id;
         my $p = {
-          user_id => $user,
+          user => $session_user_row_id,
           title => $title,
           key => $key
         };
@@ -128,6 +132,7 @@
     # Delete ssh public key
     elsif ($op eq 'delete') {
       my $row_id = param('row-id');
+      
       eval {
         app->dbi->connector->txn(sub {
           app->dbi->model('ssh_public_key')->delete(where => {row_id => $row_id});
@@ -146,7 +151,13 @@
     }
   }
   
-  my $keys = app->dbi->model('ssh_public_key')->select(where => {user_id => $user})->all;
+  my $keys = app->dbi->model('ssh_public_key')->select(
+    {
+      __MY__ => '*'
+    },
+    where => {'__user.id' => $user_id},
+    append => 'order by title'
+  )->all;
 %>
 
 % layout 'common', title => 'SSH keys';
@@ -158,10 +169,10 @@
       <div class="left">
         <ul>
           <li>
-            <a href="<%= url_for("/$user/_settings") %>">Profile</a>
+            <a href="<%= url_for("/$user_id/_settings") %>">Profile</a>
           </li>
           <li class="active">
-            <a href="<%= url_for("/$user/_settings/ssh") %>">SSH keys</a>
+            <a href="<%= url_for("/$user_id/_settings/ssh") %>">SSH keys</a>
           </li>
         </ul>
       </div>
@@ -172,7 +183,7 @@
         <div class="user-settings-container ssh-keys">
           <div>
             <div>
-              <span>SSH Keys</span> (<a href="<%= url_for("/$user.keys") %>">see</a>)
+              <span>SSH Keys</span> (<a href="<%= url_for("/$user_id.keys") %>">see</a>)
             </div>
           </div>
           <div>
