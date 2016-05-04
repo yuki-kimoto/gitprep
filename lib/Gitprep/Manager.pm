@@ -538,12 +538,17 @@ sub update_authorized_keys_file {
     }
 
     # Create public keys
-    my $ssh_public_keys = $self->app->dbi->model('ssh_public_key')->select->all;
+    my $ssh_public_keys = $self->app->dbi->model('ssh_public_key')->select(
+      [
+        {__MY__ => '*'},
+        {__user => ['id']}
+      ]
+    )->all;
     my $ssh_public_keys_str = '';
     for my $key (@$ssh_public_keys) {
       my $ssh_public_key_str = 'command="' . $self->app->home->rel_file('script/gitprep-shell')
-        . " $key->{user_id}\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty $key->{key}";
-      $ssh_public_keys_str .= "$ssh_public_key_str $key->{user_id}\n\n";
+        . " $key->{'__user.id'}\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty $key->{key}";
+      $ssh_public_keys_str .= "$ssh_public_key_str $key->{'__user.id'}\n\n";
     }
     
     # Output tmp file
