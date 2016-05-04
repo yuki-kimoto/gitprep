@@ -2,7 +2,7 @@
 
 Github clone. You can install portable github system into Unix/Linux.
 
-See GitPrep example site. [GitPrep example site](http://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)
+See GitPrep example site. [GitPrep example site](https://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)
 
 ![GitPrep Image](gitprep_image.png "Gitprep image example")
 
@@ -121,7 +121,7 @@ You can stop the application by adding the **--stop** option.
 
 You can run GitPrep as CGI script as the following site.
 
-[GitPrep example site](http://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)
+[GitPrep example site](https://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)
 
 This is shared server. I assume you can connect the server via SSH and login with your own user.
 
