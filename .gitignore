@@ -16,9 +16,9 @@ MYMETA.json
 MYMETA.yml
 log/*
 !log/.gitignore
+script/gitprep-shell
 script/hypnotoad.pid
 !public/.gitignore
-script/hypnotoad.pid
 extlib/*
 gitprep.my.conf
 data/*

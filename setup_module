@@ -4,3 +4,10 @@ export PERL_CPANM_HOME=$CUR_DIR_ABS/setup
 perl cpanm -n -l extlib Module::CoreList
 perl -Iextlib/lib/perl5 cpanm -f -L extlib ExtUtils::MakeMaker
 perl -Iextlib/lib/perl5 cpanm -L extlib --installdeps .
+
+# Create gitprep-shell script
+CURRENT_PERL=`which perl`
+echo '#!/bin/sh' > script/gitprep-shell
+echo -n "$CURRENT_PERL $CUR_DIR_ABS/script/gitprep-shell-raw" >> script/gitprep-shell
+echo ' $*' >> script/gitprep-shell
+chmod 755 script/gitprep-shell

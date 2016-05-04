@@ -102,7 +102,7 @@ gitprep-shell - AuthorizedKeysCommand for sshd
 
 =head1 USAGE
 
-  ./gitprep-shell kimoto
+  ./gitprep-shell-raw kimoto
 
 This command return user public_key
 
