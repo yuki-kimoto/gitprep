@@ -45,8 +45,8 @@ If you don't have Perl 5.10.1+, you need to install a newer perl version with pe
     echo "source ~/perl5/perlbrew/etc/bashrc" >> ~/.bash_profile
     source ~/.bash_profile
     
-    perlbrew install perl-5.22.1
-    perlbrew switch perl-5.22.1
+    perlbrew install perl-5.16.3
+    perlbrew switch perl-5.16.3
     perl -v
     
 Download GitPrep .tar.gz archive, expand it and change directory:
