@@ -136,9 +136,9 @@ If you finish installation, you can access the following URL.
 If you see an internal server error, look at the log file (gitprep/log/production.log)
 to see what problem has occurred.
 
-## C. Installation as sparrow plugin
+## C. Installation via sparrow plugin
 
-You may install gitprep as sparrow plugin. This installation favor is very similar as A):
+You may install gitprep via sparrow plugin. This installation favor is very similar as A):
 
     $ sparrow plg install gitprep
     $ sparrow plg run gitprep --param action=install   # to install gitprep server
