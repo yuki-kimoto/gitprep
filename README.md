@@ -136,17 +136,6 @@ If you finish installation, you can access the following URL.
 If you see an internal server error, look at the log file (gitprep/log/production.log)
 to see what problem has occurred.
 
-## C. Run GitPrep via sparrow plugin
-
-You may install and run GitPrep via sparrow plugin. This installation favor is very similar as A):
-
-    $ sparrow plg install gitprep
-    $ sparrow plg run gitprep --param action=install   # to install GitPrep server
-    $ sparrow plg run gitprep --param action=start     # to start GitPrep server
-    $ sparrow plg run gitprep --param action=stop      # to stop GitPrep server
-
-Follow [plugin documentation](https://sparrowhub.org/info/gitprep) for details.
-
 ## FAQ
 
 ## I can't install Gitprep on CentOS
@@ -492,6 +481,10 @@ and move this feature to project settings page.
 **5. mail is required for user registration.
 
 mail address is require for user registration.
+
+### Install, run GitPrep via sparrow plugin
+
+You may install and install, run GitPrep via sparrow plugin. Please follow [gitprep plugin documentation](https://sparrowhub.org/info/gitprep) for details.
 
 ## For Developers
 
