@@ -482,6 +482,10 @@ and move this feature to project settings page.
 
 mail address is require for user registration.
 
+### Install, run GitPrep via sparrow plugin
+
+You may install and install, run GitPrep via sparrow plugin. Please follow [gitprep plugin documentation](https://sparrowhub.org/info/gitprep) for details.
+
 ## For Developers
 
 If you are a developer, you can start the application in development mode.
