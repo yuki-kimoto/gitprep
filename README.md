@@ -482,9 +482,17 @@ and move this feature to project settings page.
 
 mail address is require for user registration.
 
-### Install, run GitPrep via sparrow plugin
+### Are there other ways to install GitPrep?
 
-You may install and install, run GitPrep via sparrow plugin. Please follow [gitprep plugin documentation](https://sparrowhub.org/info/gitprep) for details.
+**Use sparrow**
+
+You may install and install, run GitPrep via sparrow plugin.
+
+    $ cpanm Sparrow
+    $ sparrow index update 
+    $ sparrow plg install gitprep
+
+Please follow [gitprep plugin documentation](https://sparrowhub.org/info/gitprep) for details.
 
 ## For Developers
 
