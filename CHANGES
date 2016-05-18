@@ -1,5 +1,6 @@
 2.1 ()
   - default login session time become 2 weeks and delete save check box.
+  - Fix commits page author links.
   
 2.0 (7 May 2016)
   - drop Perl 5.8 support, now require Perl 5.10.1
