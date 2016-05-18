@@ -17,7 +17,6 @@
     # Paramerters
     my $id = param('id');
     my $password = param('password');
-    my $save = param('save');
     
     # Validator
     my $vc = app->vc;
@@ -48,9 +47,6 @@
       }
     }
     
-    # "save"
-    $save = $save ? 1 : 0;
-    
     if ($validation->is_valid) {
       
       # Login success
@@ -59,10 +55,8 @@
       session(user_row_id => $user->{row_id});
       session(password => $password_encrypted);
       
-      if ($save) {
-        # 2 weeks save
-        session(expires => time + 60 * 60 * 24 * 14);
-      }
+      # 2 weeks save
+      session(expires => time + 60 * 60 * 24 * 14);
       
       # Go to admin page
       if ($admin) {
@@ -133,11 +127,6 @@
           <div>Password</div>
           <div>
             <%= password_field 'password', id => 'input-password', placeholder => 'Password' %>
-          </div>
-        </div>
-        <div>
-          <div>
-            <input type="checkbox" name="save" value="1"> Save
           </div>
         </div>
         <div>

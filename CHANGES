@@ -1,4 +1,7 @@
-2.00_dev ()
+2.1 ()
+  - default login session time become 2 weeks and delete save check box.
+  
+2.0 (7 May 2016)
   - drop Perl 5.8 support, now require Perl 5.10.1
   - use own temparaly directory when creating repositoy with readme file. Now not use /tmp.
   - add Mojolicious::Plugin::DBViewer to cpanfile

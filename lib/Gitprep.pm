@@ -17,7 +17,7 @@ use Time::Moment;
   eval {require Digest::SHA; import Digest::SHA qw(sha1 sha1_hex)};
 }
 
-our $VERSION = 'v2.0';
+our $VERSION = 'v2.1_dev';
 
 has 'dbi';
 has 'git';
