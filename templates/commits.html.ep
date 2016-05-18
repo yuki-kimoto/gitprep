@@ -28,6 +28,10 @@
     'id',
     where => {email => $commit_author_email}
   )->value;
+
+  # Authors
+  my %author_id_of = map { $_->{email} => $_->{id} }
+    @{ app->dbi->model('user')->select( [ 'id', 'email' ] )->all };
     
   # Commits
   my $page_count = 30;
@@ -145,8 +149,9 @@
                   </div>
                   <div class="commit-left-author">
                     <span title="<%= $commit->{author_email} %>">
-                      % if (defined $commit_author_id) {
-                        <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+                      % my $author_id = $author_id_of{ $commit->{author_email} };
+                      % if ($author_id) {
+                        <a href="<%= url_for("/$author_id") %>"><%= $author_id %></a>
                       % } else {
                         <%= $commit->{author_name} %>
                       % }
