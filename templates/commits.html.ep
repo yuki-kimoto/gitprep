@@ -15,19 +15,8 @@
   my ($rev, $file) = $git->parse_rev_path(app->rep_info($user, $project), $rev_file);
   my $page = param('page') || 0;
   
-  # Commit
-  my $commit = $git->get_commit(app->rep_info($user, $project), $rev);
-
-  # Not found
-  unless ($commit) {
-    $self->reply->not_found;
-    return;
-  }
-  my $commit_author_email = $commit->{author_email};
-  my $commit_author_id = app->dbi->model('user')->select(
-    'id',
-    where => {email => $commit_author_email}
-  )->value;
+  # Latest commit
+  my $latest_commit = $git->get_commit(app->rep_info($user, $project), $rev);
 
   # Authors
   my %author_id_of = map { $_->{email} => $_->{id} }
@@ -37,7 +26,7 @@
   my $page_count = 30;
   my $commits = $git->get_commits(
     app->rep_info($user, $project),
-    $commit->{id},
+    $latest_commit->{id},
     $page_count,
     $page_count * $page,
     $file
@@ -140,6 +129,8 @@
           <ul class="commits-date-container">
             % my $num = 0;
             % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
+              <%
+                my $author_id = app->dbi->model('user')->select('id', where => {email => $commit->{author_email}})->value;              %>
               <li>
                 <div class="commit-left">
                   <div class="commit-left-title">
@@ -149,8 +140,8 @@
                   </div>
                   <div class="commit-left-author">
                     <span title="<%= $commit->{author_email} %>">
-                      % my $author_id = $author_id_of{ $commit->{author_email} };
-                      % if ($author_id) {
+                    
+                      % if (defined $author_id) {
                         <a href="<%= url_for("/$author_id") %>"><%= $author_id %></a>
                       % } else {
                         <%= $commit->{author_name} %>
