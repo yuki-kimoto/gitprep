@@ -56,7 +56,7 @@
       session(password => $password_encrypted);
       
       # 2 weeks save
-      session(expires => time + 60 * 60 * 24 * 14);
+      session(expiration => 60 * 60 * 24 * 14);
       
       # Go to admin page
       if ($admin) {
