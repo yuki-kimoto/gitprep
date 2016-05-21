@@ -47,7 +47,12 @@
           </div>
           <!-- Logined as <%= $session_user->{id} %> -->
           <div class="header-login-container">
-            <i class="icon-user"></i><a href="<%= url_for("/$session_user->{id}") %>"><%= $session_user->{id} %></a>
+            <i class="icon-user"></i>
+              % if ($api->logined_admin) {
+                <a href="<%= url_for("/_admin") %>"><%= $session_user->{id} %></a>
+              % } else {
+                <a href="<%= url_for("/$session_user->{id}") %>"><%= $session_user->{id} %></a>
+              % }
           </div>
         % } else {
           <div class="header-btn-container">
