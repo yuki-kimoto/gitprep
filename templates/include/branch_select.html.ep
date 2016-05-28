@@ -152,9 +152,11 @@
           </li>
           <li>
             <div class="donwload-zip">
-              <a class="btn btn-small" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
-                Download ZIP
-              </a>
+		<select size="1" name="jumpit" onchange="document.location.href=this.value">
+                        <option selected value="#">Download As</option>
+                        <option value="<%= url_for("/$user/$project/archive/$rev.zip") %>">zip</option>
+                        <option value="<%= url_for("/$user/$project/archive/$rev.tar.gz") %>">tar.gz</option>
+                </select>
             </div>
           </li>
         </ul>
