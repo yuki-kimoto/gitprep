@@ -77,6 +77,12 @@
   padding:13px 12px;
   
 }
+
+.pull-command-line {
+  border:1px solid #95c97e;
+  border-radius:3px;
+}
+
 .pull-request-form {
   border:1px solid #95c97e;
   border-radius:3px;

@@ -322,9 +322,8 @@
       
       % if ($api->can_write_access($session_user_id, $base_user_id, $base_project_id)) {
         % if ($commits_count && $merge_success && $pull_request->{open}) {
-          <form action="<%= url_for %>" method="post">
-            <%= hidden_field op => 'merge' %>
-            <div class="pull-request-form">
+          <div class="pull-request-form">
+            <div>
               <div style="overflow:hidden">
                 <div style="float:left;padding:10px;padding-right:0">
                   <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#95c97e;color:white;padding-top:5px;"><%= "\x{2714}" %></div>
@@ -341,10 +340,50 @@
                 </div>
               </div>
               <div class="pull-request-form-button">
-                <%= submit_button 'Merge pull request', class => "btn btn-success" %>
+                <form action="<%= url_for %>" method="post">
+                  <%= hidden_field op => 'merge' %>
+                  <%= submit_button 'Merge pull request', class => "btn btn-success" %>
+                  <span style="margin-left:5px">
+                    You can also view <a href="javascript:void(0)" onclick="$('#command-line-instructions').toggle()" >command line instructions</a>.
+                  </span>
+                </form>
+                
+                <div id="command-line-instructions">
+                  <div style="margin-top:15px;border-top:1px solid #d8d8d8;">
+                  <div style="font-size:18px;padding:10px 0">
+                    Merging via command line
+                  </div>
+
+                  <div>
+                    If you do not want to use the merge button or an automatic merge cannot be performed, you can perform a manual merge on the command line.
+                  </div>
+                  <div style="margin-top:10px">
+                    <button>HTTPS</button> <button>Git</button> <button>Patch</button>
+                    <%= text_field clone_url => "https://github.com/kaloyan13/gitprep.git" %>
+                  </div>
+
+                  <div style="margin-top:15px;margin-bottom:5px;">
+                    <b>Step 1:</b> From your project repository, check out a new branch and test the changes.
+                  </div>
+
+<pre style="background:#f2f2f2; padding:10px; border-radius:3px">
+git checkout -b kaloyan13-master master
+git pull https://github.com/kaloyan13/gitprep.git master
+</pre>
+
+                  <div style="margin-top:15px;margin-bottom:5px;">
+                    <b>Step 2:</b> Merge the changes and update on GitPrep.
+                  </div>
+
+<pre style="background:#f2f2f2; padding:10px; border-radius:3px">
+git checkout master
+git merge --no-ff kaloyan13-master
+git push origin master
+</pre>
+                </div>
               </div>
             </div>
-          </form>
+          </div>
         % }
         
         % if ($pull_request->{open}) {
