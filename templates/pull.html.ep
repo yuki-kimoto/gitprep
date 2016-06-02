@@ -184,7 +184,27 @@
       $target_branch
     );
   }
+  
+  # HTTP repository URL
+  my $http_rep_url = url_for("$target_user_id/$target_project_id.git")->to_abs;
+  
+  # SSH repository URL
+  my $url = url_for->to_abs;
+  $url->base(undef);
+  my $ssh_port = config->{basic}{ssh_port};
+  my $rep_home = app->rep_home;
+  my $execute_user = getpwuid($>);
+  my $ssh_rep_url_base = defined app->config->{basic}{'ssh_rep_url_base'}
+    ? app->config->{basic}{'ssh_rep_url_base'} : $rep_home;
+  my $ssh_rep_url = "ssh://$execute_user\@" . $url->host
+    . ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user/$project.git";
 
+  my $patch_url = url_for("/$base_user_id/$base_project_id/pull/$pull_request->{row_id}.patch")->to_abs;
+
+  my $pre_content_base = "git checkout -b $target_user_id-$target_branch $base_branch";
+  my $pre_content_http = "git pull $http_rep_url $target_branch";
+  my $pre_content_ssh = "git pull $ssh_rep_url $target_branch";
+  
   # Commit body arguments
   my %commit_body_args = (
     id => $end_commit->{id},
@@ -265,7 +285,7 @@
             <b><%= $pull_request_message_first->{'__open_user.id'} %></b>
             <span style="color:#767676">
               commented
-              <%= $api->age_string($pull_request_message_first->{update_time}) %></b>
+              <%= $api->age_string($pull_request_message_first->{update_time}) %>
             </span>
           </div>
           <div class="pull-comment-body">
@@ -323,63 +343,88 @@
       % if ($api->can_write_access($session_user_id, $base_user_id, $base_project_id)) {
         % if ($commits_count && $merge_success && $pull_request->{open}) {
           <div class="pull-request-form">
-            <div>
-              <div style="overflow:hidden">
-                <div style="float:left;padding:10px;padding-right:0">
-                  <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#95c97e;color:white;padding-top:5px;"><%= "\x{2714}" %></div>
-                </div>
-                <div style="float:left">
-                  <div class="pull-request-form-title">
-                    <div>
-                      <b>This branch has no conflicts with the base branch</b>
-                    </div>
-                    <div>
-                      <span style="color:#767676">Merging can be performed automatically.</span>
-                    </div>
+            <div style="overflow:hidden">
+              <div style="float:left;padding:10px;padding-right:0">
+                <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#95c97e;color:white;padding-top:5px;"><%= "\x{2714}" %></div>
+              </div>
+              <div style="float:left">
+                <div class="pull-request-form-title">
+                  <div>
+                    <b>This branch has no conflicts with the base branch</b>
+                  </div>
+                  <div>
+                    <span style="color:#767676">Merging can be performed automatically.</span>
                   </div>
                 </div>
               </div>
-              <div class="pull-request-form-button">
-                <form action="<%= url_for %>" method="post">
-                  <%= hidden_field op => 'merge' %>
-                  <%= submit_button 'Merge pull request', class => "btn btn-success" %>
-                  <span style="margin-left:5px">
-                    You can also view <a href="javascript:void(0)" onclick="$('#command-line-instructions').toggle()" >command line instructions</a>.
-                  </span>
-                </form>
+            </div>
+            <div class="pull-request-form-button">
+              <form action="<%= url_for %>" method="post">
+                <%= hidden_field op => 'merge' %>
+                <%= submit_button 'Merge pull request', class => "btn btn-success" %>
+                <span style="margin-left:5px">
+                  You can also view <a href="javascript:void(0)" onclick="$('#command-line-instructions').toggle()" >command line instructions</a>.
+                </span>
+              </form>
+              
+              <div id="command-line-instructions" style="display:none">
+                <div style="font-size:18px;padding:10px 0">
+                  Merging via command line
+                </div>
+
+                <div>
+                  If you do not want to use the merge button or an automatic merge cannot be performed, you can perform a manual merge on the command line.
+                </div>
+                %= javascript begin
+                  $(document).ready(function () {
+                    var http_rep_url = "<%= $http_rep_url %>";
+                    
+                    var ssh_rep_url = "<%= $ssh_rep_url %>";
+                    var patch_url = "<%= $patch_url %>";
+                    
+                    var pre_content_base = "<%= $pre_content_base %>";
+                    var pre_content_http = "<%= $pre_content_http %>";
+                    var pre_content_ssh = "<%= $pre_content_ssh %>";
+                    
+                    var pre_content_http_all = pre_content_base + "\n" + pre_content_http;
+                    var pre_content_ssh_all = pre_content_base + "\n" + pre_content_ssh;
+                    
+                    $('#http-btn').on('click', function () {
+                      $('[name=clone_url]').val(http_rep_url);
+                      $('#step1').text(pre_content_http_all);
+                    });
+                    $('#ssh-btn').on('click', function () {
+                      $('[name=clone_url]').val(ssh_rep_url);
+                      $('#step1').text(pre_content_ssh_all);
+                    });
+                    $('#patch-btn').on('click', function () {
+                      $('[name=clone_url]').val(patch_url);
+                    });
+                  });
+                % end
                 
-                <div id="command-line-instructions">
-                  <div style="margin-top:15px;border-top:1px solid #d8d8d8;">
-                  <div style="font-size:18px;padding:10px 0">
-                    Merging via command line
-                  </div>
+                <div style="margin-top:10px">
+                  <button id="http-btn" class="btn btn-small" style="border-radius:3px 0 0 3px">HTTPS</button><button id="ssh-btn" class="btn btn-small" style="border-radius:0">SSH</button><button id="patch-btn" class="btn btn-small" style="border-radius:0">Patch</button><%= text_field clone_url => $http_rep_url, style => "width:600px;padding:4px 7px 5px 7px;border-radius:0 3px 3px 0" %>
+                </div>
 
-                  <div>
-                    If you do not want to use the merge button or an automatic merge cannot be performed, you can perform a manual merge on the command line.
-                  </div>
-                  <div style="margin-top:10px">
-                    <button class="btn btn-small" style="border-radius:3px 0 0 3px">HTTPS</button><button class="btn btn-small" style="border-radius:0">Git</button><button class="btn btn-small" style="border-radius:0">Patch</button><%= text_field clone_url => "https://github.com/kaloyan13/gitprep.git", style => "width:600px;padding:4px 7px 5px 7px;border-radius:0 3px 3px 0" %>
-                  </div>
+                <div style="margin-top:15px;margin-bottom:5px;">
+                  <b>Step 1:</b> From your project repository, check out a new branch and test the changes.
+                </div>
 
-                  <div style="margin-top:15px;margin-bottom:5px;">
-                    <b>Step 1:</b> From your project repository, check out a new branch and test the changes.
-                  </div>
-
-<pre style="background:#f2f2f2; padding:10px; border-radius:3px">
+<pre id="step1" style="background:#f2f2f2; padding:10px; border-radius:3px">
 git checkout -b <%= $target_user_id %>-<%= $target_branch %> <%= $base_branch %>
 git pull <%= url_for("$target_user_id/$target_project_id.git")->to_abs %> <%= $target_branch %>
 </pre>
 
-                  <div style="margin-top:15px;margin-bottom:5px;">
-                    <b>Step 2:</b> Merge the changes and update on GitPrep.
-                  </div>
+                <div style="margin-top:15px;margin-bottom:5px;">
+                  <b>Step 2:</b> Merge the changes and update on GitPrep.
+                </div>
 
 <pre style="background:#f2f2f2; padding:10px; border-radius:3px">
 git checkout <%= $base_branch %>
 git merge --no-ff <%= $target_user_id %>-<%= $target_branch %>
 git push origin <%= $base_branch %>
 </pre>
-                </div>
               </div>
             </div>
           </div>
@@ -404,5 +449,4 @@ git push origin <%= $base_branch %>
     </div>
   </div>
 
- 
   %= include '/include/footer';
