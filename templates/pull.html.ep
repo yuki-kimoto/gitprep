@@ -43,7 +43,7 @@
   )->one;
   my $target_branch = $pull_request->{target_branch};
   my $target_user_id = $target_project->{'__user.id'};
-  my $taregt_project_id = $target_project->{id};
+  my $target_project_id = $target_project->{id};
   
   # Session
   my $session_user_row_id = $api->session_user_row_id;
@@ -358,8 +358,7 @@
                     If you do not want to use the merge button or an automatic merge cannot be performed, you can perform a manual merge on the command line.
                   </div>
                   <div style="margin-top:10px">
-                    <button>HTTPS</button> <button>Git</button> <button>Patch</button>
-                    <%= text_field clone_url => "https://github.com/kaloyan13/gitprep.git" %>
+                    <button class="btn btn-small" style="border-radius:3px 0 0 3px">HTTPS</button><button class="btn btn-small" style="border-radius:0">Git</button><button class="btn btn-small" style="border-radius:0">Patch</button><%= text_field clone_url => "https://github.com/kaloyan13/gitprep.git", style => "width:600px;padding:4px 7px 5px 7px;border-radius:0 3px 3px 0" %>
                   </div>
 
                   <div style="margin-top:15px;margin-bottom:5px;">
@@ -367,8 +366,8 @@
                   </div>
 
 <pre style="background:#f2f2f2; padding:10px; border-radius:3px">
-git checkout -b kaloyan13-master master
-git pull https://github.com/kaloyan13/gitprep.git master
+git checkout -b <%= $target_user_id %>-<%= $target_branch %> <%= $base_branch %>
+git pull <%= url_for("$target_user_id/$target_project_id.git")->to_abs %> <%= $target_branch %>
 </pre>
 
                   <div style="margin-top:15px;margin-bottom:5px;">
@@ -376,9 +375,9 @@ git pull https://github.com/kaloyan13/gitprep.git master
                   </div>
 
 <pre style="background:#f2f2f2; padding:10px; border-radius:3px">
-git checkout master
-git merge --no-ff kaloyan13-master
-git push origin master
+git checkout <%= $base_branch %>
+git merge --no-ff <%= $target_user_id %>-<%= $target_branch %>
+git push origin <%= $base_branch %>
 </pre>
                 </div>
               </div>
