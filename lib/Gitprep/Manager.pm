@@ -129,6 +129,27 @@ sub merge {
   return $success;
 }
 
+sub get_patch {
+  my ($self, $work_rep_info, $target_rep_info, $target_branch) = @_;
+  
+  my $object_id = $self->app->git->ref_to_object_id($target_rep_info, $target_branch);
+  
+  # Merge
+  my @git_format_patch_cmd = $self->app->git->cmd(
+    $work_rep_info,
+    'format-patch',
+    '--stdout',
+    "HEAD..$object_id"
+  );
+  
+  open my $fh, '-|', @git_format_patch_cmd
+    or croak "Execute git format-patch cmd:@git_format_patch_cmd";
+  
+  my $patch = do { local $/; <$fh> };
+  
+  return $patch;
+}
+
 sub push {
   my ($self, $work_rep_info, $base_branch) = @_;
   

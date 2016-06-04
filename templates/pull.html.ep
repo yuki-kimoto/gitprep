@@ -57,7 +57,33 @@
   
   # Working repository information
   my $work_rep_info = app->work_rep_info($base_user_id, $base_project_id);
-  
+
+  # Display patch
+  if (stash('patch')) {
+    # Lock working repository
+    my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+    
+    # Prepare merge
+    $self->app->manager->prepare_merge(
+      $work_rep_info,
+      $base_rep_info,
+      $base_branch,
+      $target_rep_info,
+      $target_branch
+    );
+    
+    # Create patch
+    my $patch = $self->app->manager->get_patch(
+      $work_rep_info,
+      $target_rep_info,
+      $target_branch
+    );
+    
+    $self->res->headers->content_type('text/plain; charset=utf-8');
+    $self->render(text => $patch);
+    return;
+  }
+
   # Git
   my $git = $self->app->git;
   
