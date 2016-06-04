@@ -1,3 +1,6 @@
+2.2 (4 June 2016)
+  - add command line merging interface to pull request page
+  - add createing patch feture to pull request page
 2.1 (31 May 2016)
   - default login session time become 2 weeks and delete save check box.
   - Fix commits page author links.
