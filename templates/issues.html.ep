@@ -1,0 +1,20 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
+  my $user_id = param('user');
+  my $project_id = param('project');
+  
+  
+%>
+
+% layout 'common', title => "Pull Requests Tags \x{30fb} $user_id/$project_id";
+  
+  %= include '/include/header';
+  
+  <div class="container">
+    <h1>Issues</h1>
+  </div>
+  
+  %= include '/include/footer';

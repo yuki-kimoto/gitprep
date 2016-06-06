@@ -121,6 +121,12 @@
                   Code
                 </a>
               </li>
+              <li class="<%= $tab eq 'issues' ? 'active' :  '' %>">
+                <a href="<%= url_for("/$user_id/$project_id/issues") %>">
+                  <i class="icon-tasks"></i>
+                  Issue
+                </a>
+              </li>
               <li class="<%= $tab eq 'pulls' ? 'active' :  '' %>">
                 <a href="<%= url_for("/$user_id/$project_id/pulls") %>">
                   <i class="icon-retweet"></i>

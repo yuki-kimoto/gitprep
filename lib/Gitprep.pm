@@ -412,7 +412,10 @@ sub startup {
             
             # Home
             $r->get('/' => sub { shift->render_maybe('/tree') });
-
+            
+            # Issue
+            $r->get('/issues' => sub { shift->render_maybe('/issues') })->to(tab => 'issues');
+            
             # Pull requests
             $r->get('/pulls' => sub { shift->render_maybe('/pulls') })->to(tab => 'pulls');
             
