@@ -126,7 +126,7 @@
             )->value;
             
             # Get pull request message number
-            my $number = app->dbi->model('pull_request_message')->select(
+            my $number = app->dbi->model('issue_message')->select(
               'max(number)',
               where => {pull_request => $new_pull_request_row_id},
               append => 'group by number'
@@ -137,7 +137,7 @@
             my $new_number = $number + 1;
             
             # New pull request message
-            my $new_pull_request_message_params = {
+            my $new_issue_message_params = {
               pull_request => $new_pull_request_row_id,
               number => $new_number,
               message => $message,
@@ -146,7 +146,7 @@
               user => $session_user_row_id
             };
             
-            app->dbi->model('pull_request_message')->insert($new_pull_request_message_params);
+            app->dbi->model('issue_message')->insert($new_issue_message_params);
           });
           
           $self->redirect_to("/$base_user_id/$base_project_id/pull/$new_pull_request_row_id");

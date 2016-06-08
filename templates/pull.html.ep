@@ -180,7 +180,7 @@
   my $end_commit = $git->get_commit($target_rep_info, $target_branch);
   
   # Pull request first message 
-  my $pull_request_message_first = app->dbi->model('pull_request_message')->select(
+  my $issue_message_first = app->dbi->model('issue_message')->select(
     [
       {__MY__ => '*'},
       {__user => ['id']}
@@ -308,14 +308,14 @@
         </ul>
         <div class="pull-comment">
           <div class="pull-comment-header">
-            <b><%= $pull_request_message_first->{'__open_user.id'} %></b>
+            <b><%= $issue_message_first->{'__open_user.id'} %></b>
             <span style="color:#767676">
               commented
-              <%= $api->age_string($pull_request_message_first->{update_time}) %>
+              <%= $api->age_string($issue_message_first->{update_time}) %>
             </span>
           </div>
           <div class="pull-comment-body">
-            <%= $pull_request_message_first->{message} %>
+            <%= $issue_message_first->{message} %>
           </div>
         </div>
         
