@@ -152,6 +152,39 @@ EOS
     die $error;
   }
 
+  # Create pull_request table
+  eval {
+    my $sql = <<"EOS";
+create table pull_request (
+  row_id integer primary key autoincrement,
+  base_project integer not null default 0,
+  base_branch not null default '',
+  target_project integer not null default 0,
+  target_branch not null default '',
+  unique(base_project, base_branch, target_project, target_branch)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Create pull_request columns
+  my @pull_request_columns = (
+    "title not null default ''",
+    "open integer default 0",
+    "open_time integer default 0",
+    "open_user integer default 0"
+  );
+  for my $column (@pull_request_columns) {
+    eval { $dbi->execute("alter table pull_request add column $column") };
+  }
+
+  # Check pull_request table
+  eval { $dbi->select([qw/row_id base_project base_branch target_project target_branch title open open_time open_user/], table => 'pull_request') };
+  if ($@) {
+    my $error = "Can't create pull_request table properly: $@";
+    die $error;
+  }
+
   # Rename pull_request_message to issue_message
   eval {
     my $sql = <<"EOS";
@@ -188,39 +221,6 @@ EOS
   eval { $dbi->select([qw/row_id pull_request number message create_time update_time user/], table => 'issue_message') };
   if ($@) {
     my $error = "Can't create issue_message table properly: $@";
-    die $error;
-  }
-
-  # Create pull_request table
-  eval {
-    my $sql = <<"EOS";
-create table pull_request (
-  row_id integer primary key autoincrement,
-  base_project integer not null default 0,
-  base_branch not null default '',
-  target_project integer not null default 0,
-  target_branch not null default '',
-  unique(base_project, base_branch, target_project, target_branch)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Create pull_request columns
-  my @pull_request_columns = (
-    "title not null default ''",
-    "open integer default 0",
-    "open_time integer default 0",
-    "open_user integer default 0"
-  );
-  for my $column (@pull_request_columns) {
-    eval { $dbi->execute("alter table pull_request add column $column") };
-  }
-
-  # Check pull_request table
-  eval { $dbi->select([qw/row_id base_project base_branch target_project target_branch title open open_time open_user/], table => 'pull_request') };
-  if ($@) {
-    my $error = "Can't create pull_request table properly: $@";
     die $error;
   }
 }
