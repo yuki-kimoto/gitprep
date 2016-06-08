@@ -152,6 +152,66 @@ EOS
     die $error;
   }
 
+  # Create issue table
+  eval {
+    my $sql = <<"EOS";
+create table issue (
+  row_id integer primary key autoincrement,
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Create issue columns
+  my @issue_columns = (
+    "title not null default ''",
+    "open integer default 0",
+    "open_time integer default 0",
+    "open_user integer default 0",
+    "pull_request integer default 0"
+  );
+  for my $column (@issue_columns) {
+    eval { $dbi->execute("alter table issue add column $column") };
+  }
+
+  # Check issue table
+  eval { $dbi->select([qw/row_id title open open_time open_user pull_request/], table => 'issue') };
+  if ($@) {
+    my $error = "Can't create issue table properly: $@";
+    die $error;
+  }
+  
+  # Create issue_message table
+  eval {
+    my $sql = <<"EOS";
+create table issue_message (
+  row_id integer primary key autoincrement,
+  issue integer not null default 0,
+  number integer not null default 0,
+  unique(issue, number)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Create issue_message columns
+  my @issue_message_columns = (
+    "message not null default ''",
+    "create_time integer default 0",
+    "update_time integer default 0",
+    "user integer not null default 0"
+  );
+  for my $column (@issue_message_columns) {
+    eval { $dbi->execute("alter table issue_message add column $column") };
+  }
+
+  # Check issue_message table
+  eval { $dbi->select([qw/row_id issue number message create_time update_time user/], table => 'issue_message') };
+  if ($@) {
+    my $error = "Can't create issue_message table properly: $@";
+    die $error;
+  }
+
   # Create pull_request table
   eval {
     my $sql = <<"EOS";
@@ -168,51 +228,15 @@ EOS
   };
   
   # Create pull_request columns
-  my @pull_request_columns = (
-    "title not null default ''",
-    "open integer default 0",
-    "open_time integer default 0",
-    "open_user integer default 0"
-  );
+  my @pull_request_columns = ();
   for my $column (@pull_request_columns) {
     eval { $dbi->execute("alter table pull_request add column $column") };
   }
 
   # Check pull_request table
-  eval { $dbi->select([qw/row_id base_project base_branch target_project target_branch title open open_time open_user/], table => 'pull_request') };
+  eval { $dbi->select([qw/row_id base_project base_branch target_project target_branch/], table => 'pull_request') };
   if ($@) {
     my $error = "Can't create pull_request table properly: $@";
-    die $error;
-  }
-
-  # Create pull_request_message table
-  eval {
-    my $sql = <<"EOS";
-create table pull_request_message (
-  row_id integer primary key autoincrement,
-  pull_request integer not null default 0,
-  number integer not null default 0,
-  unique(pull_request, number)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Create pull_request_message columns
-  my @pull_request_message_columns = (
-    "message not null default ''",
-    "create_time integer default 0",
-    "update_time integer default 0",
-    "user integer not null default 0"
-  );
-  for my $column (@pull_request_message_columns) {
-    eval { $dbi->execute("alter table pull_request_message add column $column") };
-  }
-
-  # Check pull_request_message table
-  eval { $dbi->select([qw/row_id pull_request number message create_time update_time user/], table => 'pull_request_message') };
-  if ($@) {
-    my $error = "Can't create pull_request_message table properly: $@";
     die $error;
   }
 }
