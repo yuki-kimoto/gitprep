@@ -216,11 +216,11 @@ sub startup {
       ]
     },
     {
-      table => 'issue_message',
+      table => 'pull_request_message',
       primary_key => 'row_id',
       join => [
-        'left join user as __user on issue_message.user = __user.row_id',
-        'left join pull_request as __pull_request on issue_message.pull_request = __pull_request.row_id'
+        'left join user as __user on pull_request_message.user = __user.row_id',
+        'left join pull_request as __pull_request on pull_request_message.pull_request = __pull_request.row_id'
       ]
     }
   ];
