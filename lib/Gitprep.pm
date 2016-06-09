@@ -203,6 +203,29 @@ sub startup {
       ]
     },
     {
+      table => 'issue',
+      join => [
+        'left join pull_request as __pull_request on issue.pull_request = __pull_request.row_id',
+        
+        'left join user as __open_user on issue.open_user = __open_user.row_id',
+        'left join project as __pull_request__base_project on __pull_request.base_project = __pull_request__base_project.row_id',
+        'left join user as __pull_request__base_project__user'
+          . ' on __pull_request__base_project.user = __pull_request__base_project__user.row_id',
+        'left join project as __pull_request__target_project on __pull_request.target_project = __pull_request__target_project.row_id',
+        'left join user as __pull_request__target_project__user'
+          . ' on __pull_request__target_project.user = __pull_request__target_project__user.row_id'
+
+      ]
+    },
+    {
+      table => 'issue_message',
+      primary_key => 'row_id',
+      join => [
+        'left join user as __user on issue_message.user = __user.row_id',
+        'left join issue as __issue on issue_message.issue = __issue.row_id'
+      ]
+    },
+    {
       table => 'pull_request',
       primary_key => 'row_id',
       join => [
@@ -215,14 +238,6 @@ sub startup {
           . ' on __target_project.user = __target_project__user.row_id'
       ]
     },
-    {
-      table => 'pull_request_message',
-      primary_key => 'row_id',
-      join => [
-        'left join user as __user on pull_request_message.user = __user.row_id',
-        'left join pull_request as __pull_request on pull_request_message.pull_request = __pull_request.row_id'
-      ]
-    }
   ];
   $dbi->create_model($_) for @$models;
   $dbi->setup_model;

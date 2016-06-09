@@ -13,20 +13,36 @@
   # Git
   my $git = $self->app->git;
   
-  # Pull requests
-  my $pull_requests = app->dbi->model('pull_request')->select(
+  # Issues which have pull request
+  my $issues = app->dbi->model('issue')->select(
     [
       {__MY__ => '*'},
-      {__open_user => ['id']}
+      {__open_user => ['id']},
+      {__pull_request => ['target_branch']}
     ],
-    where => {open => $open}
+    where => [
+      ['and', ':issue.open{=}', ':pull_request{<>}'],
+      {'issue.open' => $open, pull_request => 0}
+    ]
   )->all;
   
   # Open count
-  my $open_count = app->dbi->model('pull_request')->select('count(*)', where => {open => 1})->value;
+  my $open_count = app->dbi->model('issue')->select(
+    'count(*)',
+    where => [
+      ['and', ':issue.open{=}', ':pull_request{<>}'],
+      {'issue.open' => 1, pull_request => 0}
+    ]
+  )->value;
   
   # Close count
-  my $close_count = app->dbi->model('pull_request')->select('count(*)', where => {open => 0})->value;
+  my $close_count = app->dbi->model('issue')->select(
+    'count(*)',
+    where => [
+      ['and', ':issue.open{=}', ':pull_request{<>}'],
+      {'issue.open' => 0, pull_request => 0}
+    ]
+  )->value;
 %>
 
 % layout 'common', title => "Pull Requests Tags \x{30fb} $user_id/$project_id";
@@ -50,26 +66,26 @@
         % }
       </div>
       <div class="pulls-body">
-        % if (@$pull_requests) {
+        % if (@$issues) {
           <ul>
-            % for my $pull_request (@$pull_requests) {
+            % for my $issue (@$issues) {
               <%
-                my $target_branch = $pull_request->{target_branch};
+                my $target_branch = $issue->{'__pull_request.target_branch'};
                 my $commit = app->git->get_commit(app->rep_info($user_id, $project_id), $target_branch);
-                my $open_time = $pull_request->{open_time};
+                my $open_time = $issue->{open_time};
                 my $open_time_age = Time::Moment->now->epoch - $open_time;
                 my $open_time_age_string = $self->app->git->_age_string($open_time_age);
               %>
               <li>
                 <div class="pulls-title">
-                  <a href="<%= "/$user_id/$project_id/pull/$pull_request->{row_id}" %>">
-                    <b><%= $pull_request->{title} %></b>
+                  <a href="<%= "/$user_id/$project_id/pull/$issue->{row_id}" %>">
+                    <b><%= $issue->{title} %></b>
                   </a>
                 </div>
                 <div class="pulls-description">
-                  #<%= $pull_request->{row_id} %> <%= $pull_request->{open} ? 'opened' : 'closed' %>
+                  #<%= $issue->{row_id} %> <%= $issue->{open} ? 'opened' : 'closed' %>
                   <%= $open_time_age_string %>
-                  by <%= $pull_request->{'__open_user.id'} %>
+                  by <%= $issue->{'__open_user.id'} %>
                 </div>
               </li>
             % }

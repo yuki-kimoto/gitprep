@@ -98,7 +98,7 @@
             where => {id => $base_user_id}
           )->value;
           
-          my $new_pull_request_row_id;
+          my $new_issue_row_id;
           my $session_user_row_id = $api->session_user_row_id;
           app->dbi->connector->txn(sub {
             # New pull request
@@ -115,20 +115,20 @@
             
             app->dbi->model('pull_request')->insert($new_pull_request_params);
             
-            $new_pull_request_row_id = app->dbi->model('pull_request')->select(
+            $new_issue_row_id = app->dbi->model('issue')->select(
               'row_id',
               where => {
-                base_project => $project_row_id,
-                base_branch => $base_branch,
-                target_project => $target_project->{row_id},
-                target_branch => $target_branch
+                '__pull_request.base_project' => $project_row_id,
+                '__pull_request.base_branch' => $base_branch,
+                '__pull_request.target_project' => $target_project->{row_id},
+                '__pull_request.target_branch' => $target_branch
               }
             )->value;
             
             # Get pull request message number
-            my $number = app->dbi->model('pull_request_message')->select(
+            my $number = app->dbi->model('issue_message')->select(
               'max(number)',
-              where => {pull_request => $new_pull_request_row_id},
+              where => {issue => $new_issue_row_id},
               append => 'group by number'
             )->value;
             
@@ -137,8 +137,8 @@
             my $new_number = $number + 1;
             
             # New pull request message
-            my $new_pull_request_message_params = {
-              pull_request => $new_pull_request_row_id,
+            my $new_issue_message_params = {
+              issue => $new_issue_row_id,
               number => $new_number,
               message => $message,
               create_time => $now_epoch,
@@ -146,10 +146,10 @@
               user => $session_user_row_id
             };
             
-            app->dbi->model('pull_request_message')->insert($new_pull_request_message_params);
+            app->dbi->model('issue_message')->insert($new_issue_message_params);
           });
           
-          $self->redirect_to("/$base_user_id/$base_project_id/pull/$new_pull_request_row_id");
+          $self->redirect_to("/$base_user_id/$base_project_id/pull/$new_issue_row_id");
           return;
         }
       }
