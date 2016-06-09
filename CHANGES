@@ -1,7 +1,9 @@
 2.3
   - Sorry, I found critical database specification mistake.
     I must fix pull_request and pull_request_message table.
-    All your pull requests is removed. Please create Pull request again.
+    All your pull requests is removed. Please create Pull request again by the following command.
+    
+    old/fix_v2_pull_request data/gitprep.db
 
 2.2 (4 June 2016)
   - add command line merging interface to pull request page

@@ -1,0 +1,62 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::Bin/../extlib/lib/perl5";
+use DBIx::Custom;
+
+my $database_file = shift;
+
+# New DBI
+my %dbi_args = (
+  dsn => "dbi:SQLite:database=$database_file",
+  connector => 1,
+  option => {sqlite_unicode => 1, sqlite_use_immediate_transaction => 1}
+);
+my $dbi = DBIx::Custom->connect(%dbi_args);
+
+# Copy pull_request data to issue
+my $pull_requests = $dbi->select(table => 'pull_request')->all;
+for my $pull_request (@$pull_requests) {
+  my $new_issue = {
+    row_id => $pull_request->{row_id},
+    title => $pull_request->{title},
+    open => $pull_request->{open},
+    open_time => $pull_request->{open_time},
+    open_user => $pull_request->{open_user},
+    pull_request => $pull_request->{row_id}
+  };
+  
+  my $issue = $dbi->select(
+    table => 'issue',
+    where => {row_id => $new_issue->{row_id}}
+  )->one;
+  
+  unless ($issue) {
+    $dbi->insert($new_issue, table => 'issue');
+  }
+}
+
+my $pull_request_messages = $dbi->select(table => 'pull_request_message')->all;
+for my $pull_request_message (@$pull_request_messages) {
+  my $new_issue_message = {
+    row_id => $pull_request_message->{row_id},
+    issue => $pull_request_message->{pull_request},
+    number => $pull_request_message->{number},
+    message => $pull_request_message->{message},
+    create_time => $pull_request_message->{create_time},
+    update_time => $pull_request_message->{update_time},
+    user => $pull_request_message->{user}
+  };
+  
+  my $issue_message = $dbi->select(
+    table => 'issue_message',
+    where => {row_id => $new_issue_message->{row_id}}
+  )->one;
+  
+  unless ($issue_message) {
+    $dbi->insert($new_issue_message, table => 'issue_message');
+  }
+}

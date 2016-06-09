@@ -482,6 +482,15 @@ and move this feature to project settings page.
 
 mail address is require for user registration.
 
+### Pull requests is removed when GitPrep upgrade
+
+Sorry, I found critical database specification mistake in GitPrep from v2.0 to v2.2,
+and fix it in v2.3.
+All your pull requests is removed when upgrading from v2.0-v2.2 to v2.3+.
+Please create Pull request again by the following command.
+    
+    old/fix_v2_pull_request data/gitprep.db
+
 ### Are there other ways to install GitPrep?
 
 **Use sparrow**
