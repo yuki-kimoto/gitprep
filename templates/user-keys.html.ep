@@ -2,7 +2,7 @@
   my $user_id = param('user');
   
   my $keys = app->dbi->model('ssh_public_key')->select(
-    where => {'__user.id' => $user_id},
+    where => {'user.id' => $user_id},
     append => 'order by title'
   )->all;
   my $keys_str = '';

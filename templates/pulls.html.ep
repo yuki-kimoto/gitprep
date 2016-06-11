@@ -17,8 +17,8 @@
   my $issues = app->dbi->model('issue')->select(
     [
       {__MY__ => '*'},
-      {__open_user => ['id']},
-      {__pull_request => ['target_branch']}
+      {open_user => ['id']},
+      {pull_request => ['target_branch']}
     ],
     where => [
       ['and', ':issue.open{=}', ':pull_request{<>}'],
@@ -70,7 +70,7 @@
           <ul>
             % for my $issue (@$issues) {
               <%
-                my $target_branch = $issue->{'__pull_request.target_branch'};
+                my $target_branch = $issue->{'pull_request.target_branch'};
                 my $commit = app->git->get_commit(app->rep_info($user_id, $project_id), $target_branch);
                 my $open_time = $issue->{open_time};
                 my $open_time_age = Time::Moment->now->epoch - $open_time;
@@ -85,7 +85,7 @@
                 <div class="pulls-description">
                   #<%= $issue->{row_id} %> <%= $issue->{open} ? 'opened' : 'closed' %>
                   <%= $open_time_age_string %>
-                  by <%= $issue->{'__open_user.id'} %>
+                  by <%= $issue->{'open_user.id'} %>
                 </div>
               </li>
             % }

@@ -52,7 +52,7 @@ for my $rep (glob "$rep_dir/*") {
     $project_id =~ s/\.git$//;
     
     my $project = $dbi->model('project')->select(
-      where => {'__user.id' => $user_id, 'project.id' => $project_id}
+      where => {'user.id' => $user_id, 'project.id' => $project_id}
     )->one;
     
     # Create project

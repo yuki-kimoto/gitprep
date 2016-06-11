@@ -155,7 +155,7 @@
     {
       __MY__ => '*'
     },
-    where => {'__user.id' => $user_id},
+    where => {'user.id' => $user_id},
     append => 'order by title'
   )->all;
 %>

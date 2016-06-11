@@ -11,7 +11,7 @@
   my $issue = app->dbi->model('issue')->select(
     [
       {__MY__ => '*'},
-      {__open_user => ['id']}
+      {open_user => ['id']}
     ],
     where => {'issue.row_id' => $row_id}
   )->one;
@@ -26,14 +26,14 @@
   my $base_project = app->dbi->model('project')->select(
     [
       {__MY__ => '*'},
-      {__user => ['id']}
+      {user => ['id']}
     ],
     where => {'project.row_id' => $base_project_row_id}
   )->one;
   my $base_branch = $pull_request->{base_branch};
   
   Carp::croak "pull_request invalid user id"
-    if $base_user_id ne $base_project->{'__user.id'};
+    if $base_user_id ne $base_project->{'user.id'};
   Carp::croak "pull_request invalid project id"
     if $base_project_id ne $base_project->{id};
   
@@ -42,12 +42,12 @@
   my $target_project = app->dbi->model('project')->select(
     [
       {__MY__ => '*'},
-      {__user => ['id']}
+      {user => ['id']}
     ],
     where => {'project.row_id' => $target_project_row_id}
   )->one;
   my $target_branch = $pull_request->{target_branch};
-  my $target_user_id = $target_project->{'__user.id'};
+  my $target_user_id = $target_project->{'user.id'};
   my $target_project_id = $target_project->{id};
   
   # Session
@@ -187,7 +187,7 @@
   my $issue_message_first = app->dbi->model('issue_message')->select(
     [
       {__MY__ => '*'},
-      {__user => ['id']}
+      {user => ['id']}
     ],
     where => {issue => $row_id, number => 1}
   )->one;
@@ -270,7 +270,7 @@
           </div>
         % }
       </div>
-      % my $open_user_id = $issue->{'__open_user.id'};
+      % my $open_user_id = $issue->{'open_user.id'};
       <a style="color:#333333;font-weight:bold" href="<%= url_for("/$open_user_id") %>"><%= $open_user_id %></a> 
       <span style="color:#767676">
         wants to merge <%= $commits_count %> commits
@@ -312,7 +312,7 @@
         </ul>
         <div class="pull-comment">
           <div class="pull-comment-header">
-            <b><%= $issue_message_first->{'__user.id'} %></b>
+            <b><%= $issue_message_first->{'user.id'} %></b>
             <span style="color:#767676">
               commented
               <%= $api->age_string($issue_message_first->{update_time}) %>

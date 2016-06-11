@@ -269,7 +269,7 @@ sub fork_project {
       # Original project id
       my $project = $dbi->model('project')->select(
         {__MY__ => ['row_id', 'private']},
-        where => {'__user.id' => $user_id, 'project.id' => $project_id}
+        where => {'user.id' => $user_id, 'project.id' => $project_id}
       )->one;
       
       # Create project
@@ -330,19 +330,19 @@ sub member_projects {
   # project id
   my $project_row_id = $dbi->model('project')->select(
     'project.row_id',
-    where => {'__user.id' => $user_id, 'project.id' => $project_id}
+    where => {'user.id' => $user_id, 'project.id' => $project_id}
   )->value;
   
   # Members
   my $member_projects = $dbi->model('project')->select(
     [
       {__MY__ => ['id']},
-      {__user => ['id']}
+      {user => ['id']}
     ],
     where => {
       original_project => $project_row_id,
     },
-    append => 'order by __user.id, project.id'
+    append => 'order by user.id, project.id'
   )->all;
 
   return $member_projects;
@@ -442,7 +442,7 @@ sub original_project {
   my $original_project = $dbi->model('project')->select(
     [
       {__MY__ => '*'},
-      {__user => ['id']}
+      {user => ['id']}
     ],
     where => {
       'project.row_id' => $original_project_row_id
@@ -458,17 +458,17 @@ sub child_project {
   my ($self, $user_id, $project_id, $child_user_id) = @_;
   
   my $project_row_id = $self->app->dbi->model('project')->select(
-    'project.row_id', where => {'__user.id' => $user_id, 'project.id' => $project_id}
+    'project.row_id', where => {'user.id' => $user_id, 'project.id' => $project_id}
   )->value;
   
   my $child_project = $self->app->dbi->model('project')->select(
     [
       {__MY__ => '*'},
-      {__user => ['id']}
+      {user => ['id']}
     ],
     where => {
       'project.original_project' => $project_row_id,
-      '__user.id' => $child_user_id
+      'user.id' => $child_user_id
     }
   )->one;
   
@@ -562,14 +562,14 @@ sub update_authorized_keys_file {
     my $ssh_public_keys = $self->app->dbi->model('ssh_public_key')->select(
       [
         {__MY__ => '*'},
-        {__user => ['id']}
+        {user => ['id']}
       ]
     )->all;
     my $ssh_public_keys_str = '';
     for my $key (@$ssh_public_keys) {
       my $ssh_public_key_str = 'command="' . $self->app->home->rel_file('script/gitprep-shell')
-        . " $key->{'__user.id'}\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty $key->{key}";
-      $ssh_public_keys_str .= "$ssh_public_key_str $key->{'__user.id'}\n\n";
+        . " $key->{'user.id'}\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty $key->{key}";
+      $ssh_public_keys_str .= "$ssh_public_key_str $key->{'user.id'}\n\n";
     }
     
     # Output tmp file

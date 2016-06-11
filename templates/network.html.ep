@@ -13,7 +13,7 @@
   # Original project id
   my $original_project_id = app->dbi->model('project')->select(
     'original_project',
-    where => {'__user.id' => $user_id, 'project.id' => $project_id}
+    where => {'user.id' => $user_id, 'project.id' => $project_id}
   )->value;
   
   # Original project
@@ -22,7 +22,7 @@
     $original_project = app->dbi->model('project')->select(
       [
         {__MY__ => '*'},
-        {__user => ['id']}
+        {user => ['id']}
       ],
       where => {'project.row_id' => $original_project_id}
     )->one;
@@ -31,19 +31,19 @@
     $original_project = app->dbi->model('project')->select(
       [
         {__MY__ => '*'},
-        {__user => ['id']}
+        {user => ['id']}
       ],
-      where => {'__user.id' => $user_id, 'project.id' => $project_id}
+      where => {'user.id' => $user_id, 'project.id' => $project_id}
     )->one;
   }
   
   # Members
-  my $member_projects = app->manager->member_projects($original_project->{'__user.id'}, $original_project->{id});
+  my $member_projects = app->manager->member_projects($original_project->{'user.id'}, $original_project->{id});
   unshift @$member_projects, $original_project;
   
   # Members branches
   for my $member_project (@$member_projects) {
-    my $member_rep_info = $self->app->rep_info($member_project->{'__user.id'}, $member_project->{id});
+    my $member_rep_info = $self->app->rep_info($member_project->{'user.id'}, $member_project->{id});
     
     my $branches = app->git->branches($member_rep_info);
     $branches = [map { $_->{name} } @$branches];
@@ -91,7 +91,7 @@
         % for my $member_project (@$member_projects) {
           <%
             my $member_project_id = $member_project->{id};
-            my $member_id = $member_project->{'__user.id'};
+            my $member_id = $member_project->{'user.id'};
             my $member_branches = $member_project->{branches};
             
             next if $member_id eq $user_id;

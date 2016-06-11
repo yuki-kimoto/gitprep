@@ -85,8 +85,8 @@
             <small>
               (
                 forked from
-                <a href="<%= url_for("/$original_project->{'__user.id'}/$original_project->{id}") %>">
-                  <%= "$original_project->{'__user.id'}/$original_project->{id}" %>
+                <a href="<%= url_for("/$original_project->{'user.id'}/$original_project->{id}") %>">
+                  <%= "$original_project->{'user.id'}/$original_project->{id}" %>
                 </a>
               )
             </small>
