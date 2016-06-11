@@ -97,60 +97,43 @@
         else {
           my $now_tm = Time::Moment->now_utc;
           my $now_epoch = $now_tm->epoch;
-          my $user_row_id = app->dbi->model('user')->select(
-            'row_id',
-            where => {id => $base_user_id}
-          )->value;
-          
-          my $new_issue_row_id;
           my $session_user_row_id = $api->session_user_row_id;
+          my $new_issue_row_id;
           app->dbi->connector->txn(sub {
+            
             # New pull request
-            my $new_pull_request_params = {
+            my $new_pull_request = {
               base_project => $project_row_id,
               base_branch => $base_branch,
               target_project => $target_project->{row_id},
               target_branch => $target_branch,
+            };
+            
+            app->dbi->model('pull_request')->insert($new_pull_request);
+            my $new_pull_request_row_id = app->dbi->execute("select LAST_INSERT_ROWID()")->value;
+            
+            # New issue
+            my $new_issue = {
               title => $title,
               open => 1,
               open_time => $now_epoch,
-              open_user => $session_user_row_id
+              open_user => $session_user_row_id,
+              pull_request => $new_pull_request_row_id
             };
+            app->dbi->model('issue')->insert($new_issue);
+            $new_issue_row_id = app->dbi->execute("select LAST_INSERT_ROWID()")->value;
             
-            app->dbi->model('pull_request')->insert($new_pull_request_params);
-            
-            $new_issue_row_id = app->dbi->model('issue')->select(
-              'row_id',
-              where => {
-                '__pull_request.base_project' => $project_row_id,
-                '__pull_request.base_branch' => $base_branch,
-                '__pull_request.target_project' => $target_project->{row_id},
-                '__pull_request.target_branch' => $target_branch
-              }
-            )->value;
-            
-            # Get pull request message number
-            my $number = app->dbi->model('issue_message')->select(
-              'max(number)',
-              where => {issue => $new_issue_row_id},
-              append => 'group by number'
-            )->value;
-            
-            $number //= 0;
-            
-            my $new_number = $number + 1;
-            
-            # New pull request message
-            my $new_issue_message_params = {
+            # New issue message
+            my $new_issue_message = {
               issue => $new_issue_row_id,
-              number => $new_number,
+              number => 1,
               message => $message,
               create_time => $now_epoch,
               update_time => $now_epoch,
               user => $session_user_row_id
             };
             
-            app->dbi->model('issue_message')->insert($new_issue_message_params);
+            app->dbi->model('issue_message')->insert($new_issue_message);
           });
           
           $self->redirect_to("/$base_user_id/$base_project_id/pull/$new_issue_row_id");
