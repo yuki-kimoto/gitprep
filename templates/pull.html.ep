@@ -6,14 +6,19 @@
   my $base_user_id = param('user');
   my $base_project_id = param('project');
   my $row_id = param('row_id');
-
-  # Pull requests
-  my $pull_request = app->dbi->model('pull_request')->select(
+  
+  # Issue
+  my $issue = app->dbi->model('issue')->select(
     [
       {__MY__ => '*'},
-      {'__open_user' => ['id']}
+      {__open_user => ['id']}
     ],
-    where => {'pull_request.row_id' => $row_id}
+    where => {'issue.row_id' => $row_id}
+  )->one;
+  
+  # Pull requests
+  my $pull_request = app->dbi->model('pull_request')->select(
+    where => {row_id => $issue->{pull_request}}
   )->one;
   
   # Base information
@@ -98,7 +103,7 @@
     # Close pull request
     my $op = param('op');
     if ($op eq 'close') {
-      app->dbi->model('pull_request')->update(
+      app->dbi->model('issue')->update(
         {
           open => 0,
           open_user => $session_user_row_id
@@ -110,7 +115,7 @@
     }
     elsif ($op eq 'reopen') {
       my $open_time = time;
-      app->dbi->model('pull_request')->update(
+      app->dbi->model('issue')->update(
         {
           open => 1,
           open_time => $open_time,
@@ -147,10 +152,9 @@
         # Push
         app->manager->push($work_rep_info, $base_branch);
         
-        app->dbi->model('pull_request')->update(
+        app->dbi->model('issue')->update(
           {
-            open => 0,
-            open_user => $session_user_row_id
+            open => 0
           },
           where => {row_id => $row_id}
         );
@@ -179,18 +183,18 @@
   # End commit
   my $end_commit = $git->get_commit($target_rep_info, $target_branch);
   
-  # Pull request first message 
+  # Issue first message 
   my $issue_message_first = app->dbi->model('issue_message')->select(
     [
       {__MY__ => '*'},
       {__user => ['id']}
     ],
-    where => {pull_request => $row_id, number => 1}
+    where => {issue => $row_id, number => 1}
   )->one;
   
   # Check merge automatically
   my $merge_success;
-  if ($api->can_write_access($session_user_id, $base_user_id, $base_project_id) && $pull_request->{open}) {
+  if ($api->can_write_access($session_user_id, $base_user_id, $base_project_id) && $issue->{open}) {
     
     my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
     
@@ -225,7 +229,7 @@
   my $ssh_rep_url = "ssh://$execute_user\@" . $url->host
     . ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user/$project.git";
 
-  my $patch_url = url_for("/$base_user_id/$base_project_id/pull/$pull_request->{row_id}.patch")->to_abs;
+  my $patch_url = url_for("/$base_user_id/$base_project_id/pull/$issue->{row_id}.patch")->to_abs;
 
   my $pre_content_base = "git checkout -b $target_user_id-$target_branch $base_branch";
   my $pre_content_http = "git pull $http_rep_url $target_branch";
@@ -252,11 +256,11 @@
         $pull_title = ucfirst $pull_title;
       %>
       
-      <%= $pull_title %> <span style="color:#767676;">#<%= $pull_request->{row_id} %></span>
+      <%= $pull_title %> <span style="color:#767676;">#<%= $issue->{row_id} %></span>
     </div>
     <div>
       <div style="display:inline-block;color:white;margin-right:4px;">
-        % if ($pull_request->{open}) {
+        % if ($issue->{open}) {
           <div style="background:#6cc644;padding:4px 8px;border-radius:3px;">
             Open
           </div>
@@ -266,7 +270,7 @@
           </div>
         % }
       </div>
-      % my $open_user_id = $pull_request->{'__open_user.id'};
+      % my $open_user_id = $issue->{'__open_user.id'};
       <a style="color:#333333;font-weight:bold" href="<%= url_for("/$open_user_id") %>"><%= $open_user_id %></a> 
       <span style="color:#767676">
         wants to merge <%= $commits_count %> commits
@@ -308,7 +312,7 @@
         </ul>
         <div class="pull-comment">
           <div class="pull-comment-header">
-            <b><%= $issue_message_first->{'__open_user.id'} %></b>
+            <b><%= $issue_message_first->{'__user.id'} %></b>
             <span style="color:#767676">
               commented
               <%= $api->age_string($issue_message_first->{update_time}) %>
@@ -367,7 +371,7 @@
       % }
       
       % if ($api->can_write_access($session_user_id, $base_user_id, $base_project_id)) {
-        % if ($commits_count && $merge_success && $pull_request->{open}) {
+        % if ($commits_count && $merge_success && $issue->{open}) {
           <div class="pull-request-form">
             <div style="overflow:hidden">
               <div style="float:left;padding:10px;padding-right:0">
@@ -456,7 +460,7 @@ git push origin <%= $base_branch %>
           </div>
         % }
         
-        % if ($pull_request->{open}) {
+        % if ($issue->{open}) {
           <div style="text-align:right;margin-top:10px;">
             <form action="<%= url_for %>" method="post">
               <%= hidden_field op => 'close' %>
