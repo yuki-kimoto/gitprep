@@ -434,8 +434,8 @@ sub startup {
             $r->get('/pulls' => sub { shift->render_maybe('/pulls') })->to(tab => 'pulls');
             
             # Pull request
-            $r->get('/pull/(:row_id).patch' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls', patch => 1);
-            $r->any('/pull/:row_id' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls');
+            $r->get('/pull/(:number).patch' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls', patch => 1);
+            $r->any('/pull/:number' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls');
             
             # Commit
             $r->get('/commit/*diff' => sub { shift->render_maybe('/commit') });

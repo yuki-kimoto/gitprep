@@ -91,14 +91,14 @@
           $issue = app->dbi->model('issue')->select(
             where => {pull_request => $pull_request->{row_id}}
           )->one;
-          $self->redirect_to("/$base_user_id/$base_project_id/pull/$issue->{row_id}");
+          $self->redirect_to("/$base_user_id/$base_project_id/pull/$issue->{number}");
           return;
         }
         else {
           my $now_tm = Time::Moment->now_utc;
           my $now_epoch = $now_tm->epoch;
           my $session_user_row_id = $api->session_user_row_id;
-          my $new_issue_row_id;
+          my $issue_number;
           app->dbi->connector->txn(sub {
             
             # New pull request
@@ -109,8 +109,17 @@
               target_branch => $target_branch,
             };
             
+            # last pull request row id
             app->dbi->model('pull_request')->insert($new_pull_request);
             my $new_pull_request_row_id = app->dbi->execute("select LAST_INSERT_ROWID()")->value;
+            
+            # issue number
+            $issue_number = app->dbi->model('issue')->select(
+              'max(number)',
+              where => {project => $project_row_id},
+              append => 'group by project'
+            )->value;
+            $issue_number++;
             
             # New issue
             my $new_issue = {
@@ -118,10 +127,12 @@
               open => 1,
               open_time => $now_epoch,
               open_user => $session_user_row_id,
-              pull_request => $new_pull_request_row_id
+              pull_request => $new_pull_request_row_id,
+              project => $project_row_id,
+              number => $issue_number
             };
             app->dbi->model('issue')->insert($new_issue);
-            $new_issue_row_id = app->dbi->execute("select LAST_INSERT_ROWID()")->value;
+            my $new_issue_row_id = app->dbi->execute("select LAST_INSERT_ROWID()")->value;
             
             # New issue message
             my $new_issue_message = {
@@ -136,7 +147,7 @@
             app->dbi->model('issue_message')->insert($new_issue_message);
           });
           
-          $self->redirect_to("/$base_user_id/$base_project_id/pull/$new_issue_row_id");
+          $self->redirect_to("/$base_user_id/$base_project_id/pull/$issue_number");
           return;
         }
       }

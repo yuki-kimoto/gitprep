@@ -78,12 +78,12 @@
               %>
               <li>
                 <div class="pulls-title">
-                  <a href="<%= "/$user_id/$project_id/pull/$issue->{row_id}" %>">
+                  <a href="<%= "/$user_id/$project_id/pull/$issue->{number}" %>">
                     <b><%= $issue->{title} %></b>
                   </a>
                 </div>
                 <div class="pulls-description">
-                  #<%= $issue->{row_id} %> <%= $issue->{open} ? 'opened' : 'closed' %>
+                  #<%= $issue->{number} %> <%= $issue->{open} ? 'opened' : 'closed' %>
                   <%= $open_time_age_string %>
                   by <%= $issue->{'open_user.id'} %>
                 </div>

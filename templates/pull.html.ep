@@ -5,7 +5,7 @@
   # Parameters
   my $base_user_id = param('user');
   my $base_project_id = param('project');
-  my $row_id = param('row_id');
+  my $issue_number = param('number');
   
   # Issue
   my $issue = app->dbi->model('issue')->select(
@@ -13,7 +13,10 @@
       {__MY__ => '*'},
       {open_user => ['id']}
     ],
-    where => {'issue.row_id' => $row_id}
+    where => {
+      'project.id' => $base_project_id,
+      'issue.number' => $issue_number
+    }
   )->one;
   
   # Pull requests
@@ -105,10 +108,12 @@
     if ($op eq 'close') {
       app->dbi->model('issue')->update(
         {
-          open => 0,
-          open_user => $session_user_row_id
+          open => 0
         },
-        where => {row_id => $row_id}
+        where => {
+          'project.id' => $base_project_id,
+          'issue.number' => $issue_number
+        }
       );
       $self->redirect_to('current');
       return;
@@ -121,7 +126,10 @@
           open_time => $open_time,
           open_user => $session_user_row_id
         },
-        where => {row_id => $row_id}
+        where => {
+          'project.id' => $base_project_id,
+          'issue.number' => $issue_number
+        }
       );
       $self->redirect_to('current');
       return;
@@ -152,11 +160,15 @@
         # Push
         app->manager->push($work_rep_info, $base_branch);
         
+        # Close
         app->dbi->model('issue')->update(
           {
             open => 0
           },
-          where => {row_id => $row_id}
+          where => {
+            'project.id' => $base_project_id,
+            'issue.number' => $issue_number
+          }
         );
         
         $self->redirect_to("/$base_user_id/$base_project_id/tree/$base_branch");
@@ -189,7 +201,7 @@
       {__MY__ => '*'},
       {user => ['id']}
     ],
-    where => {issue => $row_id, number => 1}
+    where => {issue => $issue->{row_id}, number => 1}
   )->one;
   
   # Check merge automatically
@@ -229,7 +241,7 @@
   my $ssh_rep_url = "ssh://$execute_user\@" . $url->host
     . ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user/$project.git";
 
-  my $patch_url = url_for("/$base_user_id/$base_project_id/pull/$issue->{row_id}.patch")->to_abs;
+  my $patch_url = url_for("/$base_user_id/$base_project_id/pull/$issue->{number}.patch")->to_abs;
 
   my $pre_content_base = "git checkout -b $target_user_id-$target_branch $base_branch";
   my $pre_content_http = "git pull $http_rep_url $target_branch";
@@ -256,7 +268,7 @@
         $pull_title = ucfirst $pull_title;
       %>
       
-      <%= $pull_title %> <span style="color:#767676;">#<%= $issue->{row_id} %></span>
+      <%= $pull_title %> <span style="color:#767676;">#<%= $issue->{number} %></span>
     </div>
     <div>
       <div style="display:inline-block;color:white;margin-right:4px;">
