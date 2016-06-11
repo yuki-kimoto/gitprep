@@ -23,6 +23,7 @@
   my $tabel;
   my $table;
   my $where = $dbi->where;
+  my $total;
   if ($q_exists) {
     if ($type eq 'users') {
       $table = 'user';
@@ -34,21 +35,27 @@
       )->all;
     } elsif ($type eq 'repositories') {
       $table = 'project';
-      $where->clause(':name{like}');
-      $where->param({name => "%$q%"});
+      $where->clause(':project.id{like}');
+      $where->param({'project.id' => "%$q%"});
       $rows = $dbi->model($table)->select(
+        [
+          {__MY__ => '*'},
+          {__user => ['id']}
+        ],
         where => $where,
-        append => "order by name, user_id limit $offset, $count"
+        append => "order by project.id, __user.id limit $offset, $count"
       )->all;
     }
+
+    $total = $dbi->model($table)->select(
+      'count(*)',
+      where => $where,
+    )->value;
   }
-  $rows ||= [];
+  $rows //= [];
+  $total //= 0;
 
   # Pager
-  my $total = $dbi->model($table)->select(
-    'count(*)',
-    where => $where,
-  )->value;
   my $pager = Data::Page->new($total, $count, $page);
   my @pages = $pager->pages_in_navigation(10);
 %>
@@ -88,10 +95,10 @@
             </div>
             <ul>
               % for my $user (@$rows) {
-                % my $user = $user->{id};
+                % my $user_id = $user->{id};
                 <li>
                   <div>
-                    <a style="font-size:19px" href="<%= url_for("/$user") %>"><%= $user %></a>
+                    <a style="font-size:19px" href="<%= url_for("/$user_id") %>"><%= $user_id %></a>
                   </div>
                 </li>
               % }
@@ -109,20 +116,20 @@
             <ul>
               % for my $project (@$rows) {
                 <%
-                  my $user = $project->{user_id};
-                  my $project = $project->{name};
-                  my $rev = app->manager->default_branch($user, $project);
-                  my $desc = app->git->description(app->rep_info($user, $project));
-                  my $branches = app->git->branches($self->app->rep_info($user, $project));
+                  my $user_id = $project->{'__user.id'};
+                  my $project_id = $project->{id};
+                  my $rev = app->manager->default_branch($user_id, $project_id);
+                  my $desc = app->git->description(app->rep_info($user_id, $project_id));
+                  my $branches = app->git->branches($self->app->rep_info($user_id, $project_id));
                   my $commit;
                   if (@$branches) {
-                    $commit = app->git->get_commit(app->rep_info($user, $project), $rev);
+                    $commit = app->git->get_commit(app->rep_info($user_id, $project_id), $rev);
                   }
                 %>
                 
                 <li>
                   <div>
-                    <a style="font-size:19px" href="<%= url_for("/$user/$project") %>"><%= $user %>/<%= $project %></a>
+                    <a style="font-size:19px" href="<%= url_for("/$user_id/$project_id") %>"><%= $user_id %>/<%= $project_id %></a>
                   </div>
                   <div>
                     <%= $desc %>

@@ -429,3 +429,18 @@ note 'Compare page';
   $t->content_like(qr/branch change/);
   $t->content_like(qr#http://foo5branch change#);
 }
+
+note 'Search page';
+{
+  # Page access (branch name)
+  $t->get_ok("/_search");
+  $t->content_like(qr/Search/);
+
+  # Page access (branch name)
+  $t->get_ok("/_search?q=foo&type=repositories");
+  $t->content_like(qr/Search/);
+
+  # Page access (branch name)
+  $t->get_ok("/_search?q=foo&type=users");
+  $t->content_like(qr/Search/);
+}
