@@ -315,13 +315,13 @@
                       % } else {
                         % if ($api->logined) {
                           % if ($pull_request) {
+                            #<%= $issue->{number} %>
                             % if ($issue->{open}) {
-                              #<%= $issue->{row_id} %>
-                              <a class="branches-open" href="<%= url_for("/$user/$project/pull/$issue->{row_id}") %>">
+                              <a class="branches-open" href="<%= url_for("/$user/$project/pull/$issue->{number}") %>">
                                 open
                               </a>
                             % } else {
-                              <a class="branches-close" href="<%= url_for("/$user/$project/pull/$issue->{row_id}") %>">
+                              <a class="branches-close" href="<%= url_for("/$user/$project/pull/$issue->{number}") %>">
                                 closed
                               </a>
                             % }

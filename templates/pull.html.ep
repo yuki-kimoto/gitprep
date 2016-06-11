@@ -110,10 +110,7 @@
         {
           open => 0
         },
-        where => {
-          'project.id' => $base_project_id,
-          'issue.number' => $issue_number
-        }
+        where => {row_id => $issue->{row_id}}
       );
       $self->redirect_to('current');
       return;
@@ -127,8 +124,7 @@
           open_user => $session_user_row_id
         },
         where => {
-          'project.id' => $base_project_id,
-          'issue.number' => $issue_number
+          row_id => $issue->{row_id}
         }
       );
       $self->redirect_to('current');
@@ -165,10 +161,7 @@
           {
             open => 0
           },
-          where => {
-            'project.id' => $base_project_id,
-            'issue.number' => $issue_number
-          }
+          where => {row_id => $issue->{row_id}}
         );
         
         $self->redirect_to("/$base_user_id/$base_project_id/tree/$base_branch");
