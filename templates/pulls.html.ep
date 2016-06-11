@@ -21,8 +21,8 @@
       {pull_request => ['target_branch']}
     ],
     where => [
-      ['and', ':issue.open{=}', ':pull_request{<>}'],
-      {'issue.open' => $open, pull_request => 0}
+      ['and', ':issue.open{=}', ':pull_request{<>}', ':project.id{=}'],
+      {'issue.open' => $open, pull_request => 0, 'project.id' => $project_id}
     ]
   )->all;
   
@@ -30,8 +30,8 @@
   my $open_count = app->dbi->model('issue')->select(
     'count(*)',
     where => [
-      ['and', ':issue.open{=}', ':pull_request{<>}'],
-      {'issue.open' => 1, pull_request => 0}
+      ['and', ':issue.open{=}', ':pull_request{<>}', ':project.id{=}'],
+      {'issue.open' => 1, pull_request => 0, 'project.id' => $project_id}
     ]
   )->value;
   
@@ -39,8 +39,8 @@
   my $close_count = app->dbi->model('issue')->select(
     'count(*)',
     where => [
-      ['and', ':issue.open{=}', ':pull_request{<>}'],
-      {'issue.open' => 0, pull_request => 0}
+      ['and', ':issue.open{=}', ':pull_request{<>}', ':project.id{=}'],
+      {'issue.open' => 0, pull_request => 0, 'project.id' => $project_id}
     ]
   )->value;
 %>

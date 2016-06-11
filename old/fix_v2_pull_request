@@ -19,14 +19,20 @@ my $dbi = DBIx::Custom->connect(%dbi_args);
 
 # Copy pull_request data to issue
 my $pull_requests = $dbi->select(table => 'pull_request')->all;
+my $issue_project_numbers = {};
 for my $pull_request (@$pull_requests) {
+
+  my $project = $pull_request->{base_project};
+  $issue_project_numbers->{$project}++;
   my $new_issue = {
     row_id => $pull_request->{row_id},
     title => $pull_request->{title},
     open => $pull_request->{open},
     open_time => $pull_request->{open_time},
     open_user => $pull_request->{open_user},
-    pull_request => $pull_request->{row_id}
+    pull_request => $pull_request->{row_id},
+    project => $project,
+    number => $issue_project_numbers->{$project}
   };
   
   my $issue = $dbi->select(

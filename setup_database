@@ -156,7 +156,10 @@ EOS
   eval {
     my $sql = <<"EOS";
 create table issue (
-  row_id integer primary key autoincrement
+  row_id integer primary key autoincrement,
+  project integer not null default 0,
+  number integer not null default 0,
+  unique(project, number)
 );
 EOS
     $dbi->execute($sql);
@@ -165,17 +168,17 @@ EOS
   # Create issue columns
   my @issue_columns = (
     "title not null default ''",
-    "open integer default 0",
-    "open_time integer default 0",
-    "open_user integer default 0",
-    "pull_request integer default 0"
+    "open integer not null default 0",
+    "open_time integer not null default 0",
+    "open_user integer not null default 0",
+    "pull_request integer  not null default 0",
   );
   for my $column (@issue_columns) {
     eval { $dbi->execute("alter table issue add column $column") };
   }
 
   # Check issue table
-  eval { $dbi->select([qw/row_id title open open_time open_user pull_request/], table => 'issue') };
+  eval { $dbi->select([qw/row_id title open open_time open_user pull_request project/], table => 'issue') };
   if ($@) {
     my $error = "Can't create issue table properly: $@";
     die $error;
@@ -197,8 +200,8 @@ EOS
   # Create issue_message columns
   my @issue_message_columns = (
     "message not null default ''",
-    "create_time integer default 0",
-    "update_time integer default 0",
+    "create_time integer not null default 0",
+    "update_time integer not null default 0",
     "user integer not null default 0"
   );
   for my $column (@issue_message_columns) {

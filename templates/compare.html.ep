@@ -377,7 +377,7 @@
               </span>
             % } else {
               <span style="margin-left:10px">
-                <span style="color:red;font-weight:bold"><%= "??" %>Not able to merge.</span> These branches can't be automatically merged.
+                <span style="color:red;font-weight:bold">Not able to merge.</span> These branches can't be automatically merged.
               </span>
             % }
           % }

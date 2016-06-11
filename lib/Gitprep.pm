@@ -183,29 +183,29 @@ sub startup {
       table => 'ssh_public_key',
       primary_key => 'row_id',
       join => [
-        'left join user as user on ssh_public_key.user = user.row_id'
+        'left join user on ssh_public_key.user = user.row_id'
       ]
     },
     {
       table => 'project',
       primary_key => 'row_id',
       join => [
-        'left join user as user on project.user = user.row_id'
+        'left join user on project.user = user.row_id'
       ]
     },
     {
       table => 'collaboration',
       primary_key => 'row_id',
       join => [
-        'left join user as user on collaboration.user = user.row_id',
-        'left join project as project on collaboration.project = project.row_id',
+        'left join user on collaboration.user = user.row_id',
+        'left join project on collaboration.project = project.row_id',
       ]
     },
     {
       table => 'issue',
       join => [
-        'left join pull_request as pull_request on issue.pull_request = pull_request.row_id',
-        
+        'left join project on issue.project = project.row_id',
+        'left join pull_request on issue.pull_request = pull_request.row_id',
         'left join user as open_user on issue.open_user = open_user.row_id',
         'left join project as pull_request__base_project on pull_request.base_project = pull_request__base_project.row_id',
         'left join user as pull_request__base_project__user'
@@ -220,8 +220,8 @@ sub startup {
       table => 'issue_message',
       primary_key => 'row_id',
       join => [
-        'left join user as user on issue_message.user = user.row_id',
-        'left join issue as issue on issue_message.issue = issue.row_id'
+        'left join user on issue_message.user = user.row_id',
+        'left join issue on issue_message.issue = issue.row_id'
       ]
     },
     {
