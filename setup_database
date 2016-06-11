@@ -156,7 +156,7 @@ EOS
   eval {
     my $sql = <<"EOS";
 create table issue (
-  row_id integer primary key autoincrement,
+  row_id integer primary key autoincrement
 );
 EOS
     $dbi->execute($sql);
