@@ -230,7 +230,7 @@
                 )->value;
 
                 my $pull_request = app->dbi->model('pull_request')->select(
-                  {__MY__ => ['row_id', 'open']},
+                  {__MY__ => ['row_id']},
                   where => {
                     '__base_project.id' => $project_id,
                     '__base_project__user.id' => $user_id,
