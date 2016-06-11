@@ -86,8 +86,12 @@
           }
         )->one;
         
+        my $issue;
         if ($pull_request) {
-          $self->redirect_to("/$base_user_id/$base_project_id/pull/$pull_request->{row_id}");
+          $issue = app->dbi->model('issue')->select(
+            where => {pull_request => $pull_request->{row_id}}
+          )->one;
+          $self->redirect_to("/$base_user_id/$base_project_id/pull/$issue->{row_id}");
           return;
         }
         else {

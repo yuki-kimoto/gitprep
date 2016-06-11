@@ -238,6 +238,14 @@
                     target_branch => $branch_name
                   }
                 )->one;
+                
+                my $issue;
+                if ($pull_request) {
+                  $issue = app->dbi->model('issue')->select(
+                    where => {pull_request => $pull_request->{row_id}}
+                  )->one;
+                }
+                
               %>
               % if ($display eq 'overview' && $i > 4) {
                 <li class="branches-overview-more">
@@ -307,13 +315,13 @@
                       % } else {
                         % if ($api->logined) {
                           % if ($pull_request) {
-                            % if ($pull_request->{open}) {
-                              #<%= $pull_request->{row_id} %>
-                              <a class="branches-open" href="<%= url_for("/$user/$project/pull/$pull_request->{row_id}") %>">
+                            % if ($issue->{open}) {
+                              #<%= $issue->{row_id} %>
+                              <a class="branches-open" href="<%= url_for("/$user/$project/pull/$issue->{row_id}") %>">
                                 open
                               </a>
                             % } else {
-                              <a class="branches-close" href="<%= url_for("/$user/$project/pull/$pull_request->{row_id}") %>">
+                              <a class="branches-close" href="<%= url_for("/$user/$project/pull/$issue->{row_id}") %>">
                                 closed
                               </a>
                             % }
@@ -350,7 +358,7 @@
                           </a>
                         % }
                         % if ($api->logined($user_id)) {
-                          % if ($pull_request && $pull_request->{open}) {
+                          % if ($pull_request && $issue->{open}) {
                             <button class="btn btn-small disabled delete-branch"value="Delete">Delete</button>
                           % } else {
                             <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
