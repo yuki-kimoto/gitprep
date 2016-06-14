@@ -107,7 +107,7 @@
       my $validation = $vc->validation;
       
       # Check default branch
-      if (length $default_branch > 300) {
+      if (defined $default_branch && length $default_branch > 300) {
         $validation->add_failed('default-branch' => 'default branch is too long');
       }
       
