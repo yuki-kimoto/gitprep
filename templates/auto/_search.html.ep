@@ -40,10 +40,10 @@
       $rows = $dbi->model($table)->select(
         [
           {__MY__ => '*'},
-          {__user => ['id']}
+          {user => ['id']}
         ],
         where => $where,
-        append => "order by project.id, __user.id limit $offset, $count"
+        append => "order by project.id, user.id limit $offset, $count"
       )->all;
     }
 
@@ -116,7 +116,7 @@
             <ul>
               % for my $project (@$rows) {
                 <%
-                  my $user_id = $project->{'__user.id'};
+                  my $user_id = $project->{'user.id'};
                   my $project_id = $project->{id};
                   my $rev = app->manager->default_branch($user_id, $project_id);
                   my $desc = app->git->description(app->rep_info($user_id, $project_id));
