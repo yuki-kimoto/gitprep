@@ -1,18 +1,21 @@
-2.3
+2.3 ()
   - Sorry, I found critical database specification mistake.
     I must fix pull_request and pull_request_message table.
     All your pull requests is removed. Please create Pull request again by the following command.
     
-    old/fix_v2_pull_request data/gitprep.db
+      old/fix_v2_pull_request data/gitprep.db
 
-2.2 (4 June 2016)
+2.2.1 (2016-06-14)
+  - fix _search page error bug.
+2.2 (2016-06-04)
+>>>>>>> master
   - add command line merging interface to pull request page
   - add createing patch feture to pull request page
-2.1 (31 May 2016)
+2.1 (2016-05-31)
   - default login session time become 2 weeks and delete save check box.
   - Fix commits page author links.
   - add admin page link.
-2.0 (7 May 2016)
+2.0 (2016-05-07)
   - drop Perl 5.8 support, now require Perl 5.10.1
   - use own temparaly directory when creating repositoy with readme file. Now not use /tmp.
   - add Mojolicious::Plugin::DBViewer to cpanfile
