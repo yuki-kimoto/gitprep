@@ -33,7 +33,7 @@
   }
   else {
     $target_user_id = $base_user_id;
-    $target_branch = $user_id_and_target_branch;
+    $target_branch = $user_id_and_target_branch // $base_branch;
     $target_project = $base_project
   }
   
