@@ -6,7 +6,42 @@
   my $user_id = param('user');
   my $project_id = param('project');
   
+  my $is = param('is') // '';
   
+  my $open = $is eq 'closed' ? 0 : 1;
+  
+  # Git
+  my $git = $self->app->git;
+  
+  # Issues(which don't have pull request)
+  my $issues = app->dbi->model('issue')->select(
+    [
+      {__MY__ => '*'},
+      {open_user => ['id']},
+    ],
+    where => [
+      ['and', ':issue.open{=}', ':pull_request{=}', ':project.id{=}'],
+      {'issue.open' => $open, pull_request => 0, 'project.id' => $project_id}
+    ]
+  )->all;
+  
+  # Open count
+  my $open_count = app->dbi->model('issue')->select(
+    'count(*)',
+    where => [
+      ['and', ':issue.open{=}', ':pull_request{=}', ':project.id{=}'],
+      {'issue.open' => 1, pull_request => 0, 'project.id' => $project_id}
+    ]
+  )->value;
+  
+  # Close count
+  my $close_count = app->dbi->model('issue')->select(
+    'count(*)',
+    where => [
+      ['and', ':issue.open{=}', ':pull_request{=}', ':project.id{=}'],
+      {'issue.open' => 0, pull_request => 0, 'project.id' => $project_id}
+    ]
+  )->value;
 %>
 
 % layout 'common', title => "Pull Requests Tags \x{30fb} $user_id/$project_id";
@@ -14,7 +49,51 @@
   %= include '/include/header';
   
   <div class="container">
-    <h1>Issues</h1>
+    <div class="pulls-button-container">
+      <a href="<%= url_for("/$user_id/$project_id/compare") %>" class="btn btn-success">New issue</a>
+    </div>
+    <div class="pulls">
+      <div class="pulls-header">
+        % if ($open) {
+          <b><%= $open_count %> Open</b>
+          <a href="<%= url_with->query([is => 'closed']) %>" style="margin-left:5px;color:#767676"><%= "\x{2714}" %><%= $close_count %> Closed</a>
+        % } else {
+          <a  style="margin-left:5px;color:#767676" href="<%= url_with->query([is => undef]) %>"><%= $open_count %> Open</a>
+          <b>
+            <span style="margin-left:5px;color:#767676"><%= "\x{2714}" %><%= $close_count %> Closed</span>
+          </b>
+        % }
+      </div>
+      <div class="pulls-body">
+        % if (@$issues) {
+          <ul>
+            % for my $issue (@$issues) {
+              <%
+                my $open_time = $issue->{open_time};
+                my $open_time_age = Time::Moment->now->epoch - $open_time;
+                my $open_time_age_string = $self->app->git->_age_string($open_time_age);
+              %>
+              <li>
+                <div class="pulls-title">
+                  <a href="<%= "/$user_id/$project_id/pull/$issue->{number}" %>">
+                    <b><%= $issue->{title} %></b>
+                  </a>
+                </div>
+                <div class="pulls-description">
+                  #<%= $issue->{number} %> <%= $issue->{open} ? 'opened' : 'closed' %>
+                  <%= $open_time_age_string %>
+                  by <%= $issue->{'open_user.id'} %>
+                </div>
+              </li>
+            % }
+          </ul>
+        % } else {
+          <div class="pulls-no-request">
+            <div style="font-size:18px"><b>There aren’t any issues.</b></div>
+          </div>
+        % }
+      </div>
+    </div>
   </div>
   
   %= include '/include/footer';
