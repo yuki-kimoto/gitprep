@@ -1,6 +1,4 @@
 <%
-  use Text::Markdown::Hoedown;
-  
   # API
   my $api = gitprep_api;
 
@@ -119,7 +117,7 @@
           my $readme = join "\n", @$lines;
           $readme =~ s#^(\[.*\]:)(?!\s*https?://)\s*(\S*)#{"$1 " . url_for("/$user/$project/raw/$rev/$2")}#mge;
           $readme =~ s#^(!\[.*\]\()(?!https?://)(\S*)#{$1 . url_for("/$user/$project/raw/$rev/$2")}#mge;
-          my $readme_e = Text::Markdown::Hoedown::markdown($readme, extensions => HOEDOWN_EXT_FENCED_CODE);
+          my $readme_e = $api->markdown($readme);
         %>
         <div class="readme-frame">
           <div class="markdown-body">

@@ -4,7 +4,9 @@
     All your pull requests is removed. Please create Pull request again by the following command.
     
       old/fix_v2_pull_request data/gitprep.db
-
+  
+  - support markdown table
+  
 2.2.1 (2016-06-14)
   - fix _search page error bug.
 2.2 (2016-06-04)

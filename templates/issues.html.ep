@@ -42,15 +42,15 @@
       {'issue.open' => 0, pull_request => 0, 'project.id' => $project_id}
     ]
   )->value;
-%>
 
-% layout 'common', title => "Pull Requests Tags \x{30fb} $user_id/$project_id";
+  layout 'common', title => "Issues - $user_id/$project_id";
+%>
   
   %= include '/include/header';
   
   <div class="container">
     <div class="pulls-button-container">
-      <a href="<%= url_for("/$user_id/$project_id/compare") %>" class="btn btn-success">New issue</a>
+      <a href="<%= url_for("/$user_id/$project_id/issues/new") %>" class="btn btn-success">New issue</a>
     </div>
     <div class="pulls">
       <div class="pulls-header">

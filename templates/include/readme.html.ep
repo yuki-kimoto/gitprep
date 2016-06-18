@@ -1,6 +1,7 @@
 <%
   use Mojo::ByteStream ();
-  use Text::Markdown::Hoedown;
+  
+  my $api = gitprep_api;
   
   my $dir = stash('dir');
   
@@ -24,7 +25,7 @@
       my $readme = join "\n", @$lines;
       $readme =~ s#^(\[.*\]:)(?!\s*https?://)\s*(\S*)#{"$1 " . url_for("/$user/$project/raw/$rev/$2")}#mge;
       $readme =~ s#^(!\[.*\]\()(?!https?://)(\S*)#{$1 . url_for("/$user/$project/raw/$rev/$2")}#mge;
-      $readme_e = Text::Markdown::Hoedown::markdown($readme, extensions => HOEDOWN_EXT_FENCED_CODE);
+      $readme_e = $api->markdown($readme);
     }
   }
 %>

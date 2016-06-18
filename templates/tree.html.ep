@@ -1,6 +1,4 @@
 <%
-  use Text::Markdown::Hoedown;
-
   my $state;
 
   # API

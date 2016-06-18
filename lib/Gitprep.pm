@@ -429,6 +429,9 @@ sub startup {
             
             # Issue
             $r->get('/issues' => sub { shift->render_maybe('/issues') })->to(tab => 'issues');
+
+            # New issue
+            $r->get('/issues/new' => sub { shift->render_maybe('/issues/new') })->to(tab => 'issues');
             
             # Pull requests
             $r->get('/pulls' => sub { shift->render_maybe('/pulls') })->to(tab => 'pulls');
