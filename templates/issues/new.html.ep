@@ -6,20 +6,114 @@
   my $user_id = param('user');
   my $project_id = param('project');
   my $issue_number = param('number');
+  
+  my $errors;
+  if (lc $self->req->method eq 'post') {
+    my $op = param('op');
 
+    if ($op eq 'create') {
+      
+      # Parameters
+      my $title = param('title');
+      my $message = param('message');
+      
+      # Validation
+      my $vc = app->vc;
+      my $validation = $vc->validation;
+      
+      # Check title
+      if (!(defined $title && length $title)) {
+        $validation->add_failed(title => 'title is empty');
+      }
+      elsif (length $title > 300) {
+        $validation->add_failed(title => 'title is too long');
+      }
+      
+      # Message
+      if (!(defined $message && length $message)) {
+        $message = '';
+        if (length $message > 1000) {
+          $validation->add_failed(message => 'message is too long');
+        }
+      }
+      
+      if ($validation->is_valid) {
+        my $project_row_id = app->dbi->model('project')->select(
+          'project.row_id',
+          where => {'user.id' => $user_id, 'project.id' => $project_id}
+        )->value;
+        
+        my $issue;
+        my $now_tm = Time::Moment->now_utc;
+        my $now_epoch = $now_tm->epoch;
+        my $session_user_row_id = $api->session_user_row_id;
+        my $issue_number;
+        
+        app->dbi->connector->txn(sub {
+
+          # issue number
+          $issue_number = app->dbi->model('issue')->select(
+            'max(number)',
+            where => {project => $project_row_id},
+            append => 'group by project'
+          )->value;
+          $issue_number++;
+          
+          # New issue
+          my $new_issue = {
+            title => $title,
+            open => 1,
+            open_time => $now_epoch,
+            open_user => $session_user_row_id,
+            pull_request => 0,
+            project => $project_row_id,
+            number => $issue_number
+          };
+          app->dbi->model('issue')->insert($new_issue);
+          my $new_issue_row_id = app->dbi->execute("select LAST_INSERT_ROWID()")->value;
+          
+          # New issue message
+          my $new_issue_message = {
+            issue => $new_issue_row_id,
+            number => 1,
+            message => $message,
+            create_time => $now_epoch,
+            update_time => $now_epoch,
+            user => $session_user_row_id
+          };
+          
+          app->dbi->model('issue_message')->insert($new_issue_message);
+        });
+        
+        $self->redirect_to("/$user_id/$project_id/issues/$issue_number");
+        return;
+      }
+      else {
+        $errors = $validation->messages;
+      }
+    }
+  }
+  
   layout 'common', title => "New issue - $user_id/$project_id";
 %>
-    <div class="compare-open-pull-request">
-      <form action="<%= url_for %>" method="post">
-        <%= hidden_field op => 'create-pull-request' %>
-        <div class="compare-open-pull-request-title">
-          <%= text_field 'title' %>
-        </div>
-        <div class="compare-open-pull-request-message">
-          <%= text_area 'message' %>
-        </div>
-        <div class="compare-open-pull-request-button">
-          <%= submit_button 'Create pull request', class => 'btn btn-success' %>
-        </div>
-      </form>
-    </div>
+
+%= include '/include/header';
+<div class="container">
+  %= include '/include/errors', errors => $errors;
+  <div class="compare-open-pull-request">
+    <form action="<%= url_for %>" method="post">
+      <%= hidden_field op => 'create' %>
+      <div class="compare-open-pull-request-title">
+        <%= text_field 'title' %>
+      </div>
+      <div class="compare-open-pull-request-message">
+        <%= text_area 'message' %>
+      </div>
+      <div class="compare-open-pull-request-button">
+        <%= submit_button 'Submit new issue', class => 'btn btn-success' %>
+      </div>
+    </form>
+  </div>
+</div>
+
+%= include '/include/footer';

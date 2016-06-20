@@ -1,0 +1,18 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
+  my $user_id = param('user');
+  my $project_id = param('project');
+  my $issue_number = param('number');
+
+  layout 'common', title => "Issue - $user_id/$project_id #$issue_number";
+%>
+
+%= include '/include/header';
+
+<div class="container">
+</div>
+
+%= include '/include/footer';

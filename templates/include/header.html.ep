@@ -124,7 +124,7 @@
               <li class="<%= $tab eq 'issues' ? 'active' :  '' %>">
                 <a href="<%= url_for("/$user_id/$project_id/issues") %>">
                   <i class="icon-tasks"></i>
-                  Issue
+                  Issues
                 </a>
               </li>
               <li class="<%= $tab eq 'pulls' ? 'active' :  '' %>">

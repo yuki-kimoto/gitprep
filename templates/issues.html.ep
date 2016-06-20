@@ -75,7 +75,7 @@
               %>
               <li>
                 <div class="pulls-title">
-                  <a href="<%= "/$user_id/$project_id/pull/$issue->{number}" %>">
+                  <a href="<%= "/$user_id/$project_id/issues/$issue->{number}" %>">
                     <b><%= $issue->{title} %></b>
                   </a>
                 </div>
