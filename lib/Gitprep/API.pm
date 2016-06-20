@@ -2,14 +2,16 @@ package Gitprep::API;
 use Mojo::Base -base;
 
 use Digest::MD5 'md5_hex';
-use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES);
+use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
 
 has 'cntl';
 
 sub markdown {
   my ($self, $text) = @_;
 
-  my $text_e = Text::Markdown::Hoedown::markdown($text, extensions => HOEDOWN_EXT_FENCED_CODE|HOEDOWN_EXT_TABLES);
+  my $text_e = Text::Markdown::Hoedown::markdown(
+    $text, extensions => HOEDOWN_EXT_FENCED_CODE|HOEDOWN_EXT_TABLES|HOEDOWN_EXT_NO_INTRA_EMPHASIS
+  );
   
   return $text_e;
 }

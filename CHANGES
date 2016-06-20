@@ -6,6 +6,7 @@
       old/fix_v2_pull_request data/gitprep.db
   
   - support markdown table
+  - support markdown foo_bar_baz
   
 2.2.1 (2016-06-14)
   - fix _search page error bug.
