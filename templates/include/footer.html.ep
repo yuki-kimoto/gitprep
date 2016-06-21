@@ -1,7 +1,7 @@
 <div class="footer">
   <div class="container">
     <div>
-      <a href="http://gitprep.yukikimoto.com/">Gitprep</a>
+      <a href="https://github.com/yuki-kimoto/gitprep">Gitprep</a>
       <span>Version <%= $Gitprep::VERSION %></span>
     </div>
 
