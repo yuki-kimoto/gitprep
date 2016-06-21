@@ -7,12 +7,64 @@
   my $project_id = param('project');
   my $issue_number = param('number');
 
+  # Issue
+  my $issue = app->dbi->model('issue')->select(
+    [
+      {__MY__ => '*'},
+      {open_user => ['id']}
+    ],
+    where => {
+      'project.id' => $project_id,
+      'issue.number' => $issue_number
+    }
+  )->one;
+
+  # Issue message
+  my $issue_messages = app->dbi->model('issue_message')->select(
+    [
+      {__MY__ => '*'},
+      {user => ['id']}
+    ],
+    where => {issue => $issue->{row_id}},
+    append => 'order by number'
+  )->all;
+
+  my $issue_messages_count = app->dbi->model('issue_message')->select(
+    'count(*)',
+    where => {issue => $issue->{row_id}},
+  )->value;
+  
   layout 'common', title => "Issue - $user_id/$project_id #$issue_number";
 %>
 
 %= include '/include/header';
 
 <div class="container">
+  <div>
+    <div>
+      <%= $issue->{title} %> #<%= $issue->{number} %>
+    </div>
+    <div>
+     % if ($issue->{open}) {
+       Open
+     % } else {
+       Close
+     % }
+     <%= $issue->{'open_user.id'} %> opened this issue <%= $api->age_string($issue->{open_time}) %> / <%= $issue_messages_count %> comment
+    </div>
+  </div>
+  <div>
+    % for my $issue_message (@$issue_messages) {
+      <div>
+        <div>
+          <%= $issue_message->{'user.id'} %> commented <%= $api->age_string($issue_message->{create_time}) %>
+        </div>
+        <div>
+          <%= $issue_message->{message} %>
+        </div>
+      </div>
+    % }
+  </div>
 </div>
 
 %= include '/include/footer';
