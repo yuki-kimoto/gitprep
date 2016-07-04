@@ -40,17 +40,17 @@
 %= include '/include/header';
 
 <div class="container">
-  <div>
-    <div>
-      <%= $issue->{title} %> #<%= $issue->{number} %>
+  <div class="issue-title-panel">
+    <div class="issue-title">
+      Some <%= $issue->{title} %> <span style="color:#aaa;">#<%= $issue->{number} %></span>
     </div>
     <div>
-     % if ($issue->{open}) {
-       Open
-     % } else {
-       Close
-     % }
-     <%= $issue->{'open_user.id'} %> opened this issue <%= $api->age_string($issue->{open_time}) %> / <%= $issue_messages_count %> comment
+      % if ($issue->{open}) {
+        <div class="issue-open">Open</div>
+      % } else {
+        <div class="issue-close">Close</div>
+      % }
+      <b><%= $issue->{'open_user.id'} %></b> <span style="color:#767676;">opened this issue <%= $api->age_string($issue->{open_time}) %> / <%= $issue_messages_count %> comment</span>
     </div>
   </div>
   <div>

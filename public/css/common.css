@@ -35,6 +35,30 @@
   box-sizing: border-box;
 }
 
+.issue-title-panel {
+  border-bottom: 1px solid #d8d8d8;
+  padding-bottom:15px;
+  margin-bottom:15px;
+}
+
+.issue-title {
+  font-size:27px;
+  font-weight:bold;
+  margin:30px 0 15px 0;
+}
+
+.issue-open {
+  display:inline-block;
+  border-radius:5px;
+  padding:3px 5px;
+  color:white;
+  background:#6cc644;
+}
+
+.issue-close {
+  background:#bd2c00;
+}
+
 .branches-open {
   color:white;
   background:#6cc644;
