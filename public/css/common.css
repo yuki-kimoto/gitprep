@@ -35,6 +35,20 @@
   box-sizing: border-box;
 }
 
+.issue-message {
+  border-radius:3px;
+  border:1px solid #ddd;
+}
+
+.issue-message-header {
+  background:#f7f7f7;
+  padding:10px 15px;
+}
+
+.issue-message-body {
+  padding:15px;
+}
+
 .issue-title-panel {
   border-bottom: 1px solid #d8d8d8;
   padding-bottom:15px;
@@ -43,19 +57,24 @@
 
 .issue-title {
   font-size:27px;
-  font-weight:bold;
   margin:30px 0 15px 0;
 }
 
 .issue-open {
   display:inline-block;
   border-radius:5px;
-  padding:3px 5px;
+  padding:4px 8px;
   color:white;
+  font-weight:bold;
   background:#6cc644;
 }
 
 .issue-close {
+  display:inline-block;
+  border-radius:5px;
+  padding:4px 8px;
+  color:white;
+  font-weight:bold;
   background:#bd2c00;
 }
 
