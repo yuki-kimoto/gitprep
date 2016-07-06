@@ -35,6 +35,47 @@
   box-sizing: border-box;
 }
 
+.issue-add-comment-bottom {
+  overflow:hidden;
+}
+.issue-panel {
+  padding-bottom:20px;
+  border-bottom:2px solid #f7f7f7;
+}
+
+.issue-add-comment-button-left {
+  float:left;
+  width:50%;
+  color:#767676;
+  padding-top:15px;
+}
+.issue-add-comment-button {
+  float:left;
+  width:50%;
+  padding:10px;
+  text-align:right;
+}
+.issue-add-comment {
+  border:1px solid #d8d8d8;
+  border-radius: 3px;
+  margin-top:10px;
+  padding:10px;
+}
+.issue-add-comment-message {
+}
+.issue-add-comment [type=text] {
+  width:100%;
+}
+.issue-add-comment textarea {
+  width:100%;
+  min-height:200px;
+  padding:10px;
+  border-radius:3px;
+}
+.issue-left {
+  width:80%;
+}
+
 .issue-message {
   border-radius:3px;
   border:1px solid #ddd;
