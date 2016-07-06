@@ -205,6 +205,7 @@ sub startup {
       table => 'issue',
       join => [
         'left join project on issue.project = project.row_id',
+        'left join user as project__user on project.user = project__user.row_id',
         'left join pull_request on issue.pull_request = pull_request.row_id',
         'left join user as open_user on issue.open_user = open_user.row_id',
         'left join project as pull_request__base_project on pull_request.base_project = pull_request__base_project.row_id',
@@ -432,7 +433,7 @@ sub startup {
 
             # New issue
             $r->any('/issues/new' => sub { shift->render_maybe('/issues/new') })->to(tab => 'issues');
-            $r->get('/issues/:number' => sub { shift->render_maybe('/issue') })->to(tab => 'issues');
+            $r->any('/issues/:number' => sub { shift->render_maybe('/issue') })->to(tab => 'issues');
             
             # Pull requests
             $r->get('/pulls' => sub { shift->render_maybe('/pulls') })->to(tab => 'pulls');

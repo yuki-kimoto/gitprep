@@ -6,6 +6,7 @@
   my $user_id = param('user');
   my $project_id = param('project');
   my $issue_number = param('number');
+  my $op = param('op') // '';
 
   # Issue
   my $issue = app->dbi->model('issue')->select(
@@ -18,22 +19,99 @@
       'issue.number' => $issue_number
     }
   )->one;
-
-=pod
+  
+  my $errors;
   if (lc $self->req->method eq 'post') {
-    # New issue message
-    my $new_issue_message = {
-      issue => $new_issue_row_id,
-      number => 1,
-      message => $message,
-      create_time => $now_epoch,
-      update_time => $now_epoch,
-      user => $session_user_row_id
-    };
-    
-    app->dbi->model('issue_message')->insert($new_issue_message);
+    if ($op eq 'reopen-issue') {
+      my $issue_row_id = app->dbi->model('issue')->select(
+        'issue.row_id',
+        where => {
+          'project__user.id' => $user_id,
+          'project.id' => $project_id,
+          number => $number
+        }
+      )->value;
+      
+      app->dbi->model('issue')->update({open => 1}, where => {row_id => $issue_row_id});
+      
+      $self->redirect_to;
+      return;
+    }
+    elsif ($op eq 'close-issue') {
+      my $issue_row_id = app->dbi->model('issue')->select(
+        'issue.row_id',
+        where => {
+          'project__user.id' => $user_id,
+          'project.id' => $project_id,
+          number => $number
+        }
+      )->value;
+            
+      app->dbi->model('issue')->update({open => 0}, where => {row_id => $issue_row_id});
+      
+      $self->redirect_to;
+      return;
+    }
+    elsif ($op eq 'add-comment') {
+
+      # Parameters
+      my $message = param('message');
+      
+      # Validation
+      my $vc = app->vc;
+      my $validation = $vc->validation;
+      
+      # Check Message
+      if (!length $message) {
+        $validation->add_failed(message => 'message is empty');
+      }
+      elsif (length $message > 1000) {
+        $validation->add_failed(message => 'message is too long');
+      }
+      
+      if ($validation->is_valid) {
+        app->dbi->connector->txn(sub {
+          my $issue_row_id = app->dbi->model('issue')->select(
+            'issue.row_id',
+            where => {
+              'project__user.id' => $user_id,
+              'project.id' => $project_id,
+              number => $number
+            }
+          )->value;
+
+          # issue number
+          $issue_number = app->dbi->model('issue')->select(
+            'max(number)',
+            where => {row_id => $issue_row_id},
+            append => 'group by project'
+          )->value;
+          $issue_number++;
+
+          # New issue message
+          my $now_tm = Time::Moment->now_utc;
+          my $now_epoch = $now_tm->epoch;
+          my $session_user_row_id = $api->session_user_row_id;
+          my $new_issue_message = {
+            issue => $issue_row_id,
+            number => $issue_number,
+            message => $message,
+            create_time => $now_epoch,
+            update_time => $now_epoch,
+            user => $session_user_row_id
+          };
+          
+          app->dbi->model('issue_message')->insert($new_issue_message);
+ 
+          $self->redirect_to;
+          return;
+        });
+      }
+      else {
+        $errors = $validation->messages;
+      }
+    }
   }
-=cut
 
   # Issue message
   my $issue_messages = app->dbi->model('issue_message')->select(
@@ -56,6 +134,7 @@
 %= include '/include/header';
 
 <div class="container">
+  %= include '/include/errors', errors => $errors;
   <div class="issue-left">
     <div class="issue-panel">
       <div class="issue-title-panel">
@@ -88,7 +167,7 @@
     % if ($api->logined) {
       <div class="issue-add-comment">
         <form action="<%= url_for %>" method="post">
-          <%= hidden_field op => 'comment' %>
+          <%= hidden_field 'op' %>
           <div class="issue-add-comment-message">
             <%= text_area 'message' %>
           </div>
@@ -97,8 +176,12 @@
               Styling with Markdown is supported
             </div>
             <div class="issue-add-comment-button">
-              <%= submit_button 'Close issue', class => 'btn' %>
-              <%= submit_button 'Comment', class => 'btn btn-success' %>
+              % if ($issue->{open}) {
+                <input type="submit" value="Close issue" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn">
+              % } else {
+                <input type="submit" value="Reopen issue" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
+              % }
+              <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-success">
             </div>
           </div>
         </form>

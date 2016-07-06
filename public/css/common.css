@@ -79,6 +79,7 @@
 .issue-message {
   border-radius:3px;
   border:1px solid #ddd;
+  margin-bottom:15px;
 }
 
 .issue-message-header {
