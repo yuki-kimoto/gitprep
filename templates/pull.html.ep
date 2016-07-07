@@ -324,7 +324,7 @@
             </span>
           </div>
           <div class="pull-comment-body">
-            <%= $issue_message_first->{message} %>
+            <%==  $api->markdown($issue_message_first->{message}) %>
           </div>
         </div>
         

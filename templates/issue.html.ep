@@ -81,12 +81,11 @@
           )->value;
 
           # issue number
-          $issue_number = app->dbi->model('issue')->select(
+          my $issue_message_number = app->dbi->model('issue_message')->select(
             'max(number)',
-            where => {row_id => $issue_row_id},
-            append => 'group by project'
+            where => {issue => $issue_row_id}
           )->value;
-          $issue_number++;
+          $issue_message_number++;
 
           # New issue message
           my $now_tm = Time::Moment->now_utc;
@@ -94,12 +93,14 @@
           my $session_user_row_id = $api->session_user_row_id;
           my $new_issue_message = {
             issue => $issue_row_id,
-            number => $issue_number,
+            number => $issue_message_number,
             message => $message,
             create_time => $now_epoch,
             update_time => $now_epoch,
             user => $session_user_row_id
           };
+          
+          warn dumper $new_issue_message;
           
           app->dbi->model('issue_message')->insert($new_issue_message);
  
@@ -157,7 +158,7 @@
               <b><%= $issue_message->{'user.id'} %></b> <span style="color:#767676;">commented <%= $api->age_string($issue_message->{create_time}) %></span>
             </div>
             <div class="issue-message-body">
-              <%= $issue_message->{message} %>
+              <%== $api->markdown($issue_message->{message}) %>
             </div>
           </div>
         % }
