@@ -80,7 +80,7 @@
             }
           )->value;
 
-          # issue number
+          # Issue message number
           my $issue_message_number = app->dbi->model('issue_message')->select(
             'max(number)',
             where => {issue => $issue_row_id}
@@ -169,20 +169,26 @@
       <div class="issue-add-comment">
         <form action="<%= url_for %>" method="post">
           <%= hidden_field 'op' %>
-          <div class="issue-add-comment-message">
-            <%= text_area 'message' %>
+          <div class="issue-add-comment-header">
+            <div class="issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
+            <div class="issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
           </div>
-          <div class="issue-add-comment-bottom">
-            <div class="issue-add-comment-button-left">
-              Styling with Markdown is supported
+          <div class="issue-add-comment-body">
+            <div class="issue-add-comment-message">
+              <%= text_area 'message' %>
             </div>
-            <div class="issue-add-comment-button">
-              % if ($issue->{open}) {
-                <input type="submit" value="Close issue" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn">
-              % } else {
-                <input type="submit" value="Reopen issue" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
-              % }
-              <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-success">
+            <div class="issue-add-comment-bottom">
+              <div class="issue-add-comment-button-left">
+                Styling with Markdown is supported
+              </div>
+              <div class="issue-add-comment-button">
+                % if ($issue->{open}) {
+                  <input type="submit" value="Close issue" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn">
+                % } else {
+                  <input type="submit" value="Reopen issue" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
+                % }
+                <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-success">
+              </div>
             </div>
           </div>
         </form>
