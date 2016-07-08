@@ -1,0 +1,14 @@
+<%
+  my $api = gitprep_api;
+  
+  my $text = param('text');
+  
+  my $markdown = $api->markdown($text);
+  
+  $self->render(
+    json => {
+      markdown => $markdown
+    }
+  );
+  return;
+%>

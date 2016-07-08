@@ -323,7 +323,7 @@
               <%= $api->age_string($issue_message_first->{update_time}) %>
             </span>
           </div>
-          <div class="pull-comment-body">
+          <div class="pull-comment-body markdown-body" style="padding:10px">
             <%==  $api->markdown($issue_message_first->{message}) %>
           </div>
         </div>

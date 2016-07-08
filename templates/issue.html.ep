@@ -100,8 +100,6 @@
             user => $session_user_row_id
           };
           
-          warn dumper $new_issue_message;
-          
           app->dbi->model('issue_message')->insert($new_issue_message);
  
           $self->redirect_to;
@@ -134,18 +132,28 @@
 
 %= javascript begin
   $(document).ready(function() {
+    
+    // Click write tab
     $('#write-tab').on('click', function () {
       $('#write-tab').find('a').attr('class', '');
       $('#preview-tab').find('a').attr('class', 'disable');
       $('#write-area').css('display', 'block');
       $('#preview-area').css('display', 'none');
     });
-
+    
+    // Click preview tab
     $('#preview-tab').on('click', function () {
       $('#write-tab').find('a').attr('class', 'disable');
       $('#preview-tab').find('a').attr('class', '');
       $('#write-area').css('display', 'none');
       $('#preview-area').css('display', 'block');
+      
+      var text = $('[name=message]').val();
+      
+      $.post('/api/markdown', {text : text}, function (result) {
+        var markdown = result.markdown;
+        $('#preview-area').html(markdown);
+      });
     });
   });
 % end
@@ -175,7 +183,7 @@
             <div class="issue-message-header">
               <b><%= $issue_message->{'user.id'} %></b> <span style="color:#767676;">commented <%= $api->age_string($issue_message->{create_time}) %></span>
             </div>
-            <div class="issue-message-body">
+            <div class="issue-message-body markdown-body" style="padding:10px">
               <%== $api->markdown($issue_message->{message}) %>
             </div>
           </div>
@@ -195,7 +203,7 @@
             <div id="write-area" class="issue-add-comment-message">
               <%= text_area 'message' %>
             </div>
-            <div id="preview-area" class="issue-add-comment-preview">
+            <div id="preview-area" class="issue-add-comment-preview markdown-body" style="padding:10px">
             </div>
             <div class="issue-add-comment-bottom">
               <div class="issue-add-comment-button-left">
