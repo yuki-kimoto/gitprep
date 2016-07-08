@@ -102,6 +102,10 @@
   padding:10px;
   border-radius:3px;
 }
+.issue-add-comment-preview {
+  min-height:203px;
+  display:none;
+}
 .issue-left {
   width:80%;
 }

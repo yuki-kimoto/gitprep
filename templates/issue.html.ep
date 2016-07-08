@@ -132,6 +132,24 @@
   layout 'common', title => "Issue - $user_id/$project_id #$issue_number";
 %>
 
+%= javascript begin
+  $(document).ready(function() {
+    $('#write-tab').on('click', function () {
+      $('#write-tab').find('a').attr('class', '');
+      $('#preview-tab').find('a').attr('class', 'disable');
+      $('#write-area').css('display', 'block');
+      $('#preview-area').css('display', 'none');
+    });
+
+    $('#preview-tab').on('click', function () {
+      $('#write-tab').find('a').attr('class', 'disable');
+      $('#preview-tab').find('a').attr('class', '');
+      $('#write-area').css('display', 'none');
+      $('#preview-area').css('display', 'block');
+    });
+  });
+% end
+
 %= include '/include/header';
 
 <div class="container">
@@ -170,12 +188,14 @@
         <form action="<%= url_for %>" method="post">
           <%= hidden_field 'op' %>
           <div class="issue-add-comment-header">
-            <div class="issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
-            <div class="issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
+            <div id="write-tab" class="issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
+            <div id="preview-tab" class="issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
           </div>
           <div class="issue-add-comment-body">
-            <div class="issue-add-comment-message">
+            <div id="write-area" class="issue-add-comment-message">
               <%= text_area 'message' %>
+            </div>
+            <div id="preview-area" class="issue-add-comment-preview">
             </div>
             <div class="issue-add-comment-bottom">
               <div class="issue-add-comment-button-left">
