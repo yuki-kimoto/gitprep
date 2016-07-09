@@ -35,6 +35,10 @@
   box-sizing: border-box;
 }
 
+.issue-add-comment-title {
+  margin-bottom:5px;
+}
+
 .issue-add-comment-header-tab a.disable {
   background:none;
   border:none;

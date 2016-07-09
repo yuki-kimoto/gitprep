@@ -1,0 +1,22 @@
+// Click write tab
+$('#write-tab').on('click', function () {
+  $('#write-tab').find('a').attr('class', '');
+  $('#preview-tab').find('a').attr('class', 'disable');
+  $('#write-area').css('display', 'block');
+  $('#preview-area').css('display', 'none');
+});
+
+// Click preview tab
+$('#preview-tab').on('click', function () {
+  $('#write-tab').find('a').attr('class', 'disable');
+  $('#preview-tab').find('a').attr('class', '');
+  $('#write-area').css('display', 'none');
+  $('#preview-area').css('display', 'block');
+  
+  var text = $('[name=message]').val();
+  
+  $.post('/api/markdown', {text : text}, function (result) {
+    var markdown = result.markdown;
+    $('#preview-area').html(markdown);
+  });
+});
