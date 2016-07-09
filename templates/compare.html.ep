@@ -342,6 +342,7 @@
     $('#target-branch-btn').click(function() { event.stopPropagation(); });
     $('#target-branch-popup').click(function() { event.stopPropagation(); });
 
+    %= include '/include/add_issue_form_js';
   });
 % end
 
@@ -553,17 +554,30 @@
   </div>
  
   % if (keys %$commits_date && $merge_success) {
-    <div class="compare-open-pull-request">
+    <div class="issue-add-comment" style="width:80%">
       <form action="<%= url_for %>" method="post">
         <%= hidden_field op => 'create-pull-request' %>
-        <div class="compare-open-pull-request-title">
-          <%= text_field 'title' => $commits->[0]{title_short}  %>
+        <div class="issue-add-comment-header">
+          <div class="issue-add-comment-title">
+            <%= text_field 'title' => $commits->[0]{title_short} %>
+          </div>
+          <div id="write-tab" class="issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
+          <div id="preview-tab" class="issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
         </div>
-        <div class="compare-open-pull-request-message">
-          <%= text_area 'message' %>
-        </div>
-        <div class="compare-open-pull-request-button">
-          <%= submit_button 'Create pull request', class => 'btn btn-success' %>
+        <div class="issue-add-comment-body">
+          <div id="write-area" class="issue-add-comment-message">
+            <%= text_area 'message' %>
+          </div>
+          <div id="preview-area" class="issue-add-comment-preview markdown-body" style="padding:10px">
+          </div>
+          <div class="issue-add-comment-bottom">
+            <div class="issue-add-comment-button-left">
+              Styling with Markdown is supported
+            </div>
+            <div class="issue-add-comment-button">
+              <input type="submit" value="Create pull request" class="btn btn-success">
+            </div>
+          </div>
         </div>
       </form>
     </div>
