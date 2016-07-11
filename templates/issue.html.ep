@@ -70,41 +70,11 @@
       }
       
       if ($validation->is_valid) {
-        app->dbi->connector->txn(sub {
-          my $issue_row_id = app->dbi->model('issue')->select(
-            'issue.row_id',
-            where => {
-              'project__user.id' => $user_id,
-              'project.id' => $project_id,
-              number => $number
-            }
-          )->value;
 
-          # Issue message number
-          my $issue_message_number = app->dbi->model('issue_message')->select(
-            'max(number)',
-            where => {issue => $issue_row_id}
-          )->value;
-          $issue_message_number++;
-
-          # New issue message
-          my $now_tm = Time::Moment->now_utc;
-          my $now_epoch = $now_tm->epoch;
-          my $session_user_row_id = $api->session_user_row_id;
-          my $new_issue_message = {
-            issue => $issue_row_id,
-            number => $issue_message_number,
-            message => $message,
-            create_time => $now_epoch,
-            update_time => $now_epoch,
-            user => $session_user_row_id
-          };
-          
-          app->dbi->model('issue_message')->insert($new_issue_message);
- 
-          $self->redirect_to;
-          return;
-        });
+        $api->add_issue_message($user_id, $project_id, $number, $message);
+        
+        $self->redirect_to;
+        return;
       }
       else {
         $errors = $validation->messages;

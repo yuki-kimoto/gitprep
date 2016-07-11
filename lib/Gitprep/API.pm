@@ -6,6 +6,43 @@ use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOW
 
 has 'cntl';
 
+sub add_issue_message {
+  my ($self, $user_id, $project_id, $number, $message) = @_;
+  
+  $self->app->dbi->connector->txn(sub {
+    my $issue_row_id = $self->app->dbi->model('issue')->select(
+      'issue.row_id',
+      where => {
+        'project__user.id' => $user_id,
+        'project.id' => $project_id,
+        number => $number
+      }
+    )->value;
+
+    # Issue message number
+    my $issue_message_number = $self->app->dbi->model('issue_message')->select(
+      'max(number)',
+      where => {issue => $issue_row_id}
+    )->value;
+    $issue_message_number++;
+
+    # New issue message
+    my $now_tm = Time::Moment->now_utc;
+    my $now_epoch = $now_tm->epoch;
+    my $session_user_row_id = $self->session_user_row_id;
+    my $new_issue_message = {
+      issue => $issue_row_id,
+      number => $issue_message_number,
+      message => $message,
+      create_time => $now_epoch,
+      update_time => $now_epoch,
+      user => $session_user_row_id
+    };
+    
+    $self->app->dbi->model('issue_message')->insert($new_issue_message);
+  });
+}
+
 sub markdown {
   my ($self, $text) = @_;
 

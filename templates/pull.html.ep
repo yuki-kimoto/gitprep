@@ -95,17 +95,14 @@
   # Git
   my $git = $self->app->git;
   
+  my $op = param('op') // '';
+  
+  my $errors;
   if (lc $self->req->method eq 'post') {
-    
-    # Access controll
-    unless ($api->can_write_access($session_user_id, $base_user_id, $base_project_id)) {
-      $self->reply->exception('Forbbiden');
-      return;
-    }
     
     # Close pull request
     my $op = param('op');
-    if ($op eq 'close') {
+    if ($op eq 'close-issue') {
       app->dbi->model('issue')->update(
         {
           open => 0
@@ -115,7 +112,7 @@
       $self->redirect_to('current');
       return;
     }
-    elsif ($op eq 'reopen') {
+    elsif ($op eq 'reopen-issue') {
       my $open_time = time;
       app->dbi->model('issue')->update(
         {
@@ -131,6 +128,12 @@
       return;
     }
     elsif ($op eq 'merge') {
+
+      # Access controll
+      unless ($api->can_write_access($session_user_id, $base_user_id, $base_project_id)) {
+        $self->reply->exception('Forbbiden');
+        return;
+      }
       
       # Lock working repository
       my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
@@ -167,6 +170,34 @@
         $self->redirect_to("/$base_user_id/$base_project_id/tree/$base_branch");
       }
     }
+    elsif ($op eq 'add-comment') {
+
+      # Parameters
+      my $message = param('message');
+      
+      # Validation
+      my $vc = app->vc;
+      my $validation = $vc->validation;
+      
+      # Check Message
+      if (!length $message) {
+        $validation->add_failed(message => 'message is empty');
+      }
+      elsif (length $message > 1000) {
+        $validation->add_failed(message => 'message is too long');
+      }
+      
+      if ($validation->is_valid) {
+
+        $api->add_issue_message($base_user_id, $base_project_id, $issue_number, $message);
+        
+        $self->redirect_to;
+        return;
+      }
+      else {
+        $errors = $validation->messages;
+      }
+    }
   }
   
   # Commits
@@ -188,15 +219,21 @@
   # End commit
   my $end_commit = $git->get_commit($target_rep_info, $target_branch);
   
-  # Issue first message 
-  my $issue_message_first = app->dbi->model('issue_message')->select(
+  # Issue messages
+  my $issue_messages = app->dbi->model('issue_message')->select(
     [
       {__MY__ => '*'},
       {user => ['id']}
     ],
-    where => {issue => $issue->{row_id}, number => 1}
-  )->one;
+    where => {issue => $issue->{row_id}}
+  )->all;
   
+  # Issue message count
+  my $issue_messages_count = app->dbi->model('issue_message')->select(
+    'count(*)',
+    where => {issue => $issue->{row_id}},
+  )->value;
+
   # Check merge automatically
   my $merge_success;
   if ($api->can_write_access($session_user_id, $base_user_id, $base_project_id) && $issue->{open}) {
@@ -247,13 +284,21 @@
     rev => $end_commit->{id},
     from_rev => $start_commit->{id}
   );
+
+  layout 'common', title => "Pull Requests Tags \x{30fb} $base_user_id/$base_project_id";
 %>
 
-% layout 'common', title => "Pull Requests Tags \x{30fb} $base_user_id/$base_project_id";
-  
+
+  %= javascript begin
+    $(document).ready(function() {
+      %= include '/include/add_issue_form_js';
+    });
+  % end
+
   %= include '/include/header';
   
   <div class="container">
+    %= include '/include/errors', errors => $errors;
     <div style="font-size:23px;margin-top:20px;margin-bottom:9px;">
       <%
         my $pull_title = $pull_request->{target_branch};
@@ -315,19 +360,22 @@
             
           </li>
         </ul>
-        <div class="pull-comment">
-          <div class="pull-comment-header">
-            <b><%= $issue_message_first->{'user.id'} %></b>
-            <span style="color:#767676">
-              commented
-              <%= $api->age_string($issue_message_first->{update_time}) %>
-            </span>
-          </div>
-          <div class="pull-comment-body markdown-body" style="padding:10px">
-            <%==  $api->markdown($issue_message_first->{message}) %>
+
+        <div class="issue-panel" style="margin-top:10px;">
+          <div>
+            % for my $issue_message (@$issue_messages) {
+              <div class="issue-message">
+                <div class="issue-message-header">
+                  <b><%= $issue_message->{'user.id'} %></b> <span style="color:#767676;">commented <%= $api->age_string($issue_message->{create_time}) %></span>
+                </div>
+                <div class="issue-message-body markdown-body" style="padding:10px">
+                  <%== $api->markdown($issue_message->{message}) %>
+                </div>
+              </div>
+            % }
           </div>
         </div>
-        
+
         <div class="commits">
           % for my $date (reverse sort keys %$commits_date) {
             % my $commits = $commits_date->{$date};
@@ -464,22 +512,38 @@ git push origin <%= $base_branch %>
             </div>
           </div>
         % }
-        
-        % if ($issue->{open}) {
-          <div style="text-align:right;margin-top:10px;">
-            <form action="<%= url_for %>" method="post">
-              <%= hidden_field op => 'close' %>
-              <%= submit_button 'Close pull request', class => 'btn' %>
-            </form>
-          </div>
-        % } else {
-          <div style="text-align:right;margin-top:10px;">
-            <form action="<%= url_for %>" method="post">
-              <%= hidden_field op => 'reopen' %>
-              <%= submit_button 'Reopen pull request', class => 'btn' %>
-            </form>
-          </div>
-        % }
+      % }
+
+      % if ($api->logined) {
+        <div class="issue-add-comment">
+          <form action="<%= url_for %>" method="post">
+            <%= hidden_field 'op' %>
+            <div class="issue-add-comment-header">
+              <div id="write-tab" class="issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
+              <div id="preview-tab" class="issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
+            </div>
+            <div class="issue-add-comment-body">
+              <div id="write-area" class="issue-add-comment-message">
+                <%= text_area 'message' %>
+              </div>
+              <div id="preview-area" class="issue-add-comment-preview markdown-body" style="padding:10px">
+              </div>
+              <div class="issue-add-comment-bottom">
+                <div class="issue-add-comment-button-left">
+                  Styling with Markdown is supported
+                </div>
+                <div class="issue-add-comment-button">
+                  % if ($issue->{open}) {
+                    <input type="submit" value="Close pull request" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn">
+                  % } else {
+                    <input type="submit" value="Reopen pull request" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
+                  % }
+                  <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-success">
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
       % }
     </div>
   </div>
