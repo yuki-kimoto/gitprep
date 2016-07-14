@@ -119,10 +119,38 @@
   border:1px solid #ddd;
   margin-bottom:15px;
 }
+.issue-message-owner {
+  border:1px solid #bfccd1;
+}
+
+.issue-message-owner-label {
+  display:inline-block;
+  border:1px solid #bfccd1;
+  padding: 2px 5px;
+  border-radius: 3px;
+  color:#767676;
+}
 
 .issue-message-header {
   background:#f7f7f7;
+  overflow:hidden;
+}
+
+.issue-message-header-left {
+  width:50%;
+  float:left;
   padding:10px 15px;
+}
+
+.issue-message-header-right {
+  width:50%;
+  float:left;
+  text-align:right;
+  padding:7px 15px;
+}
+.issue-message-header-owner {
+  background:#f2f8fa;
+  border-bottom:1px solid #bfccd1;
 }
 
 .issue-message-body {

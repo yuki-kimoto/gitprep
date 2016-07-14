@@ -127,9 +127,17 @@
       </div>
       <div>
         % for my $issue_message (@$issue_messages) {
-          <div class="issue-message">
-            <div class="issue-message-header">
-              <b><%= $issue_message->{'user.id'} %></b> <span style="color:#767676;">commented <%= $api->age_string($issue_message->{create_time}) %></span>
+          % my $is_owner = $issue_message->{'user.id'} eq $user_id;
+          <div class="issue-message <%= $is_owner ? 'issue-message-owner' : '' %>">
+            <div class="issue-message-header <%= $is_owner ? 'issue-message-header-owner' : '' %>">
+              <div class="issue-message-header-left">
+                <b><%= $issue_message->{'user.id'} %></b> <span style="color:#767676;">commented <%= $api->age_string($issue_message->{create_time}) %></span>
+              </div>
+              <div class="issue-message-header-right">
+                % if ($is_owner) {
+                  <div class="issue-message-owner-label">Owner</div>
+                % }
+              </div>
             </div>
             <div class="issue-message-body markdown-body" style="padding:10px">
               <%== $api->markdown($issue_message->{message}) %>
