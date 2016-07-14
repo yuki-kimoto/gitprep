@@ -7,6 +7,8 @@
   my $project_id = param('project');
   my $issue_number = param('number');
   my $op = param('op') // '';
+  
+  my $session_id = $api->session_user_id;
 
   # Issue
   my $issue = app->dbi->model('issue')->select(
@@ -80,6 +82,23 @@
         $errors = $validation->messages;
       }
     }
+    elsif ($op eq 'api-delete') {
+      my $issue_message_row_id = param('issue_message_row_id');
+      
+      my $session_user_id = $api->session_user_id;
+      
+      if ($session_user_id eq $user_id) {
+        app->dbi->model('issue_message')->delete(
+          where => {row_id => $issue_message_row_id}
+        );
+        
+        $self->render(json => {success => 1});
+      }
+      else {
+        $self->render(json => {success => 0});
+      }
+      return;
+    }
   }
 
   # Issue message
@@ -103,6 +122,21 @@
 %= javascript begin
   $(document).ready(function() {
     %= include '/include/add_issue_form_js';
+    
+    // Click delete button
+    $('.delete-btn').on('click', function () {
+      if (window.confirm('Are you sure you want to delete this?')) {
+        var issue_message = $(this).closest('.issue-message');
+        var issue_message_row_id_str = issue_message.attr('id');
+        
+        var issue_message_row_id = (issue_message_row_id_str.match(/delete-(.+)/))[1];
+        $.post('<%= url_for %>', {op : 'api-delete', issue_message_row_id : issue_message_row_id}, function (result) {
+          if (result.success) {
+            $(issue_message).fadeOut();
+          }
+        });
+      }
+    });
   });
 % end
 
@@ -128,7 +162,7 @@
       <div>
         % for my $issue_message (@$issue_messages) {
           % my $is_owner = $issue_message->{'user.id'} eq $user_id;
-          <div class="issue-message <%= $is_owner ? 'issue-message-owner' : '' %>">
+          <div class="issue-message <%= $is_owner ? 'issue-message-owner' : '' %>" id="delete-<%= $issue_message->{row_id} %>">
             <div class="issue-message-header <%= $is_owner ? 'issue-message-header-owner' : '' %>">
               <div class="issue-message-header-left">
                 <b><%= $issue_message->{'user.id'} %></b> <span style="color:#767676;">commented <%= $api->age_string($issue_message->{create_time}) %></span>
@@ -136,6 +170,11 @@
               <div class="issue-message-header-right">
                 % if ($is_owner) {
                   <div class="issue-message-owner-label">Owner</div>
+                % }
+                % if ($issue_message->{number} != 1) {
+                  <div class="icon-remove">
+                    <a href="javascript:void(0)" class="delete-btn"><i class="icon icon-remove"></i></a>
+                  </div>
                 % }
               </div>
             </div>
