@@ -6,6 +6,34 @@ use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOW
 
 has 'cntl';
 
+sub api_delete_issue_message {
+  my ($self, $issue_message_row_id, $user_id) = @_;
+  
+  my $issue_message = $self->app->dbi->model('issue_message')->select(
+    {user => ['id']}, where => {'issue_message.row_id' => $issue_message_row_id}
+  )->one;
+  
+  my $session_user_id = $self->session_user_id;
+
+  my $is_my_project = $user_id eq $session_user_id;
+  my $is_my_comment = $issue_message->{'user.id'} eq $session_user_id;
+  my $can_modify = $is_my_project || $is_my_comment;
+  
+  my $json;
+  if ($can_modify) {
+    $self->app->dbi->model('issue_message')->delete(
+      where => {row_id => $issue_message_row_id}
+    );
+    
+    $json = {success => 1};
+  }
+  else {
+    $json = {success => 0};
+  }
+  
+  return $json;
+}
+
 sub add_issue_message {
   my ($self, $user_id, $project_id, $number, $message) = @_;
   

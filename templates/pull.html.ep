@@ -198,6 +198,14 @@
         $errors = $validation->messages;
       }
     }
+    elsif ($op eq 'api-delete-issue-message') {
+      my $issue_message_row_id = param('issue_message_row_id');
+      
+      my $json = $api->api_delete_issue_message($issue_message_row_id, $base_user_id);
+      
+      $self->render(json => $json);
+      return;
+    }
   }
   
   # Commits
