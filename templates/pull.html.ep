@@ -364,14 +364,14 @@
         <div class="issue-panel" style="margin-top:10px;">
           <div>
             % for my $issue_message (@$issue_messages) {
-              <div class="issue-message">
-                <div class="issue-message-header">
-                  <b><%= $issue_message->{'user.id'} %></b> <span style="color:#767676;">commented <%= $api->age_string($issue_message->{create_time}) %></span>
-                </div>
-                <div class="issue-message-body markdown-body" style="padding:10px">
-                  <%== $api->markdown($issue_message->{message}) %>
-                </div>
-              </div>
+              <%
+                my %issue_message_param = (
+                  user_id => $base_user_id,
+                  issue_message => $issue_message
+                );
+              %>
+              
+              %= include '/include/issue_message', %issue_message_param;
             % }
           </div>
         </div>
