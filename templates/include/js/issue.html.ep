@@ -20,3 +20,18 @@ $('#preview-tab').on('click', function () {
     $('#preview-area').html(markdown);
   });
 });
+
+// Click delete button
+$('.issue-message-delete-btn').on('click', function () {
+  if (window.confirm('Are you sure you want to delete this?')) {
+    var issue_message = $(this).closest('.issue-message');
+    var issue_message_row_id_str = issue_message.attr('id');
+    
+    var issue_message_row_id = (issue_message_row_id_str.match(/delete-(.+)/))[1];
+    $.post('<%= url_for %>', {op : 'api-delete-issue-message', issue_message_row_id : issue_message_row_id}, function (result) {
+      if (result.success) {
+        $(issue_message).fadeOut();
+      }
+    });
+  }
+});

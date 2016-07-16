@@ -82,10 +82,12 @@
         $errors = $validation->messages;
       }
     }
-    elsif ($op eq 'api-delete') {
+    elsif ($op eq 'api-delete-issue-message') {
       my $issue_message_row_id = param('issue_message_row_id');
       
-      my $issue_message = app->dbi->model('issue_message')->select({user => ['id']}, where => {'issue_message.row_id' => $issue_message_row_id})->one;
+      my $issue_message = app->dbi->model('issue_message')->select(
+        {user => ['id']}, where => {'issue_message.row_id' => $issue_message_row_id}
+      )->one;
       
       my $session_user_id = $api->session_user_id;
 
@@ -127,22 +129,7 @@
 
 %= javascript begin
   $(document).ready(function() {
-    %= include '/include/add_issue_form_js';
-    
-    // Click delete button
-    $('.delete-btn').on('click', function () {
-      if (window.confirm('Are you sure you want to delete this?')) {
-        var issue_message = $(this).closest('.issue-message');
-        var issue_message_row_id_str = issue_message.attr('id');
-        
-        var issue_message_row_id = (issue_message_row_id_str.match(/delete-(.+)/))[1];
-        $.post('<%= url_for %>', {op : 'api-delete', issue_message_row_id : issue_message_row_id}, function (result) {
-          if (result.success) {
-            $(issue_message).fadeOut();
-          }
-        });
-      }
-    });
+    %= include '/include/js/issue';
   });
 % end
 

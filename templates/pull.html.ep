@@ -291,7 +291,7 @@
 
   %= javascript begin
     $(document).ready(function() {
-      %= include '/include/add_issue_form_js';
+      %= include '/include/js/issue';
     });
   % end
 
