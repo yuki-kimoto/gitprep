@@ -101,11 +101,18 @@
     where => {issue => $issue->{row_id}},
     append => 'order by number'
   )->all;
-
+  
+  # Issue message count
   my $issue_messages_count = app->dbi->model('issue_message')->select(
     'count(*)',
     where => {issue => $issue->{row_id}},
   )->value;
+  
+  # Participants
+  my $participants = app->dbi->model('issue_message')->select(
+    ['distinct user.id'],
+    where => {issue => $issue->{row_id}},
+  )->values;
   
   layout 'common', title => "Issue - $user_id/$project_id #$issue_number";
 %>
@@ -120,66 +127,80 @@
 
 <div class="container">
   %= include '/include/errors', errors => $errors;
-  <div class="issue-left">
-    <div class="issue-panel">
-      <div class="issue-title-panel">
-        <div class="issue-title">
-          Some <%= $issue->{title} %> <span style="color:#aaa;">#<%= $issue->{number} %></span>
-        </div>
-        <div>
-          % if ($issue->{open}) {
-            <div class="issue-open">Open</div>
-          % } else {
-            <div class="issue-close">Close</div>
-          % }
-          <b><%= $issue->{'open_user.id'} %></b> <span style="color:#767676;">opened this issue <%= $api->age_string($issue->{open_time}) %> / <%= $issue_messages_count %> comment</span>
-        </div>
-      </div>
-      <div>
-        % for my $issue_message (@$issue_messages) {
-          <%
-            my %issue_message_param = (
-              user_id => $user_id,
-              issue_message => $issue_message
-            );
-          %>
-          
-          %= include '/include/issue_message', %issue_message_param;
-        % }
-      </div>
+
+  <div class="issue-title-panel">
+    <div class="issue-title">
+      Some <%= $issue->{title} %> <span style="color:#aaa;">#<%= $issue->{number} %></span>
     </div>
-    
-    % if ($api->logined) {
-      <div class="issue-add-comment">
-        <form action="<%= url_for %>" method="post">
-          <%= hidden_field 'op' %>
-          <div class="issue-add-comment-header">
-            <div id="write-tab" class="issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
-            <div id="preview-tab" class="issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
-          </div>
-          <div class="issue-add-comment-body">
-            <div id="write-area" class="issue-add-comment-message">
-              <%= text_area 'message' %>
-            </div>
-            <div id="preview-area" class="issue-add-comment-preview markdown-body" style="padding:10px">
-            </div>
-            <div class="issue-add-comment-bottom">
-              <div class="issue-add-comment-button-left">
-                Styling with Markdown is supported
-              </div>
-              <div class="issue-add-comment-button">
-                % if ($issue->{open}) {
-                  <input type="submit" value="Close issue" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn">
-                % } else {
-                  <input type="submit" value="Reopen issue" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
-                % }
-                <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-success">
-              </div>
-            </div>
-          </div>
-        </form>
+    <div>
+      % if ($issue->{open}) {
+        <div class="issue-open">Open</div>
+      % } else {
+        <div class="issue-close">Close</div>
+      % }
+      <b><%= $issue->{'open_user.id'} %></b> <span style="color:#767676;">opened this issue <%= $api->age_string($issue->{open_time}) %> / <%= $issue_messages_count %> comment</span>
+    </div>
+  </div>
+  
+  <div class="issue">
+    <div class="issue-left">
+      <div class="issue-panel">
+        <div>
+          % for my $issue_message (@$issue_messages) {
+            <%
+              my %issue_message_param = (
+                user_id => $user_id,
+                issue_message => $issue_message
+              );
+            %>
+            
+            %= include '/include/issue_message', %issue_message_param;
+          % }
+        </div>
       </div>
-    % }
+      
+      % if ($api->logined) {
+        <div class="issue-add-comment">
+          <form action="<%= url_for %>" method="post">
+            <%= hidden_field 'op' %>
+            <div class="issue-add-comment-header">
+              <div id="write-tab" class="issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
+              <div id="preview-tab" class="issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
+            </div>
+            <div class="issue-add-comment-body">
+              <div id="write-area" class="issue-add-comment-message">
+                <%= text_area 'message' %>
+              </div>
+              <div id="preview-area" class="issue-add-comment-preview markdown-body" style="padding:10px">
+              </div>
+              <div class="issue-add-comment-bottom">
+                <div class="issue-add-comment-button-left">
+                  Styling with Markdown is supported
+                </div>
+                <div class="issue-add-comment-button">
+                  % if ($issue->{open}) {
+                    <input type="submit" value="Close issue" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn">
+                  % } else {
+                    <input type="submit" value="Reopen issue" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
+                  % }
+                  <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-success">
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      % }
+    </div>
+    <div class="issue-right">
+      <div style="font-weight:bold;padding-bottom:3px"><%= @$participants %> participants</div>
+      <ul>
+        % for my $participant (@$participants) {
+          <li>
+            <a href="<%= url_for("/$participant") %>"><%= $participant %></a>
+          </li>
+        % }
+      </ul>
+    </div>
   </div>
 </div>
 

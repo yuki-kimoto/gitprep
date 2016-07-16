@@ -110,8 +110,25 @@
   min-height:203px;
   display:none;
 }
+.issue {
+  overflow:hidden;
+}
 .issue-left {
   width:80%;
+  float:left;
+}
+.issue-right {
+  width:20%;
+  float:left;
+  padding-left:15px;
+  color:#767676;
+}
+
+.issue-right a {
+  color:#767676;
+}
+.issue-right a:hover {
+  color:inherit;
 }
 
 .issue-message {
