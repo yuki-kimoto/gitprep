@@ -2,7 +2,7 @@
   <div class="container">
     <div>
       <a href="https://github.com/yuki-kimoto/gitprep">Gitprep</a>
-      <span>Version <%= $Gitprep::VERSION %></span>
+      <span>Version <%= $Gitprep::VERSION %> (build on <a href="https://github.com/kraih/mojo">Mojolicious</a>)</span>
     </div>
 
     % if (app->mode eq 'development') {
