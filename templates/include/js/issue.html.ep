@@ -1,3 +1,19 @@
+function insertAtCaret(target, str) {
+  var obj = $(target);
+  obj.focus();
+  if(navigator.userAgent.match(/MSIE/)) {
+    var r = document.selection.createRange();
+    r.text = str;
+    r.select();
+  } else {
+    var s = obj.val();
+    var p = obj.get(0).selectionStart;
+    var np = p + str.length;
+    obj.val(s.substr(0, p) + str + s.substr(p));
+    obj.get(0).setSelectionRange(np, np);
+  }
+}
+
 // Click write tab
 $('#write-tab').on('click', function () {
   $('#write-tab').find('a').attr('class', '');
@@ -34,4 +50,9 @@ $('.issue-message-delete-btn').on('click', function () {
       }
     });
   }
+});
+
+$('.issue-icon-add-bold-text').on('click', function () {
+  var textarea = $(this).closest('form').find('textarea');
+  insertAtCaret(textarea, "****");
 });
