@@ -120,6 +120,12 @@
 %= javascript begin
   $(document).ready(function() {
     %= include '/include/js/issue';
+    
+    $('.issue-icon-add-bold-text').on('click', function () {
+      var textarea = $(this).closest('form').find('textarea');
+      textarea.text('aaa');
+      alert('aaa');
+    });
   });
 % end
 

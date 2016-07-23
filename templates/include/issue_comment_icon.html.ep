@@ -1,15 +1,15 @@
 <div class="issue-add-comment-icon">
-  <i id="icon-add-header-text" class="icon icon-font" title="Add header text"></i>
-  <i id="icon-add-bold-text" class="icon icon-bold" title="Add bold text"></i>
-  <i id="icon-add-italic-text" class="icon icon-italic" title="Add italic text"></i>
+  <i class="issue-icon-add-header-text icon icon-font" title="Add header text"></i>
+  <i class="issue-icon-add-bold-text icon icon-bold" title="Add bold text"></i>
+  <i class="issue-icon-add-italic-text icon icon-italic" title="Add italic text"></i>
   <span style="margin-left:10px"></span>
-  <i id="icon-insert-quote" class="icon icon-comment" title="Insert a quote"></i>
-  <i id="icon-insert-code" class="icon icon-file" title="Insert a code"></i>
-  <i id="icon-add-link" class="icon icon-map-marker" title="Add a link"></i>
+  <i class="issue-icon-insert-quote icon icon-comment" title="Insert a quote"></i>
+  <i class="issue-icon-insert-code icon icon-file" title="Insert a code"></i>
+  <i class="issue-icon-add-link icon icon-map-marker" title="Add a link"></i>
   <span style="margin-left:10px"></span>
-  <i id="icon-add-bulleted-list" class="icon icon-list" title="Add a bulleted list"></i>
-  <i id="icon-add-numbered-list" class="icon icon-th-list" title="Add a numbered list"></i>
+  <i class="issue-icon-add-bulleted-list icon icon-list" title="Add a bulleted list"></i>
+  <i class="issue-icon-add-numbered-list icon icon-th-list" title="Add a numbered list"></i>
   <span style="margin-left:10px"></span>
-  <i id="icon-mension-user" class="icon icon-user" title="Directory mension a user"></i>
-  <i id="icon-reference-issue"class="icon icon-bookmark" title="Reference a issue or pull request"></i>
+  <i class="issue-icon-mension-user icon icon-user" title="Directory mension a user"></i>
+  <i class="issue-icon-reference-issue icon icon-bookmark" title="Reference a issue or pull request"></i>
 </div>
