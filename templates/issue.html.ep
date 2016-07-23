@@ -166,6 +166,21 @@
             <div class="issue-add-comment-header">
               <div id="write-tab" class="issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
               <div id="preview-tab" class="issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
+              <div class="issue-add-comment-icon">
+                <i class="icon icon-font" title="Add header text"></i>
+                <i class="icon icon-bold" title="Add bold text"></i>
+                <i class="icon icon-italic" title="Add italic text"></i>
+                <span style="margin-left:10px"></span>
+                <i class="icon icon-comment" title="Insert a quote"></i>
+                <i class="icon icon-file" title="Insert a code"></i>
+                <i class="icon icon-map-marker" title="Add a link"></i>
+                <span style="margin-left:10px"></span>
+                <i class="icon icon-list" title="Add a bulleted list"></i>
+                <i class="icon icon-th-list" title="Add a numbered list"></i>
+                <span style="margin-left:10px"></span>
+                <i class="icon icon-user" title="Directory mension a user"></i>
+                <i class="icon icon-bookmark" title="Reference a issue or pull request"></i>
+              </div>
             </div>
             <div class="issue-add-comment-body">
               <div id="write-area" class="issue-add-comment-message">

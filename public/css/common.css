@@ -44,6 +44,15 @@
   border:none;
 }
 
+.issue-add-comment-icon {
+  display:inline-block;
+  float:right;
+  padding:6px;
+}
+.issue-add-comment-icon i {
+  cursor:pointer;
+}
+
 .issue-add-comment-header-tab a {
   background:white;
   display:block;
