@@ -45,15 +45,15 @@
         <form action="<%= url_for %>" method="post">
           <%= hidden_field 'op' %>
           <div class="issue-add-comment-header">
-            <div id="write-tab" class="issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
-            <div id="preview-tab" class="issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
+            <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
+            <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
             %= include '/include/issue_comment_icon';
           </div>
           <div class="issue-add-comment-body">
-            <div id="write-area" class="issue-add-comment-message">
+            <div class="issue-message-write-area issue-add-comment-message">
               <%= text_area 'message' => $issue_message->{message} %>
             </div>
-            <div id="preview-area" class="issue-add-comment-preview markdown-body" style="padding:10px">
+            <div class="issue-message-preview-area issue-add-comment-preview markdown-body" style="padding:10px">
             </div>
             <div class="issue-add-comment-bottom">
               <div class="issue-add-comment-button-left">
