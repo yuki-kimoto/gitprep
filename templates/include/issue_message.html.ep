@@ -51,7 +51,6 @@
           </div>
           <div class="issue-add-comment-body">
             <div id="write-area" class="issue-add-comment-message">
-              %= $issue_message->{message};
               <%= text_area 'message' => $issue_message->{message} %>
             </div>
             <div id="preview-area" class="issue-add-comment-preview markdown-body" style="padding:10px">
