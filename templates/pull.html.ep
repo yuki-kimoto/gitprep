@@ -206,6 +206,16 @@
       $self->render(json => $json);
       return;
     }
+    elsif ($op eq 'api-update-issue-message') {
+      
+      my $issue_message_row_id = param('issue_message_row_id');
+      my $message = param('message');
+      
+      my $json = $api->api_update_issue_message($issue_message_row_id, $message, $base_user_id);
+      
+      $self->render(json => $json);
+      return;
+    }
   }
   
   # Commits

@@ -90,6 +90,16 @@
       $self->render(json => $json);
       return;
     }
+    elsif ($op eq 'api-update-issue-message') {
+      
+      my $issue_message_row_id = param('issue_message_row_id');
+      my $message = param('message');
+      
+      my $json = $api->api_update_issue_message($issue_message_row_id, $message, $user_id);
+      
+      $self->render(json => $json);
+      return;
+    }
   }
 
   # Issue message
@@ -173,7 +183,7 @@
             </div>
             <div class="issue-add-comment-body">
               <div class="issue-message-write-area issue-add-comment-message">
-                <%= text_area 'message' %>
+                <%= text_area 'message' => '' %>
               </div>
               <div class="issue-message-preview-area issue-add-comment-preview markdown-body" style="padding:10px">
               </div>

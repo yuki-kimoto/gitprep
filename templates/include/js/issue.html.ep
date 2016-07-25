@@ -75,7 +75,29 @@ $('.issue-message-update-cancel').on('click', function () {
   
   return false;
 });
+$('.issue-message-update-btn').on('click', function () {
+  
+  var issue_message_row_id_div = $(this).closest('.issue-message-row-id');
+  var issue_message_row_id_str = issue_message_row_id_div.attr('id');
+  
+  var issue_message_row_id = (issue_message_row_id_str.match(/row-(.+)/))[1];
+  var message = $('#row-' + issue_message_row_id).find('[name=message]').val();
 
+  $.post(
+    '<%= url_for %>',
+    {op : 'api-update-issue-message', issue_message_row_id : issue_message_row_id, message : message},
+    function (result) {
+      if (result.success) {
+        $('#row-' + issue_message_row_id).find('.issue-message-body').html(result.markdown_message);
+        $('#row-' + issue_message_row_id).find('.issue-message').css('display', 'block');
+        $('#row-' + issue_message_row_id).find('.issue-message-update').css('display', 'none');
+      }
+      return false;
+    }
+  );
+  
+  return false;
+});
 
 // Comment icon
 $('.issue-icon-add-header-text').on('click', function () {

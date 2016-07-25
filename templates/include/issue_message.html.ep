@@ -16,7 +16,7 @@
   <div class="issue-message <%= $is_owner_comment ? 'issue-message-owner' : '' %>">
     <div class="issue-message-header <%= $is_owner_comment ? 'issue-message-header-owner' : '' %>">
       <div class="issue-message-header-left">
-        <b><%= $issue_message->{'user.id'} %></b> <span style="color:#767676;">commented <%= $api->age_string($issue_message->{create_time}) %></span>
+        <b><%= $issue_message->{'user.id'} %></b> <span style="color:#767676;">commented <%= $api->age_string($issue_message->{update_time}) %></span>
       </div>
       <div class="issue-message-header-right">
         % if ($is_owner_comment) {
@@ -60,8 +60,8 @@
                 Styling with Markdown is supported
               </div>
               <div class="issue-add-comment-button">
-                <button class="issue-message-update-cancel btn" onclick="javascript:void(0)" >Cancel</button>
-                <input type="submit" value="Update comment" onclick="$(this).closest('form').find('[name=op]').val('update-comment'); $(this).closest('form').submit();" class="btn btn-success"> 
+                <button class="issue-message-update-cancel btn" onclick="javascript:return false;" >Cancel</button>
+                <button class="issue-message-update-btn btn btn-success" onclick="javascript:return false">Update comment</button>
               </div>
             </div>
           </div>
