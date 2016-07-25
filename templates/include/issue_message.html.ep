@@ -12,26 +12,62 @@
   my $can_modify = $is_my_project || $is_my_comment;
 %>
 
-<div class="issue-message <%= $is_owner_comment ? 'issue-message-owner' : '' %>" id="delete-<%= $issue_message->{row_id} %>">
-  <div class="issue-message-header <%= $is_owner_comment ? 'issue-message-header-owner' : '' %>">
-    <div class="issue-message-header-left">
-      <b><%= $issue_message->{'user.id'} %></b> <span style="color:#767676;">commented <%= $api->age_string($issue_message->{create_time}) %></span>
-    </div>
-    <div class="issue-message-header-right">
-      % if ($is_owner_comment) {
-        <div class="issue-message-owner-label">Owner</div>
-      % }
-      % if ($issue_message->{number} != 1) {
-        % if ($can_modify) {
-          <div class="icon-remove">
-            <a href="javascript:void(0)" class="issue-message-delete-btn"><i class="icon icon-remove"></i></a>
-          </div>
+<div class="issue-message-row-id" id="row-<%= $issue_message->{row_id} %>">
+  <div class="issue-message <%= $is_owner_comment ? 'issue-message-owner' : '' %>">
+    <div class="issue-message-header <%= $is_owner_comment ? 'issue-message-header-owner' : '' %>">
+      <div class="issue-message-header-left">
+        <b><%= $issue_message->{'user.id'} %></b> <span style="color:#767676;">commented <%= $api->age_string($issue_message->{create_time}) %></span>
+      </div>
+      <div class="issue-message-header-right">
+        % if ($is_owner_comment) {
+          <div class="issue-message-owner-label">Owner</div>
         % }
-      % }
+        % if ($can_modify) {
+          <a href="javascript:void(0)" class="issue-message-edit-btn"><i class="icon icon-pencil" style="margin-right:6px"></i></a>
+        % }
+        % if ($issue_message->{number} != 1) {
+          % if ($can_modify) {
+            <div class="icon-remove">
+              <a href="javascript:void(0)" class="issue-message-delete-btn"><i class="icon icon-remove"></i></a>
+            </div>
+          % }
+        % }
+      </div>
+    </div>
+    <div class="issue-message-body markdown-body" style="padding:10px">
+      <%== $api->markdown($issue_message->{message}) %>
     </div>
   </div>
-  <div class="issue-message-body markdown-body" style="padding:10px">
-    <%== $api->markdown($issue_message->{message}) %>
-  </div>
+  
+  % if ($can_modify) {
+    <div class="issue-message-update" style="display:none;margin-bottom:20px;">
+      <div class="issue-add-comment">
+        <form action="<%= url_for %>" method="post">
+          <%= hidden_field 'op' %>
+          <div class="issue-add-comment-header">
+            <div id="write-tab" class="issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
+            <div id="preview-tab" class="issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
+            %= include '/include/issue_comment_icon';
+          </div>
+          <div class="issue-add-comment-body">
+            <div id="write-area" class="issue-add-comment-message">
+              %= $issue_message->{message};
+              <%= text_area 'message' => $issue_message->{message} %>
+            </div>
+            <div id="preview-area" class="issue-add-comment-preview markdown-body" style="padding:10px">
+            </div>
+            <div class="issue-add-comment-bottom">
+              <div class="issue-add-comment-button-left">
+                Styling with Markdown is supported
+              </div>
+              <div class="issue-add-comment-button">
+                <button class="issue-message-update-cancel btn" onclick="javascript:void(0)" >Cancel</button>
+                <input type="submit" value="Update comment" onclick="$(this).closest('form').find('[name=op]').val('update-comment'); $(this).closest('form').submit();" class="btn btn-success"> 
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  % }
 </div>
-          

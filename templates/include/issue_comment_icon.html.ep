@@ -11,5 +11,7 @@
   <i class="issue-icon-add-numbered-list icon icon-th-list" title="Add a numbered list"></i>
   <span style="margin-left:10px"></span>
   <i class="issue-icon-mension-user icon icon-user" title="Directory mension a user"></i>
-  <i class="issue-icon-reference-issue icon icon-bookmark" title="Reference a issue or pull request"></i>
+  <!--
+    <i class="issue-icon-reference-issue icon icon-bookmark" title="Reference a issue or pull request"></i>
+  -->
 </div>
