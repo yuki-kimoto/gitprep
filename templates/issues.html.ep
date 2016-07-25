@@ -49,11 +49,16 @@
   %= include '/include/header';
   
   <div class="container">
-    <div class="pulls-button-container">
-      <a href="<%= url_for("/$user_id/$project_id/issues/new") %>" class="btn btn-success">New issue</a>
+    <div class="issues-button-container">
+      <div class="issues-button-container-left">
+        <div class="issues-labels"><a href="<%= url_for("/$user_id/$project_id/labels") %>">Labels</a></div>
+      </div>
+      <div class="issues-button-container-right">
+        <a href="<%= url_for("/$user_id/$project_id/issues/new") %>" class="btn btn-success">New issue</a>
+      </div>
     </div>
-    <div class="pulls">
-      <div class="pulls-header">
+    <div class="issues">
+      <div class="issues-header">
         % if ($open) {
           <b><%= $open_count %> Open</b>
           <a href="<%= url_with->query([is => 'closed']) %>" style="margin-left:5px;color:#767676"><%= "\x{2714}" %><%= $close_count %> Closed</a>
@@ -64,7 +69,7 @@
           </b>
         % }
       </div>
-      <div class="pulls-body">
+      <div class="issues-body">
         % if (@$issues) {
           <ul>
             % for my $issue (@$issues) {
@@ -74,12 +79,12 @@
                 my $open_time_age_string = $self->app->git->_age_string($open_time_age);
               %>
               <li>
-                <div class="pulls-title">
+                <div class="issues-title">
                   <a href="<%= "/$user_id/$project_id/issues/$issue->{number}" %>">
                     <b><%= $issue->{title} %></b>
                   </a>
                 </div>
-                <div class="pulls-description">
+                <div class="issues-description">
                   #<%= $issue->{number} %> <%= $issue->{open} ? 'opened' : 'closed' %>
                   <%= $open_time_age_string %>
                   by <%= $issue->{'open_user.id'} %>
@@ -88,7 +93,7 @@
             % }
           </ul>
         % } else {
-          <div class="pulls-no-request">
+          <div class="issues-no-request">
             <div style="font-size:18px"><b>There aren’t any issues.</b></div>
           </div>
         % }
