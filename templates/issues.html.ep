@@ -42,6 +42,27 @@
       {'issue.open' => 0, pull_request => 0, 'project.id' => $project_id}
     ]
   )->value;
+  
+  # Initialize labels if there are no labels
+  my $labels_count = app->dbi->model('label')->select('count(*)')->value;
+  if ($labels_count == 0) {
+    my @labels = (
+      {id => 'bug', color => '#fc2929'},
+      {id => 'duplicate', color => '#cccccc'},
+      {id => 'enhancement', color => '#84b6eb'},
+      {id => 'invalid', color => '#e6e6e6'},
+      {id => 'question', color => '#cc317c'},
+      {id => 'wontfix', color => '#ffffff'}
+    );
+    for my $label (@labels) {
+      my $project_row_id = app->dbi->model('project')->select(
+        'project.row_id',
+        where => {'user.id' => $user_id, 'project.id' => $project_id}
+      )->value;
+      $label->{project} = $project_row_id;
+      app->dbi->model('label')->insert($label);
+    }
+  }
 
   layout 'common', title => "Issues - $user_id/$project_id";
 %>

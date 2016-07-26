@@ -238,6 +238,13 @@ sub startup {
           . ' on target_project.user = target_project__user.row_id'
       ]
     },
+    {
+      table => 'label',
+      primary_key => 'row_id',
+      join => [
+        'left join project on label.project = project.row_id'
+      ]
+    }
   ];
   $dbi->create_model($_) for @$models;
   $dbi->setup_model;
