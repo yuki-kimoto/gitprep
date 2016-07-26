@@ -6,13 +6,29 @@
   my $user_id = param('user');
   my $project_id = param('project');
   
+  my $labels = app->dbi->model('label')->select(
+    {__MY__ => '*'},
+    where => {'project__user.id' => $user_id, 'project.id' => $project_id},
+    append => 'order by id'
+  )->all;
+  
   layout 'common', title => "Labels - $user_id/$project_id";
 %>
 
 %= include '/include/header';
 
 <div class="container">
-  Labels
+  <ul class="labels">
+    <li><%= @$labels %> labels</li>
+    % for my $label (@$labels) {
+      <li>
+        <div style="border-radius:5px;display:inline-block;background:<%= $label->{color} %>;padding:7px 12px;font-weight:bold;border:1px solid #dddddd;">
+          <i class="icon icon-tag"></i>
+          <%= $label->{id} %>
+        </div>
+      </li>
+    % }
+  </ul>
 </div>
 
 %= include '/include/footer';

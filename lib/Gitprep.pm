@@ -242,7 +242,8 @@ sub startup {
       table => 'label',
       primary_key => 'row_id',
       join => [
-        'left join project on label.project = project.row_id'
+        'left join project on label.project = project.row_id',
+        'left join user as project__user on project.user = project__user.row_id'
       ]
     }
   ];
