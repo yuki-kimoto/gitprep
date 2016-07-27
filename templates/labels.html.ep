@@ -20,12 +20,22 @@
     $('.labels-new-btn').on('click', function () {
       $('.labels-create-panel').toggle();
     });
-  });
-  
-  $(document).ready(function () {
+
     $('.labels-create-cancel-btn').on('click', function () {
       $('.labels-create-panel').hide();
     });
+    
+    $('.labels-edit').on('click', function () {
+      $(this).closest('li').find('.labels-display-area').hide();
+      $(this).closest('li').find('.labels-edit-area').show();
+    });
+
+    $('.labels-edit-cancel-btn').on('click', function () {
+      $(this).closest('li').find('.labels-display-area').show();
+      $(this).closest('li').find('.labels-edit-area').hide();
+    });
+    
+    // labels-edit-save-btn
   });
 % end
 
@@ -55,18 +65,34 @@
     <li><%= @$labels %> labels</li>
     % for my $label (@$labels) {
       <li>
-        <div class="labels-left">
-          <div class="labels-tag" style="background:<%= $label->{color} %>;">
-            <i class="icon icon-tag"></i>
-            <%= $label->{id} %>
+        <div class="labels-display-area">
+          <div class="labels-left">
+            <div class="labels-tag" style="background:<%= $label->{color} %>;">
+              <i class="icon icon-tag"></i>
+              <%= $label->{id} %>
+            </div>
+          </div>
+          <div class="labels-right">
+            <div class="labels-edit">
+              <a href="javascript:void(0)"><i class="icon icon-edit"></i> Edit</a>
+            </div>
+            <div class="labels-delete">
+              <a href="javascript:void(0)"><i class="icon icon-remove"></i> Delete</a>
+            </div>
           </div>
         </div>
-        <div class="labels-right">
-          <div class="labels-edit">
-            <a href="javascript:void(0)"><i class="icon icon-edit"></i> Edit</a>
+        <div class="labels-edit-area" style="display:none">
+          <div class="labels-left">
+            <%= input_tag 'label-id' => $label->{id}, class => 'labels-edit-label-id' %>
+            <%= input_tag 'color' => $label->{color}, class => 'labels-edit-label-color' %>
           </div>
-          <div class="labels-delete">
-            <a href="javascript:void(0)"><i class="icon icon-remove"></i> Delete</a>
+          <div class="labels-right">
+            <div class="labels-edit-cancel-btn btn">
+              Cancel
+            </div>
+            <div class="labels-edit-save-btn btn btn-success">
+              Save changes
+            </div>
           </div>
         </div>
       </li>

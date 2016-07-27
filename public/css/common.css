@@ -46,6 +46,18 @@
   padding:10px;
   margin-bottom:20px;
 }
+.labels-edit-label-id {
+  width:400px;
+  padding:9px;
+  border-radius:3px;
+  border: 1px solid #ddd;
+}
+.labels-edit-label-color {
+  width:100px;
+  padding:8px;
+  border-radius:3px;
+  border: 1px solid #ddd;
+}
 .labels-create-label-id {
   width:400px;
   padding:6px;
@@ -85,7 +97,7 @@
 }
 
 .labels-left {
-  width:50%;
+  width:60%;
   float:left;
 }
 .labels-tag {
@@ -96,7 +108,7 @@
   border:1px solid #dddddd;
 }
 .labels-right {
-  width:50%;
+  width:40%;
   float:left;
   text-align:right;
 }
