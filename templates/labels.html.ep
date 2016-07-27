@@ -18,13 +18,28 @@
 %= include '/include/header';
 
 <div class="container">
+  <div class="labels-new-panel">
+    <div class="btn btn-success">
+      New label
+    </div>
+  </div>
   <ul class="labels">
     <li><%= @$labels %> labels</li>
     % for my $label (@$labels) {
       <li>
-        <div style="border-radius:5px;display:inline-block;background:<%= $label->{color} %>;padding:7px 12px;font-weight:bold;border:1px solid #dddddd;">
-          <i class="icon icon-tag"></i>
-          <%= $label->{id} %>
+        <div class="labels-left">
+          <div class="labels-tag" style="background:<%= $label->{color} %>;">
+            <i class="icon icon-tag"></i>
+            <%= $label->{id} %>
+          </div>
+        </div>
+        <div class="labels-right">
+          <div class="labels-edit">
+            <a href="javascript:void(0)"><i class="icon icon-edit"></i> Edit</a>
+          </div>
+          <div class="labels-delete">
+            <a href="javascript:void(0)"><i class="icon icon-remove"></i> Delete</a>
+          </div>
         </div>
       </li>
     % }

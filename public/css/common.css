@@ -35,6 +35,11 @@
   box-sizing: border-box;
 }
 
+.labels-new-panel {
+  text-align:right;
+  margin-bottom:20px;
+  margin-top:20px;
+}
 .labels {
   
 }
@@ -42,6 +47,7 @@
   border:1px #e5e5e5 solid;
   border-top:none;
   padding:7px 10px;
+  overflow:hidden;
 }
 .labels li:first-child {
   padding:10px 10px;
@@ -49,6 +55,40 @@
   border-radius:3px 3px 0 0;
   background:#f8f8f8;
 }
+
+.labels-left {
+  width:50%;
+  float:left;
+}
+.labels-tag {
+  border-radius:5px;
+  display:inline-block;
+  padding:7px 12px;
+  font-weight:bold;
+  border:1px solid #dddddd;
+}
+.labels-right {
+  width:50%;
+  float:left;
+  text-align:right;
+}
+.labels-delete {
+  padding-top:9px;
+  margin-right:10px;
+  display:inline-block;
+}
+.labels-delete a, .labels-delete a:hover {
+  color:#767676;
+}
+.labels-edit {
+  padding-top:9px;
+  margin-right:10px;
+  display:inline-block;
+}
+.labels-edit a, .labels-edit a:hover {
+  color:#767676;
+}
+
 
 .issues-title a {
   color:black;
