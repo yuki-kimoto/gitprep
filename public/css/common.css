@@ -144,7 +144,7 @@
   display:inline-block;
 }
 .issues-labels a {
-  padding:5px 10px;
+  padding:7px 10px;
   display:inline-block;
   width:100%;
 }
@@ -562,13 +562,12 @@ input[type=text], input[type=password] {
   display:block;
   width:100%;
   text-decoration:none;
-  padding:8px 11px 7px 11px;
+  padding:10px 15px 8px 15px;
   text-align:center;
   color:#565656;
 }
 
 .project-tabs li.active a {
-  padding:5px 11px 7px 11px;
 }
 
 .admin-users {

@@ -15,24 +15,38 @@
   layout 'common', title => "Labels - $user_id/$project_id";
 %>
 
+%= javascript begin
+  $(document).ready(function () {
+    $('.labels-new-btn').on('click', function () {
+      $('.labels-create-panel').toggle();
+    });
+  });
+  
+  $(document).ready(function () {
+    $('.labels-create-cancel-btn').on('click', function () {
+      $('.labels-create-panel').hide();
+    });
+  });
+% end
+
 %= include '/include/header';
 
 <div class="container">
   <div class="labels-new-panel">
-    <div class="btn btn-success">
+    <div class="labels-new-btn btn btn-success">
       New label
     </div>
   </div>
-  <form class="labels-create-panel" action="<%= url_for %>" method="post">
+  <form class="labels-create-panel" action="<%= url_for %>" method="post" style="display:none">
     <div class="labels-create-left">
       <%= input_tag 'label-id', class => 'labels-create-label-id' %>
       <%= input_tag 'color', class => 'labels-create-label-color' %>
     </div>
     <div class="labels-create-right">
-      <div class="btn">
+      <div class="labels-create-cancel-btn btn">
         Cancel
       </div>
-      <div class="btn btn-success">
+      <div class="labels-create-create-btn btn btn-success">
         Create label
       </div>
     </div>
