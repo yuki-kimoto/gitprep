@@ -23,6 +23,20 @@
       New label
     </div>
   </div>
+  <form class="labels-create-panel" action="<%= url_for %>" method="post">
+    <div class="labels-create-left">
+      <%= input_tag 'label-id', class => 'labels-create-label-id' %>
+      <%= input_tag 'color', class => 'labels-create-label-color' %>
+    </div>
+    <div class="labels-create-right">
+      <div class="btn">
+        Cancel
+      </div>
+      <div class="btn btn-success">
+        Create label
+      </div>
+    </div>
+  </form>
   <ul class="labels">
     <li><%= @$labels %> labels</li>
     % for my $label (@$labels) {

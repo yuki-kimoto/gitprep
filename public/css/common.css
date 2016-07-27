@@ -40,6 +40,34 @@
   margin-bottom:20px;
   margin-top:20px;
 }
+.labels-create-panel {
+  overflow:hidden;
+  background:#fafafa;
+  padding:10px;
+  margin-bottom:20px;
+}
+.labels-create-label-id {
+  width:400px;
+  padding:6px;
+  border-radius:3px;
+  border: 1px solid #ddd;
+}
+.labels-create-label-color {
+  width:100px;
+  padding:6px;
+  border-radius:3px;
+  border: 1px solid #ddd;
+}
+.labels-create-left {
+  width:70%;
+  float:left;
+}
+.labels-create-right {
+  width:30%;
+  float:right;
+  text-align:right;
+}
+
 .labels {
   
 }
