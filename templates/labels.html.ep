@@ -108,7 +108,7 @@
       New label
     </div>
   </div>
-  <form class="labels-create-panel" action="<%= url_for %>" method="post" style="display:nonea">
+  <form class="labels-create-panel" action="<%= url_for %>" method="post" style="display:none">
     <%= hidden_field op => 'create' %>
     <div class="labels-create-left">
       <%= input_tag 'label-id', class => 'labels-create-label-id' %>

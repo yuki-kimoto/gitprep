@@ -103,7 +103,9 @@
   float:right;
   text-align:right;
 }
-
+.labels-edit-area {
+  padding:3px 0 31px 0;
+}
 .labels {
   
 }
