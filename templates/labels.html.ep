@@ -12,6 +12,9 @@
     append => 'order by id'
   )->all;
   
+  # Default color;
+  my $default_color = "#" . sprintf('%02x', int rand 255) . sprintf('%02x', int rand 255) . sprintf('%02x', int rand 255);
+
   layout 'common', title => "Labels - $user_id/$project_id";
 %>
 
@@ -47,10 +50,13 @@
       New label
     </div>
   </div>
-  <form class="labels-create-panel" action="<%= url_for %>" method="post" style="display:none">
+  <form class="labels-create-panel" action="<%= url_for %>" method="post" style="display:nonea">
     <div class="labels-create-left">
       <%= input_tag 'label-id', class => 'labels-create-label-id' %>
-      <%= input_tag 'color', class => 'labels-create-label-color' %>
+      <div class="labels-create-label-color-area">
+        <%= input_tag 'color' => $default_color, class => 'labels-create-label-color' %>
+        <div class ="labels-create-label-color-palette" style="background:<%= $default_color %>;"></div>
+      </div>
     </div>
     <div class="labels-create-right">
       <div class="labels-create-cancel-btn btn">
@@ -84,7 +90,10 @@
         <div class="labels-edit-area" style="display:none">
           <div class="labels-left">
             <%= input_tag 'label-id' => $label->{id}, class => 'labels-edit-label-id' %>
-            <%= input_tag 'color' => $label->{color}, class => 'labels-edit-label-color' %>
+            <div class="labels-edit-label-color-area">
+              <%= input_tag 'color' => $label->{color}, class => 'labels-edit-label-color' %>
+              <div class ="labels-edit-label-color-palette" style="background:<%= $label->{color} %>;"></div>
+            </div>
           </div>
           <div class="labels-right">
             <div class="labels-edit-cancel-btn btn">

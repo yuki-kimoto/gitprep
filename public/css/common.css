@@ -46,17 +46,29 @@
   padding:10px;
   margin-bottom:20px;
 }
+.labels-edit-label-color-area {
+  display:inline-block;
+}
 .labels-edit-label-id {
   width:400px;
-  padding:9px;
+  padding:6px;
   border-radius:3px;
   border: 1px solid #ddd;
 }
 .labels-edit-label-color {
   width:100px;
-  padding:8px;
+  padding:6px;
   border-radius:3px;
   border: 1px solid #ddd;
+  padding-left:28px;
+}
+.labels-edit-label-color-palette {
+  width:15px;
+  height:15px;
+  display:inline-block;
+  position:relative;
+  top:3px;
+  left:-95px;
 }
 .labels-create-label-id {
   width:400px;
@@ -64,11 +76,23 @@
   border-radius:3px;
   border: 1px solid #ddd;
 }
+.labels-create-label-color-area {
+  display:inline-block;
+}
 .labels-create-label-color {
   width:100px;
   padding:6px;
   border-radius:3px;
   border: 1px solid #ddd;
+  padding-left:28px;
+}
+.labels-create-label-color-palette {
+  width:15px;
+  height:15px;
+  display:inline-block;
+  position:relative;
+  top:3px;
+  left:-95px;
 }
 .labels-create-left {
   width:70%;
