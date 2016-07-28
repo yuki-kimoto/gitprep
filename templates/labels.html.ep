@@ -6,6 +6,64 @@
   my $user_id = param('user');
   my $project_id = param('project');
   
+  my $errors;
+  if (lc $self->req->method eq 'post') {
+    my $op = param('op') // '';
+
+    my $project_row_id = app->dbi->model('project')->select(
+      'project.row_id',
+      where => {'user.id' => $user_id, 'project.id' => $project_id}
+    )->value;
+    
+    if ($op eq 'create') {
+      my $id = param('label-id');
+      my $color = param('color');
+      
+      my $vc = app->vc;
+      my $validation = $vc->validation;
+      
+      if (!length $id) {
+        $validation->add_failed(id => "Name can't be blank");
+      }
+      elsif (length $id > 100) {
+        $validation->add_failed(id => "Name is too long");
+      }
+      else {
+        my $label = app->dbi->model('label')->select(
+          where => {
+            project => $project_row_id,
+            id => $id
+          }
+        )->one;
+        
+        if ($label) {
+          $validation->add_failed(id => "Name has already been taken");
+        }
+      }
+      
+      if (!length $color) {
+        $validation->add_failed(color => "Color can't be blank");
+      }
+      
+      if ($validation->is_valid) {
+        
+        my $new_label = {
+          id => $id,
+          color => $color,
+          project => $project_row_id
+        };
+        
+        app->dbi->model('label')->insert($new_label);
+        
+        $self->redirect_to;
+        return;
+      }
+      else {
+        $errors = $validation->messages;
+      }
+    }
+  }
+  
   my $labels = app->dbi->model('label')->select(
     {__MY__ => '*'},
     where => {'project__user.id' => $user_id, 'project.id' => $project_id},
@@ -38,33 +96,33 @@
       $(this).closest('li').find('.labels-edit-area').hide();
     });
     
-    // labels-edit-save-btn
   });
 % end
 
 %= include '/include/header';
 
 <div class="container">
+  %= include '/include/errors', errors => $errors;
   <div class="labels-new-panel">
     <div class="labels-new-btn btn btn-success">
       New label
     </div>
   </div>
   <form class="labels-create-panel" action="<%= url_for %>" method="post" style="display:nonea">
+    <%= hidden_field op => 'create' %>
     <div class="labels-create-left">
       <%= input_tag 'label-id', class => 'labels-create-label-id' %>
       <div class="labels-create-label-color-area">
         <%= input_tag 'color' => $default_color, class => 'labels-create-label-color' %>
         <div class ="labels-create-label-color-palette" style="background:<%= $default_color %>;"></div>
+        <div class="error"></div>
       </div>
     </div>
     <div class="labels-create-right">
       <div class="labels-create-cancel-btn btn">
         Cancel
       </div>
-      <div class="labels-create-create-btn btn btn-success">
-        Create label
-      </div>
+      <input type="submit" value="Create label" class="labels-create-create-btn btn btn-success">
     </div>
   </form>
   <ul class="labels">

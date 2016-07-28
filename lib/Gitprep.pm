@@ -444,7 +444,7 @@ sub startup {
             $r->any('/issues/:number' => sub { shift->render_maybe('/issue') })->to(tab => 'issues');
 
             # Labels
-            $r->get('/labels' => sub { shift->render_maybe('/labels') })->to(tab => 'issues');
+            $r->any('/labels' => sub { shift->render_maybe('/labels') })->to(tab => 'issues');
             
             # Pull requests
             $r->get('/pulls' => sub { shift->render_maybe('/pulls') })->to(tab => 'pulls');
