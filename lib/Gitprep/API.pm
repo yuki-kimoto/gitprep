@@ -225,6 +225,8 @@ sub can_access_private_project {
 sub can_write_access {
   my ($self, $session_user_id, $user_id, $project_id) = @_;
   
+  return unless $session_user_id;
+  
   my $can_write_access
     = length $session_user_id &&
     (

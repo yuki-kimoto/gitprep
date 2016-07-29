@@ -6,8 +6,16 @@
   my $user_id = param('user');
   my $project_id = param('project');
   
+  # Can write access
+  my $session_user_id = $api->session_user_id;
+  my $can_write_access = $api->can_write_access($session_user_id, $user_id, $project_id);
+  
   my $errors;
   if (lc $self->req->method eq 'post') {
+    unless ($can_write_access) {
+      Carp::croak("Don't have write access");
+    }
+
     my $op = param('op') // '';
 
     my $project_row_id = app->dbi->model('project')->select(
@@ -62,6 +70,14 @@
         $errors = $validation->messages;
       }
     }
+    elsif ($op eq 'api-delete') {
+      my $row_id = param('id');
+      
+      app->dbi->model('label')->delete(where => {row_id => $row_id});
+      
+      $self->render(json => {success => 1});
+      return;
+    }
   }
   
   my $labels = app->dbi->model('label')->select(
@@ -96,6 +112,15 @@
       $(this).closest('li').find('.labels-edit-area').hide();
     });
     
+    $('.labels-delete').on('click', function () {
+      var li = $(this).closest('li');
+      var id = li.attr('row-id');
+      $.post('<%= url_for %>', {id : id, op : 'api-delete'}, function (result) {
+        if (result.success) {
+          li.fadeOut();
+        }
+      });
+    });
   });
 % end
 
@@ -103,11 +128,14 @@
 
 <div class="container">
   %= include '/include/errors', errors => $errors;
-  <div class="labels-new-panel">
-    <div class="labels-new-btn btn btn-success">
-      New label
+  % if ($can_write_access) {
+    <div class="labels-new-panel">
+      <div class="labels-new-btn btn btn-success">
+        New label
+      </div>
     </div>
-  </div>
+  % }
+  
   <form class="labels-create-panel" action="<%= url_for %>" method="post" style="display:none">
     <%= hidden_field op => 'create' %>
     <div class="labels-create-left">
@@ -128,7 +156,7 @@
   <ul class="labels">
     <li><%= @$labels %> labels</li>
     % for my $label (@$labels) {
-      <li>
+      <li row-id="<%= $label->{row_id} %>">
         <div class="labels-display-area">
           <div class="labels-left">
             <div class="labels-tag" style="background:<%= $label->{color} %>;">
@@ -137,12 +165,14 @@
             </div>
           </div>
           <div class="labels-right">
-            <div class="labels-edit">
-              <a href="javascript:void(0)"><i class="icon icon-edit"></i> Edit</a>
-            </div>
-            <div class="labels-delete">
-              <a href="javascript:void(0)"><i class="icon icon-remove"></i> Delete</a>
-            </div>
+            % if ($can_write_access) {
+              <div class="labels-edit">
+                <a href="javascript:void(0)"><i class="icon icon-edit"></i> Edit</a>
+              </div>
+              <div class="labels-delete">
+                <a href="javascript:void(0)"><i class="icon icon-remove"></i> Delete</a>
+              </div>
+            % }
           </div>
         </div>
         <div class="labels-edit-area" style="display:none">
