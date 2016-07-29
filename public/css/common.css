@@ -123,7 +123,7 @@
 }
 
 .labels-left {
-  width:60%;
+  width:75%;
   float:left;
 }
 .labels-tag {
@@ -134,7 +134,7 @@
   border:1px solid #dddddd;
 }
 .labels-right {
-  width:40%;
+  width:25%;
   float:left;
   text-align:right;
 }

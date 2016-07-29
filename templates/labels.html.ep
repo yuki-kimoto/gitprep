@@ -71,12 +71,54 @@
       }
     }
     elsif ($op eq 'api-delete') {
-      my $row_id = param('id');
+      my $row_id = param('row-id');
       
       app->dbi->model('label')->delete(where => {row_id => $row_id});
       
       $self->render(json => {success => 1});
       return;
+    }
+    elsif ($op eq 'api-update') {
+      my $row_id = param('row-id');
+      my $id = param('id');
+      my $color = param('color');
+      
+      my $vc = app->vc;
+      my $validation = $vc->validation;
+      
+      if (!length $id) {
+        $validation->add_failed(id => "Name can't be blank");
+      }
+      elsif (length $id > 100) {
+        $validation->add_failed(id => "Name is too long");
+      }
+      else {
+        my $label = app->dbi->model('label')->select(
+          where => {
+            project => $project_row_id,
+            id => $id
+          }
+        )->one;
+        
+        if ($label && $id ne $label->{id}) {
+          $validation->add_failed(id => "Name has already been taken");
+        }
+      }
+      
+      if (!length $color) {
+        $validation->add_failed(color => "Color can't be blank");
+      }
+      
+      if ($validation->is_valid) {
+        app->dbi->model('label')->update({id => $id, color => $color}, where => {row_id => $row_id});
+        
+        $self->render(json => {success => 1, id => $id, color => $color});
+        return;
+      }
+      else {
+        $self->render(json => {success => 0, message => $validation->messages->[0]});
+        return;
+      }
     }
   }
   
@@ -114,10 +156,31 @@
     
     $('.labels-delete').on('click', function () {
       var li = $(this).closest('li');
-      var id = li.attr('row-id');
-      $.post('<%= url_for %>', {id : id, op : 'api-delete'}, function (result) {
+      var row_id = li.attr('row-id');
+      $.post('<%= url_for %>', {'row-id' : row_id, op : 'api-delete'}, function (result) {
         if (result.success) {
           li.fadeOut();
+        }
+      });
+    });
+    
+    $('.labels-edit-save-btn').on('click', function () {
+      var li = $(this).closest('li');
+      var row_id = li.attr('row-id');
+      var id = li.find('[name=label-id]').val();
+      var color = li.find('[name=color]').val();
+      
+      $.post('<%= url_for %>', {'row-id' : row_id, op : 'api-update', id : id, color : color}, function (result) {
+        
+        if (result.success) {
+          li.find('.labels-label-id').text(result.id);
+          li.find('.labels-tag').css('background', result.color);
+
+          li.find('.labels-display-area').show();
+          li.find('.labels-edit-area').hide();
+        }
+        else {
+          li.find('.labels-error').text(result.message);
         }
       });
     });
@@ -161,7 +224,7 @@
           <div class="labels-left">
             <div class="labels-tag" style="background:<%= $label->{color} %>;">
               <i class="icon icon-tag"></i>
-              <%= $label->{id} %>
+              <span class="labels-label-id"><%= $label->{id} %></span>
             </div>
           </div>
           <div class="labels-right">
@@ -182,6 +245,7 @@
               <%= input_tag 'color' => $label->{color}, class => 'labels-edit-label-color' %>
               <div class ="labels-edit-label-color-palette" style="background:<%= $label->{color} %>;"></div>
             </div>
+            <div class="labels-error" style="display:inline-block;color:red;"></div>
           </div>
           <div class="labels-right">
             <div class="labels-edit-cancel-btn btn">
