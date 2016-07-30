@@ -206,6 +206,21 @@
       % }
     </div>
     <div class="issue-right">
+      <div class="issue-labels">
+        <div class="issue-labels-title-area">
+          <div class="issue-labels-title">
+            labels
+          </div>
+          <div class="issue-labels-setting-btn">
+            <a href="javascript:void(0)"><i class="icon icon-cog"></i></a>
+          </div>
+        </div>
+        <ul>
+          <li>
+            None yet
+          </li>
+        </ul>
+      </div>
       <div style="font-weight:bold;padding-bottom:3px"><%= @$participants %> participants</div>
       <ul>
         % for my $participant (@$participants) {

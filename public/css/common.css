@@ -35,6 +35,23 @@
   box-sizing: border-box;
 }
 
+.issue-labels {
+  padding:10px 0;
+  border-bottom:1px solid #d8d8d8;
+}
+.issue-labels-title-area {
+  overflow:hidden;
+}
+.issue-labels-title {
+  font-weight:bold;
+  float:left;
+  width:80%;
+}
+.issue-labels-setting-btn {
+  float:left;
+  width:20%;
+  text-align:right;
+}
 .labels-new-panel {
   text-align:right;
   margin-bottom:20px;
