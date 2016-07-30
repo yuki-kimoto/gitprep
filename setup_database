@@ -270,4 +270,31 @@ EOS
     my $error = "Can't create label table properly: $@";
     die $error;
   }
+
+  # Create issue_label table
+  eval {
+    my $sql = <<"EOS";
+create table issue_label (
+  row_id integer primary key autoincrement,
+  issue integer not null default 0,
+  label integer not null default 0,
+  unique(issue, label)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Create issue_label columns
+  my @issue_label_columns = (
+  );
+  for my $column (@issue_label_columns) {
+    eval { $dbi->execute("alter table issue_label add column $column") };
+  }
+
+  # Check issue_label table
+  eval { $dbi->select([qw/row_id issue label/], table => 'issue_label') };
+  if ($@) {
+    my $error = "Can't create issue_label table properly: $@";
+    die $error;
+  }
 }
