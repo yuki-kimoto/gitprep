@@ -241,6 +241,46 @@
   color:#767676;
 }
 
+.issue-labels-popup {
+  border:1px solid #d8d8d8;
+  border-radius:3px;
+  box-shadow: 0 0 10px rgba(0,0,0,.1);
+  width:350px;
+}
+.issue-labels-popup-title {
+  border-bottom:1px solid #d8d8d8;
+  background:#f7f7f7;
+  padding:10px;
+  
+}
+.issue-labels-popup-body {
+  
+}
+.issue-labels-popup-body li {
+  padding:10px 10px;
+  border-top:1px solid #d8d8d8;
+  overflow:hidden;
+  cursor:pointer;
+}
+.issue-labels-popup-body li:first-child {
+  border-top:none;
+}
+.issue-labels-popup-check {
+  float:left;
+  width:20px;
+  height:1px;
+}
+.issue-labels-popup-pallet {
+  width:15px;
+  height:15px;
+  float:left;
+  margin-left:2px;
+}
+.issue-labels-popup-pallet-id {
+  float:left;
+  margin-left:5px;
+  width:50%;
+}
 .issue-add-comment-title {
   margin-bottom:5px;
 }

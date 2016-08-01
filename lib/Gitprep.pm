@@ -245,6 +245,10 @@ sub startup {
         'left join project on label.project = project.row_id',
         'left join user as project__user on project.user = project__user.row_id'
       ]
+    },
+    {
+      table => 'issue_label',
+      primary_key => 'row_id'
     }
   ];
   $dbi->create_model($_) for @$models;

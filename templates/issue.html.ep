@@ -7,6 +7,8 @@
   my $project_id = param('project');
   my $issue_number = param('number');
   my $op = param('op') // '';
+
+  my $project_row_id = $api->get_project_row_id($user_id, $project_id);
   
   my $session_id = $api->session_user_id;
 
@@ -17,38 +19,21 @@
       {open_user => ['id']}
     ],
     where => {
-      'project.id' => $project_id,
+      project => $project_row_id,
       'issue.number' => $issue_number
     }
   )->one;
+  my $issue_row_id = $issue->{row_id};
   
   my $errors;
   if (lc $self->req->method eq 'post') {
     if ($op eq 'reopen-issue') {
-      my $issue_row_id = app->dbi->model('issue')->select(
-        'issue.row_id',
-        where => {
-          'project__user.id' => $user_id,
-          'project.id' => $project_id,
-          number => $number
-        }
-      )->value;
-      
       app->dbi->model('issue')->update({open => 1}, where => {row_id => $issue_row_id});
       
       $self->redirect_to;
       return;
     }
     elsif ($op eq 'close-issue') {
-      my $issue_row_id = app->dbi->model('issue')->select(
-        'issue.row_id',
-        where => {
-          'project__user.id' => $user_id,
-          'project.id' => $project_id,
-          number => $number
-        }
-      )->value;
-            
       app->dbi->model('issue')->update({open => 0}, where => {row_id => $issue_row_id});
       
       $self->redirect_to;
@@ -100,6 +85,27 @@
       $self->render(json => $json);
       return;
     }
+    elsif ($op eq 'api-toggle-label') {
+      my $label_row_id = param('label-row-id');
+      
+      my $label_checked = app->dbi->model('issue_label')->select(
+        where => {issue => $issue_row_id, label => $label_row_id}
+      )->one;
+      
+      my $json = {};
+      if ($label_checked) {
+        app->dbi->model('issue_label')->delete(where => {issue => $issue_row_id, label => $label_row_id});
+        $json->{checked} = 0;
+      }
+      else {
+        app->dbi->model('issue_label')->insert({issue => $issue_row_id, label => $label_row_id});
+        $json->{checked} = 1
+      }
+      $json->{success} = 1;
+      
+      $self->render(json => $json);
+      return;
+    }
   }
 
   # Issue message
@@ -124,15 +130,40 @@
     where => {issue => $issue->{row_id}},
   )->values;
   
+  # Labels
+  my $labels = app->dbi->model('label')->select(
+    {__MY__ => '*'},
+    where => {project => $project_row_id}
+  )->all;
+  
   layout 'common', title => "Issue - $user_id/$project_id #$issue_number";
 %>
 
 %= javascript begin
-
-
-
   $(document).ready(function() {
     %= include '/include/js/issue';
+    
+    // Click labels btn
+    $('.issue-labels-setting-btn').on('click', function () {
+      alert('aaa');
+    });
+    
+    // Click label check btn
+    $('.issue-labels-popup-body li').on('click', function () {
+      var that = this;
+      
+      var label_row_id = $(this).attr('label-row-id');
+      $.post('<%= url_for %>', {'label-row-id' : label_row_id, op : 'api-toggle-label'}, function (result) {
+        if (result.success) {
+          if (result.checked) {
+            $(that).find('.issue-labels-popup-check i').css('display', 'block');
+          }
+          else {
+            $(that).find('.issue-labels-popup-check i').css('display', 'none');
+          }
+        }
+      });
+    });
   });
 % end
 
@@ -231,6 +262,24 @@
       </ul>
     </div>
   </div>
+
+  <div class="issue-labels-popup"">
+    <div class="issue-labels-popup-title">
+      Apply labels to this issue
+    </div>
+    <ul class="issue-labels-popup-body">
+      % for my $label (@$labels) {
+        % my $checked = app->dbi->model('issue_label')->select(where => {issue => $issue_row_id, label => $label->{row_id}})->one;
+        <li label-row-id="<%= $label->{row_id} %>">
+          <div class="issue-labels-popup-check"><i class="icon icon-ok" style="display:<%= $checked ? 'block' : 'none' %>"></i></div>
+          <div class="issue-labels-popup-pallet" style="background:<%= $label->{color} %>"></div>
+          <div class="issue-labels-popup-pallet-id"><%= $label->{id} %></div>
+        </li>
+      % }
+    </ul>
+  </div>
 </div>
+
+
 
 %= include '/include/footer';
