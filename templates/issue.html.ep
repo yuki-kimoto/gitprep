@@ -152,10 +152,17 @@
     
     // Click labels btn
     $('.issue-labels-setting-btn').on('click', function () {
-      alert('aaa');
+      var popup = $('.issue-labels-popup');
+      popup.css('display', 'block');
+      
+      var top = $('.issue-labels').offset().top;
+      var left = $('.issue-labels').offset().left;
+      
+      popup.css('top', (top + 30) + 'px');
+      popup.css('left', (left - 165) + 'px');
     });
     
-    // Click label check btn
+    // Click label check button
     $('.issue-labels-popup-body li').on('click', function () {
       var that = this;
       
@@ -170,6 +177,11 @@
           }
         }
       });
+    });
+    
+    // Click label popup close button
+    $('.issue-labels-popup-close-btn').on('click', function () {
+      $('.issue-labels-popup').hide();
     });
   });
 % end
@@ -253,6 +265,26 @@
             <a href="javascript:void(0)"><i class="icon icon-cog"></i></a>
           </div>
         </div>
+        <div class="issue-labels-popup">
+          <div class="issue-labels-popup-title-area">
+            <div class="issue-labels-popup-title">
+              Apply labels to this issue
+            </div>
+            <div class="issue-labels-popup-close-btn">
+              <a href="javascript:void(0)"><i class="icon icon-remove"></i></a>
+            </div>
+          </div>
+          <ul class="issue-labels-popup-body">
+            % for my $label (@$labels) {
+              % my $checked = app->dbi->model('issue_label')->select(where => {issue => $issue_row_id, label => $label->{row_id}})->one;
+              <li label-row-id="<%= $label->{row_id} %>">
+                <div class="issue-labels-popup-check"><i class="icon icon-ok" style="display:<%= $checked ? 'block' : 'none' %>"></i></div>
+                <div class="issue-labels-popup-pallet" style="background:<%= $label->{color} %>"></div>
+                <div class="issue-labels-popup-pallet-id"><%= $label->{id} %></div>
+              </li>
+            % }
+          </ul>
+        </div>
         % if (@$labels) {
           <ul class="issue-labels-setting-pallet">
             % for my $issue_label (@$issue_labels) {
@@ -278,22 +310,6 @@
         % }
       </ul>
     </div>
-  </div>
-
-  <div class="issue-labels-popup"">
-    <div class="issue-labels-popup-title">
-      Apply labels to this issue
-    </div>
-    <ul class="issue-labels-popup-body">
-      % for my $label (@$labels) {
-        % my $checked = app->dbi->model('issue_label')->select(where => {issue => $issue_row_id, label => $label->{row_id}})->one;
-        <li label-row-id="<%= $label->{row_id} %>">
-          <div class="issue-labels-popup-check"><i class="icon icon-ok" style="display:<%= $checked ? 'block' : 'none' %>"></i></div>
-          <div class="issue-labels-popup-pallet" style="background:<%= $label->{color} %>"></div>
-          <div class="issue-labels-popup-pallet-id"><%= $label->{id} %></div>
-        </li>
-      % }
-    </ul>
   </div>
 </div>
 

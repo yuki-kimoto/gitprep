@@ -253,15 +253,29 @@
   border-radius:3px;
   box-shadow: 0 0 10px rgba(0,0,0,.1);
   width:350px;
+  display:none;
+  position:absolute;
 }
-.issue-labels-popup-title {
-  border-bottom:1px solid #d8d8d8;
+.issue-labels-popup-title-area {
   background:#f7f7f7;
+  overflow:hidden;
+  border-bottom:1px solid #d8d8d8;
+}
+
+.issue-labels-popup-title {
   padding:10px;
-  
+  width:80%;
+  float:left;
+}
+.issue-labels-popup-close-btn {
+  width:20%;
+  float:left;
+  text-align:right;
+  padding-top:10px;
+  padding-right:10px;
 }
 .issue-labels-popup-body {
-  
+  background:white;
 }
 .issue-labels-popup-body li {
   padding:10px 10px;
