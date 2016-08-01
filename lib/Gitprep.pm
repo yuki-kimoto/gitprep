@@ -248,7 +248,10 @@ sub startup {
     },
     {
       table => 'issue_label',
-      primary_key => 'row_id'
+      primary_key => 'row_id',
+      join => [
+        'left join label on issue_label.label = label.row_id'
+      ]
     }
   ];
   $dbi->create_model($_) for @$models;

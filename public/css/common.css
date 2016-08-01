@@ -52,6 +52,13 @@
   width:20%;
   text-align:right;
 }
+.issue-labels-setting-pallet li {
+  border-radius:3px;
+  margin-bottom:4px;
+  margin-top:5px;
+  padding:4px 5px;
+  color:#333;
+}
 .labels-new-panel {
   text-align:right;
   margin-bottom:20px;

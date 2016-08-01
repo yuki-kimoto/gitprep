@@ -136,6 +136,13 @@
     where => {project => $project_row_id}
   )->all;
   
+  # Issue labels
+  my $issue_labels = app->dbi->model('issue_label')->select(
+    {label => '*'},
+    where => {'issue_label.issue' => $issue_row_id},
+    appden => 'order by label.id'
+  )->all;
+  
   layout 'common', title => "Issue - $user_id/$project_id #$issue_number";
 %>
 
@@ -246,11 +253,21 @@
             <a href="javascript:void(0)"><i class="icon icon-cog"></i></a>
           </div>
         </div>
-        <ul>
-          <li>
-            None yet
-          </li>
-        </ul>
+        % if (@$labels) {
+          <ul class="issue-labels-setting-pallet">
+            % for my $issue_label (@$issue_labels) {
+              <li style="background:<%= $issue_label->{'label.color'} %>">
+                <%= $issue_label->{'label.id'} %>
+              </li>
+            % }
+          </ul>
+        % } else {
+          <ul>
+            <li>
+              None yet
+            </li>
+          </ul>
+        % }
       </div>
       <div style="font-weight:bold;padding-bottom:3px"><%= @$participants %> participants</div>
       <ul>
