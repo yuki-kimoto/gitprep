@@ -75,7 +75,9 @@
         <div class="issues-labels"><a href="<%= url_for("/$user_id/$project_id/labels") %>">Labels</a></div>
       </div>
       <div class="issues-button-container-right">
-        <a href="<%= url_for("/$user_id/$project_id/issues/new") %>" class="btn btn-success">New issue</a>
+        % if ($api->logined) {
+          <a href="<%= url_for("/$user_id/$project_id/issues/new") %>" class="btn btn-success">New issue</a>
+        % }
       </div>
     </div>
     <div class="issues">
@@ -95,6 +97,13 @@
           <ul>
             % for my $issue (@$issues) {
               <%
+                my $issue_labels = app->dbi->model('issue_label')->select(
+                  {label => ['id', 'color']},
+                  where => {issue => $issue->{row_id}}
+                )->all;
+              %>
+
+              <%
                 my $open_time = $issue->{open_time};
                 my $open_time_age = Time::Moment->now->epoch - $open_time;
                 my $open_time_age_string = $self->app->git->_age_string($open_time_age);
@@ -104,6 +113,13 @@
                   <a href="<%= "/$user_id/$project_id/issues/$issue->{number}" %>">
                     <b><%= $issue->{title} %></b>
                   </a>
+                  <ul class="issues-label-pallet">
+                    % for my $issue_label (@$issue_labels) {
+                      <li style="background:<%= $issue_label->{'label.color'} %>">
+                        <%= $issue_label->{'label.id'} %>
+                      </li>
+                    % }
+                  </ul>
                 </div>
                 <div class="issues-description">
                   #<%= $issue->{number} %> <%= $issue->{open} ? 'opened' : 'closed' %>

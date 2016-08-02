@@ -179,7 +179,15 @@
   color:#767676;
 }
 
-
+ul.issues-label-pallet {
+  display:inline-block;
+}
+ul.issues-label-pallet li {
+  display:inline-block;
+  border-radius:3px;
+  padding:1px 3px;
+  font-size:95%;
+}
 .issues-title a {
   color:black;
 }

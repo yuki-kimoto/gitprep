@@ -7,6 +7,11 @@
   my $project_id = param('project');
   my $issue_number = param('number');
   
+  unless ($api->logined) {
+    $self->redirect_to("/$user_id/$project_id/issues");
+    return;
+  }
+  
   my $errors;
   if (lc $self->req->method eq 'post') {
     my $op = param('op');
