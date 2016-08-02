@@ -86,7 +86,7 @@
       return;
     }
     elsif ($op eq 'api-toggle-label') {
-      my $label_row_id = param('label-row-id');
+      my $label_row_id = param('popup-label-row-id');
       
       my $label_checked = app->dbi->model('issue_label')->select(
         where => {issue => $issue_row_id, label => $label_row_id}
@@ -99,7 +99,10 @@
       }
       else {
         app->dbi->model('issue_label')->insert({issue => $issue_row_id, label => $label_row_id});
-        $json->{checked} = 1
+        my $label = app->dbi->model('label')->select(where => {row_id => $label_row_id})->one;
+        $json->{checked} = 1;
+        $json->{id} = $label->{id};
+        $json->{color} = $label->{color};
       }
       $json->{success} = 1;
       
@@ -166,14 +169,21 @@
     $('.issue-labels-popup-body li').on('click', function () {
       var that = this;
       
-      var label_row_id = $(this).attr('label-row-id');
-      $.post('<%= url_for %>', {'label-row-id' : label_row_id, op : 'api-toggle-label'}, function (result) {
+      var label_row_id = $(this).attr('popup-label-row-id');
+      $.post('<%= url_for %>', {'popup-label-row-id' : label_row_id, op : 'api-toggle-label'}, function (result) {
         if (result.success) {
           if (result.checked) {
             $(that).find('.issue-labels-popup-check i').css('display', 'block');
+            var li = '<li label-row-id="' + label_row_id + '" style="background:' + result.color + '">' + result.id + '</li>';
+            $('.issue-labels-setting-pallet').append(li);
           }
           else {
             $(that).find('.issue-labels-popup-check i').css('display', 'none');
+            $('.issue-labels-setting-pallet li').each(function () {
+              if ($(this).attr('label-row-id') === label_row_id) {
+                $(this).remove();
+              }
+            });
           }
         }
       });
@@ -277,7 +287,7 @@
           <ul class="issue-labels-popup-body">
             % for my $label (@$labels) {
               % my $checked = app->dbi->model('issue_label')->select(where => {issue => $issue_row_id, label => $label->{row_id}})->one;
-              <li label-row-id="<%= $label->{row_id} %>">
+              <li popup-label-row-id="<%= $label->{row_id} %>">
                 <div class="issue-labels-popup-check"><i class="icon icon-ok" style="display:<%= $checked ? 'block' : 'none' %>"></i></div>
                 <div class="issue-labels-popup-pallet" style="background:<%= $label->{color} %>"></div>
                 <div class="issue-labels-popup-pallet-id"><%= $label->{id} %></div>
@@ -288,7 +298,7 @@
         % if (@$labels) {
           <ul class="issue-labels-setting-pallet">
             % for my $issue_label (@$issue_labels) {
-              <li style="background:<%= $issue_label->{'label.color'} %>">
+              <li label-row-id="<%= $issue_label->{'label.row_id'} %>" style="background:<%= $issue_label->{'label.color'} %>">
                 <%= $issue_label->{'label.id'} %>
               </li>
             % }
