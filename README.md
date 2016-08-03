@@ -1,11 +1,10 @@
-# GitPrep - Let's install portable GitHub system into your own server
+# GitPrep - Portable GitHub system into your own server
 
-<span style="font-size:130%">GitPrep is **portable Github** system. You can install portable GitHub system into your own Unix/Linux server.</span>
+GitPrep is **portable Github system**. You can install portable GitHub system into **your own Unix/Linux server**.</span>
 
 ![GitPrep Image](gitprep_image.png "Gitprep image example")
 
-Let's try <span style="font-size:130%">[GitPrep example](https://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)</span>
-
+At first, Let's try **[GitPrep example](https://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)**
 You will find GitPrep is real portable GitHub system.
 
 ## Features
