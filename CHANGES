@@ -1,4 +1,4 @@
-2.3 ()
+2.3 (2016-08-06)
   - Sorry, I found critical database specification mistake.
     I must fix pull_request and pull_request_message table.
     All your pull requests is removed. Please create Pull request again by the following command.
@@ -7,11 +7,10 @@
   
   - support markdown table
   - support markdown foo_bar_baz
-  
+  - support issue system
 2.2.1 (2016-06-14)
   - fix _search page error bug.
 2.2 (2016-06-04)
->>>>>>> master
   - add command line merging interface to pull request page
   - add createing patch feture to pull request page
 2.1 (2016-05-31)
@@ -33,13 +32,13 @@
   - add user update page.
   - fix bug that repository with read can't be created when git global user name and email.
   - drop cygwin support.
-1.12 (7 Feb 2016)
+1.12 (2016-02-07)
   - Catch up latest Github design.
   - Fix bug that relative image path in README.md and blob html.
-1.11 (7 Nov 2015)
+1.11 (2015-11-07)
   - support relative path in README.md and blob html.
   - support git version 2
-1.10 (27 Jun 2015)
+1.10 (2015-07-27)
   - add show_ignore_space_change_link option to show --ignore-space-change page easily
   - add --ignore-space-change feature in diff page by using w= query string
     for example, http://some.com/kimoto/gitprep_t/commit/3cf14ade5e28ee0cd83b9a3b1e1c332aed66df53?w=
@@ -48,20 +47,20 @@
     you need to change CGI script path, path/gitprep.cgi to path/gitprep/gitprep/cgi
   - remove setup.php
   
-1.9.2 (18 Nov 2014)
+1.9.2 (2014-11-18)
   - fix atom feed entry url bug
 1.9.1
   - fix atom feed bug
-1.9 (11 Nov 2014)
+1.9 (2014-11-11)
   - add ssh_rep_url_base to cnahge or hide ssh URL user directory
   - add atom feed of commits page
     for example, http://somehost.com/kimoto/gitprep_t/commits/master.atom
-1.8 (6 Jun 2014)
+1.8 (2014-07-06)
   - support publick key authentication
-1.7 (26 Apr 2014)
+1.7 (2014-04-26)
   - allow . as project name.
   - add respository and user search page
-1.6 (3 Apr 2014)
+1.6 (2014-04-03)
   - fix bug that can't create collaborator more than one.
   - support time zone.
   - change markdown parser from Text::Markdown::Discount to Text::Markdown::Hoedown
@@ -70,22 +69,22 @@
     code
     ```
   - add encoding_suspects to support multiple encoding in blob, commit diff, and blame.
-1.5 (26 Feb 2014)
+1.5 (2014-02-26)
   - fix bug that git clone via http failed.
   - show readme file in sub directory.
-1.4 (26 Nov 2013)
+1.4 (2013-11-26)
   - fix markdown bugs (*em*, _em_)
   - default readme file is changed. README is changed to README.md
   - add private repository and collaborator feature
-1.3 (9 Oct 2013)
+1.3 (2013-10-09)
   - add README.md support
   - add submodule support
   - add Smart HTTP and basic authentication support
   - add Markdown format in normal file
-1.2 (23 Aug 2013)
+1.2 (2013-08-23)
   - add blame page
   - add blanch import feature
-1.1 (30 Jun 2013)
+1.1 (2013-06-30)
   - add import_rep script to import repositories.
-1.0 (12 Jun 2013)
+1.0 (2013-06-12 )
   - first major release
