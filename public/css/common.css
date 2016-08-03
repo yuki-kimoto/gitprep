@@ -1000,6 +1000,10 @@ body {
   margin-top:0;
   margin-bottom:0
 }
+.markdown-body ul li {
+  list-style:disc;
+}
+
 .markdown-body li>p{
   margin-top:16px
 }
