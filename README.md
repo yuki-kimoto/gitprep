@@ -1,17 +1,20 @@
-# GitPrep
+# GitPrep - Let's install portable GitHub system into your own server
 
-Github clone. You can install portable github system into Unix/Linux.
-
-See GitPrep example site. [GitPrep example site](https://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)
+<span style="font-size:130%">GitPrep is **portable Github** system. You can install portable GitHub system into your own Unix/Linux server.</span>
 
 ![GitPrep Image](gitprep_image.png "Gitprep image example")
+
+Let's try <span style="font-size:130%">[GitPrep example](https://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)</span>
+
+You will find GitPrep is real portable GitHub system.
 
 ## Features
 
 * Github clone: GitPrep has the same interface as GitHub.
+* Support issue system
 * Portable: You can install GitPrep on your own Unix/Linux server.
 * Only needs Perl 5.10.1+.
-* Smart HTTP support: you can pull and push via HTTP.
+* Smart HTTP support: you can pull and push repository via HTTP.
 * Built-in web server, and reverse proxy support.
 * CGI support.
 * SSL support.
@@ -538,7 +541,7 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 * [Object::Simple](http://search.cpan.org/dist/Object-Simple/lib/Object/Simple.pm)
 * [Text::Markdown::Hoedown](http://search.cpan.org/~tokuhirom/Text-Markdown-Hoedown-1.01/lib/Text/Markdown/Hoedown.pm)
 * [Validator::Custom](http://search.cpan.org/dist/Validator-Custom/lib/Validator/Custom.pm)
-* [Time-Moment](http://search.cpan.org/dist/Time-Moment/lib/Time/Moment.pod)
+* [Time::Moment](http://search.cpan.org/dist/Time-Moment/lib/Time/Moment.pod)
 
 ## Sister project
 
