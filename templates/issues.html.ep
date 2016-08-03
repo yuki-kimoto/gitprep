@@ -110,7 +110,7 @@
               %>
               <li>
                 <div class="issues-title">
-                  <a href="<%= "/$user_id/$project_id/issues/$issue->{number}" %>">
+                  <a href="<%= url_for("/$user_id/$project_id/issues/$issue->{number}") %>">
                     <b><%= $issue->{title} %></b>
                   </a>
                   <ul class="issues-label-pallet">
