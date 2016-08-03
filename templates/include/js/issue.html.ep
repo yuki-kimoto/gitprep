@@ -35,7 +35,7 @@ $('.issue-message-preview-tab').on('click', function () {
   
   var text = form.find('[name=message]').val();
   
-  $.post('/api/markdown', {text : text}, function (result) {
+  $.post('<%= url_for('/api/markdown') %>', {text : text}, function (result) {
     var markdown = result.markdown;
     form.find('.issue-message-preview-area').html(markdown);
   });
