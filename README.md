@@ -29,7 +29,7 @@ All reporitories are yours. All repositories exists on **your own server**.
 
 Open source. **All free**.
 
-Let's try GitPrep. 
+Let's try GitPrep. If you like GitPrep, please share and talk about GitPrep in your community or your company.
 
 ## A. Install and run GitPrep by embdded web server
 
@@ -539,11 +539,9 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 
 ## Internally Using Modules
 
-* [Config::Tiny](http://search.cpan.org/dist/Config-Tiny/lib/Config/Tiny.pm)
-* [DBD::SQLite](http://search.cpan.org/dist/DBD-SQLite/lib/DBD/SQLite.pm)
-* [DBI](http://search.cpan.org/dist/DBI/DBI.pm)
-* [DBIx::Connector](http://search.cpan.org/dist/DBIx-Connector/lib/DBIx/Connector.pm)
-* [DBIx::Custom](http://search.cpan.org/dist/DBIx-Custom/lib/DBIx/Custom.pm)
+GitPrep depends on the following modules, especially Mojolicious is the base of GitPrep.
+Thanks to Mojolicious author,[Sebastian riedel](https://twitter.com/kraih).
+
 * [Mojolicious](http://search.cpan.org/~sri/Mojolicious/lib/Mojolicious.pm)
 * [Mojolicious::Plugin::INIConfig](http://search.cpan.org/dist/Mojolicious-Plugin-INIConfig/lib/Mojolicious/Plugin/INIConfig.pm)
 * [Mojolicious::Plugin::AutoRoute](http://search.cpan.org/dist/Mojolicious-Plugin-AutoRoute/lib/Mojolicious/Plugin/AutoRoute.pm)
@@ -553,6 +551,11 @@ It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 * [Text::Markdown::Hoedown](http://search.cpan.org/~tokuhirom/Text-Markdown-Hoedown-1.01/lib/Text/Markdown/Hoedown.pm)
 * [Validator::Custom](http://search.cpan.org/dist/Validator-Custom/lib/Validator/Custom.pm)
 * [Time::Moment](http://search.cpan.org/dist/Time-Moment/lib/Time/Moment.pod)
+* [Config::Tiny](http://search.cpan.org/dist/Config-Tiny/lib/Config/Tiny.pm)
+* [DBD::SQLite](http://search.cpan.org/dist/DBD-SQLite/lib/DBD/SQLite.pm)
+* [DBI](http://search.cpan.org/dist/DBI/DBI.pm)
+* [DBIx::Connector](http://search.cpan.org/dist/DBIx-Connector/lib/DBIx/Connector.pm)
+* [DBIx::Custom](http://search.cpan.org/dist/DBIx-Custom/lib/DBIx/Custom.pm)
 
 ## Sister project
 
