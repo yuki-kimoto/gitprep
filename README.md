@@ -19,7 +19,19 @@ You will find GitPrep is real portable GitHub system.
 * SSL support.
 * Public key authentication support
 
-## A. Run GitPrep by embdded web server
+**Installation** is very **easy**. You run only two commands.
+Difficult settings is unnecessary.
+
+Even if you have troubles by your mistake, for example "git push -f origin master",
+you can access all of your git repositories **directory** and fix them.
+
+All reporitories are yours. All repositories exists on **your own server**.
+
+Open source. **All free**.
+
+Let's try GitPrep. 
+
+## A. Install and run GitPrep by embdded web server
 
 GitPrep has its own web server. You can start GitPrep easily.
 
