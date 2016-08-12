@@ -519,6 +519,8 @@ Please follow [gitprep plugin documentation](https://sparrowhub.org/info/gitprep
 
 ## For Developers
 
+### Run GitPrep in development mode
+
 If you are a developer, you can start the application in development mode.
 
     ./morbo
@@ -532,6 +534,35 @@ If you have git, it is easy to install from git.
     git clone git://github.com/yuki-kimoto/gitprep.git
 
 It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
+
+### The way to create installable Mojolicious application
+
+GitPrep is the best example for developers who want to create installabel Mojolicious application.
+
+Even if shared hosting server, you can install Mojolicious application as CGI.
+
+**1. CGI is supported in Mojolicious
+
+It is good luck for us that Mojolicious author [Sebastian Riedel](https://twitter.com/kraih) decided to support CGI in Mojolicious.
+
+We can create web application which support CGI with a little effort.
+
+All you do is always using **url_for** method or **url_with** method in your templates when you write URL.
+
+    <a href="<%= url_for('/foo') %>">Bar</a>
+    
+    <a href="<%= url_with('/foo') %>">Bar</a>
+
+Mojolicious automatically resolve URL for both embded server and CGI.
+
+After that, you only prepare CGI script to call Mojolicious application in **production** mode.
+
+    #!/usr/bin/env perl
+    use FindBin;
+    use lib "$FindBin::Bin/extlib/lib/perl5";
+
+    $ENV{MOJO_MODE} = 'production';
+    require "$FindBin::Bin/script/gitprep";
 
 ## Web Site
 
