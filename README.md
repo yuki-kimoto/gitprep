@@ -535,13 +535,13 @@ If you have git, it is easy to install from git.
 
 It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
 
-### The way to create installable Mojolicious application
+## The way to create installable Mojolicious application
 
 GitPrep is the best example for developers who want to create installabel Mojolicious application.
 
 Even if shared hosting server, you can install Mojolicious application as CGI.
 
-***1. cpanm and cpanfile, module installation and version controll***
+###1. cpanm and cpanfile, module installation and version controll###
 
 [Tatsuhiko Miyagawa](http://weblog.bulknews.net/)'s cpanm and cpanfile is the tool which install CPAN module easily.
 
@@ -579,7 +579,7 @@ I write the following way in "setup_module"
     perl -Iextlib/lib/perl5 cpanm -f -L extlib ExtUtils::MakeMaker
     perl -Iextlib/lib/perl5 cpanm -L extlib --installdeps .
 
-***2. CGI is supported in Mojolicious***
+###2. CGI is supported in Mojolicious
 
 It is good luck for us that Mojolicious author [Sebastian Riedel](https://twitter.com/kraih) decided to **support CGI** in Mojolicious.
 
