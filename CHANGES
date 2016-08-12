@@ -1,3 +1,5 @@
+2.3.1 (2016-08-12)
+  - prevent XSS attack in issue and pull request message
 2.3 (2016-08-06)
   - Sorry, I found critical database specification mistake.
     I must fix pull_request and pull_request_message table.
