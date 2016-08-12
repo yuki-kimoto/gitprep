@@ -113,13 +113,17 @@ sub add_issue_message {
 }
 
 sub markdown {
-  my ($self, $text) = @_;
+  my ($self, $markdown_text) = @_;
 
-  my $text_e = Text::Markdown::Hoedown::markdown(
-    $text, extensions => HOEDOWN_EXT_FENCED_CODE|HOEDOWN_EXT_TABLES|HOEDOWN_EXT_NO_INTRA_EMPHASIS
+  # Remove script tags
+  $markdown_text =~ s/\<\s*script\s*.*?\>//g;
+  $markdown_text =~ s/\<\s*\/\s*script\s*.*?\>//g;
+
+  my $html_text = Text::Markdown::Hoedown::markdown(
+    $markdown_text, extensions => HOEDOWN_EXT_FENCED_CODE|HOEDOWN_EXT_TABLES|HOEDOWN_EXT_NO_INTRA_EMPHASIS
   );
   
-  return $text_e;
+  return $html_text;
 }
 
 sub age_string {
