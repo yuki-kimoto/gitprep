@@ -78,7 +78,7 @@ sub parse_ssh_original_command {
   $ssh_original_command ||= '';
 
   my $git_commands = "git-upload-pack|git-receive-pack|git-upload-archive";
-  if ($ssh_original_command =~ m(^($git_commands) '.*/([a-zA-Z1-9_]+)/([^\/]+?)\.git'$)) {
+  if ($ssh_original_command =~ m(^($git_commands) '.*/([a-zA-Z0-9_]+)/([^\/]+?)\.git'$)) {
     my ($verb, $user_id, $project_id) = ($1, $2, $3);
     warn "User:$user_id, Project:$project_id" if $debug;
     die "invalid repo name: '$project_id'\n" if $project_id !~ $project_re;
