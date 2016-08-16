@@ -677,6 +677,7 @@ Thanks for helping my GitPrep project.
 * [mrmuskrat](https://github.com/mrmuskrat)
 * [knittl](https://github.com/knittl)
 * [programmerMOT](https://github.com/programmerMOT)
+* [sn0](https://github.com/sn0)
 
 ## Copyright & license
 
