@@ -84,10 +84,39 @@
           $errors = ['Internal Error'];
         }
         else {
-          flash(message => 'Description is saved.');
+          flash(message => 'Description is changed.');
           $self->redirect_to('current');
           return;
         }
+      }
+    }
+
+    # Change website URL
+    elsif ($op eq 'change-website-url') {
+      
+      # Parameters
+      my $website_url = param('website-url');
+      $website_url = '' unless defined $website_url;
+ 
+      # Validator
+      my $vc = app->vc;
+      
+      # Validation result
+      my $validation = $vc->validation;
+      
+      if (length $website_url > 300) {
+        $validation->add_failed('website-url' => 'Website URL is too long');
+      }
+      
+      if ($validation->is_valid) {
+        app->dbi->model('project')->update(
+          {website_url => $website_url},
+          where => {user => $user_row_id, id => $project_id}
+        );
+        
+        flash(message => 'Website URL is changed.');
+        $self->redirect_to('current');
+        return;
       }
     }
     
@@ -254,6 +283,27 @@
                 % my $description = $git->description(app->rep_info($user_id, $project_id));
                 % $description = '' unless defined $description;
                 %= text_field 'description' => $description, style => "width:90%";
+                <input type="submit" class="btn" value="Save">
+              </div>
+            </form>
+          </li>
+        </ul>
+
+        <ul class="project-settings-main">
+          <li>
+            <h4>
+              Website URL
+            </h4>
+          </li>
+          <li>
+            <form action="<%= url_for->query(op => 'change-website-url') %>" method="post">
+              <div>
+                <%
+                  my $website_url = app->dbi->model('project')->select('website_url', where => {user => $user_row_id, id => $project_id})->value;
+                  $website_url = '' unless defined $website_url;
+                %>
+                
+                %= text_field 'website-url' => $website_url, style => "width:90%";
                 <input type="submit" class="btn" value="Save">
               </div>
             </form>
