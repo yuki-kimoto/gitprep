@@ -152,8 +152,11 @@
           </li>
           <li>
             <div class="donwload-zip">
-              <a class="btn btn-small" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
-                Download ZIP
+              <a title="Download ZIP" class="btn btn-small" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
+                ZIP
+              </a>
+              <a title="Download tar.gz" class="btn btn-small" href="<%= url_for("/$user/$project/archive/$rev.tar.gz") %>">
+                tar.gz
               </a>
             </div>
           </li>
