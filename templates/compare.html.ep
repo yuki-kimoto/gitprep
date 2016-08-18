@@ -3,24 +3,32 @@
   my $api = gitprep_api;
 
   # Parameters
-  my $base_user_id = param('user');
-  my $base_project_id = param('project');
+  my $user_id = param('user');
+  my $project_id = param('project');
   my $base_branch = param('rev1');
   my $user_id_and_target_branch = param('rev2');
+  if (!$user_id_and_target_branch){
+    $user_id_and_target_branch = ''
+  }
   my $page = param('page') || 0;
   my $expand = param('expand');
   
-  # Default base branch
-  $base_branch //= app->manager->default_branch($base_user_id, $base_project_id);
-  
-  # Base project
-  my $base_project = app->dbi->model('project')->select(
-    [
-      {__MY__ => '*'},
-      {user => ['id']}
-    ],
-    where => {'project.id' => $base_project_id, 'user.id' => $base_user_id}
-  )->one;
+  my $base_project = $self->app->manager->original_project($user_id, $project_id);
+  if (!$base_project) {
+  $base_project = app->dbi->model('project')->select(
+      [
+        {__MY__ => '*'},
+        {user => ['id']}
+      ],
+      where => {'project.id' => $project_id, 'user.id' => $user_id}
+    )->one;
+  }
+  my $base_user_id = $base_project->{'user.id'};
+  my $base_project_id = $base_project->{id};
+  if (!$base_branch) {
+    $base_branch = $base_project->{'default_branch'};
+  }
+
   
   # Get target user, project, branch
   my $target_user_id;
@@ -30,13 +38,30 @@
     $target_user_id = $1;
     $target_branch = $2;
     $target_project = $self->app->manager->child_project($base_user_id, $base_project_id, $target_user_id);
-  }
-  else {
+  } elsif ($base_user_id eq $user_id) {
     $target_user_id = $base_user_id;
-    $target_branch = $user_id_and_target_branch // $base_branch;
-    $target_project = $base_project
+    $target_branch = $base_branch;
+    $target_project = app->dbi->model('project')->select(
+      [
+        {__MY__ => '*'},
+        {user => ['id']}
+      ],
+      where => {'project.id' => $base_project_id, 'user.id' => $base_user_id}
+    )->one;
+    
+  } else {
+    $target_user_id = $user_id;
+    $target_branch = $base_branch;
+    #$target_project = $base_project;
+    $target_project = app->dbi->model('project')->select(
+      [
+        {__MY__ => '*'},
+        {user => ['id']}
+      ],
+      where => {'project.id' => $project_id, 'user.id' => $user_id}
+    )->one;
   }
-  
+    
   # Git
   my $git = $self->app->git;
   
@@ -358,6 +383,15 @@
       Comparing changes
     % }
   </div>
+  <div class="topic2">
+  <%=
+    my $url;
+    my $session_user_id = $api->session_user_id;
+    $url = url_with("/$target_user_id/$base_project_id/compare/$base_branch...$session_user_id:$target_branch");
+   %>
+    Choose two branches to see what’s changed or to start a new pull request. If you need to, you can also <a href="<%= $url %>">compare across forks.</a>
+  </div>
+  <br/>
   <div class="compare-select">
     <div>
       <div>
@@ -540,7 +574,7 @@
                     $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$target_branch");
                   }
                   else {
-                    $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$member_user_id:$target_branch");
+                    $url = url_with("/$base_user_id/$member_project_id/compare/$base_branch...$member_user_id:$target_branch");
                   }
                 %>
                 <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= $url %>">
