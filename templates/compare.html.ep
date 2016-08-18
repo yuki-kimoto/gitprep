@@ -346,6 +346,15 @@
   });
 % end
 
+%= javascript begin
+  $(document).ready(function () {
+    $('#comapre-across-btn').on('click', function () {
+      $('#base-fork-btn').toggle();
+      $('#head-fork-btn').toggle();
+    });
+  });
+% end
+
 %= include '/include/header';
 
 <div class="container">
@@ -355,33 +364,32 @@
     % if ($can_open_pull_request) {
       Open a pull request
     % } else {
-      Comparing changes
+      Compare changes
     % }
+  </div>
+  <div class="compare-desc">
+    Compare changes across branches, commits, tags, and more below. If you need to, you can also <a href="javascript:void(0)" id="comapre-across-btn">compare across forks</a>.
   </div>
   <div class="compare-select">
     <div>
       <div>
         <div style="display:inline-block">
-          % if ($base_user_id ne $target_user_id) {
-            <button id="base-fork-btn" class="btn btn-small">
-              <span>base fork:</span><b> <%= $base_project->{'user.id'} %>/<%= $base_project->{id} %></b><i class="icon-arrow-down"></i>
-            </button>
-          % }
+          <button id="base-fork-btn" class="btn btn-small" style="<%= $base_user_id eq $target_user_id ? 'display:none' : '' %>">
+            <span>base fork:</span><b> <%= $base_project->{'user.id'} %>/<%= $base_project->{id} %></b><i class="icon-arrow-down"></i>
+          </button>
           <button id="base-branch-btn" class="btn btn-small">
             <span>base:</span><b> <%= $base_branch %></b><i class="icon-arrow-down"></i>
           </button>
           ...
         </div>
         <div style="display:inline-block;margin-top:10px;">
-          % if ($base_user_id ne $target_user_id) {
-            <button id="head-fork-btn" class="btn btn-small">
-              <span>head fork:</span><b> <%= $target_project->{'user.id'} %>/<%= $target_project->{id} %></b><i class="icon-arrow-down"></i>
-            </button>
-          % }
+          <button id="head-fork-btn" class="btn btn-small" style="<%= $base_user_id eq $target_user_id ? 'display:none' : '' %>">
+            <span>head fork:</span><b> <%= $target_project->{'user.id'} %>/<%= $target_project->{id} %></b><i class="icon-arrow-down"></i>
+          </button>
           <button id="target-branch-btn" class="btn btn-small">
             <span>compare:</span> <b><%= $target_branch %></b><i class="icon-arrow-down"></i>
           </button>
-        
+          
           % if ($can_open_pull_request) {
             % if ($merge_success) {
               <span style="margin-left:10px">

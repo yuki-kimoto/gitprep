@@ -590,6 +590,10 @@ ul.issues-label-pallet li {
 .pulls-description {
   color:#767676;
 }
+.compare-desc {
+  color:#767676;
+  margin-bottom:10px;
+}
 .compare-open-pull-request {
   border:1px solid #d8d8d8;
   border-radius: 3px;
