@@ -87,7 +87,8 @@ EOS
     "original_project integer not null default 0",
     "private integer not null default 0",
     "ignore_space_change integer not null default 0",
-    "guess_encoding integer not null default ''"
+    "guess_encoding integer not null default ''",
+    "website_url not null default ''"
   ];
   for my $column (@$project_columns) {
     eval { $dbi->execute("alter table project add column $column") };
@@ -96,7 +97,7 @@ EOS
   # Check project table
   eval {
     $dbi->select(
-      [qw/row_id user id default_branch original_project private ignore_space_change guess_encoding/],
+      [qw/row_id user id default_branch original_project private ignore_space_change guess_encoding website_url/],
       table => 'project'
     );
   };

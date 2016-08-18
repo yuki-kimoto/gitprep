@@ -375,12 +375,12 @@ note 'Profile';
     {
       # Change description(t1)
       $t->post_ok("/kimoto1/t1/settings?op=change-description", form => {description => 'あああ'});
-      $t->content_like(qr/Description is saved/);
+      $t->content_like(qr/Description is changed/);
       $t->content_like(qr/あああ/);
 
       # Change description(t2)
       $t->post_ok("/kimoto1/t2/settings?op=change-description", form => {description => 'いいい'});
-      $t->content_like(qr/Description is saved/);
+      $t->content_like(qr/Description is changed/);
       $t->content_like(qr/いいい/);
     }
     

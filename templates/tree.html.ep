@@ -8,55 +8,60 @@
   my $git = app->git;
   
   # Parameters
-  my $user = param('user');
-  my $project = param('project');
+  my $user_id = param('user');
+  my $project_id = param('project');
+  
+  my $project_row_id = $api->get_project_row_id($user_id, $project_id);
   
   my $rev;
   my $dir;
   my $rev_dir = param('rev_dir');
   if (defined $rev_dir) {
-    ($rev, $dir) = $git->parse_rev_path(app->rep_info($user, $project), $rev_dir);
+    ($rev, $dir) = $git->parse_rev_path(app->rep_info($user_id, $project_id), $rev_dir);
   }
   else {
-    $rev = app->manager->default_branch($user, $project);
+    $rev = app->manager->default_branch($user_id, $project_id);
   }
   
-  unless (app->manager->exists_project($user, $project)) {
+  unless (app->manager->exists_project($user_id, $project_id)) {
     $self->reply->not_found;
     return;
   }
 
   # Repository description
-  my $desc = $git->description(app->rep_info($user, $project));
+  my $desc = $git->description(app->rep_info($user_id, $project_id));
+  my $website_url = app->dbi->model('project')->select('website_url', where => {row_id => $project_row_id})->value;
   
   # Check exsitence
   my $commits_number;
-  if ($git->exists_branch(app->rep_info($user, $project))) {
+  if ($git->exists_branch(app->rep_info($user_id, $project_id))) {
     # Commit
-    my $commit = $git->get_commit(app->rep_info($user, $project), $rev);
+    my $commit = $git->get_commit(app->rep_info($user_id, $project_id), $rev);
     
     # Tree
     my $trees;
     if (defined $dir && length $dir) {
-      $trees = $git->trees(app->rep_info($user, $project), $rev, $dir);
+      $trees = $git->trees(app->rep_info($user_id, $project_id), $rev, $dir);
     }
     else {
-      $trees = $git->trees(app->rep_info($user, $project), $rev);
+      $trees = $git->trees(app->rep_info($user_id, $project_id), $rev);
     }
     # Commits number
-    $commits_number = $git->commits_number(app->rep_info($user, $project), $rev);
+    $commits_number = $git->commits_number(app->rep_info($user_id, $project_id), $rev);
     
     # Variable for included template
     stash(
       commit => $commit,
       trees => $trees,
       rev => $rev,
-      title => "$user/$project",
+      title => "$user_id/$project_id",
     );
     
     $state = 'display';
   }
   else { $state = 'init' }
+  
+  my $is_project_top_page = !(defined $dir && length $dir);
 
   my $url = url_for->to_abs;
   $url->base(undef);
@@ -66,16 +71,16 @@
   my $ssh_rep_url_base = defined app->config->{basic}{'ssh_rep_url_base'}
     ? app->config->{basic}{'ssh_rep_url_base'} : $rep_home;
   my $ssh_rep_url = "ssh://$execute_user\@" . $url->host
-    . ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user/$project.git";
+    . ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user_id/$project_id.git";
 
   my $branches = stash('branches');
-  my $branches_count = app->git->branches_count($self->app->rep_info($user, $project));
-  my $default_branch_name = app->manager->default_branch($user, $project);
-  my $tags_count = app->git->tags_count(app->rep_info($user, $project));
+  my $branches_count = app->git->branches_count($self->app->rep_info($user_id, $project_id));
+  my $default_branch_name = app->manager->default_branch($user_id, $project_id);
+  my $tags_count = app->git->tags_count(app->rep_info($user_id, $project_id));
   
   my $logined = $api->logined;
   
-  layout 'common', title => "$user/$project";
+  layout 'common', title => "$user_id/$project_id";
 %>
   
   %= include '/include/header';
@@ -83,13 +88,16 @@
   <div class="container">
     %= include '/include/message', message => flash('message');
     
-    % if (!(defined $dir && length $dir)) {
+    % if ($is_project_top_page) {
       <h3 style="font-weight:normal;color:#666;margin:20px 0px 20px 0;font-size:16px;line-height:0">
         <%= $desc %>
+        % if (defined $website_url && length $website_url) {
+          <a href="<%= $website_url %>"><%= $website_url %></a>
+        % }
       </h3>
     % }
     % if ($state eq 'display') {
-      % if (!(defined $dir && length $dir)) {
+      % if ($is_project_top_page) {
         %= stylesheet begin
           .commits-count {
             margin:0;
@@ -120,7 +128,7 @@
         
         <ul class="commits-count">
           <li>
-            % my $commits_url = "/$user/$project/commits/" . ((defined $rev && length $rev) ? $rev : $default_branch_name);
+            % my $commits_url = "/$user_id/$project_id/commits/" . ((defined $rev && length $rev) ? $rev : $default_branch_name);
             <a href="<%= url_for($commits_url) %>">
               <span class="commits-count-number">
                 <i class="icon-repeat"></i>
@@ -132,7 +140,7 @@
             </a>
           </li>
           <li>
-            <a href="<%= url_for("/$user/$project/branches") %>">
+            <a href="<%= url_for("/$user_id/$project_id/branches") %>">
               <span class="commits-count-number">
                 <i class="icon-indent-left"></i>
                 <%= $branches_count %>
@@ -143,7 +151,7 @@
             </a>
           </li>
           <li>
-            <a href="<%= url_for("/$user/$project/tags") %>">
+            <a href="<%= url_for("/$user_id/$project_id/tags") %>">
               <span class="commits-count-number">
                 <i class="icon-tags"></i>
                 <%= $tags_count %>
@@ -170,7 +178,7 @@
       
       %= include '/include/readme', dir => $dir;
       
-    % } elsif ($state eq 'init' && $api->logined($user)) {
+    % } elsif ($state eq 'init' && $api->logined($user_id)) {
       
       <h4 class="topic1">SSH</h4>
       
@@ -196,7 +204,7 @@ git push -u origin master</pre>
 
       <hr>
 
-      % my $http_rep_url = url_for("$user/$project.git")->to_abs;
+      % my $http_rep_url = url_for("$user_id/$project_id.git")->to_abs;
       <h4 class="topic1"><%= uc url_for->to_abs->scheme %></h4>
 
       <div class="text-center" style="margin-bottom:10px">

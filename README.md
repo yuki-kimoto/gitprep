@@ -519,6 +519,8 @@ Please follow [gitprep plugin documentation](https://sparrowhub.org/info/gitprep
 
 ## For Developers
 
+### Run GitPrep in development mode
+
 If you are a developer, you can start the application in development mode.
 
     ./morbo
@@ -532,6 +534,73 @@ If you have git, it is easy to install from git.
     git clone git://github.com/yuki-kimoto/gitprep.git
 
 It is useful to write configuration in ***gitprep.my.conf***, not gitprep.conf.
+
+## The way to create installable Mojolicious application
+
+GitPrep is the best example for developers who want to create installabel Mojolicious application.
+
+Even if shared hosting server, you can install Mojolicious application as CGI.
+
+###1. cpanm and cpanfile, module installation and version controll###
+
+[Tatsuhiko Miyagawa](http://weblog.bulknews.net/)'s cpanm and cpanfile is the tool which install CPAN module easily.
+
+**cpanm** is a command. It is **one file**. you can download cpanm easily and put it in your directory.
+
+**cpanfile** is **a definition** of module name and version. you create the following file which name is "cpanfile".
+
+    requires 'Time::HiRes', '== 1.9732';
+    requires 'DBD::SQLite', '== 1.50';
+    requires 'DBI', '== 1.634';
+    requires 'DBIx::Connector', '== 0.53';
+    requires 'Object::Simple', '== 3.14';
+    requires 'DBIx::Custom', '== 0.36';
+    requires 'Validator::Custom', '== 1.01';
+    requires 'Config::Tiny', '== 2.23';
+    requires 'Data::Page', '== 2.02';
+    requires 'Data::Page::Navigation', '== 0.06';
+    requires 'Mojolicious', '== 6.57';
+    requires 'Mojolicious::Plugin::BasicAuth', '== 0.08';
+    requires 'Mojolicious::Plugin::AutoRoute', '== 0.19';
+    requires 'Mojolicious::Plugin::INIConfig', '== 0.03';
+    requires 'Mojolicious::Plugin::DBViewer', '== 0.28';
+    requires 'Text::Markdown::Hoedown', '== 1.01';
+    requires 'Time::Moment', '== 0.38';
+
+If you want to install all defined modules, you only run the following command.
+
+    perl -Iextlib/lib/perl5 cpanm -L extlib --installdeps .
+
+It's ok. but in some environment Module::CoreList is not installed, and latest ExtUtils::MakeMaker is needed for module installation.
+
+I write the following way in "setup_module"
+
+    perl cpanm -n -l extlib Module::CoreList
+    perl -Iextlib/lib/perl5 cpanm -f -L extlib ExtUtils::MakeMaker
+    perl -Iextlib/lib/perl5 cpanm -L extlib --installdeps .
+
+###2. CGI is supported in Mojolicious
+
+It is good luck for us that Mojolicious author [Sebastian Riedel](https://twitter.com/kraih) decided to **support CGI** in Mojolicious.
+
+We can create web application which support CGI with a little effort.
+
+All you do is always using **url_for** method or **url_with** method in your templates when you write URL.
+
+    <a href="<%= url_for('/foo') %>">Bar</a>
+    
+    <a href="<%= url_with('/foo') %>">Bar</a>
+
+Mojolicious automatically resolve URL for both embded server and CGI.
+
+After that, you only prepare CGI script to call Mojolicious application in **production** mode.
+
+    #!/usr/bin/env perl
+    use FindBin;
+    use lib "$FindBin::Bin/extlib/lib/perl5";
+
+    $ENV{MOJO_MODE} = 'production';
+    require "$FindBin::Bin/script/gitprep";
 
 ## Web Site
 
@@ -608,6 +677,7 @@ Thanks for helping my GitPrep project.
 * [mrmuskrat](https://github.com/mrmuskrat)
 * [knittl](https://github.com/knittl)
 * [programmerMOT](https://github.com/programmerMOT)
+* [sn0](https://github.com/sn0)
 
 ## Copyright & license
 
