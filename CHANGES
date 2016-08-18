@@ -1,6 +1,8 @@
-2.3.2 (2016-08-17)
+2.4 (2016-08-18)
   - add tar.gz download button
   - add website URL settings. you can create external link.
+  - fix "New pull request" button link
+  - add "compare across forks" button in compare page
 2.3.1 (2016-08-12)
   - prevent XSS attack in issue and pull request message
 2.3 (2016-08-06)
