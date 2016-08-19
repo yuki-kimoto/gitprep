@@ -3,6 +3,7 @@
   - add website URL settings. you can create external link.
   - fix "New pull request" button link
   - add "compare across forks" button in compare page
+  - fix pull request error bug when already pull request exists.
 2.3.1 (2016-08-12)
   - prevent XSS attack in issue and pull request message
 2.3 (2016-08-06)
