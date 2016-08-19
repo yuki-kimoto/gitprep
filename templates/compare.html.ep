@@ -81,7 +81,7 @@
           where => {
             base_project => $project_row_id,
             base_branch => $base_branch,
-            target_project => $target_project->{id},
+            target_project => $target_project->{row_id},
             target_branch => $target_branch
           }
         )->one;
