@@ -36,6 +36,26 @@
     $target_branch = $user_id_and_target_branch // $base_branch;
     $target_project = $base_project
   }
+
+=pod
+  # Already pull request exists
+  my $pull_request_already = app->dbi->model('pull_request')->select(
+    where => {
+      base_project => $base_project->{row_id},
+      base_branch => $base_branch,
+      target_project => $target_project->{row_id},
+      target_branch => $target_branch
+    }
+  )->one;
+  if ($pull_request_already) {
+    my $issue = app->dbi->model('issue')->select(
+      where => {
+        project => $base_project->{row_id},
+        pull_request => $pull_request_already->{row_id}
+      }
+    )->one;
+  }
+=cut
   
   # Git
   my $git = $self->app->git;

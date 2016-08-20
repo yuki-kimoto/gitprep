@@ -13,25 +13,29 @@
   # Git
   my $git = $self->app->git;
   
+  my $project_row_id = $api->get_project_row_id($user_id, $project_id);
+  
   # Issues which have pull request
+  my $issue_where = [
+    ['and', ':issue.open{=}', ':pull_request{<>}', ':project{=}'],
+    {'issue.open' => $open, pull_request => 0, project => $project_row_id}
+  ];
+  
   my $issues = app->dbi->model('issue')->select(
     [
       {__MY__ => '*'},
       {open_user => ['id']},
       {pull_request => ['target_branch']}
     ],
-    where => [
-      ['and', ':issue.open{=}', ':pull_request{<>}', ':project.id{=}'],
-      {'issue.open' => $open, pull_request => 0, 'project.id' => $project_id}
-    ]
+    where => $issue_where
   )->all;
   
   # Open count
   my $open_count = app->dbi->model('issue')->select(
     'count(*)',
     where => [
-      ['and', ':issue.open{=}', ':pull_request{<>}', ':project.id{=}'],
-      {'issue.open' => 1, pull_request => 0, 'project.id' => $project_id}
+      ['and', ':issue.open{=}', ':pull_request{<>}', ':project{=}'],
+      {'issue.open' => 1, pull_request => 0, project => $project_row_id}
     ]
   )->value;
   
@@ -39,8 +43,8 @@
   my $close_count = app->dbi->model('issue')->select(
     'count(*)',
     where => [
-      ['and', ':issue.open{=}', ':pull_request{<>}', ':project.id{=}'],
-      {'issue.open' => 0, pull_request => 0, 'project.id' => $project_id}
+      ['and', ':issue.open{=}', ':pull_request{<>}', ':project{=}'],
+      {'issue.open' => 0, pull_request => 0, project => $project_row_id}
     ]
   )->value;
   

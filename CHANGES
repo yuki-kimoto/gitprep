@@ -4,6 +4,8 @@
   - fix "New pull request" button link
   - add "compare across forks" button in compare page
   - fix pull request error bug when already pull request exists.
+  - fix compare page bug
+  - fix pulls page bug
 2.3.1 (2016-08-12)
   - prevent XSS attack in issue and pull request message
 2.3 (2016-08-06)
