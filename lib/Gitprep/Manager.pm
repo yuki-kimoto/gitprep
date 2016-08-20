@@ -28,6 +28,7 @@ sub prepare_merge {
   
   # Fetch target repository
   my @git_fetch_target_cmd = $self->app->git->cmd($work_rep_info, 'fetch', $target_rep_info->{git_dir});
+  
   Gitprep::Util::run_command(@git_fetch_target_cmd)
     or Carp::croak "Can't execute git fetch: @git_fetch_target_cmd";
 

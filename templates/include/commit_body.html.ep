@@ -1,5 +1,6 @@
 <%
   # Parameters
+  my $rep_info = stash('rep_info') // app->rep_info($user, $project);
   my $rev = stash('rev');
   my $from_rev = stash('from_rev');
 
@@ -20,7 +21,7 @@
   
   # Diff tree
   my $diff_trees = $git->diff_tree(
-    app->rep_info($user, $project),
+    $rep_info,
     $rev,
     $from_rev,
     {ignore_space_change => $ignore_space_change}
@@ -35,7 +36,7 @@
   
   # Get blob diffs
   my $blob_diffs = $git->blob_diffs(
-    app->rep_info($user, $project),
+    $rep_info,
     $from_rev,
     $rev,
     $diff_trees,

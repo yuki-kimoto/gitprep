@@ -713,14 +713,16 @@ sub file_type_long {
 }
 
 sub forward_commits {
-  my ($self, $rep_info, $rev1, $rev2) = @_;
-  
+  my ($self, $work_rep_info, $base_rep_info, $base_branch, $target_rep_info, $target_branch) = @_;
+
+  my $target_object_id = $self->app->git->ref_to_object_id($target_rep_info, $target_branch);
+
   # Forwarding commits
   my @cmd = $self->cmd(
-    $rep_info,
+    $work_rep_info,
     'rev-list',
     '--left-right',
-    "$rev1...$rev2"
+    "$base_branch...$target_object_id"
   );
   open my $fh, '-|', @cmd
     or croak "Can't get info: @cmd";
@@ -728,7 +730,7 @@ sub forward_commits {
   while (my $line = <$fh>) {
     if ($line =~ /^>(.+)\s/) {
       my $rev = $1;
-      my $commit = $self->get_commit($rep_info, $rev);
+      my $commit = $self->get_commit($work_rep_info, $rev);
       push @$commits, $commit;
     }
   }

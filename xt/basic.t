@@ -414,22 +414,6 @@ note 'Markdown normal file';
   $t->content_like(qr#<h1 .*?>Head</h1>#);
 }
 
-note 'Compare page';
-{
-  # Page access (branch name)
-  $t->get_ok("/$user/$project/compare/b1...master");
-  $t->content_like(qr#renamed dir/a\.txt to dir/b\.txt and added text#);
-
-  # Page access (branch name long)
-  $t->get_ok("/$user/$project/compare/refs/heads/b1...refs/heads/master");
-  $t->content_like(qr#renamed dir/a\.txt to dir/b\.txt and added text#);
-
-  # Page access
-  $t->get_ok("/$user/$project/compare/master...no_merged");
-  $t->content_like(qr/branch change/);
-  $t->content_like(qr#http://foo5branch change#);
-}
-
 note 'Search page';
 {
   # Page access (branch name)

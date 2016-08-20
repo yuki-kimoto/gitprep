@@ -194,7 +194,14 @@
   }
   
   # Commits
-  my $commits = $git->forward_commits($base_rep_info, $base_branch, $target_branch);
+  my $commits = $git->forward_commits(
+    $work_rep_info,
+    $base_rep_info,
+    $base_branch,
+    $target_rep_info,
+    $target_branch
+  );
+
   my $commits_count = @$commits;
   my $commits_date = {};
   my $authors = {};
@@ -207,12 +214,12 @@
   my $authors_count = keys %$authors;
 
   # Start commit
-  my $start_commit = $git->separated_commit($base_rep_info, $base_branch, $target_branch);
+  my $start_commit_id = app->git->ref_to_object_id($base_rep_info, $base_branch);
 
   # End commit
-  my $end_commit = $git->get_commit($target_rep_info, $target_branch);
+  my $end_commit_id = app->git->ref_to_object_id($target_rep_info, $target_branch);
   
-  if (!$start_commit || !$end_commit) {
+  if (!$start_commit_id || !$end_commit_id) {
     $self->reply->not_found;
     return;
   }
@@ -237,10 +244,9 @@
   
   # commit_body args
   my %commit_body_args = (
-    id => $end_commit->{id},
-    from_id => $start_commit->{id},
-    rev => $end_commit->{id},
-    from_rev => $start_commit->{id}
+    rep_info => $work_rep_info,
+    rev => $end_commit_id,
+    from_rev => $start_commit_id
   );
 
   layout 'common', title => "Comparing $base_branch...$target_branch \x{30fb} $base_user_id/$base_project_id";
