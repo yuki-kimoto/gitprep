@@ -590,6 +590,10 @@ ul.issues-label-pallet li {
 .pulls-description {
   color:#767676;
 }
+.compare-pull-request-link {
+  font-size:20px;
+  margin:20px 0;
+}
 .compare-desc {
   color:#767676;
   margin-bottom:10px;

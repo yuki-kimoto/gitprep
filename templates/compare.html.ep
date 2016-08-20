@@ -37,7 +37,6 @@
     $target_project = $base_project
   }
 
-=pod
   # Already pull request exists
   my $pull_request_already = app->dbi->model('pull_request')->select(
     where => {
@@ -47,24 +46,20 @@
       target_branch => $target_branch
     }
   )->one;
-  if ($pull_request_already) {
-    my $issue = app->dbi->model('issue')->select(
-      where => {
-        project => $base_project->{row_id},
-        pull_request => $pull_request_already->{row_id}
-      }
-    )->one;
-  }
-=cut
   
   # Git
   my $git = $self->app->git;
   
   my $errors;
   if (lc $self->req->method eq 'post') {
+  
     my $op = param('op');
     
     if ($op eq 'create-pull-request') {
+      
+      if ($pull_request_already) {
+        $self->render_exception("Error");
+      }
       
       # Parameters
       my $title = param('title');
@@ -586,8 +581,23 @@
       </div>
     </div>
   </div>
- 
-  % if (keys %$commits_date && $merge_success) {
+  
+  % if ($pull_request_already) {
+    <%
+      my $issue = app->dbi->model('issue')->select(
+        where => {
+          project => $base_project->{row_id},
+          pull_request => $pull_request_already->{row_id}
+        }
+      )->one;
+    %>
+    
+    <div class="compare-pull-request-link">
+      <a href="<%= url_for("/$base_user_id/$base_project_id/pull/$issue->{number}") %>">
+        Pull request #<%= $issue->{number} %>
+      </a>
+    </div>
+  % } elsif (keys %$commits_date && $merge_success) {
     <div class="issue-add-comment" style="width:80%">
       <form action="<%= url_for %>" method="post">
         <%= hidden_field op => 'create-pull-request' %>
