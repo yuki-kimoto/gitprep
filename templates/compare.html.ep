@@ -677,12 +677,12 @@
                 </span>
               </div>
               <div class="compare-commits-commit-title">
-                <a style="color:#333" href="<%= url_for("/$target_user_id/$target_project/commit/$commit->{id}") %>">
+                <a style="color:#333" href="<%= url_for("/$target_user_id/$base_project_id/commit/$commit->{id}") %>">
                   <%= $commit->{title_short} %>
                 </a>
               </div>
               <div class="compare-commits-commit-id">
-                <a href="<%= url_for("/$target_user_id/$target_project/commit/$commit->{id}") %>">
+                <a href="<%= url_for("/$target_user_id/$base_project_id/commit/$commit->{id}") %>">
                   <%= substr($commit->{id}, 0, 7) %>
                 </a>
               </div>
