@@ -63,7 +63,9 @@
       % if ($original_project) {
         <a href="<%= url_for("/$original_project->{'user.id'}/$original_project->{id}/compare/$original_project->{default_branch}...$user_id:$default_branch") %>" class="btn btn-success">New pull request</a>
       % } else {
-        <a href="<%= url_for("/$user_id/$project_id/compare") %>" class="btn btn-success">New pull request</a>
+		% if ($api->logined) {
+		  <a href="<%= url_for("/$user_id/$project_id/compare") %>" class="btn btn-success">New pull request</a>
+		% }
       % }
     </div>
     <div class="pulls">
