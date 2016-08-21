@@ -10,6 +10,11 @@
   my $page = param('page') || 0;
   my $expand = param('expand');
   
+  unless ($api->logined) {
+    $self->redirect_to("/$user_id/$project_id/pulls");
+    return;
+  }
+  
   # Default base branch
   $base_branch //= app->manager->default_branch($base_user_id, $base_project_id);
   
