@@ -33,7 +33,7 @@
   my $target_project;
   my $commit_user_id;
   
-  if ($user_id_and_target_branch =~ /^([^:]+):(.+)/) {
+  if (defined $user_id_and_target_branch && $user_id_and_target_branch =~ /^([^:]+):(.+)/) {
     $target_user_id = $1;
     $target_branch = $2;
     $target_project = $self->app->manager->child_project($base_user_id, $base_project_id, $target_user_id);
@@ -266,6 +266,8 @@
   
   # commit_body args
   my %commit_body_args = (
+    user => $target_user_id,
+    project => $target_project->{id},
     rep_info => $work_rep_info,
     rev => $end_commit_id,
     from_rev => $start_commit_id,
@@ -687,12 +689,12 @@
                 </span>
               </div>
               <div class="compare-commits-commit-title">
-                <a style="color:#333" href="<%= url_for("/$commit_user_id/$base_project_id/commit/$commit->{id}") %>">
+                <a style="color:#333" href="<%= url_for("/$commit_user_id/$target_project->{id}/commit/$commit->{id}") %>">
                   <%= $commit->{title_short} %>
                 </a>
               </div>
               <div class="compare-commits-commit-id">
-                <a href="<%= url_for("/$commit_user_id/$base_project_id/commit/$commit->{id}") %>">
+                <a href="<%= url_for("/$commit_user_id/$target_project->{id}/commit/$commit->{id}") %>">
                   <%= substr($commit->{id}, 0, 7) %>
                 </a>
               </div>
