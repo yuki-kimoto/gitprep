@@ -268,7 +268,8 @@
   my %commit_body_args = (
     rep_info => $work_rep_info,
     rev => $end_commit_id,
-    from_rev => $start_commit_id
+    from_rev => $start_commit_id,
+	target_user_id => $target_user_id,
   );
 
   layout 'common', title => "Comparing $base_branch...$target_branch \x{30fb} $base_user_id/$base_project_id";
