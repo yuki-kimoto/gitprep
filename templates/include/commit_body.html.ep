@@ -1,6 +1,8 @@
 <%
   # Parameters
-  my $rep_info = stash('rep_info') // app->rep_info($user, $project);
+  my $user_id = stash('user');
+  my $project_id = stash('project');
+  my $rep_info = stash('rep_info') // app->rep_info($user_id, $project_id);
   my $rev = stash('rev');
   my $from_rev = stash('from_rev');
   my $target_user_id = stash('target_user_id');
@@ -13,7 +15,7 @@
   else {
     $ignore_space_change = app->dbi->model('project')->select(
       'ignore_space_change',
-      where => {user_id => $user, name => $project}
+      where => {user_id => $user_id, name => $project_id}
     )->value;
   }
   
@@ -53,6 +55,14 @@
     $total_add_line_count += $blob_diff->{add_line_count};
     $total_delete_line_count += $blob_diff->{delete_line_count};
   }
+  
+  # diff_tree arguments
+  my %diff_tree_args = (
+    rev => $rev,
+    from_rev => $from_rev,
+    diff_trees => $diff_trees
+  );
+  
 %>
 
 %= javascript begin
@@ -86,15 +96,23 @@
 </div>
 
 <div id="diff_tree" style="display:none">
-  <%= include '/include/diff_tree', id => $rev, from_id => $from_rev,
-    diff_trees => $diff_trees %>
+  %= include '/include/diff_tree', %diff_tree_args;
 </div>
 
 % my $num = 0;
 % for my $file (sort keys %$diff_trees_h) {
+  <%
+    # blob_diff_body arguments
+    my $blob_diff = $blob_diffs_h->{$file};
+    my %blob_diff_body_args = (
+      user => $user_id,
+      project => $project_id,
+      blob_diff => $blob_diff,
+      diff_tree => $diff_trees_h->{$file}
+    );
+  %>
   <div id="diff-<%= $num %>">
-    % my $blob_diff = $blob_diffs_h->{$file};
-    %= include '/include/blob_diff_body', blob_diff => $blob_diff, diff_tree => $diff_trees_h->{$file};
+    %= include '/include/blob_diff_body', %blob_diff_body_args;
   </div>
   % $num++;
 % }

@@ -634,7 +634,7 @@ These are my Perl web application projects.
 
 ## Bug
 
-If you find bug, plese tell me on GitHub issue. 
+If you find bug, plese tell me on GitHub issue. Small bugs is OK! I'm pleasure if you report anything bugs.
 
 Please post only bug information.
 
