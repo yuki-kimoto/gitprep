@@ -301,8 +301,10 @@
   my $pre_content_http = "git pull $http_rep_url $target_branch";
   my $pre_content_ssh = "git pull $ssh_rep_url $target_branch";
   
-  # Commit body arguments
+  # commit_body args
   my %commit_body_args = (
+    user => $base_user_id,
+    project => $base_project_id,
     rep_info => $work_rep_info,
     rev => $end_commit_id,
     from_rev => $start_commit_id

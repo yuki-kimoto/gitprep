@@ -259,6 +259,8 @@
   
   # commit_body args
   my %commit_body_args = (
+    user => $base_user_id,
+    project => $base_project_id,
     rep_info => $work_rep_info,
     rev => $end_commit_id,
     from_rev => $start_commit_id

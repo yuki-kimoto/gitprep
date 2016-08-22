@@ -3,7 +3,8 @@
   my $api = gitprep_api;
   
   # Paramters
-  my $project = param('project');
+  my $user_id = param('user');
+  my $project_id = param('project');
   my $diff = param('diff');
   my ($from_rev, $rev) = $diff =~ /(.+)\.\.(.+)/;
   $rev = $diff unless defined $rev;
@@ -12,7 +13,7 @@
   my $git = app->git;
   
   # Commit
-  my $commit = $git->get_commit(app->rep_info($user, $project), $rev);
+  my $commit = $git->get_commit(app->rep_info($user_id, $project_id), $rev);
   
   unless ($commit) {
     $self->reply->not_found;
@@ -33,19 +34,19 @@
   )->value;
   
   # Branches
-  my $branch_refs = $git->references(app->rep_info($user, $project), 'heads');
+  my $branch_refs = $git->references(app->rep_info($user_id, $project_id), 'heads');
   my $branches = $branch_refs->{$commit->{id}} || [];
   
   # Tags
-  my $tag_refs = $git->references(app->rep_info($user, $project), 'tags');
+  my $tag_refs = $git->references(app->rep_info($user_id, $project_id), 'tags');
   my $tags = $tag_refs->{$commit->{id}} || [];
   
-  # Global variable for included template
-  stash(
+  # commit_body args
+  my %commit_body_args = (
+    user => $user_id,
+    project => $project_id,
     rev => $rev,
-    from_rev => $from_rev,
-    commit => $commit,
-    parents => $commit->{parents}
+    from_rev => $from_rev
   );
 
   layout 'common', title => "$commit->{title_short} \x{30fb} $commit_short_id";
@@ -86,19 +87,19 @@
           % if (@$branches || @$tags) {
             <div>
               % for my $branch (@$branches) {
-                <i class="icon-share-alt" style="padding-right:1px"></i><a href="<%= url_for("/$user/$project/tree/$branch") %>"><%= $branch %></a>
+                <i class="icon-share-alt" style="padding-right:1px"></i><a href="<%= url_for("/$user_id/$project_id/tree/$branch") %>"><%= $branch %></a>
               % }
               
               % for my $tag (@$tags) {
                 <span style="padding-left:5px">
-                  <i class="icon-tag" style="padding-right:2px"></i><a href="<%= url_for("/$user/$project/tree/$tag") %>"><%= $tag %></a>
+                  <i class="icon-tag" style="padding-right:2px"></i><a href="<%= url_for("/$user_id/$project_id/tree/$tag") %>"><%= $tag %></a>
                 </span>
               % }
             </div>
           % }
         </li>
         <li class="last-child">
-          <a class="btn btn-primary" href="<%= url_for("/$user/$project/tree/$commit->{id}") %>">
+          <a class="btn btn-primary" href="<%= url_for("/$user_id/$project_id/tree/$commit->{id}") %>">
             Browse files
           </a>
         </li>
@@ -126,7 +127,7 @@
           % } elsif (@$parents == 1) {
             <div class="commits-summary-parent">
               <span>1 parent</span>
-              <a href="<%= url_for("/$user/$project/commit/$parents->[0]") %>">
+              <a href="<%= url_for("/$user_id/$project_id/commit/$parents->[0]") %>">
                 <%= substr($parents->[0], 0, 7) %>
               </a>
             </div>
@@ -134,11 +135,11 @@
             <div class="commits-summary-parent">
               <span>2 parents</span>:
               
-              <a class="font-black" href="<%= url_for("/$user/$project/commit/$parents->[0]") %>">
+              <a class="font-black" href="<%= url_for("/$user_id/$project_id/commit/$parents->[0]") %>">
                 <%= substr($parents->[0], 0, 7) %>
               </a>
               +
-              <a class="font-black" href="<%= url_for("/$user/$project/commit/$parents->[1]") %>">
+              <a class="font-black" href="<%= url_for("/$user_id/$project_id/commit/$parents->[1]") %>">
                 <%= substr($parents->[1], 0, 7) %>
               </a>
             </div>
@@ -151,7 +152,7 @@
     </li>
   </ul>
 
-  %= include '/include/commit_body';
+  %= include '/include/commit_body', %commit_body_args;
 </div>
 
 %= include '/include/footer';
