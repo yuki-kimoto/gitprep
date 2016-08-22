@@ -665,6 +665,13 @@
                 'id',
                 where => {email => $commit_author_email}
               )->value;
+			
+			if (defined $commit_author_id) {
+				my $commit_user_id = $commit_author_id;
+			} else {
+				my $commit_user_id = $target_user_id;
+			}
+		
             %>
             <li>
               <div class="compare-commits-author">
@@ -677,12 +684,12 @@
                 </span>
               </div>
               <div class="compare-commits-commit-title">
-                <a style="color:#333" href="<%= url_for("/$target_user_id/$base_project_id/commit/$commit->{id}") %>">
+                <a style="color:#333" href="<%= url_for("/$commit_user_id/$base_project_id/commit/$commit->{id}") %>">
                   <%= $commit->{title_short} %>
                 </a>
               </div>
               <div class="compare-commits-commit-id">
-                <a href="<%= url_for("/$target_user_id/$base_project_id/commit/$commit->{id}") %>">
+                <a href="<%= url_for("/$commit_user_id/$base_project_id/commit/$commit->{id}") %>">
                   <%= substr($commit->{id}, 0, 7) %>
                 </a>
               </div>
