@@ -31,6 +31,8 @@
   my $target_user_id;
   my $target_branch;
   my $target_project;
+  my $commit_user_id;
+  
   if ($user_id_and_target_branch =~ /^([^:]+):(.+)/) {
     $target_user_id = $1;
     $target_branch = $2;
@@ -667,9 +669,9 @@
               )->value;
 			
 			if (defined $commit_author_id) {
-				my $commit_user_id = $commit_author_id;
+				$commit_user_id = $commit_author_id;
 			} else {
-				my $commit_user_id = $target_user_id;
+				$commit_user_id = $target_user_id;
 			}
 		
             %>
