@@ -1,6 +1,7 @@
 <%
   my $rev = stash('rev');
   my $from_rev = stash('from_rev');
+  my $target_user_id = stash('target_user_id');
   
   my $git = app->git;
   
@@ -62,11 +63,11 @@
       </div>
       <div class="last-child">
         % if ($status eq 'D') {
-          <a class="btn" href="<%= url_for("/$user/$project/blob/$from_rev/$file") %>">
+          <a class="btn" href="<%= url_for("/$target_user_id/$project/blob/$from_rev/$file") %>">
             <b>View</b>
           </a>
         % } else {
-          <a class="btn" href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
+          <a class="btn" href="<%= url_for("/$target_user_id/$project/blob/$rev/$file") %>">
             <b>View</b>
           </a>
         % }
