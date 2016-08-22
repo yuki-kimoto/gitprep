@@ -3,6 +3,7 @@
   my $rep_info = stash('rep_info') // app->rep_info($user, $project);
   my $rev = stash('rev');
   my $from_rev = stash('from_rev');
+  my $target_user_id = stash('target_user_id');
 
   my $param_ignore_space_change = param('w');
   my $ignore_space_change;
