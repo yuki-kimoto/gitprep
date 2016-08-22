@@ -62,11 +62,11 @@
       </div>
       <div class="last-child">
         % if ($status eq 'D') {
-          <a class="btn" href="<%= url_for("/$target_user_id/$project/blob/$from_rev/$file") %>">
+          <a class="btn" href="<%= url_for("/$user/$project/blob/$from_rev/$file") %>">
             <b>View</b>
           </a>
         % } else {
-          <a class="btn" href="<%= url_for("/$target_user_id/$project/blob/$rev/$file") %>">
+          <a class="btn" href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
             <b>View</b>
           </a>
         % }
