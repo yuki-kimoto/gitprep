@@ -35,6 +35,32 @@
   box-sizing: border-box;
 }
 
+.commits-count {
+  margin:0;
+  border-radius: 3px 3px 0 0;
+  border: 1px solid #ddd;
+  border-bottom:none;
+}
+
+.commits-count li {
+  display:inline-block;
+  width:25%;
+  margin-left:0px;
+  list-style-type: none;
+  padding:0;
+  text-align:center;
+}
+.commits-count li a {
+  width:100%;
+  display:block;
+  padding:10px 0;
+  color:#767676;
+}
+.commits-count li a:hover {
+  color:#4078c0;
+  text-decoration:none;
+}
+
 .issue-labels {
   padding:10px 0;
   border-bottom:1px solid #d8d8d8;
