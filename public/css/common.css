@@ -35,6 +35,14 @@
   box-sizing: border-box;
 }
 
+.header-issue-count {
+  background:#eee;
+  color:#555;
+  display:inline-block;
+  width:18px;
+  height:18px;
+  border-radius:9px;
+}
 .commits-count {
   margin:0;
   border-radius: 3px 3px 0 0;
