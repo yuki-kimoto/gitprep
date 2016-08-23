@@ -124,7 +124,7 @@
               <li class="<%= $tab eq 'issues' ? 'active' :  '' %>">
                 <a href="<%= url_for("/$user_id/$project_id/issues") %>">
                   <i class="icon-tasks"></i>
-                  Issues
+                  Issues <div style="background:#eee;color:#555;display:inline-block;width:18px; height:18px;border-radius:9px;"><%= $api->get_open_issue_count($user_id, $project_id) %></div>
                 </a>
               </li>
               <li class="<%= $tab eq 'pulls' ? 'active' :  '' %>">

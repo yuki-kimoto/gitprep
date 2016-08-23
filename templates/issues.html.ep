@@ -29,22 +29,10 @@
   )->all;
   
   # Open count
-  my $open_count = app->dbi->model('issue')->select(
-    'count(*)',
-    where => [
-      ['and', 'issue.open = 1', 'pull_request = 0', ':project{=}'],
-      {project => $project_row_id}
-    ]
-  )->value;
+  my $open_count = $api->get_open_issue_count($user_id, $project_id);
   
   # Close count
-  my $close_count = app->dbi->model('issue')->select(
-    'count(*)',
-    where => [
-      ['and', 'issue.open = 0', 'pull_request = 0', ':project{=}'],
-      {project => $project_row_id}
-    ]
-  )->value;
+  my $close_count = $api->get_close_issue_count($user_id, $project_id);
   
   # Initialize labels if there are no labels
   my $labels_count = app->dbi->model('label')->select('count(*)')->value;
