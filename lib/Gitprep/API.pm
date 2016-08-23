@@ -6,6 +6,46 @@ use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOW
 
 has 'cntl';
 
+sub get_pull_request_count {
+  my ($self, $user_id, $project_id, $opt) = @_;
+  
+  $opt ||= {};
+  
+  my $project_row_id = $self->get_project_row_id($user_id, $project_id);
+  
+  my $where = $self->app->dbi->where;
+  my $clause = ['and', 'pull_request <> 0', ':project{=}'];
+  my $param = {project => $project_row_id};
+  
+  # Open
+  if (exists $opt->{open}) {
+    push @$clause, ':issue.open{=}';
+    $param->{'issue.open'} = $opt->{open};
+  }
+  
+  $where->clause($clause);
+  $where->param($param);
+  
+  my $pull_request_count = $self->app->dbi->model('issue')->select(
+    'count(*)',
+    where => $where
+  )->value;
+  
+  return $pull_request_count;
+}
+
+sub get_open_pull_request_count {
+  my ($self, $user_id, $project_id) = @_;
+  
+  return $self->get_pull_request_count($user_id, $project_id, {open => 1});
+}
+
+sub get_close_pull_request_count {
+  my ($self, $user_id, $project_id) = @_;
+  
+  return $self->get_pull_request_count($user_id, $project_id, {open => 0});
+}
+
 sub get_issue_count {
   my ($self, $user_id, $project_id, $opt) = @_;
   

@@ -31,22 +31,10 @@
   )->all;
   
   # Open count
-  my $open_count = app->dbi->model('issue')->select(
-    'count(*)',
-    where => [
-      ['and', ':issue.open{=}', ':pull_request{<>}', ':project{=}'],
-      {'issue.open' => 1, pull_request => 0, project => $project_row_id}
-    ]
-  )->value;
+  my $open_count = $api->get_open_pull_request_count($user_id, $project_id);
   
   # Close count
-  my $close_count = app->dbi->model('issue')->select(
-    'count(*)',
-    where => [
-      ['and', ':issue.open{=}', ':pull_request{<>}', ':project{=}'],
-      {'issue.open' => 0, pull_request => 0, project => $project_row_id}
-    ]
-  )->value;
+  my $close_count = $api->get_close_pull_request_count($user_id, $project_id);
   
   my $default_branch = app->manager->default_branch($user_id, $project_id);
   
