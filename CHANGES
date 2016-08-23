@@ -1,5 +1,6 @@
 2.4.2 (2016-08-23)
   - fix issue count bugs
+  - add issue count and pull reqeust count to header
 2.4.1 (2016-08-22)
   - fix compare page view link bug
 2.4 (2016-08-20)
