@@ -459,6 +459,9 @@ sub startup {
             # Pull request
             $r->get('/pull/(:number).patch' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls', patch => 1);
             $r->any('/pull/:number' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls');
+
+            # Issue
+            $r->get('/wiki' => sub { shift->render_maybe('/wiki') })->to(tab => 'wiki');
             
             # Commit
             $r->get('/commit/*diff' => sub { shift->render_maybe('/commit') });

@@ -1,0 +1,22 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
+  my $user_id = param('user');
+  my $project_id = param('project');
+  
+  layout 'common', title => "Wiki - $user_id/$project_id";
+%>
+  
+  %= include '/include/header';
+  
+  <div class="container">
+    Welcome to the gitprep wiki!
+
+    Wikis provide a place in your repository to lay out the roadmap of your project, show the current status, and document software better, together.
+
+    Create the first page
+  </div>
+  
+  %= include '/include/footer';
