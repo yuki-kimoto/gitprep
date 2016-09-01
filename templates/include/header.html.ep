@@ -133,6 +133,12 @@
                   Pull request <div class="header-issue-count"><%= $api->get_open_pull_request_count($user_id, $project_id) %></div>
                 </a>
               </li>
+              <li class="<%= $tab eq 'wiki' ? 'active' :  '' %>">
+                <a href="<%= url_for("/$user_id/$project_id/wiki") %>">
+                  <i class="icon-book"></i>
+                  Wiki
+                </a>
+              </li>
               <li class="<%= $tab eq 'graph' ? 'active' :  '' %>">
                 <a href="<%= url_for("/$user_id/$project_id/network") %>" >
                   <i class="icon-align-center"></i>
