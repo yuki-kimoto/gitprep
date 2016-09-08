@@ -1,4 +1,6 @@
 <%
+  use Digest::MD5 'md5_hex';
+
   # API
   my $api = gitprep_api;
 
@@ -132,6 +134,11 @@
               <%
                 my $author_id = app->dbi->model('user')->select('id', where => {email => $commit->{author_email}})->value;              %>
               <li>
+                <div class="commmits-avatar">
+                  <a href="/<%= $author_id %>" rel="author">
+                    <img alt="@<%= $author_id %>" class="avatar" width="36" height="36" src="https://gravatar.com/avatar/<%= md5_hex($commit->{author_email}) %>?s=32">
+                  </a>
+                </div>
                 <div class="commit-left">
                   <div class="commit-left-title">
                     <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
