@@ -2777,7 +2777,7 @@ button.close {
   margin-left:20px;
   border: 1px solid #e5e5e5;
   border-top:none;
-  padding:8px 20px 8px 15px;
+  padding:8px 20px 8px 10px;
   overflow:hidden;
 }
 
@@ -2789,9 +2789,18 @@ button.close {
   margin-right:15px;
 }
 
+.commits-avatar {
+  float: left;
+  margin-right: 7px;
+  height: 36px;
+}
+
+.commits-avatar > a > img {
+  border-radius: 3px;
+}
+
 .commit-left {
   float:left;
-  width:70%;
 }
 
 .commit-left-title a {
@@ -2808,8 +2817,7 @@ button.close {
   font-size:98%;
 }
 .commit-right {
-  float:left;
-  width:30%;
+  float:right;
 }
 
 .commit-right-container {
