@@ -363,18 +363,18 @@ OK. GitPrep supports time zones. You can set time_zone option in conig file.
 
 **1. Use symbolic link and ssh_rep_url_base option**
 
-At first, set [basic]ssh_rep_url_base option to /git
+At first, set [basic]ssh_rep_url_base option to /~/git
 
     ;;; SSH repository url base
-    ; For exampke, If you set this value to /git, SSH repository url become
-    ; ssh://kimoto@59.106.185.196/git/kimoto/gitprep.git
-    ssh_rep_url_base=/git
+    ; For exampke, If you set this value to /~/git, SSH repository url become
+    ; ssh://gitprep@59.106.185.196/~/git/kimoto/gitprep.git
+    ; ~ is exapned to user home directory automatically
+    ssh_rep_url_base=/~/git
 
-And you create symbolic link to /home/gitprep/gitprep/data/rep
+Next, you create symbolic link to /home/gitprep/gitprep/data/rep
     
-    cd /
-    ln -s /home/gitprep/gitprep/data/rep /git
-    chown gitprep:gitprep /git
+    cd ~
+    ln -s ~/gitprep/data/rep ~/git
 
 **2. Use only public key authentication and set [basic]ssh_rep_url_base to empty**
 
