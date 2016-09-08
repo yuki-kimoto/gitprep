@@ -134,7 +134,7 @@
               <%
                 my $author_id = app->dbi->model('user')->select('id', where => {email => $commit->{author_email}})->value;              %>
               <li>
-                <div class="commmits-avatar">
+                <div class="commits-avatar">
                   <a href="/<%= $author_id %>" rel="author">
                     <img alt="@<%= $author_id %>" class="avatar" width="36" height="36" src="https://gravatar.com/avatar/<%= md5_hex($commit->{author_email}) %>?s=32">
                   </a>
