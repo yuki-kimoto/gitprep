@@ -869,6 +869,7 @@ body {
   background:#5AAE08;
   border-bottom:1px solid #e5e5e5;
   overflow:hidden;
+  border-bottom:3px solid #479A05;
 }
 
 .header-left {
@@ -2495,6 +2496,9 @@ button.close {
   font-size:19px;
   font-weight:bold;
   margin:20px 0 15px 0;
+  color:#358D23;
+  border-left:5px solid #6FBA2C;
+  padding:4px 6px;
 }
 
 .project-header {
