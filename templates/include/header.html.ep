@@ -136,7 +136,7 @@
               <li class="<%= $tab eq 'graph' ? 'active' :  '' %>">
                 <a href="<%= url_for("/$user_id/$project_id/network") %>" >
                   <i class="icon-align-center"></i>
-                  Graph
+                  Members
                 </a>
               </li>
               % if ($logined && $user_id eq $session_user->{id}) {
