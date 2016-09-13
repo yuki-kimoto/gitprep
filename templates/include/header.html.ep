@@ -56,7 +56,7 @@
           </div>
         % } else {
           <div class="header-btn-container">
-            <a class="btn btn-primary" href="<%= url_for('/_login') %>">Sign in</a>
+            <a class="btn btn-success" href="<%= url_for('/_login') %>">Login</a>
           </div>
         % }
       </div>

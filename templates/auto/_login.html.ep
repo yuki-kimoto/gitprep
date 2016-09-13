@@ -73,7 +73,7 @@
   }
 %>
 
-% layout 'common', title => 'Sign in';
+% layout 'common', title => 'Login';
 
   <!-- Login page -->
   <div class="header">
@@ -112,7 +112,7 @@
     % }
 
     <div class="topic1" style="text-align:center">
-      Sign in to GitPrep
+      Login
     </div>
     
     <form class="user-form" action="<%= url_for->query(op => 'login') %>" method="post">
@@ -131,7 +131,7 @@
         </div>
         <div>
           <div>
-            <button type="submit" class="btn btn-success">Sign in</button>
+            <button type="submit" class="btn btn-primary">Login</button>
           </div>
         </div>
       </div>
