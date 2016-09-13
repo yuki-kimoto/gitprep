@@ -69,6 +69,15 @@
   text-decoration:none;
 }
 
+.commits-count-bottom {
+  border-radius:0 0 3px 3px;
+  border: 1px solid #ddd;
+  min-height:4px;
+  border-top:none;
+  margin-bottom:15px;
+  background:#6FBA2C;
+}
+
 .issue-labels {
   padding:10px 0;
   border-bottom:1px solid #d8d8d8;
