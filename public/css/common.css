@@ -35,6 +35,16 @@
   box-sizing: border-box;
 }
 
+.tree-description {
+  font-size:19px;
+  padding-top:3px;
+  padding-bottom:9px;
+}
+.tree-description a {
+  font-size:18px;
+  font-weight:normal;
+}
+
 .header-issue-count {
   background:#eee;
   color:#555;
@@ -2502,7 +2512,7 @@ button.close {
 }
 
 .project-header {
-  background:#fafafa;
+  background:#fafcfa;
   border-bottom: none;
   margin-bottom:12px;
   overflow:hidden;
