@@ -10,11 +10,11 @@
  
 /*
   Default values
-    border:1px solid #e6e6e6;
+    border:1px solid #e6e9e6;
     border-radius: 3px;
   
   input[type=text] 
-    border:1px solid #e6e6e6;
+    border:1px solid #e6e9e6;
     border-radius: 3px;
     padding:6px 5px;
     margin:5px 0;
@@ -82,7 +82,7 @@
 
 .issue-labels {
   padding:10px 0;
-  border-bottom:1px solid #d8d8d8;
+  border-bottom:1px solid #e6e9e6;
 }
 .issue-labels-title-area {
   overflow:hidden;
@@ -254,7 +254,7 @@ ul.issues-label-pallet li {
   width:50%;
 }
 .issues-labels {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius:3px;
   display:inline-block;
 }
@@ -273,19 +273,19 @@ ul.issues-label-pallet li {
 }
 
 .issues-header {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   background:#fafafa;
   padding:10px;
 }
 .issues-body {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-top:none;
   background:#fafafa;
   background:white;
 }
 .issues-body li {
   padding:10px;
-  border-top: 1px solid #d8d8d8;
+  border-top: 1px solid #e6e9e6;
 }
 .issues-body li:first-child {
   border-top:none;
@@ -302,7 +302,7 @@ ul.issues-label-pallet li {
 }
 
 .issue-labels-popup {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius:3px;
   box-shadow: 0 0 10px rgba(0,0,0,.1);
   width:350px;
@@ -312,7 +312,7 @@ ul.issues-label-pallet li {
 .issue-labels-popup-title-area {
   background:#f7f7f7;
   overflow:hidden;
-  border-bottom:1px solid #d8d8d8;
+  border-bottom:1px solid #e6e9e6;
 }
 
 .issue-labels-popup-title {
@@ -332,7 +332,7 @@ ul.issues-label-pallet li {
 }
 .issue-labels-popup-body li {
   padding:10px 10px;
-  border-top:1px solid #d8d8d8;
+  border-top:1px solid #e6e9e6;
   overflow:hidden;
   cursor:pointer;
 }
@@ -379,7 +379,7 @@ ul.issues-label-pallet li {
   width:100%;
   padding:8px 13px;
   color:#333;
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-bottom:none;
   border-radius:3px 3px 0 0;
   margin-bottom:-1px;
@@ -397,7 +397,7 @@ ul.issues-label-pallet li {
 .issue-add-comment-header {
   padding:7px 10px 0 10px;
   background:#f7f7f7;
-  border-bottom:1px solid #d8d8d8;
+  border-bottom:1px solid #e6e9e6;
 }
 .issue-add-comment-bottom {
   overflow:hidden;
@@ -420,7 +420,7 @@ ul.issues-label-pallet li {
   text-align:right;
 }
 .issue-add-comment {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   margin-top:10px;
 }
@@ -505,7 +505,7 @@ ul.issues-label-pallet li {
 }
 
 .issue-title-panel {
-  border-bottom: 1px solid #d8d8d8;
+  border-bottom: 1px solid #e6e9e6;
   padding-bottom:15px;
   margin-bottom:15px;
 }
@@ -594,7 +594,7 @@ ul.issues-label-pallet li {
 }
 .pull-request-form-button {
   padding:10px;
-  border-top:1px solid #d8d8d8;
+  border-top:1px solid #e6e9e6;
 }
 .pulls-title a {
   color:black;
@@ -608,19 +608,19 @@ ul.issues-label-pallet li {
   margin-bottom:10px;
 }
 .pulls-header {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   background:#fafafa;
   padding:10px;
 }
 .pulls-body {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-top:none;
   background:#fafafa;
   background:white;
 }
 .pulls-body li {
   padding:10px;
-  border-top: 1px solid #d8d8d8;
+  border-top: 1px solid #e6e9e6;
 }
 .pulls-body li:first-child {
   border-top:none;
@@ -644,12 +644,12 @@ ul.issues-label-pallet li {
   margin-bottom:10px;
 }
 .compare-open-pull-request {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   width:80%;
 }
 .compare-open-pull-request-title {
-  border-bottom:1px solid #d8d8d8;
+  border-bottom:1px solid #e6e9e6;
   padding:10px;
 }
 .compare-open-pull-request-message {
@@ -668,7 +668,7 @@ ul.issues-label-pallet li {
 }
 
 .compare-nothing {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   background:#fafafa;
   padding:25px 0 30px 0;
@@ -679,7 +679,7 @@ ul.issues-label-pallet li {
 .text-gray { color:#767676 }
 
 input[type=text], input[type=password] {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   padding:6px 5px;
 }
@@ -705,7 +705,7 @@ input[type=text], input[type=password] {
   padding:5px 0 7px 2px;
   font-size:18px;
   color:#767676;
-  border-bottom:1px solid #d8d8d8;
+  border-bottom:1px solid #e6e9e6;
 }
 .repositories-user-mail {
   padding:5px 0;
@@ -728,7 +728,7 @@ input[type=text], input[type=password] {
 
 .project-tabs li.active {
   background:white;
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-top:3px #d26911 solid;
   border-bottom:white;
   border-radius:3px 3px 0 0;
@@ -751,7 +751,7 @@ input[type=text], input[type=password] {
   width:100%;
 }
 .admin-users th, .admin-users td {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   padding:5px;
 }
 .admin-users th {
@@ -845,7 +845,7 @@ input[type=text], input[type=password] {
 }
 
 .new-repository .last-child input[type=text] {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   padding:6px 5px;
   margin:5px 0;
@@ -861,7 +861,7 @@ input[type=text], input[type=password] {
 }
 
 .new-repository input[type=text] {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   padding:6px 5px;
   margin:5px 0;
@@ -2563,7 +2563,7 @@ button.close {
 }
 
 .repositories li {
-  border-top: 1px solid #d8d8d8;
+  border-top: 1px solid #e6e9e6;
   overflow:hidden;
   padding:10px 0;
 }
@@ -2621,7 +2621,7 @@ button.close {
 .git-url-container input[type=text] {
   width:550px;
   padding:5px 0 5px 5px;
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius:0 3px 3px 0;
 }
 
@@ -2646,7 +2646,7 @@ button.close {
 .readme-header {
   background-color: #f5f5f5;
   border-radius: 3px 3px 0 0;
-  border: 1px solid #d8d8d8;
+  border: 1px solid #e6e9e6;
   border-bottom: 0;
   padding: 9px 10px 10px;
   font-size: 14px;
@@ -2655,7 +2655,7 @@ button.close {
 }
 
 .readme-frame {
-  border: 1px solid #d8d8d8;
+  border: 1px solid #e6e9e6;
 }
 
 .commit-summary {
@@ -2739,7 +2739,7 @@ button.close {
 .file-header {
   padding: 5px 10px;
   background-color: #f7f7f7;
-  border: 1px solid #d8d8d8;
+  border: 1px solid #e6e9e6;
   border-bottom:none;
   border-top-left-radius: 2px;
   border-top-right-radius: 2px;
@@ -2956,7 +2956,7 @@ button.close {
 
 .blame-body-container {
   overflow-x:scroll;
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius:0 0 3px 3px;
 }
 
@@ -2977,7 +2977,7 @@ button.close {
   color:gray;
   font-size:12px;
   vertical-align:middle;
-  border-right:1px solid #d8d8d8;
+  border-right:1px solid #e6e9e6;
 }
 
 .blame-body-right {
@@ -3008,7 +3008,7 @@ button.close {
 }
 
 .user-form {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   padding:25px 0;
   width:300px;
@@ -3040,7 +3040,7 @@ button.close {
 }
 
 .search-top {
-  border-bottom:1px solid #d8d8d8;
+  border-bottom:1px solid #e6e9e6;
   margin-bottom:20px;
   padding-bottom:20px;
 }
@@ -3069,13 +3069,13 @@ button.close {
 }
 
 .search-result .left li {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-top:none;
   padding:7px 10px;
 }
 
 .search-result .left li:first-child {
-  border-top:1px solid #d8d8d8;
+  border-top:1px solid #e6e9e6;
 }
 
 .search-result .right {
@@ -3085,7 +3085,7 @@ button.close {
 }
 
 .search-result .right li {
-  border-bottom: 1px solid #d8d8d8;
+  border-bottom: 1px solid #e6e9e6;
   padding:5px 0px;
   margin-bottom:10px;
 }
@@ -3120,13 +3120,13 @@ button.close {
 }
 
 .project-settings .left li {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-top:none;
   padding:5px 10px;
 }
 
 .project-settings .left li:first-child {
-  border-top:1px solid #d8d8d8;
+  border-top:1px solid #e6e9e6;
 }
 
 .project-settings .right {
@@ -3139,20 +3139,20 @@ button.close {
 }
 
 .project-settings-main li {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-top:none;
   padding:10px 10px;
 }
 
 .project-settings-main li:first-child {
-  border-top:1px solid #d8d8d8;
+  border-top:1px solid #e6e9e6;
   background: #eee;
   border-radius:3px 3px 0 0;
   font-size:17px;
 }
 
 .project-settings-main input[type=text] {
-    border:1px solid #e6e6e6;
+    border:1px solid #e6e9e6;
     border-radius: 3px;
     padding:6px 5px;
     width:100%;
@@ -3164,7 +3164,7 @@ button.close {
 }
 
 .project-settings-main select {
-    border:1px solid #e6e6e6;
+    border:1px solid #e6e9e6;
     border-radius: 3px;
     padding:6px 5px;
     width:30%;
@@ -3172,13 +3172,13 @@ button.close {
 }
 
 .project-settings-danger li {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-top:none;
   padding:10px 10px;
 }
 
 .project-settings-danger li:first-child {
-  border-top:1px solid #d8d8d8;
+  border-top:1px solid #e6e9e6;
   background: #eee;
   border-radius:3px 3px 0 0;
   font-size:17px;
@@ -3186,7 +3186,7 @@ button.close {
 }
 
 #delete-confirm input {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   padding:6px 5px;
   margin:5px 0;
@@ -3196,13 +3196,13 @@ button.close {
 .collaboration > div:first-child {
   font-size:17px;
   padding:5px;
-  border-bottom:1px solid #d8d8d8;
+  border-bottom:1px solid #e6e9e6;
   font-weight:bold;
   margin-bottom:10px;
 }
 
 .collaboration input[type=text] {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   padding:6px 5px;
   margin:5px 0;
@@ -3226,13 +3226,13 @@ button.close {
 }
 
 .user-settings .left li {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-top:none;
   padding:5px 10px;
 }
 
 .user-settings .left li:first-child {
-  border-top:1px solid #d8d8d8;
+  border-top:1px solid #e6e9e6;
 }
 
 .user-settings .left li.active a {
@@ -3247,7 +3247,7 @@ button.close {
 }
 
 .user-settings-container > div {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   padding:10px 10px;
   font-size:120%;
   margin-bottom:20px;
@@ -3271,7 +3271,7 @@ button.close {
 }
 
 .ssh-key-add input[type=text] {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   padding:6px 5px;
   margin:5px 0;
@@ -3279,7 +3279,7 @@ button.close {
 }
 
 .ssh-key-add textarea {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   padding:6px 5px;
   margin:5px 0;
@@ -3350,13 +3350,13 @@ button.close {
   margin-bottom:15px;
 }
 .branches > li {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-top:none;
   padding:8px 8px;
 }
 .branches > li:first-child {
   border-radius: 3px 3px 0 0;
-  border-top:1px solid #d8d8d8;
+  border-top:1px solid #e6e9e6;
   background: #f5f5f5;
   text-shadow: 0 1px 0 #fff;
 }
@@ -3408,13 +3408,13 @@ button.close {
 }
 
 .branches-select li {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   float:left;
   border-left:none;
 }
 
 .branches-select li:first-child {
-  border-left:1px solid #d8d8d8;
+  border-left:1px solid #e6e9e6;
   border-radius:3px 0 0 3px;
 }
 
@@ -3489,12 +3489,12 @@ button.close {
 }
 
 .tags > li {
-  border-bottom:1px solid #d8d8d8;
+  border-bottom:1px solid #e6e9e6;
   padding:10px 0;
 }
 
 .tags > li:first-child {
-  border-top:1px solid #d8d8d8;
+  border-top:1px solid #e6e9e6;
 }
 
 .tags-item {
@@ -3649,7 +3649,7 @@ button.close {
   margin-bottom:30px;
 }
 .commit-diff > :first-child {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius:3px 3px 0 0;
   padding:7px;
   background-color: #f7f7f7;
@@ -3669,7 +3669,7 @@ button.close {
 }
 
 .commit-diff-body {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-top:none;
   border-radius: 0 0 3px 3px;
   margin-bottom:30px;
@@ -3691,7 +3691,7 @@ button.close {
   padding:12px 10px;
   margin-bottom:5px;
   position:relative;
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   background-color: #fafafa;
 }
@@ -3701,7 +3701,7 @@ button.close {
 }
 
 .compare-header {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   overflow:hidden;
   border-radius: 3px;
   padding:10px;
@@ -3776,7 +3776,7 @@ button.close {
 }
 
 .network-mybranch select, .network-member-branch select {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   padding:6px 5px;
   width:30%;
@@ -3787,7 +3787,7 @@ button.close {
 }
 
 .network-member-branch li {
-  border-bottom:1px solid #d8d8d8;
+  border-bottom:1px solid #e6e9e6;
   padding:10px 10px 14px 10px;
   overflow:hidden;
 }
@@ -3857,13 +3857,13 @@ button.close {
   width:45%;
 }
 .import-branch select {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   padding:6px 5px;
   width:30%;
 }
 .import-branch-from, .import-branch-to {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius:3px;
   padding:25px 15px;
 }
@@ -3890,14 +3890,14 @@ button.close {
   
 }
 .submodule > :first-child {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px 3px 0 0;
   padding:8px 5px;
   border-bottom:none;
   background-color: #f7f7f7;
 }
 .submodule > .last-child {
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-top:none;
   font-size:16px;
   padding:15px;
@@ -3917,7 +3917,7 @@ pre.command-line {
   background:white;
   text-align:center;
   font-size:20px;
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   padding:20px 0;
   color:#767676
@@ -3926,7 +3926,7 @@ pre.command-line {
 .not-yet-created {
   background:white;
   margin-bottom:30px;
-  border:1px solid #e6e6e6;
+  border:1px solid #e6e9e6;
   border-radius: 3px;
   color:#767676;
   padding:15px 10px;
