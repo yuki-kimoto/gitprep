@@ -678,14 +678,13 @@ input[type=text], input[type=password] {
   overflow:hidden;
 }
 .repositories-left {
-  padding-top:20px;
   padding-left:10px;
   padding-right:25px;
-  width:25%;
+  width:75%;
   float:left;
 }
 .repositories-right {
-  width:75%;
+  width:25%;
   float:left;
 }
 .repositories-user-name {

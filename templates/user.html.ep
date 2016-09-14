@@ -38,17 +38,6 @@
     
     <div class="repositories-container">
       <div class="repositories-left">
-        <div class="repositories-user-name">
-          % if (defined $user->{name} && length $user->{name}) {
-            <%= $user->{name} %>
-          % } else {
-            No Name
-          % }
-        </div>
-        <div class="repositories-user-id"><%= $user->{id} %></div>
-        <div class="repositories-user-mail"><i class="icon icon-envelope"></i> <a href="mailto:<%= $user->{email} %>"><%= $user->{email} %></a></div>
-      </div>
-      <div class="repositories-right">
         <div class="topic1">Repositories</div>
         
         <ul class="repositories">
@@ -80,6 +69,18 @@
             % }
           % }
         </ul>
+      </div>
+      <div class="repositories-right">
+        <h2 class="topic1">Profile</h2>
+        <div class="repositories-user-name">
+          % if (defined $user->{name} && length $user->{name}) {
+            <%= $user->{name} %>
+          % } else {
+            No Name
+          % }
+        </div>
+        <div class="repositories-user-id"><%= $user->{id} %></div>
+        <div class="repositories-user-mail"><i class="icon icon-envelope"></i> <a href="mailto:<%= $user->{email} %>"><%= $user->{email} %></a></div>
       </div>
     </div>
   </div>
