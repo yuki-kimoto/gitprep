@@ -2537,6 +2537,16 @@ button.close {
   border-top:1px solid #e5e5e5;
   padding:15px 0;
   margin-top:30px;
+  background:#5AAE08;
+  color:white;
+  font-size:16px;
+}
+.footer a {
+  color:white;
+  text-decoration:underline;
+}
+.footer a:hover {
+  color:white;
 }
 
 .repositories {

@@ -1,8 +1,8 @@
 <div class="footer">
   <div class="container">
     <div>
-      <div style="font-size:120%;"><a href="https://github.com/yuki-kimoto/gitprep">Gitprep</a> Version <%= $Gitprep::VERSION %></div>
-      <div>build on <a href="https://github.com/kraih/mojo">Mojolicious</a></div>
+      <a href="https://github.com/yuki-kimoto/gitprep">Gitprep</a> Version <%= $Gitprep::VERSION %>
+      build on <a href="https://github.com/kraih/mojo">Mojolicious</a>
     </div>
 
     % if (app->mode eq 'development') {
