@@ -43,7 +43,7 @@
           % }
           % my $url = url_with->to_abs;
           <div class="header-btn-container">
-            <a class="btn btn-small" href="<%= url_for("/_logout?from=$url") %>"><b>Sign out</b></a>
+            <a class="btn btn-small" href="<%= url_for("/_logout?from=$url") %>"><b>Logout</b></a>
           </div>
           <!-- Logined as <%= $session_user->{id} %> -->
           <div class="header-login-container">

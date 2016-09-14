@@ -134,8 +134,6 @@
             </a>
           </li>
         </ul>
-        <div class="commits-count-bottom">
-        </div>
       % }
 
       <div style="margin-bottom:5px;">
