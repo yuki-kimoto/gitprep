@@ -35,7 +35,7 @@
   my $close_count = $api->get_close_issue_count($user_id, $project_id);
   
   # Initialize labels if there are no labels
-  my $labels_count = app->dbi->model('label')->select('count(*)')->value;
+  my $labels_count = app->dbi->model('label')->select('count(*)', where => {'project.id' => $project_id})->value;
   if ($labels_count == 0) {
     my @labels = (
       {id => 'bug', color => '#fc2929'},
