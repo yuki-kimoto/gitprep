@@ -6,7 +6,6 @@
   my $user_id = param('user');
   my $project_id = param('project');
   my $op = param('op') || '';
-  my $display = 'all';
   my $page = param('page') || 1;
   
   # Git
@@ -57,17 +56,17 @@
   my $default_branch = $git->branch($self->app->rep_info($user_id, $project_id), $default_branch_name);
   
   # Branches
-  my $branch_types;
+  my $all_branches = [];
   my $branches = [];
 
   # Pagenation
   my $page_count = 20;
   my $skip = $page_count * ($page - 1);
   
-  my $branches = $git->branches($self->app->rep_info($user_id, $project_id));
+  my $all_branches = $git->branches($self->app->rep_info($user_id, $project_id));
   my $max = 0;
   my $all_count = 0;
-  for my $branch (@$branches) {
+  for my $branch (@$all_branches) {
     $branch->{status} = $git->branch_status(
       $self->app->rep_info($user_id, $project_id),
       $default_branch->{name},
@@ -285,7 +284,7 @@
                 % } else {
                   % my $newer_page = $page - 1;
                   <li>
-                    <a href="<%= url_for("/$user_id/$project_id/branches/$display?page=$newer_page") %>">Newer</a>
+                    <a href="<%= url_for("/$user_id/$project_id/branches?page=$newer_page") %>">Newer</a>
                   </li>
                 % }
                 % if ($branches_count < $page_count) {
@@ -293,18 +292,13 @@
                 % } else {
                   % my $older_page = $page + 1;
                   <li>
-                    <a href="<%= url_for("/$user_id/$project_id/branches/$display?page=$older_page") %>">Older</a>
+                    <a href="<%= url_for("/$user_id/$project_id/branches?page=$older_page") %>">Older</a>
                   </li>
                 % }
               </ul>
             </div>
           % } else {
             <li style="text-align:center;text-color:#767676">
-              <%
-                my $branch_type_name;
-                  $branch_type_name = '';
-              %>
-              
               There aren’t any branches.
             </li>
           % }

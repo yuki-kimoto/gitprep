@@ -467,7 +467,7 @@ sub startup {
             $r->get('/commits/*rev_file' => sub { shift->render_maybe('/commits') });
             
             # Branches
-            $r->any('/branches/:display' => {display => undef} => sub { shift->render_maybe('/branches') });
+            $r->any('/branches' => sub { shift->render_maybe('/branches') });
 
             # Tags
             $r->get('/tags' => sub { shift->render_maybe('/tags') });
