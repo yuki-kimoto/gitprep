@@ -896,7 +896,7 @@ body {
 .title {
   float:left;
   font-size:19px;
-  padding:14px 0 12px 0;
+  padding:13px 0 9px 0;
 }
 .title a {
   color:white;
@@ -908,7 +908,7 @@ body {
 .header-search {
   float:left;
   margin-left:10px;
-  padding:11px 0 8px 0;
+  padding:10px 0 7px 0;
 }
 
 .header-search input {
@@ -2517,6 +2517,7 @@ button.close {
   margin-bottom:12px;
   overflow:hidden;
   padding:14px 0 0 0;
+  border-top:#CCCCCC 1px solid;
 }
 
 .project-header-left {
@@ -2543,8 +2544,8 @@ button.close {
 
 .footer {
   text-align:center;
-  border-top:3px solid #479A05;
-  padding:15px 0;
+  border-top:2px solid #479A05;
+  padding:8px 0 10px 0;
   margin-top:30px;
   background:#5AAE08;
   color:white;
