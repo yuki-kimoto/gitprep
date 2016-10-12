@@ -2502,13 +2502,14 @@ button.close {
 
 
 .topic1 {
-  font-size:19px;
+  font-size:18px;
   font-weight:bold;
   margin:20px 0 15px 0;
   color:#358D23;
   padding:4px 6px;
-  background:#F2F2F2;
+  background:#F3F3ED;
   padding:10px 12px;
+  border: 1px solid #EBEEDC;
 }
 
 .project-header {

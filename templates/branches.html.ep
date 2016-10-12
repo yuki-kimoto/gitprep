@@ -56,7 +56,6 @@
   my $default_branch = $git->branch($self->app->rep_info($user_id, $project_id), $default_branch_name);
   
   # Branches
-  my $all_branches = [];
   my $branches = [];
 
   # Pagenation
