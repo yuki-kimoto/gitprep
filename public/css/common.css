@@ -3356,13 +3356,7 @@ button.close {
   padding:8px 8px;
 }
 .branches > li:first-child {
-  border-radius: 3px 3px 0 0;
   border-top:1px solid #e6e9e6;
-  background: #f5f5f5;
-  text-shadow: 0 1px 0 #fff;
-}
-.branches > li:last-child {
-  border-radius: 0 0 3px 3px;
 }
 .branches > li > ul {
   overflow:hidden;
