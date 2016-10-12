@@ -2507,8 +2507,9 @@ button.close {
   font-weight:bold;
   margin:20px 0 15px 0;
   color:#358D23;
-  border-left:5px solid #6FBA2C;
   padding:4px 6px;
+  background:#F2F2F2;
+  padding:10px 12px;
 }
 
 .project-header {
