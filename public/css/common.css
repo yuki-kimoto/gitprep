@@ -2663,8 +2663,8 @@ button.close {
   overflow:hidden;
   padding: 10px;
   line-height: 20px;
-  background-color: #e3f2ec;
-  border: 1px solid #c7d8d2;
+  background: #f4fcef;
+  border: 1px solid #d0ddc7;
   border-radius: 3px;
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
@@ -2706,7 +2706,7 @@ button.close {
 }
 
 .file-list li {
-  border: 1px solid #c7d8d2;
+  border: 1px solid #d0ddc7;
   border-top:none;
   padding:7px;
   overflow:hidden;
