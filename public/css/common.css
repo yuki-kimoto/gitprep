@@ -466,7 +466,7 @@ ul.issues-label-pallet li {
   margin-bottom:15px;
 }
 .issue-message-owner {
-  border:1px solid #bfccd1;
+  border:1px solid #e6e9e6;
 }
 
 .issue-message-owner-label {
@@ -496,8 +496,8 @@ ul.issues-label-pallet li {
   padding:7px 15px;
 }
 .issue-message-header-owner {
-  background:#f2f8fa;
-  border-bottom:1px solid #bfccd1;
+  background:#f4fcef;
+  border-bottom:1px solid #e6e9e6;
 }
 
 .issue-message-body {
@@ -2699,7 +2699,7 @@ button.close {
 .commit-contributor {
   padding: 5px 10px;
   background-color: #fff;
-  border: 1px solid #c1dce9;
+  border: 1px solid #d0ddc7;
   border-top:none;
   border-bottom-left-radius: 3px;
   border-bottom-right-radius: 3px;
@@ -3527,8 +3527,8 @@ button.close {
   overflow:hidden;
   padding: 10px;
   line-height: 20px;
-  background-color: #e6f1f6;
-  border: 1px solid #c1dce9;
+  background-color: #f4fcef;
+  border: 1px solid #d0ddc7;
   border-radius: 3px;
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
@@ -3538,7 +3538,7 @@ button.close {
 .commits-summary > .last-child {
   padding: 5px 10px;
   background-color: #fff;
-  border: 1px solid #c1dce9;
+  border: 1px solid #d0ddc7;
   border-top:none;
   border-bottom-left-radius: 3px;
   border-bottom-right-radius: 3px;
