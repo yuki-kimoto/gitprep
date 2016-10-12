@@ -896,7 +896,7 @@ body {
 .title {
   float:left;
   font-size:19px;
-  padding:13px 0 9px 0;
+  padding:10px 0 6px 0;
 }
 .title a {
   color:white;
@@ -908,7 +908,7 @@ body {
 .header-search {
   float:left;
   margin-left:10px;
-  padding:10px 0 7px 0;
+  padding:6px 0 5px 0;
 }
 
 .header-search input {
@@ -924,12 +924,11 @@ body {
 .header-btn-container {
   float:left;
   margin-right:4px;
-  padding-top:9px;
+  padding-top:4px;
 }
 
 .header-login-container {
   float:left;
-  padding-top:13px;
 }
 
 .header-login-container a {
