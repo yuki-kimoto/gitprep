@@ -50,7 +50,7 @@
 
 <<%= $tag %> title="<%= $diff_count_text %>" style="text-decoration:none;display:inline-block;overflow:none;" href="#<%= $fragment %>">
   % for (my $i = 0; $i < $add_block_count; $i++) {
-    <div style="display:inline-block;background:#6cc644;width:8px;height:9px;float:left;margin:1px"></div>
+    <div style="display:inline-block;background:#1b97f7;width:8px;height:9px;float:left;margin:1px"></div>
   % }
   % for (my $i = 0; $i < $delete_block_count; $i++) {
     <div style="display:inline-block;background:#bd2c00;width:8px;height:9px;float:left;margin:1px"></div>

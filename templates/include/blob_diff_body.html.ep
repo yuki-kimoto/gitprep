@@ -118,7 +118,7 @@
                   $border_color = '#e4e4ff';
                   $bk_color = '#f8f8ff';
                 } elsif ($value =~ /^\+/) {
-                  $bk_color_line = '#bdf9f8';
+                  $bk_color_line = '#c9fffe';
                   $border_color = '#9de8e6';
                   $bk_color = '#edfffe';
                 } elsif ($value =~ /^-/) {

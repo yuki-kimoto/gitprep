@@ -24,6 +24,25 @@
     color:#767676
 */
 
+ul {
+  padding: 0;
+  margin: 0;;
+}
+
+ul li {
+  list-style:none;
+}
+
+a {
+  color: #33ce90;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #004CCA;
+  text-decoration: underline;
+}
+
 * {
   margin:0;
   padding:0;
@@ -1280,25 +1299,6 @@ body {
 .markdown-body blockquote{
   padding:0 0 0 40px;
   border:0 none
-}
-
-ul {
-  padding: 0;
-  margin: 0;;
-}
-
-ul li {
-  list-style:none;
-}
-
-a {
-  color: #004CCA;
-  text-decoration: none;
-}
-
-a:hover {
-  color: #004CCA;
-  text-decoration: underline;
 }
 
 /* icon */
