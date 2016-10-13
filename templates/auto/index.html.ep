@@ -16,7 +16,7 @@
   <!-- Index page -->
   <div class="container">
     <div class="topic1">Users</div>
-    <ul class="nav nav-tabs nav-stacked">
+    <ul class="users">
       % for my $user (@$users) {
         % my $uid = $user->{id};
         <li>
