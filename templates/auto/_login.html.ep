@@ -111,7 +111,7 @@
       </div>
     % }
 
-    <div class="topic1" style="text-align:center">
+    <div class="topic1" style="text-align:center;width:300px;margin-left:auto;margin-right:auto;">
       Login
     </div>
     
@@ -131,7 +131,7 @@
         </div>
         <div>
           <div>
-            <button type="submit" class="btn btn-primary">Login</button>
+            <button type="submit" class="btn btn-success">Login</button>
           </div>
         </div>
       </div>
