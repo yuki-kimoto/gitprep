@@ -141,11 +141,11 @@
         <ul class="git-url-container">
           % if ($logined) {
             <li>
-              <button class="btn btn-small btn-info" id="btn_ssh">SSH</button>
+              <button class="btn btn-small btn-success" id="btn_ssh">SSH</button>
             </li>
           % }
           <li>
-            <button class="btn btn-small <%= !$logined ? 'btn-info' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
+            <button class="btn btn-small <%= !$logined ? 'btn-success' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
           </li>
           <li>
             <input id="rep_url" type="text">
