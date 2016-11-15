@@ -33,13 +33,13 @@ ul li {
   list-style:none;
 }
 
-a {
-  color: #67C4EE;
+a, a:visited {
+  color: #4168a3;
   text-decoration: none;
 }
 
 a:hover {
-  color: #33ce90;
+  color: inherit;
   text-decoration: underline;
 }
 
@@ -91,7 +91,7 @@ a:hover {
 .commits-count {
   margin:0;
   border: 1px solid #ddd;
-  border-top:3px solid #6FBA2C;
+  border-top:2px solid #758bad;
   margin-bottom:12px;
   box-shadow: 0 1px 6px #d9d9d9;
 }
@@ -2559,10 +2559,10 @@ button.close {
 
 .footer {
   text-align:center;
-  border-top:1px solid #e2eae1;
+  border-top:1px solid #d7dee8;
   padding:8px 0 10px 0;
   margin-top:30px;
-  background:#f7f9f7;
+  background:#f7f8f9;
   font-size:14px;
 }
 .footer a {

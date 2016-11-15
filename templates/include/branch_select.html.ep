@@ -145,7 +145,7 @@
             </li>
           % }
           <li>
-            <button class="btn btn-small <%= !$logined ? 'btn-success' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
+            <button class="btn btn-small <%= !$logined ? 'btn-info' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
           </li>
           <li>
             <input id="rep_url" type="text">
