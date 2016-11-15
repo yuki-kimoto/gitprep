@@ -34,7 +34,7 @@ ul li {
 }
 
 a {
-  color: #23be80;
+  color: #67C4EE;
   text-decoration: none;
 }
 
@@ -911,9 +911,8 @@ body {
 }
 
 .header {
-  background:#5AAE08;
+  background:#004763;
   overflow:hidden;
-  border-bottom:2px solid #479A05;
 }
 
 .header-left {
