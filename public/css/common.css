@@ -24,6 +24,13 @@
     color:#767676
 */
 
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 130%;
+  color: #02123d;
+}
+
 ul {
   padding: 0;
   margin: 0;;
@@ -901,13 +908,6 @@ input[type=text], input[type=password] {
   padding:6px 5px;
   margin:5px 0;
   width:350px;
-}
-
-body {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  line-height: 130%;
-  color: #333333;
 }
 
 .header {
