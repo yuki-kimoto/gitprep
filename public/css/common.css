@@ -2519,11 +2519,11 @@ button.close {
   font-size:18px;
   font-weight:bold;
   margin:20px 0 15px 0;
-  color:#358D23;
+  color:#395582;
   padding:4px 6px;
-  background:#F3F3ED;
+  background:#f7f7f7;
   padding:10px 12px;
-  border: 1px solid #EBEEDC;
+  border: 1px solid #eaecef;
 }
 
 .project-header {
