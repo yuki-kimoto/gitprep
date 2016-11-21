@@ -131,7 +131,7 @@
         </div>
         <div>
           <div>
-            <button type="submit" class="btn btn-success">Login</button>
+            <button type="submit" class="btn">Login</button>
           </div>
         </div>
       </div>

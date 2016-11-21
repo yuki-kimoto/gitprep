@@ -35,15 +35,15 @@
         % if ($api->logined) {
           % unless ($session_user->{id} eq 'admin') {
             <div class="header-btn-container">
-              <a class="btn btn-small" href="<%= url_for("/_new") %>"><b>Create a new repo</b></a>
+              <a class="btn" href="<%= url_for("/_new") %>">Create a new repo</a>
             </div>
             <div class="header-btn-container">
-              <a class="btn btn-small" href="<%= url_for("/$session_user->{id}/_settings") %>"><b>Account Settings</b></a>
+              <a class="btn" href="<%= url_for("/$session_user->{id}/_settings") %>">Account Settings</a>
             </div>
           % }
           % my $url = url_with->to_abs;
           <div class="header-btn-container">
-            <a class="btn btn-small" href="<%= url_for("/_logout?from=$url") %>"><b>Logout</b></a>
+            <a class="btn" href="<%= url_for("/_logout?from=$url") %>">Logout</a>
           </div>
           <!-- Logined as <%= $session_user->{id} %> -->
           <div class="header-login-container">
@@ -56,7 +56,7 @@
           </div>
         % } else {
           <div class="header-btn-container">
-            <a class="btn btn-info" href="<%= url_for('/_login') %>">Login</a>
+            <a class="btn" href="<%= url_for('/_login') %>">Login</a>
           </div>
         % }
       </div>
