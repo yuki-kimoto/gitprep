@@ -2476,7 +2476,7 @@ button.close {
 }
 
 .project-header {
-  background:#fafcfa;
+  background:#f7f9f9;
   border-bottom: none;
   margin-bottom:12px;
   overflow:hidden;
@@ -2504,6 +2504,7 @@ button.close {
 .project-header-btn-container {
   float:left;
   margin-right:4px;
+  
 }
 
 .header-btn-container .btn {
@@ -2517,7 +2518,7 @@ button.close {
   border-top:1px solid #d7dee8;
   padding:8px 0 10px 0;
   margin-top:30px;
-  background:#f7f8f9;
+  background:#f7f9f9;
   font-size:14px;
 }
 .footer a {
