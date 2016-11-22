@@ -152,7 +152,7 @@
         </div>
       </div>
     % }
-    <hr style="position:relative;background:#d8d8d8;height:1px;border:none">
+    <div style="position:relative;border-top:#d8d8d8 1px solid"></div>
   </div>
 % } else {
   <div style="min-height:1px;margin-bottom:10px"></div>
