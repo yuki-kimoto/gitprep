@@ -2506,6 +2506,12 @@ button.close {
   margin-right:4px;
 }
 
+.header-btn-container .btn {
+  font-size:13px;
+  padding:3px 5px 3px 5px;
+  margin-top:1px;
+}
+
 .footer {
   text-align:center;
   border-top:1px solid #d7dee8;
