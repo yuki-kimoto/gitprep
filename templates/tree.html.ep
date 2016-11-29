@@ -103,7 +103,7 @@
             % my $commits_url = "/$user_id/$project_id/commits/" . ((defined $rev && length $rev) ? $rev : $default_branch_name);
             <a href="<%= url_for($commits_url) %>">
               <span class="commits-count-number">
-                <i class="icon-repeat"></i>
+                <i class="icon-repeat" style="position:relative;top:-1px"></i>
                 <%= $commits_number %>
               </span>
               <span class="commits-count-type">
@@ -114,7 +114,7 @@
           <li>
             <a href="<%= url_for("/$user_id/$project_id/branches") %>">
               <span class="commits-count-number">
-                <i class="icon-indent-left"></i>
+                <i class="icon-indent-left" style="position:relative;top:-1px"></i>
                 <%= $branches_count %>
               </span>
               <span class="commits-count-type">
@@ -125,7 +125,7 @@
           <li>
             <a href="<%= url_for("/$user_id/$project_id/tags") %>">
               <span class="commits-count-number">
-                <i class="icon-tags"></i>
+                <i class="icon-tags" style="position:relative;top:-1px"></i>
                 <%= $tags_count %>
               </span>
               <span class="commits-count-type">
