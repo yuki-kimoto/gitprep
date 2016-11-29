@@ -129,8 +129,8 @@
 
 <div class="branch-select-container">
   <div class="branch-select-left-container <%= $display eq 'tree' || $display eq 'blob' ? 'branch-select-left-container-page-path' : '' %>">
-    <button id="rev-btn" class="btn btn-small">
-      <span><%= $title %>:</span> <b><%= $rev_short %></b> <i class="icon-arrow-down"></i>
+    <button id="rev-btn" class="btn" style="padding-top:6px">
+      <span><%= $title %>:</span> <b><%= $rev_short %></b> <i class="icon-arrow-down" style="position: relative;top:-1px;left:2px;"></i>
     </button>
     % if ($display eq 'tree' || $display eq 'blob') {
         %= include '/include/page_path', Path => $path;
@@ -141,21 +141,21 @@
         <ul class="git-url-container">
           % if ($logined) {
             <li>
-              <button class="btn btn-small btn-success" id="btn_ssh">SSH</button>
+              <button class="btn btn-primary" id="btn_ssh">SSH</button>
             </li>
           % }
           <li>
-            <button class="btn btn-small <%= !$logined ? 'btn-info' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
+            <button class="btn <%= !$logined ? 'btn-info' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
           </li>
           <li>
             <input id="rep_url" type="text">
           </li>
           <li>
             <div class="donwload-zip">
-              <a title="Download ZIP" class="btn btn-small" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
+              <a title="Download ZIP" class="btn" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
                 ZIP
               </a>
-              <a title="Download tar.gz" class="btn btn-small" href="<%= url_for("/$user/$project/archive/$rev.tar.gz") %>">
+              <a title="Download tar.gz" class="btn" href="<%= url_for("/$user/$project/archive/$rev.tar.gz") %>">
                 tar.gz
               </a>
             </div>

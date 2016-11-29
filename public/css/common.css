@@ -1925,8 +1925,8 @@ button.close {
 
 .btn, .btn:visited {
   display: inline-block;
-  padding: 4px 12px;
-  font-size: 15px;
+  padding: 4px 12px 3px 12px;
+  font-size: 11px;
   color:#395582;
   text-align: center;
   cursor: pointer;
@@ -1934,6 +1934,7 @@ button.close {
   border-radius: 4px;
   background: -moz-linear-gradient(top,#FFF 0%,#EEE);
   background: -webkit-gradient(linear, left top, left bottom, from(#FFF), to(#EEE));
+  height:26px;
 }
 
 .btn:hover,
@@ -1949,40 +1950,6 @@ button.close {
 .btn.disabled,
 .btn[disabled] {
   cursor: default;
-}
-
-
-.btn-large {
-  padding: 11px 19px;
-  font-size: 17.5px;
-  border-radius: 6px;
-}
-
-.btn-large [class^="icon-"],
-.btn-large [class*=" icon-"] {
-  margin-top: 4px;
-}
-
-.btn-small {
-  padding: 2px 10px;
-  font-size: 11.9px;
-  border-radius: 3px;
-}
-
-.btn-small [class^="icon-"],
-.btn-small [class*=" icon-"] {
-  margin-top: 0;
-}
-
-.btn-mini [class^="icon-"],
-.btn-mini [class*=" icon-"] {
-  margin-top: -1px;
-}
-
-.btn-mini {
-  padding: 0 6px;
-  font-size: 10.5px;
-  border-radius: 3px;
 }
 
 .btn-primary {
