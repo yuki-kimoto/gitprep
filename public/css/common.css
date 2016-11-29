@@ -2634,8 +2634,8 @@ button.close {
   overflow:hidden;
   padding: 10px;
   line-height: 20px;
-  background: #f4fcef;
-  border: 1px solid #bcc8db;
+  background: #f7fafc;
+  border: 1px solid #d0dbe2;
   border-radius: 3px;
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
@@ -2669,7 +2669,7 @@ button.close {
 .commit-contributor {
   padding: 5px 10px;
   background-color: #fff;
-  border: 1px solid #bcc8db;
+  border: 1px solid #d0dbe2;
   border-top:none;
   border-bottom-left-radius: 3px;
   border-bottom-right-radius: 3px;
@@ -2677,7 +2677,7 @@ button.close {
 }
 
 .file-list li {
-  border: 1px solid #bcc8db;
+  border: 1px solid #d0dbe2;
   border-top:none;
   padding:7px;
   overflow:hidden;
@@ -3498,7 +3498,7 @@ button.close {
   padding: 10px;
   line-height: 20px;
   background-color: #f4fcef;
-  border: 1px solid #bcc8db;
+  border: 1px solid #d0dbe2;
   border-radius: 3px;
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
@@ -3508,7 +3508,7 @@ button.close {
 .commits-summary > .last-child {
   padding: 5px 10px;
   background-color: #fff;
-  border: 1px solid #bcc8db;
+  border: 1px solid #d0dbe2;
   border-top:none;
   border-bottom-left-radius: 3px;
   border-bottom-right-radius: 3px;
