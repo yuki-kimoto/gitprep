@@ -538,7 +538,7 @@ ul.issues-label-pallet li {
   padding:7px 15px;
 }
 .issue-message-header-owner {
-  background:#f4fcef;
+  background:#f7fafc;
   border-bottom:1px solid #e6e9e6;
 }
 
@@ -1950,6 +1950,12 @@ button.close {
 .btn.disabled,
 .btn[disabled] {
   cursor: default;
+}
+
+.btn-fork {
+  font-size:13px;
+  padding:5px 20px;
+  height:28px;
 }
 
 .btn-primary {
@@ -3464,7 +3470,7 @@ button.close {
   overflow:hidden;
   padding: 10px;
   line-height: 20px;
-  background-color: #f4fcef;
+  background-color: #f7fafc;
   border: 1px solid #d0dbe2;
   border-radius: 3px;
   border-bottom-right-radius: 0;

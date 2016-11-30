@@ -98,9 +98,9 @@
           % if (defined $project_id) {
             <div class="project-header-btn-container">
               % if ($logined && $session_user->{id} ne $user_id ) {
-                <a href="<%= url_for("/$user_id/$project_id/fork") %>" class="btn">Fork</a>
+                <a href="<%= url_for("/$user_id/$project_id/fork") %>" class="btn btn-fork">Fork</a>
               % } else {
-                <button class="btn disabled" disabled>Fork</button>
+                <button class="btn btn-fork disabled" disabled>Fork</button>
               % }
             </div>
           % }
