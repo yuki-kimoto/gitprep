@@ -61,7 +61,7 @@
               </div>
               <div class="issue-add-comment-button">
                 <button class="issue-message-update-cancel btn" onclick="javascript:return false;" >Cancel</button>
-                <button class="issue-message-update-btn btn btn-success" onclick="javascript:return false">Update comment</button>
+                <button class="issue-message-update-btn btn btn-green" onclick="javascript:return false">Update comment</button>
               </div>
             </div>
           </div>

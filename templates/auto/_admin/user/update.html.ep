@@ -134,7 +134,7 @@
         </div>
         <div>
           <div>
-            <button type="submit" class="btn btn-success" style="margin-top:20px">Update User</button>
+            <button type="submit" class="btn btn-green" style="margin-top:20px">Update User</button>
           </div>
         </div>
       </div>

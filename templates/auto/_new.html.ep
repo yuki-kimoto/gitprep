@@ -166,7 +166,7 @@
         </div>
       </div>
       
-      <input type="submit" class="btn btn-success" value="Create repository">
+      <input type="submit" class="btn btn-green" value="Create repository">
     </form>
   </div>
   %= include '/include/footer';

@@ -133,7 +133,7 @@
             Styling with Markdown is supported
           </div>
           <div class="issue-add-comment-button">
-            <input type="submit" value="Submit new issue" class="btn btn-success">
+            <input type="submit" value="Submit new issue" class="btn btn-green">
           </div>
         </div>
       </div>

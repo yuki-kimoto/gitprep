@@ -2007,7 +2007,7 @@ button.close {
   background-color: #2f96b4;
 }
 
-.btn-success {
+.btn-green {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #5bb75b;
@@ -2019,18 +2019,18 @@ button.close {
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
 }
 
-.btn-success:hover,
-.btn-success:focus,
-.btn-success:active,
-.btn-success.active,
-.btn-success.disabled,
-.btn-success[disabled] {
+.btn-green:hover,
+.btn-green:focus,
+.btn-green:active,
+.btn-green.active,
+.btn-green.disabled,
+.btn-green[disabled] {
   color: #ffffff;
   background-color: #51a351;
 }
 
-.btn-success:active,
-.btn-success.active {
+.btn-green:active,
+.btn-green.active {
   background-color: #408140;
 }
 

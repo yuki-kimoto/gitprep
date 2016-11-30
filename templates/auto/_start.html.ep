@@ -94,7 +94,7 @@
           </div>
         </div>
         <div>
-          <button type="submit" class="btn btn-success" style="margin-top:20px">Create Admin User</button>
+          <button type="submit" class="btn btn-green" style="margin-top:20px">Create Admin User</button>
         </div>
       </div>
     </form>

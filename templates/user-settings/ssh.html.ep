@@ -228,7 +228,7 @@
               <div>
                 <%= text_area 'key' %>
               </div>
-              <input type="submit" class="btn btn-success" value="Add key">
+              <input type="submit" class="btn btn-green" value="Add key">
             </form>
           </div>
         </div>
