@@ -152,7 +152,7 @@
             <form action="<%= url_for->query(op => 'add') %>" method="post">
               <div>
                 <%= text_field 'collaborator' %>
-                <input type="submit" value="Add"" >
+                <input type="submit" value="Add" class="btn" >
               </div>
             </form>
           </div>

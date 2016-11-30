@@ -70,7 +70,7 @@
       </div>
       <div class="issues-button-container-right">
         % if ($api->logined) {
-          <a href="<%= url_for("/$user_id/$project_id/issues/new") %>" class="btn btn-green">New issue</a>
+          <a href="<%= url_for("/$user_id/$project_id/issues/new") %>" class="btn btn-green btn-new">New issue</a>
         % }
       </div>
     </div>

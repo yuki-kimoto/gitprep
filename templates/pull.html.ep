@@ -469,7 +469,7 @@
             <div class="pull-request-form-button">
               <form action="<%= url_for %>" method="post">
                 <%= hidden_field op => 'merge' %>
-                <%= submit_button 'Merge pull request', class => "btn btn-green" %>
+                <%= submit_button 'Merge pull request', class => "btn btn-green btn-new" %>
                 <span style="margin-left:5px">
                   You can also view <a href="javascript:void(0)" onclick="$('#command-line-instructions').toggle()" >command line instructions</a>.
                 </span>
@@ -564,7 +564,7 @@ git push origin <%= $base_branch %>
                   % } else {
                     <input type="submit" value="Reopen pull request" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
                   % }
-                  <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-green">
+                  <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-green btn-new">
                 </div>
               </div>
             </div>

@@ -101,9 +101,6 @@
       <div class="new-title">
         Create a new repository
       </div>
-      <div class="new-description">
-        A repository contains all the files for your project, including the revision history.
-      </div>
     </div>
     <form action="<%= url_for->query(op => 'create') %>" method="post">
       <div class="new-repository">
@@ -143,30 +140,21 @@
           <div>
             <%= radio_button private => 0, checked => undef %><span>Public</span>
           </div>
-          <div class="last-child">
-            Anyone can see this repository. You choose who can commit.
-          </div>
         </li>
         <li>
           <div>
             <%= radio_button private => 1 %><span>Private</span>
-          </div>
-          <div class="last-child">
-            You choose who can see and commit to this repository.
           </div>
         </li>
       </ul>
       
       <div class="new-readme">
         <div>
-          <%= check_box readme => 1 %><span>Initialize this this repository with a README<span>
-        </div>
-        <div class="last-child">
-          This will let you immediately clone the repository to your computer. Skip this step if you’re importing an existing repository.
+          <%= check_box readme => 1 %><span>Initialize this repository with a README<span>
         </div>
       </div>
       
-      <input type="submit" class="btn btn-green" value="Create repository">
+      <input type="submit" class="btn btn-green btn-new" value="Create repository">
     </form>
   </div>
   %= include '/include/footer';

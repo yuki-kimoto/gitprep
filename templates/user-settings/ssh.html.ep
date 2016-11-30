@@ -195,7 +195,7 @@
                 <form action="<%= url_for->query(op => 'delete') %>" method="post">
                   <div>
                     <b><%= $key->{title} %></b>
-                    <a class="btn btn-small btn-danger" href="javascript:void(0)" onclick="$(this).closest('form').submit()">Delete</a>
+                    <a class="btn btn-danger btn-delete" href="javascript:void(0)" onclick="$(this).closest('form').submit()">Delete</a>
                     <%= hidden_field 'row-id' => $key->{row_id} %>
                   </div>
                 </form>
@@ -228,7 +228,7 @@
               <div>
                 <%= text_area 'key' %>
               </div>
-              <input type="submit" class="btn btn-green" value="Add key">
+              <input type="submit" class="btn btn-green btn-new" value="Add key">
             </form>
           </div>
         </div>

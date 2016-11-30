@@ -240,7 +240,7 @@ a:hover {
 .labels-tag {
   border-radius:5px;
   display:inline-block;
-  padding:7px 12px;
+  padding:5px 10px;
   font-weight:bold;
   border:1px solid #dddddd;
 }
@@ -1952,10 +1952,15 @@ button.close {
   cursor: default;
 }
 
-.btn-fork {
+.btn-fork, .btn-new {
   font-size:13px;
   padding:5px 20px;
   height:28px;
+}
+
+.btn-delete {
+  padding:1px 10px;
+  height:20px;
 }
 
 .btn-primary {
