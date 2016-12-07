@@ -35,7 +35,10 @@
   my $close_count = $api->get_close_issue_count($user_id, $project_id);
   
   # Initialize labels if there are no labels
-  my $labels_count = app->dbi->model('label')->select('count(*)')->value;
+  my $labels_count = app->dbi->model('label')->select(
+    'count(*)',
+    where => {project => $project_row_id}
+  )->value;
   if ($labels_count == 0) {
     my @labels = (
       {id => 'bug', color => '#fc2929'},
@@ -67,7 +70,7 @@
       </div>
       <div class="issues-button-container-right">
         % if ($api->logined) {
-          <a href="<%= url_for("/$user_id/$project_id/issues/new") %>" class="btn btn-success">New issue</a>
+          <a href="<%= url_for("/$user_id/$project_id/issues/new") %>" class="btn btn-green btn-new">New issue</a>
         % }
       </div>
     </div>

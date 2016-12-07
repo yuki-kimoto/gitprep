@@ -25,6 +25,8 @@
       my $readme = join "\n", @$lines;
       $readme =~ s#^(\[.*\]:)(?!\s*https?://)\s*(\S*)#{"$1 " . url_for("/$user/$project/raw/$rev/$2")}#mge;
       $readme =~ s#^(!\[.*\]\()(?!https?://)(\S*)#{$1 . url_for("/$user/$project/raw/$rev/$2")}#mge;
+      $readme =~ s#src="(?!https?://)(\S*)"#{'src="' . url_for("/$user/$project/raw/$rev/$1") . '"'}#mge;
+      
       $readme_e = $api->markdown($readme);
     }
   }

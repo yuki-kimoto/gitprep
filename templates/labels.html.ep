@@ -193,7 +193,7 @@
   %= include '/include/errors', errors => $errors;
   % if ($can_write_access) {
     <div class="labels-new-panel">
-      <div class="labels-new-btn btn btn-success">
+      <div class="labels-new-btn btn btn-green btn-new">
         New label
       </div>
     </div>
@@ -213,7 +213,7 @@
       <div class="labels-create-cancel-btn btn">
         Cancel
       </div>
-      <input type="submit" value="Create label" class="labels-create-create-btn btn btn-success">
+      <input type="submit" value="Create label" class="labels-create-create-btn btn btn-green">
     </div>
   </form>
   <ul class="labels">
@@ -251,7 +251,7 @@
             <div class="labels-edit-cancel-btn btn">
               Cancel
             </div>
-            <div class="labels-edit-save-btn btn btn-success">
+            <div class="labels-edit-save-btn btn btn-green">
               Save changes
             </div>
           </div>

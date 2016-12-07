@@ -120,7 +120,7 @@
                 } elsif ($value =~ /^\+/) {
                   $bk_color_line = '#ceffce';
                   $border_color = '#b4e2b4';
-                  $bk_color = '#dfd';
+                  $bk_color = '#ddffdd';
                 } elsif ($value =~ /^-/) {
                   $bk_color_line = '#f7c8c8';
                   $border_color = '#e9aeae';
