@@ -12,11 +12,9 @@
   %= include '/include/header';
   
   <div class="container">
-    Welcome to the gitprep wiki!
-
-    Wikis provide a place in your repository to lay out the roadmap of your project, show the current status, and document software better, together.
-
-    Create the first page
+    <form action="<%= url_for %>">
+      <%= submit_button 'Create Wiki', class => 'btn btn-green btn-new' %>
+    </form>
   </div>
   
   %= include '/include/footer';
