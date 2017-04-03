@@ -24,6 +24,10 @@ data/*
 data/rep/*
 !data/work/
 data/work/*
+!data/wiki_rep/
+data/wiki_rep/*
+!data/wiki_work/
+data/wiki_work/*
 setup/latest-build
 setup/work/*
 setup/build.log
