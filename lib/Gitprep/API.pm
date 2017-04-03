@@ -228,7 +228,7 @@ sub get_project_row_id {
   my ($self, $user_id, $project_id) = @_;
   
   my $user_row_id = $self->app->dbi->model('user')->select('row_id', where => {id => $user_id})->value;
-  my $project_row_id = $self->app->dbi->model('project')->model('project')->select(
+  my $project_row_id = $self->app->dbi->model('project')->select(
     'row_id',
     where => {user => $user_row_id, id => $project_id}
   )->value;

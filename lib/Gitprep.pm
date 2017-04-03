@@ -255,7 +255,6 @@ sub startup {
     }
   ];
   $dbi->create_model($_) for @$models;
-  $dbi->setup_model;
 
   # Validator
   my $vc = Validator::Custom->new;
