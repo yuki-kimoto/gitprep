@@ -1,0 +1,18 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
+  my $user_id = param('user');
+  my $project_id = param('project');
+  
+  layout 'common', title => "Create new wiki page - $user_id/$project_id";
+%>
+  
+  %= include '/include/header';
+
+  <div class="container">
+    <h1 class="topic1">Create new wiki</h1>
+  </div>
+  
+  %= include '/include/footer';

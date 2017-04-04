@@ -346,7 +346,7 @@ sub startup {
           # SSH keys
           $r->any('/_settings/ssh' => sub { shift->render_maybe('/user-settings/ssh') });
         }
-
+        
         # Smart HTTP
         {
           my $r = $r->route('/(#project).git');
@@ -459,8 +459,11 @@ sub startup {
             $r->get('/pull/(:number).patch' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls', patch => 1);
             $r->any('/pull/:number' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls');
 
-            # Issue
+            # Wiki
             $r->get('/wiki' => sub { shift->render_maybe('/wiki') })->to(tab => 'wiki');
+            
+            # Wiki - Create new page
+            $r->any('/wiki/_new' => sub { shift->render_maybe('/wiki/_new') })->to(tab => 'wiki');
             
             # Commit
             $r->get('/commit/*diff' => sub { shift->render_maybe('/commit') });
