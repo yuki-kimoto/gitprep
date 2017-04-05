@@ -61,6 +61,19 @@ a:hover {
   box-sizing: border-box;
 }
 
+.wiki-new-form-title input {
+  width:680px;
+}
+
+.wiki-new-form-content textarea {
+  width:680px;
+  min-height:300px;
+}
+
+.wiki-new-form-commit-message input {
+  width:680px;
+  margin-bottom:10px;
+}
 .users {
   margin-bottom:30px;
 }

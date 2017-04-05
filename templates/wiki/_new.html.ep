@@ -12,21 +12,29 @@
   %= include '/include/header';
 
   <div class="container">
-    <h1 class="topic1">Create new wiki</h1>
-    <form action="<%= url_for %>" method="POST">
-      <div>
-        %= text_field 'title';
-      </div>
-      <div>
-        %= text_area 'content';
-      </div>
-      <div>
-        %= text_field 'commit-message';
-      </div>
-      <div>
-        <%= submit_button 'Create wiki', class => 'btn btn-green btn-new' %>
-      </div>
-    </form>
+    <h1 class="topic1">Create new page</h1>
+    <div class="wiki-new-form">
+      <form action="<%= url_for %>" method="POST">
+        <div>
+          <b>Page title</b>
+        </div>
+        <div class="wiki-new-form-title">
+          %= text_field 'title' => 'Home';
+        </div>
+        <div class="wiki-new-form-content">
+          %= text_area 'content';
+        </div>
+        <div class="wiki-new-form-commit-message-description">
+          <b>Edit message</b>
+        </div>
+        <div class="wiki-new-form-commit-message">
+          %= text_field 'commit-message';
+        </div>
+        <div class="wiki-new-form-create-page-btn">
+          <%= submit_button 'Create page', class => 'btn btn-green btn-new' %>
+        </div>
+      </form>
+    </div>
   </div>
   
   %= include '/include/footer';
