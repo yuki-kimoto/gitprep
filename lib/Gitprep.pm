@@ -61,6 +61,22 @@ sub work_rep_home {
   return $work_rep_home;
 }
 
+sub wiki_rep_home {
+  my $self = shift;
+  
+  my $wiki_rep_home = $self->data_dir . "/wiki/rep";
+  
+  return $wiki_rep_home;
+}
+
+sub wiki_work_home {
+  my $self = shift;
+  
+  my $wiki_work_home = $self->data_dir . "/wiki/work";
+  
+  return $wiki_work_home;
+}
+
 sub work_rep_info {
   my ($self, $user_id, $project_id) = @_;
   

@@ -6,6 +6,10 @@
   my $user_id = param('user');
   my $project_id = param('project');
   
+  if ($self->req->method eq 'POST') {
+    
+  }
+  
   layout 'common', title => "Create new wiki page - $user_id/$project_id";
 %>
   
