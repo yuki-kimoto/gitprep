@@ -61,22 +61,6 @@ sub work_rep_home {
   return $work_rep_home;
 }
 
-sub wiki_rep_home {
-  my $self = shift;
-  
-  my $wiki_rep_home = $self->data_dir . "/wiki/rep";
-  
-  return $wiki_rep_home;
-}
-
-sub wiki_work_home {
-  my $self = shift;
-  
-  my $wiki_work_home = $self->data_dir . "/wiki/work";
-  
-  return $wiki_work_home;
-}
-
 sub work_rep_info {
   my ($self, $user_id, $project_id) = @_;
   
@@ -85,6 +69,45 @@ sub work_rep_info {
   $info->{project} = $project_id;
   $info->{git_dir} = $self->work_rep_home . "/$user_id/$project_id/.git";
   $info->{work_tree} = $self->work_rep_home . "/$user_id/$project_id";
+  
+  return $info;
+}
+
+sub wiki_rep_home {
+  my $self = shift;
+  
+  my $wiki_rep_home = $self->data_dir . "/wiki/rep";
+  
+  return $wiki_rep_home;
+}
+
+sub wiki_work_rep_home {
+  my $self = shift;
+  
+  my $wiki_work_home = $self->data_dir . "/wiki/work";
+  
+  return $wiki_work_home;
+}
+
+sub wiki_rep_info {
+  my ($self, $user_id, $project_id) = @_;
+  
+  my $info = {};
+  $info->{user} = $user_id;
+  $info->{project} = $project_id;
+  $info->{git_dir} = $self->wiki_rep_home . "/$user_id/$project_id.git";
+  
+  return $info;
+}
+
+sub wiki_work_rep_info {
+  my ($self, $user_id, $project_id) = @_;
+  
+  my $info = {};
+  $info->{user} = $user_id;
+  $info->{project} = $project_id;
+  $info->{git_dir} = $self->wiki_work_rep_home . "/$user_id/$project_id/.git";
+  $info->{work_tree} = $self->wiki_work_rep_home . "/$user_id/$project_id";
   
   return $info;
 }
