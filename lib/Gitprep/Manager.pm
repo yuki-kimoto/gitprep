@@ -855,6 +855,48 @@ sub create_wiki_rep {
   }
 }
 
+sub create_wiki_work_rep {
+  my ($self, $user, $project) = @_;
+  
+  # Remote repository
+  my $wiki_rep_info = $self->app->wiki_rep_info($user, $project);
+  my $wiki_rep_git_dir = $wiki_rep_info->{git_dir};
+  
+  # Working repository
+  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user, $project);
+  my $work_tree = $wiki_work_rep_info->{work_tree};
+  
+  # Create working repository if it don't exist
+  unless (-e $work_tree) {
+
+    # git clone
+    my @git_clone_cmd = ($self->app->git->bin, 'clone', $wiki_rep_git_dir, $work_tree);
+    Gitprep::Util::run_command(@git_clone_cmd)
+      or croak "Can't git clone: @git_clone_cmd";
+    
+    # Set user name
+    my @git_config_user_name = $self->app->git->cmd(
+      $wiki_work_rep_info,
+      'config',
+      'user.name',
+      $user
+    );
+    Gitprep::Util::run_command(@git_config_user_name)
+      or croak "Can't execute git config: @git_config_user_name";
+    
+    # Set user email
+    my $user_email = $self->app->dbi->model('user')->select('email', where => {id => $user})->value;
+    my @git_config_user_email = $self->app->git->cmd(
+      $wiki_work_rep_info,
+      'config',
+      'user.email',
+      "$user_email"
+    );
+    Gitprep::Util::run_command(@git_config_user_email)
+      or croak "Can't execute git config: @git_config_user_email";
+  }
+}
+
 sub _create_db_user {
   my ($self, $user_id, $data) = @_;
   
