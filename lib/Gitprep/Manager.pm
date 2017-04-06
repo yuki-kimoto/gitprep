@@ -811,6 +811,50 @@ sub _create_rep {
   }
 }
 
+sub create_wiki_rep {
+  my ($self, $user, $project, $opts) = @_;
+  
+  # Create repository directory
+  my $git = $self->app->git;
+  
+  my $wiki_rep_info = $self->app->wiki_rep_info($user, $project);
+  my $wiki_rep_git_dir = $wiki_rep_info->{git_dir};
+  
+  mkdir $wiki_rep_git_dir
+    or croak "Can't create directory $wiki_rep_git_dir: $!";
+  
+  eval {
+    # Git init
+    {
+      my @git_init_cmd = $git->cmd($wiki_rep_info, 'init', '--bare');
+      Gitprep::Util::run_command(@git_init_cmd)
+        or croak  "Can't execute git init --bare:@git_init_cmd";
+    }
+    
+    # Add git-daemon-export-ok
+    {
+      my $file = "$wiki_rep_git_dir/git-daemon-export-ok";
+      open my $fh, '>', $file
+        or croak "Can't create git-daemon-export-ok: $!"
+    }
+    
+    # HTTP support
+    my @git_update_server_info_cmd = $git->cmd(
+      $wiki_rep_info,
+      '--bare',
+      'update-server-info'
+    );
+    Gitprep::Util::run_command(@git_update_server_info_cmd)
+      or croak "Can't execute git --bare update-server-info";
+    move("$wiki_rep_git_dir/hooks/post-update.sample", "$wiki_rep_git_dir/hooks/post-update")
+      or croak "Can't move post-update";
+  };
+  if (my $e = $@) {
+    rmtree $wiki_rep_git_dir;
+    croak $e;
+  }
+}
+
 sub _create_db_user {
   my ($self, $user_id, $data) = @_;
   
