@@ -298,4 +298,36 @@ EOS
     my $error = "Can't create issue_label table properly: $@";
     die $error;
   }
+
+  # Create wiki table
+  eval {
+    my $sql = <<"EOS";
+create table wiki (
+  row_id integer primary key autoincrement,
+  project integer not null default 0,
+  unique(project)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Create Project columns
+  my $wiki_columns = [
+    "home not null default ''",
+  ];
+  for my $column (@$wiki_columns) {
+    eval { $dbi->execute("alter table wiki add column $column") };
+  }
+
+  # Check wiki table
+  eval {
+    $dbi->select(
+      [qw(home)],
+      table => 'wiki'
+    );
+  };
+  if ($@) {
+    my $error = "Can't create wiki table properly: $@";
+    die $error;
+  }
 }
