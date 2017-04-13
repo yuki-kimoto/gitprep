@@ -926,6 +926,7 @@ input[type=text], input[type=password] {
 .header {
   background:#004763;
   overflow:hidden;
+  padding:3px 0;
 }
 
 .header-left {
