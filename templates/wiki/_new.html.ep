@@ -6,8 +6,32 @@
   my $user_id = param('user');
   my $project_id = param('project');
   
+  my $errors;
   if ($self->req->method eq 'POST') {
+    my $title = param('title');
+    my $content = param('content');
+    my $commit_message = param('commit-message');
     
+    # Validation
+    my $vc = app->vc;
+    my $validation = $vc->validation;
+    
+    # Title
+    if (!length $title) {
+      $validation->add_failed(title => 'Page title is empty.');
+    }
+    
+    # Commit message
+    if (!length $commit_message) {
+      $validation->add_failed('commit-message' => 'Edit message is empty.');
+    }
+    
+    if ($validation->is_valid) {
+      
+    }
+    else {
+      $errors = $validation->messages;
+    }
   }
   
   layout 'common', title => "Create new wiki page - $user_id/$project_id";
@@ -16,6 +40,10 @@
   %= include '/include/header';
 
   <div class="container">
+    <div>
+      <%= include '/include/errors', errors => $errors %>
+      <%= include '/include/message', message => flash('message') %>
+    </div>
     <h1 class="topic1">Create new page</h1>
     <div class="wiki-new-form">
       <form action="<%= url_for %>" method="POST">
