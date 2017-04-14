@@ -291,6 +291,9 @@ sub startup {
       join => [
         'left join label on issue_label.label = label.row_id'
       ]
+    },
+    {
+      table => 'wiki'
     }
   ];
   $dbi->create_model($_) for @$models;

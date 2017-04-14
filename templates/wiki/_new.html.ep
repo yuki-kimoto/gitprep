@@ -27,7 +27,7 @@
     }
     
     if ($validation->is_valid) {
-      
+      $api->create_wiki_page($user_id, $project_id, $title, $content, $commit_message);
     }
     else {
       $errors = $validation->messages;

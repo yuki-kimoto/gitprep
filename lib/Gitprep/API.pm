@@ -6,6 +6,30 @@ use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOW
 
 has 'cntl';
 
+sub create_wiki_page {
+  my ($self, $user_id, $project_id, $title, $content, $commit_message) = @_;
+  
+  # Project row id
+  my $project_row_id = $self->get_project_row_id($user_id, $project_id);
+  
+  # Get wiki
+  my $wiki = $self->app->dbi->model('wiki')->select(where => {project => $project_row_id})->one;
+  
+  # First wiki page
+  unless ($wiki) {
+    # Create wiki
+    my $new_wiki = {
+      project => $project_row_id,
+      home => $title
+    };
+    $self->app->dbi->model('wiki')->insert($new_wiki);
+  }
+  
+  
+  die "aaaa";
+  
+}
+
 sub get_pull_request_count {
   my ($self, $user_id, $project_id, $opt) = @_;
   
