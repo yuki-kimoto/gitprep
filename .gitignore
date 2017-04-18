@@ -24,12 +24,6 @@ data/*
 data/rep/*
 !data/work/
 data/work/*
-!data/wiki/
-data/wiki/*
-!data/wiki/rep/
-data/wiki/rep/*
-!data/wiki/work/
-data/wiki/work/*
 setup/latest-build
 setup/work/*
 setup/build.log

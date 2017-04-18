@@ -22,12 +22,19 @@ sub create_wiki_page {
       project => $project_row_id,
       home => $title
     };
-    $self->app->dbi->model('wiki')->insert($new_wiki);
+    
+    eval {
+      $self->app->dbi->connector->txn(sub {
+        $self->app->dbi->model('wiki')->insert($new_wiki);
+        $self->app->manager->create_wiki_rep($user_id, $project_id);
+        $self->app->manager->create_wiki_work_rep($user_id, $project_id);
+      });
+    };
+    
+    if (my $error = $@) {
+      die $error
+    }
   }
-  
-  
-  die "aaaa";
-  
 }
 
 sub get_pull_request_count {

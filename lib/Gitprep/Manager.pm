@@ -812,7 +812,7 @@ sub _create_rep {
 }
 
 sub create_wiki_rep {
-  my ($self, $user, $project, $opts) = @_;
+  my ($self, $user, $project) = @_;
   
   # Create repository directory
   my $git = $self->app->git;
