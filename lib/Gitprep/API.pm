@@ -3,6 +3,7 @@ use Mojo::Base -base;
 
 use Digest::MD5 'md5_hex';
 use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
+use Carp 'croak';
 
 has 'cntl';
 
@@ -38,7 +39,10 @@ sub create_wiki_page {
   
   # Update page
   my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
+  my $wiki_rep_info = $self->app->wiki_rep_info($user_id, $project_id);
+
   use Data::Dumper;
+  warn Dumper [$wiki_work_rep_info, $wiki_rep_info];
   
   # File name
   my $file_name = $title;
@@ -57,9 +61,42 @@ sub create_wiki_page {
   # Close file
   close $fh;
   
+  # Add
+  my @git_add_cmd = $self->app->git->cmd(
+    $wiki_work_rep_info,
+    'add',
+    $wiki_work_rep_info->{work_tree}
+  );
+  
+  Gitprep::Util::run_command(@git_add_cmd)
+    or croak "Can't execute git add: @git_add_cmd";
+  
+  # Commit
+  my @git_commit_cmd = $self->app->git->cmd(
+    $wiki_work_rep_info,
+    'commit',
+    '-q',
+    '-m',
+    $commit_message
+  );
+  Gitprep::Util::run_command(@git_commit_cmd)
+    or croak "Can't execute git commit: @git_commit_cmd";
+  
+  # Push
+  {
+    my @git_push_cmd = $self->app->git->cmd(
+      $wiki_work_rep_info,
+      'push',
+      '-q',
+      $wiki_rep_info->{git_dir},
+      'master'
+    );
+    # (This is bad, but --quiet option can't supress in old git)
+    Gitprep::Util::run_command(@git_push_cmd)
+      or croak "Can't execute git push: @git_push_cmd";
+  }
+  
   die "AAAA";
-  
-  
 }
 
 sub get_pull_request_count {
