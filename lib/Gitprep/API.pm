@@ -35,6 +35,31 @@ sub create_wiki_page {
       die $error
     }
   }
+  
+  # Update page
+  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
+  use Data::Dumper;
+  
+  # File name
+  my $file_name = $title;
+  $file_name =~ s/\s+/-/;
+  $file_name .= '.md';
+  
+  # File abs name
+  my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
+  
+  open my $fh, '>', $file_abs_name
+    or die "Can't open file \"$file_abs_name\": $!";
+  
+  # Write content to file
+  print $fh $content;
+  
+  # Close file
+  close $fh;
+  
+  die "AAAA";
+  
+  
 }
 
 sub get_pull_request_count {
