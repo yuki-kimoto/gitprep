@@ -7,6 +7,33 @@ use Carp 'croak';
 
 has 'cntl';
 
+sub get_wiki_page_content {
+  my ($self, $user_id, $project_id, $title) = @_;
+  
+  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
+  
+  # File name
+  my $file_name = $title;
+  $file_name =~ s/\s+/-/;
+  $file_name .= '.md';
+  
+  # File abs name
+  my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
+  
+  unless (-f $file_abs_name) {
+    return;
+  }
+  
+  open my $fh, '<', $file_abs_name
+    or die "Can't open file \"$file_abs_name\": $!";
+  
+  my $content = do { local $/; <$fh> };
+  
+  close $fh;
+  
+  return $content;
+}
+
 sub create_wiki_page {
   my ($self, $user_id, $project_id, $title, $content, $commit_message) = @_;
   
@@ -40,9 +67,6 @@ sub create_wiki_page {
   # Update page
   my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
   my $wiki_rep_info = $self->app->wiki_rep_info($user_id, $project_id);
-
-  use Data::Dumper;
-  warn Dumper [$wiki_work_rep_info, $wiki_rep_info];
   
   # File name
   my $file_name = $title;
