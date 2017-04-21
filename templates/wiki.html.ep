@@ -24,26 +24,39 @@
   %= include '/include/header';
   
   <div class="container">
-    % if ($wiki) {
-      <form action="<%= url_for("/$user_id/$project_id/wiki/_new") %>" style="text-align:right">
-        <%= submit_button 'Create page', class => 'btn btn-green btn-new' %>
-      </form>
-      
-      <div class="readme">
-        <div class="readme-header">
-          <%= $title %>
-        </div>
-        <div class="readme-frame">
-          <div class="markdown-body"><%== $content_md %></div>
-        </div>
+    <div class="wiki">
+        % if ($wiki) {
+          <form action="<%= url_for("/$user_id/$project_id/wiki/_new") %>" style="text-align:right">
+            <%= submit_button 'Create page', class => 'btn btn-green btn-new' %>
+          </form>
+          <div class="wiki-container">
+            <div class="wiki-left">
+              <div class="wiki-header">
+                <%= $title %>
+              </div>
+              <div class="wiki-frame">
+                <div class="markdown-body"><%== $content_md %></div>
+              </div>
+            </div>
+            <div class="wiki-right">
+              <div class="wiki-sidebar-box">
+                <div class="wiki-sidebar-box-header">
+                  Pages
+                </div>
+                <div class="wiki-sidebar-box-frame">
+                  aaa
+                </div>
+              </div>
+            </div>
+          </div>
+        % } else {
+          <h1 class="topic1">Wiki</h1>
+          <form action="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
+            <%= submit_button 'Create Wiki', class => 'btn btn-green btn-new' %>
+          </form>
+        % }
       </div>
-
-    % } else {
-      <h1 class="topic1">Wiki</h1>
-      <form action="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
-        <%= submit_button 'Create Wiki', class => 'btn btn-green btn-new' %>
-      </form>
-    % }
+    </div>
   </div>
   
   %= include '/include/footer';

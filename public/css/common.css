@@ -61,6 +61,61 @@ a:hover {
   box-sizing: border-box;
 }
 
+.wiki {
+  overflow:hidden;
+}
+.wiki-left {
+  width:78%;
+  float:left;
+}
+.wiki-right {
+  width:22%;
+  float:left;
+  padding-left:10px;
+}
+
+.wiki-container {
+  margin-top:7px;
+}
+
+.wiki-header {
+  background-color: #f5f5f5;
+  border-radius: 3px 3px 0 0;
+  border: 1px solid #e6e9e6;
+  border-bottom: 0;
+  padding: 14px 15px;
+  font-size: 20px;
+  line-height: 17px;
+  font-weight:bold;
+}
+
+.wiki-frame {
+  border: 1px solid #e6e9e6;
+}
+
+.wiki-sidebar-box {
+  
+}
+
+.wiki-sidebar-box-header {
+  background-color: #fcfcfc;
+  border-radius: 3px 3px 0 0;
+  border: 1px solid #e6e9e6;
+  border-top:3px solid #bed8e2;
+  border-bottom: 0;
+  padding: 7px 12px;
+  font-size: 14px;
+  line-height: 17px;
+  font-weight:bold;
+  color:#004763;
+}
+
+.wiki-sidebar-box-frame {
+  border: 1px solid #e6e9e6;
+  padding:6px 3px;
+  font-size: 14px;
+}
+
 .wiki-new-form-title input {
   width:680px;
 }
@@ -988,7 +1043,7 @@ input[type=text], input[type=password] {
 
 /* Markdown */
 .markdown-body{
-  padding:40px 40px;
+  padding:20px 30px;
   
   font-family:"Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-size:16px;
