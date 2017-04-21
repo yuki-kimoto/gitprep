@@ -7,6 +7,27 @@ use Carp 'croak';
 
 has 'cntl';
 
+sub get_wiki_pages {
+  my ($self, $user_id, $project_id, $title) = @_;
+  
+  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
+  
+  # Open directory
+  my $dir = $wiki_work_rep_info->{work_tree};
+  opendir my $dh, $dir
+    or croak "Can't open directory \"$dir\":$!";
+  
+  # Pages
+  my @pages;
+  while (my $file = readdir $dh) {
+    next if $file =~ /^\./;
+    $file =~ s/\.[^\.]+$//;
+    push @pages, $file;
+  }
+  
+  return \@pages;
+}
+
 sub get_wiki_page_content {
   my ($self, $user_id, $project_id, $title) = @_;
   

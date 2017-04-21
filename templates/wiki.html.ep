@@ -18,6 +18,9 @@
     $content_md = $api->markdown($content);
   }
   
+  # Pages
+  my $pages = $api->get_wiki_pages($user_id, $project_id);
+  
   layout 'common', title => "Wiki - $user_id/$project_id";
 %>
   
@@ -44,7 +47,13 @@
                   Pages
                 </div>
                 <div class="wiki-sidebar-box-frame">
-                  aaa
+                  <ul>
+                    % for my $page (@$pages) {
+                      <li>
+                        <a href="<%= url_for("/$user_id/$project_id/wiki/$page") %>"><%= $page %></a>
+                      </li>
+                    % }
+                  </ul>
                 </div>
               </div>
             </div>
