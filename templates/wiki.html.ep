@@ -20,29 +20,36 @@
 
   my $errors;
   if ($self->req->method eq 'POST') {
-    my $title = param('title');
-    my $content = param('content');
-    my $commit_message = param('commit-message');
+    my $op = param('op') // '';
     
-    # Validation
-    my $vc = app->vc;
-    my $validation = $vc->validation;
-    
-    # Title
-    if (!length $title) {
-      $validation->add_failed(title => 'Page title is empty.');
-    }
-    
-    # Commit message
-    if (!length $commit_message) {
-      $validation->add_failed('commit-message' => 'Edit message is empty.');
-    }
-    
-    if ($validation->is_valid) {
-      $api->create_wiki_page($user_id, $project_id, $title, $content, $commit_message);
-    }
-    else {
-      $errors = $validation->messages;
+    if ($op eq 'create') {
+      my $title = param('title');
+      my $content = param('content');
+      my $commit_message = param('commit-message');
+      
+      # Validation
+      my $vc = app->vc;
+      my $validation = $vc->validation;
+      
+      # Title
+      if (!length $title) {
+        $validation->add_failed(title => 'Page title is empty.');
+      }
+      
+      # Commit message
+      if (!length $commit_message) {
+        $validation->add_failed('commit-message' => 'Edit message is empty.');
+      }
+      
+      if ($validation->is_valid) {
+        $api->create_wiki_page($user_id, $project_id, $title, $content, $commit_message);
+        
+        $self->redirect_to("/$user_id/$project_id/wiki/$title");
+        return;
+      }
+      else {
+        $errors = $validation->messages;
+      }
     }
   }
   else {
@@ -55,9 +62,8 @@
       $title //= $wiki->{home};
       $content = $api->get_wiki_page_content($user_id, $project_id, $title);
       
-      warn $title;
-      
       if ($title eq '_new' || !defined $content) {
+        $title = '';
         $display = 'new';
       }
       else {
@@ -92,13 +98,14 @@
         </div>
         <h1 class="topic1">Create new page</h1>
         <div class="wiki-new-form">
-          <form action="<%= url_for %>" method="POST">
+          <form action="<%= url_for("/$user_id/$project_id/wiki") %>" method="POST">
             <%= hidden_field op => 'create' %>
             <div>
               <b>Page title</b>
             </div>
             <div class="wiki-new-form-title">
-              %= text_field 'title' => 'Home';
+              % param(title => $title);
+              %= text_field 'title';
             </div>
             <div class="wiki-new-form-content">
               %= text_area 'content';

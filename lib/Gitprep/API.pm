@@ -140,8 +140,6 @@ sub create_wiki_page {
     Gitprep::Util::run_command(@git_push_cmd)
       or croak "Can't execute git push: @git_push_cmd";
   }
-  
-  die "AAAA";
 }
 
 sub get_pull_request_count {

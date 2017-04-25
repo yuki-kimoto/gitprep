@@ -486,7 +486,7 @@ sub startup {
             $r->any('/pull/:number' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls');
 
             # Wiki top page
-            $r->get('/wiki' => sub { shift->render_maybe('/wiki') })->to(tab => 'wiki');
+            $r->any('/wiki' => sub { shift->render_maybe('/wiki') })->to(tab => 'wiki');
             
             # Wiki page
             $r->get('/wiki/:title' => sub { shift->render_maybe('/wiki') })->to(tab => 'wiki');
