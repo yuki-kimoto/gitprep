@@ -16,7 +16,9 @@
   my $pages;
   
   # Display type
-  my $display;
+  my $display = param('display');
+  
+  warn $display;
 
   my $errors;
   if ($self->req->method eq 'POST') {
@@ -62,19 +64,18 @@
       $title //= $wiki->{home};
       $content = $api->get_wiki_page_content($user_id, $project_id, $title);
       
-      if ($title eq '_new' || !defined $content) {
+      if ($display eq 'page' && !defined $content) {
         $title = '';
-        $display = 'new';
+        $display = 'create';
       }
       else {
         $content_md = $api->markdown($content);
-        $display = 'page';
       }
     }
     else {
       $display = 'init';
     }
-
+    
     # Pages
     $pages = $api->get_wiki_pages($user_id, $project_id);
   }
@@ -91,7 +92,7 @@
         <form action="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
           <%= submit_button 'Create Wiki', class => 'btn btn-green btn-new' %>
         </form>
-      % } elsif ($display eq 'new') {
+      % } elsif ($display eq 'create') {
         <div>
           <%= include '/include/errors', errors => $errors %>
           <%= include '/include/message', message => flash('message') %>
@@ -123,7 +124,9 @@
         </div>
       % } elsif ($display eq 'page') {
         <div style="text-align:right">
-          
+          <a href="<%= url_for("/$user_id/$project_id/wiki/$title/_edit") %>">
+            <button class="btn btn-new">Edit</button>
+          </a>
           <a href="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
             <button class="btn btn-green btn-new">Create page</button>
           </a>

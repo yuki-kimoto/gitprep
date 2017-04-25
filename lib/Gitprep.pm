@@ -485,12 +485,23 @@ sub startup {
             $r->get('/pull/(:number).patch' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls', patch => 1);
             $r->any('/pull/:number' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls');
 
-            # Wiki top page
-            $r->any('/wiki' => sub { shift->render_maybe('/wiki') })->to(tab => 'wiki');
-            
-            # Wiki page
-            $r->get('/wiki/:title' => sub { shift->render_maybe('/wiki') })->to(tab => 'wiki');
-            
+            # Wiki
+            {
+              my $r = $r->any('/wiki' => sub { shift->render_maybe('/wiki') })->to(tab => 'wiki');
+              
+              # Wiki top page
+              $r->any('/')->to(display => 'page');
+
+              # Create wiki page
+              $r->get('/_new')->to(display => 'create');
+              
+              # Show wiki page
+              $r->get('/:title')->to(display => 'page');
+              
+              # Edit wiki page
+              $r->get('/:title/_edit')->to(display => 'edit');
+            }
+
             # Commit
             $r->get('/commit/*diff' => sub { shift->render_maybe('/commit') });
 
