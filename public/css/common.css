@@ -114,10 +114,9 @@ a:hover {
   background-color: #fcfcfc;
   border-radius: 3px 3px 0 0;
   border: 1px solid #e6e9e6;
-  border-top:3px solid #bed8e2;
   border-bottom: 0;
   padding: 7px 6px;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 17px;
   font-weight:bold;
   color:#004763;
@@ -127,6 +126,11 @@ a:hover {
   border: 1px solid #e6e9e6;
   padding:6px 6px;
   font-size: 14px;
+  border-radius: 3px 3px;
+}
+
+.wiki-sidebar-box-frame li {
+  margin-bottom:3px;
 }
 
 .wiki-new-form-title input {
