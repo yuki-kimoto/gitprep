@@ -6,9 +6,10 @@
   my $user_id = param('user');
   my $project_id = param('project');
   my $title = param('title');
+  my $edit = param('edit');
   
   my $project_row_id = $api->get_project_row_id($user_id, $project_id);
-
+  
   my $wiki = app->dbi->model('wiki')->select(where => {project => $project_row_id})->one;
   
   my $content;
@@ -16,7 +17,7 @@
   my $pages;
   
   # Display type
-  my $display = param('display');
+  my $display;
 
   my $errors;
   if ($self->req->method eq 'POST') {
@@ -54,20 +55,32 @@
   }
   else {
     if ($wiki) {
-      if (($title // '') eq $wiki->{home}) {
-        $self->redirect_to("/$user_id/$project_id/wiki");
-        return;
+      # Edit page
+      if ($edit) {
+        $display = 'edit';
       }
-      
-      $title //= $wiki->{home};
-      $content = $api->get_wiki_page_content($user_id, $project_id, $title);
-      
-      if ($display eq 'page' && !defined $content) {
-        $title = '';
+      # Create page
+      elsif (($title // '') eq '_new') {
         $display = 'create';
       }
+      # Show page
       else {
-        $content_md = $api->markdown($content);
+        if (($title // '') eq $wiki->{home}) {
+          $self->redirect_to("/$user_id/$project_id/wiki");
+          return;
+        }
+        
+        $title //= $wiki->{home};
+        
+        $content = $api->get_wiki_page_content($user_id, $project_id, $title);
+        
+        if (defined $content) {
+          $display = 'page';
+          $content_md = $api->markdown($content);
+        }
+        else {
+          $display = 'create';
+        }
       }
     }
     else {

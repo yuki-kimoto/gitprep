@@ -490,16 +490,13 @@ sub startup {
               my $r = $r->any('/wiki' => sub { shift->render_maybe('/wiki') })->to(tab => 'wiki');
               
               # Wiki top page
-              $r->any('/')->to(display => 'page');
-
-              # Create wiki page
-              $r->get('/_new')->to(display => 'create');
+              $r->any('/');
               
               # Show wiki page
-              $r->get('/:title')->to(display => 'page');
+              $r->get('/:title');
               
               # Edit wiki page
-              $r->get('/:title/_edit')->to(display => 'edit');
+              $r->get('/:title/_edit')->to(edit => 1);
             }
 
             # Commit
