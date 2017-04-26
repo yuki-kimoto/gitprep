@@ -74,6 +74,19 @@ a:hover {
   padding-left:10px;
 }
 
+.wiki-top-buttons-box {
+  text-align:right;
+}
+
+.wiki-top-buttons {
+  display:inline-block;
+}
+
+.wiki-top-buttons li {
+  float:left;
+  margin-left:5px;
+}
+
 .wiki-container {
   margin-top:7px;
 }

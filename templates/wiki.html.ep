@@ -17,8 +17,6 @@
   
   # Display type
   my $display = param('display');
-  
-  warn $display;
 
   my $errors;
   if ($self->req->method eq 'POST') {
@@ -123,13 +121,19 @@
           </form>
         </div>
       % } elsif ($display eq 'page') {
-        <div style="text-align:right">
-          <a href="<%= url_for("/$user_id/$project_id/wiki/$title/_edit") %>">
-            <button class="btn btn-new">Edit</button>
-          </a>
-          <a href="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
-            <button class="btn btn-green btn-new">Create page</button>
-          </a>
+        <div class="wiki-top-buttons-box">
+          <ul class="wiki-top-buttons">
+            <li>
+              <a href="<%= url_for("/$user_id/$project_id/wiki/$title/_edit") %>">
+                <button class="btn btn-new">Edit</button>
+              </a>
+            </li>
+            <li>
+              <a href="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
+                <button class="btn btn-green btn-new">Create page</button>
+              </a>
+            </li>
+          </ul>
         </div>
         <div class="wiki-container">
           <div class="wiki-left">
