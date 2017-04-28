@@ -55,31 +55,37 @@
   }
   else {
     if ($wiki) {
-      # Edit page
-      if ($edit) {
-        $display = 'edit';
-      }
-      # Create page
-      elsif (($title // '') eq '_new') {
+      if (($title // '') eq '_new') {
         $display = 'create';
+        $title = undef;
       }
-      # Show page
       else {
-        if (($title // '') eq $wiki->{home}) {
-          $self->redirect_to("/$user_id/$project_id/wiki");
-          return;
-        }
-        
-        $title //= $wiki->{home};
-        
-        $content = $api->get_wiki_page_content($user_id, $project_id, $title);
-        
-        if (defined $content) {
-          $display = 'page';
-          $content_md = $api->markdown($content);
+        if ($edit) {
+          $content = $api->get_wiki_page_content($user_id, $project_id, $title);
+          if (defined $content) {
+            $display = 'edit';
+          }
+          else {
+            $display = 'create';
+          }
         }
         else {
-          $display = 'create';
+          if (($title // '') eq $wiki->{home}) {
+            $self->redirect_to("/$user_id/$project_id/wiki");
+            return;
+          }
+          else {
+            $title //= $wiki->{home};
+            $content = $api->get_wiki_page_content($user_id, $project_id, $title);
+            
+            if (defined $content) {
+              $content_md = $api->markdown($content);
+              $display = 'page';
+            }
+            else {
+              $display = 'create';
+            }
+          }
         }
       }
     }
@@ -150,7 +156,7 @@
               %= text_field 'title';
             </div>
             <div class="wiki-new-form-content">
-              %= text_area 'content';
+              %= text_area 'content' => $content;
             </div>
             <div class="wiki-new-form-commit-message-description">
               <b>Edit message</b>
