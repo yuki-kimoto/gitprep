@@ -109,6 +109,25 @@ sub create_wiki_page {
   # Close file
   close $fh;
   
+  # Check file changes
+  my $is_file_change;
+  {
+    my @git_status_cmd = $self->app->git->cmd(
+      $wiki_work_rep_info,
+      'status',
+      '-s',
+      $wiki_work_rep_info->{work_tree}
+    );
+    open my $fh, '-|', @git_status_cmd
+      or croak "Can't execute @git_status_cmd";
+    my $result = <$fh>;
+    
+    $is_file_change = length $result ? 1 : 0;
+  }
+  
+  # Nothing to do if files is not changed
+  return unless $is_file_change;
+  
   # Add
   my @git_add_cmd = $self->app->git->cmd(
     $wiki_work_rep_info,
