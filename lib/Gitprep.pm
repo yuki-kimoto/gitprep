@@ -484,7 +484,7 @@ sub startup {
             # Pull request
             $r->get('/pull/(:number).patch' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls', patch => 1);
             $r->any('/pull/:number' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls');
-
+            
             # Wiki
             {
               my $r = $r->any('/wiki' => sub { shift->render_maybe('/wiki') })->to(tab => 'wiki');
@@ -492,11 +492,13 @@ sub startup {
               # Wiki top page
               $r->any('/');
               
+              $r->any('/_new')->to(create => 1);
+              
               # Show wiki page
-              $r->get('/:title');
+              $r->any('/:title');
               
               # Edit wiki page
-              $r->get('/:title/_edit')->to(edit => 1);
+              $r->any('/:title/_edit')->to(edit => 1);
             }
 
             # Commit
