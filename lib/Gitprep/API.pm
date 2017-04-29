@@ -4,6 +4,7 @@ use Mojo::Base -base;
 use Digest::MD5 'md5_hex';
 use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
 use Carp 'croak';
+use Encode 'decode';
 
 has 'cntl';
 
@@ -49,6 +50,8 @@ sub get_wiki_page_content {
     or die "Can't open file \"$file_abs_name\": $!";
   
   my $content = do { local $/; <$fh> };
+  
+  $content = decode('UTF-8', $content);
   
   close $fh;
   

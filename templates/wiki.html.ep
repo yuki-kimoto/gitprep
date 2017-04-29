@@ -147,7 +147,7 @@
         <h1 class="topic1">Edit page</h1>
         <div class="wiki-new-form">
           <form action="<%= url_for("/$user_id/$project_id/wiki") %>" method="POST">
-            <%= hidden_field op => 'edit' %>
+            <%= hidden_field op => 'create' %>
             <div>
               <b>Page title</b>
             </div>
@@ -165,7 +165,7 @@
               %= text_field 'commit-message';
             </div>
             <div class="wiki-new-form-create-page-btn">
-              <%= submit_button 'Create page', class => 'btn btn-green btn-new' %>
+              <%= submit_button 'Save page', class => 'btn btn-green btn-new' %>
             </div>
           </form>
         </div>
