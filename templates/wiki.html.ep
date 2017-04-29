@@ -114,26 +114,30 @@
           <%= include '/include/message', message => flash('message') %>
         </div>
         <h1 class="topic1">Create new page</h1>
-        <div class="wiki-new-form">
+        <div class="wiki-edit-form">
           <form action="<%= url_for %>" method="POST">
             <%= hidden_field op => 'create' %>
-            <div>
-              <b>Page title</b>
-            </div>
-            <div class="wiki-new-form-title">
-              % param(title => $title);
-              %= text_field 'title';
-            </div>
-            <div class="wiki-new-form-content">
+            <label>
+              <div class="wiki-edit-form-title-label">
+                Page title
+              </div>
+              <div class="wiki-edit-form-title">
+                % param(title => $title);
+                %= text_field 'title';
+              </div>
+            </label>
+            <div class="wiki-edit-form-content">
               %= text_area 'content';
             </div>
-            <div class="wiki-new-form-commit-message-description">
-              <b>Edit message</b>
-            </div>
-            <div class="wiki-new-form-commit-message">
-              %= text_field 'commit-message';
-            </div>
-            <div class="wiki-new-form-create-page-btn">
+            <label>
+              <div class="wiki-edit-form-commit-message-description">
+                Edit message(optional)
+              </div>
+              <div class="wiki-edit-form-commit-message">
+                %= text_field 'commit-message';
+              </div>
+            </label>
+            <div class="wiki-edit-form-create-page-btn">
               <%= submit_button 'Create page', class => 'btn btn-green btn-new' %>
             </div>
           </form>
@@ -144,26 +148,30 @@
           <%= include '/include/message', message => flash('message') %>
         </div>
         <h1 class="topic1">Edit page</h1>
-        <div class="wiki-new-form">
+        <div class="wiki-edit-form">
           <form action="<%= url_for %>" method="POST">
             <%= hidden_field op => 'create' %>
-            <div>
-              <b>Page title</b>
-            </div>
-            <div class="wiki-new-form-title">
-              % param(title => $title);
-              %= text_field 'title';
-            </div>
-            <div class="wiki-new-form-content">
+            <label>
+              <div class="wiki-edit-form-label">
+                Page title
+              </div>
+              <div class="wiki-edit-form-title">
+                % param(title => $title);
+                %= text_field 'title';
+              </div>
+            </label>
+            <div class="wiki-edit-form-content">
               %= text_area 'content' => $content;
             </div>
-            <div class="wiki-new-form-commit-message-description">
-              <b>Edit message</b>
-            </div>
-            <div class="wiki-new-form-commit-message">
-              %= text_field 'commit-message';
-            </div>
-            <div class="wiki-new-form-create-page-btn">
+            <label>
+              <div class="wiki-edit-form-commit-message-description">
+                Edit message
+              </div>
+              <div class="wiki-edit-form-commit-message">
+                %= text_field 'commit-message';
+              </div>
+            </label>
+            <div class="wiki-edit-form-create-page-btn">
               <%= submit_button 'Save page', class => 'btn btn-green btn-new' %>
             </div>
           </form>

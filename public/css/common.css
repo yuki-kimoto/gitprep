@@ -133,16 +133,32 @@ a:hover {
   margin-bottom:3px;
 }
 
-.wiki-new-form-title input {
+.wiki-edit-form-title-label {
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:8px;
+  margin-top:15px;
+  padding-left:2px;
+  letter-spacing:0.5px;
+}
+.wiki-edit-form-title input[type=text] {
   width:680px;
+  padding:7px 10px;
+  color:red;
+  margin-bottom:10px;
 }
 
-.wiki-new-form-content textarea {
+.wiki-edit-form-content textarea {
   width:680px;
   min-height:300px;
+  border-radius:5px;
+  border:1px solid #ddd;
 }
 
-.wiki-new-form-commit-message input {
+.wiki-edit-form-commit-message-description {
+  margin-top:10px;
+}
+.wiki-edit-form-commit-message input {
   width:680px;
   margin-bottom:10px;
 }
