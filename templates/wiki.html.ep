@@ -37,6 +37,9 @@
       if (!length $title) {
         $validation->add_failed(title => 'Page title is empty.');
       }
+      elsif ($title =~ /^_/) {
+        $validation->add_failed(title => 'Page title can\'t start with _.');
+      }
       
       # Commit message
       if (!length $commit_message) {
