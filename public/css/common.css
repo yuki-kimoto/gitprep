@@ -110,23 +110,29 @@ a:hover {
   
 }
 
-.wiki-sidebar-box-header {
+.wiki-list-pages-box {
   background-color: #fcfcfc;
-  border-radius: 3px 3px 0 0;
+  border-radius: 3px;
   border: 1px solid #e6e9e6;
-  border-bottom: 0;
-  padding: 7px 6px;
-  font-size: 13px;
+  padding: 9px 6px;
+  font-size: 14px;
   line-height: 17px;
   font-weight:bold;
   color:#004763;
 }
 
-.wiki-sidebar-box-frame {
-  border: 1px solid #e6e9e6;
-  padding:6px 6px;
-  font-size: 14px;
-  border-radius: 3px 3px;
+.wiki-list-pages-box a {
+  text-decoration:underline;
+}
+
+.wiki-list-pages {
+  padding:15px 12px;
+  font-size:15px;
+}
+
+.wiki-list-pages li {
+  list-style-type: disc;
+  margin-left:20px;
 }
 
 .wiki-sidebar-box-frame li {

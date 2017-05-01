@@ -26,6 +26,8 @@ sub get_wiki_pages {
     push @pages, $file;
   }
   
+  @pages = sort { lc $a cmp lc $b } @pages;
+  
   return \@pages;
 }
 

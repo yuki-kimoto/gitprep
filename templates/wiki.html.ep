@@ -74,6 +74,7 @@
         }
       }
       elsif ($list_pages) {
+        $display = 'list-pages';
         # Pages
         $pages = $api->get_wiki_pages($user_id, $project_id);
       }
@@ -100,9 +101,6 @@
   else {
     $display = 'init';
   }
-  
-  # Pages
-  $pages = $api->get_wiki_pages($user_id, $project_id);
   
   layout 'common', title => "Wiki - $user_id/$project_id";
 %>
@@ -210,19 +208,17 @@
             </div>
           </div>
           <div class="wiki-right">
-            <div class="wiki-sidebar-box">
-              <div class="wiki-sidebar-box-header">
-                <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">Pages</a>
-              </div>
+            <div class="wiki-list-pages-box">
+              <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">Pages</a>
             </div>
           </div>
-        % } elsif ($list_pages) {
+        % } elsif ($display eq 'list-pages') {
           <div class="wiki-left">
             <div class="wiki-header">
               Pages
             </div>
             <div class="wiki-frame">
-              <ul>
+              <ul class="wiki-list-pages">
                 % for my $page (@$pages) {
                   <li>
                     <a href="<%= url_for("/$user_id/$project_id/wiki/$page") %>"><%= $page %></a>
