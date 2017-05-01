@@ -8,6 +8,7 @@
   my $title = param('title');
   my $create = param('create');
   my $edit = param('edit');
+  my $list_pages = param('list-pages');
   
   my $project_row_id = $api->get_project_row_id($user_id, $project_id);
   
@@ -71,6 +72,10 @@
         else {
           $display = 'create';
         }
+      }
+      elsif ($list_pages) {
+        # Pages
+        $pages = $api->get_wiki_pages($user_id, $project_id);
       }
       else {
         if (($title // '') eq 'Home') {
@@ -206,17 +211,25 @@
           <div class="wiki-right">
             <div class="wiki-sidebar-box">
               <div class="wiki-sidebar-box-header">
-                Pages
+                <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">Pages</a>
               </div>
-              <div class="wiki-sidebar-box-frame">
-                <ul>
-                  % for my $page (@$pages) {
-                    <li>
-                      <a href="<%= url_for("/$user_id/$project_id/wiki/$page") %>"><%= $page %></a>
-                    </li>
-                  % }
-                </ul>
-              </div>
+            </div>
+          </div>
+        </div>
+      % } elsif ($list_pages) {
+        <div class="wiki-container">
+          <div class="wiki-left">
+            <div class="wiki-header">
+              Pages
+            </div>
+            <div class="wiki-frame">
+              <ul>
+                % for my $page (@$pages) {
+                  <li>
+                    <a href="<%= url_for("/$user_id/$project_id/wiki/$page") %>"><%= $page %></a>
+                  </li>
+                % }
+              </ul>
             </div>
           </div>
         </div>

@@ -492,7 +492,11 @@ sub startup {
               # Wiki top page
               $r->any('/');
               
+              # Create page
               $r->any('/_new')->to(create => 1);
+              
+              # Show pages
+              $r->any('/_pages')->to('list-pages' => 1);
               
               # Show wiki page
               $r->any('/:title');
