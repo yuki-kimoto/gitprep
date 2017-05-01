@@ -70,12 +70,12 @@
         }
       }
       else {
-        if (($title // '') eq $wiki->{home}) {
+        if (($title // '') eq 'Home') {
           $self->redirect_to("/$user_id/$project_id/wiki");
           return;
         }
         else {
-          $title //= $wiki->{home};
+          $title //= 'Home';
           $content = $api->get_wiki_page_content($user_id, $project_id, $title);
           
           if (defined $content) {
