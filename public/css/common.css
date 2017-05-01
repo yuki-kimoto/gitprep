@@ -142,17 +142,17 @@ a:hover {
   letter-spacing:0.5px;
 }
 .wiki-edit-form-title input[type=text] {
-  width:680px;
+  width:100%;
   padding:7px 10px;
-  color:red;
   margin-bottom:10px;
 }
 
 .wiki-edit-form-content textarea {
-  width:680px;
+  width:100%;
   min-height:300px;
   border-radius:5px;
   border:1px solid #ddd;
+  padding:10px;
 }
 
 .wiki-edit-form-commit-message-description {

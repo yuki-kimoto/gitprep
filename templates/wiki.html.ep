@@ -111,95 +111,96 @@
   
   <div class="container">
     <div class="wiki">
-      % if ($display eq 'init') {
-        <h1 class="topic1">Wiki</h1>
-        <form action="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
-          <%= submit_button 'Create Wiki', class => 'btn btn-green btn-new' %>
-        </form>
-      % } elsif ($display eq 'create') {
-        <div>
-          <%= include '/include/errors', errors => $errors %>
-          <%= include '/include/message', message => flash('message') %>
-        </div>
-        <h1 class="topic1">Create new page</h1>
-        <div class="wiki-edit-form">
-          <form action="<%= url_for %>" method="POST">
-            <%= hidden_field op => 'create' %>
-            <label>
-              <div class="wiki-edit-form-title-label">
-                Page title
-              </div>
-              <div class="wiki-edit-form-title">
-                % param(title => $title);
-                %= text_field 'title';
-              </div>
-            </label>
-            <div class="wiki-edit-form-content">
-              %= text_area 'content';
-            </div>
-            <label>
-              <div class="wiki-edit-form-commit-message-description">
-                Edit message(optional)
-              </div>
-              <div class="wiki-edit-form-commit-message">
-                %= text_field 'commit-message';
-              </div>
-            </label>
-            <div class="wiki-edit-form-create-page-btn">
-              <%= submit_button 'Create page', class => 'btn btn-green btn-new' %>
-            </div>
-          </form>
-        </div>
-      % } elsif ($display eq 'edit') {
-        <div>
-          <%= include '/include/errors', errors => $errors %>
-          <%= include '/include/message', message => flash('message') %>
-        </div>
-        <h1 class="topic1">Edit page</h1>
-        <div class="wiki-edit-form">
-          <form action="<%= url_for %>" method="POST">
-            <%= hidden_field op => 'create' %>
-            <label>
-              <div class="wiki-edit-form-label">
-                Page title
-              </div>
-              <div class="wiki-edit-form-title">
-                % param(title => $title);
-                %= text_field 'title';
-              </div>
-            </label>
-            <div class="wiki-edit-form-content">
-              %= text_area 'content' => $content;
-            </div>
-            <label>
-              <div class="wiki-edit-form-commit-message-description">
-                Edit message
-              </div>
-              <div class="wiki-edit-form-commit-message">
-                %= text_field 'commit-message';
-              </div>
-            </label>
-            <div class="wiki-edit-form-create-page-btn">
-              <%= submit_button 'Save page', class => 'btn btn-green btn-new' %>
-            </div>
-          </form>
-        </div>
-      % } elsif ($display eq 'page') {
-        <div class="wiki-top-buttons-box">
-          <ul class="wiki-top-buttons">
+      <div>
+        <%= include '/include/errors', errors => $errors %>
+        <%= include '/include/message', message => flash('message') %>
+      </div>
+      <div class="wiki-top-buttons-box">
+        <ul class="wiki-top-buttons">
+          % if ($display eq 'page') {
             <li>
               <a href="<%= url_for("/$user_id/$project_id/wiki/$title/_edit") %>">
                 <button class="btn btn-new">Edit</button>
               </a>
             </li>
+          % }
+          % if ($display ne 'create') {
             <li>
               <a href="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
                 <button class="btn btn-green btn-new">Create page</button>
               </a>
             </li>
-          </ul>
-        </div>
-        <div class="wiki-container">
+          % }
+        </ul>
+      </div>
+
+      <div class="wiki-container">
+        % if ($display eq 'init') {
+          <h1 class="topic1">Wiki</h1>
+          <form action="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
+            <%= submit_button 'Create Wiki', class => 'btn btn-green btn-new' %>
+          </form>
+        % } elsif ($display eq 'create') {
+          <h1 class="topic1">Create page</h1>
+          <div class="wiki-edit-form">
+            <form action="<%= url_for %>" method="POST">
+              <%= hidden_field op => 'create' %>
+              <label>
+                <div class="wiki-edit-form-title-label">
+                  Page title
+                </div>
+                <div class="wiki-edit-form-title">
+                  % param(title => $title);
+                  %= text_field 'title';
+                </div>
+              </label>
+              <div class="wiki-edit-form-content">
+                %= text_area 'content';
+              </div>
+              <label>
+                <div class="wiki-edit-form-commit-message-description">
+                  Edit message
+                </div>
+                <div class="wiki-edit-form-commit-message">
+                  %= text_field 'commit-message';
+                </div>
+              </label>
+              <div class="wiki-edit-form-create-page-btn">
+                <%= submit_button 'Create page', class => 'btn btn-green btn-new' %>
+              </div>
+            </form>
+          </div>
+        % } elsif ($display eq 'edit') {
+          <h1 class="topic1">Edit page</h1>
+          <div class="wiki-edit-form">
+            <form action="<%= url_for %>" method="POST">
+              <%= hidden_field op => 'create' %>
+              <label>
+                <div class="wiki-edit-form-title-label">
+                  Page title
+                </div>
+                <div class="wiki-edit-form-title">
+                  % param(title => $title);
+                  %= text_field 'title';
+                </div>
+              </label>
+              <div class="wiki-edit-form-content">
+                %= text_area 'content' => $content;
+              </div>
+              <label>
+                <div class="wiki-edit-form-commit-message-description">
+                  Edit message
+                </div>
+                <div class="wiki-edit-form-commit-message">
+                  %= text_field 'commit-message';
+                </div>
+              </label>
+              <div class="wiki-edit-form-create-page-btn">
+                <%= submit_button 'Save page', class => 'btn btn-green btn-new' %>
+              </div>
+            </form>
+          </div>
+        % } elsif ($display eq 'page') {
           <div class="wiki-left">
             <div class="wiki-header">
               <%= $title %>
@@ -215,9 +216,7 @@
               </div>
             </div>
           </div>
-        </div>
-      % } elsif ($list_pages) {
-        <div class="wiki-container">
+        % } elsif ($list_pages) {
           <div class="wiki-left">
             <div class="wiki-header">
               Pages
@@ -232,8 +231,8 @@
               </ul>
             </div>
           </div>
-        </div>
-      % }
+        % }
+      </div>
     </div>
   </div>
   
