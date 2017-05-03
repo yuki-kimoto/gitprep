@@ -162,21 +162,23 @@
       </div>
       
       <div class="wiki-top">
-        <div class="wiki-top-git-url">
-          <ul class="git-url-container">
-            % if ($logined) {
+        % if ($title eq 'Home') {
+          <div class="wiki-top-git-url">
+            <ul class="git-url-container">
+              % if ($logined) {
+                <li>
+                  <button class="btn btn-info" id="btn_ssh">SSH</button>
+                </li>
+              % }
               <li>
-                <button class="btn btn-info" id="btn_ssh">SSH</button>
+                <button class="btn <%= !$logined ? 'btn-info' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
               </li>
-            % }
-            <li>
-              <button class="btn <%= !$logined ? 'btn-info' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
-            </li>
-            <li>
-              <input id="rep_url" type="text">
-            </li>
-          </ul>
-        </div>
+              <li>
+                <input id="rep_url" type="text">
+              </li>
+            </ul>
+          </div>
+        % }
         
         <div class="wiki-top-buttons-box">
           <ul class="wiki-top-buttons">
@@ -274,9 +276,11 @@
             </div>
           </div>
           <div class="wiki-right">
-            <div class="wiki-list-pages-box">
-              <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">Pages</a>
-            </div>
+            <ul class="wiki-list-pages-box">
+              <li>
+                <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">Pages</a>
+              </li>
+            </ul>
           </div>
         % } elsif ($display eq 'list-pages') {
           <div class="wiki-left">
