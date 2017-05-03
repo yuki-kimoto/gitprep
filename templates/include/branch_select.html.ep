@@ -141,7 +141,7 @@
         <ul class="git-url-container">
           % if ($logined) {
             <li>
-              <button class="btn btn-primary" id="btn_ssh">SSH</button>
+              <button class="btn btn-info" id="btn_ssh">SSH</button>
             </li>
           % }
           <li>

@@ -74,8 +74,15 @@ a:hover {
   padding-left:10px;
 }
 
+.wiki-top {
+  overflow:hidden;
+}
+.wiki-top-git-url {
+  float:left;
+}
+
 .wiki-top-buttons-box {
-  text-align:right;
+  float:right;
 }
 
 .wiki-top-buttons {
@@ -2678,9 +2685,10 @@ button.close {
 
 .git-url-container input[type=text] {
   width:550px;
-  padding:5px 0 5px 5px;
+  padding:4px 5px 5px 5px;
   border:1px solid #e6e9e6;
   border-radius:0 3px 3px 0;
+  margin-bottom:1px;
 }
 
 .page-path-container {
