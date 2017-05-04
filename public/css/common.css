@@ -74,6 +74,32 @@ a:hover {
   padding-left:10px;
 }
 
+.wiki-add-side-bar {
+  border:1px dashed #ddd;
+  margin-top:10px;
+  text-align:center;
+  padding:20px 0;
+  font-size:16px;
+  border-radius:3px;
+}
+
+.wiki-add-side-bar a {
+  color:#99c;
+}
+
+.wiki-add-footer {
+  border:1px dashed #ddd;
+  margin-top:10px;
+  text-align:center;
+  padding:20px 0;
+  font-size:16px;
+  border-radius:3px;
+}
+
+.wiki-add-footer a {
+  color:#99c;
+}
+
 .wiki-top {
   overflow:hidden;
 }
@@ -126,6 +152,7 @@ a:hover {
   line-height: 17px;
   font-weight:bold;
   color:#004763;
+  text-align:center;
 }
 
 .wiki-list-pages-box a {
@@ -140,6 +167,8 @@ a:hover {
 .wiki-list-pages li {
   list-style-type: disc;
   margin-left:20px;
+  font-size:16px;
+  margin-bottom:3px;
 }
 
 .wiki-sidebar-box-frame li {
@@ -158,6 +187,9 @@ a:hover {
   width:100%;
   padding:7px 10px;
   margin-bottom:10px;
+  font-size:16px;
+  letter-spacing:0.5px;
+  color:#000;
 }
 
 .wiki-edit-form-content textarea {

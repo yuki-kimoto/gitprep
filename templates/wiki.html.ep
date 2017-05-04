@@ -274,13 +274,18 @@
             <div class="wiki-frame">
               <div class="markdown-body"><%== $content_md %></div>
             </div>
-          </div>
+            <div class="wiki-add-footer">
+              <a href="<%= url_for("/$user_id/$project_id/wiki/_Footer") %>">+ Add footer</a>
+            </div>          </div>
           <div class="wiki-right">
             <ul class="wiki-list-pages-box">
               <li>
                 <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">Pages</a>
               </li>
             </ul>
+            <div class="wiki-add-side-bar">
+              <a href="<%= url_for("/$user_id/$project_id/wiki/_Sidebar") %>">+ Add side bar</a>
+            </div>
           </div>
         % } elsif ($display eq 'list-pages') {
           <div class="wiki-left">
