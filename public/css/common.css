@@ -175,14 +175,6 @@ a:hover {
   margin-bottom:3px;
 }
 
-.wiki-edit-form-title-label {
-  font-size:18px;
-  font-weight:bold;
-  margin-bottom:8px;
-  margin-top:15px;
-  padding-left:2px;
-  letter-spacing:0.5px;
-}
 .wiki-edit-form-title input[type=text] {
   width:100%;
   padding:7px 10px;
@@ -190,6 +182,7 @@ a:hover {
   font-size:16px;
   letter-spacing:0.5px;
   color:#000;
+  border-color:#ccc;
 }
 
 .wiki-edit-form-content textarea {

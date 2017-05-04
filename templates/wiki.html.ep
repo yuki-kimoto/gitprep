@@ -212,12 +212,9 @@
             <form action="<%= url_for %>" method="POST">
               <%= hidden_field op => 'create' %>
               <label>
-                <div class="wiki-edit-form-title-label">
-                  Page title
-                </div>
                 <div class="wiki-edit-form-title">
                   % param(title => $title);
-                  %= text_field 'title';
+                  %= text_field 'title', placeholder => 'Title';
                 </div>
               </label>
               <div class="wiki-edit-form-content">
@@ -242,9 +239,6 @@
             <form action="<%= url_for %>" method="POST">
               <%= hidden_field op => 'create' %>
               <label>
-                <div class="wiki-edit-form-title-label">
-                  Page title
-                </div>
                 <div class="wiki-edit-form-title">
                   % param(title => $title);
                   %= text_field 'title';
