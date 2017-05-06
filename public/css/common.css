@@ -96,6 +96,10 @@ a:hover {
   border-radius:3px;
 }
 
+.wiki-link-no-title a {
+  color:#e0162e;
+}
+
 .wiki-add-footer a {
   color:#99c;
 }

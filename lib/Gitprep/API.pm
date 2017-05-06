@@ -8,6 +8,26 @@ use Encode 'decode';
 
 has 'cntl';
 
+sub exists_wiki_page {
+  my ($self, $user_id, $project_id, $title) = @_;
+  
+  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
+  
+  # File name
+  my $file_name = $title;
+  $file_name =~ s/\s+/-/;
+  $file_name .= '.md';
+  
+  # File abs name
+  my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
+  
+  my $exists = -f $file_abs_name;
+  
+  warn "BBBBBBBBBBB $file_abs_name $exists";
+  
+  return $exists;
+}
+
 sub get_wiki_pages {
   my ($self, $user_id, $project_id, $title) = @_;
   
