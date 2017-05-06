@@ -56,9 +56,8 @@
         $validation->add_failed(title => 'Page title can\'t start with _.');
       }
       
-      # Commit message
       if (!length $commit_message) {
-        $validation->add_failed('commit-message' => 'Edit message is empty.');
+        $commit_message = "Updated $title";
       }
       
       if ($validation->is_valid) {
@@ -222,7 +221,7 @@
               </div>
               <label>
                 <div class="wiki-edit-form-commit-message-description">
-                  Edit message
+                  Edit message(Optional)
                 </div>
                 <div class="wiki-edit-form-commit-message">
                   %= text_field 'commit-message';
@@ -249,7 +248,7 @@
               </div>
               <label>
                 <div class="wiki-edit-form-commit-message-description">
-                  Edit message
+                  Edit message(Optional)
                 </div>
                 <div class="wiki-edit-form-commit-message">
                   %= text_field 'commit-message';
