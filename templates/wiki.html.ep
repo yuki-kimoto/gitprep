@@ -101,6 +101,20 @@
           $content = $api->get_wiki_page_content($user_id, $project_id, $title);
           
           if (defined $content) {
+            # Convert wiki link to markdonw link
+            my $url_base = $self->url_for("/$user_id/$project_id/wiki");
+            
+            my $re_cb = sub {
+              my ($title, $link) = @_;
+              
+              my $replace = "[$title](" . $url_base . "\/$title)";
+              
+              return $replace;
+            };
+            
+            $content =~ s/\[\[([^\[\]]+?)\]\]/$re_cb->($1)/eg;
+            
+            
             $content_md = $api->markdown($content);
             $display = 'page';
           }
