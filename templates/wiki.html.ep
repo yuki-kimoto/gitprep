@@ -105,15 +105,18 @@
             my $url_base = $self->url_for("/$user_id/$project_id/wiki");
             
             my $re_cb = sub {
-              my ($title, $link) = @_;
+              my ($message, $title) = @_;
+
+              if (!length $message) {
+                $message = $title;
+              }
               
-              my $replace = "[$title](" . $url_base . "\/$title)";
+              my $replace = "[$message](" . $url_base . "\/$title)";
               
               return $replace;
             };
-            
-            $content =~ s/\[\[([^\[\]]+?)\]\]/$re_cb->($1)/eg;
-            
+
+            $content =~ s/\[\[([^\]\|]+?)(?:\|([^\[\]]+?))?\]\]/$re_cb->($1, $2)/eg;
             
             $content_md = $api->markdown($content);
             $display = 'page';
