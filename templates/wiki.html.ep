@@ -73,7 +73,11 @@
       }
     }
   }
-  
+
+  my $exists_sidebar;
+  my $exists_footer;
+  my $content_sidebar_md;
+  my $content_footer_md;
   if ($wiki) {
     if ($create) {
       $display = 'create';
@@ -130,6 +134,20 @@
             
             $content_md = $api->markdown($content);
             $display = 'page';
+            
+            # Side bar
+            $exists_sidebar = $api->exists_wiki_page($user_id, $project_id, '_Sidebar');
+            if ($exists_sidebar) {
+              my $content_sidebar = $api->get_wiki_page_content($user_id, $project_id, '_Sidebar');
+              $content_sidebar_md = $api->markdown($content_sidebar);
+            }
+            
+            # Footer
+            $exists_footer = $api->exists_wiki_page($user_id, $project_id, '_Footer');
+            if ($exists_footer) {
+              my $content_footer = $api->get_wiki_page_content($user_id, $project_id, '_Footer');
+              $content_footer_md = $api->markdown($content_footer);
+            }
           }
           else {
             $display = 'create';
@@ -300,7 +318,11 @@
             <div class="wiki-frame">
               <div class="markdown-body"><%== $content_md %></div>
             </div>
-            % if ($title ne '_Sidebar' && $title ne '_Footer') {
+            % if ($exists_footer) {
+              <div>
+                <%== $content_footer_md %>
+              </div>
+            % } elsif ($title ne '_Sidebar' && $title ne '_Footer') {
               <div class="wiki-add-footer">
                 <a href="<%= url_for("/$user_id/$project_id/wiki/_Footer") %>">+ Add footer</a>
               </div>
@@ -312,7 +334,11 @@
                 <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">Pages</a>
               </li>
             </ul>
-            % if ($title ne '_Sidebar' && $title ne '_Footer') {
+            % if ($exists_sidebar) {
+              <div>
+                <%== $content_sidebar_md %>
+              </div>
+            % } elsif ($title ne '_Sidebar' && $title ne '_Footer') {
               <div class="wiki-add-side-bar">
                 <a href="<%= url_for("/$user_id/$project_id/wiki/_Sidebar") %>">+ Add side bar</a>
               </div>
