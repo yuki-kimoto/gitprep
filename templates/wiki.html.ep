@@ -53,7 +53,9 @@
         $validation->add_failed(title => 'Page title is empty.');
       }
       elsif ($title =~ /^_/) {
-        $validation->add_failed(title => 'Page title can\'t start with _.');
+        if ($title ne '_Sidebar' && $title ne '_Footer') {
+          $validation->add_failed(title => 'Page title can\'t start with _.');
+        }
       }
       
       if (!length $commit_message) {
@@ -186,8 +188,8 @@
       </div>
       
       <div class="wiki-top">
-        % if ($title eq 'Home') {
-          <div class="wiki-top-git-url">
+        <div class="wiki-top-git-url">
+          % if ($title eq 'Home') {
             <ul class="git-url-container">
               % if ($logined) {
                 <li>
@@ -201,8 +203,12 @@
                 <input id="rep_url" type="text">
               </li>
             </ul>
-          </div>
-        % }
+          % } else {
+            <div class="wiki-home-link">
+              <a href="<%= url_for("/$user_id/$project_id/wiki") %>">Home</a>
+            </div>
+          % }
+        </div>
         
         <div class="wiki-top-buttons-box">
           <ul class="wiki-top-buttons">

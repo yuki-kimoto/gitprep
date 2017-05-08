@@ -23,8 +23,6 @@ sub exists_wiki_page {
   
   my $exists = -f $file_abs_name;
   
-  warn "BBBBBBBBBBB $file_abs_name $exists";
-  
   return $exists;
 }
 
