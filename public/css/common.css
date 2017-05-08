@@ -92,6 +92,10 @@ a:hover {
   
 }
 
+.wiki .topic1 {
+  margin-top:0;
+}
+
 .wiki-add-side-bar a {
   color:#99c;
 }

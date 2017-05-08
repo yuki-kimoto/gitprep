@@ -189,7 +189,7 @@
       
       <div class="wiki-top">
         <div class="wiki-top-git-url">
-          % if ($title eq 'Home') {
+          % if ($display eq 'page' && $title eq 'Home') {
             <ul class="git-url-container">
               % if ($logined) {
                 <li>
@@ -203,7 +203,9 @@
                 <input id="rep_url" type="text">
               </li>
             </ul>
-          % } else {
+          % }
+          
+          % if ($display eq 'page' && $title ne 'Home') {
             <div class="wiki-home-link">
               <a href="<%= url_for("/$user_id/$project_id/wiki") %>">Home</a>
             </div>
