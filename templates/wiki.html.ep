@@ -319,7 +319,7 @@
               <div class="markdown-body"><%== $content_md %></div>
             </div>
             % if ($exists_footer) {
-              <div>
+              <div class="wiki-footer">
                 <%== $content_footer_md %>
               </div>
             % } elsif ($title ne '_Sidebar' && $title ne '_Footer') {
@@ -335,7 +335,7 @@
               </li>
             </ul>
             % if ($exists_sidebar) {
-              <div>
+              <div class="wiki-side-bar">
                 <%== $content_sidebar_md %>
               </div>
             % } elsif ($title ne '_Sidebar' && $title ne '_Footer') {

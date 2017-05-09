@@ -83,6 +83,17 @@ a:hover {
   border-radius:3px;
 }
 
+.wiki-footer {
+  border:1px solid #ddd;
+  margin-top:10px;
+  padding:10px;
+}
+.wiki-side-bar {
+  border:1px solid #ddd;
+  margin-top:10px;
+  padding:10px;
+}
+
 .wiki-home-link {
   padding-top:8px;
   padding-left:13px;
