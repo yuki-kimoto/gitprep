@@ -40,6 +40,7 @@
     my $op = param('op') // '';
     
     if ($op eq 'create') {
+      
       my $title = param('title');
       my $content = param('content');
       my $commit_message = param('commit-message');
@@ -256,8 +257,21 @@
           <form action="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
             <%= submit_button 'Create Wiki', class => 'btn btn-green btn-new' %>
           </form>
-        % } elsif ($display eq 'create') {
-          <h1 class="topic1">Create page</h1>
+        % } elsif ($display eq 'create' || $display eq 'edit') {
+          <%
+            my $h1_text;
+            my $submit_button_title;
+            if ($display eq 'create') {
+              $h1_text = 'Create page';
+              $submit_button_title = 'Create page';
+            }
+            else {
+              $h1_text = 'Edit page';
+              $submit_button_title = 'Save page';
+            }
+          %>
+          
+          <h1 class="topic1"><%= $h1_text %></h1>
           <div class="wiki-edit-form">
             <form action="<%= url_for %>" method="POST">
               <%= hidden_field op => 'create' %>
@@ -268,21 +282,18 @@
                 </div>
               </label>
               <div class="issue-add-comment">
-                <form action="<%= url_for %>" method="post">
-                  <%= hidden_field 'op' %>
-                  <div class="issue-add-comment-header">
-                    <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
-                    <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
-                    %= include '/include/issue_comment_icon';
+                <div class="issue-add-comment-header">
+                  <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
+                  <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
+                  %= include '/include/issue_comment_icon';
+                </div>
+                <div class="issue-add-comment-body">
+                  <div class="issue-message-write-area issue-add-comment-message">
+                    %= text_area 'content' => $content;
                   </div>
-                  <div class="issue-add-comment-body">
-                    <div class="issue-message-write-area issue-add-comment-message">
-                       %= text_area 'content';
-                    </div>
-                    <div class="issue-message-preview-area issue-add-comment-preview markdown-body" style="padding:10px">
-                    </div>
+                  <div class="issue-message-preview-area issue-add-comment-preview markdown-body" style="padding:10px">
                   </div>
-                </form>
+                </div>
               </div>
               <label>
                 <div class="wiki-edit-form-commit-message-description">
@@ -293,34 +304,7 @@
                 </div>
               </label>
               <div class="wiki-edit-form-create-page-btn">
-                <%= submit_button 'Create page', class => 'btn btn-green btn-new' %>
-              </div>
-            </form>
-          </div>
-        % } elsif ($display eq 'edit') {
-          <h1 class="topic1">Edit page</h1>
-          <div class="wiki-edit-form">
-            <form action="<%= url_for %>" method="POST">
-              <%= hidden_field op => 'create' %>
-              <label>
-                <div class="wiki-edit-form-title">
-                  % param(title => $title);
-                  %= text_field 'title';
-                </div>
-              </label>
-              <div class="wiki-edit-form-content">
-                %= text_area 'content' => $content;
-              </div>
-              <label>
-                <div class="wiki-edit-form-commit-message-description">
-                  Edit message(Optional)
-                </div>
-                <div class="wiki-edit-form-commit-message">
-                  %= text_field 'commit-message';
-                </div>
-              </label>
-              <div class="wiki-edit-form-create-page-btn">
-                <%= submit_button 'Save page', class => 'btn btn-green btn-new' %>
+                <%= submit_button $submit_button_title, class => 'btn btn-green btn-new' %>
               </div>
             </form>
           </div>
