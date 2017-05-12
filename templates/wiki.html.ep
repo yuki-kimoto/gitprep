@@ -285,7 +285,23 @@
                 <div class="issue-add-comment-header">
                   <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
                   <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
-                  %= include '/include/issue_comment_icon';
+                  <div class="issue-add-comment-icon">
+                    <i class="issue-icon-add-header-text icon icon-font" title="Add header text"></i>
+                    <i class="issue-icon-add-bold-text icon icon-bold" title="Add bold text"></i>
+                    <i class="issue-icon-add-italic-text icon icon-italic" title="Add italic text"></i>
+                    <span style="margin-left:10px"></span>
+                    <i class="issue-icon-insert-quote icon icon-comment" title="Insert a quote"></i>
+                    <i class="issue-icon-insert-code icon icon-file" title="Insert a code"></i>
+                    <i class="issue-icon-add-link icon icon-map-marker" title="Add a link"></i>
+                    <span style="margin-left:10px"></span>
+                    <i class="issue-icon-add-bulleted-list icon icon-list" title="Add a bulleted list"></i>
+                    <i class="issue-icon-add-numbered-list icon icon-th-list" title="Add a numbered list"></i>
+                    <span style="margin-left:10px"></span>
+                    <i class="issue-icon-mension-user icon icon-user" title="Directory mension a user"></i>
+                    <!--
+                      <i class="issue-icon-reference-issue icon icon-bookmark" title="Reference a issue or pull request"></i>
+                    -->
+                  </div>
                 </div>
                 <div class="issue-add-comment-body">
                   <div class="issue-message-write-area issue-add-comment-message">
