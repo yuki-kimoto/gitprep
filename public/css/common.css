@@ -74,6 +74,66 @@ a:hover {
   padding-left:10px;
 }
 
+.wiki-add-comment textarea {
+  width:100%;
+  min-height:200px;
+  padding:10px;
+  border-radius:3px;
+}
+
+.wiki-add-comment-icon {
+  display:inline-block;
+  float:right;
+  padding:6px;
+}
+.wiki-add-comment-icon i {
+  cursor:pointer;
+}
+
+.wiki-add-comment {
+  border:1px solid #e6e9e6;
+  border-radius: 3px;
+  margin-top:10px;
+}
+.wiki-add-comment-header {
+  padding:7px 10px 0 10px;
+  background:#f7f7f7;
+  border-bottom:1px solid #e6e9e6;
+}
+
+.wiki-add-comment-header-tab a.disable {
+  background:none;
+  border:none;
+}
+
+.wiki-add-comment-header-tab a {
+  background:white;
+  display:block;
+  width:100%;
+  padding:8px 13px;
+  color:#333;
+  border:1px solid #e6e9e6;
+  border-bottom:none;
+  border-radius:3px 3px 0 0;
+  margin-bottom:-1px;
+}
+.wiki-add-comment-header-tab a:hover {
+  text-decoration:none;
+  color:inherit;
+}
+.wiki-add-comment-header-tab {
+  display:inline-block;
+}
+
+.wiki-add-comment-preview {
+  min-height:203px;
+  display:none;
+}
+
+.wiki-add-comment-body {
+  padding:10px;
+}
+
 .wiki-add-side-bar {
   border:1px dashed #ddd;
   margin-top:10px;
@@ -568,11 +628,6 @@ ul.issues-label-pallet li {
   margin-bottom:5px;
 }
 
-.issue-add-comment-header-tab a.disable {
-  background:none;
-  border:none;
-}
-
 .issue-add-comment-icon {
   display:inline-block;
   float:right;
@@ -580,6 +635,11 @@ ul.issues-label-pallet li {
 }
 .issue-add-comment-icon i {
   cursor:pointer;
+}
+
+.issue-add-comment-header-tab a.disable {
+  background:none;
+  border:none;
 }
 
 .issue-add-comment-header-tab a {
