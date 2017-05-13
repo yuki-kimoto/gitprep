@@ -39,38 +39,52 @@
   if ($self->req->method eq 'POST') {
     my $op = param('op') // '';
     
-    if ($op eq 'create') {
-      
-      my $title = param('title');
-      my $content = param('content');
-      my $commit_message = param('commit-message');
-      
-      # Validation
-      my $vc = app->vc;
-      my $validation = $vc->validation;
-      
-      # Title
-      if (!length $title) {
-        $validation->add_failed(title => 'Page title is empty.');
-      }
-      elsif ($title =~ /^_/) {
-        if ($title ne '_Sidebar' && $title ne '_Footer') {
-          $validation->add_failed(title => 'Page title can\'t start with _.');
-        }
-      }
-      
-      if (!length $commit_message) {
-        $commit_message = "Updated $title";
-      }
-      
-      if ($validation->is_valid) {
-        $api->create_wiki_page($user_id, $project_id, $title, $content, $commit_message);
+    # Ajax request
+    if ($self->req->is_xhr) {
+      if ($op eq 'preview') {
         
-        $self->redirect_to("/$user_id/$project_id/wiki/$title");
+        my $content = param('content');
+        my $content_md = $api->markdown_wiki($user_id, $project_id, $content);
+        
+        $self->render(json => {markdown => $content_md});
         return;
       }
-      else {
-        $errors = $validation->messages;
+    }
+    # Form request
+    else {
+      if ($op eq 'create') {
+        
+        my $title = param('title');
+        my $content = param('content');
+        my $commit_message = param('commit-message');
+        
+        # Validation
+        my $vc = app->vc;
+        my $validation = $vc->validation;
+        
+        # Title
+        if (!length $title) {
+          $validation->add_failed(title => 'Page title is empty.');
+        }
+        elsif ($title =~ /^_/) {
+          if ($title ne '_Sidebar' && $title ne '_Footer') {
+            $validation->add_failed(title => 'Page title can\'t start with _.');
+          }
+        }
+        
+        if (!length $commit_message) {
+          $commit_message = "Updated $title";
+        }
+        
+        if ($validation->is_valid) {
+          $api->create_wiki_page($user_id, $project_id, $title, $content, $commit_message);
+          
+          $self->redirect_to("/$user_id/$project_id/wiki/$title");
+          return;
+        }
+        else {
+          $errors = $validation->messages;
+        }
       }
     }
   }
@@ -112,7 +126,7 @@
           
           if (defined $content) {
             # Convert wiki link to markdonw link
-            $content_md = $api->markdown_wiki($user_id, $project_id, $title, $content);
+            $content_md = $api->markdown_wiki($user_id, $project_id, $content);
             $display = 'page';
             
             # Side bar
@@ -152,30 +166,30 @@
       init_icon_input();
 
       // Click write tab
-      $('.issue-message-write-tab').on('click', function () {
+      $('.wiki-message-write-tab').on('click', function () {
         var form = $(this).closest('form');
         
-        form.find('.issue-message-write-tab').find('a').attr('class', '');
-        form.find('.issue-message-preview-tab').find('a').attr('class', 'disable');
-        form.find('.issue-message-write-area').css('display', 'block');
-        form.find('.issue-message-preview-area').css('display', 'none');
+        form.find('.wiki-message-write-tab').find('a').attr('class', '');
+        form.find('.wiki-message-preview-tab').find('a').attr('class', 'disable');
+        form.find('.wiki-message-write-area').css('display', 'block');
+        form.find('.wiki-message-preview-area').css('display', 'none');
       });
 
       // Click preview tab
-      $('.issue-message-preview-tab').on('click', function () {
+      $('.wiki-message-preview-tab').on('click', function () {
         var form = $(this).closest('form');
 
-        form.find('.issue-message-write-tab').find('a').attr('class', 'disable');
-        form.find('.issue-message-preview-tab').find('a').attr('class', '');
-        form.find('.issue-message-write-area').css('display', 'none');
-        form.find('.issue-message-preview-area').css('display', 'block');
+        form.find('.wiki-message-write-tab').find('a').attr('class', 'disable');
+        form.find('.wiki-message-preview-tab').find('a').attr('class', '');
+        form.find('.wiki-message-write-area').css('display', 'none');
+        form.find('.wiki-message-preview-area').css('display', 'block');
         
-        var text = form.find('[name=message]').val();
+        var content = form.find('[name=content]').val();
 
-        form.find('.issue-message-preview-area').html('');
-        $.post('<%= url_for('/api/markdown') %>', {text : text}, function (result) {
+        form.find('.wiki-message-preview-area').html('');
+        $.post('<%= url_for %>', {op : "preview", content : content}, function (result) {
           var markdown = result.markdown;
-          form.find('.issue-message-preview-area').html(markdown);
+          form.find('.wiki-message-preview-area').html(markdown);
         });
       });
       

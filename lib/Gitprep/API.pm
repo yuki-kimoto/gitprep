@@ -9,7 +9,7 @@ use Encode 'decode';
 has 'cntl';
 
 sub markdown_wiki {
-  my ($self, $user_id, $project_id, $title, $content) = @_;
+  my ($self, $user_id, $project_id, $content) = @_;
 
   my $url_base = $self->cntl->url_for("/$user_id/$project_id/wiki");
   
@@ -18,7 +18,7 @@ sub markdown_wiki {
     
     # [[Link text|Title]]
     # [[Title]]
-    if (!length $title) {
+    if (!defined $title || !length $title) {
       $title = $link_text;
     }
     
