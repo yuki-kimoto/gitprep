@@ -112,31 +112,7 @@
           
           if (defined $content) {
             # Convert wiki link to markdonw link
-            my $url_base = $self->url_for("/$user_id/$project_id/wiki");
-            
-            my $re_cb = sub {
-              my ($link_text, $title) = @_;
-              
-              # [[Link text|Title]]
-              # [[Title]]
-              if (!length $title) {
-                $title = $link_text;
-              }
-              
-              my $replace = "[$link_text](" . $url_base . "\/$title)";
-              
-              my $exists_page = $api->exists_wiki_page($user_id, $project_id, $title);
-              
-              unless ($exists_page) {
-                $replace = '<span class="wiki-link-no-title">' . $replace . '</span>';
-              }
-              
-              return $replace;
-            };
-
-            $content =~ s/\[\[([^\]\|]+?)(?:\|([^\[\]]+?))?\]\]/$re_cb->($1, $2)/eg;
-            
-            $content_md = $api->markdown($content);
+            $content_md = $api->markdown_wiki($user_id, $project_id, $title, $content);
             $display = 'page';
             
             # Side bar
@@ -174,6 +150,34 @@
       
       // Initialize icon input
       init_icon_input();
+
+      // Click write tab
+      $('.issue-message-write-tab').on('click', function () {
+        var form = $(this).closest('form');
+        
+        form.find('.issue-message-write-tab').find('a').attr('class', '');
+        form.find('.issue-message-preview-tab').find('a').attr('class', 'disable');
+        form.find('.issue-message-write-area').css('display', 'block');
+        form.find('.issue-message-preview-area').css('display', 'none');
+      });
+
+      // Click preview tab
+      $('.issue-message-preview-tab').on('click', function () {
+        var form = $(this).closest('form');
+
+        form.find('.issue-message-write-tab').find('a').attr('class', 'disable');
+        form.find('.issue-message-preview-tab').find('a').attr('class', '');
+        form.find('.issue-message-write-area').css('display', 'none');
+        form.find('.issue-message-preview-area').css('display', 'block');
+        
+        var text = form.find('[name=message]').val();
+
+        form.find('.issue-message-preview-area').html('');
+        $.post('<%= url_for('/api/markdown') %>', {text : text}, function (result) {
+          var markdown = result.markdown;
+          form.find('.issue-message-preview-area').html(markdown);
+        });
+      });
       
       // Repository URL buttons
       var http_rep_url = '<%= url_for("$user/$project.wiki.git")->to_abs %>';

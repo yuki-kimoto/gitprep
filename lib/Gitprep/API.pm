@@ -8,6 +8,37 @@ use Encode 'decode';
 
 has 'cntl';
 
+sub markdown_wiki {
+  my ($self, $user_id, $project_id, $title, $content) = @_;
+
+  my $url_base = $self->cntl->url_for("/$user_id/$project_id/wiki");
+  
+  my $re_cb = sub {
+    my ($link_text, $title) = @_;
+    
+    # [[Link text|Title]]
+    # [[Title]]
+    if (!length $title) {
+      $title = $link_text;
+    }
+    
+    my $replace = "[$link_text](" . $url_base . "\/$title)";
+    
+    my $exists_page = $self->exists_wiki_page($user_id, $project_id, $title);
+    
+    unless ($exists_page) {
+      $replace = '<span class="wiki-link-no-title">' . $replace . '</span>';
+    }
+    
+    return $replace;
+  };
+
+  $content =~ s/\[\[([^\]\|]+?)(?:\|([^\[\]]+?))?\]\]/$re_cb->($1, $2)/eg;
+  my $content_md = $self->markdown($content);
+  
+  return $content_md;
+}
+
 sub exists_wiki_page {
   my ($self, $user_id, $project_id, $title) = @_;
   
