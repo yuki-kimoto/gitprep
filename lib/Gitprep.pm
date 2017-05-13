@@ -493,7 +493,7 @@ sub startup {
               $r->any('/');
               
               # Create page
-              $r->any('/_new')->to(create => 1);
+              $r->any('/_new')->to(new => 1);
               
               # Show pages
               $r->any('/_pages')->to('list-pages' => 1);

@@ -6,7 +6,7 @@
   my $user_id = param('user');
   my $project_id = param('project');
   my $title = param('title');
-  my $create = param('create');
+  my $new = param('new');
   my $edit = param('edit');
   my $list_pages = param('list-pages');
   
@@ -39,7 +39,7 @@
   if ($self->req->method eq 'POST') {
     my $op = param('op') // '';
     
-    if ($op eq 'create') {
+    if ($op eq 'new') {
       
       my $title = param('title');
       my $content = param('content');
@@ -80,8 +80,8 @@
   my $content_sidebar_md;
   my $content_footer_md;
   if ($wiki) {
-    if ($create) {
-      $display = 'create';
+    if ($new) {
+      $display = 'new';
     }
     else {
       if ($edit) {
@@ -90,7 +90,7 @@
           $display = 'edit';
         }
         else {
-          $display = 'create';
+          $display = 'new';
         }
       }
       elsif ($list_pages) {
@@ -151,7 +151,7 @@
             }
           }
           else {
-            $display = 'create';
+            $display = 'new';
           }
         }
       }
@@ -246,7 +246,7 @@
                 </a>
               </li>
             % }
-            % if ($display ne 'create') {
+            % if ($display ne 'new' && $display ne 'init') {
               <li>
                 <a href="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
                   <button class="btn btn-green btn-new">Create page</button>
@@ -260,14 +260,16 @@
       <div class="wiki-container">
         % if ($display eq 'init') {
           <h1 class="topic1">Wiki</h1>
-          <form action="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
-            <%= submit_button 'Create Wiki', class => 'btn btn-green btn-new' %>
-          </form>
-        % } elsif ($display eq 'create' || $display eq 'edit') {
+          <div>
+            <a href="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
+              <button class="btn btn-green btn-new">Create page</button>
+            </a>
+          </div>
+        % } elsif ($display eq 'new' || $display eq 'edit') {
           <%
             my $h1_text;
             my $submit_button_title;
-            if ($display eq 'create') {
+            if ($display eq 'new') {
               $h1_text = 'Create page';
               $submit_button_title = 'Create page';
             }
