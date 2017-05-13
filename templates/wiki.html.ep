@@ -39,7 +39,7 @@
   if ($self->req->method eq 'POST') {
     my $op = param('op') // '';
     
-    if ($op eq 'new') {
+    if ($op eq 'create') {
       
       my $title = param('title');
       my $content = param('content');
