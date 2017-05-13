@@ -2719,6 +2719,11 @@ button.close {
   margin-top:1px;
 }
 
+.header-btn-container a.btn {
+  color:#112;
+  padding:4px 10px 5px 10px;
+}
+
 .footer {
   text-align:center;
   border-top:1px solid #d7dee8;
