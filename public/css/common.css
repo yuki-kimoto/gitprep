@@ -306,8 +306,11 @@ a:hover {
 
 .tree-description {
   font-size:20px;
-  padding-top:5px;
-  padding-bottom:11px;
+  padding-top:7px;
+  padding-bottom:5px;
+  color:#112;
+  margin-bottom:7px;
+  padding-left:6px;
 }
 .tree-description a {
   font-size:18px;
