@@ -10,6 +10,11 @@
   my $page = param('page') || 0;
   my $expand = param('expand');
   
+  unless ($api->logined) {
+    $self->redirect_to("/$base_user_id/$base_project_id/pulls");
+    return;
+  }
+  
   # Default base branch
   $base_branch //= app->manager->default_branch($base_user_id, $base_project_id);
   
@@ -26,6 +31,8 @@
   my $target_user_id;
   my $target_branch;
   my $target_project;
+  my $commit_user_id;
+  
   if (defined $user_id_and_target_branch && $user_id_and_target_branch =~ /^([^:]+):(.+)/) {
     $target_user_id = $1;
     $target_branch = $2;
@@ -263,7 +270,8 @@
     project => $target_project->{id},
     rep_info => $work_rep_info,
     rev => $end_commit_id,
-    from_rev => $start_commit_id
+    from_rev => $start_commit_id,
+	target_user_id => $target_user_id,
   );
 
   layout 'common', title => "Comparing $base_branch...$target_branch \x{30fb} $base_user_id/$base_project_id";
@@ -662,6 +670,13 @@
                 'id',
                 where => {email => $commit_author_email}
               )->value;
+			
+			if (defined $commit_author_id) {
+				$commit_user_id = $commit_author_id;
+			} else {
+				$commit_user_id = $target_user_id;
+			}
+		
             %>
             <li>
               <div class="compare-commits-author">
@@ -674,12 +689,12 @@
                 </span>
               </div>
               <div class="compare-commits-commit-title">
-                <a style="color:#333" href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
+                <a style="color:#333" href="<%= url_for("/$commit_user_id/$target_project->{id}/commit/$commit->{id}") %>">
                   <%= $commit->{title_short} %>
                 </a>
               </div>
               <div class="compare-commits-commit-id">
-                <a href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
+                <a href="<%= url_for("/$commit_user_id/$target_project->{id}/commit/$commit->{id}") %>">
                   <%= substr($commit->{id}, 0, 7) %>
                 </a>
               </div>
