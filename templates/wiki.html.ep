@@ -220,6 +220,13 @@
       else {
         $('#btn_http').trigger('click');
       }
+      
+      // Click delete page
+      $('#wiki-btn-delete-page').on('click', function () {
+        if (window.confirm('This page is deleted. OK?')) {
+          alert('aaa');
+        }
+      });
     });
   % end
 
@@ -267,7 +274,14 @@
                 </a>
               </li>
             % }
-            % if ($display ne 'new' && $display ne 'init') {
+            % if ($display eq 'edit') {
+              <li>
+                <a id="wiki-btn-delete-page" href="javascript:void(0)">
+                  <button class="btn btn-delete">Delete page</button>
+                </a>
+              </li>
+            % }
+            % if ($display ne 'new' && $display ne 'init' && $display ne 'edit') {
               <li>
                 <a href="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
                   <button class="btn btn-green btn-new">Create page</button>

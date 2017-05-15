@@ -2183,15 +2183,15 @@ button.close {
   cursor: default;
 }
 
-.btn-fork, .btn-new {
+.btn-fork, .btn-new, .btn-delete {
   font-size:13px;
   padding:5px 20px;
   height:28px;
 }
 
-.btn-delete {
-  padding:1px 10px;
-  height:20px;
+a:hover .btn-delete {
+  background:red;
+  color:white;
 }
 
 .btn-primary {
