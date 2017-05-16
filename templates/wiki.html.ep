@@ -41,12 +41,17 @@
     
     # Ajax request
     if ($self->req->is_xhr) {
-      if ($op eq 'preview') {
+      if ($op eq 'ajax-preview') {
         
         my $content = param('content');
         my $content_md = $api->markdown_wiki($user_id, $project_id, $content);
         
         $self->render(json => {markdown => $content_md});
+        return;
+      }
+      elsif ($op eq 'ajax-delete') {
+        
+        $self->render(json => {success => 1});
         return;
       }
     }
@@ -187,7 +192,7 @@
         var content = form.find('[name=content]').val();
 
         form.find('.wiki-message-preview-area').html('');
-        $.post('<%= url_for %>', {op : "preview", content : content}, function (result) {
+        $.post('<%= url_for %>', {op : "ajax-preview", content : content}, function (result) {
           var markdown = result.markdown;
           form.find('.wiki-message-preview-area').html(markdown);
         });
@@ -224,7 +229,9 @@
       // Click delete page
       $('#wiki-btn-delete-page').on('click', function () {
         if (window.confirm('This page is deleted. OK?')) {
-          alert('aaa');
+          $.post('<%= url_for %>', {op : "ajax-delete", title : "<%= $title %>"}, function (result) {
+            alert('aaa');
+          });
         }
       });
     });
