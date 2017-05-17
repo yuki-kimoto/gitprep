@@ -4,7 +4,7 @@ use Mojo::Base -base;
 use Digest::MD5 'md5_hex';
 use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
 use Carp 'croak';
-use Encode 'decode';
+use Encode 'decode', 'encode';
 
 has 'cntl';
 
@@ -52,7 +52,7 @@ sub exists_wiki_page {
   # File abs name
   my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
   
-  my $exists = -f $file_abs_name;
+  my $exists = -f encode('UTF-8', $file_abs_name);
   
   return $exists;
 }
@@ -93,12 +93,12 @@ sub get_wiki_page_content {
   # File abs name
   my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
   
-  unless (-f $file_abs_name) {
+  unless (-f encode('UTF-8', $file_abs_name)) {
     return;
   }
   
-  open my $fh, '<', $file_abs_name
-    or die "Can't open file \"$file_abs_name\": $!";
+  open my $fh, '<', encode('UTF-8', $file_abs_name)
+    or die "Can't open file \"" . encode('UTF-8', $file_abs_name) . "\": $!";
   
   my $content = do { local $/; <$fh> };
   
@@ -145,14 +145,15 @@ sub create_wiki_page {
   
   # File name
   my $file_name = $title;
-  $file_name =~ s/\s+/-/;
+  $file_name =~ s/^ +//;
+  $file_name =~ s/ +$//;
   $file_name .= '.md';
   
   # File abs name
   my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
   
-  open my $fh, '>', $file_abs_name
-    or die "Can't open file \"$file_abs_name\": $!";
+  open my $fh, '>', encode('UTF-8', $file_abs_name)
+    or die "Can't open file \"". encode('UTF-8', $file_abs_name) . "\": $!";
   
   # Write content to file
   print $fh $content;
@@ -196,6 +197,90 @@ sub create_wiki_page {
     '-q',
     '-m',
     $commit_message
+  );
+  Gitprep::Util::run_command(@git_commit_cmd)
+    or croak "Can't execute git commit: @git_commit_cmd";
+  
+  # Push
+  {
+    my @git_push_cmd = $self->app->git->cmd(
+      $wiki_work_rep_info,
+      'push',
+      '-q',
+      $wiki_rep_info->{git_dir},
+      'master'
+    );
+    # (This is bad, but --quiet option can't supress in old git)
+    Gitprep::Util::run_command(@git_push_cmd)
+      or croak "Can't execute git push: @git_push_cmd";
+  }
+}
+
+sub delete_wiki_page {
+  my ($self, $user_id, $project_id, $title) = @_;
+  
+  # Project row id
+  my $project_row_id = $self->get_project_row_id($user_id, $project_id);
+  
+  # Get wiki
+  my $wiki = $self->app->dbi->model('wiki')->select(where => {project => $project_row_id})->one;
+  
+  # Wiki working directory
+  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
+  
+  # Wiki repository
+  my $wiki_rep_info = $self->app->wiki_rep_info($user_id, $project_id);
+  
+  # File name
+  my $file_name = $title;
+  $file_name .= '.md';
+  
+  # File abs name
+  my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
+  
+  # Delete file
+  if (-f encode('UTF-8', $file_abs_name)) {
+    unlink encode('UTF-8', $file_abs_name)
+      or die "Can't delete file \"" . encode('UTF-8', $file_abs_name) . "\": $!";
+  }
+  
+  # Check file changes
+  my $is_file_change;
+  {
+    my @git_status_cmd = $self->app->git->cmd(
+      $wiki_work_rep_info,
+      'status',
+      '-s',
+      $wiki_work_rep_info->{work_tree}
+    );
+    open my $fh, '-|', @git_status_cmd
+      or croak "Can't execute @git_status_cmd";
+    my $result = <$fh>;
+    
+    $is_file_change = length $result ? 1 : 0;
+  }
+  
+  # Nothing to do if files is not changed
+  return unless $is_file_change;
+  
+  # Git remove
+  my @git_rm_cmd = $self->app->git->cmd(
+    $wiki_work_rep_info,
+    'rm',
+    encode('UTF-8', $file_abs_name)
+  );
+  
+  Gitprep::Util::run_command(@git_rm_cmd)
+    or croak "Can't execute git rm: @git_rm_cmd";
+  
+  # Commit
+  my $commit_message = "Deleted $title";
+  my @git_commit_cmd = $self->app->git->cmd(
+    $wiki_work_rep_info,
+    'commit',
+    '-q',
+    '-m',
+    encode('UTF-8', $commit_message)
   );
   Gitprep::Util::run_command(@git_commit_cmd)
     or croak "Can't execute git commit: @git_commit_cmd";
