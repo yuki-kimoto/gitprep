@@ -329,6 +329,7 @@
           <div class="wiki-edit-form">
             <form action="<%= url_for %>" method="POST">
               <%= hidden_field op => 'create' %>
+              <%= hidden_field 'original-title' => $title %>
               <label>
                 <div class="wiki-edit-form-title">
                   % param(title => $title);
