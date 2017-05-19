@@ -61,7 +61,8 @@
     else {
       if ($op eq 'create') {
         
-        my $title = param('title');
+        my $update_title = param('update-title');
+        my $original_title = param('original-title');
         my $content = param('content');
         my $commit_message = param('commit-message');
         
@@ -70,7 +71,7 @@
         my $validation = $vc->validation;
         
         # Title
-        if (!length $title) {
+        if (!length $update_title) {
           $validation->add_failed(title => 'Page title is empty.');
         }
         elsif ($title =~ /^_/) {
@@ -80,11 +81,18 @@
         }
         
         if (!length $commit_message) {
-          $commit_message = "Updated $title";
+          $commit_message = "Updated $update_title";
         }
-        
+
         if ($validation->is_valid) {
-          $api->create_wiki_page($user_id, $project_id, $title, $content, $commit_message);
+          # Rename and update page
+          if (defined $original_title && length $original_title && $update_title ne $original_title) {
+            $api->rename_and_update_wiki_page($user_id, $project_id, $original_title, $update_title, $content, $commit_message);
+          }
+          # Create or update page
+          else {
+            $api->create_wiki_page($user_id, $project_id, $update_title, $content, $commit_message);
+          }
           
           $self->redirect_to("/$user_id/$project_id/wiki/$title");
           return;
@@ -332,8 +340,7 @@
               <%= hidden_field 'original-title' => $title %>
               <label>
                 <div class="wiki-edit-form-title">
-                  % param(title => $title);
-                  %= text_field 'title', placeholder => 'Title';
+                  %= text_field 'update-title' => $title, placeholder => 'Title';
                 </div>
               </label>
               <div class="wiki-add-comment">
