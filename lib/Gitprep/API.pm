@@ -216,6 +216,115 @@ sub create_wiki_page {
   }
 }
 
+sub rename_and_update_wiki_page {
+  my ($self, $user_id, $project_id, $original_title, $title, $content, $commit_message) = @_;
+  
+  # Project row id
+  my $project_row_id = $self->get_project_row_id($user_id, $project_id);
+  
+  # Update page
+  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
+  my $wiki_rep_info = $self->app->wiki_rep_info($user_id, $project_id);
+  
+  # Original file name
+  my $original_file_name = $original_title;
+  $original_file_name =~ s/^ +//;
+  $original_file_name =~ s/ +$//;
+  $original_file_name .= '.md';
+  
+  # File name
+  my $file_name = $title;
+  $file_name =~ s/^ +//;
+  $file_name =~ s/ +$//;
+  $file_name .= '.md';
+
+  # Original file abs name
+  my $original_file_abs_name = "$wiki_work_rep_info->{work_tree}/$original_file_name";
+  
+  # File abs name
+  my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
+  
+  # Create file
+  open my $fh, '>', encode('UTF-8', $file_abs_name)
+    or die "Can't open file \"". encode('UTF-8', $file_abs_name) . "\": $!";
+  
+  # Write content to file
+  print $fh $content;
+  
+  # Close file
+  close $fh;
+  
+  # Delete original file
+  if (-f encode('UTF-8', $original_file_abs_name)) {
+    unlink encode('UTF-8', $original_file_abs_name)
+      or die "Can't delete file \"" . encode('UTF-8', $original_file_abs_name) . "\": $!";
+  }
+  
+  # Check file changes
+  my $is_file_change;
+  {
+    my @git_status_cmd = $self->app->git->cmd(
+      $wiki_work_rep_info,
+      'status',
+      '-s',
+      $wiki_work_rep_info->{work_tree}
+    );
+    open my $fh, '-|', @git_status_cmd
+      or croak "Can't execute @git_status_cmd";
+    my $result = <$fh>;
+    
+    $is_file_change = length $result ? 1 : 0;
+  }
+  
+  # Nothing to do if files is not changed
+  return unless $is_file_change;
+
+  # Git remove
+  my @git_rm_cmd = $self->app->git->cmd(
+    $wiki_work_rep_info,
+    'rm',
+    encode('UTF-8', $original_file_abs_name)
+  );
+  
+  Gitprep::Util::run_command(@git_rm_cmd)
+    or croak "Can't execute git rm: @git_rm_cmd";
+  
+  # Add
+  my @git_add_cmd = $self->app->git->cmd(
+    $wiki_work_rep_info,
+    'add',
+    $wiki_work_rep_info->{work_tree}
+  );
+  
+  Gitprep::Util::run_command(@git_add_cmd)
+    or croak "Can't execute git add: @git_add_cmd";
+
+  # Commit
+  my @git_commit_cmd = $self->app->git->cmd(
+    $wiki_work_rep_info,
+    'commit',
+    '-q',
+    '-m',
+    $commit_message
+  );
+  Gitprep::Util::run_command(@git_commit_cmd)
+    or croak "Can't execute git commit: @git_commit_cmd";
+  
+  # Push
+  {
+    my @git_push_cmd = $self->app->git->cmd(
+      $wiki_work_rep_info,
+      'push',
+      '-q',
+      $wiki_rep_info->{git_dir},
+      'master'
+    );
+    # (This is bad, but --quiet option can't supress in old git)
+    Gitprep::Util::run_command(@git_push_cmd)
+      or croak "Can't execute git push: @git_push_cmd";
+  }
+}
+
 sub delete_wiki_page {
   my ($self, $user_id, $project_id, $title) = @_;
   

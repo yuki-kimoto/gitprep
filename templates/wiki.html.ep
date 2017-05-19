@@ -80,21 +80,23 @@
           }
         }
         
-        if (!length $commit_message) {
-          $commit_message = "Updated $update_title";
-        }
-
         if ($validation->is_valid) {
           # Rename and update page
           if (defined $original_title && length $original_title && $update_title ne $original_title) {
+            if (!length $commit_message) {
+              $commit_message = "Renamed $original_title to $update_title and updated $update_title";
+            }
             $api->rename_and_update_wiki_page($user_id, $project_id, $original_title, $update_title, $content, $commit_message);
           }
           # Create or update page
           else {
+            if (!length $commit_message) {
+              $commit_message = "Updated $update_title";
+            }
             $api->create_wiki_page($user_id, $project_id, $update_title, $content, $commit_message);
           }
           
-          $self->redirect_to("/$user_id/$project_id/wiki/$title");
+          $self->redirect_to("/$user_id/$project_id/wiki/$update_title");
           return;
         }
         else {
