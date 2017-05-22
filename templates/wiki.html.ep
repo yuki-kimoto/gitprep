@@ -261,9 +261,46 @@
         <%= include '/include/message', message => flash('message') %>
       </div>
       
+      % if ($display eq 'page' || $display eq 'list-pages') {
+        <ul class="commits-count">
+          <li>
+            <a href="<%= url_for("/$user_id/$project_id/wiki") %>">
+              <span class="commits-count-number">
+                <i class="icon-home" style="position:relative;top:-1px"></i>
+              </span>
+              <span class="commits-count-type">
+                Home
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">
+              <span class="commits-count-number">
+                <i class="icon-tags" style="position:relative;top:-1px"></i>
+                <%= 13 %>
+              </span>
+              <span class="commits-count-type">
+                pages
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="<%= url_for("/$user_id/$project_id/branches") %>">
+              <span class="commits-count-number">
+                <i class="icon-indent-left" style="position:relative;top:-1px"></i>
+                <%= 15 %>
+              </span>
+              <span class="commits-count-type">
+                commits
+              </span>
+            </a>
+          </li>
+        </ul>
+      % }
+        
       <div class="wiki-top">
         <div class="wiki-top-git-url">
-          % if ($display eq 'page' && $title eq 'Home') {
+          % if ($display eq 'page' || $display eq 'list-pages') {
             <ul class="git-url-container">
               % if ($logined) {
                 <li>
@@ -277,12 +314,6 @@
                 <input id="rep_url" type="text">
               </li>
             </ul>
-          % }
-          
-          % if ($display eq 'page' && $title ne 'Home') {
-            <div class="wiki-home-link">
-              <a href="<%= url_for("/$user_id/$project_id/wiki") %>">Home</a>
-            </div>
           % }
         </div>
         
@@ -407,11 +438,6 @@
             % }
           </div>
           <div class="wiki-right">
-            <ul class="wiki-list-pages-box">
-              <li>
-                <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">Pages</a>
-              </li>
-            </ul>
             % if ($exists_sidebar) {
               <div class="wiki-side-bar">
                 <%== $content_sidebar_md %>
