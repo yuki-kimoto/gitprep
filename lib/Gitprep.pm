@@ -504,8 +504,11 @@ sub startup {
               # Edit wiki page
               $r->any('/:title/_edit')->to(edit => 1);
               
-              # Wiki commits
-              $r->get('/commits/*rev_file' => sub { shift->render_maybe('/commits') })->to(wiki => 1);
+              # Commits
+              $r->get('/commits/*rev_file' => sub { shift->render_maybe('/commits') });
+              
+              # Commit
+              $r->get('/commit/*diff' => sub { shift->render_maybe('/commit') });
             }
 
             # Commit

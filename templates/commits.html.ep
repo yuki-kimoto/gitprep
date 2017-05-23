@@ -9,7 +9,8 @@
   my $user_id = param('user');
   my $project_id = param('project');
   my $rev_file = param('rev_file');
-  my $is_wiki = stash('wiki');
+
+  my $is_wiki = (stash('tab') // '') eq 'wiki';
   
   my $user_project_path = "/$user_id/$project_id";
   if ($is_wiki) {

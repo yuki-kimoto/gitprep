@@ -2,10 +2,20 @@
   # Parameters
   my $user_id = stash('user');
   my $project_id = stash('project');
-  my $rep_info = stash('rep_info') // app->rep_info($user_id, $project_id);
+  my $rep_info = stash('rep_info');
   my $rev = stash('rev');
   my $from_rev = stash('from_rev');
 
+  my $is_wiki = (stash('tab') // '') eq 'wiki';
+  my $user_project_path = "/$user_id/$project_id";
+  if ($is_wiki) {
+    $user_project_path .= '/wiki';
+  }
+  
+  unless ($rep_info) {
+    $rep_info = $is_wiki ? app->wiki_rep_info($user_id, $project_id) : app->rep_info($user_id, $project_id);
+  }
+  
   my $param_ignore_space_change = param('w');
   my $ignore_space_change;
   if ($param_ignore_space_change) {
