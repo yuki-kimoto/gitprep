@@ -9,14 +9,17 @@
   my $user = param('user');
   my $project = param('project');
   my $rev_file = param('rev_file');
+  my $wiki = param('wiki');
   
   my $render_atom_feed = $rev_file =~ s/\.atom$// ? 1 : 0;
   
-  my ($rev, $file) = $git->parse_rev_path(app->rep_info($user, $project), $rev_file);
+  my $rep_info = $wiki ? app->wiki_rep_info($user, $project) : app->rep_info($user, $project);
+  
+  my ($rev, $file) = $git->parse_rev_path($rep_info, $rev_file);
   my $page = param('page') || 0;
   
   # Latest commit
-  my $latest_commit = $git->get_commit(app->rep_info($user, $project), $rev);
+  my $latest_commit = $git->get_commit($rep_info, $rev);
 
   # Authors
   my %author_id_of = map { $_->{email} => $_->{id} }
@@ -25,7 +28,7 @@
   # Commits
   my $page_count = 30;
   my $commits = $git->get_commits(
-    app->rep_info($user, $project),
+    $rep_info,
     $latest_commit->{id},
     $page_count,
     $page_count * $page,
