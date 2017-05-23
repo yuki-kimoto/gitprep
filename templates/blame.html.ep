@@ -6,29 +6,37 @@
   my $git = $self->app->git;
   
   # Parameters
-  my $user = param('user');
-  my $project = param('project');
+  my $user_id = param('user');
+  my $project_id = param('project');
   my $rev_file = param('rev_file');
-  my ($rev, $file) = $git->parse_rev_path(app->rep_info($user, $project), $rev_file);
+
+  my $is_wiki = (stash('tab') // '') eq 'wiki';
+  my $user_project_path = "/$user_id/$project_id";
+  if ($is_wiki) {
+    $user_project_path .= '/wiki';
+  }
+  my $rep_info = $is_wiki ? app->wiki_rep_info($user_id, $project_id) : app->rep_info($user_id, $project_id);
+
+  my ($rev, $file) = $git->parse_rev_path($rep_info, $rev_file);
 
   # Commit
-  my $commit = $git->last_change_commit(app->rep_info($user, $project), $rev, $file);
+  my $commit = $git->last_change_commit($rep_info, $rev, $file);
   
   # Authors
-  my $authors = $git->authors(app->rep_info($user, $project), $rev, $file);
+  my $authors = $git->authors($rep_info, $rev, $file);
   
   # File size
-  my $file_size = $git->blob_size(app->rep_info($user, $project), $rev, $file);
+  my $file_size = $git->blob_size($rep_info, $rev, $file);
 
   # File mode
-  my $mode = $git->blob_mode(app->rep_info($user, $project), $rev, $file);
+  my $mode = $git->blob_mode($rep_info, $rev, $file);
   my $file_type = $git->file_type_long($mode);
 
   # MIME type
-  my $mime_type = $git->blob_mime_type(app->rep_info($user, $project), $rev, $file);
+  my $mime_type = $git->blob_mime_type($rep_info, $rev, $file);
 
   # Blame
-  my $blame = $git->blame(app->rep_info($user, $project), $rev, $file);
+  my $blame = $git->blame($rep_info, $rev, $file);
   my $blame_lines = $blame->{lines};
   my $blame_min_author_time = $blame->{min_author_time};
   my $blame_max_author_time = $blame->{max_author_time};
@@ -48,10 +56,10 @@
   ];
   
   # Variables for included template
-  stash(id => $rev, project => $project, rev => $rev);
+  stash(id => $rev, project => $project_id, rev => $rev);
 %>
 
-% layout 'common' , title => "$user/$project at $rev";
+% layout 'common' , title => "$user_id/$project_id at $rev";
 
   %= include '/include/header';
   
@@ -77,13 +85,13 @@
       <div class="file-header-right">
         <ul>
           <li>
-            <a class="btn btn-small" href="<%= url_for("/$user/$project/raw/$rev/$file") %>">Raw</a>
+            <a class="btn btn-small" href="<%= url_for("$user_project_path/raw/$rev/$file") %>">Raw</a>
           </li>
           <li>
-            <a class="btn btn-small" href="<%= url_for("/$user/$project/blob/$rev/$file") %>">Normal View</a>
+            <a class="btn btn-small" href="<%= url_for("$user_project_path/blob/$rev/$file") %>">Normal View</a>
           </li>
           <li>
-            <a class="btn btn-small" href="<%= url_for("/$user/$project/commits/$rev/$file") %>">History</a>
+            <a class="btn btn-small" href="<%= url_for("$user_project_path/commits/$rev/$file") %>">History</a>
           </li>
         </ul>
       </div>
@@ -112,7 +120,7 @@
                     <%= $summary_short %>
                   </div>
                   <div class="blame-commit-id">
-                    <a href="<%= url_for("/$user/$project/commit/$blame_commit") %>" ><%= substr($blame_commit, 0, 7) %></a>
+                    <a href="<%= url_for("$user_project_path/commit/$blame_commit") %>" ><%= substr($blame_commit, 0, 7) %></a>
                   </div>
                 </div>
                 <div class="blame-author">

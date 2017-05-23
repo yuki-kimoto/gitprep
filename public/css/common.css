@@ -24,6 +24,35 @@
     color:#767676
 */
 
+.btn, .btn:visited {
+  display: inline-block;
+  padding: 4px 12px 3px 12px;
+  font-size: 11px;
+  color:#395582;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  background: -moz-linear-gradient(top,#FFF 0%,#EEE);
+  background: -webkit-gradient(linear, left top, left bottom, from(#FFF), to(#EEE));
+  height:26px;
+}
+
+.btn:hover,
+.btn:focus,
+.btn:active,
+.btn.active,
+.btn.disabled,
+.btn[disabled] {
+  background:#eff2f4;
+  text-decoration:none;
+}
+
+.btn.disabled,
+.btn[disabled] {
+  cursor: default;
+}
+
 body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 14px;
@@ -59,6 +88,19 @@ a:hover {
   -o-box-sizing: border-box;
   -ms-box-sizing: border-box;
   box-sizing: border-box;
+}
+
+a.wiki-btn-history {
+  display:block;
+  font-size:14px;
+  padding:5px 8px;
+  height:28px;
+  background:#fff;
+  border:1px solid white;
+  width:100%;
+}
+a.wiki-btn-history:hover {
+  background:white;
 }
 
 .wiki-count {
@@ -2178,35 +2220,6 @@ button.close {
   background: transparent;
   border: 0;
   -webkit-appearance: none;
-}
-
-.btn, .btn:visited {
-  display: inline-block;
-  padding: 4px 12px 3px 12px;
-  font-size: 11px;
-  color:#395582;
-  text-align: center;
-  cursor: pointer;
-  border: 1px solid #cccccc;
-  border-radius: 4px;
-  background: -moz-linear-gradient(top,#FFF 0%,#EEE);
-  background: -webkit-gradient(linear, left top, left bottom, from(#FFF), to(#EEE));
-  height:26px;
-}
-
-.btn:hover,
-.btn:focus,
-.btn:active,
-.btn.active,
-.btn.disabled,
-.btn[disabled] {
-  background:#eff2f4;
-  text-decoration:none;
-}
-
-.btn.disabled,
-.btn[disabled] {
-  cursor: default;
 }
 
 .btn-fork, .btn-new, .btn-delete {

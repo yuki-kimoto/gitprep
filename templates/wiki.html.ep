@@ -321,6 +321,11 @@
           <ul class="wiki-top-buttons">
             % if ($display eq 'page') {
               <li>
+                <a class="wiki-btn-history" href="<%= url_for("/$user_id/$project_id/wiki/commits/master/$title.md") %>" >
+                  History
+                </a>
+              </li>
+              <li>
                 <a href="<%= url_for("/$user_id/$project_id/wiki/$title/_edit") %>">
                   <button class="btn btn-new">Edit</button>
                 </a>
