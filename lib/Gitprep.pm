@@ -509,6 +509,12 @@ sub startup {
               
               # Commit
               $r->get('/commit/*diff' => sub { shift->render_maybe('/commit') });
+              
+              # Tree
+              $r->get('/tree/*rev_dir' => sub { shift->render_maybe('/tree') });
+              
+              # Blob
+              $r->get('/blob/*rev_file' => sub { shift->render_maybe('/blob') });
             }
 
             # Commit

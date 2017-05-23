@@ -55,9 +55,11 @@
   %= include '/include/header';
 
   <div class="container">
-    <div style="margin-bottom:20px;">
-      %= include '/include/branch_select', display => 'blob', Path => $file;
-    </div>
+    % unless ($is_wiki) {
+      <div style="margin-bottom:20px;">
+        %= include '/include/branch_select', display => 'blob', Path => $file;
+      </div>
+    % }
 
     <div class="commit-summary">
       <div class="commit-summary-left-container">
