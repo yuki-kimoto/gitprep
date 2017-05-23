@@ -6,13 +6,21 @@
   my $git = $self->app->git;
   
   # Parameters
-  my $user = param('user');
-  my $project = param('project');
+  my $user_id = param('user');
+  my $project_id = param('project');
   my $rev_file = param('rev_file');
-  my ($rev, $file) = $git->parse_rev_path(app->rep_info($user, $project), $rev_file);
+
+  my $is_wiki = (stash('tab') // '') eq 'wiki';
+  my $user_id_project_path = "/$user_id/$project_id";
+  if ($is_wiki) {
+    $user_id_project_path .= '/wiki';
+  }
+  my $rep_info = $is_wiki ? app->wiki_rep_info($user_id, $project_id) : app->rep_info($user_id, $project_id);
+
+  my ($rev, $file) = $git->parse_rev_path($rep_info, $rev_file);
 
   # Commit
-  my $commit = $git->last_change_commit(app->rep_info($user, $project), $rev, $file);
+  my $commit = $git->last_change_commit($rep_info, $rev, $file);
   my $commit_author_email = $commit->{author_email};
   my $commit_author_id = app->dbi->model('user')->select(
     'id',
@@ -20,27 +28,27 @@
   )->value;
 
   # Authors
-  my $authors = $git->authors(app->rep_info($user, $project), $rev, $file);
+  my $authors = $git->authors($rep_info, $rev, $file);
   
   # File size
-  my $file_size = $git->blob_size(app->rep_info($user, $project), $rev, $file);
+  my $file_size = $git->blob_size($rep_info, $rev, $file);
   
   # File mode
-  my $mode = $git->blob_mode(app->rep_info($user, $project), $rev, $file);
+  my $mode = $git->blob_mode($rep_info, $rev, $file);
   my $file_type = $git->file_type_long($mode);
   
   # MIME type
-  my $mime_type = $git->blob_mime_type(app->rep_info($user, $project), $rev, $file);
+  my $mime_type = $git->blob_mime_type($rep_info, $rev, $file);
 
   # Blob lines(only text)
   my $lines;
-  $lines = $git->blob(app->rep_info($user, $project), $rev, $file) if $mime_type =~ /^text/;
+  $lines = $git->blob($rep_info, $rev, $file) if $mime_type =~ /^text/;
 
   # Variables for included template
-  stash(id => $rev, project => $project, rev => $rev);
+  stash(id => $rev, project => $project_id, rev => $rev);
 %>
 
-<% layout 'common' , title => "$project/$file at $rev \x{30fb} $user/$project",
+<% layout 'common' , title => "$project_id/$file at $rev \x{30fb} $user_id/$project_id",
      stylesheets => ['/js/google-code-prettify/prettify.css']; %>
 
 %
@@ -60,12 +68,12 @@
             <%= $commit->{author_name} %>
           % }
         </span>
-        <a href="<%= url_for("/$user/$project/commit/$rev") %>">
+        <a href="<%= url_for("$user_id_project_path/commit/$rev") %>">
           <%= $commit->{title} %>
         </a>
       </div>
       <div class="commit-summary-right-container">
-        <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+        <a href="<%= url_for("$user_id_project_path/commit/$commit->{id}") %>">
           <%= substr($commit->{id}, 0, 7) %>
         </a>
         <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
@@ -88,15 +96,15 @@
         <div class="file-header-right">
           <ul>
             <li>
-              <a class="btn btn-small" href="<%= url_for("/$user/$project/raw/$rev/$file") %>">Raw</a>
+              <a class="btn btn-small" href="<%= url_for("$user_id_project_path/raw/$rev/$file") %>">Raw</a>
             </li>
             % if ($mime_type =~ m#^text/#) {
               <li>
-                <a class="btn btn-small" href="<%= url_for("/$user/$project/blame/$rev/$file") %>">Blame</a>
+                <a class="btn btn-small" href="<%= url_for("$user_id_project_path/blame/$rev/$file") %>">Blame</a>
               </li>
             % }
             <li>
-              <a class="btn btn-small" href="<%= url_for("/$user/$project/commits/$rev/$file") %>">History</a>
+              <a class="btn btn-small" href="<%= url_for("$user_id_project_path/commits/$rev/$file") %>">History</a>
             </li>
           </ul>
         </div>
@@ -108,15 +116,15 @@
           % if (defined $file) {
             alt="<%= $file %>" title="<%= $file %>"
           % }
-          src="<%= url_for("/$user/$project/raw/$rev/$file") %>"
+          src="<%= url_for("$user_id_project_path/raw/$rev/$file") %>"
         />
       </div>
     % } elsif ($mime_type =~ m#^text/#) {
       % if ($file =~ /\.md$/) {
         <%
           my $readme = join "\n", @$lines;
-          $readme =~ s#^(\[.*\]:)(?!\s*https?://)\s*(\S*)#{"$1 " . url_for("/$user/$project/raw/$rev/$2")}#mge;
-          $readme =~ s#^(!\[.*\]\()(?!https?://)(\S*)#{$1 . url_for("/$user/$project/raw/$rev/$2")}#mge;
+          $readme =~ s#^(\[.*\]:)(?!\s*https?://)\s*(\S*)#{"$1 " . url_for("$user_id_project_path/raw/$rev/$2")}#mge;
+          $readme =~ s#^(!\[.*\]\()(?!https?://)(\S*)#{$1 . url_for("$user_id_project_path/raw/$rev/$2")}#mge;
           my $readme_e = $api->markdown($readme);
         %>
         <div class="readme-frame">
@@ -129,7 +137,7 @@
       % }
     % } else {
       <div class="blob-raw">
-        <a href="<%= url_for("/$user/$project/raw/$rev/$file") %>">View raw</a>
+        <a href="<%= url_for("$user_id_project_path/raw/$rev/$file") %>">View raw</a>
       </div>
     % }
   </div>
