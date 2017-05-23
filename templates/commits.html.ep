@@ -6,14 +6,19 @@
   my $git = $self->app->git;
 
   # Parameters
-  my $user = param('user');
-  my $project = param('project');
+  my $user_id = param('user');
+  my $project_id = param('project');
   my $rev_file = param('rev_file');
-  my $wiki = param('wiki');
+  my $is_wiki = stash('wiki');
+  
+  my $user_project_path = "/$user_id/$project_id";
+  if ($is_wiki) {
+    $user_project_path .= '/wiki';
+  }
   
   my $render_atom_feed = $rev_file =~ s/\.atom$// ? 1 : 0;
   
-  my $rep_info = $wiki ? app->wiki_rep_info($user, $project) : app->rep_info($user, $project);
+  my $rep_info = $is_wiki ? app->wiki_rep_info($user_id, $project_id) : app->rep_info($user_id, $project_id);
   
   my ($rev, $file) = $git->parse_rev_path($rep_info, $rev_file);
   my $page = param('page') || 0;
@@ -43,7 +48,7 @@
   }
   
   # Global variable
-  stash(user => $user, project => $project, rev => $rev);
+  stash(user => $user_id, project => $project_id, rev => $rev);
   
   # Render atom xml feed
   if ($render_atom_feed) {
@@ -73,8 +78,8 @@
   
   # Set stash
   stash(
-    user => $user,
-    project => $project,
+    user => $user_id,
+    project => $project_id,
     rev => $rev
   );
 #%>
@@ -88,23 +93,23 @@
 #%>
 <?xml version="1.0" encoding="UTF-8" ?>
 <feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xml:lang="en-US">
-  <id>tag:gitprep,2008:/<%= $user %>/<%= $project %>/commits/<%= $rev_file %></id>
+  <id>tag:gitprep,2008:/<%= $user_id %>/<%= $project_id %>/commits/<%= $rev_file %></id>
   <link type="text/html" rel="alternate" href="<%= $alternate_url->to_abs %>"/>
   <link type="application/atom+xml" rel="self" href="<%= url_with->to_abs %>"/>
-  <title>Recent Commits to <%= "$project:$rev" %></title>
+  <title>Recent Commits to <%= "$project_id:$rev" %></title>
   <updated><%= $commits->[0]->{updated} %></updated>
 
     % for my $commit (@$commits) {
   <entry>
     <id>tag:gitprep,2008:Grit::Commit/<%= $commit->{id} %></id>
-    <link type="text/html" rel="alternate" href="<%= url_for("/$user/$project/commit/$commit->{id}")->to_abs %>" />
+    <link type="text/html" rel="alternate" href="<%= url_for("$user_project_path/commit/$commit->{id}")->to_abs %>" />
     <title>
         <%= $commit->{title} %>
     </title>
     <updated><%= $commit->{updated} %></updated>
     <author>
-      <name><%= $user %></name>
-      <uri><%= url_for("/$user")->to_abs %></uri>
+      <name><%= $user_id %></name>
+      <uri><%= url_for("/$user_id")->to_abs %></uri>
     </author>
     <content type="html">
       <%= "<pre style='white-space:pre-wrap;width:81ex'>$commit->{title}</pre>" %>
@@ -113,14 +118,16 @@
     % }
 </feed>
 % } else {
-  % layout 'common', title => "Commit History \x{30fb} $user/$project";
+  % layout 'common', title => "Commit History \x{30fb} $user_id/$project_id";
     
     %= include '/include/header';
 
     <div class="container">
-      <div>
-        %= include '/include/branch_select', display => 'commits';
-      </div>
+      % unless ($is_wiki) {
+        <div>
+          %= include '/include/branch_select', display => 'commits';
+        </div>
+      % }
       
       <div class="commits">
         % for my $date (reverse sort keys %$commits_date) {
@@ -137,7 +144,7 @@
               <li>
                 <div class="commit-left">
                   <div class="commit-left-title">
-                    <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                    <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
                       <b><%= $commit->{title_short} %></b>
                     </a>
                   </div>
@@ -156,12 +163,12 @@
                 <div class="commit-right">
                   <div class="commit-right-container">
                     <div class="commit-right-commit-id">
-                      <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                      <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
                         <%= substr($commit->{id}, 0, 7) %>
                       </a>
                     </div>
                     <div class="commit-right-browse-repository">
-                      <a title="Browse the repository at this point in the history" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
+                      <a title="Browse the repository at this point in the history" href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
                         &lt;&gt;
                       </a>
                     </div>
@@ -181,7 +188,7 @@
           % } else {
             % my $newer_page = $page - 1;
             <li>
-              <a href="<%= url_for("/$user/$project/commits/$rev?page=$newer_page") %>">Newer</a>
+              <a href="<%= url_for("$user_project_path/commits/$rev?page=$newer_page") %>">Newer</a>
             </li>
           % }
           % if ($commits_count < $page_count) {
@@ -189,7 +196,7 @@
           % } else {
             % my $older_page = $page + 1;
             <li>
-              <a href="<%= url_for("/$user/$project/commits/$rev?page=$older_page") %>">Older</a>
+              <a href="<%= url_for("$user_project_path/commits/$rev?page=$older_page") %>">Older</a>
             </li>
           % }
         </ul>

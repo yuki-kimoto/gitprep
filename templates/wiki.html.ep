@@ -285,7 +285,7 @@
             </a>
           </li>
           <li>
-            <a href="<%= url_for("/$user_id/$project_id/commits/master") %>">
+            <a href="<%= url_for("/$user_id/$project_id/wiki/commits/master") %>">
               <span class="wiki-count-number">
                 <i class="icon-repeat" style="position:relative;top:-1px"></i>
                 <%= 15 %>
