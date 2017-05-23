@@ -3,16 +3,24 @@
   my $git = app->git;
 
   # Parameters
-  my $user = param('user');
-  my $project = param('project');
+  my $user_id = param('user');
+  my $project_id = param('project');
   my $rev_file = param('rev_file');
-  my ($rev, $file) = $git->parse_rev_path(app->rep_info($user, $project), $rev_file);
+
+  my $is_wiki = (stash('tab') // '') eq 'wiki';
+  my $user_id_project_path = "/$user_id/$project_id";
+  if ($is_wiki) {
+    $user_id_project_path .= '/wiki';
+  }
+  my $rep_info = $is_wiki ? app->wiki_rep_info($user_id, $project_id) : app->rep_info($user_id, $project_id);
+
+  my ($rev, $file) = $git->parse_rev_path($rep_info, $rev_file);
   
   # Blob raw
-  my $blob_raw = $git->blob_raw(app->rep_info($user, $project), $rev, $file);
+  my $blob_raw = $git->blob_raw($rep_info, $rev, $file);
   
   # Content type
-  my $type = $git->blob_content_type(app->rep_info($user, $project), $rev, $file);
+  my $type = $git->blob_content_type($rep_info, $rev, $file);
 
   # File name
   my $file_name = $rev;

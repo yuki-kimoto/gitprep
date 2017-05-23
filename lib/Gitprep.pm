@@ -515,6 +515,12 @@ sub startup {
               
               # Blob
               $r->get('/blob/*rev_file' => sub { shift->render_maybe('/blob') });
+              
+              # Raw
+              $r->get('/raw/*rev_file' => sub { shift->render_maybe('/raw') });
+              
+              # Blame
+              $r->get('/blame/*rev_file' => sub { shift->render_maybe('/blame') });
             }
 
             # Commit
