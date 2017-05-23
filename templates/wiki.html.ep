@@ -262,35 +262,35 @@
       </div>
       
       % if ($display eq 'page' || $display eq 'list-pages') {
-        <ul class="commits-count">
+        <ul class="wiki-count">
           <li>
             <a href="<%= url_for("/$user_id/$project_id/wiki") %>">
-              <span class="commits-count-number">
+              <span class="wiki-count-number">
                 <i class="icon-home" style="position:relative;top:-1px"></i>
               </span>
-              <span class="commits-count-type">
+              <span class="wiki-count-type">
                 Home
               </span>
             </a>
           </li>
           <li>
             <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">
-              <span class="commits-count-number">
-                <i class="icon-tags" style="position:relative;top:-1px"></i>
+              <span class="wiki-count-number">
+                <i class="icon-leaf" style="position:relative;top:-1px"></i>
                 <%= 13 %>
               </span>
-              <span class="commits-count-type">
+              <span class="wiki-count-type">
                 pages
               </span>
             </a>
           </li>
           <li>
             <a href="<%= url_for("/$user_id/$project_id/branches") %>">
-              <span class="commits-count-number">
-                <i class="icon-indent-left" style="position:relative;top:-1px"></i>
+              <span class="wiki-count-number">
+                <i class="icon-repeat" style="position:relative;top:-1px"></i>
                 <%= 15 %>
               </span>
-              <span class="commits-count-type">
+              <span class="wiki-count-type">
                 commits
               </span>
             </a>

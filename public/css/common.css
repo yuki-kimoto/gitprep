@@ -61,6 +61,31 @@ a:hover {
   box-sizing: border-box;
 }
 
+.wiki-count {
+  margin:0;
+  border: 1px solid #ddd;
+  margin-bottom:10px;
+}
+
+.wiki-count li {
+  display:inline-block;
+  width:25%;
+  margin-left:0px;
+  list-style-type: none;
+  padding:0;
+  text-align:center;
+}
+.wiki-count li a {
+  width:100%;
+  display:block;
+  padding:5px 0;
+  color:#767676;
+}
+.wiki-count li a:hover {
+  color:#4078c0;
+  text-decoration:none;
+}
+
 .wiki {
   overflow:hidden;
 }
