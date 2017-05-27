@@ -46,7 +46,8 @@ sub exists_wiki_page {
   
   # File name
   my $file_name = $title;
-  $file_name =~ s/\s+/-/;
+  $file_name =~ s/^ +//;
+  $file_name =~ s/ +$//;
   $file_name .= '.md';
   
   # File abs name
@@ -88,7 +89,8 @@ sub get_wiki_page_content {
   
   # File name
   my $file_name = $title;
-  $file_name =~ s/\s+/-/;
+  $file_name =~ s/^ +//;
+  $file_name =~ s/ +$//;
   $file_name .= '.md';
   
   # File abs name
