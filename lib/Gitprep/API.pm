@@ -122,8 +122,7 @@ sub create_wiki_page {
   unless ($wiki) {
     # Create wiki
     my $new_wiki = {
-      project => $project_row_id,
-      home => $title
+      project => $project_row_id
     };
     
     eval {
