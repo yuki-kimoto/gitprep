@@ -70,6 +70,7 @@ sub get_wiki_pages {
   # Pages
   my @pages;
   while (my $file = readdir $dh) {
+    $file = decode('UTF-8', $file);
     next if $file =~ /^\./;
     $file =~ s/\.[^\.]+$//;
     push @pages, $file;
