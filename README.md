@@ -109,6 +109,10 @@ you have to add the correct git command path to the **gitprep.conf** config file
     ;;; Git command path
     git_bin=/home/yourname/local/bin/git
 
+And do some settings
+
+    git config --global core.quotepath false
+
 ### Start gitprep server
 
 You can start the application by running the provided gitprep script.

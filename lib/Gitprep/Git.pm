@@ -340,6 +340,7 @@ sub blob_diffs {
   
   open my $fh, '-|', @cmd
     or croak('Open self-diff-tree failed');
+  
   my @diff_tree;
   my @diff_tree_lines = <$fh>;
   my $diff_tree_enc = $self->decide_encoding($rep_info, \@diff_tree_lines);
