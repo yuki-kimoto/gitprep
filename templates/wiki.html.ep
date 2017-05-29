@@ -174,7 +174,11 @@
     }
   }
   
+  # Pages count
   my $pages_count = $api->get_wiki_pages_count($user_id, $project_id);
+  
+  # Commits number
+  my $commits_number = app->git->commits_number(app->wiki_rep_info($user_id, $project_id), 'master');
   
   layout 'common', title => "Wiki - $user_id/$project_id";
 %>
@@ -293,7 +297,7 @@
             <a href="<%= url_for("/$user_id/$project_id/wiki/commits/master") %>">
               <span class="wiki-count-number">
                 <i class="icon-repeat" style="position:relative;top:-1px"></i>
-                <%= 15 %>
+                <%= $commits_number %>
               </span>
               <span class="wiki-count-type">
                 commits
