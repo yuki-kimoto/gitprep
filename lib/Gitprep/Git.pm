@@ -323,7 +323,18 @@ sub blob_diffs {
   my $ignore_space_change = $opt->{ignore_space_change};
   
   return unless defined $rev1 && defined $rev2;
-  
+
+  # Config quotepath false
+  # Fix UTF-8 file name problem
+  my @git_config_quotepath = $self->cmd(
+    $rep_info,
+    'config',
+    'core.quotepath',
+    'false'
+  );
+  Gitprep::Util::run_command(@git_config_quotepath)
+    or croak "Can't execute git config: @git_config_quotepath";
+
   # Diff tree
   my @cmd = $self->cmd(
     $rep_info,
