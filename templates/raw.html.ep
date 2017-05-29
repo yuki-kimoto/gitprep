@@ -28,7 +28,7 @@
   elsif ($type =~ m/^text\//) { $file_name .= '.txt' }
   
   # Content disposition
-  my $content_disposition = "inline; filename=$file_name";
+  my $content_disposition = "inline; filename*=UTF-8''" . Encode::encode('UTF-8', $file_name);
   
   # Response
   $self->res->headers->content_disposition($content_disposition);
