@@ -59,7 +59,7 @@ sub exists_wiki_page {
 }
 
 sub get_wiki_pages {
-  my ($self, $user_id, $project_id, $title) = @_;
+  my ($self, $user_id, $project_id) = @_;
   
   my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
   
@@ -80,6 +80,28 @@ sub get_wiki_pages {
   @pages = sort { lc $a cmp lc $b } @pages;
   
   return \@pages;
+}
+
+sub get_wiki_pages_count {
+  my ($self, $user_id, $project_id) = @_;
+  
+  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
+  
+  # Open directory
+  my $dir = $wiki_work_rep_info->{work_tree};
+  opendir my $dh, $dir
+    or croak "Can't open directory \"$dir\":$!";
+  
+  # Pages
+  my $count = 0;
+  while (my $file = readdir $dh) {
+    $file = decode('UTF-8', $file);
+    next if $file =~ /^\./;
+    $file =~ s/\.[^\.]+$//;
+    $count++;
+  }
+  
+  return $count;
 }
 
 sub get_wiki_page_content {
