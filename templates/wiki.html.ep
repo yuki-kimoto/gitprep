@@ -113,6 +113,13 @@
   my $exists_footer;
   my $content_sidebar_md;
   my $content_footer_md;
+
+  # Pages count
+  my $pages_count;
+  
+  # Commits number
+  my $commits_number;
+
   if ($new) {
     $display = 'new';
     unless ($wiki) {
@@ -121,6 +128,9 @@
   }
   else {
     if ($wiki) {
+      $pages_count = $api->get_wiki_pages_count($user_id, $project_id);
+      $commits_number = app->git->commits_number(app->wiki_rep_info($user_id, $project_id), 'master');
+      
       if ($edit) {
         $content = $api->get_wiki_page_content($user_id, $project_id, $title);
         if (defined $content) {
@@ -173,12 +183,6 @@
       $display = 'init';
     }
   }
-  
-  # Pages count
-  my $pages_count = $api->get_wiki_pages_count($user_id, $project_id);
-  
-  # Commits number
-  my $commits_number = app->git->commits_number(app->wiki_rep_info($user_id, $project_id), 'master');
   
   layout 'common', title => "Wiki - $user_id/$project_id";
 %>
