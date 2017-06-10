@@ -4,8 +4,13 @@ GitPrep is **portable Github system**. You can install portable GitHub system in
 
 <img src="gitprep_01.png" width="870" border="1">
 
+
+## GitPrep example
+
 At first, Let's try **[GitPrep example](https://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)**.
 You will find GitPrep is real portable GitHub system.
+
+You can use all of repository, pull request, issue, wiki.
 
 ## Features
 
