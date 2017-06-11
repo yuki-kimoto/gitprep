@@ -30,7 +30,7 @@ Difficult settings is unnecessary.
 Even if you have troubles by your mistake, for example "git push -f origin master",
 you can access all of your git repositories **directory** and fix them.
 
-All reporitories are yours. All repositories exists on **your own server**.
+All reporitories are yours. All repositories exist on **your own server**.
 
 Open source. **All free**.
 
