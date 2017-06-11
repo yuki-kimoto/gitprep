@@ -63,11 +63,11 @@ If you don't have Perl 5.10.1+, you need to install a newer perl version with pe
     curl -L http://install.perlbrew.pl | bash
     echo "source ~/perl5/perlbrew/etc/bashrc" >> ~/.bash_profile
     source ~/.bash_profile
-    
+
     perlbrew install perl-5.16.3
     perlbrew switch perl-5.16.3
     perl -v
-    
+
 Download GitPrep .tar.gz archive, expand it and change directory:
 
     curl -kL https://github.com/yuki-kimoto/gitprep/archive/latest.tar.gz > gitprep-latest.tar.gz
@@ -88,7 +88,7 @@ Check if module setup successes. Run the following command.
 
     prove t
 
-If "syntax OK" is displayed, setup was successful. 
+If "syntax OK" is displayed, setup was successful.
 
 Setup database.
 
@@ -100,7 +100,7 @@ with the following command
     # Backup gitprep directory for safety
     cd ..
     cp -rp gitprep gitprep.bak
-    
+
     # Upgrade database
     cd gitprep
     mv data/gitprep.db data/gitprep_v1bak.db
@@ -218,7 +218,7 @@ You maybe see the following error
     fatal: The remote end hung up unexpectedly
 
 Please increase increase the value of MOJO_MAX_MESSAGE_SIZE
-    
+
     # 1GB
     export MOJO_MAX_MESSAGE_SIZE=1024000000
 
@@ -240,7 +240,7 @@ You maybe see the following error message.
     Everything up-to-date
 
 Please increase the value of http.postBuffer.
-    
+
     # 1GB
     git config http.postBuffer 1024000000
 
@@ -255,7 +255,7 @@ You can use GitPrep via reverse proxy access
 
 I show apache config example.
 You can use Name virtual host.
-    
+
     # HTTP
     <VirtualHost *:80>
 
@@ -264,13 +264,13 @@ You can use Name virtual host.
         Order deny,allow
         Allow from all
       </Proxy>
-      
+
       ProxyRequests Off
       ProxyPreserveHost On
       ProxyPass / http://localhost:10020/ keepalive=On
       ProxyPassReverse / http://localhost:10020/
       RequestHeader set X-Forwarded-Proto "https"
-        
+
     </VirtualHost>
 
 If you use GitPrep via https, you should set X-Forwarded-HTTPS Request Header.
@@ -283,7 +283,7 @@ If you use GitPrep via https, you should set X-Forwarded-HTTPS Request Header.
         Order deny,allow
         Allow from all
       </Proxy>
-      
+
       ProxyRequests Off
       ProxyPreserveHost On
       ProxyPass / http://localhost:10020/ keepalive=On
@@ -320,7 +320,7 @@ Next you set http server config file. The following is apache example.
 
       ProxyPass /app2 http://localhost:10021/app2 keepalive=On
       ProxyPassReverse /app2 http://localhost:3001/app2
-      
+
       RequestHeader set X-Forwarded-Proto "https"
     </VirtualHost>
 
@@ -351,10 +351,10 @@ Please fix it the following way.
 
     # Run SQLite client
     sqlite3 data/gitprep.db
-    
+
     # drop collaboration table
     drop table collaboration;
-    
+
     # Restart
     ./gitprep
 
@@ -381,7 +381,7 @@ At first, set [basic]ssh_rep_url_base option to /~/git
     ssh_rep_url_base=/~/git
 
 Next, you create symbolic link to /home/gitprep/gitprep/data/rep
-    
+
     cd ~
     ln -s ~/gitprep/data/rep ~/git
 
@@ -470,10 +470,10 @@ you must remove extlib directory before running the "./setup_module" command.
 You should know the following small changes.
 
 **1. X-Forwarded-HTTPS header is deprecated. use  X-Forwarded-Proto header.**
-    
+
     # This is deprecated in GitPrep 2.0
     RequestHeader set X-Forwarded-HTTPS "1"
-    
+
     # Use X-Forwarded-Proto instead
     RequestHeader set X-Forwarded-Proto "https"
 
@@ -511,7 +511,7 @@ Sorry, I found critical database specification mistake in GitPrep from v2.0 to v
 and fix it in v2.3.
 All your pull requests is removed when upgrading from v2.0-v2.2 to v2.3+.
 Please create Pull request again by the following command.
-    
+
     old/fix_v2_pull_request data/gitprep.db
 
 ### Are there other ways to install GitPrep?
@@ -521,7 +521,7 @@ Please create Pull request again by the following command.
 You may install and install, run GitPrep via sparrow plugin.
 
     $ cpanm Sparrow
-    $ sparrow index update 
+    $ sparrow index update
     $ sparrow plg install gitprep
 
 Please follow [gitprep plugin documentation](https://sparrowhub.org/info/gitprep) for details.
@@ -597,7 +597,7 @@ We can create web application which support CGI with a little effort.
 All you do is always using **url_for** method or **url_with** method in your templates when you write URL.
 
     <a href="<%= url_for('/foo') %>">Bar</a>
-    
+
     <a href="<%= url_with('/foo') %>">Bar</a>
 
 Mojolicious automatically resolve URL for both embded server and CGI.
