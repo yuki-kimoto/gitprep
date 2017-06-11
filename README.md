@@ -28,7 +28,7 @@ You can use all of repository, pull request, issue, wiki.
 Difficult settings is unnecessary.
 
 Even if you have troubles by your mistake, for example "git push -f origin master",
-you can access all of your git repositories **directory** and fix them.
+you can access all of your git repositories **directly** and fix them.
 
 All reporitories are yours. All repositories exist on **your own server**.
 
