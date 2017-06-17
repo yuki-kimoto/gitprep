@@ -188,7 +188,7 @@ At least, blame page work well in git 1.8.2.1.
 It is very easy. you only overwrite all files except for "gitprep.conf".
 
 If you want to upgrade by "git pull", you can do it.
-you create "gitprep.my.conf" copied from "gitprep.my.conf",
+you create "gitprep.my.conf" copied from "gitprep.conf",
 and do "git pull"
 
 If you get a rainbow unicorn t-rex error after upgrading, you might be missing
