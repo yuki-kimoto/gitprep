@@ -516,15 +516,34 @@ Please create Pull request again by the following command.
 
 ### Are there other ways to install GitPrep?
 
-**Use sparrow**
+**Sparrowdo**
 
-You may install and install, run GitPrep via sparrow plugin.
+You can use Sparrowdo to install GitPrep on remote server ( by ssh ) or on running Docker container:
 
-    $ cpanm Sparrow
-    $ sparrow index update 
-    $ sparrow plg install gitprep
+Here is example for Docker minimal Debian image:
 
-Please follow [gitprep plugin documentation](https://sparrowhub.org/info/gitprep) for details.
+    $ zef install Sparrowdo
+
+    $ docker pull bitnami/minideb-extras 
+    $ docker run --name instance0 -d bitnami/minideb-extras -expose=10020:10020  bash
+
+    $ sparrowdo \
+      --bootstrap
+      --docker=instance1 \
+      --no_sudo --sparrowfile=deploy/sparrowfile.install.pl6  
+      \--format=production
+
+And for remote server:
+
+    $ sparrowdo \
+      --bootstrap
+      --host=$ipaddress \
+      --no_sudo --sparrowfile=deploy/sparrowfile.install.pl6  
+      \--format=production
+
+Caveat - this installation method only supported for Linux OS.
+
+Follow [Sparrowdo](https://github.com/melezhik/sparrowdo) for the details.
 
 ## For Developers
 
