@@ -533,6 +533,8 @@ Here is example for Docker minimal Debian image:
       --no_sudo --sparrowfile=deploy/sparrowfile.install.pl6 \
       --format=production
 
+    $ firefox 127.0.0.1:10020
+
 And for remote server:
 
     $ sparrowdo \
@@ -540,6 +542,8 @@ And for remote server:
       --host=$ipaddress \
       --no_sudo --sparrowfile=deploy/sparrowfile.install.pl6 \
       --format=production
+
+    $ firefox $ipaddress:10020
 
 Caveat - this installation method is only supported for Linux OS.
 
