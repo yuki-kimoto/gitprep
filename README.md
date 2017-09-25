@@ -530,18 +530,18 @@ Here is example for Docker minimal Debian image:
     $ sparrowdo \
       --bootstrap
       --docker=instance1 \
-      --no_sudo --sparrowfile=deploy/sparrowfile.install.pl6  
-      \--format=production
+      --no_sudo --sparrowfile=deploy/sparrowfile.install.pl6 \
+      --format=production
 
 And for remote server:
 
     $ sparrowdo \
       --bootstrap
       --host=$ipaddress \
-      --no_sudo --sparrowfile=deploy/sparrowfile.install.pl6  
-      \--format=production
+      --no_sudo --sparrowfile=deploy/sparrowfile.install.pl6 \
+      --format=production
 
-Caveat - this installation method only supported for Linux OS.
+Caveat - this installation method is only supported for Linux OS.
 
 Follow [Sparrowdo](https://github.com/melezhik/sparrowdo) for the details.
 
