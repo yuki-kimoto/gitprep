@@ -188,7 +188,7 @@ At least, blame page work well in git 1.8.2.1.
 It is very easy. you only overwrite all files except for "gitprep.conf".
 
 If you want to upgrade by "git pull", you can do it.
-you create "gitprep.my.conf" copied from "gitprep.my.conf",
+you create "gitprep.my.conf" copied from "gitprep.conf",
 and do "git pull"
 
 If you get a rainbow unicorn t-rex error after upgrading, you might be missing
@@ -516,15 +516,38 @@ Please create Pull request again by the following command.
 
 ### Are there other ways to install GitPrep?
 
-**Use sparrow**
+**Sparrowdo**
 
-You may install and install, run GitPrep via sparrow plugin.
+You can use Sparrowdo to install GitPrep on remote server ( by ssh ) or on running Docker container:
 
-    $ cpanm Sparrow
-    $ sparrow index update 
-    $ sparrow plg install gitprep
+Here is example for Docker minimal Debian image:
 
-Please follow [gitprep plugin documentation](https://sparrowhub.org/info/gitprep) for details.
+    $ zef install Sparrowdo
+
+    $ docker pull bitnami/minideb-extras 
+    $ docker run --name instance0 -d bitnami/minideb-extras -expose=10020:10020  bash
+
+    $ sparrowdo \
+      --bootstrap
+      --docker=instance1 \
+      --no_sudo --sparrowfile=deploy/sparrowfile.install.pl6 \
+      --format=production
+
+    $ firefox 127.0.0.1:10020
+
+And for remote server:
+
+    $ sparrowdo \
+      --bootstrap
+      --host=$ipaddress \
+      --no_sudo --sparrowfile=deploy/sparrowfile.install.pl6 \
+      --format=production
+
+    $ firefox $ipaddress:10020
+
+Caveat - this installation method is only supported for Linux OS.
+
+Follow [Sparrowdo](https://github.com/melezhik/sparrowdo) for the details.
 
 ## For Developers
 
