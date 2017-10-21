@@ -711,6 +711,8 @@ Thanks for helping my GitPrep project.
 * [programmerMOT](https://github.com/programmerMOT)
 * [sn0](https://github.com/sn0)
 * [socialmedialabs](https://github.com/socialmedialabs)
+* [troneill](https://github.com/troneill)
+
 
 ## Copyright & license
 
