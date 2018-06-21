@@ -11,11 +11,12 @@ use Gitprep;
 my $debug = 0;
 
 # Project name pattern
-my $project_re = qr/[a-zA-Z0-9_\-\.]+$/;
+my $project_re = qr/$Gitprep::project_re$/;
 
 # User
 my $session_user_id = shift;
 die "User not specifed" unless defined $session_user_id;
+my $user_re = qr/$Gitprep::user_re/;
 
 # Application
 my $app = Mojo::Server->new->load_app("$FindBin::Bin/gitprep");
@@ -78,7 +79,7 @@ sub parse_ssh_original_command {
   $ssh_original_command ||= '';
 
   my $git_commands = "git-upload-pack|git-receive-pack|git-upload-archive";
-  if ($ssh_original_command =~ m(^($git_commands) '.*/([a-zA-Z0-9_]+)/([^\/]+?)\.git'$)) {
+  if ($ssh_original_command =~ m(^($git_commands) '.*/($user_re)/([^\/]+?)\.git'$)) {
     my ($verb, $user_id, $project_id) = ($1, $2, $3);
     warn "User:$user_id, Project:$project_id" if $debug;
     die "invalid repo name: '$project_id'\n" if $project_id !~ $project_re;
