@@ -4,4 +4,6 @@ deny from all
 allow from all
 </Files>
 
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+
 DirectoryIndex index.cgi
