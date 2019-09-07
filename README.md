@@ -600,7 +600,7 @@ GitPrep is the best example for developers who want to create installabel Mojoli
 
 Even if shared hosting server, you can install Mojolicious application as CGI.
 
-###1. cpanm and cpanfile, module installation and version controll###
+###1. cpanm and cpanfile, module installation and version control###
 
 [Tatsuhiko Miyagawa](http://weblog.bulknews.net/)'s cpanm and cpanfile is the tool which install CPAN module easily.
 
