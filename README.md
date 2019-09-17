@@ -553,7 +553,7 @@ Follow [Sparrowdo](https://github.com/melezhik/sparrowdo) for the details.
 
 You can use Docker to build your own container based on Alpine Linux. This image configures SSHD to be run by user root and GitPrep to be run by user gitprep.
 
-    docker build ./deploy -t jndeverteuil/gitprep:latest
+    docker build ./deploy -t yuki-kimoto/gitprep:latest
 
 With that build, you can start a service with docker-compose:
 
@@ -561,7 +561,7 @@ With that build, you can start a service with docker-compose:
 
     services:
     gitprep:
-        image: jndeverteuil/gitprep:latest
+        image: yuki-kimoto/gitprep:latest
         container_name: gitprep
         hostname: gitprep
         restart: always
