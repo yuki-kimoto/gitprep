@@ -1,0 +1,18 @@
+version: "3"
+
+services:
+  gitprep:
+    image: yuki-kimoto/gitprep:latest
+    container_name: gitprep
+    hostname: gitprep
+    restart: always
+    ports:
+      - "10020:10020"
+      - "0.0.0.0:2222:22"
+    volumes:
+      - gitprep:/home/gitprep
+      - sshd:/etc/ssh
+
+volumes:
+   gitprep:
+   sshd:
