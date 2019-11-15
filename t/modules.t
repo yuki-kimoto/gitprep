@@ -27,3 +27,4 @@ use_ok('ExtUtils::ParseXS');
 use_ok('Test::MockModule');
 use_ok('Digest::SHA');
 use_ok('Text::Markdown::Hoedown');
+use_ok('HTML::Restrict');

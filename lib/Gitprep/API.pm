@@ -3,6 +3,7 @@ use Mojo::Base -base;
 
 use Digest::MD5 'md5_hex';
 use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
+use HTML::Restrict;
 use Carp 'croak';
 use Encode 'decode', 'encode';
 
@@ -622,14 +623,61 @@ sub add_issue_message {
 sub markdown {
   my ($self, $markdown_text) = @_;
 
-  # Remove script tags
-  $markdown_text =~ s/\<\s*script\s*.*?\>//g;
-  $markdown_text =~ s/\<\s*\/\s*script\s*.*?\>//g;
-
   my $html_text = Text::Markdown::Hoedown::markdown(
     $markdown_text, extensions => HOEDOWN_EXT_FENCED_CODE|HOEDOWN_EXT_TABLES|HOEDOWN_EXT_NO_INTRA_EMPHASIS
   );
-  
+
+  my $hr = HTML::Restrict->new(
+    rules => {
+      h1 => [qw( id class )],
+      h2 => [qw( id class )],
+      h3 => [qw( id class )],
+      h4 => [qw( id class )],
+      h5 => [qw( id class )],
+      h6 => [qw( id class )],
+      p => [qw( id class )],
+      div => [qw( id class )],
+      span => [qw( id class )],
+      br => [qw( class / )],
+      em => [qw( class )],
+      strong => [qw( class )],
+      code => [qw( id class )],
+      pre => [qw( id class )],
+      tt => [qw( id class )],
+      kbd => [qw( class )],
+      del => [qw( id class cite datetime )],
+      hr => [qw( class / )],
+      ul => [qw( class )],
+      ol => [qw( class )],
+      dl => [qw( class )],
+      dt => [qw( class )],
+      dd => [qw( class )],
+      li => [qw( class )],
+      a => [qw( href id class )],
+      img => [qw( src alt title align id class / )],
+      blockquote => [qw( id class )],
+      table => [qw( id class border width bgcolor cellspacing )],
+      th => [qw( class rowspan colspan bgcolor align valign )],
+      tr => [qw( class rowspan colspan bgcolor align valign )],
+      td => [qw( class rowspan colspan bgcolor align valign )],
+      thead => [qw( class bgcolor align valign )],
+      tbody => [qw( class bgcolor align valign )],
+      tfoot => [qw( class bgcolor align valign )],
+      caption => [qw( class align valign )],
+      col => [qw( class align valign )],
+      colgroup => [qw( class align valign )],
+      sup => [qw( class )],
+      sub => [qw( class )],
+      b => [qw( class )],
+      i => [qw( class )],
+      u => [qw( class )],
+      s => [qw( class )],
+      strike => [qw( class )]
+    }
+  );
+
+  $html_text = $hr->process($html_text);
+
   return $html_text;
 }
 
