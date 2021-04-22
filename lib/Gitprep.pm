@@ -24,7 +24,7 @@ use Time::Moment;
 
 our $VERSION = 'v2.6.1';
 
-our $user_re = qr/[a-zA-Z0-9\-]+/;
+our $user_re = qr/[a-zA-Z0-9_\-]+/;
 our $project_re = qr/[a-zA-Z0-9_\-\.]+/;
 
 has 'dbi';
