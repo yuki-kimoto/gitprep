@@ -15,3 +15,4 @@ requires 'Mojolicious::Plugin::INIConfig', '== 0.03';
 requires 'Mojolicious::Plugin::DBViewer', '== 0.28';
 requires 'Text::Markdown::Hoedown', '== 1.01';
 requires 'Time::Moment', '== 0.38';
+requires 'HTML::Restrict', '== 3.0.0';
