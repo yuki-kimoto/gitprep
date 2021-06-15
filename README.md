@@ -549,6 +549,33 @@ Caveat - this installation method is only supported for Linux OS.
 
 Follow [Sparrowdo](https://github.com/melezhik/sparrowdo) for the details.
 
+**Dockerfile and docker-compose**
+
+You can use Docker to build your own container based on Alpine Linux. This image configures SSHD to be run by user root and GitPrep to be run by user gitprep.
+
+    docker build ./deploy -t jndeverteuil/gitprep:latest
+
+With that build, you can start a service with docker-compose:
+
+    version: "3"
+
+    services:
+    gitprep:
+        image: jndeverteuil/gitprep:latest
+        container_name: gitprep
+        hostname: gitprep
+        restart: always
+        ports:
+        - "10020:10020"
+        - "0.0.0.0:2222:22"
+        volumes:
+        - gitprep:/home/gitprep
+        - sshd:/etc/ssh
+
+    volumes:
+    gitprep:
+    sshd:
+
 ## For Developers
 
 ### Run GitPrep in development mode
@@ -573,7 +600,7 @@ GitPrep is the best example for developers who want to create installabel Mojoli
 
 Even if shared hosting server, you can install Mojolicious application as CGI.
 
-###1. cpanm and cpanfile, module installation and version controll###
+###1. cpanm and cpanfile, module installation and version control###
 
 [Tatsuhiko Miyagawa](http://weblog.bulknews.net/)'s cpanm and cpanfile is the tool which install CPAN module easily.
 

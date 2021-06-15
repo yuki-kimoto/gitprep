@@ -24,6 +24,9 @@ use Time::Moment;
 
 our $VERSION = 'v2.6.2';
 
+our $user_re = qr/[a-zA-Z0-9_\-]+/;
+our $project_re = qr/[a-zA-Z0-9_\-\.]+/;
+
 has 'dbi';
 has 'git';
 has 'manager';
@@ -294,14 +297,14 @@ sub startup {
     user_name => sub {
       my $value = shift;
       
-      return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/;
+      return ($value || '') =~ /^$user_re$/;
     },
     project_name => sub {
       my $value = shift;
       return 0 unless defined $value;
       return 0 if $value eq '.' || $value eq '..';
 
-      return ($value || '') =~ /[a-zA-Z0-9_\-\.]+$/;
+      return ($value || '') =~ /$project_re$/;
     }
   );
   
@@ -311,12 +314,12 @@ sub startup {
     return 0 unless defined $value;
     return 0 if $value eq '.' || $value eq '..';
     
-    return ($value || '') =~ /[a-zA-Z0-9_\-\.]+$/;
+    return ($value || '') =~ /$project_re$/;
   });
   $vc->add_check(user_name => sub {
     my ($vc, $value) = @_;
     
-    return ($value || '') =~ /^[a-zA-Z0-9_\-]+$/;
+    return ($value || '') =~ /^$user_re$/;
   });
   
   # Basic auth plugin
