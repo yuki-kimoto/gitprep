@@ -1,3 +1,12 @@
+2.6.2 20201-06-15
+  - Issue #141: Insert markdown buttons fix on new.html.ep
+  - Fix bug #144
+  - fix BUG "fatal: Authentication failed #38"
+  - Added instructions to build GitPrep docker container
+  - removed Carriage Return Character from docker files
+  - add underscore symbol to username regexp
+  - Data::Page::Navigation is version up to 0.07
+
 2.6.1 (2017-06-10)
   - add wiki feature
 2.5.1 (2016-12-6)
