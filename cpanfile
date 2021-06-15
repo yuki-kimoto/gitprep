@@ -7,7 +7,7 @@ requires 'DBIx::Custom', '== 0.40';
 requires 'Validator::Custom', '== 1.01';
 requires 'Config::Tiny', '== 2.23';
 requires 'Data::Page', '== 2.02';
-requires 'Data::Page::Navigation', '== 0.06';
+requires 'Data::Page::Navigation', '== 0.07';
 requires 'Mojolicious', '== 6.57';
 requires 'Mojolicious::Plugin::BasicAuth', '== 0.08';
 requires 'Mojolicious::Plugin::AutoRoute', '== 0.19';
