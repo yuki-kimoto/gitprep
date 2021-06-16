@@ -1,6 +1,6 @@
-requires 'Time::HiRes', '== 1.9732';
-requires 'DBD::SQLite', '== 1.50';
-requires 'DBI', '== 1.634';
+requires 'Time::HiRes', '== 1.9764';
+requires 'DBD::SQLite', '== 1.66';
+requires 'DBI', '== 1.643';
 requires 'DBIx::Connector', '== 0.56';
 requires 'Object::Simple', '== 3.14';
 requires 'DBIx::Custom', '== 0.40';
@@ -13,5 +13,5 @@ requires 'Mojolicious::Plugin::BasicAuth', '== 0.08';
 requires 'Mojolicious::Plugin::AutoRoute', '== 0.19';
 requires 'Mojolicious::Plugin::INIConfig', '== 0.03';
 requires 'Mojolicious::Plugin::DBViewer', '== 0.28';
-requires 'Text::Markdown::Hoedown', '== 1.01';
-requires 'Time::Moment', '== 0.38';
+requires 'Text::Markdown::Hoedown', '== 1.03';
+requires 'Time::Moment', '== 0.44';

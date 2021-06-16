@@ -1,3 +1,11 @@
+2.6.3 20201-06-16
+  - module version update
+    requires 'Time::HiRes', '== 1.9764';
+		requires 'DBD::SQLite', '== 1.66';
+		requires 'DBI', '== 1.643';
+		requires 'Text::Markdown::Hoedown', '== 1.03';
+		requires 'Time::Moment', '== 0.44';
+  
 2.6.2 20201-06-15
   - Issue #141: Insert markdown buttons fix on new.html.ep
   - Fix bug #144
