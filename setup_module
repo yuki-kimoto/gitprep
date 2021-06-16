@@ -1,9 +1,6 @@
 #!/bin/sh
 CUR_DIR_ABS=$(cd $(dirname $0); pwd)
-export PERL_CPANM_HOME=$CUR_DIR_ABS/setup
-perl cpanm -n -l extlib Module::CoreList
-perl -Iextlib/lib/perl5 cpanm -f -L extlib ExtUtils::MakeMaker
-perl -Iextlib/lib/perl5 cpanm -L extlib --installdeps .
+perl cpanm -L extlib --installdeps .
 
 # Create gitprep-shell script
 CURRENT_PERL=`which perl`
