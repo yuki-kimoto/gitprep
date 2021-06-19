@@ -349,10 +349,30 @@ sub startup {
         # Authentication
         {
           my $path = $self->req->url->path->parts->[0] || '';
-          
+          my $hide_from_public = $self->config->{basic}{hide_from_public};
+          my $request_login = 0;
+
+          # repositories need login?
+          if ($hide_from_public)
+          {
+            $request_login = 1;
+
+            if ($api->logined) {
+                $request_login = 0;
+            }
+
+            if ($path eq '_login' && !$api->logined_admin) {
+                $request_login = 0;
+            }
+          }
+
           # Admin
           if ($path eq '_admin' && !$api->logined_admin) {
-            $self->redirect_to('/');
+            $request_login = 1;
+          }
+
+          if ($request_login == 1) {
+            $self->redirect_to('/_login');
             return;
           }
         }
