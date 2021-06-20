@@ -349,8 +349,11 @@ sub startup {
         # Authentication
         {
           my $path = $self->req->url->path->parts->[0] || '';
+          my $repo = $self->req->url->path->parts->[1] || '';
           my $hide_from_public = $self->config->{basic}{hide_from_public};
           my $request_login = 0;
+
+          my $service = $self->param('service');
 
           # repositories need login?
           if ($hide_from_public)
@@ -358,11 +361,16 @@ sub startup {
             $request_login = 1;
 
             if ($api->logined) {
-                $request_login = 0;
+              $request_login = 0;
             }
 
             if ($path eq '_login' && !$api->logined_admin) {
-                $request_login = 0;
+              $request_login = 0;
+            }
+
+            # if the repo ends with .git, don't request_login, but go on to /(#project).git
+            if ($repo =~ /\.git$/) {
+              $request_login = 0;
             }
           }
 
@@ -414,6 +422,12 @@ sub startup {
               my $project_id = $self->param('project');
               my $private = $self->app->manager->is_private_project($user_id, $project_id);
               
+
+              if ($self->config->{basic}{hide_from_public} == 1)
+              {
+                $private = 1;
+              }
+
               # Basic auth when push request
               my $service = $self->param('service') || '';
               if ($service eq 'git-receive-pack' || $private) {
