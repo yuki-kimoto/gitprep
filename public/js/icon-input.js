@@ -48,7 +48,7 @@ function init_icon_input () {
     var textarea = $(this).closest('form').find('textarea');
     insertAtCaret(textarea, "1. ");
   });
-  $('.icon-mension-user').on('click', function () {
+  $('.icon-mention-user').on('click', function () {
     var textarea = $(this).closest('form').find('textarea');
     insertAtCaret(textarea, "@");
   });
