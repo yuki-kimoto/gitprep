@@ -1,9 +1,9 @@
-deny from all
+Options +ExecCGI
+AddHandler cgi-script .cgi
 
-<Files ~ "gitprep\.cgi">
-allow from all
-</Files>
+RewriteEngine On
+
+RewriteRule "^$" "gitprep.cgi"
+RewriteRule "!^gitprep\.cgi(\/|$)" "" [F]
 
 SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
-
-DirectoryIndex index.cgi
