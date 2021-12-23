@@ -8,9 +8,9 @@ if ! ( perl -MModule::CoreList -e 1 2> /dev/null ); then
     perl cpanm -n -l extlib Module::CoreList
     perl -Iextlib/lib/perl5 cpanm -f -L extlib ExtUtils::MakeMaker
     perl -Iextlib/lib/perl5 cpanm -L extlib --installdeps .
+else
+    perl cpanm -L extlib --installdeps .
 fi
-
-perl cpanm -L extlib --installdeps .
 
 # Create gitprep-shell script
 
