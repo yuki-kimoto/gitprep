@@ -740,6 +740,7 @@ Thanks for helping my GitPrep project.
 * [sn0](https://github.com/sn0)
 * [socialmedialabs](https://github.com/socialmedialabs)
 * [troneill](https://github.com/troneill)
+* [brainchild0](https://github.com/brainchild0)
 
 
 ## Copyright & license
