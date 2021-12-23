@@ -1,8 +1,19 @@
 #!/bin/sh
+
 CUR_DIR_ABS=$(cd $(dirname $0); pwd)
-perl cpanm -L extlib --installdeps .
+
+# Fetch CoreList from CPAN if not available from system
+
+if ! ( perl -MModule::CoreList -e 1 2> /dev/null ); then
+    perl cpanm -n -l extlib Module::CoreList
+    perl -Iextlib/lib/perl5 cpanm -f -L extlib ExtUtils::MakeMaker
+    perl -Iextlib/lib/perl5 cpanm -L extlib --installdeps .
+else
+    perl cpanm -L extlib --installdeps .
+fi
 
 # Create gitprep-shell script
+
 CURRENT_PERL=`which perl`
 echo '#!/bin/sh' > script/gitprep-shell
 echo -n "$CURRENT_PERL $CUR_DIR_ABS/script/gitprep-shell-raw" >> script/gitprep-shell
