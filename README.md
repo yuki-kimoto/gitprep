@@ -70,9 +70,9 @@ If you don't have Perl 5.10.1+, you need to install a newer perl version with pe
     
 Download GitPrep .tar.gz archive, expand it and change directory:
 
-    curl -kL https://github.com/yuki-kimoto/gitprep/archive/latest.tar.gz > gitprep-latest.tar.gz
-    tar xf gitprep-latest.tar.gz
-    mv gitprep-latest gitprep
+    curl -kL https://github.com/yuki-kimoto/gitprep/archive/master.tar.gz > gitprep-master.tar.gz
+    tar xf gitprep-master.tar.gz
+    mv gitprep-master gitprep
     cd gitprep
 
 Setup. Needed modules are installed.
