@@ -1,16 +1,14 @@
-# GitPrep - Portable GitHub system into your own server
+# GitPrep - Portable GitHub system on your own server
 
-GitPrep is **portable Github system**. You can install portable GitHub system into **your own Unix/Linux server**.</span>
+GitPrep is **portable Github system**, which can be installed and hosted on **your own Unix/Linux server**.
 
 <img src="gitprep_01.png" width="870" border="1">
 
 
 ## GitPrep example
 
-At first, Let's try **[GitPrep example](https://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)**.
-You will find GitPrep is real portable GitHub system.
-
-You can use all of repository, pull request, issue, wiki.
+There is a demo setup at **[GitPrep example](https://perlcodesample.sakura.ne.jp/gitprep/gitprep.cgi/kimoto/gitprep)**.
+You will find that GitPrep is a really portable GitHub system and has many features such as repository, pull request, issue and wiki.
 
 ## Features
 
@@ -24,15 +22,14 @@ You can use all of repository, pull request, issue, wiki.
 * SSL support.
 * Public key authentication support
 
-**Installation** is very **easy**. You run only two commands.
-Difficult settings is unnecessary.
+**Installation** is very **easy**, requiring only two commands.
+There are many other configuration settings that can be found in [gitprep.conf](gitprep.conf).
 
-Even if you have troubles by your mistake, for example "git push -f origin master",
-you can access all of your git repositories **directory** and fix them.
+Since the git repositories **directory** are accessible on the server, it becomes easy to fix mistakes like "git push -f origin master".
 
-All reporitories are yours. All repositories exists on **your own server**.
+All repositories are safely stored only on **your server**.
 
-Open source. **All free**.
+This project is open sourced, **all free**.
 
 Let's try GitPrep. If you like GitPrep, please share and talk about GitPrep in your community or your company.
 
