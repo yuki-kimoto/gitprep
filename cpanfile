@@ -13,5 +13,9 @@ requires 'Mojolicious::Plugin::BasicAuth';
 requires 'Mojolicious::Plugin::AutoRoute';
 requires 'Mojolicious::Plugin::INIConfig';
 requires 'Mojolicious::Plugin::DBViewer';
+requires 'Mojolicious::Plugin::AccessLog';
 requires 'Text::Markdown::Hoedown';
 requires 'Time::Moment';
+requires 'Crypt::Digest::SHA256';
+requires 'MIME::Base64';
+
