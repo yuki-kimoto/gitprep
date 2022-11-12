@@ -80,7 +80,9 @@
           % }
         </div>
         <div class="repositories-user-id"><%= $user->{id} %></div>
+        % if (app->config->{show_emails}) {
         <div class="repositories-user-mail"><i class="icon icon-envelope"></i> <a href="mailto:<%= $user->{email} %>"><%= $user->{email} %></a></div>
+        % }
       </div>
     </div>
   </div>

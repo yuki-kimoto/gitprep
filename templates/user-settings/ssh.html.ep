@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Util;
+
   # API
   my $api = gitprep_api;
   
@@ -153,11 +155,12 @@
   
   my $keys = app->dbi->model('ssh_public_key')->select(
     {
-      __MY__ => '*'
+      __MY__ => ["title", "key", "row_id"]
     },
     where => {'user.id' => $user_id},
     append => 'order by title'
   )->all;
+
 %>
 
 % layout 'common', title => 'SSH keys';
@@ -183,7 +186,7 @@
         <div class="user-settings-container ssh-keys">
           <div>
             <div>
-              <span>SSH Keys</span> (<a href="<%= url_for("/$user_id.keys") %>">see</a>)
+              <span>SSH Keys</span>
             </div>
           </div>
           <div>
@@ -191,10 +194,13 @@
               <div>
                 This is a list of SSH keys associated with your account. Remove any keys that you do not recognize.
               </div>
+              <br/>
               % for my $key (@$keys) {
                 <form action="<%= url_for->query(op => 'delete') %>" method="post">
                   <div>
-                    <b><%= $key->{title} %></b>
+                    % my ($type, $fingerprint) = Gitprep::Util::fingerprint($key->{key});
+                    <b><%= $key->{title} %></b> <b> <%= $type %> </b>
+		    SHA256:<%= $fingerprint %>
                     <a class="btn btn-danger btn-delete" href="javascript:void(0)" onclick="$(this).closest('form').submit()">Delete</a>
                     <%= hidden_field 'row-id' => $key->{row_id} %>
                   </div>

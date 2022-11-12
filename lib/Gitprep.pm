@@ -116,8 +116,16 @@ sub startup {
     $self->plugin('INIConfig', {file => $my_conf_file}) if -f $my_conf_file;
   }
   
-  # Listen
   my $conf = $self->config;
+  if (my $mojo_log = $conf->{basic}{mojo_log_file_path}) {
+     my $log = Mojo::Log->new(path => $mojo_log, level => 'trace');
+     $self->log($log);
+  }
+  if (my $access_log = $conf->{basic}{access_log_file_path} ) {
+     $self->plugin(AccessLog => log => $access_log);
+  }
+
+  # Listen
   my $listen = $conf->{hypnotoad}{listen} ||= ['http://*:10020'];
   $listen = [split /,/, $listen] unless ref $listen eq 'ARRAY';
   $conf->{hypnotoad}{listen} = $listen;
@@ -393,13 +401,10 @@ sub startup {
       
       # Custom routes
       {
-        # Show ssh keys
-        $r->get('/(:user).keys' => sub { shift->render_maybe('/user-keys') });
-        
         # User
         my $r = $r->any('/:user');
         {
-          # Home
+	   # Home
           $r->get('/' => [format => 0] => sub { shift->render_maybe('/user') });
           
           # Settings
@@ -647,7 +652,6 @@ sub startup {
     # API
     $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
   }
-  
   # set scheme to https when X-Forwarded-HTTPS header is specified
   # This is for the backword compatible only. Now X-Forwarded-Proto is used for this purpose
   $self->hook(before_dispatch => sub {

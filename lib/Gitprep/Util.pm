@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use IPC::Open3 ();
 use File::Spec;
+use MIME::Base64;
+use Crypt::Digest::SHA256 qw(sha256);
 
 sub run_command {
   my @cmd = @_;
@@ -19,5 +21,21 @@ sub run_command {
   
   return $child_exit_status == 0 ? 1 : 0;
 }
+
+sub fingerprint {
+  my ($key) = @_;
+  $key =~ /^(ssh-rsa|ssh-dss|ecdsa-sha2-nistp25|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) +(\S+)/; 
+  my $type = $1;
+  my $data = $2;
+  if ($type && $data) {
+    return (
+      $type, 
+      encode_base64(sha256(decode_base64($data))) 
+    );
+  }
+
+  return;
+}
+
 
 1;
