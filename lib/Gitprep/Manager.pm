@@ -357,9 +357,11 @@ sub create_project {
     $params->{private} = 1;
   }
   
+  $params->{default_branch} = $opts->{default_branch};
   # Create project
   my $dbi = $self->app->dbi;
   my $error;
+
   eval {
     $dbi->connector->txn(sub {
       eval { $self->_create_project($user_id, $project_id, $params) };
@@ -669,7 +671,13 @@ sub _create_project {
 
 sub _create_rep {
   my ($self, $user, $project, $opts) = @_;
-  
+
+  my $default_branch = 'master';
+  if ($opts->{default_branch} && $opts->{default_branch} ne 'master' ) {
+    $default_branch = $opts->{default_branch};
+    chomp($default_branch);
+  }
+ 
   # Create repository directory
   my $git = $self->app->git;
   
@@ -682,7 +690,12 @@ sub _create_rep {
   eval {
     # Git init
     {
-      my @git_init_cmd = $git->cmd($rep_info, 'init', '--bare');
+      my @git_init_args = ($rep_info, 'init', '--bare');
+      if ($default_branch ne 'master' ) {
+      	push @git_init_args, ('--initial-branch=' . $default_branch);
+      }
+      my @git_init_cmd = $git->cmd(@git_init_args);
+
       Gitprep::Util::run_command(@git_init_cmd)
         or croak  "Can't execute git init --bare:@git_init_cmd";
     }
@@ -737,7 +750,11 @@ sub _create_rep {
         or croak "Can't create directory $work_rep_work_tree: $!";
       
       # Git init
-      my @git_init_cmd = $git->cmd($work_rep_info, 'init', '-q');
+      my @work_repo_cmd = ($work_rep_info, 'init', '-q');
+      if ($default_branch ne 'master') {
+        push @work_repo_cmd, '--initial-branch=' . $default_branch;
+      }
+      my @git_init_cmd = $git->cmd(@work_repo_cmd);
       Gitprep::Util::run_command(@git_init_cmd)
         or croak "Can't execute git init: @git_init_cmd";
       
@@ -787,6 +804,7 @@ sub _create_rep {
         '-m',
         'first commit'
       );
+
       Gitprep::Util::run_command(@git_commit_cmd)
         or croak "Can't execute git commit: @git_commit_cmd";
       
@@ -797,7 +815,7 @@ sub _create_rep {
           'push',
           '-q',
           $rep_git_dir,
-          'master'
+          $default_branch
         );
         # (This is bad, but --quiet option can't supress in old git)
         Gitprep::Util::run_command(@git_push_cmd)
