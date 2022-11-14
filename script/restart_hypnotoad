@@ -1,0 +1,2 @@
+export GITPREP_NO_MYCONFIG=0
+cat script/hypnotoad.pid | xargs kill -INT && ./gitprep && tail -f log/production.log log/access.log
