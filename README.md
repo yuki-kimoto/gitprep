@@ -738,6 +738,7 @@ Thanks for helping my GitPrep project.
 * [socialmedialabs](https://github.com/socialmedialabs)
 * [troneill](https://github.com/troneill)
 * [brainchild0](https://github.com/brainchild0)
+* [emil-perhinschi](https://github.com/emil-perhinschi)
 
 
 ## Copyright & license
