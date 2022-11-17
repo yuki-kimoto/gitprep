@@ -133,7 +133,12 @@ sub startup {
   # Data directory
   my $data_dir = $ENV{GITPREP_DATA_DIR} ? $ENV{GITPREP_DATA_DIR} : $self->home->rel_file('data');
   $self->config(data_dir => $data_dir);
-  
+
+  if (my $custom_templates = $conf->{templates}{custom_template_folder}) {
+    die "$custom_templates folder not found or not writable! Giving up ..." unless (-d $custom_templates && -w $custom_templates);
+    unshift(@{$self->renderer->paths}, $custom_templates);
+  }
+
   # Git
   my $git = Gitprep::Git->new;
   $git->app($self);
