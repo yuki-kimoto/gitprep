@@ -692,7 +692,7 @@ sub _create_rep {
     {
       my @git_init_args = ($rep_info, 'init', '--bare');
       if ($default_branch ne 'master' ) {
-      	push @git_init_args, ('--initial-branch=' . $default_branch);
+      	CORE::push( @git_init_args, ('--initial-branch=' . $default_branch));
       }
       my @git_init_cmd = $git->cmd(@git_init_args);
 
@@ -752,7 +752,7 @@ sub _create_rep {
       # Git init
       my @work_repo_cmd = ($work_rep_info, 'init', '-q');
       if ($default_branch ne 'master') {
-        push @work_repo_cmd, '--initial-branch=' . $default_branch;
+        CORE::push( @work_repo_cmd, '--initial-branch=' . $default_branch );
       }
       my @git_init_cmd = $git->cmd(@work_repo_cmd);
       Gitprep::Util::run_command(@git_init_cmd)
