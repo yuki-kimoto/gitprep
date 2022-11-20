@@ -392,7 +392,7 @@ sub startup {
             $request_login = 1;
           }
 
-          if ($request_login == 1) {
+          if ($request_login == 1 && $path ne 'reset-password') {
             $self->redirect_to('/_login');
             return;
           }
