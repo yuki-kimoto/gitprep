@@ -381,7 +381,7 @@ sub startup {
               $request_login = 0;
             }
 
-            # if the repo ends with .git, don't request_login, but go on to /(#project).git
+            # if the repo ends with .git, don't request_login, but go on to /<#project>.git
             if ($repo =~ /\.git$/) {
               $request_login = 0;
             }
@@ -421,7 +421,7 @@ sub startup {
         
         # Smart HTTP
         {
-          my $r = $r->any('/(#project).git');
+          my $r = $r->any('/<#project>.git');
           
           {
             my $r = $r->under(sub {
@@ -430,6 +430,7 @@ sub startup {
               my $api = $self->gitprep_api;
               my $user_id = $self->param('user');
               my $project_id = $self->param('project');
+              $self->log->info("user: $user_id project $project_id");
               my $private = $self->app->manager->is_private_project($user_id, $project_id);
               
 
@@ -475,19 +476,22 @@ sub startup {
             });
             
             # /info/refs
-            $r->get('/info/refs' => sub { shift->render_maybe('smart-http/info-refs') });
+            $r->get('/info/refs' => sub {
+                shift->render_maybe('smart-http/info-refs') 
+            });
             
             # /git-upload-pack or /git-receive-pack
-            $r->any('/git-(:service)'
-              => [service => qr/(?:upload-pack|receive-pack)/]
-              => sub { shift->render_maybe('smart-http/service') }
+            $r->any(
+                '/git-:service'
+                    => [service => qr/(?:upload-pack|receive-pack)/]
+                    => sub { shift->render_maybe('smart-http/service') }
             );
             
             # Static file
-            $r->get('/(*Path)' => sub { shift->render_maybe('smart-http/static') });
+            $r->get('/<*Path>' => sub { shift->render_maybe('smart-http/static') });
           }
         }
-                
+
         # Project
         {
           my $r = $r->any('/#project');
@@ -534,7 +538,7 @@ sub startup {
             $r->get('/pulls' => sub { shift->render_maybe('/pulls') })->to(tab => 'pulls');
             
             # Pull request
-            $r->get('/pull/(:number).patch' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls', patch => 1);
+            $r->get('/pull/<:number>.patch' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls', patch => 1);
             $r->any('/pull/:number' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls');
             
             # Wiki
@@ -604,17 +608,17 @@ sub startup {
             
             # Archive
             # Archive
-            $r->get('/archive/(*rev).tar.gz' => sub { shift->render_maybe('/archive') })->to(archive_type => 'tar');
-            $r->get('/archive/(*rev).zip' => sub { shift->render_maybe('/archive') })->to(archive_type => 'zip' );
+            $r->get('/archive/<*rev>.tar.gz' => sub { shift->render_maybe('/archive') })->to(archive_type => 'tar');
+            $r->get('/archive/<*rev>.zip' => sub { shift->render_maybe('/archive') })->to(archive_type => 'zip' );
             
             # Compare
             $r->any('/compare' => sub { shift->render_maybe('/compare') });
             $r->any(
-              '/compare/(:rev1)...(:rev2)'
+              '/compare/<:rev1>...<:rev2>'
               => [rev1 => qr/[^\.]+/, rev2 => qr/[^\.]+/]
               => sub { shift->render_maybe('/compare') }
             );
-            $r->any('/compare/(:rev2)' => sub { shift->render_maybe('/compare') });
+            $r->any('/compare/<:rev2>' => sub { shift->render_maybe('/compare') });
             
             # Settings
             {
@@ -638,7 +642,7 @@ sub startup {
               $r->get('/' => sub { shift->render_maybe('/network') });
 
               # Network Graph
-              $r->get('/graph/(*rev1)...(*rev2_abs)' => sub { shift->render_maybe('/network/graph') });
+              $r->get('/graph/<*rev1>...<*rev2_abs>' => sub { shift->render_maybe('/network/graph') });
             }
 
             # Import branch
