@@ -83,6 +83,9 @@
           else {
             my $key_is_contained;
             my $authorized_keys_file = app->manager->authorized_keys_file;
+            unless (-f $authorized_keys_file && -w $authorized_keys_file) {
+                die "ERROR: $authorized_keys_file does not exist or is not writable: $!";
+            }
             if (defined $authorized_keys_file) {
               my $result
                 = app->manager->parse_authorized_keys_file($authorized_keys_file);
