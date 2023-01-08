@@ -19,3 +19,9 @@ echo '#!/bin/sh' > script/gitprep-shell
 echo -n "$CURRENT_PERL $CUR_DIR_ABS/script/gitprep-shell-raw" >> script/gitprep-shell
 echo ' $*' >> script/gitprep-shell
 chmod 755 script/gitprep-shell
+
+# create config file from example if so that we can get going
+
+if [ ! -e gitprep.conf ]; then
+    cp gitprep.conf.example gitprep.conf
+fi

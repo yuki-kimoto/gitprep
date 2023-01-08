@@ -1,0 +1,4 @@
+#!/bin/sh
+
+git pull https://github.com/yuki-kimoto/gitprep
+./setup

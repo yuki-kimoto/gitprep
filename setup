@@ -1,0 +1,4 @@
+#!/bin/sh
+
+./setup_module
+./setup_database
