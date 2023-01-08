@@ -33,7 +33,7 @@ This project is open sourced, **all free**.
 
 Let's try GitPrep. If you like GitPrep, please share and talk about GitPrep in your community or your company.
 
-## A. Install and run GitPrep by embdded web server
+## A. Install and run GitPrep by embedded web server
 
 GitPrep has its own web server. You can start GitPrep easily.
 
@@ -49,7 +49,7 @@ Create a **gitprep** user. This is not necessary, but recommended:
 
     git --version
 
-## Check Perl Version
+### Check Perl Version
 
 Check Perl version. You can use GitPrep if the Perl version is 5.10.1+;
 
@@ -65,11 +65,24 @@ If you don't have Perl 5.10.1+, you need to install a newer perl version with pe
     perlbrew switch perl-5.16.3
     perl -v
     
-Download GitPrep .tar.gz archive, expand it and change directory:
+### Download, setup and update - Simplified
+```BASH
+# Pulls a shallow copy from this repository
+git clone --depth=1 https://github.com/yuki-kimoto/gitprep
+cd gitprep
 
-    curl -kL https://github.com/yuki-kimoto/gitprep/archive/master.tar.gz > gitprep-master.tar.gz
-    tar xf gitprep-master.tar.gz
-    mv gitprep-master gitprep
+# This will install the necessary modules, create the config file and data folder
+./setup
+
+# To update in future, run
+./update
+```
+[Start gitprep server](#start-gitprep-server)
+
+### Download and setup - Detailed
+Download from the repository and change directory:
+
+    git clone --depth=1 https://github.com/yuki-kimoto/gitprep
     cd gitprep
 
 Setup. Needed modules are installed.

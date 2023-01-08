@@ -3,28 +3,28 @@
 [basic]
 ;;; SSH port (default: 22)
 ;;; This value is used by ssh git repository URL.
-;ssh_port=55555
+; ssh_port=55555
 
 ;;; SSH repository url base
-; For exampke, If you set this value to /~/git, SSH repository url become
-; ssh://kimoto@59.106.185.196/~/git/kimoto/gitprep.git
-; ~ is expaned to user home directory automatically
+;;; For exampke, If you set this value to /~/git, SSH repository url become
+;;; ssh://kimoto@59.106.185.196/~/git/kimoto/gitprep.git
+;;; ~ is expaned to user home directory automatically
 ; ssh_rep_url_base=/~/git
 
 ;;; Git command path
 ;;; By default, git command path is automatically detected
 ;;; from PATH enviroment variable or /usr/bin/git or /usr/local/bin/git
-;git_bin=/usr/local/bin/git
+; git_bin=/usr/local/bin/git
 
 ;;; Tags limit (default:1000)
-;tags_limit=1000
+; tags_limit=1000
 
 ;;; Time Zone
 ;;; GitPrep time zone is GMT by default
 ;;; You can set your local time zone.
-;time_zone=+9:00
-;time_zone=+10:30
-;time_zone=-4:00
+; time_zone=+9:00
+; time_zone=+10:30
+; time_zone=-4:00
 
 ;;; authorized_keys file for public key authentication via ssh.
 ;;; default is "$ENV{HOME}/.ssh/authorized_keys"
@@ -41,13 +41,13 @@ show_emails=1
 
 [templates]
 ;;; put here custom templates overriding the defaults provided by gitprep; requires full path
-custom_template_folder=/home/gitprep/gitprep/templates_custom
+; custom_template_folder=/home/gitprep/gitprep/templates_custom
 
 [admin]
 ;;; If you forget admin password,
 ;;; set this value to 1 and access /reset-password page.
 ;;; Forget to comment out after resetting password.
-;reset_password=1
+; reset_password=1
 
 [hypnotoad]
 ;;; Listen URL (default: http://*:10020)
@@ -55,10 +55,10 @@ listen=http://127.0.0.1:10020
 
 [reverse_proxy]
 ;;; Reverse proxy support (default: 0)
-;on=1
+; on=1
 
 ;;; Reverse proxy path depth (default: none)
 ;;; If proxy path is http://somehost.com/foo, you set path_depth to 1.
 ;;; If proxy path is http://somehost.com/foo/bar, you set path_depth to 2.
-;path_depth=1
-;path_depth=2
+; path_depth=1
+; path_depth=2
