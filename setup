@@ -1,4 +1,6 @@
 #!/bin/sh
 
 ./setup_module
+./setup_script
+./setup_config
 ./setup_database

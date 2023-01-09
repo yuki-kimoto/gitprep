@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# create config file from example so that gitprep can run
+
+if [ ! -e gitprep.conf ]; then
+    cp gitprep.conf.example gitprep.conf
+fi

@@ -1,0 +1,14 @@
+#!/bin/sh
+
+CUR_DIR_ABS=$(
+    cd $(dirname $0)
+    pwd
+)
+
+# Create gitprep-shell script
+
+CURRENT_PERL=$(which perl)
+echo '#!/bin/sh' >script/gitprep-shell
+echo -n "$CURRENT_PERL $CUR_DIR_ABS/script/gitprep-shell-raw" >>script/gitprep-shell
+echo ' $*' >>script/gitprep-shell
+chmod 755 script/gitprep-shell
