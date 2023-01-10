@@ -1,0 +1,4 @@
+#!/bin/sh
+
+git pull --depth=1 https://github.com/yuki-kimoto/gitprep
+./setup

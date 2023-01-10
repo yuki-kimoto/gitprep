@@ -4,6 +4,24 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 use lib "$FindBin::Bin/extlib/lib/perl5";
 use DBIx::Custom;
+use File::Path qw(make_path);
+
+# make the data folder here
+my $dir = 'data/rep';
+if (!-e $dir) {
+    make_path $dir or die "Error creating directory: $dir";
+}
+
+$dir = 'data/work';
+if (!-e $dir) {
+    make_path $dir or die "Error creating directory: $dir";
+}
+
+{ open my $session_file, '>', 'data/.gitkeep' }
+{ open my $session_file, '>', 'data/rep/.gitkeep' }
+{ open my $session_file, '>', 'data/work/.gitkeep' }
+
+# setup the database
 
 my $database_file = shift // "$FindBin::Bin/data/gitprep.db";
 
