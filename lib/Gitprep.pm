@@ -661,11 +661,16 @@ sub startup {
     # API
     $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
   }
-  # set scheme to https when X-Forwarded-HTTPS header is specified
-  # This is for the backword compatible only. Now X-Forwarded-Proto is used for this purpose
+
   $self->hook(before_dispatch => sub {
     my $c = shift;
-    if ($c->req->headers->header('X-Forwarded-HTTPS')) {
+    if ($c->req->headers->header('X-Forwarded-Proto') eq 'https') {
+      $c->req->url->base->scheme('https');
+    }
+    elsif ($c->req->headers->header('X-Forwarded-HTTPS')) {
+      # Set scheme to https when X-Forwarded-HTTPS header is specified.
+      # This is for backward compatibility only. Now X-Forwarded-Proto is
+      # used for this purpose.
       $c->req->url->base->scheme('https');
       $c->app->log->warn("X-Forwarded-HTTPS header is DEPRECATED! use X-Forwarded-Proto instead.");
     }
@@ -681,6 +686,7 @@ sub startup {
   });
 
   # Reverse proxy support
+  $self->plugin('RequestBase');
   my $reverse_proxy_on = $self->config->{reverse_proxy}{on};
   my $path_depth = $self->config->{reverse_proxy}{path_depth};
   if ($reverse_proxy_on) {

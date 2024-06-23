@@ -279,7 +279,7 @@ You can use Name virtual host.
       ProxyPreserveHost On
       ProxyPass / http://localhost:10020/ keepalive=On
       ProxyPassReverse / http://localhost:10020/
-      RequestHeader set X-Forwarded-Proto "https"
+      RequestHeader set X-Forwarded-Proto "http"
         
     </VirtualHost>
 
@@ -305,33 +305,24 @@ If you use GitPrep via https, you should set X-Forwarded-HTTPS Request Header.
 
 GitPrep support reverse proxy with sub directory.
 
-At first, set [reverse_proxy]path_depth option.
-
-    [reverse_proxy]
-
-    ;;; Reverse proxy path depth (default: none)
-    ;;; If proxy path is http://somehost.com/foo, you set path_depth to 1.
-    ;;; If proxy path is http://somehost.com/foo/bar, you set path_depth to 2.
-    path_depth=1
-
-Next you set http server config file. The following is apache example.
+Here is the apache configuration example:
 
     <VirtualHost *:80>
       ServerName perlcodesample.com
-      <Proxy *>
-        Order deny,allow
-        Allow from all
-      </Proxy>
       ProxyRequests Off
-      ProxyPreserveHost On
 
-      ProxyPass /app1 http://localhost:10020/app1 keepalive=On
-      ProxyPassReverse /app1 http://localhost:3000/app1
+      RedirectMatch ^/gitprep$ /gitprep/
 
-      ProxyPass /app2 http://localhost:10021/app2 keepalive=On
-      ProxyPassReverse /app2 http://localhost:3001/app2
-      
-      RequestHeader set X-Forwarded-Proto "https"
+      <Location /gitprep/>
+        Require all granted
+        ProxyPass http://localhost:10020/ keepalive=On
+        RequestHeader setifempty X-Forwarded-Proto "https" \
+                                        expr=%{REQUEST_SCHEME}=='https'
+        RequestHeader setifempty X-Forwarded-Proto "http"  \
+                                        expr=%{REQUEST_SCHEME}!='https'
+        RequestHeader setifempty X-Request-Base "/gitprep/"
+        ProxyPreserveHost On
+      </Location>
     </VirtualHost>
 
 ### How to import already existing repositories?
@@ -633,6 +624,7 @@ Even if shared hosting server, you can install Mojolicious application as CGI.
     requires 'Mojolicious::Plugin::AutoRoute', '== 0.19';
     requires 'Mojolicious::Plugin::INIConfig', '== 0.03';
     requires 'Mojolicious::Plugin::DBViewer', '== 0.28';
+    requires 'Mojolicious::Plugin::RequestBase', '== 0.3';
     requires 'Text::Markdown::Hoedown', '== 1.01';
     requires 'Time::Moment', '== 0.38';
 
@@ -685,6 +677,7 @@ Thanks to Mojolicious author,[Sebastian riedel](https://twitter.com/kraih).
 * [Mojolicious::Plugin::AutoRoute](http://search.cpan.org/dist/Mojolicious-Plugin-AutoRoute/lib/Mojolicious/Plugin/AutoRoute.pm)
 * [Mojolicious::Plugin::BasicAuth](http://search.cpan.org/dist/Mojolicious-Plugin-BasicAuth/README.pod)
 * [Mojolicious::Plugin::DBViewer](http://search.cpan.org/dist/Mojolicious-Plugin-DBViewer/lib/Mojolicious/Plugin/DBViewer.pm)
+* [Mojolicious::Plugin::RequestBase](http://search.cpan.org/dist/Mojolicious-Plugin-RequestBase/lib/Mojolicious/Plugin/RequestBase.pm)
 * [Object::Simple](http://search.cpan.org/dist/Object-Simple/lib/Object/Simple.pm)
 * [Text::Markdown::Hoedown](http://search.cpan.org/~tokuhirom/Text-Markdown-Hoedown-1.01/lib/Text/Markdown/Hoedown.pm)
 * [Validator::Custom](http://search.cpan.org/dist/Validator-Custom/lib/Validator/Custom.pm)
