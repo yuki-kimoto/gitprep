@@ -81,7 +81,7 @@
               %>
               <li>
                 <div class="pulls-title">
-                  <a href="<%= "/$user_id/$project_id/pull/$issue->{number}" %>">
+                  <a href="<%= url_for("/$user_id/$project_id/pull/$issue->{number}") %>">
                     <b><%= $issue->{title} %></b>
                   </a>
                 </div>
