@@ -6,7 +6,7 @@
   my $user_id = param('user');
   my $project_id = param('project');
   
-  my $is = param('is');
+  my $is = param('is') || '';
   
   my $open = $is eq 'closed' ? 0 : 1;
   
