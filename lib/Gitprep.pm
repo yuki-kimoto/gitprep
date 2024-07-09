@@ -115,8 +115,15 @@ sub startup {
     my $my_conf_file = $self->home->rel_file('gitprep.my.conf');
     $self->plugin('INIConfig', {file => $my_conf_file}) if -f $my_conf_file;
   }
-  
+
   my $conf = $self->config;
+
+  # Set-up secret passphrase.
+  if ($conf->{basic}{secret}) {
+    $self->secrets([$conf->{basic}{secret}]);
+  }
+
+  # Configure logging.
   if (my $mojo_log = $conf->{basic}{mojo_log_file_path}) {
      my $log = Mojo::Log->new(path => $mojo_log, level => 'trace');
      $self->log($log);
