@@ -808,6 +808,9 @@ ul.issues-label-pallet li {
 .issue-message-owner {
   border:1px solid #e6e9e6;
 }
+:fragment.issue-message {
+  border:1px solid #00f;
+}
 
 .issue-message-owner-label {
   display:inline-block;
