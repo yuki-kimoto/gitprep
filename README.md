@@ -724,6 +724,7 @@ If you are interested in my project and activity, Please follow me on Twitter.
 
 Thanks for helping my GitPrep project.
 
+* [monnerat](https://github.com/monnerat)
 * [bilogic](https://github.com/bilogic)
 * [maspalio](https://github.com/maspalio)
 * [djzort](https://github.com/djzort)
