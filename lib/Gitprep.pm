@@ -115,8 +115,15 @@ sub startup {
     my $my_conf_file = $self->home->rel_file('gitprep.my.conf');
     $self->plugin('INIConfig', {file => $my_conf_file}) if -f $my_conf_file;
   }
-  
+
   my $conf = $self->config;
+
+  # Set-up secret passphrase.
+  if ($conf->{basic}{secret}) {
+    $self->secrets([$conf->{basic}{secret}]);
+  }
+
+  # Configure logging.
   if (my $mojo_log = $conf->{basic}{mojo_log_file_path}) {
      my $log = Mojo::Log->new(path => $mojo_log, level => 'trace');
      $self->log($log);
@@ -208,11 +215,11 @@ sub startup {
   $self->dbi($dbi);
   
   # Database file permision
-  if (my $user_id = $self->config->{hypnotoad}{user}) {
+  if (my $user_id = $conf->{hypnotoad}{user}) {
     my $uid = (getpwnam $user_id)[2];
     chown $uid, -1, $db_file;
   }
-  if (my $group = $self->config->{hypnotoad}{group}) {
+  if (my $group = $conf->{hypnotoad}{group}) {
     my $gid = (getgrnam $group)[2];
     chown -1, $gid, $db_file;
   }
@@ -363,7 +370,7 @@ sub startup {
         {
           my $path = $self->req->url->path->parts->[0] || '';
           my $repo = $self->req->url->path->parts->[1] || '';
-          my $hide_from_public = $self->config->{basic}{hide_from_public};
+          my $hide_from_public = $conf->{basic}{hide_from_public};
           my $request_login = 0;
 
           my $service = $self->param('service');
@@ -434,7 +441,7 @@ sub startup {
               my $private = $self->app->manager->is_private_project($user_id, $project_id);
               
 
-              if ($self->config->{basic}{hide_from_public} == 1)
+              if ($conf->{basic}{hide_from_public} == 1)
               {
                 $private = 1;
               }
@@ -664,7 +671,7 @@ sub startup {
 
   $self->hook(before_dispatch => sub {
     my $c = shift;
-    if ($c->req->headers->header('X-Forwarded-Proto') eq 'https') {
+    if (($c->req->headers->header('X-Forwarded-Proto') || '') eq 'https') {
       $c->req->url->base->scheme('https');
     }
     elsif ($c->req->headers->header('X-Forwarded-HTTPS')) {
@@ -687,8 +694,8 @@ sub startup {
 
   # Reverse proxy support
   $self->plugin('RequestBase');
-  my $reverse_proxy_on = $self->config->{reverse_proxy}{on};
-  my $path_depth = $self->config->{reverse_proxy}{path_depth};
+  my $reverse_proxy_on = $conf->{reverse_proxy}{on};
+  my $path_depth = $conf->{reverse_proxy}{path_depth};
   if ($reverse_proxy_on) {
     $ENV{MOJO_REVERSE_PROXY} = 1;
     if ($path_depth) {

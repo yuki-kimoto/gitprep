@@ -808,6 +808,9 @@ ul.issues-label-pallet li {
 .issue-message-owner {
   border:1px solid #e6e9e6;
 }
+:fragment.issue-message {
+  border:1px solid #00f;
+}
 
 .issue-message-owner-label {
   display:inline-block;
@@ -2334,6 +2337,12 @@ a:hover .btn-delete {
 .btn-danger:active,
 .btn-danger.active {
   background-color: #942a25;
+}
+
+.count-label {
+  background-color: rgba(128, 128, 128, 0.2);
+  padding: 4px 6px 1px 6px;
+  border-radius: 6px;
 }
 
 /* alert */

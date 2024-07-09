@@ -208,7 +208,7 @@
 
   <div class="issue-title-panel">
     <div class="issue-title">
-      Some <%= $issue->{title} %> <span style="color:#aaa;">#<%= $issue->{number} %></span>
+      <%= $issue->{title} %> <span style="color:#aaa;">#<%= $issue->{number} %></span>
     </div>
     <div>
       % if ($issue->{open}) {
