@@ -339,4 +339,29 @@ EOS
     my $error = "Can't create wiki table properly: $@";
     die $error;
   }
+
+  # Create subscription table
+  eval {
+    my $sql = <<"EOS";
+create table subscription (
+  row_id integer primary key autoincrement,
+  issue integer not null default 0,
+  user integer not null default 0,
+  reason text not null default '',
+  unique(issue, user)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Check subscription table
+  eval {
+    $dbi->select(
+      table => 'subscription'
+    );
+  };
+  if ($@) {
+    my $error = "Can't create subscription table properly: $@";
+    die $error;
+  }
 }

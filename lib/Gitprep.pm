@@ -15,6 +15,8 @@ use Gitprep::Manager;
 use Scalar::Util 'weaken';
 use Validator::Custom;
 use Time::Moment;
+use Email::Sender::Transport::SMTP;
+use Email::Sender::Transport::Sendmail;
 
 # Digest::SHA loading to Mojo::Util if not loaded
 {
@@ -306,6 +308,14 @@ sub startup {
     },
     {
       table => 'wiki'
+    },
+    {
+      table => 'subscription',
+      primary_key => 'row_id',
+      join => [
+        'left join issue as subscription__issue on subscription.issue = subscription__issue.row_id',
+        'left join user as subscription__user on subscription.user = subscription__user.row_id'
+      ]
     }
   ];
   $dbi->create_model($_) for @$models;
@@ -657,6 +667,14 @@ sub startup {
             
             # Get branches and tags
             $r->get('/api/revs' => sub { shift->render_maybe('/api/revs') });
+
+            # Subscription button.
+            $r->get('/api/subscribe/:issue/:reason' => sub {
+              my $self = shift;
+              $self->render_maybe(template => '/api/subscribe',
+                                  issue => $self->param('issue'),
+                                  reason => $self->param('reason'));
+             });
           }
         }
       }
@@ -711,6 +729,22 @@ sub startup {
   
   # Smart HTTP Buffer size
   $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE} ||= 16384;
+
+  # E-mail transport.
+  if ($conf->{mail}{from}) {
+    if ($conf->{smtp}{hosts}) {
+      my $c = $conf->{smtp};
+      my %args = map {$_ => $c->{$_}} keys %$c;
+      my @hosts = split(' ', $c->{hosts});
+      $args{hosts} = \@hosts;
+      $self->{mailtransport} = Email::Sender::Transport::SMTP->new(%args);
+    }
+    else {
+      $self->{mailtransport} = Email::Sender::Transport::Sendmail->new(
+        $conf->{sendmail}
+      );
+    }
+  }
 }
 
 1;

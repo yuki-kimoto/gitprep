@@ -1,0 +1,19 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Arguments.
+  my $user = stash('user');
+  my $project = stash('project');
+  my $path_suffix = stash('path_suffix');
+  my $message = stash('message');
+  my $message_id = stash('message_id');
+
+  my $link = url_for("/$user/$project/$path_suffix")->fragment($message_id)->to_abs;
+%>
+
+<div><%== $message %></div>
+<p style="font-size:small;-webkit-text-size-adjust:none;color:#666;">
+  &mdash;<br />
+  <a href="<%= $link %>">View it on Gitprep</a>
+</p>

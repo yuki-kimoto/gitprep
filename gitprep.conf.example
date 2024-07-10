@@ -66,3 +66,30 @@ listen=http://127.0.0.1:10020
 ;;; If proxy path is http://somehost.com/foo/bar, you set path_depth to 2.
 ; path_depth=1
 ; path_depth=2
+
+[mail]
+;;; Notifications by e-mail.
+;;; "From" address of e-mails sent. Should not accept incoming mails.
+;;; Default is to disable notifications.
+; from=no-reply@gitprep.org
+
+;;; Dummy (i.e. no reply) visible recipient e-mail address.
+;;; Default: "undisclosed-recipients:;".
+; to=no-reply@gitprep.org
+
+[sendmail]
+;;; Sendmail program path (default: search in $PATH, /usr/sbin and /usr/lib).
+; sendmail=/usr/local/bin/sendmail
+
+[smtp]
+;;; list of space-separated smtp server FQDNs.
+; hosts=mail.gitprep.org
+
+;;; listening port of the smtp server (default: 25).
+; port=587
+
+;;; Authentication user name.
+; sasl_username=gitprep
+
+;;; Authentication password.
+; sasl_password=LetsOpenIt
