@@ -3,6 +3,9 @@ use Mojo::Base -base;
 
 use Digest::MD5 'md5_hex';
 use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
+use HTML::FormatText::WithLinks;
+use MIME::Entity;
+use Email::Sender::Simple;
 use Carp 'croak';
 use Encode 'decode', 'encode';
 
@@ -584,6 +587,7 @@ sub api_delete_issue_message {
 
 sub add_issue_message {
   my ($self, $user_id, $project_id, $number, $message) = @_;
+  my $issue_message_number;
   
   $self->app->dbi->connector->txn(sub {
     my $issue_row_id = $self->app->dbi->model('issue')->select(
@@ -596,7 +600,7 @@ sub add_issue_message {
     )->value;
 
     # Issue message number
-    my $issue_message_number = $self->app->dbi->model('issue_message')->select(
+    $issue_message_number = $self->app->dbi->model('issue_message')->select(
       'max(number)',
       where => {issue => $issue_row_id}
     )->value;
@@ -617,6 +621,8 @@ sub add_issue_message {
     
     $self->app->dbi->model('issue_message')->insert($new_issue_message);
   });
+
+  return $issue_message_number;
 }
 
 sub markdown {
@@ -633,6 +639,19 @@ sub markdown {
   return $html_text;
 }
 
+sub mentioned {
+  my ($self, $message) = @_;
+  my %users;
+
+  # Scan message for @<username>s and return an array of them.
+
+  while ($message =~ /@([a-zA-Z0-9_\-]+)/g) {
+    $users{$1} = 1;
+  }
+  my @result = keys %users;
+  return @result;
+}
+
 sub age_string {
   my ($self, $epoch_time) = @_;
   
@@ -641,6 +660,131 @@ sub age_string {
   my $age_string = $self->cntl->app->git->_age_string($age);
   
   return $age_string;
+}
+
+sub subscribe {
+  my ($self, $user_id, $issue, $reason) = @_;
+
+  my $r = $self->app->dbi->model('subscription')->select('reason',
+      where => {
+        user => $user_id,
+        issue => $issue
+      }
+    )->value;
+
+  if (!defined $r) {
+      $self->app->dbi->model('subscription')->insert(
+        {
+          user => $user_id,
+          issue => $issue,
+          reason => $reason
+        }
+      );
+    }
+  elsif ($reason ne $r) {
+    if ($r eq 'U' || $reason eq 'U') {
+      $self->app->dbi->model('subscription')->update(
+        {
+          reason => $reason,
+        },
+        where => {
+          user => $user_id,
+          issue => $issue
+        }
+      );
+    }
+  }
+}
+
+sub subscribe_mentioned {
+  my ($self, $issue_row_id, $message) = @_;
+  my @mentioned = $self->mentioned($message);
+
+  if (@mentioned != 0) {
+    my $results = $self->app->dbi->model('user')->select('row_id',
+             where => {
+               id => @mentioned
+             })->all;
+
+    for my $user_row_id (@$results) {
+      $self->subscribe($user_row_id->{row_id}, $issue_row_id, 'M');
+    }
+  }
+}
+
+sub notify_subscribed {
+  my ($self, $user, $project, $title, $sender_row_id, $message, $message_id,
+      $path_suffix, $issue_row_id) = @_;
+
+  $self->app->{mailtransport} || return;
+
+  # Subscribed recipients.
+  my $recipients = $self->app->dbi->model('subscription')->select(
+    'subscription__user.email',
+    where => $self->app->dbi->where(
+      clause => ['and', "reason != 'U'", ':user{!=}', ':issue{=}'],
+      param => {user => $sender_row_id, issue => $issue_row_id}
+    ))->all;
+
+  # Sender name.
+  my $sender_name = $self->app->dbi->model('user')->select('name',
+    where => {
+      row_id => $sender_row_id
+    })->value;
+
+  # Convert markdown message to HTML.
+  $message = $self->markdown($message);
+
+  # HTML to plain text converter.
+  my $html2plain = HTML::FormatText::WithLinks->new(
+    before_link => '',
+    after_link => ' [%l]',
+    footnote => '',
+    anchor_links => 0,
+    skip_linked_urls => 1
+  );
+
+  # Build visible sender and recipient email addresses.
+  my $conf = $self->app->config->{mail};
+  my $from = "$sender_name <$conf->{from}>";
+  my $to = 'undisclosed-recipients:;';
+  $to = "$user/$project <$conf->{to}>" if $conf->{to};
+
+  # Avoid multi-recipient mails as sent data can be personalized.
+  for my $recipient (@$recipients) {
+    my $email = $recipient->{'email'};
+    my $html = $self->cntl->render_to_string('/api/notify',
+      user => $user,
+      project => $project,
+      path_suffix => $path_suffix,
+      message => $message,
+      message_id => $message_id
+    )->to_string;
+    my $plain = $html2plain->parse($html);
+# return;
+    my $top = MIME::Entity->build(From => $from,
+                                  To => $to,
+                                  Subject => "[$user/$project] $title",
+                                  Type => 'multipart/alternative',
+                                  'X-Mailer' => undef
+    );
+    $top->attach(Type => 'text/html',
+                 Charset => 'UTF-8',
+                 Data => encode('UTF-8', $html)
+    );
+    $top->attach(Type => 'text/plain',
+                 Charset => 'UTF-8',
+                 Data => encode('UTF-8', $plain)
+    );
+    Email::Sender::Simple->send(
+      $top->stringify,
+      {
+        transport => $self->app->{mailtransport},
+        from => $conf->{from},
+        to => $email
+      }
+    );
+  }
 }
 
 sub get_user_row_id {

@@ -58,8 +58,20 @@
       
       if ($validation->is_valid) {
 
-        $api->add_issue_message($user_id, $project_id, $number, $message);
-        
+        my $msgno =$api->add_issue_message($user_id, $project_id,
+                                           $number, $message);
+
+        # Subscriptions.
+        $api->subscribe($api->session_user_row_id, $issue_row_id, 'C');
+        $api->subscribe_mentioned($issue_row_id, $message);
+
+        # Notifications.
+        $api->notify_subscribed($user_id, $project_id,
+                                "$issue->{title} (#$number)",
+                                $api->session_user_row_id, $message,
+                                "comment-$msgno", "issues/$number",
+                                $issue_row_id);
+
         $self->redirect_to;
         return;
       }
@@ -324,6 +336,11 @@
           </li>
         % }
       </ul>
+      % if ($api->logined) {
+        <div id="subscription-frame" class="issue-subscription">
+          <%== $self->render_to_string(template => '/api/subscribe', 'issue' => $issue_row_id, 'reason' => undef) %>
+        </div>
+      % }
     </div>
   </div>
 </div>

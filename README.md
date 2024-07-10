@@ -627,6 +627,9 @@ Even if shared hosting server, you can install Mojolicious application as CGI.
     requires 'Mojolicious::Plugin::RequestBase', '== 0.3';
     requires 'Text::Markdown::Hoedown', '== 1.01';
     requires 'Time::Moment', '== 0.38';
+    requires 'MIME::Entity', '== 5.510';
+    requires 'HTML::FormatText::WithLinks', '== 0.15';
+    requires 'Email::Sender', '== 2.600';
 
 If you want to install all defined modules, you only run the following command.
 
@@ -687,6 +690,9 @@ Thanks to Mojolicious author,[Sebastian riedel](https://twitter.com/kraih).
 * [DBI](http://search.cpan.org/dist/DBI/DBI.pm)
 * [DBIx::Connector](http://search.cpan.org/dist/DBIx-Connector/lib/DBIx/Connector.pm)
 * [DBIx::Custom](http://search.cpan.org/dist/DBIx-Custom/lib/DBIx/Custom.pm)
+* [HTML::FormatText::WithLinks](https://metacpan.org/pod/HTML::FormatText::WithLinks)
+* [MIME::Entity](https://metacpan.org/pod/MIME::Entity)
+* [Email::Sender](https://metacpan.org/pod/Email::Sender)
 
 ## Sister project
 

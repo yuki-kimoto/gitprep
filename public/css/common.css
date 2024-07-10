@@ -444,6 +444,32 @@ a.wiki-btn-history:hover {
   padding:4px 5px;
   color:#333;
 }
+.issue-subscription {
+  padding-top: 5px;
+  display: block;
+  width: 100%;
+}
+.subscription-btn {
+  display: inline-block;
+  padding: 3px;
+  width: 100%;
+  border-radius: 8px;
+  border-style: solid;
+  border-width: 1px;
+}
+.subscription-btn:hover {
+  background: #d0d0d0;
+}
+.subscription-btn-icon {
+  vertical-align: middle;
+}
+.subscription-btn-text {
+}
+.notif-reason {
+  width: 100%;
+  color: #767676;
+  margin-top: 5px;
+}
 .labels-new-panel {
   text-align:right;
   margin-bottom:20px;
