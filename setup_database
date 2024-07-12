@@ -364,4 +364,28 @@ EOS
     my $error = "Can't create subscription table properly: $@";
     die $error;
   }
+
+  # Create watch table
+  eval {
+    my $sql = <<"EOS";
+create table watch (
+  row_id integer primary key autoincrement,
+  user integer not null default 0,
+  project integer not null default 0,
+  unique(user, project)
+);
+EOS
+    $dbi->execute($sql);
+  };
+  
+  # Check watch table
+  eval {
+    $dbi->select(
+      table => 'watch'
+    );
+  };
+  if ($@) {
+    my $error = "Can't create watch table properly: $@";
+    die $error;
+  }
 }

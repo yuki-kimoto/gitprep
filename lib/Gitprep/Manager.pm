@@ -666,6 +666,14 @@ sub _create_project {
   my $dbi = $self->app->dbi;
   $dbi->connector->txn(sub {
     $dbi->model('project')->insert($params);
+    # Auto-watch for owner.
+    my $project_row_id = $dbi->model('project')->select('row_id',
+      where => {user => $user_row_id, id => $project_id}
+    )->value;
+    $dbi->model('watch')->insert({
+      user => $user_row_id,
+      project => $project_row_id
+    });
   });
 }
 

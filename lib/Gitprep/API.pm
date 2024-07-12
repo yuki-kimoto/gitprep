@@ -718,13 +718,31 @@ sub notify_subscribed {
 
   $self->app->{mailtransport} || return;
 
-  # Subscribed recipients.
-  my $recipients = $self->app->dbi->model('subscription')->select(
-    'subscription__user.email',
+  # Subscriptions.
+  my $subscriptions = $self->app->dbi->model('subscription')->select(
+    ['subscription__user.email', 'reason'],
     where => $self->app->dbi->where(
-      clause => ['and', "reason != 'U'", ':user{!=}', ':issue{=}'],
+      clause => ['and', ':user{!=}', ':issue{=}'],
       param => {user => $sender_row_id, issue => $issue_row_id}
     ))->all;
+
+  # Watchers.
+  my $watchers = $self->app->dbi->model('watch')->select(
+    ['watch__user.email'],
+    where => $self->app->dbi->where(
+      clause => ['and', ':user{!=}', ':project{=}'],
+      param => {
+        user => $sender_row_id,
+        project => $self->get_project_row_id($user, $project)
+      }
+    ))->all;
+
+  # Merge results.
+  my %recipients = ((map {$_->{email} => 'W'} @$watchers),
+                    (map {$_->{email} => $_->{reason}} @$subscriptions));
+
+  # Filter out unsubscribed.
+  my @recipients = grep {$recipients{$_} ne 'U';} keys(%recipients);
 
   # Sender name.
   my $sender_name = $self->app->dbi->model('user')->select('name',
@@ -751,8 +769,7 @@ sub notify_subscribed {
   $to = "$user/$project <$conf->{to}>" if $conf->{to};
 
   # Avoid multi-recipient mails as sent data can be personalized.
-  for my $recipient (@$recipients) {
-    my $email = $recipient->{'email'};
+  for my $email (@recipients) {
     my $html = $self->cntl->render_to_string('/api/notify',
       user => $user,
       project => $project,
@@ -761,7 +778,6 @@ sub notify_subscribed {
       message_id => $message_id
     )->to_string;
     my $plain = $html2plain->parse($html);
-# return;
     my $top = MIME::Entity->build(From => $from,
                                   To => $to,
                                   Subject => "[$user/$project] $title",
