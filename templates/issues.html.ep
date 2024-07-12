@@ -25,7 +25,8 @@
     where => [
       ['and', ':issue.open{=}', 'pull_request = 0', ':project{=}'],
       {'issue.open' => $open, project => $project_row_id}
-    ]
+    ],
+    append => 'order by open_time desc'
   )->all;
   
   # Open count

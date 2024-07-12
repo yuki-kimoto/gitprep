@@ -27,7 +27,8 @@
       {open_user => ['id']},
       {pull_request => ['target_branch']}
     ],
-    where => $issue_where
+    where => $issue_where,
+    append => 'order by open_time desc'
   )->all;
   
   # Open count
