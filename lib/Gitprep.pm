@@ -459,7 +459,7 @@ sub startup {
               my $private = $self->app->manager->is_private_project($user_id, $project_id);
               
 
-              if ($conf->{basic}{hide_from_public} == 1)
+              if ($conf->{basic}{hide_from_public})
               {
                 $private = 1;
               }
