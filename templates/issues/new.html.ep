@@ -90,8 +90,6 @@
           app->dbi->model('issue_message')->insert($new_issue_message);
 
           # Subscriptions.
-          $api->subscribe($api->get_user_row_id($user_id),
-                          $new_issue_row_id, 'O');
           $api->subscribe($session_user_row_id, $new_issue_row_id, 'N');
           $api->subscribe_mentioned($new_issue_row_id, $message);
 

@@ -316,6 +316,14 @@ sub startup {
         'left join issue as subscription__issue on subscription.issue = subscription__issue.row_id',
         'left join user as subscription__user on subscription.user = subscription__user.row_id'
       ]
+    },
+    {
+      table => 'watch',
+      primary_key => 'row_id',
+      join => [
+        'left join user as watch__user on watch.user = watch__user.row_id',
+        'left join project as watch__project on watch.project = watch__project.row_id'
+      ]
     }
   ];
   $dbi->create_model($_) for @$models;
@@ -451,7 +459,7 @@ sub startup {
               my $private = $self->app->manager->is_private_project($user_id, $project_id);
               
 
-              if ($conf->{basic}{hide_from_public} == 1)
+              if ($conf->{basic}{hide_from_public})
               {
                 $private = 1;
               }
@@ -674,6 +682,13 @@ sub startup {
               $self->render_maybe(template => '/api/subscribe',
                                   issue => $self->param('issue'),
                                   reason => $self->param('reason'));
+             });
+
+             # Watch button.
+             $r->get('/api/watch/:state' => sub {
+               my $self = shift;
+               $self->render_maybe(template => '/api/watch',
+                                   state => $self->param('state'));
              });
           }
         }

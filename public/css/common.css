@@ -2251,7 +2251,7 @@ button.close {
   -webkit-appearance: none;
 }
 
-.btn-fork, .btn-new, .btn-delete {
+.btn-fork, .btn-new, .btn-delete, .btn-watch {
   font-size:13px;
   padding:5px 20px;
   height:28px;
@@ -2367,7 +2367,7 @@ a:hover .btn-delete {
 
 .count-label {
   background-color: rgba(128, 128, 128, 0.2);
-  padding: 4px 6px 1px 6px;
+  padding: 3px 3px 1px 3px;
   border-radius: 6px;
 }
 
@@ -2769,13 +2769,13 @@ a:hover .btn-delete {
 
 .project-header-left {
   float:left;
-  width:80%;
+  width:75%;
   overflow:hidden;
 }
 
 .project-header-right {
   float:left;
-  width:20%;
+  width:25%;
   overflow:hidden;
 }
 

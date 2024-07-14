@@ -1,0 +1,69 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  return unless $api->logined;
+
+  my $user = param('user');
+  my $project = param('project');
+  my $state = stash('state');
+
+  my $user_row_id = $api->session_user_row_id;
+  my $project_row_id = $api->get_project_row_id($user, $project);
+
+  if (defined $state) {
+    if ($state) {
+      app->dbi->model('watch')->insert(
+        {
+          user => $user_row_id,
+          project => $project_row_id
+        }
+      );
+    }
+    else {
+      app->dbi->model('watch')->delete(where => {
+        user => $user_row_id,
+        project => $project_row_id
+      });
+    }
+  }
+
+  $state = app->dbi->model('watch')->select(
+    'COUNT(*)',
+     where => {user => $user_row_id, project => $project_row_id}
+   )->value;
+  my $newstate = !$state || '0';
+
+  my $watch_count = app->dbi->model('watch')->select(
+      'COUNT(*)',
+       where => {project => $project_row_id}
+     )->value;
+  if ($watch_count >= 1000000) {
+    $watch_count = sprintf('%.1f', $watch_count / 1000000.0);
+    $watch_count =~ s/\.?0*$/M/;
+  }
+  elsif ($watch_count >= 1000) {
+    $watch_count = sprintf('%.1f', $watch_count / 1000.0);
+    $watch_count =~ s/\.?0*$/k/;
+  }
+%>
+
+<button id="watch-btn" class="btn btn-watch">
+  <%= $newstate? 'Watch': 'Unwatch' %>
+  <span class="count-label"><%= $watch_count %></span>
+</button>
+<script type="text/javascript">
+$('#watch-btn').on('click', function() {
+  $.ajax({
+    type: 'GET',
+    url: '<%= url_for("/$user/$project/api/watch/$newstate") %>',
+    dataType: 'html',
+    error: function(jqXHR, textStatus, errorThrown) { 
+      alert(textStatus);
+    },
+    success: function(html) {
+      $('#watch-btn-frame').html(html);
+    }
+  });
+});
+</script>
