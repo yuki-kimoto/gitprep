@@ -67,18 +67,19 @@
     <p style="margin-top: 3px;">Notifications are currently disabled.</p>
   % }
 </div>
-<script type="text/javascript">
-$('#subscribe-btn').on('click', function() {
-  $.ajax({
-    type: 'GET',
-    url: '<%= url_for("/$user/$project/api/subscribe/$issue/" . ($subscribed? "U": "S")) %>',
-    dataType: 'html',
-    error: function(jqXHR, textStatus, errorThrown) { 
-      alert(textStatus);
-    },
-    success: function(html) {
-      $('#subscription-frame').html(html);
-    }
+
+%= javascript begin
+  $('#subscribe-btn').on('click', function() {
+    $.ajax({
+      type: 'GET',
+      url: '<%= url_for("/$user/$project/api/subscribe/$issue/" . ($subscribed? "U": "S")) %>',
+      dataType: 'html',
+      error: function(jqXHR, textStatus, errorThrown) { 
+        alert(textStatus);
+      },
+      success: function(html) {
+        $('#subscription-frame').html(html);
+      }
+    });
   });
-});
-</script>
+% end

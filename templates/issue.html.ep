@@ -338,7 +338,7 @@
       </ul>
       % if ($api->logined) {
         <div id="subscription-frame" class="issue-subscription">
-          <%== $self->render_to_string(template => '/api/subscribe', 'issue' => $issue_row_id, 'reason' => undef) %>
+          %= include '/api/subscribe', issue => $issue_row_id, reason => undef;
         </div>
       % }
     </div>
