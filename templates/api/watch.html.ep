@@ -52,18 +52,19 @@
   <%= $newstate? 'Watch': 'Unwatch' %>
   <span class="count-label"><%= $watch_count %></span>
 </button>
-<script type="text/javascript">
-$('#watch-btn').on('click', function() {
-  $.ajax({
-    type: 'GET',
-    url: '<%= url_for("/$user/$project/api/watch/$newstate") %>',
-    dataType: 'html',
-    error: function(jqXHR, textStatus, errorThrown) { 
-      alert(textStatus);
-    },
-    success: function(html) {
-      $('#watch-btn-frame').html(html);
-    }
+
+%= javascript begin
+  $('#watch-btn').on('click', function() {
+    $.ajax({
+      type: 'GET',
+      url: '<%= url_for("/$user/$project/api/watch/$newstate") %>',
+      dataType: 'html',
+      error: function(jqXHR, textStatus, errorThrown) { 
+        alert(textStatus);
+      },
+      success: function(html) {
+        $('#watch-btn-frame').html(html);
+      }
+    });
   });
-});
-</script>
+% end
