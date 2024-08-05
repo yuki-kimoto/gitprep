@@ -105,12 +105,12 @@
       </div>
       <div class="project-header-right">
         <div class="project-header-right-container">
-          % if (defined $project_id) {
+          % if ($logined && defined $project_id) {
             <div class="project-header-btn-container">
               <span id="watch-btn-frame">
                 %= include '/api/watch', state => undef;
               </span>
-              % if ($logined && $session_user->{id} ne $user_id ) {
+              % if ($session_user->{id} ne $user_id ) {
                 <a href="<%= url_for("/$user_id/$project_id/fork") %>" class="btn btn-fork">Fork
                   <span class="count-label"><%= $fork_count %></span>
                 </a>
