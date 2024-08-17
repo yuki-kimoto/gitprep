@@ -39,12 +39,8 @@
   % if ($diff_tree->{binary}) {
     BIN
   % } else {
-    % if ($add_line_count) {
-      <span style="color:green">+<%= $add_line_count %></span>
-    % }
-    % if ($delete_line_count) {
-      <span style="color:red">-<%= $delete_line_count %></span>
-    % }
+    <span style="color:green">+<%= $add_line_count %></span>
+    <span style="color:red">-<%= $delete_line_count %></span>
   % }
 </<%= $tag %>>
 

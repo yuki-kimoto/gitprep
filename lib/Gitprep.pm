@@ -565,7 +565,12 @@ sub startup {
             # Pull request
             $r->get('/pull/<:number>.patch' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls', patch => 1);
             $r->any('/pull/:number' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls');
-            
+            $r->any('/pull/:number/:activetab' => [
+              activetab => ['commits', 'files', 'contributors']
+            ])->to(tab => 'pulls', cb => sub {
+              shift->render_maybe('/pull')
+            });
+
             # Wiki
             {
               my $r = $r->any('/wiki' => sub { shift->render_maybe('/wiki') })->to(tab => 'wiki');

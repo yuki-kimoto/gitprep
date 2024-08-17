@@ -930,6 +930,52 @@ ul.issues-label-pallet li {
   text-decoration:none;
 }
 
+.pull-header {
+  margin-top: 14px;
+  display: flex;
+  width: 100%;
+}
+.pull-header li.active {
+  border: 1px solid #e6e9e6;
+  border-bottom: 0px none;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+  color: #202020;
+}
+.pull-header li {
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  list-style: none;
+  border-bottom: 1px solid #e6e9e6;
+}
+.pull-header li.padding {
+  flex: 10000;
+  min-width: 1px;
+}
+.pull-header li.status {
+  padding-left: 0;
+  padding-right: 0;
+}
+.pull-header li a {
+  display: block;
+  width: 100%;
+  text-decoration: none;
+  text-align: center;
+  color: #565656;
+}
+.pull-header li a:hover {
+  color: #202020;
+}
+
+.pull-header span.count {
+  margin-left: 2px;
+  padding: 3px 3px 0;
+  border-radius: 40%;
+  background-color: #e0e0e0;
+}
+
 .pull-comment {
   border:1px solid #eee;
   margin-top:15px;
@@ -943,6 +989,10 @@ ul.issues-label-pallet li {
 .pull-comment-body {
   padding:13px 12px;
   
+}
+
+.contributors-list {
+  margin-top: 20px;
 }
 
 .pull-command-line {

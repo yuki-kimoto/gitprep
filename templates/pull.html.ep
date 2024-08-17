@@ -6,7 +6,8 @@
   my $base_user_id = param('user');
   my $base_project_id = param('project');
   my $issue_number = param('number');
-  
+  my $activetab = param('activetab') // '';
+
   # Issue
   my $issue = app->dbi->model('issue')->select(
     [
@@ -232,7 +233,7 @@
   for my $commit (@$commits) {
     my $date = $commit->{age_string_date_local};
     $commits_date->{$date} ||= [];
-    $authors->{$commit->{author}} = 1;
+    $authors->{$commit->{author}} = $commit;
     push @{$commits_date->{$date}}, $commit;
   }
   my $authors_count = keys %$authors;
@@ -280,6 +281,45 @@
       $target_branch
     );
   }
+
+  # Diff trees
+  my $diff_trees = $git->diff_tree(
+    $work_rep_info,
+    $end_commit_id,
+    $start_commit_id,
+    {ignore_space_change => !!$target_project->{ignore_space_change}}
+  );
+
+  # Annotate diff trees with statistics.
+  $git->blob_diffs(
+    $work_rep_info,
+    $start_commit_id,
+    $end_commit_id,
+    $diff_trees,
+    {ignore_space_change => !!$target_project->{ignore_space_change}}
+  );
+
+  # Total statistics.
+  my %s;
+  my $total = {
+    add_line_count => 0,
+    delete_line_count => 0,
+    add_block_count => 0,
+    delete_block_count => 0
+  };
+  for my $diff_tree (@$diff_trees) {
+    $total->{add_line_count} += $diff_tree->{add_line_count} || 0;
+    $total->{delete_line_count} += $diff_tree->{delete_line_count} || 0;
+    $total->{add_block_count} += $diff_tree->{add_block_count} || 0;
+    $total->{delete_block_count} += $diff_tree->{delete_block_count} || 0;
+    $s{$diff_tree->{status}} = 1;
+  }
+  if (@{$diff_trees}) {
+    $total->{add_block_count} /= @{$diff_trees};
+    $total->{delete_block_count} /= @{$diff_trees};
+  }
+  my @k = keys %s;
+  $total->{status} = @k == 1? $k[0]: '';
   
   # HTTP repository URL
   my $http_rep_url = url_for("$target_user_id/$target_project_id.git")->to_abs;
@@ -309,6 +349,14 @@
     rev => $end_commit_id,
     from_rev => $start_commit_id
   );
+
+  # Pull header bar tabs.
+  my $tabs = [
+    {label => 'Conversation', tab => '', count => @$issue_messages - 1},
+    {label => 'Commits', tab => 'commits', count => scalar @$commits},
+    {label => 'Files changed', tab => 'files', count => scalar @{$diff_trees}},
+    {label => 'Contributors', tab => 'contributors', count => $authors_count}
+  ];
 
   layout 'common', title => "Pull Requests Tags \x{30fb} $base_user_id/$base_project_id";
 %>
@@ -357,12 +405,24 @@
         <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
           % if ($base_user_id ne $target_user_id) {
             <%= $target_user_id %>
-            /
+            :
           % }
           <%= $pull_request->{target_branch} %>
         </span>
       </span>
     </div>
+    <ul class="pull-header">
+      % for my $tab (@$tabs) {
+        % my $class = $activetab eq $tab->{tab}? 'active': '';
+        % my $taburl = "/$base_user_id/$base_project_id/pull/$issue_number";
+        % $taburl .= '/' . $tab->{tab} if $tab->{tab};
+        <li class="<%= $class %>"><a href=" <%= url_for($taburl) %>"><%= $tab->{label} %><span class="count"><%= $tab->{count} %></a></li>
+      % }
+      <li class="padding"></li>
+      <li class="status">
+        %= include '/include/diff_status_bar', diff_tree => $total;
+      </li>
+    </ul>
     % if (!$commits_count) {
       <div class="compare-nothing" style="margin-top:10px">
         <div>
@@ -371,207 +431,212 @@
       </div>
     % } else {
       <div>
-        <ul class="compare-header">
-          <li>
-            <b><%= @$commits %></b> <span>commit</span>
-          </li>
-          <li>
-            <b><%= $authors_count %></b> <span>contributor</span>
-          </li>
-          <li>
-            
-          </li>
-          <li>
-            
-          </li>
-        </ul>
 
-        <div class="issue-panel" style="margin-top:10px;">
-          <div>
-            % for my $issue_message (@$issue_messages) {
-              <%
-                my %issue_message_param = (
-                  user_id => $base_user_id,
-                  issue_message => $issue_message
-                );
-              %>
-              
-              %= include '/include/issue_message', %issue_message_param;
+        % if ($activetab eq 'commits') {
+
+          <div class="commits">
+            % for my $date (reverse sort keys %$commits_date) {
+              % my $commits = $commits_date->{$date};
+
+              <div class="commit-date">
+                <i class="icon-off"></i><span>Commits on <%= $date %></span>
+              </div>
+
+              <ul class="compare-commits-date-container">
+                % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
+                  <%
+                    my $commit_author_email = $commit->{author_email};
+                    my $commit_author_id = app->dbi->model('user')->select(
+                      'id',
+                      where => {email => $commit_author_email}
+                    )->value;
+                  %>
+                  <li>
+                    <div class="compare-commits-author">
+                      <span title="<%= $commit->{author_email} %>">
+                        % if (defined $commit_author_id) {
+                          <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+                        % } else {
+                          <%= $commit->{author_name} %>
+                        % }
+                      </span>
+                    </div>
+                    <div class="compare-commits-commit-title">
+                      <a style="color:#333" href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
+                        <%= $commit->{title_short} %>
+                      </a>
+                    </div>
+                    <div class="compare-commits-commit-id">
+                      <a href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
+                        <%= substr($commit->{id}, 0, 7) %>
+                      </a>
+                    </div>
+                  </li>
+                % }
+              </ul>
             % }
           </div>
-        </div>
 
-        <div class="commits">
-          % for my $date (reverse sort keys %$commits_date) {
-            % my $commits = $commits_date->{$date};
-            
-            <div class="commit-date">
-              <i class="icon-off"></i><span>Commits on <%= $date %></span>
-            </div>
-            
-            <ul class="compare-commits-date-container">
-              % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
+        % } elsif ($activetab eq 'files') {
+
+          %= include '/include/commit_body', %commit_body_args;
+
+        % } elsif ($activetab eq 'contributors') {
+
+          <ul class="contributors-list">
+            % for my $author (sort {$a->{author_name} <=> $b->{author_name}} values %$authors) {
+              <li title="<%= $author->{author_email} %>">
+                % my $authid = app->dbi->model('user')->select('id', where => {email => $author->{author_email}})->value;
+                % if (defined $authid) {
+                  <a href="<%= url_for("/$authid") %>"><%= $author->{author_name} %></a>
+                % } else {
+                  <%= $author->{author_name} %>
+                % }
+            % }
+          <ul>
+
+        % } else {
+
+          <div class="issue-panel" style="margin-top:10px;">
+            <div>
+              % for my $issue_message (@$issue_messages) {
                 <%
-                  my $commit_author_email = $commit->{author_email};
-                  my $commit_author_id = app->dbi->model('user')->select(
-                    'id',
-                    where => {email => $commit_author_email}
-                  )->value;
+                  my %issue_message_param = (
+                    user_id => $base_user_id,
+                    issue_message => $issue_message
+                  );
                 %>
-                <li>
-                  <div class="compare-commits-author">
-                    <span title="<%= $commit->{author_email} %>">
-                      % if (defined $commit_author_id) {
-                        <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
-                      % } else {
-                        <%= $commit->{author_name} %>
-                      % }
-                    </span>
-                  </div>
-                  <div class="compare-commits-commit-title">
-                    <a style="color:#333" href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
-                      <%= $commit->{title_short} %>
-                    </a>
-                  </div>
-                  <div class="compare-commits-commit-id">
-                    <a href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
-                      <%= substr($commit->{id}, 0, 7) %>
-                    </a>
-                  </div>
-                </li>
+
+                %= include '/include/issue_message', %issue_message_param;
               % }
-            </ul>
-          % }
-        </div>
-
-  
-        %= include '/include/commit_body', %commit_body_args;
-      % }
-      
-      % if ($api->can_write_access($session_user_id, $base_user_id, $base_project_id)) {
-        % if ($commits_count && $merge_success && $issue->{open}) {
-          <div class="pull-request-form">
-            <div style="overflow:hidden">
-              <div style="float:left;padding:10px;padding-right:0">
-                <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#95c97e;color:white;padding-top:5px;"><%= "\x{2714}" %></div>
-              </div>
-              <div style="float:left">
-                <div class="pull-request-form-title">
-                  <div>
-                    <b>This branch has no conflicts with the base branch</b>
-                  </div>
-                  <div>
-                    <span style="color:#767676">Merging can be performed automatically.</span>
-                  </div>
-                </div>
-              </div>
             </div>
-            <div class="pull-request-form-button">
-              <form action="<%= url_for %>" method="post">
-                <%= hidden_field op => 'merge' %>
-                <%= submit_button 'Merge pull request', class => "btn btn-green btn-new" %>
-                <span style="margin-left:5px">
-                  You can also view <a href="javascript:void(0)" onclick="$('#command-line-instructions').toggle()" >command line instructions</a>.
-                </span>
-              </form>
-              
-              <div id="command-line-instructions" style="display:none">
-                <div style="font-size:18px;padding:10px 0">
-                  Merging via command line
-                </div>
+          </div>
 
-                <div>
-                  If you do not want to use the merge button or an automatic merge cannot be performed, you can perform a manual merge on the command line.
+          % if ($api->can_write_access($session_user_id, $base_user_id, $base_project_id)) {
+            % if ($commits_count && $merge_success && $issue->{open}) {
+              <div class="pull-request-form">
+                <div style="overflow:hidden">
+                  <div style="float:left;padding:10px;padding-right:0">
+                    <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#95c97e;color:white;padding-top:5px;"><%= "\x{2714}" %></div>
+                  </div>
+                  <div style="float:left">
+                    <div class="pull-request-form-title">
+                      <div>
+                        <b>This branch has no conflicts with the base branch</b>
+                      </div>
+                      <div>
+                        <span style="color:#767676">Merging can be performed automatically.</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                %= javascript begin
-                  $(document).ready(function () {
-                    var http_rep_url = "<%= $http_rep_url %>";
-                    
-                    var ssh_rep_url = "<%= $ssh_rep_url %>";
-                    var patch_url = "<%= $patch_url %>";
-                    
-                    var pre_content_base = "<%= $pre_content_base %>";
-                    var pre_content_http = "<%= $pre_content_http %>";
-                    var pre_content_ssh = "<%= $pre_content_ssh %>";
-                    
-                    var pre_content_http_all = pre_content_base + "\n" + pre_content_http;
-                    var pre_content_ssh_all = pre_content_base + "\n" + pre_content_ssh;
-                    
-                    $('#http-btn').on('click', function () {
-                      $('[name=clone_url]').val(http_rep_url);
-                      $('#step1').text(pre_content_http_all);
-                    });
-                    $('#ssh-btn').on('click', function () {
-                      $('[name=clone_url]').val(ssh_rep_url);
-                      $('#step1').text(pre_content_ssh_all);
-                    });
-                    $('#patch-btn').on('click', function () {
-                      $('[name=clone_url]').val(patch_url);
-                    });
-                  });
-                % end
-                
-                <div style="margin-top:10px">
-                  <button id="http-btn" class="btn btn-small" style="border-radius:3px 0 0 3px">HTTPS</button><button id="ssh-btn" class="btn btn-small" style="border-radius:0">SSH</button><button id="patch-btn" class="btn btn-small" style="border-radius:0">Patch</button><%= text_field clone_url => $http_rep_url, style => "width:600px;padding:4px 7px 5px 7px;border-radius:0 3px 3px 0" %>
-                </div>
+                <div class="pull-request-form-button">
+                  <form action="<%= url_for %>" method="post">
+                    <%= hidden_field op => 'merge' %>
+                    <%= submit_button 'Merge pull request', class => "btn btn-green btn-new" %>
+                    <span style="margin-left:5px">
+                      You can also view <a href="javascript:void(0)" onclick="$('#command-line-instructions').toggle()" >command line instructions</a>.
+                    </span>
+                  </form>
 
-                <div style="margin-top:15px;margin-bottom:5px;">
-                  <b>Step 1:</b> From your project repository, check out a new branch and test the changes.
-                </div>
+                  <div id="command-line-instructions" style="display:none">
+                    <div style="font-size:18px;padding:10px 0">
+                      Merging via command line
+                    </div>
+                  <div>
+                    If you do not want to use the merge button or an automatic merge cannot be performed, you can perform a manual merge on the command line.
+                  </div>
+                  %= javascript begin
+                    $(document).ready(function () {
+                      var http_rep_url = "<%= $http_rep_url %>";
+
+                      var ssh_rep_url = "<%= $ssh_rep_url %>";
+                      var patch_url = "<%= $patch_url %>";
+
+                      var pre_content_base = "<%= $pre_content_base %>";
+                      var pre_content_http = "<%= $pre_content_http %>";
+                      var pre_content_ssh = "<%= $pre_content_ssh %>";
+
+                      var pre_content_http_all = pre_content_base + "\n" + pre_content_http;
+                      var pre_content_ssh_all = pre_content_base + "\n" + pre_content_ssh;
+
+                      $('#http-btn').on('click', function () {
+                        $('[name=clone_url]').val(http_rep_url);
+                        $('#step1').text(pre_content_http_all);
+                      });
+                      $('#ssh-btn').on('click', function () {
+                        $('[name=clone_url]').val(ssh_rep_url);
+                        $('#step1').text(pre_content_ssh_all);
+                      });
+                      $('#patch-btn').on('click', function () {
+                        $('[name=clone_url]').val(patch_url);
+                      });
+                    });
+                  % end
+
+                  <div style="margin-top:10px">
+                    <button id="http-btn" class="btn btn-small" style="border-radius:3px 0 0 3px">HTTPS</button><button id="ssh-btn" class="btn btn-small" style="border-radius:0">SSH</button><button id="patch-btn" class="btn btn-small" style="border-radius:0">Patch</button><%= text_field clone_url => $http_rep_url, style => "width:600px;padding:4px 7px 5px 7px;border-radius:0 3px 3px 0" %>
+                  </div>
+
+                  <div style="margin-top:15px;margin-bottom:5px;">
+                    <b>Step 1:</b> From your project repository, check out a new branch and test the changes.
+                  </div>
 
 <pre id="step1" style="background:#f2f2f2; padding:10px; border-radius:3px">
 git checkout -b <%= $target_user_id %>-<%= $target_branch %> <%= $base_branch %>
 git pull <%= url_for("$target_user_id/$target_project_id.git")->to_abs %> <%= $target_branch %>
 </pre>
 
-                <div style="margin-top:15px;margin-bottom:5px;">
-                  <b>Step 2:</b> Merge the changes and update on GitPrep.
-                </div>
+                  <div style="margin-top:15px;margin-bottom:5px;">
+                    <b>Step 2:</b> Merge the changes and update on GitPrep.
+                  </div>
 
 <pre style="background:#f2f2f2; padding:10px; border-radius:3px">
 git checkout <%= $base_branch %>
 git merge --no-ff <%= $target_user_id %>-<%= $target_branch %>
 git push origin <%= $base_branch %>
 </pre>
+                </div>
               </div>
             </div>
-          </div>
-        % }
-      % }
+            % }
+          % }
 
-      % if ($api->logined) {
-        <div class="issue-add-comment">
-          <form action="<%= url_for %>" method="post">
-            <%= hidden_field 'op' %>
-            <div class="issue-add-comment-header">
-              <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
-              <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
-              %= include '/include/issue_comment_icon';
-            </div>
-            <div class="issue-add-comment-body">
-              <div class="issue-message-write-area issue-add-comment-message">
-                <%= text_area 'message' %>
-              </div>
-              <div class="issue-message-preview-area issue-add-comment-preview markdown-body" style="padding:10px">
-              </div>
-              <div class="issue-add-comment-bottom">
-                <div class="issue-add-comment-button-left">
-                  Styling with Markdown is supported
+          % if ($api->logined) {
+            <div class="issue-add-comment">
+              <form action="<%= url_for %>" method="post">
+                <%= hidden_field 'op' %>
+                <div class="issue-add-comment-header">
+                  <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
+                  <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
+                  %= include '/include/issue_comment_icon';
                 </div>
-                <div class="issue-add-comment-button">
-                  % if ($issue->{open}) {
-                    <input type="submit" value="Close pull request" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn">
-                  % } else {
-                    <input type="submit" value="Reopen pull request" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
-                  % }
-                  <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-green btn-new">
+                <div class="issue-add-comment-body">
+                  <div class="issue-message-write-area issue-add-comment-message">
+                    <%= text_area 'message' %>
+                  </div>
+                  <div class="issue-message-preview-area issue-add-comment-preview markdown-body" style="padding:10px">
+                  </div>
+                  <div class="issue-add-comment-bottom">
+                    <div class="issue-add-comment-button-left">
+                      Styling with Markdown is supported
+                    </div>
+                    <div class="issue-add-comment-button">
+                      % if ($issue->{open}) {
+                        <input type="submit" value="Close pull request" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn">
+                      % } else {
+                        <input type="submit" value="Reopen pull request" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
+                      % }
+                      <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-green btn-new">
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </form>
             </div>
-          </form>
-        </div>
-      % }
-    </div>
+          % }
+        % }
+      </div>
+    % }
   </div>
 
   %= include '/include/footer';
