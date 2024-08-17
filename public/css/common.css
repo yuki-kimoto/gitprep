@@ -438,7 +438,9 @@ a.wiki-btn-history:hover {
   text-align:right;
 }
 .issue-labels-setting-pallet li {
-  border-radius:3px;
+  display: inline-block;
+  border: 1px solid #dddddd;
+  border-radius:24px;
   margin-bottom:4px;
   margin-top:5px;
   padding:4px 5px;
@@ -562,7 +564,7 @@ a.wiki-btn-history:hover {
   float:left;
 }
 .labels-tag {
-  border-radius:5px;
+  border-radius:24px;
   display:inline-block;
   padding:5px 10px;
   font-weight:bold;
@@ -595,7 +597,8 @@ ul.issues-label-pallet {
 }
 ul.issues-label-pallet li {
   display:inline-block;
-  border-radius:3px;
+  border: 1px solid #dddddd;
+  border-radius:24px;
   padding:1px 3px;
   font-size:95%;
 }
@@ -606,15 +609,15 @@ ul.issues-label-pallet li {
   color:blue;
 }
 
-.issues-button-container {
+.issues-button-container, .pulls-button-container {
   margin-bottom:10px;
   overflow:hidden;
 }
-.issues-button-container-left {
+.issues-button-container-left, .pulls-button-container-left {
   float:left;
   width:50%;
 }
-.issues-button-container-right {
+.issues-button-container-right, .pulls-button-container-right {
   text-align:right;
   float:left;
   width:50%;
@@ -1022,10 +1025,6 @@ ul.issues-label-pallet li {
   color:blue;
 }
 
-.pulls-button-container {
-  text-align:right;
-  margin-bottom:10px;
-}
 .pulls-header {
   border:1px solid #e6e9e6;
   background:#fafafa;
