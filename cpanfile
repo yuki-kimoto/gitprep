@@ -22,4 +22,4 @@ requires 'MIME::Base64';
 requires 'MIME::Entity';
 requires 'HTML::FormatText::WithLinks';
 requires 'Email::Sender';
-
+requires 'HTML::Restrict', '== 3.0.0';
