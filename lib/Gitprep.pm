@@ -554,7 +554,7 @@ sub startup {
 
             # New issue
             $r->any('/issues/new' => sub { shift->render_maybe('/issues/new') })->to(tab => 'issues');
-            $r->any('/issues/:number' => sub { shift->render_maybe('/issue') })->to(tab => 'issues');
+            $r->any('/issues/:number' => sub { shift->render_maybe('/pull') })->to(tab => 'issues');
 
             # Labels
             $r->any('/labels' => sub { shift->render_maybe('/labels') })->to(tab => 'issues');
@@ -565,7 +565,12 @@ sub startup {
             # Pull request
             $r->get('/pull/<:number>.patch' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls', patch => 1);
             $r->any('/pull/:number' => sub { shift->render_maybe('/pull') })->to(tab => 'pulls');
-            
+            $r->any('/pull/:number/:activetab' => [
+              activetab => ['commits', 'files', 'contributors']
+            ])->to(tab => 'pulls', cb => sub {
+              shift->render_maybe('/pull')
+            });
+
             # Wiki
             {
               my $r = $r->any('/wiki' => sub { shift->render_maybe('/wiki') })->to(tab => 'wiki');

@@ -6,7 +6,37 @@
   my $base_user_id = param('user');
   my $base_project_id = param('project');
   my $issue_number = param('number');
-  
+  my $op = param('op') // '';
+
+  my $activetab = '';
+  my $pull_request;
+  my $base_project_row_id = $api->get_project_row_id($base_user_id,
+    $base_project_id);
+  my $base_branch;
+  my $target_project;
+  my $target_branch;
+  my $target_user_id;
+  my $target_project_id;
+  my $merge_success;
+  my $commits;
+  my $commits_date = {};
+  my $authors = {};
+  my $tabs;
+  my $http_rep_url;
+  my $ssh_rep_url;
+  my $patch_url;
+  my $pre_content_base;
+  my $pre_content_http;
+  my $pre_content_ssh;
+  my %commit_body_args;
+  my $total = {
+    add_line_count => 0,
+    delete_line_count => 0,
+    add_block_count => 0,
+    delete_block_count => 0
+  };
+  my $title = '- Issue';
+
   # Issue
   my $issue = app->dbi->model('issue')->select(
     [
@@ -18,91 +48,46 @@
       'issue.number' => $issue_number
     }
   )->one;
-  
-  # Pull requests
-  my $pull_request = app->dbi->model('pull_request')->select(
-    where => {row_id => $issue->{pull_request}}
-  )->one;
-  
-  # Base information
-  my $base_project_row_id = $pull_request->{base_project};
-  my $base_project = app->dbi->model('project')->select(
-    [
-      {__MY__ => '*'},
-      {user => ['id']}
-    ],
-    where => {'project.row_id' => $base_project_row_id}
-  )->one;
-  my $base_branch = $pull_request->{base_branch};
-  
-  Carp::croak "pull_request invalid user id"
-    if $base_user_id ne $base_project->{'user.id'};
-  Carp::croak "pull_request invalid project id"
-    if $base_project_id ne $base_project->{id};
-  
-  # Target information
-  my $target_project_row_id = $pull_request->{target_project};
-  my $target_project = app->dbi->model('project')->select(
-    [
-      {__MY__ => '*'},
-      {user => ['id']}
-    ],
-    where => {'project.row_id' => $target_project_row_id}
-  )->one;
-  my $target_branch = $pull_request->{target_branch};
-  my $target_user_id = $target_project->{'user.id'};
-  my $target_project_id = $target_project->{id};
-  
+
   # Session
+  my $loggedin = $api->logined;
   my $session_user_row_id = $api->session_user_row_id;
   my $session_user_id = $api->session_user_id;
-  
-  # Base repository information
-  my $base_rep_info = app->rep_info($base_user_id, $base_project_id);
-  
-  # Target repository information
-  my $target_rep_info = app->rep_info($target_user_id, $base_project_id);
-  
-  # Working repository information
-  my $work_rep_info = app->work_rep_info($base_user_id, $base_project_id);
 
-  # Display patch
-  if (stash('patch')) {
-    # Lock working repository
-    my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
-    
-    # Prepare merge
-    $self->app->manager->prepare_merge(
-      $work_rep_info,
-      $base_rep_info,
-      $base_branch,
-      $target_rep_info,
-      $target_branch
-    );
-    
-    # Create patch
-    my $patch = $self->app->manager->get_patch(
-      $work_rep_info,
-      $target_rep_info,
-      $target_branch
-    );
-    
-    $self->res->headers->content_type('text/plain; charset=utf-8');
-    $self->render(text => $patch);
-    return;
-  }
+  # Permissions
+  my $canadmin = $loggedin &&
+    $api->can_write_access($session_user_id, $base_user_id, $base_project_id);
+  my $isissuer = $loggedin && $session_user_row_id == $issue->{open_user};
 
-  # Git
-  my $git = $self->app->git;
-  
-  my $op = param('op') // '';
-  
+  # Message validation function
+  my $validate_message = sub {
+    my ($message) = @_;
+    my $validation = app->vc->validation;
+
+    # Check Message
+    if (!length $message) {
+      $validation->add_failed(message => 'message is empty');
+    }
+    elsif (length $message > 1000) {
+      $validation->add_failed(message => 'message is too long');
+    }
+
+    return $validation;
+  };
+
+  # Handle issue-oriented requests.
   my $errors;
   if (lc $self->req->method eq 'post') {
-    
-    # Close pull request
-    my $op = param('op');
+
+    # Close issue
     if ($op eq 'close-issue') {
+
+      # Access control
+      unless ($isissuer || $canadmin) {
+        $self->reply->exception('Forbidden');
+        return;
+      }
+
       app->dbi->model('issue')->update(
         {
           open => 0
@@ -112,7 +97,16 @@
       $self->redirect_to('current');
       return;
     }
-    elsif ($op eq 'reopen-issue') {
+
+    # Reopen issue
+    if ($op eq 'reopen-issue') {
+
+      # Access control
+      unless ($isissuer || $canadmin) {
+        $self->reply->exception('Forbidden');
+        return;
+      }
+
       my $open_time = time;
       app->dbi->model('issue')->update(
         {
@@ -127,14 +121,188 @@
       $self->redirect_to('current');
       return;
     }
-    elsif ($op eq 'merge') {
 
-      # Access controll
-      unless ($api->can_write_access($session_user_id, $base_user_id, $base_project_id)) {
-        $self->reply->exception('Forbbiden');
+    # Toggle label
+    if ($op eq 'api-toggle-label') {
+      my $label_row_id = param('popup-label-row-id');
+      my $json = {success => 0};
+
+      if ($canadmin) {
+        my $label_checked = app->dbi->model('issue_label')->select(
+          where => {issue => $issue->{row_id}, label => $label_row_id}
+        )->one;
+
+        $json = {success => 1, checked => 0};
+        if ($label_checked) {
+          app->dbi->model('issue_label')->delete(
+            where => {
+              issue => $issue->{row_id},
+              label => $label_row_id
+            }
+          );
+        }
+        else {
+          app->dbi->model('issue_label')->insert({
+            issue => $issue->{row_id},
+            label => $label_row_id
+          });
+          my $label = app->dbi->model('label')->select(
+            where => {
+              row_id => $label_row_id
+            })->one;
+          $json->{checked} = 1;
+          $json->{id} = $label->{id};
+          $json->{color} = $label->{color};
+        }
+      }
+
+      $self->render(json => $json);
+      return;
+    }
+
+    # Delete comment
+    if ($op eq 'api-delete-issue-message') {
+      my $issue_message_row_id = param('issue_message_row_id');
+
+      my $json = $api->api_delete_issue_message($issue_message_row_id,
+        $base_user_id);
+
+      $self->render(json => $json);
+      return;
+    }
+
+    # Update comment
+    if ($op eq 'api-update-issue-message') {
+
+      my $issue_message_row_id = param('issue_message_row_id');
+      my $message = param('message');
+
+      # Validation
+      my $json = {success => 0};
+      if ($validate_message->($message)->is_valid) {
+        $json = $api->api_update_issue_message($issue_message_row_id, $message, $base_user_id);
+      }
+
+      $self->render(json => $json);
+      return;
+    }
+
+    # Add comment
+    if ($op eq 'add-comment') {
+
+      # Access control
+      unless ($loggedin) {
+        $self->reply->exception('Forbidden');
         return;
       }
-      
+
+      # Parameters
+      my $message = param('message');
+
+      # Validation
+      my $validation = $validate_message->($message);
+      if ($validation->is_valid) {
+
+        my $msgno = $api->add_issue_message($base_user_id, $base_project_id,
+                                            $issue_number, $message);
+
+        # Subscriptions.
+        $api->subscribe($api->session_user_row_id, $issue->{row_id}, 'C');
+        $api->subscribe_mentioned($issue->{row_id}, $message);
+
+        # Notifications.
+        my $issuekind = $issue->{pull_request}? 'pull': 'issues';
+        $api->notify_subscribed($base_user_id, $base_project_id,
+                                "$issue->{title} (#$issue_number)",
+                                $api->session_user_row_id, $message,
+                                "comment-$msgno", "$issuekind/$issue_number",
+                                $issue->{row_id});
+        $self->redirect_to;
+        return;
+      }
+
+      $errors = $validation->messages;
+    }
+  }
+
+  # Issue messages
+  my $issue_messages = app->dbi->model('issue_message')->select(
+    [
+      {__MY__ => '*'},
+      {user => ['id']}
+    ],
+    where => {issue => $issue->{row_id}}
+  )->all;
+
+  # Participants
+  my $participants = app->dbi->model('issue_message')->select(
+    ['distinct user.id'],
+    where => {issue => $issue->{row_id}},
+    append => 'order by user.id'
+  )->values;
+
+  # Labels
+  my $labels = app->dbi->model('label')->select(
+    {__MY__ => '*'},
+    where => {project => $base_project_row_id}
+  )->all;
+
+  # Issue labels
+  my $issue_labels = app->dbi->model('issue_label')->select(
+    {label => '*'},
+    where => {'issue_label.issue' => $issue->{row_id}},
+    append => 'order by label.id'
+  )->all;
+
+  # Pull requests
+  if ($issue->{pull_request}) {
+    $activetab = param('activetab') // '';
+    $pull_request = app->dbi->model('pull_request')->select(
+      where => {row_id => $issue->{pull_request}}
+    )->one;
+
+    # Base information
+    $base_project_row_id = $pull_request->{base_project};
+    my $base_project = app->dbi->model('project')->select(
+      [
+        {__MY__ => '*'},
+        {user => ['id']}
+      ],
+      where => {'project.row_id' => $base_project_row_id}
+    )->one;
+    $base_branch = $pull_request->{base_branch};
+
+    Carp::croak "pull_request no such project"
+      unless $base_project;
+    Carp::croak "pull_request invalid user id"
+      if $base_user_id ne $base_project->{'user.id'};
+    Carp::croak "pull_request invalid project id"
+      if $base_project_id ne $base_project->{id};
+
+    # Target information
+    my $target_project_row_id = $pull_request->{target_project};
+    $target_project = app->dbi->model('project')->select(
+      [
+        {__MY__ => '*'},
+        {user => ['id']}
+      ],
+      where => {'project.row_id' => $target_project_row_id}
+    )->one;
+    $target_branch = $pull_request->{target_branch};
+    $target_user_id = $target_project->{'user.id'};
+    $target_project_id = $target_project->{id};
+
+    # Base repository information
+    my $base_rep_info = app->rep_info($base_user_id, $base_project_id);
+
+    # Target repository information
+    my $target_rep_info = app->rep_info($target_user_id, $base_project_id);
+
+    # Working repository information
+    my $work_rep_info = app->work_rep_info($base_user_id, $base_project_id);
+
+    # Display patch
+    if (stash('patch')) {
       # Lock working repository
       my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
 
@@ -146,269 +314,317 @@
         $target_rep_info,
         $target_branch
       );
-      
-      # Merge
-      my $merge_success = $self->app->manager->merge(
+
+      # Create patch
+      my $patch = $self->app->manager->get_patch(
         $work_rep_info,
         $target_rep_info,
         $target_branch
       );
-      
-      
-      if ($merge_success) {
-        # Push
-        app->manager->push($work_rep_info, $base_branch);
-        
-        # Close
-        app->dbi->model('issue')->update(
-          {
-            open => 0
-          },
-          where => {row_id => $issue->{row_id}}
+
+      $self->res->headers->content_type('text/plain; charset=utf-8');
+      $self->render(text => $patch);
+      return;
+    }
+
+    # Git
+    my $git = $self->app->git;
+
+    # Handle pull-request specific requests.
+    if (lc $self->req->method eq 'post') {
+
+      # Merge
+      if ($op eq 'merge') {
+
+        # Access control
+        unless ($canadmin) {
+          $self->reply->exception('Forbidden');
+          return;
+        }
+
+        # Lock working repository
+        my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+
+        # Prepare merge
+        $self->app->manager->prepare_merge(
+          $work_rep_info,
+          $base_rep_info,
+          $base_branch,
+          $target_rep_info,
+          $target_branch
         );
-        
-        $self->redirect_to("/$base_user_id/$base_project_id/tree/$base_branch");
+
+        # Merge
+        $merge_success = $self->app->manager->merge(
+          $work_rep_info,
+          $target_rep_info,
+          $target_branch
+        );
+
+        if ($merge_success) {
+          # Push
+          app->manager->push($work_rep_info, $base_branch);
+
+          # Close
+          app->dbi->model('issue')->update(
+            {
+              open => 0
+            },
+            where => {row_id => $issue->{row_id}}
+          );
+
+          $self->redirect_to("/$base_user_id/$base_project_id/tree/$base_branch");
+        }
       }
     }
-    elsif ($op eq 'add-comment') {
 
-      # Parameters
-      my $message = param('message');
-      
-      # Validation
-      my $vc = app->vc;
-      my $validation = $vc->validation;
-      
-      # Check Message
-      if (!length $message) {
-        $validation->add_failed(message => 'message is empty');
-      }
-      elsif (length $message > 1000) {
-        $validation->add_failed(message => 'message is too long');
-      }
-      
-      if ($validation->is_valid) {
-
-        $api->add_issue_message($base_user_id, $base_project_id, $issue_number, $message);
-        
-        $self->redirect_to;
-        return;
-      }
-      else {
-        $errors = $validation->messages;
-      }
-    }
-    elsif ($op eq 'api-delete-issue-message') {
-      my $issue_message_row_id = param('issue_message_row_id');
-      
-      my $json = $api->api_delete_issue_message($issue_message_row_id, $base_user_id);
-      
-      $self->render(json => $json);
-      return;
-    }
-    elsif ($op eq 'api-update-issue-message') {
-      
-      my $issue_message_row_id = param('issue_message_row_id');
-      my $message = param('message');
-      
-      my $json = $api->api_update_issue_message($issue_message_row_id, $message, $base_user_id);
-      
-      $self->render(json => $json);
-      return;
-    }
-  }
-  
-  # Commits
-  my $commits = $git->forward_commits(
-    $work_rep_info,
-    $base_rep_info,
-    $base_branch,
-    $target_rep_info,
-    $target_branch
-  );
-  my $commits_count = @$commits;
-  my $commits_date = {};
-  my $authors = {};
-  for my $commit (@$commits) {
-    my $date = $commit->{age_string_date_local};
-    $commits_date->{$date} ||= [];
-    $authors->{$commit->{author}} = 1;
-    push @{$commits_date->{$date}}, $commit;
-  }
-  my $authors_count = keys %$authors;
-
-  # Start commit
-  my $start_commit_id = app->git->ref_to_object_id($base_rep_info, $base_branch);
-
-  # End commit
-  my $end_commit_id = app->git->ref_to_object_id($target_rep_info, $target_branch);
-  
-  # Issue messages
-  my $issue_messages = app->dbi->model('issue_message')->select(
-    [
-      {__MY__ => '*'},
-      {user => ['id']}
-    ],
-    where => {issue => $issue->{row_id}}
-  )->all;
-  
-  # Issue message count
-  my $issue_messages_count = app->dbi->model('issue_message')->select(
-    'count(*)',
-    where => {issue => $issue->{row_id}},
-  )->value;
-
-  # Check merge automatically
-  my $merge_success;
-  if ($api->can_write_access($session_user_id, $base_user_id, $base_project_id) && $issue->{open}) {
-    
-    my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
-    
-    # Prepare merge
-    $self->app->manager->prepare_merge(
+    # Commits
+    $commits = $git->forward_commits(
       $work_rep_info,
       $base_rep_info,
       $base_branch,
       $target_rep_info,
       $target_branch
     );
-    
-    # Check merge automatical
-    $merge_success = $self->app->manager->merge(
+    for my $commit (@$commits) {
+      my $date = $commit->{age_string_date_local};
+      $commits_date->{$date} ||= [];
+      $authors->{$commit->{author}} = $commit;
+      push @{$commits_date->{$date}}, $commit;
+    }
+
+    # Start commit
+    my $start_commit_id = app->git->ref_to_object_id($base_rep_info,
+      $base_branch);
+
+    # End commit
+    my $end_commit_id = app->git->ref_to_object_id($target_rep_info,
+        $target_branch);
+
+    # Check merge automatically
+    if ($issue->{open}) {
+
+      my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+
+      # Prepare merge
+      $self->app->manager->prepare_merge(
+        $work_rep_info,
+        $base_rep_info,
+        $base_branch,
+        $target_rep_info,
+        $target_branch
+      );
+
+      # Check conflicts
+      $merge_success = $self->app->manager->merge(
+        $work_rep_info,
+        $target_rep_info,
+        $target_branch
+      );
+    }
+
+    # Diff trees
+    my $diff_trees = $git->diff_tree(
       $work_rep_info,
-      $target_rep_info,
-      $target_branch
+      $end_commit_id,
+      $start_commit_id,
+      {ignore_space_change => !!$target_project->{ignore_space_change}}
     );
+
+    # Annotate diff trees with statistics.
+    $git->blob_diffs(
+      $work_rep_info,
+      $start_commit_id,
+      $end_commit_id,
+      $diff_trees,
+      {ignore_space_change => !!$target_project->{ignore_space_change}}
+    );
+
+    # Total statistics.
+    my %s;
+    for my $diff_tree (@$diff_trees) {
+      $total->{add_line_count} += $diff_tree->{add_line_count} || 0;
+      $total->{delete_line_count} += $diff_tree->{delete_line_count} || 0;
+      $total->{add_block_count} += $diff_tree->{add_block_count} || 0;
+      $total->{delete_block_count} += $diff_tree->{delete_block_count} || 0;
+      $s{$diff_tree->{status}} = 1;
+    }
+    if (@{$diff_trees}) {
+      $total->{add_block_count} /= @{$diff_trees};
+      $total->{delete_block_count} /= @{$diff_trees};
+    }
+    my @k = keys %s;
+    $total->{status} = @k == 1? $k[0]: '';
+
+    # HTTP repository URL
+    $http_rep_url = url_for("$target_user_id/$target_project_id.git")->to_abs;
+
+    # SSH repository URL
+    my $url = url_for->to_abs;
+    $url->base(undef);
+    my $ssh_port = config->{basic}{ssh_port};
+    my $rep_home = app->rep_home;
+    my $execute_user = getpwuid($>);
+    my $ssh_rep_url_base = defined app->config->{basic}{'ssh_rep_url_base'}
+      ? app->config->{basic}{'ssh_rep_url_base'} : $rep_home;
+    $ssh_rep_url = "ssh://$execute_user\@" . $url->host .
+      ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user/$project.git";
+
+    $patch_url = url_for("/$base_user_id/$base_project_id/pull/$issue->{number}.patch")->to_abs;
+
+    $pre_content_base = "git checkout -b $target_user_id-$target_branch $base_branch";
+    $pre_content_http = "git pull $http_rep_url $target_branch";
+    $pre_content_ssh = "git pull $ssh_rep_url $target_branch";
+
+    # commit_body args
+    %commit_body_args = (
+      user => $target_user_id,
+      project => $target_project->{id},
+      rep_info => $work_rep_info,
+      rev => $end_commit_id,
+      from_rev => $start_commit_id
+    );
+
+    # Pull header bar tabs.
+    $tabs = [
+      {label => 'Conversation', tab => '', count => @$issue_messages - 1},
+      {label => 'Commits', tab => 'commits', count => scalar @$commits},
+      {label => 'Files changed', tab => 'files',
+        count => scalar @{$diff_trees}},
+      {label => 'Contributors', tab => 'contributors',
+        count => scalar(keys %$authors)}
+    ];
+
+    # Title
+    $title = 'by ' . $issue->{'open_user.id'} . ' - Pull request';
   }
-  
-  # HTTP repository URL
-  my $http_rep_url = url_for("$target_user_id/$target_project_id.git")->to_abs;
-  
-  # SSH repository URL
-  my $url = url_for->to_abs;
-  $url->base(undef);
-  my $ssh_port = config->{basic}{ssh_port};
-  my $rep_home = app->rep_home;
-  my $execute_user = getpwuid($>);
-  my $ssh_rep_url_base = defined app->config->{basic}{'ssh_rep_url_base'}
-    ? app->config->{basic}{'ssh_rep_url_base'} : $rep_home;
-  my $ssh_rep_url = "ssh://$execute_user\@" . $url->host
-    . ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user/$project.git";
 
-  my $patch_url = url_for("/$base_user_id/$base_project_id/pull/$issue->{number}.patch")->to_abs;
-
-  my $pre_content_base = "git checkout -b $target_user_id-$target_branch $base_branch";
-  my $pre_content_http = "git pull $http_rep_url $target_branch";
-  my $pre_content_ssh = "git pull $ssh_rep_url $target_branch";
-  
-  # commit_body args
-  my %commit_body_args = (
-    user => $target_user_id,
-    project => $target_project->{id},
-    rep_info => $work_rep_info,
-    rev => $end_commit_id,
-    from_rev => $start_commit_id
-  );
-
-  layout 'common', title => "Pull Requests Tags \x{30fb} $base_user_id/$base_project_id";
+  $title = $issue->{title} . " $title #$issue_number \x{30fb} $base_user_id/$base_project_id";
+  layout 'common', title => $title;
 %>
 
+%= javascript '/js/icon-input.js';
 
-  %= javascript begin
-    $(document).ready(function() {
-      %= include '/include/js/issue';
+%= javascript begin
+  $(document).ready(function() {
+    %= include '/include/js/issue';
+
+    // Initialize icon input
+    init_icon_input();
+
+    // Click labels btn
+    $('.issue-labels-setting-btn').on('click', function () {
+      var popup = $('.issue-labels-popup');
+      popup.css('display', 'block');
+
+      var top = $('.issue-labels').offset().top;
+      var left = $('.issue-labels').offset().left;
+
+      popup.css('top', (top + 30) + 'px');
+      popup.css('left', (left - 165) + 'px');
     });
-  % end
+
+    // Click label check button
+    $('.issue-labels-popup-body li').on('click', function () {
+      var that = this;
+
+      var label_row_id = $(this).attr('popup-label-row-id');
+      $.post('<%= url_for %>', {'popup-label-row-id' : label_row_id, op : 'api-toggle-label'}, function (result) {
+        if (result.success) {
+          if (result.checked) {
+            $(that).find('.issue-labels-popup-check i').css('display', 'block');
+            var li = '<li label-row-id="' + label_row_id + '" style="background:' + result.color + '">' + result.id + '</li>';
+            $('.issue-labels-setting-pallet').append(li);
+          }
+          else {
+            $(that).find('.issue-labels-popup-check i').css('display', 'none');
+            $('.issue-labels-setting-pallet li').each(function () {
+              if ($(this).attr('label-row-id') === label_row_id) {
+                $(this).remove();
+              }
+            });
+          }
+          var licount = $('.issue-labels-setting-pallet li').length;
+          $('.issue-labels-none').css('display', licount == 1? 'list-item': 'none');
+        }
+      });
+    });
+
+    // Click label popup close button
+    $('.issue-labels-popup-close-btn').on('click', function () {
+      $('.issue-labels-popup').hide();
+    });
+  });
+% end
 
   %= include '/include/header';
-  
+
   <div class="container">
     %= include '/include/errors', errors => $errors;
-    <div style="font-size:23px;margin-top:20px;margin-bottom:9px;">
-      <%
-        my $pull_title = $pull_request->{target_branch};
-        $pull_title =~ s/_/ /g;
-        $pull_title = ucfirst $pull_title;
-      %>
-      
-      <%= $pull_title %> <span style="color:#767676;">#<%= $issue->{number} %></span>
-    </div>
-    <div>
-      <div style="display:inline-block;color:white;margin-right:4px;">
-        % if ($issue->{open}) {
-          <div style="background:#6cc644;padding:4px 8px;border-radius:3px;">
-            Open
-          </div>
-        % } else {
-          <div style="background:#bd2c00;padding:4px 8px;border-radius:3px;">
-            Closed
-          </div>
-        % }
+
+    <div class="issue-title-panel">
+      <div class="issue-title">
+        <%= $issue->{title} %> <span style="color:#aaa;">#<%= $issue->{number} %></span>
       </div>
-      % my $open_user_id = $issue->{'open_user.id'};
-      <a style="color:#333333;font-weight:bold" href="<%= url_for("/$open_user_id") %>"><%= $open_user_id %></a> 
-      <span style="color:#767676">
-        wants to merge <%= $commits_count %> commits
-        into
-        <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
-          <%= $pull_request->{base_branch} %>
-        </span>
-        from
-        <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
-          % if ($base_user_id ne $target_user_id) {
-            <%= $target_user_id %>
-            /
+      <div>
+        % if ($issue->{open}) {
+          <div class="issue-open">Open</div>
+        % } else {
+          <div class="issue-close">Close</div>
+        % }
+        % my $open_user_id = $issue->{'open_user.id'};
+        <a style="color:#333333;font-weight:bold" href="<%= url_for("/$open_user_id") %>"><%= $open_user_id %></a>
+        <span style="color:#767676">
+          % if ($pull_request) {
+            wants to merge <%= scalar @$commits %> commits into
+            <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
+              <%= $pull_request->{base_branch} %>
+            </span>
+            from
+            <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
+              % if ($base_user_id ne $target_user_id) {
+                <%= $target_user_id %>
+                :
+              % }
+              <%= $pull_request->{target_branch} %>
+            </span>
+          % } else {
+            opened this issue <%= $api->age_string($issue->{open_time}) %> / <%= scalar @$issue_messages %> comment
           % }
-          <%= $pull_request->{target_branch} %>
         </span>
-      </span>
+      </div>
     </div>
-    % if (!$commits_count) {
+    % if ($pull_request) {
+      <ul class="pull-header">
+        % for my $tab (@$tabs) {
+          % my $class = $activetab eq $tab->{tab}? 'active': '';
+          % my $taburl = "/$base_user_id/$base_project_id/pull/$issue_number";
+          % $taburl .= '/' . $tab->{tab} if $tab->{tab};
+          <li class="<%= $class %>"><a href=" <%= url_for($taburl) %>"><%= $tab->{label} %><span class="count"><%= $tab->{count} %></a></li>
+        % }
+        <li class="padding"></li>
+        <li class="status">
+          %= include '/include/diff_status_bar', diff_tree => $total;
+        </li>
+      </ul>
+    % }
+    % if ($pull_request && !@$commits) {
       <div class="compare-nothing" style="margin-top:10px">
         <div>
           <b><big>There isn't anything to compare.</big></b>
         </div>
       </div>
     % } else {
-      <div>
-        <ul class="compare-header">
-          <li>
-            <b><%= @$commits %></b> <span>commit</span>
-          </li>
-          <li>
-            <b><%= $authors_count %></b> <span>contributor</span>
-          </li>
-          <li>
-            
-          </li>
-          <li>
-            
-          </li>
-        </ul>
-
-        <div class="issue-panel" style="margin-top:10px;">
-          <div>
-            % for my $issue_message (@$issue_messages) {
-              <%
-                my %issue_message_param = (
-                  user_id => $base_user_id,
-                  issue_message => $issue_message
-                );
-              %>
-              
-              %= include '/include/issue_message', %issue_message_param;
-            % }
-          </div>
-        </div>
+      % if ($activetab eq 'commits') {
 
         <div class="commits">
           % for my $date (reverse sort keys %$commits_date) {
             % my $commits = $commits_date->{$date};
-            
+
             <div class="commit-date">
               <i class="icon-off"></i><span>Commits on <%= $date %></span>
             </div>
-            
+
             <ul class="compare-commits-date-container">
               % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
                 <%
@@ -444,134 +660,255 @@
           % }
         </div>
 
-  
+      % } elsif ($activetab eq 'files') {
+
         %= include '/include/commit_body', %commit_body_args;
-      % }
-      
-      % if ($api->can_write_access($session_user_id, $base_user_id, $base_project_id)) {
-        % if ($commits_count && $merge_success && $issue->{open}) {
-          <div class="pull-request-form">
-            <div style="overflow:hidden">
-              <div style="float:left;padding:10px;padding-right:0">
-                <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#95c97e;color:white;padding-top:5px;"><%= "\x{2714}" %></div>
-              </div>
-              <div style="float:left">
-                <div class="pull-request-form-title">
-                  <div>
-                    <b>This branch has no conflicts with the base branch</b>
-                  </div>
-                  <div>
-                    <span style="color:#767676">Merging can be performed automatically.</span>
-                  </div>
-                </div>
+
+      % } elsif ($activetab eq 'contributors') {
+
+        <ul class="contributors-list">
+          % for my $author (sort {$a->{author_name} <=> $b->{author_name}} values %$authors) {
+            <li title="<%= $author->{author_email} %>">
+              % my $authid = app->dbi->model('user')->select('id', where => {email => $author->{author_email}})->value;
+              % if (defined $authid) {
+                <a href="<%= url_for("/$authid") %>"><%= $author->{author_name} %></a>
+              % } else {
+                <%= $author->{author_name} %>
+              % }
+          % }
+        <ul>
+
+      % } else {
+
+        <div class="issue">
+          <div class="issue-left">
+            <div class="issue-panel" style="margin-top:10px;">
+              <div>
+                % for my $issue_message (@$issue_messages) {
+                  <%
+                    my %issue_message_param = (
+                      user_id => $base_user_id,
+                      issue_message => $issue_message
+                    );
+                  %>
+
+                  %= include '/include/issue_message', %issue_message_param;
+                % }
               </div>
             </div>
-            <div class="pull-request-form-button">
-              <form action="<%= url_for %>" method="post">
-                <%= hidden_field op => 'merge' %>
-                <%= submit_button 'Merge pull request', class => "btn btn-green btn-new" %>
-                <span style="margin-left:5px">
-                  You can also view <a href="javascript:void(0)" onclick="$('#command-line-instructions').toggle()" >command line instructions</a>.
-                </span>
-              </form>
-              
-              <div id="command-line-instructions" style="display:none">
-                <div style="font-size:18px;padding:10px 0">
-                  Merging via command line
-                </div>
 
-                <div>
-                  If you do not want to use the merge button or an automatic merge cannot be performed, you can perform a manual merge on the command line.
+            % if ($loggedin && $pull_request && scalar(@$commits) && $issue->{open}) {
+              <div class="pull-request-form">
+                <div style="overflow:hidden">
+                  %if ($merge_success) {
+                    <div style="float:left;padding:10px;padding-right:0">
+                      <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#95c97e;color:white;padding-top:5px;font-size:140%;"><%= "\x{2714}" %></div>
+                    </div>
+                    <div style="float:left">
+                      <div class="pull-request-form-title">
+                        <div>
+                          <b>This branch has no conflicts with the base branch</b>
+                        </div>
+                        <div>
+                          % if ($canadmin) {
+                            <span style="color:#767676">Merging can be performed automatically.</span>
+                          % } else {
+                            <span style="color:#767676">Only those with write access to this repository can merge pull requests.</span>
+                          % }
+                        </div>
+                      </div>
+                    </div>
+                  % } else {
+                    <div style="float:left;padding:10px;padding-right:0">
+                      <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#6e7781;color:white;padding-top:5px;font-size:140%;"><%= "\x{26a0}" %></div>
+                    </div>
+                    <div style="float:left">
+                      <div class="pull-request-form-title">
+                        <div>
+                          <b>This branch has conflicts that must be resolved</b>
+                        </div>
+                        <div>
+                          % if (!$canadmin) {
+                            <span style="color:#767676">Only those with write access to this repository can merge pull requests.</span>
+                          % }
+                        </div>
+                      </div>
+                    </div>
+                  % }
                 </div>
-                %= javascript begin
-                  $(document).ready(function () {
-                    var http_rep_url = "<%= $http_rep_url %>";
-                    
-                    var ssh_rep_url = "<%= $ssh_rep_url %>";
-                    var patch_url = "<%= $patch_url %>";
-                    
-                    var pre_content_base = "<%= $pre_content_base %>";
-                    var pre_content_http = "<%= $pre_content_http %>";
-                    var pre_content_ssh = "<%= $pre_content_ssh %>";
-                    
-                    var pre_content_http_all = pre_content_base + "\n" + pre_content_http;
-                    var pre_content_ssh_all = pre_content_base + "\n" + pre_content_ssh;
-                    
-                    $('#http-btn').on('click', function () {
-                      $('[name=clone_url]').val(http_rep_url);
-                      $('#step1').text(pre_content_http_all);
-                    });
-                    $('#ssh-btn').on('click', function () {
-                      $('[name=clone_url]').val(ssh_rep_url);
-                      $('#step1').text(pre_content_ssh_all);
-                    });
-                    $('#patch-btn').on('click', function () {
-                      $('[name=clone_url]').val(patch_url);
-                    });
-                  });
-                % end
-                
-                <div style="margin-top:10px">
-                  <button id="http-btn" class="btn btn-small" style="border-radius:3px 0 0 3px">HTTPS</button><button id="ssh-btn" class="btn btn-small" style="border-radius:0">SSH</button><button id="patch-btn" class="btn btn-small" style="border-radius:0">Patch</button><%= text_field clone_url => $http_rep_url, style => "width:600px;padding:4px 7px 5px 7px;border-radius:0 3px 3px 0" %>
-                </div>
+                % if ($merge_success && $canadmin) {
+                  <div class="pull-request-form-button">
+                    <form action="<%= url_for %>" method="post">
+                      <%= hidden_field op => 'merge' %>
+                      <%= submit_button 'Merge pull request', class => "btn btn-green btn-new" %>
+                      <span style="margin-left:5px">
+                        You can also view <a href="javascript:void(0)" onclick="$('#command-line-instructions').toggle()" >command line instructions</a>.
+                      </span>
+                    </form>
+                  </div>
 
-                <div style="margin-top:15px;margin-bottom:5px;">
-                  <b>Step 1:</b> From your project repository, check out a new branch and test the changes.
-                </div>
+                  <div id="command-line-instructions" style="display:none">
+                    <div style="font-size:18px;padding:10px 0">
+                      Merging via command line
+                    </div>
+                    <div>
+                      If you do not want to use the merge button or an automatic merge cannot be performed, you can perform a manual merge on the command line.
+                    </div>
+                    %= javascript begin
+                      $(document).ready(function () {
+                        var http_rep_url = "<%= $http_rep_url %>";
+
+                        var ssh_rep_url = "<%= $ssh_rep_url %>";
+                        var patch_url = "<%= $patch_url %>";
+
+                        var pre_content_base = "<%= $pre_content_base %>";
+                        var pre_content_http = "<%= $pre_content_http %>";
+                        var pre_content_ssh = "<%= $pre_content_ssh %>";
+
+                        var pre_content_http_all = pre_content_base + "\n" + pre_content_http;
+                        var pre_content_ssh_all = pre_content_base + "\n" + pre_content_ssh;
+
+                        $('#http-btn').on('click', function () {
+                          $('[name=clone_url]').val(http_rep_url);
+                          $('#step1').text(pre_content_http_all);
+                        });
+                        $('#ssh-btn').on('click', function () {
+                          $('[name=clone_url]').val(ssh_rep_url);
+                          $('#step1').text(pre_content_ssh_all);
+                        });
+                        $('#patch-btn').on('click', function () {
+                          $('[name=clone_url]').val(patch_url);
+                        });
+                      });
+                    % end
+
+                    <div style="margin-top:10px">
+                      <button id="http-btn" class="btn btn-small" style="border-radius:3px 0 0 3px">HTTPS</button><button id="ssh-btn" class="btn btn-small" style="border-radius:0">SSH</button><button id="patch-btn" class="btn btn-small" style="border-radius:0">Patch</button><%= text_field clone_url => $http_rep_url, style => "width:600px;padding:4px 7px 5px 7px;border-radius:0 3px 3px 0", readonly => 'true' %>
+                    </div>
+
+                    <div style="margin-top:15px;margin-bottom:5px;">
+                      <b>Step 1:</b> From your project repository, check out a new branch and test the changes.
+                    </div>
 
 <pre id="step1" style="background:#f2f2f2; padding:10px; border-radius:3px">
 git checkout -b <%= $target_user_id %>-<%= $target_branch %> <%= $base_branch %>
 git pull <%= url_for("$target_user_id/$target_project_id.git")->to_abs %> <%= $target_branch %>
 </pre>
 
-                <div style="margin-top:15px;margin-bottom:5px;">
-                  <b>Step 2:</b> Merge the changes and update on GitPrep.
-                </div>
+                    <div style="margin-top:15px;margin-bottom:5px;">
+                      <b>Step 2:</b> Merge the changes and update on GitPrep.
+                    </div>
 
 <pre style="background:#f2f2f2; padding:10px; border-radius:3px">
 git checkout <%= $base_branch %>
 git merge --no-ff <%= $target_user_id %>-<%= $target_branch %>
 git push origin <%= $base_branch %>
 </pre>
+                  </div>
+                % }
               </div>
-            </div>
-          </div>
-        % }
-      % }
+            % }
 
-      % if ($api->logined) {
-        <div class="issue-add-comment">
-          <form action="<%= url_for %>" method="post">
-            <%= hidden_field 'op' %>
-            <div class="issue-add-comment-header">
-              <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
-              <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
-              %= include '/include/issue_comment_icon';
-            </div>
-            <div class="issue-add-comment-body">
-              <div class="issue-message-write-area issue-add-comment-message">
-                <%= text_area 'message' %>
+            % if ($loggedin) {
+              <div class="issue-add-comment">
+                <form action="<%= url_for %>" method="post">
+                  <%= hidden_field 'op' %>
+                  <div class="issue-add-comment-header">
+                    <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
+                    <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
+                    %= include '/include/issue_comment_icon';
+                  </div>
+                  <div class="issue-add-comment-body">
+                    <div class="issue-message-write-area issue-add-comment-message">
+                      <%= text_area 'message' %>
+                    </div>
+                    <div class="issue-message-preview-area issue-add-comment-preview markdown-body" style="padding:10px">
+                    </div>
+                    <div class="issue-add-comment-bottom">
+                      <div class="issue-add-comment-button-left">
+                        Styling with Markdown is supported
+                      </div>
+                      <div class="issue-add-comment-button">
+                        % if ($isissuer || $canadmin) {
+                          % my $issuekind = $pull_request? 'pull request': 'issue';
+                          % if ($issue->{open}) {
+                            <input type="submit" value="Close <%= $issuekind %>" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn">
+                          % } else {
+                            <input type="submit" value="Reopen <%= $issuekind %>" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
+                          % }
+                        % }
+                        <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-green btn-new">
+                      </div>
+                    </div>
+                  </div>
+                </form>
               </div>
-              <div class="issue-message-preview-area issue-add-comment-preview markdown-body" style="padding:10px">
-              </div>
-              <div class="issue-add-comment-bottom">
-                <div class="issue-add-comment-button-left">
-                  Styling with Markdown is supported
+            % }
+          </div>
+          <div class="issue-right">
+            <div class="issue-labels">
+              <div class="issue-labels-title-area">
+                <div class="issue-labels-title">
+                  labels
                 </div>
-                <div class="issue-add-comment-button">
-                  % if ($issue->{open}) {
-                    <input type="submit" value="Close pull request" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn">
-                  % } else {
-                    <input type="submit" value="Reopen pull request" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
-                  % }
-                  <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-green btn-new">
-                </div>
+                %if ($canadmin) {
+                  <div class="issue-labels-setting-btn">
+                    <a href="javascript:void(0)"><i class="icon icon-cog"></i></a>
+                  </div>
+                % }
               </div>
+              % if ($canadmin) {
+                <div class="issue-labels-popup">
+                  <div class="issue-labels-popup-title-area">
+                    <div class="issue-labels-popup-title">
+                      Apply labels to this issue
+                    </div>
+                    <div class="issue-labels-popup-close-btn">
+                      <a href="javascript:void(0)"><i class="icon icon-remove"></i></a>
+                    </div>
+                  </div>
+                  <ul class="issue-labels-popup-body">
+                    % for my $label (@$labels) {
+                      % my $checked = app->dbi->model('issue_label')->select(where => {issue => $issue->{row_id}, label => $label->{row_id}})->one;
+                      <li popup-label-row-id="<%= $label->{row_id} %>">
+                        <div class="issue-labels-popup-check"><i class="icon icon-ok" style="display:<%= $checked ? 'block' : 'none' %>"></i></div>
+                        <div class="issue-labels-popup-pallet" style="background:<%= $label->{color} %>"></div>
+                        <div class="issue-labels-popup-pallet-id"><%= $label->{id} %></div>
+                      </li>
+                    % }
+                  </ul>
+                </div>
+              % }
+              <ul class="issue-labels-setting-pallet">
+                % my $show = 'list-item';
+                % for my $issue_label (@$issue_labels) {
+                  <li label-row-id="<%= $issue_label->{'label.row_id'} %>" style="background:<%= $issue_label->{'label.color'} %>">
+                    <%= $issue_label->{'label.id'} %>
+                  </li>
+                  % $show = 'none';
+                % }
+                <li class="issue-labels-none" style="display: <%= $show %>;">
+                  None yet
+                </li>
+              </ul>
             </div>
-          </form>
+            <div style="font-weight:bold;padding-bottom:3px"><%= @$participants %> participants</div>
+            <ul>
+              % for my $participant (@$participants) {
+                <li>
+                  <a href="<%= url_for("/$participant") %>"><%= $participant %></a>
+                </li>
+              % }
+            </ul>
+            % if ($api->logined) {
+              <div id="subscription-frame" class="issue-subscription">
+                %= include '/api/subscribe', issue => $issue->{row_id}, reason => undef;
+              </div>
+            % }
+          </div>
         </div>
       % }
-    </div>
+    % }
   </div>
 
   %= include '/include/footer';
