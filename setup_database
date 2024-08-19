@@ -17,10 +17,6 @@ if (!-e $dir) {
     make_path $dir or die "Error creating directory: $dir";
 }
 
-{ open my $session_file, '>', 'data/.gitkeep' }
-{ open my $session_file, '>', 'data/rep/.gitkeep' }
-{ open my $session_file, '>', 'data/work/.gitkeep' }
-
 # setup the database
 
 my $database_file = shift // "$FindBin::Bin/data/gitprep.db";
