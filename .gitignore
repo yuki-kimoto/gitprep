@@ -18,12 +18,9 @@ log/*
 script/gitprep-shell
 script/hypnotoad.pid
 extlib/*
+gitprep.conf
 gitprep.my.conf
 data/*
-!data/rep/
-data/rep/*
-!data/work/
-data/work/*
 setup/latest-build
 setup/work/*
 setup/build.log
