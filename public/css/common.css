@@ -609,15 +609,15 @@ ul.issues-label-pallet li {
   color:blue;
 }
 
-.issues-button-container, .pulls-button-container {
+.issues-button-container {
   margin-bottom:10px;
   overflow:hidden;
 }
-.issues-button-container-left, .pulls-button-container-left {
+.issues-button-container-left {
   float:left;
   width:50%;
 }
-.issues-button-container-right, .pulls-button-container-right {
+.issues-button-container-right {
   text-align:right;
   float:left;
   width:50%;

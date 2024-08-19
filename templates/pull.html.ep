@@ -6,7 +6,36 @@
   my $base_user_id = param('user');
   my $base_project_id = param('project');
   my $issue_number = param('number');
-  my $activetab = param('activetab') // '';
+  my $op = param('op') // '';
+
+  my $activetab = '';
+  my $pull_request;
+  my $base_project_row_id = $api->get_project_row_id($base_user_id,
+    $base_project_id);
+  my $base_branch;
+  my $target_project;
+  my $target_branch;
+  my $target_user_id;
+  my $target_project_id;
+  my $merge_success;
+  my $commits;
+  my $commits_date = {};
+  my $authors = {};
+  my $tabs;
+  my $http_rep_url;
+  my $ssh_rep_url;
+  my $patch_url;
+  my $pre_content_base;
+  my $pre_content_http;
+  my $pre_content_ssh;
+  my %commit_body_args;
+  my $total = {
+    add_line_count => 0,
+    delete_line_count => 0,
+    add_block_count => 0,
+    delete_block_count => 0
+  };
+  my $title = '- Issue';
 
   # Issue
   my $issue = app->dbi->model('issue')->select(
@@ -20,60 +49,15 @@
     }
   )->one;
 
-  # Pull requests
-  my $pull_request = app->dbi->model('pull_request')->select(
-    where => {row_id => $issue->{pull_request}}
-  )->one;
-
-  # Base information
-  my $base_project_row_id = $pull_request->{base_project};
-  my $base_project = app->dbi->model('project')->select(
-    [
-      {__MY__ => '*'},
-      {user => ['id']}
-    ],
-    where => {'project.row_id' => $base_project_row_id}
-  )->one;
-  my $base_branch = $pull_request->{base_branch};
-
-  Carp::croak "pull_request no such project"
-    unless $base_project;
-  Carp::croak "pull_request invalid user id"
-    if $base_user_id ne $base_project->{'user.id'};
-  Carp::croak "pull_request invalid project id"
-    if $base_project_id ne $base_project->{id};
-
-  # Target information
-  my $target_project_row_id = $pull_request->{target_project};
-  my $target_project = app->dbi->model('project')->select(
-    [
-      {__MY__ => '*'},
-      {user => ['id']}
-    ],
-    where => {'project.row_id' => $target_project_row_id}
-  )->one;
-  my $target_branch = $pull_request->{target_branch};
-  my $target_user_id = $target_project->{'user.id'};
-  my $target_project_id = $target_project->{id};
-
   # Session
   my $loggedin = $api->logined;
   my $session_user_row_id = $api->session_user_row_id;
   my $session_user_id = $api->session_user_id;
 
-  # Base repository information
-  my $base_rep_info = app->rep_info($base_user_id, $base_project_id);
-
-  # Target repository information
-  my $target_rep_info = app->rep_info($target_user_id, $base_project_id);
-
-  # Working repository information
-  my $work_rep_info = app->work_rep_info($base_user_id, $base_project_id);
-
   # Permissions
   my $canadmin = $loggedin &&
     $api->can_write_access($session_user_id, $base_user_id, $base_project_id);
-  my $isissuer = $loggedin && $session_user_id eq $target_user_id;
+  my $isissuer = $loggedin && $session_user_row_id == $issue->{open_user};
 
   # Message validation function
   my $validate_message = sub {
@@ -91,41 +75,11 @@
     return $validation;
   };
 
-  # Display patch
-  if (stash('patch')) {
-    # Lock working repository
-    my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
-
-    # Prepare merge
-    $self->app->manager->prepare_merge(
-      $work_rep_info,
-      $base_rep_info,
-      $base_branch,
-      $target_rep_info,
-      $target_branch
-    );
-
-    # Create patch
-    my $patch = $self->app->manager->get_patch(
-      $work_rep_info,
-      $target_rep_info,
-      $target_branch
-    );
-
-    $self->res->headers->content_type('text/plain; charset=utf-8');
-    $self->render(text => $patch);
-    return;
-  }
-
-  # Git
-  my $git = $self->app->git;
-
-  my $op = param('op') // '';
-
+  # Handle issue-oriented requests.
   my $errors;
   if (lc $self->req->method eq 'post') {
 
-    # Close pull request
+    # Close issue
     if ($op eq 'close-issue') {
 
       # Access control
@@ -143,7 +97,9 @@
       $self->redirect_to('current');
       return;
     }
-    elsif ($op eq 'reopen-issue') {
+
+    # Reopen issue
+    if ($op eq 'reopen-issue') {
 
       # Access control
       unless ($isissuer || $canadmin) {
@@ -165,7 +121,9 @@
       $self->redirect_to('current');
       return;
     }
-    elsif ($op eq 'api-toggle-label') {
+
+    # Toggle label
+    if ($op eq 'api-toggle-label') {
       my $label_row_id = param('popup-label-row-id');
       my $json = {success => 0};
 
@@ -201,49 +159,36 @@
       $self->render(json => $json);
       return;
     }
-    elsif ($op eq 'merge') {
 
-      # Access control
-      unless ($canadmin) {
-        $self->reply->exception('Forbidden');
-        return;
-      }
+    # Delete comment
+    if ($op eq 'api-delete-issue-message') {
+      my $issue_message_row_id = param('issue_message_row_id');
 
-      # Lock working repository
-      my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+      my $json = $api->api_delete_issue_message($issue_message_row_id,
+        $base_user_id);
 
-      # Prepare merge
-      $self->app->manager->prepare_merge(
-        $work_rep_info,
-        $base_rep_info,
-        $base_branch,
-        $target_rep_info,
-        $target_branch
-      );
-
-      # Merge
-      my $merge_success = $self->app->manager->merge(
-        $work_rep_info,
-        $target_rep_info,
-        $target_branch
-      );
-
-      if ($merge_success) {
-        # Push
-        app->manager->push($work_rep_info, $base_branch);
-
-        # Close
-        app->dbi->model('issue')->update(
-          {
-            open => 0
-          },
-          where => {row_id => $issue->{row_id}}
-        );
-
-        $self->redirect_to("/$base_user_id/$base_project_id/tree/$base_branch");
-      }
+      $self->render(json => $json);
+      return;
     }
-    elsif ($op eq 'add-comment') {
+
+    # Update comment
+    if ($op eq 'api-update-issue-message') {
+
+      my $issue_message_row_id = param('issue_message_row_id');
+      my $message = param('message');
+
+      # Validation
+      my $json = {success => 0};
+      if ($validate_message->($message)->is_valid) {
+        $json = $api->api_update_issue_message($issue_message_row_id, $message, $base_user_id);
+      }
+
+      $self->render(json => $json);
+      return;
+    }
+
+    # Add comment
+    if ($op eq 'add-comment') {
 
       # Access control
       unless ($loggedin) {
@@ -266,66 +211,19 @@
         $api->subscribe_mentioned($issue->{row_id}, $message);
 
         # Notifications.
+        my $issuekind = $issue->{pull_request}? 'pull': 'issues';
         $api->notify_subscribed($base_user_id, $base_project_id,
                                 "$issue->{title} (#$issue_number)",
                                 $api->session_user_row_id, $message,
-                                "comment-$msgno", "pull/$issue_number",
+                                "comment-$msgno", "$issuekind/$issue_number",
                                 $issue->{row_id});
         $self->redirect_to;
         return;
       }
-      else {
-        $errors = $validation->messages;
-      }
-    }
-    elsif ($op eq 'api-delete-issue-message') {
-      my $issue_message_row_id = param('issue_message_row_id');
 
-      my $json = $api->api_delete_issue_message($issue_message_row_id, $base_user_id);
-
-      $self->render(json => $json);
-      return;
-    }
-    elsif ($op eq 'api-update-issue-message') {
-
-      my $issue_message_row_id = param('issue_message_row_id');
-      my $message = param('message');
-
-      # Validation
-      my $json = {success => 0};
-      if ($validate_message->($message)->is_valid) {
-        $json = $api->api_update_issue_message($issue_message_row_id, $message, $base_user_id);
-      }
-
-      $self->render(json => $json);
-      return;
+      $errors = $validation->messages;
     }
   }
-
-  # Commits
-  my $commits = $git->forward_commits(
-    $work_rep_info,
-    $base_rep_info,
-    $base_branch,
-    $target_rep_info,
-    $target_branch
-  );
-  my $commits_count = @$commits;
-  my $commits_date = {};
-  my $authors = {};
-  for my $commit (@$commits) {
-    my $date = $commit->{age_string_date_local};
-    $commits_date->{$date} ||= [];
-    $authors->{$commit->{author}} = $commit;
-    push @{$commits_date->{$date}}, $commit;
-  }
-  my $authors_count = keys %$authors;
-
-  # Start commit
-  my $start_commit_id = app->git->ref_to_object_id($base_rep_info, $base_branch);
-
-  # End commit
-  my $end_commit_id = app->git->ref_to_object_id($target_rep_info, $target_branch);
 
   # Issue messages
   my $issue_messages = app->dbi->model('issue_message')->select(
@@ -340,6 +238,7 @@
   my $participants = app->dbi->model('issue_message')->select(
     ['distinct user.id'],
     where => {issue => $issue->{row_id}},
+    append => 'order by user.id'
   )->values;
 
   # Labels
@@ -352,109 +251,256 @@
   my $issue_labels = app->dbi->model('issue_label')->select(
     {label => '*'},
     where => {'issue_label.issue' => $issue->{row_id}},
-    appden => 'order by label.id'
+    append => 'order by label.id'
   )->all;
 
-  # Check merge automatically
-  my $merge_success;
-  if ($issue->{open}) {
+  # Pull requests
+  if ($issue->{pull_request}) {
+    $activetab = param('activetab') // '';
+    $pull_request = app->dbi->model('pull_request')->select(
+      where => {row_id => $issue->{pull_request}}
+    )->one;
 
-    my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+    # Base information
+    $base_project_row_id = $pull_request->{base_project};
+    my $base_project = app->dbi->model('project')->select(
+      [
+        {__MY__ => '*'},
+        {user => ['id']}
+      ],
+      where => {'project.row_id' => $base_project_row_id}
+    )->one;
+    $base_branch = $pull_request->{base_branch};
 
-    # Prepare merge
-    $self->app->manager->prepare_merge(
+    Carp::croak "pull_request no such project"
+      unless $base_project;
+    Carp::croak "pull_request invalid user id"
+      if $base_user_id ne $base_project->{'user.id'};
+    Carp::croak "pull_request invalid project id"
+      if $base_project_id ne $base_project->{id};
+
+    # Target information
+    my $target_project_row_id = $pull_request->{target_project};
+    $target_project = app->dbi->model('project')->select(
+      [
+        {__MY__ => '*'},
+        {user => ['id']}
+      ],
+      where => {'project.row_id' => $target_project_row_id}
+    )->one;
+    $target_branch = $pull_request->{target_branch};
+    $target_user_id = $target_project->{'user.id'};
+    $target_project_id = $target_project->{id};
+
+    # Base repository information
+    my $base_rep_info = app->rep_info($base_user_id, $base_project_id);
+
+    # Target repository information
+    my $target_rep_info = app->rep_info($target_user_id, $base_project_id);
+
+    # Working repository information
+    my $work_rep_info = app->work_rep_info($base_user_id, $base_project_id);
+
+    # Display patch
+    if (stash('patch')) {
+      # Lock working repository
+      my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+
+      # Prepare merge
+      $self->app->manager->prepare_merge(
+        $work_rep_info,
+        $base_rep_info,
+        $base_branch,
+        $target_rep_info,
+        $target_branch
+      );
+
+      # Create patch
+      my $patch = $self->app->manager->get_patch(
+        $work_rep_info,
+        $target_rep_info,
+        $target_branch
+      );
+
+      $self->res->headers->content_type('text/plain; charset=utf-8');
+      $self->render(text => $patch);
+      return;
+    }
+
+    # Git
+    my $git = $self->app->git;
+
+    # Handle pull-request specific requests.
+    if (lc $self->req->method eq 'post') {
+
+      # Merge
+      if ($op eq 'merge') {
+
+        # Access control
+        unless ($canadmin) {
+          $self->reply->exception('Forbidden');
+          return;
+        }
+
+        # Lock working repository
+        my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+
+        # Prepare merge
+        $self->app->manager->prepare_merge(
+          $work_rep_info,
+          $base_rep_info,
+          $base_branch,
+          $target_rep_info,
+          $target_branch
+        );
+
+        # Merge
+        $merge_success = $self->app->manager->merge(
+          $work_rep_info,
+          $target_rep_info,
+          $target_branch
+        );
+
+        if ($merge_success) {
+          # Push
+          app->manager->push($work_rep_info, $base_branch);
+
+          # Close
+          app->dbi->model('issue')->update(
+            {
+              open => 0
+            },
+            where => {row_id => $issue->{row_id}}
+          );
+
+          $self->redirect_to("/$base_user_id/$base_project_id/tree/$base_branch");
+        }
+      }
+    }
+
+    # Commits
+    $commits = $git->forward_commits(
       $work_rep_info,
       $base_rep_info,
       $base_branch,
       $target_rep_info,
       $target_branch
     );
+    for my $commit (@$commits) {
+      my $date = $commit->{age_string_date_local};
+      $commits_date->{$date} ||= [];
+      $authors->{$commit->{author}} = $commit;
+      push @{$commits_date->{$date}}, $commit;
+    }
 
-    # Check conflicts
-    $merge_success = $self->app->manager->merge(
+    # Start commit
+    my $start_commit_id = app->git->ref_to_object_id($base_rep_info,
+      $base_branch);
+
+    # End commit
+    my $end_commit_id = app->git->ref_to_object_id($target_rep_info,
+        $target_branch);
+
+    # Check merge automatically
+    if ($issue->{open}) {
+
+      my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+
+      # Prepare merge
+      $self->app->manager->prepare_merge(
+        $work_rep_info,
+        $base_rep_info,
+        $base_branch,
+        $target_rep_info,
+        $target_branch
+      );
+
+      # Check conflicts
+      $merge_success = $self->app->manager->merge(
+        $work_rep_info,
+        $target_rep_info,
+        $target_branch
+      );
+    }
+
+    # Diff trees
+    my $diff_trees = $git->diff_tree(
       $work_rep_info,
-      $target_rep_info,
-      $target_branch
+      $end_commit_id,
+      $start_commit_id,
+      {ignore_space_change => !!$target_project->{ignore_space_change}}
     );
+
+    # Annotate diff trees with statistics.
+    $git->blob_diffs(
+      $work_rep_info,
+      $start_commit_id,
+      $end_commit_id,
+      $diff_trees,
+      {ignore_space_change => !!$target_project->{ignore_space_change}}
+    );
+
+    # Total statistics.
+    my %s;
+    for my $diff_tree (@$diff_trees) {
+      $total->{add_line_count} += $diff_tree->{add_line_count} || 0;
+      $total->{delete_line_count} += $diff_tree->{delete_line_count} || 0;
+      $total->{add_block_count} += $diff_tree->{add_block_count} || 0;
+      $total->{delete_block_count} += $diff_tree->{delete_block_count} || 0;
+      $s{$diff_tree->{status}} = 1;
+    }
+    if (@{$diff_trees}) {
+      $total->{add_block_count} /= @{$diff_trees};
+      $total->{delete_block_count} /= @{$diff_trees};
+    }
+    my @k = keys %s;
+    $total->{status} = @k == 1? $k[0]: '';
+
+    # HTTP repository URL
+    $http_rep_url = url_for("$target_user_id/$target_project_id.git")->to_abs;
+
+    # SSH repository URL
+    my $url = url_for->to_abs;
+    $url->base(undef);
+    my $ssh_port = config->{basic}{ssh_port};
+    my $rep_home = app->rep_home;
+    my $execute_user = getpwuid($>);
+    my $ssh_rep_url_base = defined app->config->{basic}{'ssh_rep_url_base'}
+      ? app->config->{basic}{'ssh_rep_url_base'} : $rep_home;
+    $ssh_rep_url = "ssh://$execute_user\@" . $url->host .
+      ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user/$project.git";
+
+    $patch_url = url_for("/$base_user_id/$base_project_id/pull/$issue->{number}.patch")->to_abs;
+
+    $pre_content_base = "git checkout -b $target_user_id-$target_branch $base_branch";
+    $pre_content_http = "git pull $http_rep_url $target_branch";
+    $pre_content_ssh = "git pull $ssh_rep_url $target_branch";
+
+    # commit_body args
+    %commit_body_args = (
+      user => $target_user_id,
+      project => $target_project->{id},
+      rep_info => $work_rep_info,
+      rev => $end_commit_id,
+      from_rev => $start_commit_id
+    );
+
+    # Pull header bar tabs.
+    $tabs = [
+      {label => 'Conversation', tab => '', count => @$issue_messages - 1},
+      {label => 'Commits', tab => 'commits', count => scalar @$commits},
+      {label => 'Files changed', tab => 'files',
+        count => scalar @{$diff_trees}},
+      {label => 'Contributors', tab => 'contributors',
+        count => scalar(keys %$authors)}
+    ];
+
+    # Title
+    $title = 'by ' . $issue->{'open_user.id'} . ' - Pull request';
   }
 
-  # Diff trees
-  my $diff_trees = $git->diff_tree(
-    $work_rep_info,
-    $end_commit_id,
-    $start_commit_id,
-    {ignore_space_change => !!$target_project->{ignore_space_change}}
-  );
-
-  # Annotate diff trees with statistics.
-  $git->blob_diffs(
-    $work_rep_info,
-    $start_commit_id,
-    $end_commit_id,
-    $diff_trees,
-    {ignore_space_change => !!$target_project->{ignore_space_change}}
-  );
-
-  # Total statistics.
-  my %s;
-  my $total = {
-    add_line_count => 0,
-    delete_line_count => 0,
-    add_block_count => 0,
-    delete_block_count => 0
-  };
-  for my $diff_tree (@$diff_trees) {
-    $total->{add_line_count} += $diff_tree->{add_line_count} || 0;
-    $total->{delete_line_count} += $diff_tree->{delete_line_count} || 0;
-    $total->{add_block_count} += $diff_tree->{add_block_count} || 0;
-    $total->{delete_block_count} += $diff_tree->{delete_block_count} || 0;
-    $s{$diff_tree->{status}} = 1;
-  }
-  if (@{$diff_trees}) {
-    $total->{add_block_count} /= @{$diff_trees};
-    $total->{delete_block_count} /= @{$diff_trees};
-  }
-  my @k = keys %s;
-  $total->{status} = @k == 1? $k[0]: '';
-
-  # HTTP repository URL
-  my $http_rep_url = url_for("$target_user_id/$target_project_id.git")->to_abs;
-
-  # SSH repository URL
-  my $url = url_for->to_abs;
-  $url->base(undef);
-  my $ssh_port = config->{basic}{ssh_port};
-  my $rep_home = app->rep_home;
-  my $execute_user = getpwuid($>);
-  my $ssh_rep_url_base = defined app->config->{basic}{'ssh_rep_url_base'}
-    ? app->config->{basic}{'ssh_rep_url_base'} : $rep_home;
-  my $ssh_rep_url = "ssh://$execute_user\@" . $url->host
-    . ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user/$project.git";
-
-  my $patch_url = url_for("/$base_user_id/$base_project_id/pull/$issue->{number}.patch")->to_abs;
-
-  my $pre_content_base = "git checkout -b $target_user_id-$target_branch $base_branch";
-  my $pre_content_http = "git pull $http_rep_url $target_branch";
-  my $pre_content_ssh = "git pull $ssh_rep_url $target_branch";
-
-  # commit_body args
-  my %commit_body_args = (
-    user => $target_user_id,
-    project => $target_project->{id},
-    rep_info => $work_rep_info,
-    rev => $end_commit_id,
-    from_rev => $start_commit_id
-  );
-
-  # Pull header bar tabs.
-  my $tabs = [
-    {label => 'Conversation', tab => '', count => @$issue_messages - 1},
-    {label => 'Commits', tab => 'commits', count => scalar @$commits},
-    {label => 'Files changed', tab => 'files', count => scalar @{$diff_trees}},
-    {label => 'Contributors', tab => 'contributors', count => $authors_count}
-  ];
-
-  layout 'common', title => "Pull Requests Tags \x{30fb} $base_user_id/$base_project_id";
+  $title = $issue->{title} . " $title #$issue_number \x{30fb} $base_user_id/$base_project_id";
+  layout 'common', title => $title;
 %>
 
 %= javascript '/js/icon-input.js';
@@ -515,58 +561,54 @@
 
   <div class="container">
     %= include '/include/errors', errors => $errors;
-    <div style="font-size:23px;margin-top:20px;margin-bottom:9px;">
-      <%
-        my $pull_title = $pull_request->{target_branch};
-        $pull_title =~ s/_/ /g;
-        $pull_title = ucfirst $pull_title;
-      %>
 
-      <%= $pull_title %> <span style="color:#767676;">#<%= $issue->{number} %></span>
-    </div>
-    <div>
-      <div style="display:inline-block;color:white;margin-right:4px;">
-        % if ($issue->{open}) {
-          <div style="background:#6cc644;padding:4px 8px;border-radius:3px;">
-            Open
-          </div>
-        % } else {
-          <div style="background:#bd2c00;padding:4px 8px;border-radius:3px;">
-            Closed
-          </div>
-        % }
+    <div class="issue-title-panel">
+      <div class="issue-title">
+        <%= $issue->{title} %> <span style="color:#aaa;">#<%= $issue->{number} %></span>
       </div>
-      % my $open_user_id = $issue->{'open_user.id'};
-      <a style="color:#333333;font-weight:bold" href="<%= url_for("/$open_user_id") %>"><%= $open_user_id %></a>
-      <span style="color:#767676">
-        wants to merge <%= $commits_count %> commits
-        into
-        <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
-          <%= $pull_request->{base_branch} %>
-        </span>
-        from
-        <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
-          % if ($base_user_id ne $target_user_id) {
-            <%= $target_user_id %>
-            :
+      <div>
+        % if ($issue->{open}) {
+          <div class="issue-open">Open</div>
+        % } else {
+          <div class="issue-close">Close</div>
+        % }
+        % my $open_user_id = $issue->{'open_user.id'};
+        <a style="color:#333333;font-weight:bold" href="<%= url_for("/$open_user_id") %>"><%= $open_user_id %></a>
+        <span style="color:#767676">
+          % if ($pull_request) {
+            wants to merge <%= scalar @$commits %> commits into
+            <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
+              <%= $pull_request->{base_branch} %>
+            </span>
+            from
+            <span style="display:inline-block;padding:2px 4px;background:#e8f0f8;color:#336479;border-radius:3px;">
+              % if ($base_user_id ne $target_user_id) {
+                <%= $target_user_id %>
+                :
+              % }
+              <%= $pull_request->{target_branch} %>
+            </span>
+          % } else {
+            opened this issue <%= $api->age_string($issue->{open_time}) %> / <%= scalar @$issue_messages %> comment
           % }
-          <%= $pull_request->{target_branch} %>
         </span>
-      </span>
+      </div>
     </div>
-    <ul class="pull-header">
-      % for my $tab (@$tabs) {
-        % my $class = $activetab eq $tab->{tab}? 'active': '';
-        % my $taburl = "/$base_user_id/$base_project_id/pull/$issue_number";
-        % $taburl .= '/' . $tab->{tab} if $tab->{tab};
-        <li class="<%= $class %>"><a href=" <%= url_for($taburl) %>"><%= $tab->{label} %><span class="count"><%= $tab->{count} %></a></li>
-      % }
-      <li class="padding"></li>
-      <li class="status">
-        %= include '/include/diff_status_bar', diff_tree => $total;
-      </li>
-    </ul>
-    % if (!$commits_count) {
+    % if ($pull_request) {
+      <ul class="pull-header">
+        % for my $tab (@$tabs) {
+          % my $class = $activetab eq $tab->{tab}? 'active': '';
+          % my $taburl = "/$base_user_id/$base_project_id/pull/$issue_number";
+          % $taburl .= '/' . $tab->{tab} if $tab->{tab};
+          <li class="<%= $class %>"><a href=" <%= url_for($taburl) %>"><%= $tab->{label} %><span class="count"><%= $tab->{count} %></a></li>
+        % }
+        <li class="padding"></li>
+        <li class="status">
+          %= include '/include/diff_status_bar', diff_tree => $total;
+        </li>
+      </ul>
+    % }
+    % if ($pull_request && !@$commits) {
       <div class="compare-nothing" style="margin-top:10px">
         <div>
           <b><big>There isn't anything to compare.</big></b>
@@ -655,7 +697,7 @@
               </div>
             </div>
 
-            % if ($loggedin && $commits_count && $issue->{open}) {
+            % if ($loggedin && $pull_request && scalar(@$commits) && $issue->{open}) {
               <div class="pull-request-form">
                 <div style="overflow:hidden">
                   %if ($merge_success) {
@@ -788,10 +830,11 @@ git push origin <%= $base_branch %>
                       </div>
                       <div class="issue-add-comment-button">
                         % if ($isissuer || $canadmin) {
+                          % my $issuekind = $pull_request? 'pull request': 'issue';
                           % if ($issue->{open}) {
-                            <input type="submit" value="Close pull request" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn">
+                            <input type="submit" value="Close <%= $issuekind %>" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn">
                           % } else {
-                            <input type="submit" value="Reopen pull request" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
+                            <input type="submit" value="Reopen <%= $issuekind %>" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
                           % }
                         % }
                         <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-green btn-new">
