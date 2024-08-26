@@ -22,7 +22,7 @@
   my $rep_info = $is_wiki ? app->wiki_rep_info($user_id, $project_id) : app->rep_info($user_id, $project_id);
   
   my ($rev, $file) = $git->parse_rev_path($rep_info, $rev_file);
-  my $page = param('page') || 0;
+  my $page = param('page') || 1;
   
   # Latest commit
   my $latest_commit = $git->get_commit($rep_info, $rev);
@@ -37,7 +37,7 @@
     $rep_info,
     $latest_commit->{id},
     $page_count,
-    $page_count * $page,
+    $page_count * ($page - 1),
     $file
   );
   my $commits_count = @$commits;
@@ -181,28 +181,9 @@
           </ul>
         % }
       </div>
-      
-      <div class="pagination-container">
-        <ul class="pagination">
-          % if ($page == 0) {
-            <li><span>Newer</span></li>
-          % } else {
-            % my $newer_page = $page - 1;
-            <li>
-              <a href="<%= url_for("$user_project_path/commits/$rev?page=$newer_page") %>">Newer</a>
-            </li>
-          % }
-          % if ($commits_count < $page_count) {
-            <li><span>Older</span></li>
-          % } else {
-            % my $older_page = $page + 1;
-            <li>
-              <a href="<%= url_for("$user_project_path/commits/$rev?page=$older_page") %>">Older</a>
-            </li>
-          % }
-        </ul>
-      </div>
+
+      %= include '/include/pagination', page => $page, rows_per_page => $page_count, query => {}, left => 'Newer', right => 'Older';
     </div>
-    
+
     %= include '/include/footer';
 % }
