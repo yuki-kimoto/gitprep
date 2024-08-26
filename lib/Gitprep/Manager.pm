@@ -959,14 +959,125 @@ sub _delete_user_dir {
   rmtree $user_dir;
 }
 
+sub _delete_issue {
+  my ($self, $issue) = @_;
+
+  # Delete issue/pull request
+
+  my $dbi = $self->app->dbi;
+  $dbi->model('subscription')->delete(where => {issue => $issue->{row_id}});
+  if ($issue->{pull_request}) {
+    $dbi->model('pull_request')->delete(where => {
+      row_id => $issue->{pull_request}
+    });
+  }
+  $dbi->model('issue_message')->delete(where => {issue => $issue->{row_id}});
+  $dbi->model('issue')->delete(where => {row_id => $issue->{row_id}});
+}
+
+sub _change_upstream_project {
+  my ($self, $project) = @_;
+
+  # The current project is not an upstream anymore: chose another one.
+  my $dbi = $self->app->dbi;
+  my $new_upstream = $project->{original_project};
+
+  if (!$new_upstream) {
+    # Use a fork as the new upstream project
+    my $forks = $dbi->model('project')->select(['row_id', 'id'],
+      where => {
+        original_project => $project->{row_id}
+      }
+    )->all;
+    # Prefer a fork with the same visibility, same project name,
+    # maximizing fork and watch counts
+    my $best;
+    for my $fork (@$forks) {
+      $fork->{same_id} = $fork->{id} eq $project->{id};
+      $fork->{fork_count} = $dbi->model('project')->select('count(*)',
+        where => {
+          original_project => $fork->{row_id}
+        }
+      )->value;
+      $fork->{watch_count} = $dbi->model('watch')->select('count(*)',
+        where => {
+          project => $fork->{row_id}
+        }
+      )->value;
+      if (!$best) {
+        $best = $fork;
+      } elsif ($fork->{public} != $best->{public}) {
+        $best = $fork unless $fork->{public} > $best->{public} ||
+          $fork->{public} == $project->{public};
+      } elsif ($fork->{same_id} != $best->{same_id}) {
+        $best = $fork unless $fork->{same_id} < $best->{same_id};
+      } elsif ($fork->{fork_count} != $best->{fork_count}) {
+        $best = $fork unless $fork->{fork_count} < $best->{fork_count};
+      } elsif ($fork->{watch_count} > $best->{watch_count}) {
+        $best = $fork;
+      }
+    }
+    return unless $best;
+    $new_upstream = $best->{row_id};
+  }
+  $dbi->model('project')->update({original_project => $new_upstream},
+    where => {original_project => $project->{row_id}}
+  );
+  if ($new_upstream != $project->{original_project}) {
+    $dbi->model('project')->update(
+      {original_project => $project->{original_project}},
+      where => {row_id => $new_upstream}
+    );
+    $dbi->model('project')->update(
+      {original_project => $new_upstream},
+      where => {row_id => $project->{row_id}}
+    );
+  }
+}
+
 sub _delete_project {
   my ($self, $user_id, $project_id) = @_;
-  
-  my $user_row_id = $self->api->get_user_row_id($user_id);
-  
+
   # Delete project
+
   my $dbi = $self->app->dbi;
-  $dbi->model('project')->delete(where => {user => $user_row_id, id => $project_id});
+  my $project = $dbi->model('project')->select(
+    {__MY__ => '*'},
+    where => {
+      'project.id' => $project_id,
+      'user.id' => $user_id
+    }
+  )->one;
+
+  # First, assign a new upstream to forks.
+  $self->_change_upstream_project($project);
+
+  # Delete project issues and pull requests.
+  # Also delete other projects' pull requests that target the current project.
+  my $issues = $dbi->model('issue')->select(
+    {__MY__ => '*'},
+    where => [
+      ['or', ':project{=}', ':pull_request.target_project{=}'],
+      {
+        project => $project->{row_id},
+        'pull_request.target_project' => $project->{row_id}
+      }
+    ]
+  )->all;
+  for my $issue (@$issues) {
+    $self->_delete_issue($issue);
+  }
+
+  # Delete project's wiki.
+  if ($dbi->model('wiki')->delete(
+    where => {project => $project->{row_id}}
+  ) > 0) {
+    $self->_delete_wiki_rep($user_id, $project_id);
+  }
+
+  $dbi->model('watch')->delete(where => {project => $project->{row_id}});
+  $dbi->model('label')->delete(where => {project => $project->{row_id}});
+  $dbi->model('project')->delete(where => {row_id => $project->{row_id}});
 }
 
 sub _delete_rep {
@@ -977,9 +1088,24 @@ sub _delete_rep {
   croak "Can't remove repository. repository home is empty"
     if !defined $rep_home || $rep_home eq '';
   my $rep = "$rep_home/$user/$project.git";
-  rmtree $rep;
-  croak "Can't remove repository. repository is rest"
-    if -e $rep;
+  if (-e $rep) {
+    rmtree $rep;
+    croak "Can't remove repository. repository is rest"
+      if -e $rep;
+  }
+}
+
+sub _delete_wiki_rep {
+  my ($self, $user, $project) = @_;
+
+  # Delete wiki repository
+  my $wiki_rep_info = $self->app->wiki_rep_info($user, $project);
+  my $rep =  $wiki_rep_info->{git_dir};
+  if (-e $rep) {
+    rmtree $rep;
+    croak "Can't remove wiki repository"
+      if -e $rep;
+  }
 }
 
 sub exists_project {
