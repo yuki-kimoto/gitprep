@@ -276,8 +276,8 @@
             % }
 
 
-            <div class="pagenation-container" style="margin-top:20px">
-              <ul class="pagenation">
+            <div class="pagination-container" style="margin-top:20px">
+              <ul class="pagination">
                 % if ($page == 1) {
                   <li><span>Newer</span></li>
                 % } else {

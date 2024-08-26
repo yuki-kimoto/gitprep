@@ -1,7 +1,4 @@
 <%
-  use Data::Page ();
-  use Data::Page::Navigation ();
-  
   # Parameters
   my $type = param('type');
   my $q = param('q');
@@ -54,10 +51,6 @@
   }
   $rows //= [];
   $total //= 0;
-
-  # Pager
-  my $pager = Data::Page->new($total, $count, $page);
-  my @pages = $pager->pages_in_navigation(10);
 %>
 % layout 'common', title => 'Search';
   
@@ -80,10 +73,10 @@
       <div class="left">
         <ul>
           <li class="<%= $type eq 'repositories' ? 'active' : '' %>">
-            <a href="<%= url_with->query([type => 'repositories']) %>">Repositories</a>
+            <a href="<%= url_for->query([type => 'repositories', q => $q]) %>">Repositories</a>
           </li>
           <li class="<%= $type eq 'users' ? 'active' : '' %>">
-            <a href="<%= url_with->query([type => 'users']) %>">Users</a>
+            <a href="<%= url_for->query([type => 'users', q => $q]) %>">Users</a>
           </li>
         </ul>
       </div>
@@ -150,31 +143,8 @@
             </div>
           % }
         % }
-
-        % if (@$rows && $pager->last_page != 1) {
-          <div class="pagination-num">
-            <ul>
-              % if ($pager->previous_page) {
-                <li><a href="<%= url_with->query([page => $pager->previous_page]) %>">&laquo;</a></li>
-              % } else {
-                <li class="disabled"><a href="#">&laquo;</a></li>
-              % }
-              % for my $p (@pages) {
-                % if ($p eq $pager->current_page) {
-                  <li class="active"><a href="#"><%= $p %></a></li>
-                % } else {
-                  <li><a href="<%= url_with->query([page => $p]) %>"><%= $p %></a></li>
-                % }
-              % }
-              % if ($pager->next_page) {
-                <li><a href="<%= url_with->query([page => $pager->next_page]) %>">&raquo;</a></li>
-              % } else {
-                <li class="disabled"><a href="#">&raquo;</a></li>
-              % }
-            </ul>
-          </div>
-        % }
       </div>
     </div>
+     %= include '/include/pagination', page => $page, rows => $total, rows_per_page => $count, query => {type => $type, q => $q};
   </div>
   %= include '/include/footer';
