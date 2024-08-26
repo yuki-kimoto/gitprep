@@ -6,8 +6,6 @@ requires 'Object::Simple', '== 3.14';
 requires 'DBIx::Custom', '== 0.40';
 requires 'Validator::Custom';
 requires 'Config::Tiny', '== 2.23';
-requires 'Data::Page', '== 2.02';
-requires 'Data::Page::Navigation', '== 0.07';
 requires 'Mojolicious';
 requires 'Mojolicious::Plugin::BasicAuth';
 requires 'Mojolicious::Plugin::AutoRoute';

@@ -1,0 +1,78 @@
+<%
+  # Parameters.
+  my $page = stash('page') // 1;                # Current page.
+  my $rows = stash('rows');                     # Total row cunt or undef.
+  my $rows_per_page = stash('rows_per_page');   # Number of rows per page.
+  my $query = stash('query');                   # URL query parameters.
+  my $left = stash('left') // 'Previous page';  # Left arrow label/tooltip.
+  my $right = stash('right') // 'Next page';    # Light arrow label/tooltip.
+
+  $page = 1 unless $page > 0;
+  my $last_page = $page + 1;
+  my $ranges = [[$page, $page], [1, 0]];
+  $ranges->[0]->[0] = 1 if $page <= 2;
+  unshift(@$ranges, [1, 1]) if $ranges->[0]->[0] != 1;
+  my $ltooltip = '';
+  my $rtooltip = '';
+
+  if (defined $rows) {
+    return unless $rows > $rows_per_page;
+
+    $last_page = 1 + int(($rows - 1) / $rows_per_page);
+
+    # Stack the page ranges to propose.
+    my $low = $page - 2;
+    $low = 1 unless $low > 1;
+    my $high = $page + 2;
+    $high = $last_page unless $high < $last_page;
+    my $currange = [1, 2];
+    $ranges = [];
+    for my $r ([$low, $low + 4], [$last_page - 1, $last_page]) {
+      $r->[0] = 1 unless $r->[0] > 1;
+      $r->[1] = $last_page unless $r->[1] < $last_page;
+      next unless $r->[1] >= $r->[0];
+      if ($r->[0] - $currange->[1] <= 2) {
+        $currange->[1] = $r->[1];
+      } else {
+        push(@$ranges, $currange);
+        $currange = $r;
+      }
+    }
+    push(@$ranges, $currange);
+
+    $ltooltip = $left;
+    $rtooltip = $right;
+    $left = "\x{ab}";
+    $right = "\x{bb}";
+  }
+%>
+
+<div class="pagination-num-container">
+  <div class="pagination-num">
+    <ul>
+      <li class="<%= $page == 1? 'disabled': '' %>" title="<%= $ltooltip %>">
+        <a href="<%= url_for->query(page => $page - 1, %$query) %>">
+          <%= $left %>
+        </a>
+      </li>
+      % my $r = shift @$ranges;
+      % while (1) {
+        % for (my $pageno = $r->[0]; $pageno <= $r->[1]; $pageno++) {
+          <li class="<%= $pageno == $page? 'active disabled': '' %>">
+            <a href="<%= url_for->query(page => $pageno, %$query) %>">
+              <%= $pageno %>
+            </a>
+          </li>
+        % }
+        % $r = shift @$ranges;
+        % last unless $r;
+        <li class="separator"><span>&#x2026;</span><li>
+      % }
+      <li class="<%= $page == $last_page? 'disabled': '' %>" title="<%= $rtooltip %>">
+        <a href="<%= url_for->query(page => $page + 1, %$query) %>">
+          <%= $right %>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
