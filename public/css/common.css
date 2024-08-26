@@ -3204,13 +3204,13 @@ a:hover .btn-delete {
   background:#4169e1;
 }
 
-.pagenation {
+.pagination {
   overflow:hidden;
   width:140px;
   margin: 0 auto;
 }
 
-.pagenation li {
+.pagination li {
   float: left;
   font-size: 13px;
   font-weight: bold;
@@ -3222,13 +3222,13 @@ a:hover .btn-delete {
   text-align:center;
 }
 
-.pagenation li a {
+.pagination li a {
   padding: 7px 12px;
   display:block;
   width:100%;
 }
 
-.pagenation li span {
+.pagination li span {
   padding: 7px 12px;
   display:block;
   width:100%;
@@ -3236,17 +3236,17 @@ a:hover .btn-delete {
   background:#fafafa;
 }
 
-.pagenation li a:hover {
+.pagination li a:hover {
   text-decoration:none;
   background:#e5e5e5;
 }
 
-.pagenation li:first-child {
+.pagination li:first-child {
   border-left: 1px solid #e5e5e5;
   border-radius:3px 0 0 3px;
 }
 
-.pagenation li:last-child {
+.pagination li:last-child {
   border-radius:0 3px 3px 0;
 }
 
@@ -3597,7 +3597,7 @@ a:hover .btn-delete {
   min-height:200px;
 }
 
-/* 番号つきページネーション */
+/* Numbered pagination */
 .pagination-num　{
   margin:20px 0
 }

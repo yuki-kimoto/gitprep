@@ -182,8 +182,8 @@
         % }
       </div>
       
-      <div class="pagenation-container">
-        <ul class="pagenation">
+      <div class="pagination-container">
+        <ul class="pagination">
           % if ($page == 0) {
             <li><span>Newer</span></li>
           % } else {
