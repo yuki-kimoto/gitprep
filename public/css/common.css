@@ -391,6 +391,7 @@ a.wiki-btn-history:hover {
   display:inline-block;
   width:18px;
   height:18px;
+  text-align: center;
   border-radius:9px;
 }
 .commits-count {
@@ -604,6 +605,7 @@ ul.issues-label-pallet li {
 }
 .issues-title a {
   color:black;
+  font-size:16px;
 }
 .issues-title a:hover {
   color:blue;
@@ -652,12 +654,29 @@ ul.issues-label-pallet li {
   background:#fafafa;
   background:white;
 }
-.issues-body li {
-  padding:10px;
+.issues-body > ul {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+}
+.issues-body > ul > li {
+  display: table-row;
   border-top: 1px solid #e6e9e6;
 }
-.issues-body li:first-child {
+.issues-body > ul > li:hover {
+  background-color: #f6f8fa;
+}
+.issues-body > ul > li:first-child {
   border-top:none;
+}
+.issues-body > ul > li > * {
+  display: table-cell;
+  vertical-align:middle;
+}
+.issues-body > ul > li > *.nostretch {
+  width: 0;
+  white-space: nowrap;
+  text-align: center;
 }
 .issues-no-request {
   padding:30px;
@@ -1017,41 +1036,6 @@ ul.issues-label-pallet li {
 .pull-request-form-button {
   padding:10px;
   border-top:1px solid #e6e9e6;
-}
-.pulls-title a {
-  color:black;
-}
-.pulls-title a:hover {
-  color:blue;
-}
-
-.pulls-header {
-  border:1px solid #e6e9e6;
-  background:#fafafa;
-  padding:10px;
-}
-.pulls-body {
-  border:1px solid #e6e9e6;
-  border-top:none;
-  background:#fafafa;
-  background:white;
-}
-.pulls-body li {
-  padding:10px;
-  border-top: 1px solid #e6e9e6;
-}
-.pulls-body li:first-child {
-  border-top:none;
-}
-.pulls-no-request {
-  padding:30px;
-  margin:1px auto;
-  width:600px;
-  text-align:center;
-}
-
-.pulls-description {
-  color:#767676;
 }
 .compare-pull-request-link {
   font-size:20px;

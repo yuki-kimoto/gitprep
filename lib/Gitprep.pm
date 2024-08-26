@@ -560,7 +560,7 @@ sub startup {
             $r->any('/labels' => sub { shift->render_maybe('/labels') })->to(tab => 'issues');
             
             # Pull requests
-            $r->get('/pulls' => sub { shift->render_maybe('/pulls') })->to(tab => 'pulls');
+            $r->get('/pulls' => sub { shift->render_maybe('/issues', pulls => 1) })->to(tab => 'pulls');
             
             # Pull request
             $r->get('/pull/<:number>.patch' => sub { shift->render_maybe('/issue') })->to(tab => 'pulls', patch => 1);

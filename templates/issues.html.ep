@@ -5,37 +5,68 @@
   # Parameters
   my $user_id = param('user');
   my $project_id = param('project');
-  
-  my $is = param('is') // '';
-  
+  my $page = param('page') || 1;
+
+  my $is = param('is') // 'open';
+
+  my $pulls = stash('pulls') // 0;
   my $open = $is eq 'closed' ? 0 : 1;
-  
+
+  my $page_rows = 25;
+
   # Git
   my $git = $self->app->git;
-  
+
   # Project row id
   my $project_row_id = $api->get_project_row_id($user_id, $project_id);
-  
-  # Issues(which don't have pull request)
+
+  # Issues
+  my $issue_where_clause = ['and', ':project{=}'];
+  my $issue_where_param = {project => $project_row_id};
+
+  # Filtering.
+  if ($pulls) {
+    push(@$issue_where_clause, ':pull_request{<>}');
+  } else {
+    push(@$issue_where_clause, ':pull_request{=}');
+  }
+  $issue_where_param->{pull_request} = 0;
+  if (defined $is) {
+    push(@$issue_where_clause, ':issue.open{=}');
+    $issue_where_param->{'issue.open'} = $open;
+  }
+
   my $issues = app->dbi->model('issue')->select(
     [
       {__MY__ => '*'},
       {open_user => ['id']},
+      {pull_request => ['target_branch']}
     ],
-    where => [
-      ['and', ':issue.open{=}', 'pull_request = 0', ':project{=}'],
-      {'issue.open' => $open, project => $project_row_id}
-    ],
+    where => [$issue_where_clause, $issue_where_param],
     append => 'order by open_time desc'
   )->all;
-  
+  my $filtered_count = @$issues;
+
+  # Only keep current page rows.
+  my $next_issue = $page * $page_rows;
+  $next_issue = $filtered_count unless $next_issue < $filtered_count;
+  $issues = [@$issues[($page - 1) * $page_rows .. $next_issue - 1]];
+
   # Open count
-  my $open_count = $api->get_open_issue_count($user_id, $project_id);
+  my $open_count = $api->get_issue_count($user_id, $project_id,
+    {pull => $pulls, open => 1});
   
   # Close count
-  my $close_count = $api->get_close_issue_count($user_id, $project_id);
-  
-  # Initialize labels if there are no labels
+  my $close_count = $api->get_issue_count($user_id, $project_id,
+    {pull => $pulls, open => 0});
+
+  # Default branch
+  my $default_branch = app->manager->default_branch($user_id, $project_id);
+
+  # Original projcet
+  my $original_project = app->manager->original_project($user_id, $project_id);
+
+  # Initialize labels if there is none yet
   my $labels_count = app->dbi->model('label')->select(
     'count(*)',
     where => {project => $project_row_id}
@@ -45,43 +76,54 @@
       {id => 'bug', color => '#fc2929'},
       {id => 'duplicate', color => '#cccccc'},
       {id => 'enhancement', color => '#84b6eb'},
+      {id => 'help wanted', color => '#159818'},
       {id => 'invalid', color => '#e6e6e6'},
       {id => 'question', color => '#cc317c'},
       {id => 'wontfix', color => '#ffffff'}
     );
     for my $label (@labels) {
-      my $project_row_id = app->dbi->model('project')->select(
-        'project.row_id',
-        where => {'user.id' => $user_id, 'project.id' => $project_id}
-      )->value;
       $label->{project} = $project_row_id;
       app->dbi->model('label')->insert($label);
     }
+    $labels_count = @labels;
   }
 
-  layout 'common', title => "Issues - $user_id/$project_id";
+  my $title = 'Issues';
+  $title = 'Pull Requests' if $pulls;
+  layout 'common', title => "$title \x{b7} $user_id/$project_id";
 %>
   
   %= include '/include/header';
   
   <div class="container">
-    <div class="issues-button-container">
-      <div class="issues-button-container-left">
-        <div class="issues-labels"><a href="<%= url_for("/$user_id/$project_id/labels") %>">Labels</a></div>
+    % if ($api->logined) {
+      <div class="issues-button-container">
+        <div class="issues-button-container-left">
+          <div class="issues-labels">
+            <a href="<%= url_for("/$user_id/$project_id/labels") %>">
+              Labels
+              <span class="header-issue-count"><%= $labels_count %></span>
+            </a>
+          </div>
+        </div>
+        <div class="issues-button-container-right">
+          % if (!$pulls) {
+            <a href="<%= url_for("/$user_id/$project_id/issues/new") %>" class="btn btn-green btn-new">New issue</a>
+          % } elsif ($original_project) {
+            <a href="<%= url_for("/$original_project->{'user.id'}/$original_project->{id}/compare/$original_project->{default_branch}...$user_id:$default_branch") %>" class="btn btn-green btn-new">New pull request</a>
+          % } else {
+            <a href="<%= url_for("/$user_id/$project_id/compare") %>" class="btn btn-green btn-new">New pull request</a>
+          % }
+        </div>
       </div>
-      <div class="issues-button-container-right">
-        % if ($api->logined) {
-          <a href="<%= url_for("/$user_id/$project_id/issues/new") %>" class="btn btn-green btn-new">New issue</a>
-        % }
-      </div>
-    </div>
+    % }
     <div class="issues">
       <div class="issues-header">
         % if ($open) {
           <b><%= $open_count %> Open</b>
-          <a href="<%= url_with->query([is => 'closed']) %>" style="margin-left:5px;color:#767676"><%= "\x{2714}" %><%= $close_count %> Closed</a>
+          <a href="<%= url_for->query([is => 'closed']) %>" style="margin-left:5px;color:#767676"><%= "\x{2714}" %><%= $close_count %> Closed</a>
         % } else {
-          <a  style="margin-left:5px;color:#767676" href="<%= url_with->query([is => undef]) %>"><%= $open_count %> Open</a>
+          <a  style="margin-left:5px;color:#767676" href="<%= url_for->query([is => 'open']) %>"><%= $open_count %> Open</a>
           <b>
             <span style="margin-left:5px;color:#767676"><%= "\x{2714}" %><%= $close_count %> Closed</span>
           </b>
@@ -92,45 +134,58 @@
           <ul>
             % for my $issue (@$issues) {
               <%
+                my $kind = $issue->{pull_request}? 'pull': 'issues';
+                my $open_time = $issue->{open_time};
+                my $open_time_age = Time::Moment->now->epoch - $open_time;
+                my $open_time_age_string = $self->app->git->_age_string($open_time_age);
                 my $issue_labels = app->dbi->model('issue_label')->select(
                   {label => ['id', 'color']},
                   where => {issue => $issue->{row_id}}
                 )->all;
+                my $message_count = app->dbi->model('issue_message')->select(
+                  'count(*)',
+                  where => {issue => $issue->{row_id}}
+                )->value;
               %>
 
-              <%
-                my $open_time = $issue->{open_time};
-                my $open_time_age = Time::Moment->now->epoch - $open_time;
-                my $open_time_age_string = $self->app->git->_age_string($open_time_age);
-              %>
               <li>
-                <div class="issues-title">
-                  <a href="<%= url_for("/$user_id/$project_id/issues/$issue->{number}") %>">
-                    <b><%= $issue->{title} %></b>
-                  </a>
-                  <ul class="issues-label-pallet">
-                    % for my $issue_label (@$issue_labels) {
-                      <li style="background:<%= $issue_label->{'label.color'} %>">
-                        <%= $issue_label->{'label.id'} %>
-                      </li>
-                    % }
-                  </ul>
-                </div>
-                <div class="issues-description">
-                  #<%= $issue->{number} %> <%= $issue->{open} ? 'opened' : 'closed' %>
-                  <%= $open_time_age_string %>
-                  by <%= $issue->{'open_user.id'} %>
-                </div>
+                <div>
+                  <div style="padding: 8px 0px;">
+                    <div class="issues-title">
+                      <a href="<%= url_for("/$user_id/$project_id/$kind/$issue->{number}") %>">
+                        <b><%= $issue->{title} %></b>
+                      </a>
+                      <ul class="issues-label-pallet">
+                        % for my $issue_label (@$issue_labels) {
+                          <li style="background:<%= $issue_label->{'label.color'} %>">
+                            <%= $issue_label->{'label.id'} %>
+                          </li>
+                        % }
+                      </ul>
+                    </div>
+                    <div class="issues-description">
+                      #<%= $issue->{number} %> <%= $issue->{open} ? 'opened' : 'closed' %>
+                      <%= $open_time_age_string %>
+                      by <%= $issue->{'open_user.id'} %>
+                    </div>
+                 </div>
+               </div>
+               <div class="nostretch">
+                 % if ($message_count > 1) {
+                   <span title="<%= $message_count - 1 %> messages"><%= $message_count - 1 %></span>
+                 % }
+               </div>
               </li>
             % }
           </ul>
         % } else {
           <div class="issues-no-request">
-            <div style="font-size:18px"><b>There aren’t any issues.</b></div>
+            <div style="font-size:18px"><b>No results matched your search.</b></div>
           </div>
         % }
       </div>
     </div>
+    %= include '/include/pagination', page => $page, rows => $filtered_count, rows_per_page => $page_rows, query => {is => $is}, left => 'Newer', right => 'Older';
   </div>
   
   %= include '/include/footer';
