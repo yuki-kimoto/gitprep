@@ -156,7 +156,7 @@
             <button class="btn <%= !$logined ? 'btn-info' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
           </li>
           <li>
-            <input id="rep_url" type="text" readonly="">
+            <input id="rep_url" type="text" readonly="" />
             <svg id="cpy-btn" viewBox="0 0 14 15" width="16" height="16" aria-hidden="true">
               <title>Copy URL to clipboard</title>
               <path style="fill-rule:evenodd" id="path1372"

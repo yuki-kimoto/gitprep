@@ -92,7 +92,7 @@
       <div style="margin-bottom:30px">
         <span style="color:green;font-size:22px"><%= "$remote_user / $remote_project / $remote_branch" %></span>
       </div>
-      <hr>
+      <hr />
       <div style="margin-bottom:15px">
         <h4 class="topic1">Merging via command line</h4>
         you can perform a manual merge on the command line.

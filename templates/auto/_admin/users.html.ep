@@ -118,7 +118,7 @@
               <a class="btn btn-small" href="<%= url_for('/reset-password')->query(user => $uid) %>">Reset Password</a>
               <form action="<%= url_for->query(op => 'delete') %>" method="post">
                 %= hidden_field user => $uid;
-                <input type="submit" class="btn btn-small delete-btn" style="color:red" user="<%= $uid %>" value="Delete">
+                <input type="submit" class="btn btn-small delete-btn" style="color:red" user="<%= $uid %>" value="Delete" />
               </form>
             </td>
           </tr>

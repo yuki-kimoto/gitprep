@@ -48,7 +48,7 @@
   stash(id => $rev, project => $project_id, rev => $rev);
 %>
 
-<% layout 'common' , title => "$project_id/$file at $rev \x{30fb} $user_id/$project_id",
+<% layout 'common' , title => "$project_id/$file at $rev \x{b7} $user_id/$project_id",
      stylesheets => ['/js/google-code-prettify/prettify.css']; %>
 
 %

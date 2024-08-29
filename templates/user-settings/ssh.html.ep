@@ -197,7 +197,7 @@
               <div>
                 This is a list of SSH keys associated with your account. Remove any keys that you do not recognize.
               </div>
-              <br/>
+              <br />
               % for my $key (@$keys) {
                 <form action="<%= url_for->query(op => 'delete') %>" method="post">
                   <div>
@@ -237,7 +237,7 @@
               <div>
                 <%= text_area 'key' %>
               </div>
-              <input type="submit" class="btn btn-green btn-new" value="Add key">
+              <input type="submit" class="btn btn-green btn-new" value="Add key" />
             </form>
           </div>
         </div>

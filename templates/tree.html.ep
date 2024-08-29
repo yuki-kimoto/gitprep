@@ -171,7 +171,7 @@ git push -u origin master</pre>
 git remote add origin <%= $ssh_rep_url %>
 git push -u origin master</pre>
 
-      <hr>
+      <hr />
 
       % my $http_rep_url = url_for("$user_id/$project_id.git")->to_abs;
       <h4 class="topic1"><%= uc url_for->to_abs->scheme %></h4>

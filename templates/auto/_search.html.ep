@@ -61,7 +61,7 @@
       <div>Search</div>
       <form action="<%= url_for %>">
         <%= text_field 'q', style => "width:600px;margin-top:10px;margin-right:3px" %>
-        <input class="btn" type="submit" value="Search">
+        <input class="btn" type="submit" value="Search" />
         % if ($type_exists) {
           %= hidden_field type => $type;
         % }

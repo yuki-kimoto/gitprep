@@ -213,7 +213,7 @@
       <div class="labels-create-cancel-btn btn">
         Cancel
       </div>
-      <input type="submit" value="Create label" class="labels-create-create-btn btn btn-green">
+      <input type="submit" value="Create label" class="labels-create-create-btn btn btn-green" />
     </div>
   </form>
   <ul class="labels">

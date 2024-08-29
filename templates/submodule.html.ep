@@ -40,7 +40,7 @@
   stash project => $project;
   stash rev => $rev;
 
-  layout 'common' , title => "$project/$file at $rev \x{30fb} $user/$project";
+  layout 'common' , title => "$project/$file at $rev \x{b7} $user/$project";
 %>
 
   %= include '/include/header';
