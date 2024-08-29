@@ -13,8 +13,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
-    <meta name="robots" content="index, nofollow" >
+    <meta charset="UTF-8" />
+    <meta name="robots" content="index, nofollow" />
     % my $title = stash('title');
     <title><%= $title ? "$title \x{30fb} Gitprep" : 'Gitprep' %></title>
     %= stylesheet '/css/common.css', rel => 'stylesheet', media => 'screen';
@@ -24,9 +24,9 @@
     %= javascript '/js/jquery-1.9.0.min.js';
     %= javascript '/js/bootstrap.min.js';
     
-    <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" >
+    <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" />
     % if (length $user && length $project && length $rev) {
-      <link href="<%= url_for("/$user/$project/commits/$rev.atom")->to_abs %>" rel="alternate" title="Recent Commits to <%= "$project:$rev" %>" type="application/atom+xml">
+      <link href="<%= url_for("/$user/$project/commits/$rev.atom")->to_abs %>" rel="alternate" title="Recent Commits to <%= "$project:$rev" %>" type="application/atom+xml" />
     % }
   </head>
   <body>

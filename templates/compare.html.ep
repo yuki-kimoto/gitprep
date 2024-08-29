@@ -622,7 +622,7 @@
               Styling with Markdown is supported
             </div>
             <div class="issue-add-comment-button">
-              <input type="submit" value="Create pull request" class="btn btn-green">
+              <input type="submit" value="Create pull request" class="btn btn-green" />
             </div>
           </div>
         </div>

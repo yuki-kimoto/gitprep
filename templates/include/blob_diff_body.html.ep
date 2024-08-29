@@ -98,13 +98,13 @@
             <div class="commit-diff-image">
               % if ($binary_from_rev_shown) {
                 <a href="<%= url_for("$user_project_path/blob/$from_rev/$file") %>">
-                  <img src="<%= url_for("$user_project_path/raw/$from_rev/$file") %>" style="border:1px solid red;padding:1px;margin-right:20px">
+                  <img src="<%= url_for("$user_project_path/raw/$from_rev/$file") %>" style="border:1px solid red;padding:1px;margin-right:20px" />
                 </a>          
               % }
               
               % if ($binary_rev_shown) {
                 <a href="<%= url_for("$user_project_path/blob/$rev/$file") %>">
-                  <img src="<%= url_for("$user_project_path/raw/$rev/$file") %>" style="border:1px solid green;padding:1px;margin-left:20px">
+                  <img src="<%= url_for("$user_project_path/raw/$rev/$file") %>" style="border:1px solid green;padding:1px;margin-left:20px" />
                 </a>
               % }
             </div>

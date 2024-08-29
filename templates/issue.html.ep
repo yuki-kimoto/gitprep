@@ -832,12 +832,12 @@ git push origin <%= $base_branch %>
                         % if ($isissuer || $canadmin) {
                           % my $issuekind = $pull_request? 'pull request': 'issue';
                           % if ($issue->{open}) {
-                            <input type="submit" value="Close <%= $issuekind %>" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn">
+                            <input type="submit" value="Close <%= $issuekind %>" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn" />
                           % } else {
-                            <input type="submit" value="Reopen <%= $issuekind %>" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn">
+                            <input type="submit" value="Reopen <%= $issuekind %>" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn" />
                           % }
                         % }
-                        <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-green btn-new">
+                        <input type="submit" value="Comment" onclick="$(this).closest('form').find('[name=op]').val('add-comment'); $(this).closest('form').submit();" class="btn btn-green btn-new" />
                       </div>
                     </div>
                   </div>

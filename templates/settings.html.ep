@@ -283,7 +283,7 @@
                 % my $description = $git->description(app->rep_info($user_id, $project_id));
                 % $description = '' unless defined $description;
                 %= text_field 'description' => $description, style => "width:90%";
-                <input type="submit" class="btn" value="Save">
+                <input type="submit" class="btn" value="Save" />
               </div>
             </form>
           </li>
@@ -304,7 +304,7 @@
                 %>
                 
                 %= text_field 'website-url' => $website_url, style => "width:90%";
-                <input type="submit" class="btn" value="Save">
+                <input type="submit" class="btn" value="Save" />
               </div>
             </form>
           </li>
@@ -363,7 +363,7 @@
               %= text_field 'guess_encoding' => $guess_encoding;
             </li>
             <li>
-              <input type="submit" class="btn" value="Save">
+              <input type="submit" class="btn" value="Save" />
             </li>
           </ul>
         </form>

@@ -324,7 +324,7 @@
                 <button class="btn <%= !$logined ? 'btn-info' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
               </li>
               <li>
-                <input id="rep_url" type="text">
+                <input id="rep_url" type="text" />
               </li>
             </ul>
           % }

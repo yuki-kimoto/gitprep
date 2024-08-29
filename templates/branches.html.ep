@@ -263,7 +263,7 @@
                           <button class="btn btn-small disabled delete-branch"value="Delete">Delete</button>
                         % } else {
                           <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
-                            <input type="submit" class="btn btn-small delete-branch" style="color:#900;" value="Delete">
+                            <input type="submit" class="btn btn-small delete-branch" style="color:#900;" value="Delete" />
                             %= hidden_field branch => $branch_name;
                           </form>
                         % }
