@@ -112,7 +112,7 @@
   }
 %>
 
-% layout 'common', title => "branches  \x{30fb} $user_id/$project_id";
+% layout 'common', title => "branches  \x{b7} $user_id/$project_id";
 
   %= include '/include/header';
   

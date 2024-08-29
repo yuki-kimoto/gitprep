@@ -56,7 +56,7 @@
     from_rev => $from_rev
   );
 
-  layout 'common', title => "$commit->{title_short} \x{30fb} $commit_short_id";
+  layout 'common', title => "$commit->{title_short} \x{b7} $commit_short_id";
 %>
 
 %= include '/include/header';

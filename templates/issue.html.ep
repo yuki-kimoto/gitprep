@@ -499,7 +499,7 @@
     $title = 'by ' . $issue->{'open_user.id'} . ' - Pull request';
   }
 
-  $title = $issue->{title} . " $title #$issue_number \x{30fb} $base_user_id/$base_project_id";
+  $title = $issue->{title} . " $title #$issue_number \x{b7} $base_user_id/$base_project_id";
   layout 'common', title => $title;
 %>
 

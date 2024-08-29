@@ -266,7 +266,7 @@
     from_rev => $start_commit_id
   );
 
-  layout 'common', title => "Comparing $base_branch...$target_branch \x{30fb} $base_user_id/$base_project_id";
+  layout 'common', title => "Comparing $base_branch...$target_branch \x{b7} $base_user_id/$base_project_id";
 %>
 
 

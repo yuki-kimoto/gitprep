@@ -16,7 +16,7 @@
     <meta charset="UTF-8" />
     <meta name="robots" content="index, nofollow" />
     % my $title = stash('title');
-    <title><%= $title ? "$title \x{30fb} Gitprep" : 'Gitprep' %></title>
+    <title><%= $title ? "$title \x{b7} Gitprep" : 'Gitprep' %></title>
     %= stylesheet '/css/common.css', rel => 'stylesheet', media => 'screen';
     % for my $stylesheet (@$stylesheets) {
       %= stylesheet $stylesheet;

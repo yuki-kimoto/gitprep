@@ -54,7 +54,7 @@
   # Default branch
   my $default_branch = app->manager->default_branch($user_id, $project_id);
 
-  layout 'common', title => "Network \x{30fb} $user_id/$project_id";
+  layout 'common', title => "Network \x{b7} $user_id/$project_id";
 %>
 
   %= javascript begin
