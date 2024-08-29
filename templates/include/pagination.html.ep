@@ -3,7 +3,7 @@
   my $page = stash('page') // 1;                # Current page.
   my $rows = stash('rows');                     # Total row cunt or undef.
   my $rows_per_page = stash('rows_per_page');   # Number of rows per page.
-  my $query = stash('query');                   # URL query parameters.
+  my $query = stash('query') // {};             # URL query parameters.
   my $left = stash('left') // 'Previous page';  # Left arrow label/tooltip.
   my $right = stash('right') // 'Next page';    # Light arrow label/tooltip.
 

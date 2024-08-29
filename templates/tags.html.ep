@@ -71,28 +71,7 @@
         % }
       </ul>
 
-      % if ($tags_count > $page_count) {
-        <div class="pagination-container" style="margin-top:20px">
-          <ul class="pagination">
-            % if ($page == 1) {
-              <li><span>Newer</span></li>
-            % } else {
-              % my $newer_page = $page - 1;
-              <li class="disable">
-                <a href="<%= url_for("/$user/$project/tags?page=$newer_page") %>">Newer</a>
-              </li>
-            % }
-            % if (@$tags < $page_count) {
-              <li><span>Older</span></li>
-            % } else {
-              % my $older_page = $page + 1;
-              <li>
-                <a href="<%= url_for("/$user/$project/tags?page=$older_page") %>">Older</a>
-              </li>
-            % }
-          </ul>
-        </div>
-      % }
+      %= include '/include/pagination', page => $page, rows => $tags_count, rows_per_page => $page_count, left => 'Newer', right => 'Older';
     % } else {
       <ul class="tags">
         <li>

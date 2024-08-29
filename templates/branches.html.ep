@@ -58,7 +58,7 @@
   # Branches
   my $branches = [];
 
-  # Pagenation
+  # Pagination
   my $page_count = 20;
   my $skip = $page_count * ($page - 1);
   
@@ -275,27 +275,7 @@
               % $branches_count++;
             % }
 
-
-            <div class="pagination-container" style="margin-top:20px">
-              <ul class="pagination">
-                % if ($page == 1) {
-                  <li><span>Newer</span></li>
-                % } else {
-                  % my $newer_page = $page - 1;
-                  <li>
-                    <a href="<%= url_for("/$user_id/$project_id/branches?page=$newer_page") %>">Newer</a>
-                  </li>
-                % }
-                % if ($branches_count < $page_count) {
-                  <li><span>Older</span></li>
-                % } else {
-                  % my $older_page = $page + 1;
-                  <li>
-                    <a href="<%= url_for("/$user_id/$project_id/branches?page=$older_page") %>">Older</a>
-                  </li>
-                % }
-              </ul>
-            </div>
+            %= include '/include/pagination', page => $page, rows => $all_count, rows_per_page => $page_count, left => 'Newer', right => 'Older';
           % } else {
             <li style="text-align:center;text-color:#767676">
               There aren’t any branches.
