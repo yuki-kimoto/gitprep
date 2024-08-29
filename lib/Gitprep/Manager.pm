@@ -420,6 +420,8 @@ sub delete_user {
       croak $error = $@ if $@;
       eval {$self->_delete_user_dir($user) };
       croak $error = $@ if $@;
+      eval {$self->update_authorized_keys_file() };
+      croak $error = $@ if $@;
     });
   };
   croak $error if $@;
@@ -943,10 +945,31 @@ sub _create_user_dir {
 
 sub _delete_db_user {
   my ($self, $user_id) = @_;
-  
+
   # Delete database user
-  my $count = $self->app->dbi->model('user')->delete(where => {id => $user_id});
-  
+  my $dbi = $self->app->dbi;
+  my $row_id = $dbi->model('user')->select(
+    'row_id',
+     where => {
+       id => $user_id
+     }
+  )->value;
+  return 0E0 unless $row_id;
+  my $projects = $dbi->model('project')->select(
+     {__MY__ => ['id']},
+    where => {
+      'project.user' => $row_id
+    }
+  )->all;
+  foreach my $project (@$projects) {
+    $self->_delete_project($user_id, $project->{id});
+  }
+  $dbi->model('collaboration')->delete(where => {user => $row_id});
+  $dbi->model('subscription')->delete(where => {user => $row_id});
+  $dbi->model('watch')->delete(where => {user => $row_id});
+  $dbi->model('ssh_public_key')->delete(where => {user => $row_id});
+  my $count = $dbi->model('user')->delete(where => {id => $user_id});
+
   return $count;
 }
 
@@ -1048,6 +1071,7 @@ sub _delete_project {
       'user.id' => $user_id
     }
   )->one;
+  my $row_id = $project->{row_id};
 
   # First, assign a new upstream to forks.
   $self->_change_upstream_project($project);
@@ -1059,8 +1083,8 @@ sub _delete_project {
     where => [
       ['or', ':project{=}', ':pull_request.target_project{=}'],
       {
-        project => $project->{row_id},
-        'pull_request.target_project' => $project->{row_id}
+        project => $row_id,
+        'pull_request.target_project' => $row_id
       }
     ]
   )->all;
@@ -1070,14 +1094,15 @@ sub _delete_project {
 
   # Delete project's wiki.
   if ($dbi->model('wiki')->delete(
-    where => {project => $project->{row_id}}
+    where => {project => $row_id}
   ) > 0) {
     $self->_delete_wiki_rep($user_id, $project_id);
   }
 
-  $dbi->model('watch')->delete(where => {project => $project->{row_id}});
-  $dbi->model('label')->delete(where => {project => $project->{row_id}});
-  $dbi->model('project')->delete(where => {row_id => $project->{row_id}});
+  $dbi->model('collaboration')->delete(where => {project => $row_id});
+  $dbi->model('watch')->delete(where => {project => $row_id});
+  $dbi->model('label')->delete(where => {project => $row_id});
+  $dbi->model('project')->delete(where => {row_id => $row_id});
 }
 
 sub _delete_rep {
