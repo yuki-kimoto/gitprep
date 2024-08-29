@@ -353,11 +353,14 @@ sub create_project {
   my ($self, $user_id, $project_id, $opts) = @_;
   
   my $params = {};
+  $opts //= {};
   if ($opts->{private}) {
     $params->{private} = 1;
   }
   
-  $params->{default_branch} = $opts->{default_branch};
+  if (exists $opts->{default_branch}) {
+    $params->{default_branch} = $opts->{default_branch};
+  }
   # Create project
   my $dbi = $self->app->dbi;
   my $error;
