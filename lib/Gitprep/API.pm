@@ -181,7 +181,7 @@ sub create_wiki_page {
   # File abs name
   my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
   
-  open my $fh, '>', encode('UTF-8', $file_abs_name)
+  open my $fh, '>:encoding(UTF-8)', encode('UTF-8', $file_abs_name)
     or die "Can't open file \"". encode('UTF-8', $file_abs_name) . "\": $!";
   
   # Write content to file
@@ -274,7 +274,7 @@ sub rename_and_update_wiki_page {
   my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
   
   # Create file
-  open my $fh, '>', encode('UTF-8', $file_abs_name)
+  open my $fh, '>:encoding(UTF-8)', encode('UTF-8', $file_abs_name)
     or die "Can't open file \"". encode('UTF-8', $file_abs_name) . "\": $!";
   
   # Write content to file
