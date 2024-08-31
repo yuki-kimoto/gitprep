@@ -1778,7 +1778,7 @@ sub _unquote {
   my ($self, $str) = @_;
   
   # Unquote function
-  my $unq = sub {
+  local *unq = sub {
     my $seq = shift;
     my %escapes = (
       t => "\t",
@@ -1800,7 +1800,7 @@ sub _unquote {
   # Unquote
   if ($str =~ m/^"(.*)"$/) {
     $str = $1;
-    $str =~ s/\\([^0-7]|[0-7]{1,3})/$unq->($1)/eg;
+    $str =~ s/\\([^0-7]|[0-7]{1,3})/unq($1)/eg;
   }
   
   return $str;

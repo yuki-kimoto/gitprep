@@ -18,7 +18,7 @@ sub markdown_wiki {
 
   my $url_base = $self->cntl->url_for("/$user_id/$project_id/wiki");
   
-  my $re_cb = sub {
+  local *re_cb = sub {
     my ($link_text, $title) = @_;
     
     # [[Link text|Title]]
@@ -38,7 +38,7 @@ sub markdown_wiki {
     return $replace;
   };
 
-  $content =~ s/\[\[([^\]\|]+?)(?:\|([^\[\]]+?))?\]\]/$re_cb->($1, $2)/eg;
+  $content =~ s/\[\[([^\]\|]+?)(?:\|([^\[\]]+?))?\]\]/re_cb($1, $2)/eg;
   my $content_md = $self->markdown($content);
   
   return $content_md;

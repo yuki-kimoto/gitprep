@@ -60,7 +60,7 @@
   my $isissuer = $loggedin && $session_user_row_id == $issue->{open_user};
 
   # Message validation function
-  my $validate_message = sub {
+  local *validate_message = sub {
     my ($message) = @_;
     my $validation = app->vc->validation;
 
@@ -179,7 +179,7 @@
 
       # Validation
       my $json = {success => 0};
-      if ($validate_message->($message)->is_valid) {
+      if (validate_message($message)->is_valid) {
         $json = $api->api_update_issue_message($issue_message_row_id, $message, $base_user_id);
       }
 
@@ -200,7 +200,7 @@
       my $message = param('message');
 
       # Validation
-      my $validation = $validate_message->($message);
+      my $validation = validate_message($message);
       if ($validation->is_valid) {
 
         my $msgno = $api->add_issue_message($base_user_id, $base_project_id,
