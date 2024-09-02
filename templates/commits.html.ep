@@ -41,42 +41,31 @@
     $file
   );
   my $commits_count = @$commits;
-  my $commits_date = {};
-  for my $commit (@$commits) {
-    my $date = $commit->{age_string_date_local};
-    $commits_date->{$date} ||= [];
-    push @{$commits_date->{$date}}, $commit;
-  }
-  
+
   # Global variable
   stash(user => $user_id, project => $project_id, rev => $rev);
-  
+
   # Render atom xml feed
   if ($render_atom_feed) {
     # Add updated date time
     for my $commit (@$commits) {
       my $committer_epoch = $commit->{committer_epoch};
       my $committer_tz = $commit->{committer_tz};
-      
-      my $time_zone_second;
-      my $time_zone;
+
+      my $time_zone_minutes = 0;
       if ($committer_tz =~ /^(\+|\-)([0-9]{2})([0-9]{2})$/) {
         my $time_zone_sign = $1;
         my $time_zone_hour = $2;
         my $time_zone_min = $3;
-        $time_zone_second = $time_zone_sign . ($time_zone_hour * (60 * 60) + $time_zone_min * 60);
-        $time_zone = sprintf("$time_zone_sign%02d:%02d", $time_zone_hour, $time_zone_min);
+        $time_zone_minutes = $time_zone_sign . ($time_zone_hour * 60 + $time_zone_min);
       }
 
       # updated datetime
-      my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($committer_epoch + $time_zone_second);
-      my $updated = sprintf('%4d-%02d-%02dT%02d:%02d:%02d', 1900 + $year, $mon + 1, $mday, $hour, $min, $sec);
-      $updated .= $time_zone;
-      
-      $commit->{updated} = $updated;
+      $commit->{updated} = $api->strftime($committer_epoch, '%FT%T%Z',
+        $time_zone_minutes);
     }
   }
-  
+
   # Set stash
   stash(
     user => $user_id,
@@ -101,6 +90,9 @@
   <updated><%= $commits->[0]->{updated} %></updated>
 
     % for my $commit (@$commits) {
+      <%
+        my $author_id = app->dbi->model('user')->select('id', where => {email => $commit->{author_email}})->value;
+      %>
   <entry>
     <id>tag:gitprep,2008:Grit::Commit/<%= $commit->{id} %></id>
     <link type="text/html" rel="alternate" href="<%= url_for("$user_project_path/commit/$commit->{id}")->to_abs %>" />
@@ -109,8 +101,13 @@
     </title>
     <updated><%= $commit->{updated} %></updated>
     <author>
-      <name><%= $user_id %></name>
-      <uri><%= url_for("/$user_id")->to_abs %></uri>
+      % if ($author_id) {
+        <name><%= $author_id %></name>
+        <uri><%= url_for("/$author_id")->to_abs %></uri>
+      % }
+      % else {
+        <name><%= $commit->{author_name} %></name>
+      % }
     </author>
     <content type="html">
       <%= "<pre style='white-space:pre-wrap;width:81ex'>$commit->{title}</pre>" %>
@@ -131,56 +128,66 @@
       % }
       
       <div class="commits">
-        % for my $date (reverse sort keys %$commits_date) {
-          % my $commits = $commits_date->{$date};
-          <div class="commit-date">
-            <i class="icon-off"></i><span>Commits on <%= $date %></span>
-          </div>
+        <ul class="commits-date-container">
+          % for my $commit (@$commits) {
+            <%
+              my $author_id = app->dbi->model('user')->select('id', where => {email => $commit->{author_email}})->value;
+            %>
+            <li ts="<%= $commit->{committer_epoch} %>">
+              <div class="commit-left">
+                <div class="commit-left-title">
+                  <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
+                    <b><%= $commit->{title_short} %></b>
+                  </a>
+                </div>
+                <div class="commit-left-author">
+                  <span title="<%= $commit->{author_email} %>">
 
-          <ul class="commits-date-container">
-            % my $num = 0;
-            % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
-              <%
-                my $author_id = app->dbi->model('user')->select('id', where => {email => $commit->{author_email}})->value;              %>
-              <li>
-                <div class="commit-left">
-                  <div class="commit-left-title">
-                    <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
-                      <b><%= $commit->{title_short} %></b>
-                    </a>
-                  </div>
-                  <div class="commit-left-author">
-                    <span title="<%= $commit->{author_email} %>">
-                    
-                      % if (defined $author_id) {
-                        <a href="<%= url_for("/$author_id") %>"><%= $author_id %></a>
+                    % if (defined $author_id) {
+                      <a href="<%= url_for("/$author_id") %>"><%= $author_id %></a>
+                    % } else {
+                      <%= $commit->{author_name} %>
+                    % }
+                  </span>
+                  % if ($commit->{author_email} ne $commit->{committer_email}) {
+                    <%
+                      my $committer_id = app->dbi->model('user')->select('id', where => {email => $commit->{committer_email}})->value;
+                    %>
+                    authored and
+                    <span title="<%= $commit->{committer_email} %>">
+
+                      % if (defined $committer_id) {
+                        <a href="<%= url_for("/$committer_id") %>"><%= $committer_id %></a>
                       % } else {
-                        <%= $commit->{author_name} %>
+                        <%= $commit->{committer_name} %>
                       % }
                     </span>
-                    <span class="muted" title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
+                  % }
+                  committed
+                  %= $api->age_element($commit->{committer_epoch}, class => 'muted');
+                </div>
+              </div>
+              <div class="commit-right">
+                <div class="commit-right-container">
+                  <div class="commit-right-commit-id">
+                    <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
+                      <%= substr($commit->{id}, 0, 7) %>
+                    </a>
+                  </div>
+                  <div class="commit-right-browse-repository">
+                    <a title="Browse the repository at this point in the history" href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
+                      &lt;&gt;
+                    </a>
                   </div>
                 </div>
-                <div class="commit-right">
-                  <div class="commit-right-container">
-                    <div class="commit-right-commit-id">
-                      <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
-                        <%= substr($commit->{id}, 0, 7) %>
-                      </a>
-                    </div>
-                    <div class="commit-right-browse-repository">
-                      <a title="Browse the repository at this point in the history" href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
-                        &lt;&gt;
-                      </a>
-                    </div>
-                  </div>
-                </div>
-                % $num++;
-              </li>
-            % }
-          </ul>
-        % }
+              </div>
+            </li>
+          % }
+        </ul>
       </div>
+      %= javascript begin
+        Gitprep.commitsByDay($('.commits-date-container'));
+      % end
 
       %= include '/include/pagination', page => $page, rows_per_page => $page_count, query => {}, left => 'Newer', right => 'Older';
     </div>

@@ -129,7 +129,7 @@
                   </div>
                   <div class="text-gray" style="font-size:13px;">
                     % if ($commit) {
-                      <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %>
+                     %= $api->age_element($commit->{committer_epoch});
                     % } else {
                       <span >Repositry is not yet created.
                     % }

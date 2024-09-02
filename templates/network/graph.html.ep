@@ -1,4 +1,8 @@
 <%
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
   my $user = param('user');
   my $project = param('project');
   my $branch = param('rev1');
@@ -16,8 +20,7 @@
   for my $commit (@$commits) {
     my $id = $commit->{id};
     $merged_commits_h->{$id} ||= {};
-    $merged_commits_h->{$id}{age} = $commit->{age};
-    $merged_commits_h->{$id}{age_string_date_local} = $commit->{age_string_date_local};
+    $merged_commits_h->{$id}{epoch} = $commit->{committer_epoch};
     $merged_commits_h->{$id}{title} = $commit->{title};
     $merged_commits_h->{$id}{type} = 'local';
   }
@@ -28,8 +31,7 @@
     }
     else {
       $merged_commits_h->{$id} ||= {};
-      $merged_commits_h->{$id}{age} = $commit->{age};
-      $merged_commits_h->{$id}{age_string_date_local} = $commit->{age_string_date_local};
+      $merged_commits_h->{$id}{epoch} = $commit->{committer_epoch};
       $merged_commits_h->{$id}{title} = $commit->{title};
       $merged_commits_h->{$id}{type} = 'remote';
     }
@@ -37,7 +39,7 @@
   
   my $merged_commits = [];
   for my $id (
-    sort { $merged_commits_h->{$b}{age} <=> $merged_commits_h->{$a}{age}}
+    sort { $merged_commits_h->{$a}{epoch} <=> $merged_commits_h->{$b}{epoch}}
     keys %$merged_commits_h)
   {
     my $commit = {%{$merged_commits_h->{$id}}};
@@ -76,7 +78,8 @@
 
               % if ($commit->{type} eq $type) {
                 <td>
-                  <a style="color:<%= $color %>" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>" title="<%= "$commit->{title}($commit->{age_string_date_local})" %>">●</a>
+                  % my $utcday = $api->strftime($commit->{epoch}, '%F');
+                  <a style="color:<%= $color %>" href="<%= url_for("/$user/$project/commit/$commit->{id}") %>" title="<%= "$commit->{title} ($utcday)" %>">●</a>
                 </td>
               % } else {
                 <td></td>

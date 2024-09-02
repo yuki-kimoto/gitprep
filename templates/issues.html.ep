@@ -136,8 +136,6 @@
               <%
                 my $kind = $issue->{pull_request}? 'pull': 'issues';
                 my $open_time = $issue->{open_time};
-                my $open_time_age = Time::Moment->now->epoch - $open_time;
-                my $open_time_age_string = $self->app->git->_age_string($open_time_age);
                 my $issue_labels = app->dbi->model('issue_label')->select(
                   {label => ['id', 'color']},
                   where => {issue => $issue->{row_id}}
@@ -165,7 +163,7 @@
                     </div>
                     <div class="issues-description">
                       #<%= $issue->{number} %> <%= $issue->{open} ? 'opened' : 'closed' %>
-                      <%= $open_time_age_string %>
+                      %= $api->age_element($issue->{open_time});
                       by <%= $issue->{'open_user.id'} %>
                     </div>
                  </div>

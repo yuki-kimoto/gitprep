@@ -23,6 +23,7 @@
     % }
     %= javascript '/js/jquery-1.9.0.min.js';
     %= javascript '/js/bootstrap.min.js';
+    %= javascript '/js/gitprep.js';
     
     <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" />
     % if (length $user && length $project && length $rev) {

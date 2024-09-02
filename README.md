@@ -361,13 +361,8 @@ Please fix it the following way.
 
 ### I want to set time zone.
 
-OK. GitPrep supports time zones. You can set time_zone option in conig file.
-
-    [basic]
-    ;;; Time Zone
-    ;;; GitPrep time zone is GMT by default
-    ;;; You can set your local time zone.
-    time_zone=+9:00
+Gitprep is timezone-agnostic. It delegates time zone handling to the browser.
+If you want to change the time zone, do it on your client system.
 
 ### How to hide user home directory in ssh repository URL?
 

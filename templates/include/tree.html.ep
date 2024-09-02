@@ -1,4 +1,7 @@
 <%
+  # API
+  my $api = gitprep_api;
+
   my $dir = stash('dir');
   my $commit_author_email = $commit->{author_email};
   my $commit_author_id = app->dbi->model('user')->select(
@@ -26,7 +29,7 @@
       <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
         <%= substr($commit->{id}, 0, 7) %>
       </a>
-      <%= $commit->{age_string} %>
+      %= $api->age_element($commit->{committer_epoch});
     </div>
   </div>
   <ul class="file-list">
@@ -68,7 +71,7 @@
           </a>
         </div>
         <div class="file-list-age">
-          <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string} %></span>
+          %= $api->age_element($commit->{committer_epoch});
         </div>
       </li>
     % }

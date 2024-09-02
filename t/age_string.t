@@ -4,7 +4,7 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 
-use Gitprep::Git;
+use Gitprep::API;
 
 my @cases = (
   { stimulus =>                           0,     expected => 'right now'     },
@@ -37,5 +37,5 @@ my @cases = (
 );
 
 for ( @cases ) {
-  is ( Gitprep::Git->new->_age_string ( $_->{stimulus} ), $_->{expected}, "$_->{stimulus} sec ~ \"$_->{expected}\"" );
+  is ( Gitprep::API->new->_age_string ( $_->{stimulus} ), $_->{expected}, "$_->{stimulus} sec ~ \"$_->{expected}\"" );
 }
