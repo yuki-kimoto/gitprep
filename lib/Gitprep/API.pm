@@ -6,6 +6,7 @@ use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOW
 use HTML::FormatText::WithLinks;
 use MIME::Entity;
 use Email::Sender::Simple;
+use Time::Moment;
 use HTML::Restrict;
 
 use Carp 'croak';
@@ -498,8 +499,7 @@ sub api_update_issue_message {
     my $can_modify = $is_my_project || $is_my_comment;
 
     if ($can_modify) {
-      my $now_tm = Time::Moment->now;
-      my $update_time = $now_tm->epoch;
+      my $update_time = $self->now;
       $self->app->log->info($update_time);
     
       $self->app->dbi->model('issue_message')->update(
@@ -571,8 +571,7 @@ sub add_issue_message {
     $issue_message_number++;
 
     # New issue message
-    my $now_tm = Time::Moment->now_utc;
-    my $now_epoch = $now_tm->epoch;
+    my $now_epoch = $self->now;
     my $session_user_row_id = $self->session_user_row_id;
     my $new_issue_message = {
       issue => $issue_row_id,
@@ -663,14 +662,102 @@ sub mentioned {
   return @result;
 }
 
+sub DOMelement {
+  my $self = shift;
+  my $dom = Mojo::DOM->new_tag(@_);
+  return $dom->child_nodes->first;
+}
+
+sub DOMtext {
+  my ($self, $text) = @_;
+
+  # Helper to get an orphan DOM text node.
+  my $span = $self->DOMelement('span', $text);
+  return $span->child_nodes->first;
+}
+
+sub DOMrender {
+  my ($self, $dom) = @_;
+  return Mojo::ByteStream->new($dom);
+}
+
+sub now {
+  return Time::Moment->now_utc->epoch;
+}
+
+sub strftime {
+  my ($self, $unixtime, $format, $offset_minutes) = @_;
+
+  my $tm = Time::Moment->from_epoch($unixtime);
+  $tm = $tm->with_offset_same_instant($offset_minutes) if $offset_minutes;
+  return Time::Moment->from_epoch($unixtime)->strftime($format || '%F %T');
+}
+
+sub _age_ago {
+  my($self,$unit,$age) = @_;
+
+  return $age . " $unit" . ( $unit =~ /^(sec|min)$/ ? "" : ( $age > 1 ? "s" : "" ) ) . " ago";
+}
+
+sub _age_string {
+  my ($self, $age) = @_;
+  my $age_str;
+
+  if ($age >= 60 * 60 * 24 * 365) {
+    $age_str = $self->_age_ago(year => (int $age/60/60/24/365));
+  } elsif ($age >= 60 * 60 * 24 * (365/12)) {
+    $age_str = $self->_age_ago(month => int $age/60/60/24/(365/12));
+  } elsif ($age >= 60 * 60 * 24 * 7) {
+    $age_str = $self->_age_ago(week => int $age/60/60/24/7);
+  } elsif ($age >= 60 * 60 * 24) {
+    $age_str = $self->_age_ago(day => int $age/60/60/24);
+  } elsif ($age >= 60 * 60) {
+    $age_str = $self->_age_ago(hour => int $age/60/60);
+  } elsif ($age >= 60) {
+    $age_str = $self->_age_ago(min => int $age/60);
+  } elsif ($age >= 1) {
+    $age_str = $self->_age_ago(sec => int $age);
+  } else {
+    $age_str .= 'right now';
+  }
+
+  $age_str =~ s/^1 /a /;
+  $age_str =~ s/^a hour/an hour/;
+  
+  return $age_str;
+}
+
 sub age_string {
-  my ($self, $epoch_time) = @_;
-  
-  my $age = time - $epoch_time;
-  
-  my $age_string = $self->cntl->app->git->_age_string($age);
-  
-  return $age_string;
+  my ($self, $epoch) = @_;
+
+  return $self->_age_string($self->now - $epoch);
+}
+
+sub time_tooltip_element {
+  my $self = shift;
+  my $unixtime = shift;
+  my %attrs = (
+    tag => 'span',
+    @_
+  );
+
+  # Default tooltip to UTC.
+  if ($unixtime) {
+    $attrs{title} ||= $self->strftime($unixtime, $attrs{format});
+    $attrs{onmouseover} = "Gitprep.dateTooltip(this, $unixtime)";
+  }
+
+  my $tag = delete $attrs{tag};
+  return $self->DOMelement($tag, %attrs);
+}
+
+sub age_element {
+  my $self = shift;
+  my $unixtime = shift;
+  my $age = $unixtime? $self->age_string($unixtime): 'sometime';
+  my $element = $self->time_tooltip_element($unixtime, @_);
+  $element->content($self->DOMtext($age));
+  return $self->DOMrender($element);
 }
 
 sub subscribe {

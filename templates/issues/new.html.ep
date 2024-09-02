@@ -49,8 +49,7 @@
         )->value;
         
         my $issue;
-        my $now_tm = Time::Moment->now_utc;
-        my $now_epoch = $now_tm->epoch;
+        my $now_epoch = $api->now;
         my $session_user_row_id = $api->session_user_row_id;
         my $issue_number;
         

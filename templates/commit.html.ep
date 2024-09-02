@@ -26,12 +26,6 @@
     $self->reply->not_found;
     return;
   }
-  my $author_date
-    = $git->parse_date($commit->{author_epoch}, $commit->{author_tz});
-  my $committer_date
-    = $git->parse_date($commit->{committer_epoch}, $commit->{committer_tz});
-  $commit->{author_date} = $git->timestamp($author_date);
-  $commit->{committer_date} = $git->timestamp($committer_date);
   $from_rev = $commit->{parent} unless defined $from_rev;
   my $commit_short_id = substr($commit->{id}, 0, 7, );
   my $commit_author_email = $commit->{author_email};
@@ -126,7 +120,8 @@
               <%= $commit->{author_name} %>
             % }
           </span>
-          <span>commited on <span title="<%= $commit->{age_string_datetime_local} %>"><%= $commit->{age_string_date_local} %></span>
+          commited
+          %= $api->age_element($commit->{committer_epoch});
         </li>
         <li class="last-child">
           % my $parents = $commit->{parents};

@@ -110,8 +110,7 @@
           return;
         }
         else {
-          my $now_tm = Time::Moment->now_utc;
-          my $now_epoch = $now_tm->epoch;
+          my $now_epoch = $api->now;
           my $session_user_row_id = $api->session_user_row_id;
           my $issue_number;
           app->dbi->connector->txn(sub {
@@ -218,13 +217,9 @@
   );
 
   my $commits_count = @$commits;
-  my $commits_date = {};
   my $authors = {};
   for my $commit (@$commits) {
-    my $date = $commit->{age_string_date_local};
-    $commits_date->{$date} ||= [];
     $authors->{$commit->{author}} = 1;
-    push @{$commits_date->{$date}}, $commit;
   }
   my $authors_count = keys %$authors;
 
@@ -245,15 +240,15 @@
   
   # Base branches
   my $base_branches = $git->branches($base_rep_info);
-  @$base_branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$base_branches;
+  @$base_branches = sort { $b->{commit}{committer_epoch} <=> $a->{commit}{committer_epoch} } @$base_branches;
 
   # Target branches
   my $target_branches = $git->branches($target_rep_info);
-  @$target_branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$target_branches;
+  @$target_branches = sort { $b->{commit}{committer_epoch} <=> $a->{commit}{committer_epoch} } @$target_branches;
   
   # Can open pull request
   my $can_open_pull_request;
-  if (keys %$commits_date && $expand) {
+  if (@$commits && $expand) {
     $can_open_pull_request = 1;
   }
   
@@ -599,7 +594,7 @@
         Pull request #<%= $issue->{number} %>
       </a>
     </div>
-  % } elsif (keys %$commits_date && $merge_success) {
+  % } elsif (@$commits && $merge_success) {
     <div class="issue-add-comment" style="width:80%">
       <form action="<%= url_for %>" method="post">
         <%= hidden_field op => 'create-pull-request' %>
@@ -630,7 +625,7 @@
     </div>
   % }
 
-  % if (keys %$commits_date) {
+  % if (@$commits) {
     <ul class="compare-header">
       <li>
         <b><%= @$commits %></b> <span>commit</span>
@@ -647,47 +642,43 @@
     </ul>
     
     <div class="commits">
-      % for my $date (reverse sort keys %$commits_date) {
-        % my $commits = $commits_date->{$date};
-        
-        <div class="commit-date">
-          <i class="icon-off"></i><span>Commits on <%= $date %></span>
-        </div>
-        
-        <ul class="compare-commits-date-container">
-          % for my $commit (sort {$b->{author_epoch} <=> $a->{author_epoch}} @$commits) {
-            <%
-              my $commit_author_email = $commit->{author_email};
-              my $commit_author_id = app->dbi->model('user')->select(
-                'id',
-                where => {email => $commit_author_email}
-              )->value;
-            %>
-            <li>
-              <div class="compare-commits-author">
-                <span title="<%= $commit->{author_email} %>">
-                  % if (defined $commit_author_id) {
-                    <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
-                  % } else {
-                    <%= $commit->{author_name} %>
-                  % }
-                </span>
-              </div>
-              <div class="compare-commits-commit-title">
-                <a style="color:#333" href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
-                  <%= $commit->{title_short} %>
-                </a>
-              </div>
-              <div class="compare-commits-commit-id">
-                <a href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
-                  <%= substr($commit->{id}, 0, 7) %>
-                </a>
-              </div>
-            </li>
-          % }
-        </ul>
-      % }
+      <ul class="compare-commits-date-container">
+        % for my $commit (@$commits) {
+          <%
+            my $commit_author_email = $commit->{author_email};
+            my $commit_author_id = app->dbi->model('user')->select(
+              'id',
+              where => {email => $commit_author_email}
+            )->value;
+          %>
+          <li ts="<%= $commit->{committer_epoch} %>">
+            <div class="compare-commits-author">
+              <span title="<%= $commit->{author_email} %>">
+                % if (defined $commit_author_id) {
+                  <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+                % } else {
+                  <%= $commit->{author_name} %>
+                % }
+              </span>
+            </div>
+            <div class="compare-commits-commit-title">
+              <a style="color:#333" href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
+                <%= $commit->{title_short} %>
+              </a>
+            </div>
+            <div class="compare-commits-commit-id">
+              <a href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
+                <%= substr($commit->{id}, 0, 7) %>
+              </a>
+            </div>
+          </li>
+        % }
+      </ul>
     </div>
+
+    %= javascript begin
+      Gitprep.commitsByDay($('.compare-commits-date-container'));
+    % end
   
     %= include '/include/commit_body', %commit_body_args;
   % } else {

@@ -16,7 +16,10 @@
   <div id="comment-<%= $issue_message->{number} %>" class="issue-message <%= $is_owner_comment ? 'issue-message-owner' : '' %>" tabindex="-1">
     <div class="issue-message-header <%= $is_owner_comment ? 'issue-message-header-owner' : '' %>">
       <div class="issue-message-header-left">
-        <b><%= $issue_message->{'user.id'} %></b> <span style="color:#767676;">commented <%= $api->age_string($issue_message->{update_time}) %></span>
+        <b><%= $issue_message->{'user.id'} %></b>
+        <span style="color:#767676;">commented
+          %= $api->age_element($issue_message->{update_time});
+        </span>
       </div>
       <div class="issue-message-header-right">
         % if ($is_owner_comment) {

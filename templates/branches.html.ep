@@ -165,10 +165,12 @@
                         <%= $branch_name %>
                       </a>
                     </div>
-                    <div class="branches-age" title="<%= $branch->{commit}{age_string_datetime_local} %>">
-                      Updated <%= $branch->{commit}{age_string} %> by
+                    <div class="branches-age">
+                      Updated
+                      %= $api->age_element($branch->{commit}{committer_epoch});
                     </div>
                     <div class="branches-author"  title="<%= $branch->{commit}{author_email} %>">
+                      by
                       % if (defined $commit_author_id) {
                         <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
                       % } else {

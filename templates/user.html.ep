@@ -25,7 +25,6 @@
     my $rep = app->git->repository(app->rep_info($user_id, $project->{id})) || {none => 1};
     $rep->{id} = $project->{id};
     $rep->{private} = $project->{private};
-    $rep->{age} //= 0;
     push @$reps, $rep;
   }
 %>
@@ -41,7 +40,7 @@
         <div class="topic1">Repositories</div>
         
         <ul class="repositories">
-          % for my $rep (sort { $a->{age} <=> $b->{age} } @$reps) {
+          % for my $rep (sort { ($b->{timestamp} || 0) <=> ($a->{timestamp} || 0) } @$reps) {
             % if (!$rep->{private} || $api->can_access_private_project($user_id, $rep->{id})) {
               <li>
                 % my $project_id = $rep->{id};
@@ -57,12 +56,14 @@
                   <%= $rep->{description} %>
                 </div>
                 <div class="repositories-age">
-                  % my $age = $rep->{age_string};
                   % if ($rep->{none}) {
-                    <span style="color:red">Repository not exists</span>
+                    <span style="color:red">Repository does not exist</span>
                     <a href="<%= "/$user_id/$rep->{id}/settings" %>" class="btn btn-mini">Settings</a>
+                  % } elsif ($rep->{timestamp}) {
+                    last updated
+                    %= $api->age_element($rep->{timestamp});
                   % } else {
-                    <%= $age ? "last updated $age" : 'new repository' %>
+                    new repository
                   % }
                 </div>
               </li>

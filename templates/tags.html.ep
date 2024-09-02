@@ -39,7 +39,7 @@
           <li>
             <ul class="tags-item">
               <li>
-                <span title="<%= $tag->{commit}{age_string_datetime_local} %>">on <%= $tag->{commit}{age_string_date_local} %></span>
+                %= $api->age_element($tag->{commit}{committer_epoch});
               </li>
               <li class="last-child">
                 <div class="tags-name">

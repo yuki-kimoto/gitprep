@@ -16,7 +16,6 @@ use Gitprep::Util;
 has 'bin';
 has default_encoding => 'UTF-8';
 has text_exts => sub { ['txt'] };
-has 'time_zone_second';
 has 'app';
 
 sub ref_to_object_id {
@@ -150,7 +149,7 @@ sub branches {
     $branch->{no_merged} = 1 if $no_merged_branches_h->{$branch_name};
     push @$branches, $branch;
   }
-  @$branches = sort { $a->{commit}{age} <=> $b->{commit}{age} } @$branches;
+  @$branches = sort { $b->{commit}{committer_epoch} <=> $a->{commit}{committer_epoch} } @$branches;
   
   return $branches;
 }
@@ -251,10 +250,6 @@ sub blame {
         $blame_line->{author_time} = $author_time;
         $max_author_time = $author_time if !$max_author_time || $author_time > $max_author_time;
         $min_author_time = $author_time if !$min_author_time || $author_time < $min_author_time;
-        my $author_age_string_date = $self->_age_string_date($author_time);
-        $blame_line->{author_age_string_date} = $author_age_string_date;
-        my $author_age_string_date_local = $self->_age_string_date_local($author_time);
-        $blame_line->{author_age_string_date_local} = $author_age_string_date_local;
       }
       elsif ($line =~ /^summary +(.+)/) {
         $blame_line->{summary} = $1;
@@ -785,20 +780,18 @@ sub last_activity {
     '--sort=-committerdate',
     '--count=1', 'refs/heads'
   );
-  open my $fh, '-|', @cmd or return;
+  open my $fh, '-|', @cmd or return undef;
   my $most_recent = <$fh>;
   $most_recent = $self->_dec($most_recent);
-  close $fh or return;
-  
+  close $fh or return undef;
+
   # Parse most recent
   if (defined $most_recent &&
       $most_recent =~ / (\d+) [-+][01]\d\d\d$/) {
-    my $timestamp = $1;
-    my $age = time - $timestamp;
-    return ($age, $self->_age_string($age));
+    return $1;
   }
-  
-  return;
+
+  return undef;
 }
 
 sub parse_rev_path {
@@ -874,17 +867,9 @@ sub repository {
 
   return unless -d $rep_info->{git_dir};
   
-  my $rep = {};
-  my @activity = $self->last_activity($rep_info);
-  if (@activity) {
-    $rep->{age} = $activity[0];
-    $rep->{age_string} = $activity[1];
-  }
-  else { $rep->{age} = 0 }
-  
+  my $rep = {timestamp => $self->last_activity($rep_info)};
   my $description = $self->description($rep_info) || '';
   $rep->{description} = $self->_chop_str($description, 25, 5);
-  
   return $rep;
 }
 
@@ -1008,11 +993,6 @@ sub tags {
 
       if ($type eq 'tag' || $type eq 'commit') {
         $tag{epoch} = $epoch;
-        if ($epoch) {
-          $tag{age} = $self->_age_string(time - $tag{epoch});
-        } else {
-          $tag{age} = 'unknown';
-        }
       }
       
       $tag{comment_short} = $self->_chop_str($tag{subject}, 30, 5)
@@ -1248,30 +1228,6 @@ sub parse_commit_text {
     $line =~ s/^    //;
   }
   $commit{comment} = \@commit_lines;
-
-  my $age = time - $commit{committer_epoch};
-  $commit{age} = $age;
-  $commit{age_string} = $self->_age_string($age);
-  
-  # GMT
-  {
-    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($commit{committer_epoch});
-    $commit{age_string_date} = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
-    $commit{age_string_datetime} = sprintf '%4d-%02d-%02d %02d:%02d:%02d',
-      1900 + $year, $mon + 1, $mday, $hour, $min, $sec;
-  }
-  
-  # Local Time
-  {
-    my $time_zone_second = $self->time_zone_second || 0;
-    
-    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($commit{committer_epoch} + $time_zone_second);
-    $commit{age_string_date_local}
-      = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
-    $commit{age_string_datetime_local} = sprintf '%4d-%02d-%02d %02d:%02d:%02d',
-      1900 + $year, $mon + 1, $mday, $hour, $min, $sec;
-  }
-
   return \%commit;
 }
 
@@ -1307,40 +1263,6 @@ sub get_commits {
   close $fh;
   
   return \@commits;
-}
-
-sub parse_date {
-  my $self = shift;
-  my $epoch = shift;
-  my $tz = shift || '-0000';
-  
-  # Parse data
-  my %date;
-  my @months = qw/Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec/;
-  my @days = qw/Sun Mon Tue Wed Thu Fri Sat/;
-  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime $epoch;
-  $date{hour} = $hour;
-  $date{minute} = $min;
-  $date{mday} = $mday;
-  $date{day} = $days[$wday];
-  $date{month} = $months[$mon];
-  $date{rfc2822} = sprintf '%s, %d %s %4d %02d:%02d:%02d +0000',
-    $days[$wday], $mday, $months[$mon], 1900 + $year, $hour ,$min, $sec;
-  $date{'mday-time'} = sprintf '%d %s %02d:%02d',
-    $mday, $months[$mon], $hour ,$min;
-  $date{'iso-8601'}  = sprintf '%04d-%02d-%02dT%02d:%02d:%02dZ',
-    1900 + $year, 1+$mon, $mday, $hour ,$min, $sec;
-  my ($tz_sign, $tz_hour, $tz_min) = ($tz =~ m/^([-+])(\d\d)(\d\d)$/);
-  $tz_sign = ($tz_sign eq '-' ? -1 : +1);
-  my $local = $epoch + $tz_sign * ((($tz_hour*60) + $tz_min) * 60);
-  ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime $local;
-  $date{hour_local} = $hour;
-  $date{minute_local} = $min;
-  $date{tz_local} = $tz;
-  $date{'iso-tz'} = sprintf('%04d-%02d-%02d %02d:%02d:%02d %s',
-    1900 + $year, $mon+1, $mday, $hour, $min, $sec, $tz);
-  
-  return \%date;
 }
 
 sub parsed_diff_tree_line {
@@ -1508,23 +1430,6 @@ sub snapshot_name {
   return wantarray ? ($name, $name) : $name;
 }
 
-sub timestamp {
-  my ($self, $date) = @_;
-  
-  # Time stamp
-  my $strtime = $date->{rfc2822};
-  my $localtime_format = '(%02d:%02d %s)';
-  if ($date->{hour_local} < 6) { $localtime_format = '(%02d:%02d %s)' }
-  $strtime .= ' ' . sprintf(
-    $localtime_format,
-    $date->{hour_local},
-    $date->{minute_local},
-    $date->{tz_local}
-  );
-
-  return $strtime;
-}
-
 sub trees {
   my ($self, $rep_info, $rev, $dir) = @_;
   $dir = '' unless defined $dir;
@@ -1573,40 +1478,6 @@ sub trees {
   $trees = [sort {$b->{type} cmp $a->{type} || $a->{name} cmp $b->{name}} @$trees];
   
   return $trees;
-}
-
-sub _age_ago {
-  my($self,$unit,$age) = @_;
-
-  return $age . " $unit" . ( $unit =~ /^(sec|min)$/ ? "" : ( $age > 1 ? "s" : "" ) ) . " ago";
-}
-
-sub _age_string {
-  my ($self, $age) = @_;
-  my $age_str;
-
-  if ($age >= 60 * 60 * 24 * 365) {
-    $age_str = $self->_age_ago(year => (int $age/60/60/24/365));
-  } elsif ($age >= 60 * 60 * 24 * (365/12)) {
-    $age_str = $self->_age_ago(month => int $age/60/60/24/(365/12));
-  } elsif ($age >= 60 * 60 * 24 * 7) {
-    $age_str = $self->_age_ago(week => int $age/60/60/24/7);
-  } elsif ($age >= 60 * 60 * 24) {
-    $age_str = $self->_age_ago(day => int $age/60/60/24);
-  } elsif ($age >= 60 * 60) {
-    $age_str = $self->_age_ago(hour => int $age/60/60);
-  } elsif ($age >= 60) {
-    $age_str = $self->_age_ago(min => int $age/60);
-  } elsif ($age >= 1) {
-    $age_str = $self->_age_ago(sec => int $age);
-  } else {
-    $age_str .= 'right now';
-  }
-  
-  $age_str =~ s/^1 /a /;
-  $age_str =~ s/^a hour/an hour/;
-  
-  return $age_str;
 }
 
 sub _chop_str {
@@ -1695,26 +1566,6 @@ sub decide_encoding {
   }
   
   return $encoding;
-}
-
-sub _age_string_date {
-  my ($self, $age) = @_;
-
-  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($age);
-  my $age_string_date = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
-  
-  return $age_string_date;
-}
-
-sub _age_string_date_local {
-  my ($self, $age) = @_;
-  
-  my $time_zone_second = $self->time_zone_second || 0;
-  
-  my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday) = gmtime($age + $time_zone_second);
-  my $age_string_date_local = sprintf '%4d-%02d-%02d', 1900 + $year, $mon + 1, $mday;
-  
-  return $age_string_date_local;
 }
 
 sub _dec {
