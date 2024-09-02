@@ -34,12 +34,12 @@
   
   my $name = "$project-$rev";
   my $file = "$name.$ext";
-  my $quote = sub {
+  local *quote = sub {
     return join(' ',
       map { my $a = $_; $a =~ s/(['!])/'\\$1'/g; "'$a'" } @_
     );
   };
-  my $cmd = $quote->(
+  my $cmd = quote(
     $git->cmd(
       app->rep_info($user, $project),
       'archive',
@@ -49,7 +49,7 @@
     )
   );
   if ($archive_type eq 'tar') {
-    $cmd .= ' | ' . $quote->('gzip', '-n');
+    $cmd .= ' | ' . quote('gzip', '-n');
   }
   $file =~ s/(["\\])/\\$1/g;
 

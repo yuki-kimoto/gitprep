@@ -125,8 +125,11 @@
       % if ($file =~ /\.md$/) {
         <%
           my $readme = join "\n", @$lines;
-          $readme =~ s#^(\[.*\]:)(?!\s*https?://)\s*(\S*)#{"$1 " . url_for("$user_id_project_path/raw/$rev/$2")}#mge;
-          $readme =~ s#^(!\[.*\]\()(?!https?://)(\S*)#{$1 . url_for("$user_id_project_path/raw/$rev/$2")}#mge;
+          my $subpath = $file;
+          $subpath =~ s#(?:^|/)[^/]*$##;
+          $subpath = "/$subpath" if $subpath;
+          $readme =~ s#^(\[.*\]:)(?!\s*https?://)\s*(\S*)#{"$1 " . url_for("$user_id_project_path/raw/$rev" . (substr($2, 0, 1) eq '/'? '': "$subpath/") . "$2")}#mge;
+          $readme =~ s#^(!\[.*\]\()(?!https?://)(\S*)#{$1 . url_for("$user_id_project_path/raw/$rev" . (substr($2, 0, 1) eq '/'? '': "$subpath/") . "$2")}#mge;
           my $readme_e = $api->markdown($readme);
         %>
         <div class="readme-frame">

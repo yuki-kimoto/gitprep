@@ -8,6 +8,7 @@
   my $title = param('title');
   my $new = param('new');
   my $edit = param('edit');
+  my $p = param('p') // '';
   my $list_pages = param('list-pages');
 
   # Maybe mojolicious bug? In FreeBSD, String is not decoded.
@@ -21,8 +22,11 @@
   my $content_md;
   my $pages;
   
-  # Logined
+  # Session
   my $logined = $api->logined;
+  my $session_user_id = $api->session_user_id;
+  my $canadmin = $logined &&
+    $api->can_write_access($session_user_id, $user_id, $project_id);
 
   # Wiki repository URL
   my $url = url_for->to_abs;
@@ -63,7 +67,13 @@
     # Form request
     else {
       if ($op eq 'create') {
-        
+
+        # Access control
+        unless ($canadmin) {
+          $self->reply->exception('Forbidden');
+          return;
+        }
+
         my $update_title = param('update-title');
         my $original_title = param('original-title');
         my $content = param('content');
@@ -77,7 +87,7 @@
         if (!length $update_title) {
           $validation->add_failed(title => 'Page title is empty.');
         }
-        elsif ($title =~ /^_/) {
+        elsif ($title && $title =~ /^_/) {
           if ($title ne '_Sidebar' && $title ne '_Footer') {
             $validation->add_failed(title => 'Page title can\'t start with _.');
           }
@@ -115,10 +125,10 @@
   my $content_footer_md;
 
   # Pages count
-  my $pages_count;
+  my $pages_count = 0;
   
   # Commits number
-  my $commits_number;
+  my $commits_number = 0;
 
   if ($new) {
     $display = 'new';
@@ -173,17 +183,28 @@
               $content_footer_md = $api->markdown($content_footer);
             }
           }
-          else {
+          elsif ($canadmin) {
             $display = 'new';
+            $p = '_pages' unless $p;
+          }
+          else {
+            $self->redirect_to("/$user_id/$project_id/wiki/_pages");
+            return;
           }
         }
       }
     }
-    else {
+    elsif ($canadmin) {
       $display = 'init';
+    }
+    else {
+      $self->redirect_to("/$user_id/$project_id");
+      return;
     }
   }
   
+  my $query = {};
+  $query->{p} = $title if $title;
   layout 'common', title => "Wiki - $user_id/$project_id";
 %>
 
@@ -274,43 +295,41 @@
         <%= include '/include/message', message => flash('message') %>
       </div>
       
-      % if ($display eq 'page' || $display eq 'list-pages') {
-        <ul class="wiki-count">
-          <li>
-            <a href="<%= url_for("/$user_id/$project_id/wiki") %>">
-              <span class="wiki-count-number">
-                <i class="icon-home" style="position:relative;top:-1px"></i>
-              </span>
-              <span class="wiki-count-type">
-                Home
-              </span>
-            </a>
-          </li>
-          <li>
-            <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">
-              <span class="wiki-count-number">
-                <i class="icon-leaf" style="position:relative;top:-1px"></i>
-                <%= $pages_count %>
-              </span>
-              <span class="wiki-count-type">
-                pages
-              </span>
-            </a>
-          </li>
-          <li>
-            <a href="<%= url_for("/$user_id/$project_id/wiki/commits/master") %>">
-              <span class="wiki-count-number">
-                <i class="icon-repeat" style="position:relative;top:-1px"></i>
-                <%= $commits_number %>
-              </span>
-              <span class="wiki-count-type">
-                commits
-              </span>
-            </a>
-          </li>
-        </ul>
-      % }
-        
+      <ul class="wiki-count">
+        <li>
+          <a href="<%= url_for("/$user_id/$project_id/wiki") %>">
+            <span class="wiki-count-number">
+              <i class="icon-home" style="position:relative;top:-1px"></i>
+            </span>
+            <span class="wiki-count-type">
+              Home
+            </span>
+          </a>
+        </li>
+        <li>
+          <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">
+            <span class="wiki-count-number">
+              <i class="icon-leaf" style="position:relative;top:-1px"></i>
+              <%= $pages_count %>
+            </span>
+            <span class="wiki-count-type">
+              pages
+            </span>
+          </a>
+        </li>
+        <li>
+          <a href="<%= url_for("/$user_id/$project_id/wiki/commits/master") %>">
+            <span class="wiki-count-number">
+              <i class="icon-repeat" style="position:relative;top:-1px"></i>
+              <%= $commits_number %>
+            </span>
+            <span class="wiki-count-type">
+              commits
+            </span>
+          </a>
+        </li>
+      </ul>
+
       <div class="wiki-top">
         <div class="wiki-top-git-url">
           % if ($display eq 'page' || $display eq 'list-pages') {
@@ -338,25 +357,29 @@
                   History
                 </a>
               </li>
-              <li>
-                <a href="<%= url_for("/$user_id/$project_id/wiki/$title/_edit") %>">
-                  <button class="btn btn-new">Edit</button>
-                </a>
-              </li>
+              % if ($canadmin) {
+                <li>
+                  <a href="<%= url_for("/$user_id/$project_id/wiki/$title/_edit")->query($query) %>">
+                    <button class="btn btn-new">Edit</button>
+                  </a>
+                </li>
+              % }
             % }
-            % if ($display eq 'edit') {
-              <li>
-                <a id="wiki-btn-delete-page" href="javascript:void(0)">
-                  <button class="btn btn-delete">Delete page</button>
-                </a>
-              </li>
-            % }
-            % if ($display ne 'new' && $display ne 'init' && $display ne 'edit') {
-              <li>
-                <a href="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
-                  <button class="btn btn-green btn-new">Create page</button>
-                </a>
-              </li>
+            % if ($canadmin) {
+              % if ($display eq 'edit') {
+                <li>
+                  <a id="wiki-btn-delete-page" href="javascript:void(0)">
+                    <button class="btn btn-delete">Delete page</button>
+                  </a>
+                </li>
+              % }
+              % if ($display ne 'new' && $display ne 'init' && $display ne 'edit') {
+                <li>
+                  <a href="<%= url_for("/$user_id/$project_id/wiki/_new")->query($query) %>">
+                    <button class="btn btn-green btn-new">Create page</button>
+                  </a>
+                </li>
+              % }
             % }
           </ul>
         </div>
@@ -366,7 +389,7 @@
         % if ($display eq 'init') {
           <h1 class="topic1">Wiki</h1>
           <div>
-            <a href="<%= url_for("/$user_id/$project_id/wiki/_new") %>">
+            <a href="<%= url_for("/$user_id/$project_id/wiki/_new")->query($query) %>">
               <button class="btn btn-green btn-new">Create page</button>
             </a>
           </div>
@@ -432,8 +455,13 @@
                   %= text_field 'commit-message';
                 </div>
               </label>
-              <div class="wiki-edit-form-create-page-btn">
-                <%= submit_button $submit_button_title, class => 'btn btn-green btn-new' %>
+              <div>
+                <span class="wiki-edit-form-cancel-btn">
+                  <button class="btn btn-cancel" type="button" onclick="location.href='<%= url_for("/$user_id/$project_id/wiki/$p") %>'">Cancel</button>
+                </span>
+                <span class="wiki-edit-form-create-page-btn">
+                  <%= submit_button $submit_button_title, class => 'btn btn-green btn-new' %>
+                </span>
               </div>
             </form>
           </div>
@@ -449,9 +477,9 @@
               <div class="wiki-footer">
                 <%== $content_footer_md %>
               </div>
-            % } elsif ($title ne '_Sidebar' && $title ne '_Footer') {
+            % } elsif ($canadmin && $title ne '_Sidebar' && $title ne '_Footer') {
               <div class="wiki-add-footer">
-                <a href="<%= url_for("/$user_id/$project_id/wiki/_Footer") %>">+ Add footer</a>
+                <a href="<%= url_for("/$user_id/$project_id/wiki/_Footer")->query($query) %>">+ Add footer</a>
               </div>
             % }
           </div>
@@ -460,9 +488,9 @@
               <div class="wiki-side-bar">
                 <%== $content_sidebar_md %>
               </div>
-            % } elsif ($title ne '_Sidebar' && $title ne '_Footer') {
+            % } elsif ($canadmin && $title ne '_Sidebar' && $title ne '_Footer') {
               <div class="wiki-add-side-bar">
-                <a href="<%= url_for("/$user_id/$project_id/wiki/_Sidebar") %>">+ Add side bar</a>
+                <a href="<%= url_for("/$user_id/$project_id/wiki/_Sidebar")->query($query) %>">+ Add side bar</a>
               </div>
             % }
           </div>

@@ -2284,7 +2284,7 @@ button.close {
   -webkit-appearance: none;
 }
 
-.btn-fork, .btn-new, .btn-delete, .btn-watch {
+.btn-fork, .btn-new, .btn-delete, .btn-watch, btn-cancel {
   font-size:13px;
   padding:5px 20px;
   height:28px;
