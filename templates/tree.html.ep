@@ -103,7 +103,7 @@
             % my $commits_url = "/$user_id/$project_id/commits/" . ((defined $rev && length $rev) ? $rev : $default_branch_name);
             <a href="<%= url_for($commits_url) %>">
               %= $api->icon('history');
-              <%= $api->plural('commit', $commits_number, 'no') %>
+              <%= $api->plural('Commit', $commits_number, 'no') %>
             </a>
           </li>
           <li>
