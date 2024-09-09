@@ -86,15 +86,20 @@
             </div>
           % }
           % unless ($is_wiki) {
-            % if (@$branches || @$tags) {
+            % if (@$branches) {
               <div>
+                %= $api->icon('git-branch');
                 % for my $branch (@$branches) {
-                  <i class="icon-share-alt" style="padding-right:1px"></i><a href="<%= url_for("$user_project_path/tree/$branch") %>"><%= $branch %></a>
+                  <a href="<%= url_for("$user_project_path/tree/$branch") %>"><%= $branch %></a>
                 % }
-                
+              </div>
+            % }
+            % if (@$tags) {
+              <div>
+                %= $api->icon('tag');
                 % for my $tag (@$tags) {
                   <span style="padding-left:5px">
-                    <i class="icon-tag" style="padding-right:2px"></i><a href="<%= url_for("$user_project_path/tree/$tag") %>"><%= $tag %></a>
+                    <a href="<%= url_for("$user_project_path/tree/$tag") %>"><%= $tag %></a>
                   </span>
                 % }
               </div>

@@ -10,6 +10,8 @@
   my $is = param('is') // 'open';
 
   my $pulls = stash('pulls') // 0;
+  my $icon_opened = 'issue-opened';
+  my $icon_closed = 'issue-closed';
   my $open = $is eq 'closed' ? 0 : 1;
 
   my $page_rows = 25;
@@ -27,6 +29,8 @@
   # Filtering.
   if ($pulls) {
     push(@$issue_where_clause, ':pull_request{<>}');
+    $icon_opened = 'git-pull-request';
+    $icon_closed = 'git-pull-request-closed';
   } else {
     push(@$issue_where_clause, ':pull_request{=}');
   }
@@ -101,8 +105,11 @@
         <div class="issues-button-container-left">
           <div class="issues-labels">
             <a href="<%= url_for("/$user_id/$project_id/labels") %>">
-              Labels
-              <span class="header-issue-count"><%= $labels_count %></span>
+             %= $api->icon('tag');
+             Labels
+             <span class="count-label">
+               <%= $labels_count %>
+             </span>
             </a>
           </div>
         </div>
@@ -119,15 +126,18 @@
     % }
     <div class="issues">
       <div class="issues-header">
-        % if ($open) {
-          <b><%= $open_count %> Open</b>
-          <a href="<%= url_for->query([is => 'closed']) %>" style="margin-left:5px;color:#767676"><%= "\x{2714}" %><%= $close_count %> Closed</a>
-        % } else {
-          <a  style="margin-left:5px;color:#767676" href="<%= url_for->query([is => 'open']) %>"><%= $open_count %> Open</a>
+        <a  style="margin-left:5px;color:#767676" href="<%= url_for->query([is => 'open']) %>">
           <b>
-            <span style="margin-left:5px;color:#767676"><%= "\x{2714}" %><%= $close_count %> Closed</span>
+            %= $api->icon($icon_opened);
+            <%= $open_count %>
+            Open
           </b>
-        % }
+        </a>
+        <a href="<%= url_for->query([is => 'closed']) %>" style="margin-left:5px;color:#767676">
+          %= $api->icon('check');
+          <%= $close_count %>
+          Closed
+        </a>
       </div>
       <div class="issues-body">
         % if (@$issues) {
@@ -147,32 +157,34 @@
               %>
 
               <li>
+                <div class="nostretch">
+                  %= $api->icon($issue->{open}? $icon_opened: $icon_closed);
+                </div>
                 <div>
-                  <div style="padding: 8px 0px;">
-                    <div class="issues-title">
-                      <a href="<%= url_for("/$user_id/$project_id/$kind/$issue->{number}") %>">
-                        <b><%= $issue->{title} %></b>
-                      </a>
-                      <ul class="issues-label-pallet">
-                        % for my $issue_label (@$issue_labels) {
-                          <li style="background:<%= $issue_label->{'label.color'} %>">
-                            <%= $issue_label->{'label.id'} %>
-                          </li>
-                        % }
-                      </ul>
-                    </div>
-                    <div class="issues-description">
-                      #<%= $issue->{number} %> <%= $issue->{open} ? 'opened' : 'closed' %>
-                      %= $api->age_element($issue->{open_time});
-                      by <%= $issue->{'open_user.id'} %>
-                    </div>
-                 </div>
-               </div>
-               <div class="nostretch">
-                 % if ($message_count > 1) {
-                   <span title="<%= $message_count - 1 %> messages"><%= $message_count - 1 %></span>
-                 % }
-               </div>
+                  <div class="issues-title">
+                    <a href="<%= url_for("/$user_id/$project_id/$kind/$issue->{number}") %>">
+                      <b><%= $issue->{title} %></b>
+                    </a>
+                    <ul class="issues-label-pallet">
+                      % for my $issue_label (@$issue_labels) {
+                        <li style="background:<%= $issue_label->{'label.color'} %>">
+                          <%= $issue_label->{'label.id'} %>
+                        </li>
+                      % }
+                    </ul>
+                  </div>
+                  <div class="issues-description">
+                    #<%= $issue->{number} %> <%= $issue->{open} ? 'opened' : 'closed' %>
+                    %= $api->age_element($issue->{open_time});
+                    by <%= $issue->{'open_user.id'} %>
+                  </div>
+                </div>
+                <div class="nostretch">
+                  % if ($message_count > 1) {
+                    %= $api->icon('comment');
+                    <%= $message_count - 1 %>
+                  % }
+                </div>
               </li>
             % }
           </ul>

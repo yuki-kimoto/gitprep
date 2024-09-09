@@ -102,35 +102,20 @@
           <li>
             % my $commits_url = "/$user_id/$project_id/commits/" . ((defined $rev && length $rev) ? $rev : $default_branch_name);
             <a href="<%= url_for($commits_url) %>">
-              <span class="commits-count-number">
-                <i class="icon-repeat" style="position:relative;top:-1px"></i>
-                <%= $commits_number %>
-              </span>
-              <span class="commits-count-type">
-                commits
-              </span>
+              %= $api->icon('history');
+              <%= $api->plural('commit', $commits_number, 'no') %>
             </a>
           </li>
           <li>
             <a href="<%= url_for("/$user_id/$project_id/branches") %>">
-              <span class="commits-count-number">
-                <i class="icon-indent-left" style="position:relative;top:-1px"></i>
-                <%= $branches_count %>
-              </span>
-              <span class="commits-count-type">
-                branches
-              </span>
+              %= $api->icon('git-branch');
+              <%= $api->plural('branch', $branches_count, 'no') %>
             </a>
           </li>
           <li>
             <a href="<%= url_for("/$user_id/$project_id/tags") %>">
-              <span class="commits-count-number">
-                <i class="icon-tags" style="position:relative;top:-1px"></i>
-                <%= $tags_count %>
-              </span>
-              <span class="commits-count-type">
-                releases
-              </span>
+              %= $api->icon('tag');
+              <%= $api->plural('release', $tags_count, 'no') %>
             </a>
           </li>
         </ul>
@@ -140,11 +125,11 @@
         % my $display = defined $dir && length $dir ? 'tree' : 'tree_top';
         %= include '/include/branch_select', display => $display, Path => $dir, ssh_rep_url => $ssh_rep_url;
       </div>
-      
+
       <div style="margin-bottom:30px">
         %= include '/include/tree', dir => $dir;
       </div>
-      
+
       %= include '/include/readme', dir => $dir;
       
     % } elsif ($state eq 'init' && $api->logined($user_id)) {

@@ -83,7 +83,7 @@
     </div>
           
     <div class="commit-contributor">
-      <%= @$authors %> contributor
+      <%= $api->plural('contributor', scalar(@$authors), 'no') %>
     </div>
 
     <div>
@@ -106,7 +106,10 @@
               </li>
             % }
             <li>
-              <a class="btn btn-small" href="<%= url_for("$user_id_project_path/commits/$rev/$file") %>">History</a>
+              <a class="btn btn-small" href="<%= url_for("$user_id_project_path/commits/$rev/$file") %>">
+                %= $api->icon('history');
+                History
+              </a>
             </li>
           </ul>
         </div>

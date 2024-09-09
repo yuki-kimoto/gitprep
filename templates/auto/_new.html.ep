@@ -121,7 +121,8 @@
           </tr>
           <tr>
             <td>
-              <i class="icon-user"></i><%= $session_user->{id} %>
+              %= $api->icon('person');
+              <%= $session_user->{id} %>
             </td>
             <td style="padding:0 10px">
               /

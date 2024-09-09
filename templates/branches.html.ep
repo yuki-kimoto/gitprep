@@ -186,7 +186,7 @@
                         </div>
                       </div>
                     % } else {
-                      <table class="ahead-behind">
+                      <table class="ahead-behind" title="Ahead behind count: <%= $branch->{status}{behind} + $branch->{status}{ahead} %>">
                         <tr>
                           <td class="ahead-behind-behind-count">
                             <%= $branch->{status}{behind} %>
@@ -221,10 +221,12 @@
                           #<%= $issue->{number} %>
                           % if ($issue->{open}) {
                             <a class="branches-open" href="<%= url_for("/$user/$project/pull/$issue->{number}") %>">
+                              %= $api->icon('git-pull-request');
                               open
                             </a>
                           % } else {
                             <a class="branches-close" href="<%= url_for("/$user/$project/pull/$issue->{number}") %>">
+                              %= $api->icon('git-pull-request-closed');
                               closed
                             </a>
                           % }
@@ -257,16 +259,23 @@
                         % }
                       % } else {
                         <a class="btn btn-small" href="<%= url_for("/$user_id/$project_id/compare/$branch_name")->query(expand => 1) %>">
+                          %= $api->icon('git-compare');
                           Compare
                         </a>
                       % }
                       % if ($api->logined($user_id)) {
                         % if ($pull_request && $issue->{open}) {
-                          <button class="btn btn-small disabled delete-branch"value="Delete">Delete</button>
+                          <button class="btn btn-small disabled delete-branch">
+                            %= $api->icon('x-circle');
+                            Delete
+                          </button>
                         % } else {
                           <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
-                            <input type="submit" class="btn btn-small delete-branch" style="color:#900;" value="Delete" />
                             %= hidden_field branch => $branch_name;
+                            <span class="btn btn-small delete-branch" onclick="$(this).closest('form').trigger('submit');" style="color:#900;fill:#900;">
+                              %= $api->icon('x-circle');
+                              Delete
+                           <span>
                           </form>
                         % }
                       % }

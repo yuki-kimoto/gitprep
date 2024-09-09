@@ -39,6 +39,7 @@
           <li>
             <ul class="tags-item">
               <li>
+                %= $api->icon('clock');
                 %= $api->age_element($tag->{commit}{committer_epoch});
               </li>
               <li class="last-child">
@@ -53,16 +54,16 @@
                 <div class="tags-links">
                   % my $commit_id = $tag->{commit}{id};
                   <a class="muted" href="<%= url_for("/$user/$project/commit/$commit_id") %>">
-                    <i class="icon-share-alt"></i>
+                    %= $api->icon('git-commit');
                     <%= substr($commit_id, 0, 7) %>
                   </a>
                   <a href="<%= url_for("/$user/$project/archive/$name.zip") %>">
-                    <i class="icon-file"></i>
+                    %= $api->icon('file-zip');
                     zip
                   </a>
                   <a href="<%= url_for("/$user/$project/archive/$name.tar.gz") %>">
-                    <i class="icon-file"></i>
-                    tar.gz
+                    %= $api->icon('file-zip');
+                   tar.gz
                   </a>
                 </div>
               </li>

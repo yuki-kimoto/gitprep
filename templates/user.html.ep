@@ -49,7 +49,7 @@
                     <%= $rep->{id} %>
                   </a>
                   % if ($rep->{private}) {
-                    <i class="icon icon-lock"></i>
+                    %= $api->icon('lock');
                   % }
                 </div>
                 <div class="repositories-description">
@@ -81,8 +81,13 @@
           % }
         </div>
         <div class="repositories-user-id"><%= $user->{id} %></div>
-        % if (app->config->{show_emails}) {
-        <div class="repositories-user-mail"><i class="icon icon-envelope"></i> <a href="mailto:<%= $user->{email} %>"><%= $user->{email} %></a></div>
+        % if (app->config->{basic}{show_emails}) {
+        <div class="repositories-user-mail">
+          <a href="mailto:<%= $user->{email} %>">
+            %= $api->icon('mail');
+            <%= $user->{email} %>
+          </a>
+         </div>
         % }
       </div>
     </div>

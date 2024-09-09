@@ -77,8 +77,8 @@
     </div>
     <div class="file-header">
       <div class="file-header-left">
-        <i class="icon-file icon-white"></i>
-        <%= @$blame_lines %> lines
+        %= $api->icon('file');
+        <%= $api->plural('line', scalar @$blame_lines, 'no') %>
         <span style="color:#dcdcdc">|</span>
         <%= $file_size %>kb
       </div>

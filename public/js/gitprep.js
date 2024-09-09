@@ -18,25 +18,27 @@
   // Split unnumbered list of commits into several lists, one for each day
   // with a day header prepended, taking the browser timezone into account.
   // Each list item holds its Unix timestamp in a "ts" attribute.
-  Gitprep.commitsByDay = function (ul) {
-    var container = $(ul);
-    var lastDay;
-    var dayUl;
+  Gitprep.commitsByDay = function (block) {
+    $(block).each(function () {
+      var container = $(this);
+      var dateHeader = $('.commit-date', container).get(0);
+      var lastDay;
+      var dayUl;
 
-    $('li[ts]', container).each(function () {
-      var day = dayFmt.format(new Date($(this).attr('ts') * 1000));
-      if (day != lastDay) {
-        var dayHeader = $('<div class="commit-date"><i class="icon-off"></i></div>');
-        var dayLabel = $('<span></span>');
-        dayLabel.text('Commits on ' + day);
-        dayHeader.append(dayLabel);
-        container.before(dayHeader);
-        dayUl = $(container.get(0).cloneNode(false));
-        container.before(dayUl);
-        lastDay = day;
-      }
-      dayUl.append($(this));
+      $('ul > li[ts]', container).each(function () {
+        var day = dayFmt.format(new Date($(this).attr('ts') * 1000));
+        if (day != lastDay) {
+          var dayHeader = $(dateHeader.cloneNode(true));
+          var dayLabel = $('.date-text', dayHeader);
+          dayLabel.text('Commits on ' + day);
+          dayUl = $($(this).parent().get(0).cloneNode(false));
+          container.before(dayHeader);
+          container.before(dayUl);
+          lastDay = day;
+        }
+        dayUl.append($(this));
+      });
+      container.remove();
     });
-    container.remove();
   };
 }(window.Gitprep = window.Gitprep || {}, jQuery));

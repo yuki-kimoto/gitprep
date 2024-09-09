@@ -35,7 +35,8 @@
 % if (defined $readme_e) {
   <div class="readme">
     <div class="readme-header">
-      <i class="icon-book"></i> <%= $type eq 'plain' ? 'README' : 'README.md' %>
+      %= $api->icon('book');
+      <%= $type eq 'plain'? 'README': 'README.md' %>
     </div>
     <div class="readme-frame">
       % if ($type eq 'plain') {

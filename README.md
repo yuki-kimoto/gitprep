@@ -751,7 +751,9 @@ Thanks for helping my GitPrep project.
 
 ## Copyright & license
 
-Copyright 2012-2016 Yuki Kimoto. All rights reserved.
+Copyright 2012-2024 Yuki Kimoto. All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
+
+Bundled vectorial icons (octicons) are covered by the MIT license.
