@@ -109,7 +109,7 @@
           <li>
             <a href="<%= url_for("/$user_id/$project_id/branches") %>">
               %= $api->icon('git-branch');
-              <%= $api->plural('branch', $branches_count, 'no') %>
+              <%= $api->plural('Branch', $branches_count, 'no') %>
             </a>
           </li>
           <li>
