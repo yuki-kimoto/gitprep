@@ -372,6 +372,7 @@ a.wiki-btn-history:hover {
   color:#112;
   margin-bottom:7px;
   padding-left:6px;
+  font-weight:normal;
 }
 .tree-description a {
   font-size:18px;
