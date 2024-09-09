@@ -2362,12 +2362,11 @@ a:hover .btn-delete {
 }
 
 .readme-header {
-  background-color: #f5f5f5;
   border-radius: 3px 3px 0 0;
   border: 1px solid #e6e9e6;
   border-bottom: 0;
   padding: 9px 10px 10px;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 17px;
   font-weight:bold;
 }
