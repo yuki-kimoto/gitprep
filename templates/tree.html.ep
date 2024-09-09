@@ -115,7 +115,7 @@
           <li>
             <a href="<%= url_for("/$user_id/$project_id/tags") %>">
               %= $api->icon('tag');
-              <%= $api->plural('release', $tags_count, 'no') %>
+              <%= $api->plural('Tag', $tags_count, 'no') %>
             </a>
           </li>
         </ul>
