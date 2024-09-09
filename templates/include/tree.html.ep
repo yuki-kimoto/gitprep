@@ -25,7 +25,6 @@
       </a>
     </div>
     <div class="commit-summary-right-container">
-      Latest commit
       <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
         <%= substr($commit->{id}, 0, 7) %>
       </a>
