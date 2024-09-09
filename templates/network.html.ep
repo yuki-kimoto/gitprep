@@ -106,7 +106,10 @@
               %= select_field 'remote-branch' => $member_branches, style => 'margin-top:5px;margin-bottom:7px;width:150px';
             </div>
             <div class="last-child">
-              <button name="compare-btn" class="btn" style="margin-top:5px">Compare</button>
+              <button name="compare-btn" class="btn" style="margin-top:5px">
+                %= $api->icon('git-compare');
+                Compare
+              </button>
             </div>
           </li>
         % }

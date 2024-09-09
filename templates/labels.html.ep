@@ -217,23 +217,31 @@
     </div>
   </form>
   <ul class="labels">
-    <li><%= @$labels %> labels</li>
+    <li>
+      <%= $api->plural('label', scalar(@$labels), 'no'); %>
+    </li>
     % for my $label (@$labels) {
       <li row-id="<%= $label->{row_id} %>">
         <div class="labels-display-area">
           <div class="labels-left">
             <div class="labels-tag" style="background:<%= $label->{color} %>;">
-              <i class="icon icon-tag"></i>
+              %= $api->icon('tag');
               <span class="labels-label-id"><%= $label->{id} %></span>
             </div>
           </div>
           <div class="labels-right">
             % if ($can_write_access) {
               <div class="labels-edit">
-                <a href="javascript:void(0)"><i class="icon icon-edit"></i> Edit</a>
+                <a href="javascript:void(0)">
+                  %= $api->icon('pencil');
+                  Edit
+                </a>
               </div>
               <div class="labels-delete">
-                <a href="javascript:void(0)"><i class="icon icon-remove"></i> Delete</a>
+                <a href="javascript:void(0)">
+                  %= $api->icon('x');
+                  Delete
+                </a>
               </div>
             % }
           </div>

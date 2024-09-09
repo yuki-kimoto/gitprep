@@ -26,13 +26,17 @@
           <div class="issue-message-owner-label">Owner</div>
         % }
         % if ($can_modify) {
-          <a href="javascript:void(0)" class="issue-message-edit-btn"><i class="icon icon-pencil" style="margin-right:6px"></i></a>
+          <a href="javascript:void(0)" class="issue-message-edit-btn">
+            <span style="margin-right:6px">
+              %= $api->icon('pencil');
+            </span>
+          </a>
         % }
         % if ($issue_message->{number} != 1) {
           % if ($can_modify) {
-            <div class="icon-remove">
-              <a href="javascript:void(0)" class="issue-message-delete-btn"><i class="icon icon-remove"></i></a>
-            </div>
+            <a href="javascript:void(0)" class="issue-message-delete-btn">
+              %= $api->icon('x');
+            </a>
           % }
         % }
       </div>

@@ -662,21 +662,68 @@ sub mentioned {
   return @result;
 }
 
-sub DOMelement {
+sub DOM_element {
   my $self = shift;
-  my $dom = Mojo::DOM->new_tag(@_);
-  return $dom->child_nodes->first;
+  my $tag = shift;
+
+  my $child;
+  $child = pop if @_ % 2 && 'Mojo::DOM' eq ref $_[-1];
+  my $element = Mojo::DOM->new_tag($tag, @_);
+  $element = $element->child_nodes->first;
+  $element->append_content($child) if $child;
+  return $element;
 }
 
-sub DOMtext {
+sub DOM_text {
   my ($self, $text) = @_;
 
   # Helper to get an orphan DOM text node.
-  my $span = $self->DOMelement('span', $text);
+  my $span = $self->DOM_element('span', $text);
   return $span->child_nodes->first;
 }
 
-sub DOMrender {
+sub DOM_add_class {
+  my $self = shift;
+  my $dom = shift;
+
+  return unless $dom;
+
+  my $attrs = $dom->attr;
+  my @classes;
+  unshift @_, ($attrs->{class} || '');
+  push @classes, split /\s+/, $_ for (@_);
+  my %unique = map {$_ => 1} @classes;
+  delete $unique{''};
+  $attrs->{class} = join ' ', keys %unique;
+}
+
+sub DOM_set_class {
+  my $self = shift;
+  my $dom = $_[0];
+
+  return unless $dom;
+  my $attrs = $dom->attr;
+  delete $attrs->{class};
+  $self->DOM_add_class(@_);
+}
+
+sub DOM_remove_class {
+  my $self = shift;
+  my $dom = shift;
+
+  return unless $dom;
+
+  my $attrs = $dom->attr;
+  my @classes = split /\s+/, ($attrs->{class} || '');
+  my %unique = (@classes => @classes);
+  for (@_) {
+    delete $unique{$_} for (split /\s+/, $_);
+  }
+  delete $unique{''};
+  $attrs->{class} = join ' ', keys %unique;
+}
+
+sub DOM_render {
   my ($self, $dom) = @_;
   return Mojo::ByteStream->new($dom);
 }
@@ -748,7 +795,7 @@ sub time_tooltip_element {
   }
 
   my $tag = delete $attrs{tag};
-  return $self->DOMelement($tag, %attrs);
+  return $self->DOM_element($tag, %attrs);
 }
 
 sub age_element {
@@ -756,8 +803,80 @@ sub age_element {
   my $unixtime = shift;
   my $age = $unixtime? $self->age_string($unixtime): 'sometime';
   my $element = $self->time_tooltip_element($unixtime, @_);
-  $element->content($self->DOMtext($age));
-  return $self->DOMrender($element);
+  $element->content($self->DOM_text($age));
+  return $self->DOM_render($element);
+}
+
+sub load_svg {
+  my $self = shift;
+  my $name = shift;
+  my %args = (@_);
+
+  open my $fh, '<', $self->app->home . "/$name" or return undef;
+  read $fh, my $markup, -s $fh;
+  close $fh;
+  my $dom = Mojo::DOM->new($markup);
+  return undef unless $dom && scalar(@{$dom->child_nodes}) == 1;
+  my $svg = $dom->child_nodes->first;
+  return undef unless $svg->tag eq 'svg';
+  my $attrs = $svg->attr;
+  delete $attrs->{xmlns};
+  my ($x, $y, $width, $height) = (0, 0, $attrs->{width}, $attrs->{height});
+  my $viewbox = $attrs->{viewBox} || $attrs->{viewbox};
+  unless ($viewbox) {
+    $viewbox = "$x $y $width $height" if $width && $height;
+  }
+  $attrs->{viewBox} = $viewbox if $width && $height;
+  delete $attrs->{viewbox};
+  $width = delete $args{width} if $args{width};
+  $height = delete $args{height} if $args{height};
+  $attrs->{width} = $width if $width;
+  $attrs->{height} = $height if $height;
+  my $class = delete $args{class};
+  my $title = delete $args{title};
+  my $style = delete $args{style};
+  $attrs->{$_} = $args{$_} for (keys %args);
+  $self->DOM_add_class($svg, $class) if defined $class;
+  $svg = $self->DOM_element('span', title => $title, style => $style, $svg) if $title || $style;
+  return $svg;
+}
+
+sub load_icon {
+  my $self = shift;
+  my $name = shift;
+
+  my $icon = $self->load_svg("svg/$name", @_) ||
+    $self->load_svg("svg/$name.svg", @_);
+  $icon = $self->load_svg("svg/octicons/$name-16.svg", @_) ||
+    $self->load_svg("svg/octicons/name-24.svg", @_) unless $icon;
+  $self->DOM_add_class($icon, "icon icon-$name") if $icon;
+  return $icon;
+}
+
+sub icon {
+  my $self = shift;
+
+  return $self->DOM_render($self->load_icon(@_));
+}
+
+sub plural {
+  my ($self, $word, $count, $prepend, $plural) = @_;
+
+  return $word unless defined $count;
+  my $prefix = '';
+  if (defined $prepend) {
+    $prefix = $prepend;
+    $prefix = $count if $count || !$prepend;
+    return $prefix unless $word;
+    $prefix .= ' ';
+  }
+  return $word unless $word;
+  return "$prefix$word" unless $count != 1;
+  return "$prefix$plural" if $plural;
+  $word =~ s/[ei]s$/es/ && return "$prefix$word";
+  $word =~ s/(o|s|x|z|ch|sh)$/$1es/ && return "$prefix$word";
+  $word =~ s/([^aeiouy])y$/$1ies/ && return "$prefix$word";
+  return "$prefix${word}s";
 }
 
 sub subscribe {

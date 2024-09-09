@@ -28,6 +28,7 @@
   my $pre_content_http;
   my $pre_content_ssh;
   my %commit_body_args;
+  my $last_commit_date = 0;
   my $total = {
     add_line_count => 0,
     delete_line_count => 0,
@@ -35,6 +36,8 @@
     delete_block_count => 0
   };
   my $title = '- Issue';
+  my $icon_opened = 'issue-opened';
+  my $icon_closed = 'issue-closed';
 
   # Issue
   my $issue = app->dbi->model('issue')->select(
@@ -255,6 +258,8 @@
 
   # Pull requests
   if ($issue->{pull_request}) {
+    $icon_opened = 'git-pull-request';
+    $icon_closed = 'git-pull-request-closed';
     $activetab = param('activetab') // '';
     $pull_request = app->dbi->model('pull_request')->select(
       where => {row_id => $issue->{pull_request}}
@@ -388,6 +393,7 @@
     for my $commit (@$commits) {
       $authors->{$commit->{author}} = $commit;
     }
+    $last_commit_date = $commits->[0]->{committer_epoch} if @$commits;
 
     # Start commit
     my $start_commit_id = app->git->ref_to_object_id($base_rep_info,
@@ -483,11 +489,13 @@
 
     # Pull header bar tabs.
     $tabs = [
-      {label => 'Conversation', tab => '', count => @$issue_messages - 1},
-      {label => 'Commits', tab => 'commits', count => scalar @$commits},
-      {label => 'Files changed', tab => 'files',
+      {label => 'Conversation', tab => '', icon => 'comment-discussion',
+       count => @$issue_messages - 1},
+      {label => 'Commits', tab => 'commits', icon => 'git-commit',
+       count => scalar @$commits},
+      {label => 'Files changed', tab => 'files', icon => 'file-diff',
         count => scalar @{$diff_trees}},
-      {label => 'Contributors', tab => 'contributors',
+      {label => 'Contributors', tab => 'contributors', icon => 'organization',
         count => scalar(keys %$authors)}
     ];
 
@@ -564,9 +572,15 @@
       </div>
       <div>
         % if ($issue->{open}) {
-          <div class="issue-open">Open</div>
+          <div class="issue-open">
+            %= $api->icon($icon_opened);
+            Open
+          </div>
         % } else {
-          <div class="issue-close">Close</div>
+          <div class="issue-close">
+            %= $api->icon($icon_closed);
+            Closed
+          </div>
         % }
         % my $open_user_id = $issue->{'open_user.id'};
         <a style="color:#333333;font-weight:bold" href="<%= url_for("/$open_user_id") %>"><%= $open_user_id %></a>
@@ -598,7 +612,15 @@
           % my $class = $activetab eq $tab->{tab}? 'active': '';
           % my $taburl = "/$base_user_id/$base_project_id/pull/$issue_number";
           % $taburl .= '/' . $tab->{tab} if $tab->{tab};
-          <li class="<%= $class %>"><a href=" <%= url_for($taburl) %>"><%= $tab->{label} %><span class="count"><%= $tab->{count} %></a></li>
+          <li class="<%= $class %>">
+            <a href=" <%= url_for($taburl) %>">
+              %= $api->icon($tab->{icon});
+              <%= $tab->{label} %>
+              <span class="count-label">
+                <%= $tab->{count} %>
+              </span>
+            </a>
+          </li>
         % }
         <li class="padding"></li>
         <li class="status">
@@ -616,40 +638,48 @@
       % if ($activetab eq 'commits') {
 
         <div class="commits">
-          <ul class="compare-commits-date-container">
-            % for my $commit (@$commits) {
-              <%
-                my $commit_author_email = $commit->{author_email};
-                my $commit_author_id = app->dbi->model('user')->select(
-                  'id',
-                  where => {email => $commit_author_email}
-                )->value;
-              %>
-              <li ts="<%= $commit->{committer_epoch} %>">
-                <div class="compare-commits-author">
-                  <span title="<%= $commit->{author_email} %>">
-                    % if (defined $commit_author_id) {
-                      <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
-                    % } else {
-                      <%= $commit->{author_name} %>
-                    % }
-                  </span>
-                </div>
-                <div class="compare-commits-commit-title">
-                  <a style="color:#333" href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
-                    <%= $commit->{title_short} %>
-                  </a>
-                </div>
-                <div class="compare-commits-commit-id">
-                  <a href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
-                    <%= substr($commit->{id}, 0, 7) %>
-                  </a>
-                </div>
-              </li>
-            % }
-          </ul>
+          <div class="compare-commits-container">
+            <div class="commit-date">
+              %= $api->icon('git-commit', style => 'margin-right: 8px');
+              <span class="date-text">
+                Commits not after <%= $api->strftime($last_commit_date, '%F') %>
+              </span>
+            </div>
+            <ul class="compare-commits-date-container">
+              % for my $commit (@$commits) {
+                <%
+                  my $commit_author_email = $commit->{author_email};
+                  my $commit_author_id = app->dbi->model('user')->select(
+                    'id',
+                    where => {email => $commit_author_email}
+                  )->value;
+                %>
+                <li ts="<%= $commit->{committer_epoch} %>">
+                  <div class="compare-commits-author">
+                    <span title="<%= $commit->{author_email} %>">
+                      % if (defined $commit_author_id) {
+                        <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+                      % } else {
+                        <%= $commit->{author_name} %>
+                      % }
+                    </span>
+                  </div>
+                  <div class="compare-commits-commit-title">
+                    <a style="color:#333" href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
+                      <%= $commit->{title_short} %>
+                    </a>
+                  </div>
+                  <div class="compare-commits-commit-id">
+                    <a href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
+                      <%= substr($commit->{id}, 0, 7) %>
+                    </a>
+                  </div>
+                </li>
+              % }
+            </ul>
+          </div>
           %= javascript begin
-            Gitprep.commitsByDay($('.compare-commits-date-container'));
+            Gitprep.commitsByDay($('.compare-commits-container'));
           % end
         </div>
 
@@ -695,7 +725,13 @@
                 <div style="overflow:hidden">
                   %if ($merge_success) {
                     <div style="float:left;padding:10px;padding-right:0">
-                      <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#95c97e;color:white;padding-top:5px;font-size:140%;"><%= "\x{2714}" %></div>
+                      <%=
+                        $api->icon('check-circle-fill',
+                          width => 30,
+                          height => 30,
+                          style => 'fill: #95c97e; width: 30px; height: 30px;'
+                        );
+                      %>
                     </div>
                     <div style="float:left">
                       <div class="pull-request-form-title">
@@ -713,7 +749,12 @@
                     </div>
                   % } else {
                     <div style="float:left;padding:10px;padding-right:0">
-                      <div style="width:30px;height:30px;text-align:center;border-radius:15px;background:#6e7781;color:white;padding-top:5px;font-size:140%;"><%= "\x{26a0}" %></div>
+                      <%=
+                        $api->icon('alert',
+                          width => 20,
+                          height => 20,
+                          style => 'display: inline-block; background : #6e7781; fill: white; border-radius: 50%; width: 30px; height: 30px; line-height: 40px; text-align: center');
+                      %>
                     </div>
                     <div style="float:left">
                       <div class="pull-request-form-title">
@@ -842,11 +883,14 @@ git push origin <%= $base_branch %>
             <div class="issue-labels">
               <div class="issue-labels-title-area">
                 <div class="issue-labels-title">
+                  %= $api->icon('tag');
                   labels
                 </div>
                 %if ($canadmin) {
                   <div class="issue-labels-setting-btn">
-                    <a href="javascript:void(0)"><i class="icon icon-cog"></i></a>
+                    <a href="javascript:void(0)">
+                      %= $api->icon('gear');
+                    </a>
                   </div>
                 % }
               </div>
@@ -857,14 +901,20 @@ git push origin <%= $base_branch %>
                       Apply labels to this issue
                     </div>
                     <div class="issue-labels-popup-close-btn">
-                      <a href="javascript:void(0)"><i class="icon icon-remove"></i></a>
+                      <a href="javascript:void(0)">
+                        %= $api->icon('x');
+                      </a>
                     </div>
                   </div>
                   <ul class="issue-labels-popup-body">
                     % for my $label (@$labels) {
                       % my $checked = app->dbi->model('issue_label')->select(where => {issue => $issue->{row_id}, label => $label->{row_id}})->one;
                       <li popup-label-row-id="<%= $label->{row_id} %>">
-                        <div class="issue-labels-popup-check"><i class="icon icon-ok" style="display:<%= $checked ? 'block' : 'none' %>"></i></div>
+                        <div class="issue-labels-popup-check">
+                          <i style="display:<%= $checked? 'block': 'none' %>">
+                            %= $api->icon('check');
+                          </i>
+                        </div>
                         <div class="issue-labels-popup-pallet" style="background:<%= $label->{color} %>"></div>
                         <div class="issue-labels-popup-pallet-id"><%= $label->{id} %></div>
                       </li>

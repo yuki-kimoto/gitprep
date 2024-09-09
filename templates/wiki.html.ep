@@ -298,33 +298,25 @@
       <ul class="wiki-count">
         <li>
           <a href="<%= url_for("/$user_id/$project_id/wiki") %>">
-            <span class="wiki-count-number">
-              <i class="icon-home" style="position:relative;top:-1px"></i>
-            </span>
-            <span class="wiki-count-type">
-              Home
-            </span>
+            %= $api->icon('home');
+            Home
           </a>
         </li>
         <li>
           <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">
-            <span class="wiki-count-number">
-              <i class="icon-leaf" style="position:relative;top:-1px"></i>
+            %= $api->icon('note');
+            Pages
+            <span class="count-label">
               <%= $pages_count %>
-            </span>
-            <span class="wiki-count-type">
-              pages
             </span>
           </a>
         </li>
         <li>
           <a href="<%= url_for("/$user_id/$project_id/wiki/commits/master") %>">
-            <span class="wiki-count-number">
-              <i class="icon-repeat" style="position:relative;top:-1px"></i>
+            %= $api->icon('git-commit');
+            Commits
+            <span class="count-label">
               <%= $commits_number %>
-            </span>
-            <span class="wiki-count-type">
-              commits
             </span>
           </a>
         </li>
@@ -354,13 +346,17 @@
             % if ($display eq 'page') {
               <li>
                 <a class="wiki-btn-history" href="<%= url_for("/$user_id/$project_id/wiki/commits/master/$title.md") %>" >
+                  %= $api->icon('history');
                   History
                 </a>
               </li>
               % if ($canadmin) {
                 <li>
                   <a href="<%= url_for("/$user_id/$project_id/wiki/$title/_edit")->query($query) %>">
-                    <button class="btn btn-new">Edit</button>
+                    <button class="btn btn-new">
+                      %= $api->icon('pencil');
+                      Edit
+                    </button>
                   </a>
                 </li>
               % }
@@ -369,7 +365,10 @@
               % if ($display eq 'edit') {
                 <li>
                   <a id="wiki-btn-delete-page" href="javascript:void(0)">
-                    <button class="btn btn-delete">Delete page</button>
+                    <button class="btn btn-delete">
+                      %= $api->icon('x-circle');
+                      Delete page
+                    </button>
                   </a>
                 </li>
               % }
@@ -421,23 +420,7 @@
                 <div class="wiki-add-comment-header">
                   <div class="wiki-message-write-tab wiki-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
                   <div class="wiki-message-preview-tab wiki-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
-                  <div class="wiki-add-comment-icon">
-                    <i class="icon-add-header-text icon icon-font" title="Add header text"></i>
-                    <i class="icon-add-bold-text icon icon-bold" title="Add bold text"></i>
-                    <i class="icon-add-italic-text icon icon-italic" title="Add italic text"></i>
-                    <span style="margin-left:10px"></span>
-                    <i class="icon-insert-quote icon icon-comment" title="Insert a quote"></i>
-                    <i class="icon-insert-code icon icon-file" title="Insert a code"></i>
-                    <i class="icon-add-link icon icon-map-marker" title="Add a link"></i>
-                    <span style="margin-left:10px"></span>
-                    <i class="icon-add-bulleted-list icon icon-list" title="Add a bulleted list"></i>
-                    <i class="icon-add-numbered-list icon icon-th-list" title="Add a numbered list"></i>
-                    <span style="margin-left:10px"></span>
-                    <i class="icon-mention-user icon icon-user" title="Directly mention a user"></i>
-                    <!--
-                      <i class="icon-reference-issue icon icon-bookmark" title="Reference a issue or pull request"></i>
-                    -->
-                  </div>
+                  %= include '/include/issue_comment_icon';
                 </div>
                 <div class="wiki-add-comment-body">
                   <div class="wiki-message-write-area wiki-add-comment-message">

@@ -46,11 +46,21 @@
     $watch_count = sprintf('%.1f', $watch_count / 1000.0);
     $watch_count =~ s/\.?0*$/k/;
   }
+
+  my $icon = 'eye-closed';
+  my $label = 'Unwatch';
+  if ($newstate) {
+    $icon = 'eye';
+    $label = 'Watch';
+  }
 %>
 
 <button id="watch-btn" class="btn btn-watch">
-  <%= $newstate? 'Watch': 'Unwatch' %>
-  <span class="count-label"><%= $watch_count %></span>
+  %= $api->icon($icon);
+  <%= $label %>
+  <span class="count-label">
+    <%= $watch_count %>
+  </span>
 </button>
 
 %= javascript begin

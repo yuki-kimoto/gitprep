@@ -47,20 +47,20 @@
         <div class="file-list-name">
           % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
           % if ($mode_str eq 'm---------') {
-            <i class="icon-folder-close"></i>
             <a href="<%= url_for("/$user/$project/submodule/$rev/$child_dir") %>">
+              %= $api->icon('file-directory-fill', class => 'icon-on-baseline');
               <%= $name %>
             </a>
             <small>[submodule]</small>              
           % } elsif ($type eq 'blob') {
             % my $file = defined $dir && $dir ne '' ? "$dir/$name" : $name;
-            <i class="icon-file"></i>
             <a href="<%= url_for("/$user/$project/blob/$rev/$file") %>">
+              %= $api->icon('file', class => 'icon-on-baseline');
               <%= $name %>
             </a>
           % } elsif ($tree) {
-            <i class="icon-folder-close"></i>
             <a href="<%= url_for("/$user/$project/tree/$rev/$child_dir") %>">
+              %= $api->icon('file-directory-fill', class => 'icon-on-baseline');
               <%= $name %>
             </a>
           % }

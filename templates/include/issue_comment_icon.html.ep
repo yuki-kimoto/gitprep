@@ -1,17 +1,18 @@
-<div class="issue-add-comment-icon">
-  <i class="icon-add-header-text icon icon-font" title="Add header text"></i>
-  <i class="icon-add-bold-text icon icon-bold" title="Add bold text"></i>
-  <i class="icon-add-italic-text icon icon-italic" title="Add italic text"></i>
+% my $api = gitprep_api;
+<div class="add-comment-icons">
+  %= $api->icon('heading', class => 'icon-add-header-text', title => 'Add header text');
+  %= $api->icon('bold', class => 'icon-add-bold-text', title => 'Add bold text');
+  %= $api->icon('italic', class => 'icon-add-italic-text', title => 'Add italic text');
   <span style="margin-left:10px"></span>
-  <i class="icon-insert-quote icon icon-comment" title="Insert a quote"></i>
-  <i class="icon-insert-code icon icon-file" title="Insert a code"></i>
-  <i class="icon-add-link icon icon-map-marker" title="Add a link"></i>
+  %= $api->icon('quote', class => 'icon-insert-quote', title => 'Insert a quote');
+  %= $api->icon('code', class => 'icon-insert-code', title => 'Insert code');
+  %= $api->icon('link', class => 'icon-add-link', title => 'Add a link');
   <span style="margin-left:10px"></span>
-  <i class="icon-add-bulleted-list icon icon-list" title="Add a bulleted list"></i>
-  <i class="icon-add-numbered-list icon icon-th-list" title="Add a numbered list"></i>
+  %= $api->icon('list-ordered', class => 'icon-add-numbered-list', title => 'Add a numbered list');
+  %= $api->icon('list-unordered', class => 'icon-add-bulleted-list', title => 'Add a bulleted list');
   <span style="margin-left:10px"></span>
-  <i class="icon-mention-user icon icon-user" title="Directly mention a user"></i>
-  <!--
-    <i class="icon-reference-issue icon icon-bookmark" title="Reference a issue or pull request"></i>
-  -->
+  %= $api->icon('mention', class => 'icon-mention-user', title => 'Directly mention a user');
+  <%#
+    $api->icon('cross-reference', class => 'icon-reference-issue', title => 'Reference an issue or pull request');
+  %>
 </div>
