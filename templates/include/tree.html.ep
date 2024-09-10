@@ -1,13 +1,30 @@
 <%
   # API
   my $api = gitprep_api;
-
+  
+  # Git
+  my $git = app->git;
+  
   my $dir = stash('dir');
   my $commit_author_email = $commit->{author_email};
   my $commit_author_id = app->dbi->model('user')->select(
     'id',
     where => {email => $commit_author_email}
   )->value;
+  
+  my $user_id = stash('user_id');
+  my $project_id = stash('project_id');
+  my $rev = stash('rev');
+  
+  my $default_branch_name = app->manager->default_branch($user_id, $project_id);
+  
+  my $commits_number;
+  if ($git->exists_branch(app->rep_info($user_id, $project_id))) {
+    
+    # Commits number
+    $commits_number = $git->commits_number(app->rep_info($user_id, $project_id), $rev);
+  }
+  
 %>
 
 <div>
@@ -29,6 +46,14 @@
         <%= substr($commit->{id}, 0, 7) %>
       </a>
       %= $api->age_element($commit->{committer_epoch});
+      
+      % my $commits_url = "/$user_id/$project_id/commits/" . ((defined $rev && length $rev) ? $rev : $default_branch_name);
+      
+      <a href="<%= url_for($commits_url) %>">
+        %= $api->icon('history');
+        <%= $api->plural('Commit', $commits_number, 'no') %>
+      </a>
+      
     </div>
   </div>
   <ul class="file-list">

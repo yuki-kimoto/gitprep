@@ -33,7 +33,6 @@
   my $website_url = app->dbi->model('project')->select('website_url', where => {row_id => $project_row_id})->value;
   
   # Check exsitence
-  my $commits_number;
   if ($git->exists_branch(app->rep_info($user_id, $project_id))) {
     # Commit
     my $commit = $git->get_commit(app->rep_info($user_id, $project_id), $rev);
@@ -46,8 +45,6 @@
     else {
       $trees = $git->trees(app->rep_info($user_id, $project_id), $rev);
     }
-    # Commits number
-    $commits_number = $git->commits_number(app->rep_info($user_id, $project_id), $rev);
     
     # Variable for included template
     stash(
@@ -75,7 +72,6 @@
 
   my $branches = stash('branches');
   my $branches_count = app->git->branches_count($self->app->rep_info($user_id, $project_id));
-  my $default_branch_name = app->manager->default_branch($user_id, $project_id);
   my $tags_count = app->git->tags_count(app->rep_info($user_id, $project_id));
   
   my $logined = $api->logined;
@@ -100,13 +96,6 @@
       % if ($is_project_top_page) {
         <ul class="commits-count">
           <li>
-            % my $commits_url = "/$user_id/$project_id/commits/" . ((defined $rev && length $rev) ? $rev : $default_branch_name);
-            <a href="<%= url_for($commits_url) %>">
-              %= $api->icon('history');
-              <%= $api->plural('Commit', $commits_number, 'no') %>
-            </a>
-          </li>
-          <li>
             <a href="<%= url_for("/$user_id/$project_id/branches") %>">
               %= $api->icon('git-branch');
               <%= $api->plural('Branch', $branches_count, 'no') %>
@@ -127,7 +116,7 @@
       </div>
 
       <div style="margin-bottom:30px">
-        %= include '/include/tree', dir => $dir;
+        %= include '/include/tree', dir => $dir, user_id => $user_id, project_id => $project_id, rev => $rev;
       </div>
 
       %= include '/include/readme', dir => $dir;
