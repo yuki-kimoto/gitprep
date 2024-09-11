@@ -2333,10 +2333,12 @@ a:hover .btn-delete {
 
 .git-url-container .btn, .git-url-container .btn-small {
   border-radius:0;
+  padding-left:6px;
+  padding-right:6px;
 }
 
 .git-url-container input[type=text] {
-  width:530px;
+  width:400px;
   padding:4px 5px 5px 5px;
   border:1px solid #e6e9e6;
   border-radius:0 3px 3px 0;
