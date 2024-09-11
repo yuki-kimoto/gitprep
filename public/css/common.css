@@ -2437,6 +2437,11 @@ a:hover .btn-delete {
 .file-list-name {
   width:25%;
   float:left;
+  padding-left:7px;
+}
+
+.file-list-name a {
+  color:#555;
 }
 
 .file-list-commit {
