@@ -859,6 +859,74 @@ sub icon {
   return $self->DOM_render($self->load_icon(@_));
 }
 
+sub RGBtoHSL {
+  my ($self, $r, $g, $b) = @_;
+
+  $r /= 255;
+  $g /= 255;
+  $b /= 255;
+
+  my $min = $r;
+  $min = $g if $min > $g;
+  $min = $b if $min > $b;
+
+  my $max = $r;
+  $max = $g if $max < $g;
+  $max = $b if $max < $b;
+
+  my $h = ($min + $max) / 2;
+  my $s = $h;
+  my $l = $h;
+
+  my $d = $max - $min;
+  if (!$d) {
+    $h = $s = 0;
+  } else {
+    $s = $min + $max;
+    $s = $l > 0.5? $d / (2 - $s): $d / $s;
+
+    if ($max == $r) {
+      $h = ($g - $b) / $d + ($g < $b? 6: 0);
+    } elsif ($max == $g) {
+      $h = ($b - $r) / $d + 2;
+    } else {
+      $h = ($r - $g) / $d + 4;
+    }
+    $h /= 6;
+  }
+
+  return [360 * $h, 100 * $s, 100 * $l];
+}
+
+sub label {
+  my $self = shift;
+  my $label_row_id = shift;
+  my %args = (@_);
+
+  my $tag = delete $args{tag} || 'li';
+  my $icon = delete $args{icon};
+  my $label = $self->app->dbi->model('label')->select(['id', 'description', 'color'],
+    where => {row_id => $label_row_id}
+  )->one;
+  $label = {id => '?', description => '! Label does not exist !', color => '#ff0000'} unless $label;
+  my @nodes;
+  push @nodes, $self->icon($icon || 'tag', class => 'label-icon') if defined $icon;
+  push @nodes, $self->DOM_element('span', class => 'label-id', $label->{id});
+  my $background = $label->{color};
+  my $foreground = '#000000';
+  if ($background =~ /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i) {
+    my @rgb = (hex($1), hex($2), hex($3));
+    $foreground = '#ffffff' if $self->RGBtoHSL(@rgb)->[2] < 52;
+  }
+  $args{style} = ($args{style} || '') .
+    " ; background: $background; color: $foreground; fill: $foreground;";
+  $args{title} = $label->{description} if $label->{description};
+  my $dom = $self->DOM_element($tag, %args);
+  $dom->append_content($_) for (@nodes);
+  $self->DOM_add_class($dom, 'label');
+  return $self->DOM_render($dom);
+}
+
 sub plural {
   my ($self, $word, $count, $prepend, $plural) = @_;
 

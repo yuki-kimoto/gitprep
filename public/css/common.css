@@ -432,15 +432,6 @@ a.wiki-btn-history:hover {
   width:20%;
   text-align:right;
 }
-.issue-labels-setting-pallet li {
-  display: inline-block;
-  border: 1px solid #dddddd;
-  border-radius:24px;
-  margin-bottom:4px;
-  margin-top:5px;
-  padding:4px 5px;
-  color:#333;
-}
 .issue-subscription {
   padding-top: 5px;
   display: block;
@@ -468,73 +459,62 @@ a.wiki-btn-history:hover {
   margin-top:20px;
 }
 .labels-create-panel {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
   overflow:hidden;
   background:#fafafa;
   padding:10px;
   margin-bottom:20px;
 }
-.labels-edit-label-color-area {
-  display:inline-block;
+.labels-display-area {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
 }
-.labels-edit-label-id {
-  width:400px;
+.labels-input-label-id,
+.labels-input-description {
+  width:270px;
   padding:6px;
   border-radius:3px;
   border: 1px solid #ddd;
 }
-.labels-edit-label-color {
-  width:100px;
-  padding:6px;
-  border-radius:3px;
-  border: 1px solid #ddd;
-  padding-left:28px;
+.labels-input-label-color-area {
+  margin-left: 4px;
+  border-radius: 8px;
 }
-.labels-edit-label-color-palette {
-  width:15px;
-  height:15px;
-  display:inline-block;
-  position:relative;
-  top:3px;
-  left:-95px;
-}
-.labels-create-label-id {
-  width:400px;
-  padding:6px;
-  border-radius:3px;
-  border: 1px solid #ddd;
-}
-.labels-create-label-color-area {
-  display:inline-block;
-}
-.labels-create-label-color {
-  width:100px;
-  padding:6px;
-  border-radius:3px;
-  border: 1px solid #ddd;
-  padding-left:28px;
-}
-.labels-create-label-color-palette {
-  width:15px;
-  height:15px;
-  display:inline-block;
-  position:relative;
-  top:3px;
-  left:-95px;
-}
-.labels-create-left {
-  width:70%;
-  float:left;
-}
-.labels-create-right {
-  width:30%;
-  float:right;
-  text-align:right;
+.labels-input-label-color {
+  width:80px;
+  height: 2cap;
+  margin:5px;
+  padding: 0px;
+  background-color: #ffffff;
+  border: 1px solid #202020;
 }
 .labels-edit-area {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
   padding:3px 0 31px 0;
 }
-.labels {
-  
+.labels-input-rows {
+  display: table;
+  border-spacing: 8px;
+  width: 100%;
+}
+.labels-input-rows > * {
+  display: table-row; 
+}
+.labels-input-rows > * > * {
+  display: table-cell; 
+  vertical-align: middle;
+  width: 0;
+}
+.table-padding {
+  width: auto !important;
+}
+.table-header {
+  font-weight: bold;
 }
 .labels li {
   border:1px #e5e5e5 solid;
@@ -549,20 +529,15 @@ a.wiki-btn-history:hover {
   background:#f8f8f8;
 }
 
-.labels-left {
-  width:75%;
-  float:left;
-}
 .labels-tag {
-  border-radius:24px;
-  display:inline-block;
-  padding:5px 10px;
+  padding:5px 10px !important;
+  font-size: 110% !important;
   font-weight:bold;
-  border:1px solid #dddddd;
+}
+.label-icon {
+  margin-right: 0.7em;
 }
 .labels-right {
-  width:25%;
-  float:left;
   text-align:right;
 }
 .labels-delete {
@@ -585,12 +560,12 @@ a.wiki-btn-history:hover {
 ul.issues-label-pallet {
   display:inline-block;
 }
-ul.issues-label-pallet li {
+.label {
   display:inline-block;
-  border: 1px solid #dddddd;
-  border-radius:24px;
-  padding:1px 3px;
   font-size:95%;
+  border-radius:0.7em;
+  border: 1px solid #dddddd;
+  padding:1px 3px;
 }
 .issues-title a {
   color:black;
@@ -709,7 +684,7 @@ ul.issues-label-pallet li {
   background:white;
 }
 .issue-labels-popup-body li {
-  padding:10px 10px;
+  padding:5px 10px;
   border-top:1px solid #e6e9e6;
   overflow:hidden;
   cursor:pointer;
@@ -721,17 +696,6 @@ ul.issues-label-pallet li {
   float:left;
   width:20px;
   height:1px;
-}
-.issue-labels-popup-pallet {
-  width:15px;
-  height:15px;
-  float:left;
-  margin-left:2px;
-}
-.issue-labels-popup-pallet-id {
-  float:left;
-  margin-left:5px;
-  width:50%;
 }
 .issue-add-comment-title {
   margin-bottom:5px;

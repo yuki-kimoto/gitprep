@@ -273,6 +273,7 @@ EOS
   
   # Create label columns
   my @label_columns = (
+    "description not null default ''",
     "color not null default ''"
   );
   for my $column (@label_columns) {
@@ -280,7 +281,7 @@ EOS
   }
 
   # Check label table
-  eval { $dbi->select([qw/row_id project id color/], table => 'label') };
+  eval { $dbi->select([qw/row_id project id description color/], table => 'label') };
   if ($@) {
     my $error = "Can't create label table properly: $@";
     die $error;

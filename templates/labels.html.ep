@@ -22,9 +22,10 @@
       'project.row_id',
       where => {'user.id' => $user_id, 'project.id' => $project_id}
     )->value;
-    
+
     if ($op eq 'create') {
       my $id = param('label-id');
+      my $description = param('description') || '';
       my $color = param('color');
       
       my $vc = app->vc;
@@ -34,7 +35,10 @@
         $validation->add_failed(id => "Name can't be blank");
       }
       elsif (length $id > 100) {
-        $validation->add_failed(id => "Name is too long");
+        $validation->add_failed(id => 'Name is too long');
+      }
+      elsif (length $description > 300) {
+        $validation->add_failed(id => 'Description is too long');
       }
       else {
         my $label = app->dbi->model('label')->select(
@@ -45,7 +49,7 @@
         )->one;
         
         if ($label) {
-          $validation->add_failed(id => "Name has already been taken");
+          $validation->add_failed(id => 'Label name already in use');
         }
       }
       
@@ -57,6 +61,7 @@
         
         my $new_label = {
           id => $id,
+          description => $description,
           color => $color,
           project => $project_row_id
         };
@@ -72,25 +77,45 @@
     }
     elsif ($op eq 'api-delete') {
       my $row_id = param('row-id');
-      
-      app->dbi->model('label')->delete(where => {row_id => $row_id});
-      
-      $self->render(json => {success => 1});
+      my $json = {success => 1};
+
+      eval {
+        Carp::croak('Label not for this project') unless app->dbi->model('label')->select(
+          'count(*)',
+          where => {row_id => $row_id, project => $project_row_id})->value;
+        app->dbi->connector->txn(sub {
+          eval app->dbi->model('issue_label')->delete(where => {label => $row_id});
+          Carp::croak $@ if $@;
+          eval app->dbi->model('label')->delete(where => {row_id => $row_id});
+          Carp::croak $@ if $@;
+        });
+      };
+
+      $json = {success => 0, message => $@} if $@;
+      $self->render(json => $json);
       return;
     }
     elsif ($op eq 'api-update') {
       my $row_id = param('row-id');
       my $id = param('id');
+      my $description = param('description') || '';
       my $color = param('color');
-      
+
       my $vc = app->vc;
       my $validation = $vc->validation;
-      
+
       if (!length $id) {
         $validation->add_failed(id => "Name can't be blank");
       }
       elsif (length $id > 100) {
-        $validation->add_failed(id => "Name is too long");
+        $validation->add_failed(id => 'Name is too long');
+      }
+      elsif (length $description > 300) {
+        $validation->add_failed(id => 'Description is too long');
+      }
+      elsif (app->dbi->model('label')->select('project',
+        where => {row_id => $row_id})->value != $project_row_id) {
+        $validation->add_failed(id => 'Label not for this project');
       }
       else {
         my $label = app->dbi->model('label')->select(
@@ -99,20 +124,20 @@
             id => $id
           }
         )->one;
-        
-        if ($label && $id ne $label->{id}) {
-          $validation->add_failed(id => "Name has already been taken");
+
+        if ($label && $row_id ne $label->{row_id}) {
+          $validation->add_failed(id => 'Label name already in use');
         }
       }
-      
+
       if (!length $color) {
         $validation->add_failed(color => "Color can't be blank");
       }
-      
+
       if ($validation->is_valid) {
-        app->dbi->model('label')->update({id => $id, color => $color}, where => {row_id => $row_id});
+        app->dbi->model('label')->update({id => $id, description => $description, color => $color}, where => {row_id => $row_id});
         
-        $self->render(json => {success => 1, id => $id, color => $color});
+        $self->render(json => {success => 1, label => $api->label($row_id, tag => 'div', class => 'labels-tag', icon => '')});
         return;
       }
       else {
@@ -121,15 +146,15 @@
       }
     }
   }
-  
+
   my $labels = app->dbi->model('label')->select(
     {__MY__ => '*'},
     where => {'project__user.id' => $user_id, 'project.id' => $project_id},
     append => 'order by id'
   )->all;
-  
+
   # Default color;
-  my $default_color = "#" . sprintf('%02x', int rand 255) . sprintf('%02x', int rand 255) . sprintf('%02x', int rand 255);
+  my $default_color = sprintf '#%02x%02x%02x', (int rand 255), (int rand 255), (int rand 255);
 
   layout 'common', title => "Labels - $user_id/$project_id";
 %>
@@ -145,8 +170,16 @@
     });
     
     $('.labels-edit').on('click', function () {
-      $(this).closest('li').find('.labels-display-area').hide();
-      $(this).closest('li').find('.labels-edit-area').show();
+      var li = $(this).closest('li');
+      var da = $('.labels-display-area', li);
+      var ea = $('.labels-edit-area', li);
+      var color = $('.labels-tag', da).css('background-color');
+      var colorinput = $('[name="color"]', ea);
+      $('[name="label-id"]', ea).val($('.label-id', da).text());
+      colorinput.val(Gitprep.standardizeColor(color));
+      colorinput.parent().css('background', color);
+      da.hide();
+      ea.show();
     });
 
     $('.labels-edit-cancel-btn').on('click', function () {
@@ -163,18 +196,18 @@
         }
       });
     });
-    
+
     $('.labels-edit-save-btn').on('click', function () {
       var li = $(this).closest('li');
       var row_id = li.attr('row-id');
       var id = li.find('[name=label-id]').val();
+      var description = li.find('[name=description]').val();
       var color = li.find('[name=color]').val();
-      
-      $.post('<%= url_for %>', {'row-id' : row_id, op : 'api-update', id : id, color : color}, function (result) {
-        
+
+      $.post('<%= url_for %>', {'row-id' : row_id, op : 'api-update', id : id, description : description, color : color}, function (result) {
+
         if (result.success) {
-          li.find('.labels-label-id').text(result.id);
-          li.find('.labels-tag').css('background', result.color);
+          li.find('.labels-tag').replaceWith(result.label);
 
           li.find('.labels-display-area').show();
           li.find('.labels-edit-area').hide();
@@ -184,6 +217,10 @@
         }
       });
     });
+
+    /* Workaround an FF bug when refreshing the page. */
+    var clabcol = $('.labels-create-panel .labels-input-label-color');
+    clabcol.val(Gitprep.standardizeColor(clabcol.parent().css('background-color')));
   });
 % end
 
@@ -200,20 +237,32 @@
   % }
   
   <form class="labels-create-panel" action="<%= url_for %>" method="post" style="display:none">
-    <%= hidden_field op => 'create' %>
-    <div class="labels-create-left">
-      <%= input_tag 'label-id', class => 'labels-create-label-id' %>
-      <div class="labels-create-label-color-area">
-        <%= input_tag 'color' => $default_color, class => 'labels-create-label-color' %>
-        <div class ="labels-create-label-color-palette" style="background:<%= $default_color %>;"></div>
-        <div class="error"></div>
+    %= hidden_field op => 'create';
+    <div class="labels-input-rows">
+      <div class="table-header">
+        <div>Label name</div>
+        <div>Description</div>
+        <div>Color</div>
+        <div class="labels-right table-padding">
+          <div class="labels-create-cancel-btn btn">
+            Cancel
+          </div>
+          <input type="submit" value="Create label" class="labels-create-create-btn btn btn-green" />
+        </div>
       </div>
-    </div>
-    <div class="labels-create-right">
-      <div class="labels-create-cancel-btn btn">
-        Cancel
+      <div>
+        <div>
+          %= input_tag 'label-id', class => 'labels-input-label-id', placeholder => 'Label text';
+        </div>
+        <div>
+          %= input_tag 'description', class => 'labels-input-description', placeholder => 'Description (optional)';
+        </div>
+        <div class="labels-input-label-color-area" style="background-color: <%= $default_color %>;">
+          <%= input_tag(color => $default_color, type => 'color',
+            color => $default_color, class => 'labels-input-label-color',
+            onchange => 'this.parentNode.style.backgroundColor = this.value;') %>
+        </div>
       </div>
-      <input type="submit" value="Create label" class="labels-create-create-btn btn btn-green" />
     </div>
   </form>
   <ul class="labels">
@@ -223,12 +272,8 @@
     % for my $label (@$labels) {
       <li row-id="<%= $label->{row_id} %>">
         <div class="labels-display-area">
-          <div class="labels-left">
-            <div class="labels-tag" style="background:<%= $label->{color} %>;">
-              %= $api->icon('tag');
-              <span class="labels-label-id"><%= $label->{id} %></span>
-            </div>
-          </div>
+          %= $api->label($label->{row_id}, tag => 'div', class => 'labels-tag', icon => '');
+          <div class="flex-padding"></div>
           <div class="labels-right">
             % if ($can_write_access) {
               <div class="labels-edit">
@@ -247,20 +292,33 @@
           </div>
         </div>
         <div class="labels-edit-area" style="display:none">
-          <div class="labels-left">
-            <%= input_tag 'label-id' => $label->{id}, class => 'labels-edit-label-id' %>
-            <div class="labels-edit-label-color-area">
-              <%= input_tag 'color' => $label->{color}, class => 'labels-edit-label-color' %>
-              <div class ="labels-edit-label-color-palette" style="background:<%= $label->{color} %>;"></div>
+          <div class="labels-input-rows">
+            <div class="table-header">
+              <div>Label name</div>
+              <div>Description</div>
+              <div>Color</div>
+              <div class="labels-right table-padding">
+                <div class="labels-edit-cancel-btn btn">
+                  Cancel
+                </div>
+                <div class="labels-edit-save-btn btn btn-green">
+                  Save changes
+                </div>
+              </div>
             </div>
-            <div class="labels-error" style="display:inline-block;color:red;"></div>
-          </div>
-          <div class="labels-right">
-            <div class="labels-edit-cancel-btn btn">
-              Cancel
-            </div>
-            <div class="labels-edit-save-btn btn btn-green">
-              Save changes
+            <div>
+              <div>
+                %= input_tag 'label-id' => $label->{id}, class => 'labels-input-label-id', placeholder => 'Label text';
+              </div>
+              <div>
+                %= input_tag 'description' => $label->{description} || '', class => 'labels-input-description', placeholder => 'Description (optional)';
+              </div>
+              <div class="labels-input-label-color-area" style="background-color: <%= $label->{color} %>;">
+                <%= input_tag('color' => $label->{color}, type => 'color',
+                  color => $label->{color}, class => 'labels-input-label-color',
+                  onchange => 'this.parentNode.style.backgroundColor = this.value;') %>
+              </div>
+              <div class="labels-error table-padding" style="color:red;"></div>
             </div>
           </div>
         </div>
