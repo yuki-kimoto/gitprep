@@ -134,7 +134,7 @@
           where => {issue => $issue->{row_id}, label => $label_row_id}
         )->one;
 
-        $json = {success => 1, checked => 0};
+        $json = {success => 1, checked => ''};
         if ($label_checked) {
           app->dbi->model('issue_label')->delete(
             where => {
@@ -152,7 +152,7 @@
             where => {
               row_id => $label_row_id
             })->one;
-          $json->{checked} = 1;
+          $json->{checked} = $api->label($label_row_id, 'label-row-id' => $label_row_id);
           $json->{id} = $label->{id};
           $json->{color} = $label->{color};
         }
@@ -537,8 +537,7 @@
         if (result.success) {
           if (result.checked) {
             $(that).find('.issue-labels-popup-check i').css('display', 'block');
-            var li = '<li label-row-id="' + label_row_id + '" style="background:' + result.color + '">' + result.id + '</li>';
-            $('.issue-labels-setting-pallet').append(li);
+            $('.issue-labels-setting-pallet').append(result.checked);
           }
           else {
             $(that).find('.issue-labels-popup-check i').css('display', 'none');
@@ -915,8 +914,7 @@ git push origin <%= $base_branch %>
                             %= $api->icon('check');
                           </i>
                         </div>
-                        <div class="issue-labels-popup-pallet" style="background:<%= $label->{color} %>"></div>
-                        <div class="issue-labels-popup-pallet-id"><%= $label->{id} %></div>
+                        %= $api->label($label->{row_id}, tag => 'div');
                       </li>
                     % }
                   </ul>
@@ -925,9 +923,7 @@ git push origin <%= $base_branch %>
               <ul class="issue-labels-setting-pallet">
                 % my $show = 'list-item';
                 % for my $issue_label (@$issue_labels) {
-                  <li label-row-id="<%= $issue_label->{'label.row_id'} %>" style="background:<%= $issue_label->{'label.color'} %>">
-                    <%= $issue_label->{'label.id'} %>
-                  </li>
+                  %= $api->label($issue_label->{'label.row_id'}, 'label-row-id' => $issue_label->{'label.row_id'});
                   % $show = 'none';
                 % }
                 <li class="issue-labels-none" style="display: <%= $show %>;">
