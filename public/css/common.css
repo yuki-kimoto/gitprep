@@ -2313,12 +2313,12 @@ a:hover .btn-delete {
 
 .branch-select-left-container {
   float:left;
-  width:20%;
+  width:40%;
 }
 
 .branch-select-right-container {
   float:left;
-  width:80%;
+  width:60%;
 }
 
 .git-url-container {

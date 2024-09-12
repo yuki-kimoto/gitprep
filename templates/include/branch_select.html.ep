@@ -28,6 +28,10 @@
     $rev_short = $rev;
   }
   
+  my $is_project_top_page = !(defined $path && length $path);
+
+  my $branches_count = app->git->branches_count($self->app->rep_info($user, $project));
+  my $tags_count = app->git->tags_count(app->rep_info($user, $project));
 %>
 
 %= javascript begin
@@ -147,6 +151,17 @@
         </span>
       </span>
     </button>
+    % if ($is_project_top_page) {
+      <a href="<%= url_for("/$user/$project/branches") %>">
+        %= $api->icon('git-branch');
+        <%= $api->plural('Branch', $branches_count, 'no') %>
+      </a>
+      <a href="<%= url_for("/$user/$project/tags") %>">
+        %= $api->icon('tag');
+        <%= $api->plural('Tag', $tags_count, 'no') %>
+      </a>
+    % }
+
     % if ($display eq 'tree' || $display eq 'blob') {
         %= include '/include/page_path', Path => $path;
     % }

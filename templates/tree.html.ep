@@ -71,8 +71,6 @@
     . ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user_id/$project_id.git";
 
   my $branches = stash('branches');
-  my $branches_count = app->git->branches_count($self->app->rep_info($user_id, $project_id));
-  my $tags_count = app->git->tags_count(app->rep_info($user_id, $project_id));
   
   my $logined = $api->logined;
   
@@ -93,23 +91,6 @@
       </h3>
     % }
     % if ($state eq 'display') {
-      % if ($is_project_top_page) {
-        <ul class="commits-count">
-          <li>
-            <a href="<%= url_for("/$user_id/$project_id/branches") %>">
-              %= $api->icon('git-branch');
-              <%= $api->plural('Branch', $branches_count, 'no') %>
-            </a>
-          </li>
-          <li>
-            <a href="<%= url_for("/$user_id/$project_id/tags") %>">
-              %= $api->icon('tag');
-              <%= $api->plural('Tag', $tags_count, 'no') %>
-            </a>
-          </li>
-        </ul>
-      % }
-
       <div style="margin-bottom:5px;">
         % my $display = defined $dir && length $dir ? 'tree' : 'tree_top';
         %= include '/include/branch_select', display => $display, Path => $dir, ssh_rep_url => $ssh_rep_url;
