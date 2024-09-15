@@ -24,9 +24,6 @@
   my $http_rep_url;
   my $ssh_rep_url;
   my $patch_url;
-  my $pre_content_base;
-  my $pre_content_http;
-  my $pre_content_ssh;
   my %commit_body_args;
   my $last_commit_date = 0;
   my $total = {
@@ -462,21 +459,9 @@
     $http_rep_url = url_for("$target_user_id/$target_project_id.git")->to_abs;
 
     # SSH repository URL
-    my $url = url_for->to_abs;
-    $url->base(undef);
-    my $ssh_port = config->{basic}{ssh_port};
-    my $rep_home = app->rep_home;
-    my $execute_user = getpwuid($>);
-    my $ssh_rep_url_base = defined app->config->{basic}{'ssh_rep_url_base'}
-      ? app->config->{basic}{'ssh_rep_url_base'} : $rep_home;
-    $ssh_rep_url = "ssh://$execute_user\@" . $url->host .
-      ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user/$project.git";
+    $ssh_rep_url = $api->ssh_rep_url($user, $project);
 
     $patch_url = url_for("/$base_user_id/$base_project_id/pull/$issue->{number}.patch")->to_abs;
-
-    $pre_content_base = "git checkout -b $target_user_id-$target_branch $base_branch";
-    $pre_content_http = "git pull $http_rep_url $target_branch";
-    $pre_content_ssh = "git pull $ssh_rep_url $target_branch";
 
     # commit_body args
     %commit_body_args = (
@@ -787,56 +772,35 @@
                     <div>
                       If you do not want to use the merge button or an automatic merge cannot be performed, you can perform a manual merge on the command line.
                     </div>
-                    %= javascript begin
-                      $(document).ready(function () {
-                        var http_rep_url = "<%= $http_rep_url %>";
 
-                        var ssh_rep_url = "<%= $ssh_rep_url %>";
-                        var patch_url = "<%= $patch_url %>";
-
-                        var pre_content_base = "<%= $pre_content_base %>";
-                        var pre_content_http = "<%= $pre_content_http %>";
-                        var pre_content_ssh = "<%= $pre_content_ssh %>";
-
-                        var pre_content_http_all = pre_content_base + "\n" + pre_content_http;
-                        var pre_content_ssh_all = pre_content_base + "\n" + pre_content_ssh;
-
-                        $('#http-btn').on('click', function () {
-                          $('[name=clone_url]').val(http_rep_url);
-                          $('#step1').text(pre_content_http_all);
-                        });
-                        $('#ssh-btn').on('click', function () {
-                          $('[name=clone_url]').val(ssh_rep_url);
-                          $('#step1').text(pre_content_ssh_all);
-                        });
-                        $('#patch-btn').on('click', function () {
-                          $('[name=clone_url]').val(patch_url);
-                        });
-                      });
-                    % end
-
-                    <div style="margin-top:10px">
-                      <button id="http-btn" class="btn btn-small" style="border-radius:3px 0 0 3px">HTTPS</button><button id="ssh-btn" class="btn btn-small" style="border-radius:0">SSH</button><button id="patch-btn" class="btn btn-small" style="border-radius:0">Patch</button><%= text_field clone_url => $http_rep_url, style => "width:600px;padding:4px 7px 5px 7px;border-radius:0 3px 3px 0", readonly => 'true' %>
+                    <div class="merge-alternatives">
+                      %= include '/include/url', protocols => {http => '#merge-inst #step1-http', ssh => '#merge-inst #step1-ssh', patch => ''};
                     </div>
 
-                    <div style="margin-top:15px;margin-bottom:5px;">
-                      <b>Step 1:</b> From your project repository, check out a new branch and test the changes.
-                    </div>
+                    <div id="merge-inst">
+                      <div style="margin-top:15px;margin-bottom:5px;">
+                        <b>Step 1:</b> From your project repository, check out a new branch and test the changes.
+                      </div>
 
-<pre id="step1" style="background:#f2f2f2; padding:10px; border-radius:3px">
+<pre id="step1-ssh" style="background:#f2f2f2; padding:10px; border-radius:3px">
+git checkout -b <%= $target_user_id %>-<%= $target_branch %> <%= $base_branch %>
+git pull <%= $ssh_rep_url %> <%= $target_branch %>
+</pre>
+<pre id="step1-http" style="background:#f2f2f2; padding:10px; border-radius:3px">
 git checkout -b <%= $target_user_id %>-<%= $target_branch %> <%= $base_branch %>
 git pull <%= url_for("$target_user_id/$target_project_id.git")->to_abs %> <%= $target_branch %>
 </pre>
 
-                    <div style="margin-top:15px;margin-bottom:5px;">
-                      <b>Step 2:</b> Merge the changes and update on GitPrep.
-                    </div>
+                      <div style="margin-top:15px;margin-bottom:5px;">
+                        <b>Step 2:</b> Merge the changes and update on GitPrep.
+                      </div>
 
 <pre style="background:#f2f2f2; padding:10px; border-radius:3px">
 git checkout <%= $base_branch %>
 git merge --no-ff <%= $target_user_id %>-<%= $target_branch %>
 git push origin <%= $base_branch %>
 </pre>
+                    </div>
                   </div>
                 % }
               </div>

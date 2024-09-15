@@ -41,7 +41,7 @@
       % }
     </div>
     <div class="header-right">
-      <div class="header-rigth-container">
+      <div class="header-right-container">
         % if ($api->logined) {
           % unless ($session_user->{id} eq 'admin') {
             <div class="header-btn-container">

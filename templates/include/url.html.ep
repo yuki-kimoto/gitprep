@@ -1,0 +1,118 @@
+<%  
+  my $api = gitprep_api;
+
+  my $user_id = param('user');
+  my $project_id = param('project');
+
+  local *unique_selectors = sub {
+    my ($selectors) = @_;
+    $selectors = [split ' ', $selectors || ''];
+    my %t;
+    @t{@$selectors} = @$selectors;
+    delete $t{''};
+    return join ',', keys %t;
+  };
+
+  my $repository = stash('repository') || "$project_id";
+  my $protocols = stash('protocols') // {'http' => '', 'ssh' => ''};
+  my $all_selectors = unique_selectors(join ' ', values %$protocols);
+  my %btns = %$protocols;
+
+  my $logged_in = $api->logined;
+
+  delete $btns{ssh} unless $logged_in;
+  if (exists $btns{ssh}) {
+    my $has_key = app->dbi->model('ssh_public_key')->select('count(*)',
+      where => {
+        user => $api->session_user_row_id
+      }
+    )->value;
+    delete $btns{ssh} unless $has_key;
+  }
+  if (exists $btns{ssh}) {
+    my $url = $api->ssh_rep_url($user_id, $repository);
+    $btns{ssh} = {
+      btn => 'SSH',
+      url => $url,
+      selectors => unique_selectors($btns{ssh})
+    };
+  }
+
+  if (exists $btns{http}) {
+    my $url = url_for("$user_id/$repository.git")->to_abs;
+    $btns{http} = {
+      btn => uc($url->scheme),
+      url => $url,
+      selectors => unique_selectors($btns{http})
+    };
+  }
+
+  if (exists $btns{patch}) {
+    my $number = param('number');
+    delete $btns{patch};
+    if ($number) {
+      my $url = url_for("$user_id/$project_id/pull/$number.patch")->to_abs;
+      $btns{patch} = {
+        btn => 'Patch',
+        url => $url,
+        selectors => unique_selectors($btns{patch})
+      };
+    }
+  }
+
+  return unless keys %btns;
+%>
+
+%= javascript begin
+  $(document).ready(function () {
+    $('.git-url-container').each(function () {
+      var rep_url = $('.rep-url', this);
+      var btns = $('.btn-url', this);
+      var all_selectors = $(this).attr('selectors');
+
+      btns.each(function () {
+        var self = $(this);
+        self.on('click', function () {
+          var selectors = $(this).attr('selectors');
+          btns.removeClass('btn-info');
+          self.addClass('btn-info');
+          rep_url.val(self.attr('url'));
+          if (all_selectors) {
+            $(all_selectors).hide();
+          }
+          if (selectors) {
+            $(selectors).show();
+          }
+        });
+      });
+
+      btns.first().trigger('click');
+      $('.cpy-btn', this).on('click', function () {
+        rep_url.focus().select();
+        document.execCommand('copy');
+        rep_url.blur();
+      });
+    });
+  });
+% end
+
+<ul class="git-url-container" selectors="<%= $all_selectors %>">
+  % for ('ssh', 'http', 'patch') {
+    % if (exists $btns{$_}) {
+      <li>
+        <button class="btn btn-info btn-url" url="<%= $btns{$_}->{url} %>" selectors="<%= $btns{$_}->{selectors} %>">
+          <%= $btns{$_}->{btn} %>
+        </button>
+      </li>
+    % }
+  % }
+  <li>
+    <input class="rep-url" type="text" readonly="" />
+    <svg class="cpy-btn" viewBox="0 0 14 15" width="20" height="20">
+      <title>Copy URL to clipboard</title>
+      <path style="fill-rule: evenodd"
+        d="m 2,12 h 4 v 1 H 2 Z M 7,6 H 2 V 7 H 7 Z M 9,9 V 7 l -3,3 3,3 v -2 h 5 V 9 Z M 4.5,8 H 2 V 9 H 4.5 Z M 2,11 H 4.5 V 10 H 2 Z m 9,1 h 1 v 2 c -0.02,0.28 -0.11,0.52 -0.3,0.7 -0.19,0.18 -0.42,0.28 -0.7,0.3 H 1 C 0.45,15 0,14.55 0,14 V 3 C 0,2.45 0.45,2 1,2 H 4 C 4,0.89 4.89,0 6,0 7.11,0 8,0.89 8,2 h 3 c 0.55,0 1,0.45 1,1 V 8 H 11 V 5 H 1 v 9 H 11 Z M 2,4 h 8 C 10,3.45 9.55,3 9,3 H 8 C 7.45,3 7,2.55 7,2 7,1.45 6.55,1 6,1 5.45,1 5,1.45 5,2 5,2.55 4.55,3 4,3 H 3 C 2.45,3 2,3.45 2,4 Z">
+      </path>
+    </svg>
+  </li>
+</ul>

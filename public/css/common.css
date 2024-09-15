@@ -250,14 +250,11 @@ a.wiki-btn-history:hover {
 }
 
 .wiki-top {
-  overflow:hidden;
+  display: flex;
+  align-items: space-between;
 }
 .wiki-top-git-url {
-  float:left;
-}
-
-.wiki-top-buttons-box {
-  float:right;
+  flex: 10000;
 }
 
 .wiki-top-buttons {
@@ -995,6 +992,11 @@ a.branches-close:hover {
   padding:10px;
   border-top:1px solid #e6e9e6;
 }
+.merge-alternatives {
+  width: 100%;
+  overflow: hidden;
+  margin: 5px 0px;
+}
 .compare-pull-request-link {
   font-size:20px;
   margin:20px 0;
@@ -1268,7 +1270,7 @@ input[type=text], input[type=password] {
   border:1px solid white;
 }
 
-.header-rigth-container {
+.header-right-container {
   float:right;
   overflow:hidden;
 }
@@ -2277,24 +2279,27 @@ a:hover .btn-delete {
 
 .branch-select-left-container {
   float:left;
-  width:40%;
+  width:35%;
 }
 
 .branch-select-right-container {
+  display: flex;
+  align-items: space-between;
   float:left;
-  width:60%;
+  width:65%;
 }
 
 .git-url-container {
-  float:right;
-  overflow:hidden;
-  display:inline-block;
+  flex:10000;
+  display:flex;
+  margin: 3px 3px;
 }
 
-.git-url-container li {
-  float:left;
+.git-url-container li:last-child {
+  flex: 10000;
+  display: flex;
+  vertical-align: middle;
 }
-
 .git-url-container .btn, .git-url-container .btn-small {
   border-radius:0;
   padding-left:6px;
@@ -2302,8 +2307,9 @@ a:hover .btn-delete {
 }
 
 .git-url-container input[type=text] {
-  width:400px;
-  padding:4px 5px 5px 5px;
+  min-width:400px;
+  width: 100%;
+  padding:0px 5px 0px 5px;
   border:1px solid #e6e9e6;
   border-radius:0 3px 3px 0;
   margin-bottom:1px;
@@ -2313,7 +2319,8 @@ a:hover .btn-delete {
   float:left;
 }
 
-.donwload-zip {
+.download-zip {
+  float: right;
   margin-left:5px;
   font-weight:bold;
 }
