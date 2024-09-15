@@ -1268,7 +1268,7 @@ input[type=text], input[type=password] {
   border:1px solid white;
 }
 
-.header-rigth-container {
+.header-right-container {
   float:right;
   overflow:hidden;
 }
@@ -2313,7 +2313,7 @@ a:hover .btn-delete {
   float:left;
 }
 
-.donwload-zip {
+.download-zip {
   margin-left:5px;
   font-weight:bold;
 }

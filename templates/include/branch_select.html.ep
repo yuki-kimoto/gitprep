@@ -186,7 +186,7 @@
             </svg>
           </li>
           <li>
-            <div class="donwload-zip">
+            <div class="download-zip">
               <a title="Download ZIP" class="btn" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
                 ZIP
               </a>
