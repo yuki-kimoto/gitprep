@@ -27,17 +27,6 @@
   my $session_user_id = $api->session_user_id;
   my $canadmin = $logined &&
     $api->can_write_access($session_user_id, $user_id, $project_id);
-
-  # Wiki repository URL
-  my $url = url_for->to_abs;
-  $url->base(undef);
-  my $ssh_port = config->{basic}{ssh_port};
-  my $rep_home = app->rep_home;
-  my $execute_user = getpwuid($>);
-  my $ssh_rep_url_base = defined app->config->{basic}{'ssh_rep_url_base'}
-    ? app->config->{basic}{'ssh_rep_url_base'} : $rep_home;
-  my $ssh_rep_url = "ssh://$execute_user\@" . $url->host
-    . ($ssh_port ? ":$ssh_port" : '') . "$ssh_rep_url_base/$user_id/$project_id.wiki.git";
   
   # Display type
   my $display;
@@ -243,35 +232,7 @@
           form.find('.wiki-message-preview-area').html(markdown);
         });
       });
-      
-      // Repository URL buttons
-      var http_rep_url = '<%= url_for("$user/$project.wiki.git")->to_abs %>';
-      
-      var logined = <%= $logined ? 'true' : 'false' %>;
-      var ssh_rep_url = '<%= $ssh_rep_url %>';
-      
-      // Click HTTP button
-      $('#btn_http').on('click', function () {
-        $('#rep_url').val(http_rep_url);
-        $('#btn_http').addClass('btn-info');
-        $('#btn_ssh').removeClass('btn-info');
-      });
 
-      // Click SSH button
-      $('#btn_ssh').on('click', function () {
-        $('#rep_url').val(ssh_rep_url);
-        $('#btn_http').removeClass('btn-info');
-        $('#btn_ssh').addClass('btn-info');
-      });
-
-      // Initialize
-      if (logined) {
-        $('#btn_ssh').trigger('click');
-      }
-      else {
-        $('#btn_http').trigger('click');
-      }
-      
       // Click delete page
       $('#wiki-btn-delete-page').on('click', function () {
         if (window.confirm('This page is deleted. OK?')) {
@@ -325,19 +286,7 @@
       <div class="wiki-top">
         <div class="wiki-top-git-url">
           % if ($display eq 'page' || $display eq 'list-pages') {
-            <ul class="git-url-container">
-              % if ($logined) {
-                <li>
-                  <button class="btn btn-info" id="btn_ssh">SSH</button>
-                </li>
-              % }
-              <li>
-                <button class="btn <%= !$logined ? 'btn-info' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
-              </li>
-              <li>
-                <input id="rep_url" type="text" />
-              </li>
-            </ul>
+            %= include '/include/url', repository => "$project_id.wiki";
           % }
         </div>
         

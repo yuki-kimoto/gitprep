@@ -15,6 +15,9 @@
 ;;; ~ is expaned to user home directory automatically
 ; ssh_rep_url_base=/~/git
 
+;;; SSH user for git URLs (default: user running server)
+; ssh_user=mygit
+
 ;;; Git command path
 ;;; By default, git command path is automatically detected
 ;;; from PATH enviroment variable or /usr/bin/git or /usr/local/bin/git

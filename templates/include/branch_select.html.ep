@@ -7,7 +7,6 @@
   my $rev = stash('rev');
   $rev = '' unless defined $rev;
   my $branches = stash('branches');
-  my $ssh_rep_url = stash('ssh_rep_url');
 
   my $logined = $api->logined;
 
@@ -99,43 +98,6 @@
     $('#rev-close').on('click', function () {
       $('#rev-popup').css('display', 'none');
     });
-    
-    
-    // Repository URL buttons
-    var http_rep_url = '<%= url_for("$user/$project.git")->to_abs %>';
-    
-    var logined = <%= $logined ? 'true' : 'false' %>;
-    var ssh_rep_url = '<%= $ssh_rep_url %>';
-    
-    // Click HTTP button
-    $('#btn_http').on('click', function () {
-      $('#rep_url').val(http_rep_url);
-      $('#btn_http').addClass('btn-info');
-      $('#btn_ssh').removeClass('btn-info');
-    });
-
-    // Click SSH button
-    $('#btn_ssh').on('click', function () {
-      $('#rep_url').val(ssh_rep_url);
-      $('#btn_http').removeClass('btn-info');
-      $('#btn_ssh').addClass('btn-info');
-    });
-
-    // Click copy URL button. 
-    $('#cpy-btn').on('click', function () {
-      var i = $('#rep_url');
-      i.focus().select();
-      document.execCommand('copy'); 
-      i.blur(); 
-    });
-
-    // Initialize
-    if (logined) {
-      $('#btn_ssh').trigger('click');
-    }
-    else {
-      $('#btn_http').trigger('click');
-    }
   });
 % end
 
@@ -168,34 +130,16 @@
   </div>
     % if ($display eq 'tree_top') {
       <div class="branch-select-right-container">
-        <ul class="git-url-container">
-          % if ($logined) {
-            <li>
-              <button class="btn btn-info" id="btn_ssh">SSH</button>
-            </li>
-          % }
-          <li>
-            <button class="btn <%= !$logined ? 'btn-info' : '' %>" id="btn_http"><%= $self->req->is_secure ? 'HTTPS' : 'HTTP' %></button>
-          </li>
-          <li>
-            <input id="rep_url" type="text" readonly="" />
-            <svg id="cpy-btn" viewBox="0 0 14 15" width="16" height="16" aria-hidden="true">
-              <title>Copy URL to clipboard</title>
-              <path style="fill-rule:evenodd" id="path1372"
-                    d="m 2,12 h 4 v 1 H 2 Z M 7,6 H 2 V 7 H 7 Z M 9,9 V 7 l -3,3 3,3 v -2 h 5 V 9 Z M 4.5,8 H 2 V 9 H 4.5 Z M 2,11 H 4.5 V 10 H 2 Z m 9,1 h 1 v 2 c -0.02,0.28 -0.11,0.52 -0.3,0.7 -0.19,0.18 -0.42,0.28 -0.7,0.3 H 1 C 0.45,15 0,14.55 0,14 V 3 C 0,2.45 0.45,2 1,2 H 4 C 4,0.89 4.89,0 6,0 7.11,0 8,0.89 8,2 h 3 c 0.55,0 1,0.45 1,1 V 8 H 11 V 5 H 1 v 9 H 11 Z M 2,4 h 8 C 10,3.45 9.55,3 9,3 H 8 C 7.45,3 7,2.55 7,2 7,1.45 6.55,1 6,1 5.45,1 5,1.45 5,2 5,2.55 4.55,3 4,3 H 3 C 2.45,3 2,3.45 2,4 Z"></path>
-            </svg>
-          </li>
-          <li>
-            <div class="download-zip">
-              <a title="Download ZIP" class="btn" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
-                ZIP
-              </a>
-              <a title="Download tar.gz" class="btn" href="<%= url_for("/$user/$project/archive/$rev.tar.gz") %>">
-                tar.gz
-              </a>
-            </div>
-          </li>
-        </ul>
+
+        %= include '/include/url';
+        <div class="download-zip">
+          <a title="Download ZIP" class="btn" href="<%= url_for("/$user/$project/archive/$rev.zip") %>">
+            ZIP
+          </a>
+          <a title="Download tar.gz" class="btn" href="<%= url_for("/$user/$project/archive/$rev.tar.gz") %>">
+            tar.gz
+          </a>
+        </div>
       </div>
     % }
 </div>

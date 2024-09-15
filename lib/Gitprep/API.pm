@@ -662,6 +662,18 @@ sub mentioned {
   return @result;
 }
 
+sub ssh_rep_url {
+  my ($self, $user_id, $repository) = @_;
+
+  my $app = $self->app;
+  my $user = $app->config->{basic}{ssh_user} || getpwuid($>);
+  my $port = $app->config->{basic}{ssh_port};
+  my $home = $app->config->{basic}{'ssh_rep_url_base'} || $app->rep_home;
+  my $url = "ssh://$user@" . $self->cntl->url_for->to_abs->host;
+  $url .= ":$port" if $port;
+  return "$url$home/$user_id/$repository.git";
+}
+
 sub DOM_element {
   my $self = shift;
   my $tag = shift;
