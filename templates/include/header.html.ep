@@ -4,17 +4,18 @@
 
   my $session_user_row_id = session('user_row_id');
   my $session_user = app->dbi->model('user')->select(where => {row_id => $session_user_row_id})->one;
-  
+
   my $user_id = $self->param('user');
 
   my $project_id = param('project');
-  
+
   my $original_project;
   my $is_private_project;
   my $fork_count;
-  
+
   my $no_project_header = stash('no_project_header');
-  
+  my $private = stash('private');
+
   if (!$no_project_header && defined $project_id) {
     $original_project = app->manager->original_project($user_id, $project_id);
     $is_private_project = app->manager->is_private_project($user_id, $project_id);
@@ -114,7 +115,7 @@
       <div class="flex-padding"></div>
       <div class="project-header-right">
         <div class="project-header-right-container">
-          % if ($logined && defined $project_id) {
+          % if ($logined && defined $project_id && !defined $private) {
             <div class="project-header-btn-container">
               <span id="watch-btn-frame">
                 %= include '/api/watch', state => undef;
@@ -141,7 +142,7 @@
         </div>
       </div>
     </div>
-    % if (defined $project_id) {
+    % if (defined $project_id && !defined $private) {
       <%
         my $tab = stash('tab') || 'code';
       %>
