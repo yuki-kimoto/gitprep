@@ -363,8 +363,8 @@ a.wiki-btn-history:hover {
 }
 
 .tree-description {
-  font-size:20px;
-  padding-top:7px;
+  font-size:17px;
+  padding-top:5px;
   padding-bottom:5px;
   color:#112;
   margin-bottom:7px;
@@ -1689,7 +1689,6 @@ button.close {
 .btn-fork, .btn-new, .btn-delete, .btn-watch, btn-cancel {
   font-size:13px;
   padding:5px 20px;
-  height:28px;
 }
 
 a:hover .btn-delete {
@@ -2201,7 +2200,6 @@ a:hover .btn-delete {
   margin-bottom:12px;
   overflow:hidden;
   padding:14px 0 0 0;
-  border-top:#CCCCCC 1px solid;
 }
 .project-header-top {
   display: flex;

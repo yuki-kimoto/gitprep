@@ -114,32 +114,6 @@
       </ul>
       <div class="flex-padding"></div>
       <div class="project-header-right">
-        <div class="project-header-right-container">
-          % if ($logined && defined $project_id && !defined $private) {
-            <div class="project-header-btn-container">
-              <span id="watch-btn-frame">
-                %= include '/api/watch', state => undef;
-              </span>
-              % if ($session_user->{id} ne $user_id ) {
-                <a href="<%= url_for("/$user_id/$project_id/fork") %>" class="btn btn-fork">
-                  %= $api->icon('repo-forked');
-                  Fork
-                  <span class="count-label">
-                    <%= $fork_count %>
-                  </span>
-                </a>
-              % } else {
-                <button class="btn btn-fork disabled', disabled="">
-                  %= $api->icon('repo-forked');
-                  Fork
-                  <span class="count-label">
-                    <%= $fork_count %>
-                  </span>
-                </button>
-              % }
-            </div>
-          % }
-        </div>
       </div>
     </div>
     % if (defined $project_id && !defined $private) {

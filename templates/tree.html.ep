@@ -66,6 +66,29 @@
   
   my $logined = $api->logined;
   
+  my $original_project;
+  my $is_private_project;
+  my $fork_count;
+  
+  my $no_project_header = stash('no_project_header');
+  
+  if (!$no_project_header && defined $project_id) {
+    $original_project = app->manager->original_project($user_id, $project_id);
+    $is_private_project = app->manager->is_private_project($user_id, $project_id);
+    $fork_count = scalar(@{app->manager->member_projects($user_id, $project_id)});
+    if ($fork_count >= 1000000) {
+      $fork_count = sprintf('%.1f', $fork_count / 1000000.0);
+      $fork_count =~ s/\.?0*$/M/;
+    }
+    elsif ($fork_count >= 1000) {
+      $fork_count = sprintf('%.1f', $fork_count / 1000.0);
+      $fork_count =~ s/\.?0*$/k/;
+    }
+  }
+  
+  my $session_user_row_id = session('user_row_id');
+  my $session_user = app->dbi->model('user')->select(where => {row_id => $session_user_row_id})->one;
+  
   layout 'common', title => "$user_id/$project_id";
 %>
   
@@ -75,12 +98,63 @@
     %= include '/include/message', message => flash('message');
     
     % if ($is_project_top_page) {
-      <h3 class="tree-description">
-        <%= $desc %>
-        % if (defined $website_url && length $website_url) {
-          <a href="<%= $website_url %>">website</a>
-        % }
-      </h3>
+      <div class="project-header" style="background-color:white;">
+        <div class="container project-header-top">
+          <ul class="breadcrumb">
+            <li><b><a href="<%= url_for("/$user_id/$project_id") %>"><%= $project_id %></a></b></li>
+
+            % if ($is_private_project) {
+              %= $api->icon('lock');
+            % }
+
+            % if (defined $original_project) {
+              <small>
+                (
+                  forked from
+                  <a href="<%= url_for("/$original_project->{'user.id'}/$original_project->{id}") %>">
+                    <%= "$original_project->{'user.id'}/$original_project->{id}" %>
+                  </a>
+                )
+              </small>
+            % }
+          </ul>
+          <div class="flex-padding"></div>
+          <div class="project-header-right">
+            <div class="project-header-right-container">
+              % if ($logined && defined $project_id) {
+                <div class="project-header-btn-container">
+                  <span id="watch-btn-frame">
+                    %= include '/api/watch', state => undef;
+                  </span>
+                  % if ($session_user->{id} ne $user_id ) {
+                    <a href="<%= url_for("/$user_id/$project_id/fork") %>" class="btn btn-fork">
+                      %= $api->icon('repo-forked');
+                      Fork
+                      <span class="count-label">
+                        <%= $fork_count %>
+                      </span>
+                    </a>
+                  % } else {
+                    <button class="btn btn-fork disabled', disabled="">
+                      %= $api->icon('repo-forked');
+                      Fork
+                      <span class="count-label">
+                        <%= $fork_count %>
+                      </span>
+                    </button>
+                  % }
+                </div>
+              % }
+            </div>
+          </div>
+        </div>
+        <div class="tree-description">
+          <%= $desc %>
+          % if (defined $website_url && length $website_url) {
+            <a href="<%= $website_url %>">website</a>
+          % }
+        </div>
+      </div>
     % }
     % if ($state eq 'display') {
       <div style="margin-bottom:5px;">
