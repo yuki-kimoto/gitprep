@@ -833,23 +833,37 @@ sub load_svg {
   return undef unless $svg->tag eq 'svg';
   my $attrs = $svg->attr;
   delete $attrs->{xmlns};
-  my ($x, $y, $width, $height) = (0, 0, $attrs->{width}, $attrs->{height});
+
+  my ($width, $height) = ($attrs->{width}, $attrs->{height});
+  my ($w, $h) = ($width, $height);
   my $viewbox = $attrs->{viewBox} || $attrs->{viewbox};
   unless ($viewbox) {
-    $viewbox = "$x $y $width $height" if $width && $height;
+    $viewbox = "0 0 $w $h" if $w && $h;
   }
-  $attrs->{viewBox} = $viewbox if $width && $height;
+  $attrs->{viewBox} = $viewbox if $viewbox;
   delete $attrs->{viewbox};
+  if ($viewbox =~ /^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s"$/) {
+    $w = $3 - $1 unless defined $w;
+    $h = $4 - $2 unless defined $h;
+  }
+
   $width = delete $args{width} if $args{width};
   $height = delete $args{height} if $args{height};
   $attrs->{width} = $width if $width;
   $attrs->{height} = $height if $height;
+
   my $class = delete $args{class};
   my $title = delete $args{title};
   my $style = delete $args{style};
+  my $tag = delete $args{tag};
   $attrs->{$_} = $args{$_} for (keys %args);
   $self->DOM_add_class($svg, $class) if defined $class;
-  $svg = $self->DOM_element('span', title => $title, style => $style, $svg) if $title || $style;
+
+  $style = 'width:fit-content;height:fit-content;' . ($style || '') if $w && $width && $h && $height && ($width != $w || $height != $h);
+  %args = ();
+  $args{style} = $style if $style;
+  $args{title} = $title if $title;
+  $svg = $self->DOM_element($tag || 'span', %args, $svg) if keys %args;
   return $svg;
 }
 
