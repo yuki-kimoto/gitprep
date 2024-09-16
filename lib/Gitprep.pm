@@ -58,7 +58,8 @@ sub rep_info {
   my $info = {};
   $info->{user} = $user_id;
   $info->{project} = $project_id;
-  $info->{git_dir} = $self->rep_home . "/$user_id/$project_id.git";
+  $info->{root} = $self->rep_home . "/$user_id/$project_id.git";
+  $info->{git_dir} = $info->{root};
   
   return $info;
 }
@@ -77,8 +78,9 @@ sub work_rep_info {
   my $info = {};
   $info->{user} = $user_id;
   $info->{project} = $project_id;
-  $info->{git_dir} = $self->work_rep_home . "/$user_id/$project_id/.git";
-  $info->{work_tree} = $self->work_rep_home . "/$user_id/$project_id";
+  $info->{root} = $self->work_rep_home . "/$user_id/$project_id";
+  $info->{git_dir} = $info->{root} . '/.git';
+  $info->{work_tree} = $info->{root};
   
   return $info;
 }
@@ -89,7 +91,8 @@ sub wiki_rep_info {
   my $info = {};
   $info->{user} = $user_id;
   $info->{project} = $project_id;
-  $info->{git_dir} = $self->rep_home . "/$user_id/$project_id.wiki.git";
+  $info->{root} = $self->rep_home . "/$user_id/$project_id.wiki.git";
+  $info->{git_dir} = $info->{root};
   
   return $info;
 }
@@ -100,8 +103,9 @@ sub wiki_work_rep_info {
   my $info = {};
   $info->{user} = $user_id;
   $info->{project} = $project_id;
-  $info->{git_dir} = $self->work_rep_home . "/$user_id/$project_id.wiki/.git";
-  $info->{work_tree} = $self->work_rep_home . "/$user_id/$project_id.wiki";
+  $info->{root} = $self->work_rep_home . "/$user_id/$project_id.wiki";
+  $info->{git_dir} = $info->{root} . '/.git';
+  $info->{work_tree} = $info->{root};
   
   return $info;
 }
@@ -292,7 +296,11 @@ sub startup {
       ]
     },
     {
-      table => 'wiki'
+      table => 'wiki',
+      primary_key => 'row_id',
+      join => [
+        'left join project on wiki.project = project.row_id'
+      ]
     },
     {
       table => 'subscription',
