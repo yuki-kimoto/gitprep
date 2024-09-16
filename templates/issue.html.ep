@@ -585,7 +585,8 @@
           % } else {
             opened this issue
             %= $api->age_element($issue->{open_time});
-            / <%= scalar @$issue_messages %> comment
+            -
+            %= $api->plural('comment', scalar(@$issue_messages) - 1, 'No');
           % }
         </span>
       </div>

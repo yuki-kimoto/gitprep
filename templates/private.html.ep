@@ -1,10 +1,12 @@
 % layout 'common', title => 'Private repository';
 
-  %= include '/include/header';
+  %= include '/include/header', private => 1;
+  % my $api = gitprep_api;
   
   <div class="container">
     <div class="private">
-      <%= $project %> is private repository
+      %= $api->icon('lock', width => 200, height => 200);
+      <br /><%= $project %> is a private repository
     </div>
   </div>
 
