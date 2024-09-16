@@ -59,7 +59,7 @@ sub prepare_merge {
   Gitprep::Util::run_command(@git_checkout_first_branch)
     or Carp::croak "Can't execute git checkout: @git_checkout_first_branch";
   
-  # Delete temparary branch if it eixsts
+  # Delete temporary branch if it exists
   if (grep { $_ eq $tmp_branch } @$branch_names) {
     my @git_branch_remove_cmd = $self->app->git->cmd(
       $work_rep_info,
@@ -71,7 +71,7 @@ sub prepare_merge {
       or Carp::croak "Can't execute git branch: @git_branch_remove_cmd";
   }
 
-  # Create temparary branch
+  # Create temporary branch
   my @git_branch_cmd = $self->app->git->cmd(
     $work_rep_info,
     'branch',
@@ -444,7 +444,7 @@ sub original_project {
     where => {user => $user_row_id, id => $project_id}
   )->value;
   
-  croak "Original project don't eixsts." unless defined $original_project_row_id;
+  croak "Original project doesn't exist." unless defined $original_project_row_id;
   
   # Original project
   my $original_project = $dbi->model('project')->select(
@@ -513,15 +513,36 @@ sub rename_project {
   my ($self, $user, $project, $to_project) = @_;
   
   # Rename project
-  my $git = $self->app->git;
-  my $dbi = $self->app->dbi;
+  my $app = $self->app;
+  my $git = $app->git;
+  my $dbi = $app->dbi;
+  my $has_wiki = $dbi->model('wiki')->select('count(*)', where => {
+    'project.id' => $project
+  })->value;
   my $error;
   eval {
     $dbi->connector->txn(sub {
       eval { $self->_rename_project($user, $project, $to_project) };
       croak $error = $@ if $@;
-      eval { $self->_rename_rep($user, $project, $to_project) };
+
+      eval { $self->_rename_rep($user, $project, $to_project, sub () {
+        return $app->rep_info(@_);}
+      ) };
       croak $error = $@ if $@;
+      eval { $self->_rename_rep($user, $project, $to_project, sub () {
+        return $app->work_rep_info(@_);}
+      ) };
+      croak $error = $@ if $@;
+      if ($has_wiki) {
+        eval { $self->_rename_rep($user, $project, $to_project, sub () {
+          return $app->wiki_rep_info(@_);}
+        ) };
+        croak $error = $@ if $@;
+        eval { $self->_rename_rep($user, $project, $to_project, sub () {
+          return $app->wiki_work_rep_info(@_);}
+        ) };
+        croak $error = $@ if $@;
+      }
     });
   };
   croak $error if $error;
@@ -1115,11 +1136,14 @@ sub _delete_rep {
   my $rep_home = $self->app->rep_home;
   croak "Can't remove repository. repository home is empty"
     if !defined $rep_home || $rep_home eq '';
-  my $rep = "$rep_home/$user/$project.git";
-  if (-e $rep) {
-    rmtree $rep;
-    croak "Can't remove repository. repository is rest"
-      if -e $rep;
+  my $app = $self->app;
+  for my $ri ($app->rep_info($user, $project), $app->work_rep_info($user, $project)) {
+    my $rep = $ri->{root};
+    if (-e $rep) {
+      rmtree $rep;
+      croak "Can't remove repository. repository is rest"
+        if -e $rep;
+    }
   }
 }
 
@@ -1127,12 +1151,14 @@ sub _delete_wiki_rep {
   my ($self, $user, $project) = @_;
 
   # Delete wiki repository
-  my $wiki_rep_info = $self->app->wiki_rep_info($user, $project);
-  my $rep =  $wiki_rep_info->{git_dir};
-  if (-e $rep) {
-    rmtree $rep;
-    croak "Can't remove wiki repository"
-      if -e $rep;
+  my $app = $self->app;
+  for my $ri ($app->wiki_rep_info($user, $project), $app->wiki_work_rep_info($user, $project)) {
+    my $rep =  $ri->{root};
+    if (-e $rep) {
+      rmtree $rep;
+      croak "Can't remove wiki repository"
+        if -e $rep;
+    }
   }
 }
 
@@ -1213,21 +1239,24 @@ sub _rename_project {
 }
 
 sub _rename_rep {
-  my ($self, $user, $project, $renamed_project) = @_;
-  
+  my ($self, $user, $project, $renamed_project, $info_func) = @_;
+
   # Check arguments
   croak "Invalid user name or project"
     unless defined $user && defined $project && defined $renamed_project;
 
   # Rename repository
-  my $rep_info = $self->app->rep_info($user, $project);
-  my $rep_git_dir = $rep_info->{git_dir};
-  
-  my $renamed_rep_info = $self->app->rep_info($user, $renamed_project);
-  my $renamed_rep_git_dir = $renamed_rep_info->{git_dir};
+  my $rep_info = $info_func->($user, $project);
+  my $rep_git_dir = $rep_info->{root};
 
-  move($rep_git_dir, $renamed_rep_git_dir)
-    or croak "Can't move $rep_git_dir to $renamed_rep_git_dir: $!";
+  my $renamed_rep_info = $info_func->($user, $renamed_project);
+  my $renamed_rep_git_dir = $renamed_rep_info->{root};
+
+  if (-e $rep_git_dir) {
+    my $lock_fh = $self->lock_rep($rep_info);
+    move($rep_git_dir, $renamed_rep_git_dir)
+      or croak "Can't move $rep_git_dir to $renamed_rep_git_dir: $!";
+  }
 }
 
 1;
