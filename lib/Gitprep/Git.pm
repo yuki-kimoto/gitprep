@@ -729,7 +729,7 @@ sub forward_commits {
     $work_rep_info,
     'rev-list',
     '--left-right',
-    "$base_branch...$target_object_id"
+    "origin/$base_branch...$target_object_id"
   );
   open my $fh, '-|', @cmd
     or croak "Can't get info: @cmd";
