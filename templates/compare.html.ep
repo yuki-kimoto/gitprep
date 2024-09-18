@@ -182,7 +182,7 @@
     $target_rep_info = $base_rep_info;
   }
     
-  # Create working repository if it don't exist
+  # Create working repository if it doesn't exist
   $self->app->manager->create_work_rep($base_user_id, $base_project_id);
   
   # Lock working repository
@@ -225,7 +225,8 @@
   my $authors_count = keys %$authors;
 
   # Start commit
-  my $start_commit_id = app->git->ref_to_object_id($base_rep_info, $base_branch);
+  my $start_commit_id = app->manager->merge_base($work_rep_info, $base_branch,
+    $target_rep_info, $target_branch);
 
   # End commit
   my $end_commit_id = app->git->ref_to_object_id($target_rep_info, $target_branch);
@@ -399,18 +400,21 @@
       <div>
         <div style="display:inline-block">
           <button id="base-fork-btn" class="btn btn-small" style="<%= $base_user_id eq $target_user_id ? 'display:none' : '' %>">
-            <span>base fork:</span><b> <%= $base_project->{'user.id'} %>/<%= $base_project->{id} %></b>
+            <span>base repository:</span><b> <%= $base_project->{'user.id'} %>/<%= $base_project->{id} %></b>
             %= $api->icon('arrow-down');
           </button>
           <button id="base-branch-btn" class="btn btn-small">
             <span>base:</span><b> <%= $base_branch %></b>
             %= $api->icon('arrow-down');
           </button>
-          ...
+        </div>
+        <div style="display:inline-block;line-height:0px;">
+          %= $api->icon('arrow-left');
+          <br />...
         </div>
         <div style="display:inline-block;margin-top:10px;">
           <button id="head-fork-btn" class="btn btn-small" style="<%= $base_user_id eq $target_user_id ? 'display:none' : '' %>">
-            <span>head fork:</span><b> <%= $target_project->{'user.id'} %>/<%= $target_project->{id} %></b>
+            <span>head repository:</span><b> <%= $target_project->{'user.id'} %>/<%= $target_project->{id} %></b>
             %= $api->icon('arrow-down');
           </button>
           <button id="target-branch-btn" class="btn btn-small">

@@ -166,6 +166,22 @@ sub get_patch {
   return $patch;
 }
 
+sub merge_base {
+  my ($self, $work_rep_info, $base_branch, $target_rep_info, $target_branch) = @_;
+
+  my $target_remote = $target_rep_info->{user} . '/' . $target_rep_info->{project};
+  my @git_merge_base_cmd = $self->app->git->cmd(
+    $work_rep_info,
+    'merge-base',
+    "$target_remote/$target_branch",
+    "origin/$base_branch"
+  );
+  open my $fh, '-|', @git_merge_base_cmd or return;
+  my $merge_base = <$fh>;
+  chomp $merge_base;
+  return $merge_base;
+}
+
 sub push {
   my ($self, $work_rep_info, $base_branch) = @_;
   
