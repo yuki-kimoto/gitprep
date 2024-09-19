@@ -17,23 +17,54 @@ has 'authorized_keys_file';
 
 has '_tmp_branch' => '__gitprep_tmp_branch__';
 
+sub get_remotes {
+  my ($self, $rep_info) = @_;
+
+  my @git_remote_show_cmd = $self->app->git->cmd($rep_info, 'remote', '-v', 'show');
+  open my $fh, '-|', @git_remote_show_cmd
+    or croak "Execute git remote cmd:@git_remote_show_cmd";
+  my %remotes;
+  while (my $line = <$fh>) {
+    my ($remote, $url) = split /\s+/, $line;
+    $remotes{$remote} = $url;
+  }
+  return \%remotes;
+}
+
 sub prepare_merge {
   my ($self, $work_rep_info, $base_rep_info, $base_branch, $target_rep_info, $target_branch) = @_;
-  
+
+  my $git = $self->app->git;
+
   # Fetch base repository
   my $base_user_id = $base_rep_info->{user};
-  my @git_fetch_base_cmd = $self->app->git->cmd($work_rep_info, 'fetch', 'origin');
+  my @git_fetch_base_cmd = $git->cmd($work_rep_info, 'fetch', 'origin');
   Gitprep::Util::run_command(@git_fetch_base_cmd)
     or Carp::croak "Can't execute git fetch: @git_fetch_base_cmd";
-  
+
+  # Configure remote for target repository
+  my $target_remote = $target_rep_info->{user} . '/' . $target_rep_info->{project};
+  my $remotes = $self->get_remotes($work_rep_info);
+  if (exists $remotes->{$target_remote} && $remotes->{$target_remote} ne $base_rep_info->{root}) {
+    my @git_remote_remove_cmd = $git->cmd($work_rep_info, 'remote', 'remove', $target_remote);
+    Gitprep::Util::run_command(@git_remote_remove_cmd)
+      or Carp::croak "Can't execute git remote @git_remote_remove_cmd";
+    delete $remotes->{$target_remote};
+  }
+  if (!exists $remotes->{$target_remote}) {
+    my @git_remote_add_cmd = $git->cmd($work_rep_info, 'remote', 'add', $target_remote, $base_rep_info->{root});
+    Gitprep::Util::run_command(@git_remote_add_cmd)
+      or Carp::croak "Can't execute git remote @git_remote_add_cmd";
+  }
+
   # Fetch target repository
-  my @git_fetch_target_cmd = $self->app->git->cmd($work_rep_info, 'fetch', $target_rep_info->{git_dir});
-  
+  my @git_fetch_target_cmd = $git->cmd($work_rep_info, 'fetch', $target_remote);
+
   Gitprep::Util::run_command(@git_fetch_target_cmd)
     or Carp::croak "Can't execute git fetch: @git_fetch_target_cmd";
 
   # Ensure no diff
-  my @git_reset_hard_cmd = $self->app->git->cmd(
+  my @git_reset_hard_cmd = $git->cmd(
     $work_rep_info,
     'reset',
     '--hard'
@@ -61,7 +92,7 @@ sub prepare_merge {
   
   # Delete temporary branch if it exists
   if (grep { $_ eq $tmp_branch } @$branch_names) {
-    my @git_branch_remove_cmd = $self->app->git->cmd(
+    my @git_branch_remove_cmd = $git->cmd(
       $work_rep_info,
       'branch',
       '-D',
@@ -71,40 +102,23 @@ sub prepare_merge {
       or Carp::croak "Can't execute git branch: @git_branch_remove_cmd";
   }
 
-  # Create temporary branch
-  my @git_branch_cmd = $self->app->git->cmd(
-    $work_rep_info,
-    'branch',
-    $tmp_branch
-  );
-  Gitprep::Util::run_command(@git_branch_cmd)
-    or Carp::croak "Can't execute git branch: @git_branch_cmd";
-  
-  # Checkout tmp branch and git reset --hard from my remote branch
-  my @git_checkout_tmp_branch = $self->app->git->cmd(
+  # Create temporary branch from base branch and check it out
+  my @git_branch_cmd = $git->cmd(
     $work_rep_info,
     'checkout',
-    $tmp_branch
+    '-b',
+    $tmp_branch,
+    "origin/$base_branch"
   );
-  Gitprep::Util::run_command(@git_checkout_tmp_branch)
-    or Carp::croak "Can't execute git checkout: @git_checkout_tmp_branch";
-  
-  # git reset --hard 
-  my $base_object_id = $self->app->git->ref_to_object_id($base_rep_info, $base_branch);
-  my @git_reset_hard_base_cmd = $self->app->git->cmd(
-    $work_rep_info,
-    'reset',
-    '--hard',
-    $base_object_id
-  );
-  Gitprep::Util::run_command(@git_reset_hard_base_cmd)
-    or Carp::croak "Can't execute git reset --hard: @git_reset_hard_base_cmd";
+  Gitprep::Util::run_command(@git_branch_cmd)
+    or Carp::croak "Can't execute git checkout @git_branch_cmd";
 }
 
 sub merge {
   my ($self, $work_rep_info, $target_rep_info, $target_branch, $pull_request_number) = @_;
-  
-  my $object_id = $self->app->git->ref_to_object_id($target_rep_info, $target_branch);
+
+  my $target_remote = $target_rep_info->{user} . '/' . $target_rep_info->{project};
+  my $object_id = $self->app->git->ref_to_object_id($work_rep_info, "$target_remote/$target_branch");
   
   my $message;
   my $target_user_id = $target_rep_info->{user};
@@ -132,10 +146,11 @@ sub merge {
 
 sub get_patch {
   my ($self, $work_rep_info, $target_rep_info, $target_branch) = @_;
+
+  my $target_remote = $target_rep_info->{user} . '/' . $target_rep_info->{project};
+  my $object_id = $self->app->git->ref_to_object_id($work_rep_info, "$target_remote/$target_branch");
   
-  my $object_id = $self->app->git->ref_to_object_id($target_rep_info, $target_branch);
-  
-  # Merge
+  # Format patch
   my @git_format_patch_cmd = $self->app->git->cmd(
     $work_rep_info,
     'format-patch',
@@ -149,6 +164,22 @@ sub get_patch {
   my $patch = do { local $/; <$fh> };
   
   return $patch;
+}
+
+sub merge_base {
+  my ($self, $work_rep_info, $base_branch, $target_rep_info, $target_branch) = @_;
+
+  my $target_remote = $target_rep_info->{user} . '/' . $target_rep_info->{project};
+  my @git_merge_base_cmd = $self->app->git->cmd(
+    $work_rep_info,
+    'merge-base',
+    "$target_remote/$target_branch",
+    "origin/$base_branch"
+  );
+  open my $fh, '-|', @git_merge_base_cmd or return;
+  my $merge_base = <$fh>;
+  chomp $merge_base;
+  return $merge_base;
 }
 
 sub push {
@@ -192,7 +223,7 @@ sub create_work_rep {
   my $work_rep_info = $self->app->work_rep_info($user, $project);
   my $work_tree = $work_rep_info->{work_tree};
   
-  # Create working repository if it don't exist
+  # Create working repository if it doesn't exist
   unless (-e $work_tree) {
 
     # git clone

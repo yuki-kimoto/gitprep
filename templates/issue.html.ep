@@ -302,13 +302,16 @@
     # Working repository information
     my $work_rep_info = app->work_rep_info($base_user_id, $base_project_id);
 
+    # Make sure the working repository exists.
+    app->manager->create_work_rep($base_user_id, $base_project_id);
+
     # Display patch
     if (stash('patch')) {
       # Lock working repository
-      my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+      my $lock_fh = app->manager->lock_rep($work_rep_info);
 
       # Prepare merge
-      $self->app->manager->prepare_merge(
+      app->manager->prepare_merge(
         $work_rep_info,
         $base_rep_info,
         $base_branch,
@@ -317,7 +320,7 @@
       );
 
       # Create patch
-      my $patch = $self->app->manager->get_patch(
+      my $patch = app->manager->get_patch(
         $work_rep_info,
         $target_rep_info,
         $target_branch
@@ -329,7 +332,7 @@
     }
 
     # Git
-    my $git = $self->app->git;
+    my $git = app->git;
 
     # Handle pull-request specific requests.
     if (lc $self->req->method eq 'post') {
@@ -344,10 +347,10 @@
         }
 
         # Lock working repository
-        my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+        my $lock_fh = app->manager->lock_rep($work_rep_info);
 
         # Prepare merge
-        $self->app->manager->prepare_merge(
+        app->manager->prepare_merge(
           $work_rep_info,
           $base_rep_info,
           $base_branch,
@@ -356,7 +359,7 @@
         );
 
         # Merge
-        $merge_success = $self->app->manager->merge(
+        $merge_success = app->manager->merge(
           $work_rep_info,
           $target_rep_info,
           $target_branch
@@ -392,9 +395,20 @@
     }
     $last_commit_date = $commits->[0]->{committer_epoch} if @$commits;
 
+    my $lock_fh = app->manager->lock_rep($work_rep_info);
+
+    # Prepare merge
+    app->manager->prepare_merge(
+      $work_rep_info,
+      $base_rep_info,
+      $base_branch,
+      $target_rep_info,
+      $target_branch
+    );
+
     # Start commit
-    my $start_commit_id = app->git->ref_to_object_id($base_rep_info,
-      $base_branch);
+    my $start_commit_id = app->manager->merge_base($work_rep_info,
+      $base_branch, $target_rep_info, $target_branch);
 
     # End commit
     my $end_commit_id = app->git->ref_to_object_id($target_rep_info,
@@ -403,19 +417,8 @@
     # Check merge automatically
     if ($issue->{open}) {
 
-      my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
-
-      # Prepare merge
-      $self->app->manager->prepare_merge(
-        $work_rep_info,
-        $base_rep_info,
-        $base_branch,
-        $target_rep_info,
-        $target_branch
-      );
-
       # Check conflicts
-      $merge_success = $self->app->manager->merge(
+      $merge_success = app->manager->merge(
         $work_rep_info,
         $target_rep_info,
         $target_branch
