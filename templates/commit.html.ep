@@ -2,7 +2,7 @@
   # API
   my $api = gitprep_api;
   
-  # Paramters
+  # Parameters
   my $user_id = param('user');
   my $project_id = param('project');
   my $diff = param('diff');
@@ -131,30 +131,16 @@
         <li class="last-child">
           % my $parents = $commit->{parents};
           
-          % if (@$parents == 0) {
-            <div class="commits-summary-parent">
-              <span>0 parent</span>
-            </div>
-          % } elsif (@$parents == 1) {
-            <div class="commits-summary-parent">
-              <span>1 parent</span>
-              <a href="<%= url_for("$user_project_path/commit/$parents->[0]") %>">
-                <%= substr($parents->[0], 0, 7) %>
+          <div class="commits-summary-parent">
+            <span><%= $api->plural('parent', scalar @$parents, '0') %></span>
+            % my $sep = '';
+            % for my $parent (@$parents) {
+              <%= $sep %><a href="<%= url_for("$user_project_path/commit/$parent") %>">
+                <%= substr($parent, 0, 7) %>
               </a>
-            </div>
-          % } else {
-            <div class="commits-summary-parent">
-              <span>2 parents</span>:
-              
-              <a class="font-black" href="<%= url_for("$user_project_path/commit/$parents->[0]") %>">
-                <%= substr($parents->[0], 0, 7) %>
-              </a>
-              +
-              <a class="font-black" href="<%= url_for("$user_project_path/commit/$parents->[1]") %>">
-                <%= substr($parents->[1], 0, 7) %>
-              </a>
-            </div>
-          % }
+              % $sep = ' + ';
+            % }
+          </div>
           <div class="commits-summary-commit-id">
             commit <span><%= $commit->{id} %></span>
           </div>
