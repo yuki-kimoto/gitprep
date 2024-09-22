@@ -45,14 +45,14 @@ sub prepare_merge {
   # Configure remote for target repository
   my $target_remote = $target_rep_info->{user} . '/' . $target_rep_info->{project};
   my $remotes = $self->get_remotes($work_rep_info);
-  if (exists $remotes->{$target_remote} && $remotes->{$target_remote} ne $base_rep_info->{root}) {
+  if (exists $remotes->{$target_remote} && $remotes->{$target_remote} ne $target_rep_info->{root}) {
     my @git_remote_remove_cmd = $git->cmd($work_rep_info, 'remote', 'remove', $target_remote);
     Gitprep::Util::run_command(@git_remote_remove_cmd)
       or Carp::croak "Can't execute git remote @git_remote_remove_cmd";
     delete $remotes->{$target_remote};
   }
   if (!exists $remotes->{$target_remote}) {
-    my @git_remote_add_cmd = $git->cmd($work_rep_info, 'remote', 'add', $target_remote, $base_rep_info->{root});
+    my @git_remote_add_cmd = $git->cmd($work_rep_info, 'remote', 'add', $target_remote, $target_rep_info->{root});
     Gitprep::Util::run_command(@git_remote_add_cmd)
       or Carp::croak "Can't execute git remote @git_remote_add_cmd";
   }
