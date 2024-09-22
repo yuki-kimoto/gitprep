@@ -1,4 +1,6 @@
 <%
+  my $api = gitprep_api;
+
   # Parameters
   my $type = param('type');
   my $q = param('q');
