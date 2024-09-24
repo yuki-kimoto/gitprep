@@ -363,12 +363,9 @@ a.wiki-btn-history:hover {
 }
 
 .tree-description {
-  font-size:17px;
+  font-size:16px;
   padding-top:5px;
-  padding-bottom:5px;
   color:#112;
-  margin-bottom:7px;
-  padding-left:6px;
   font-weight:normal;
 }
 .tree-description a {
@@ -2220,6 +2217,10 @@ a:hover .btn-delete {
   display: flex;
   justify-content: center;
   overflow: hidden;
+}
+
+.project-header-top a, a:visited {
+  color:#444;
 }
 
 .project-header>*.padding {
