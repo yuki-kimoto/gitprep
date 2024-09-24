@@ -32,53 +32,51 @@
 %>
 
 <div class="header">
-  <div class="container">
-    <div class="header-left">
-      <div class="title"><a href="<%= url_for('/') %>"><%= $api->icon('gitprep', class => 'header-logo') %></a></div>
-      % if ((url_for->path->parts->[0] || '') ne '_search') {
-        <form class="header-search" action="<%= url_for('/_search') %>">
-          <%= text_field 'q', style => 'display:inline-block;width:350px', placeholder => 'Search' %>
-        </form>
-      % }
-    </div>
-    <div class="header-right">
-      <div class="header-right-container">
-        % if ($api->logined) {
-          % unless ($session_user->{id} eq 'admin') {
-            <div class="header-btn-container">
-              <a class="btn" href="<%= url_for("/_new") %>">
-                %= $api->icon('plus', title => 'Create a new repo');
-              </a>
-            </div>
-            <div class="header-btn-container">
-              <a class="btn" href="<%= url_for("/$session_user->{id}/_settings") %>">
-                %= $api->icon('gear', title => 'Account Settings');
-              </a>
-            </div>
-          % }
-          % my $url = url_with->to_abs;
+  <div class="header-left">
+    <div class="title"><a href="<%= url_for('/') %>"><%= $api->icon('gitprep', class => 'header-logo') %></a></div>
+    % if ((url_for->path->parts->[0] || '') ne '_search') {
+      <form class="header-search" action="<%= url_for('/_search') %>">
+        <%= text_field 'q', style => 'display:inline-block;width:350px', placeholder => 'Search' %>
+      </form>
+    % }
+  </div>
+  <div class="header-right">
+    <div class="header-right-container">
+      % if ($api->logined) {
+        % unless ($session_user->{id} eq 'admin') {
           <div class="header-btn-container">
-            <a class="btn" href="<%= url_for("/_logout?from=$url") %>">
-              %= $api->icon('sign-out', title => 'Logout');
+            <a class="btn" href="<%= url_for("/_new") %>">
+              %= $api->icon('plus', title => 'Create a new repo');
             </a>
           </div>
-          <!-- Logined as <%= $session_user->{id} %> -->
-          <div class="header-login-container">
-            % my $userurl = '/_admin';
-            % $userurl = "/$session_user->{id}" unless $api->logined_admin;
-            <a href="<%= url_for($userurl) %>">
-              %= $api->icon('person');
-              <%= $session_user->{id} %>
-            </a>
-          </div>
-        % } else {
           <div class="header-btn-container">
-            <a class="btn" href="<%= url_for('/_login') %>">
-              %= $api->icon('sign-in', title => 'Login');
+            <a class="btn" href="<%= url_for("/$session_user->{id}/_settings") %>">
+              %= $api->icon('gear', title => 'Account Settings');
             </a>
           </div>
         % }
-      </div>
+        % my $url = url_with->to_abs;
+        <div class="header-btn-container">
+          <a class="btn" href="<%= url_for("/_logout?from=$url") %>">
+            %= $api->icon('sign-out', title => 'Logout');
+          </a>
+        </div>
+        <!-- Logined as <%= $session_user->{id} %> -->
+        <div class="header-login-container">
+          % my $userurl = '/_admin';
+          % $userurl = "/$session_user->{id}" unless $api->logined_admin;
+          <a href="<%= url_for($userurl) %>">
+            %= $api->icon('person');
+            <%= $session_user->{id} %>
+          </a>
+        </div>
+      % } else {
+        <div class="header-btn-container">
+          <a class="btn" href="<%= url_for('/_login') %>">
+            %= $api->icon('sign-in', title => 'Login');
+          </a>
+        </div>
+      % }
     </div>
   </div>
 </div>
