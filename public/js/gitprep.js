@@ -42,9 +42,39 @@
     });
   };
 
+  // Given a css color (possibly in rgb()/hsl() form), return it as '#xxxxxx'.
   Gitprep.standardizeColor = function (str) {
     var ctx = document.createElement('canvas').getContext('2d');
     ctx.fillStyle = str;
     return ctx.fillStyle;
+  };
+
+  // Latched mouse coordinates.
+  Gitprep.mouseX = 0;
+  Gitprep.mouseY = 0;
+  $(document).mousemove(function (event) {
+    Gitprep.mouseX = event.pageX;
+    Gitprep.mouseY = event.pageY;
+  });
+
+  // Show a popup during ms milliseconds.
+  Gitprep.flashingPopup = function (html, ms, style) {
+    var css = {
+      position: 'absolute',
+      left: Gitprep.mouseX + 8,
+      top: Gitprep.mouseY + 8,
+      border: '1px solid black',
+      background: '#FFFBD6',
+      padding: '0.3cap 0.5em',
+      ... (style || {})
+    };
+    ms = ms || 2000;
+    var popup = $('<div>');
+    popup.css(css);
+    popup.html(html);
+    setTimeout(function () {
+      popup.remove();
+    }, ms);
+    $('body').append(popup);
   };
 }(window.Gitprep = window.Gitprep || {}, jQuery));

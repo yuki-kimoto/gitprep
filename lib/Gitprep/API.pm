@@ -603,7 +603,7 @@ sub markdown {
       h4 => [qw( id class )],
       h5 => [qw( id class )],
       h6 => [qw( id class )],
-      p => [qw( id class )],
+      p => [qw( id class align )],
       div => [qw( id class )],
       span => [qw( id class )],
       br => [qw( class / )],
@@ -622,7 +622,7 @@ sub markdown {
       dd => [qw( class )],
       li => [qw( class )],
       a => [qw( href id class )],
-      img => [qw( src alt title align id class / )],
+      img => [qw( src alt title align id class width height / )],
       blockquote => [qw( id class )],
       table => [qw( id class border width bgcolor cellspacing )],
       th => [qw( class rowspan colspan bgcolor align valign )],
@@ -827,6 +827,7 @@ sub load_svg {
   open my $fh, '<', $self->app->home . "/$name" or return undef;
   read $fh, my $markup, -s $fh;
   close $fh;
+  $markup =~ s/^[\r\n\t ]*(.*?)[\r\n\t ]*$/$1/s;
   my $dom = Mojo::DOM->new($markup);
   return undef unless $dom && scalar(@{$dom->child_nodes}) == 1;
   my $svg = $dom->child_nodes->first;

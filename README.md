@@ -1,3 +1,5 @@
+<p align="center"><img src="gitprep-logo.svg" width="200" height="200" alt="[GitPrep logo]" /></p>
+
 # GitPrep - Portable GitHub system on your own server
 
 GitPrep is **portable Github system**, which can be installed and hosted on **your own Unix/Linux server**.

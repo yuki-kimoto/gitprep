@@ -428,6 +428,18 @@ sub blob_is_image {
 sub blob_mime_type {
   my ($self, $rep_info, $rev, $file) = @_;
   
+  return 'image/png' if $file =~ m/\.png$/i;
+  return 'image/gif' if $file =~ m/\.gif$/i;
+  return 'image/jpeg' if $file =~ m/\.jpe?g$/i;
+  return 'image/svg+xml' if $file =~ m/\.svg$/i;
+
+  # Text types
+  my $text_exts = $self->text_exts;
+  for my $text_ext (@$text_exts) {
+    my $ext = quotemeta($text_ext);
+    return 'text/plain' if $file =~ /\.$ext$/i;
+  }
+
   # Blob
   my $hash = $self->path_to_hash($rep_info, $rev, $file, 'blob')
     or croak 'Cannot find file';
@@ -441,21 +453,9 @@ sub blob_mime_type {
     or croak "Can't cat $file, $hash";
 
   return 'text/plain' unless $fh;
-  
-  # MIME type
-  my $text_exts = $self->text_exts;
-  for my $text_ext (@$text_exts) {
-    my $ext = quotemeta($text_ext);
-    return 'text/plain' if $file =~ /\.$ext$/i;
-  }
-  if (-T $fh) { return 'text/plain' }
-  elsif (! $file) { return 'application/octet-stream' }
-  elsif ($file =~ m/\.png$/i) { return 'image/png' }
-  elsif ($file =~ m/\.gif$/i) { return 'image/gif' }
-  elsif ($file =~ m/\.jpe?g$/i) { return 'image/jpeg'}
-  else { return 'application/octet-stream'}
-  
-  return;
+
+  return 'text/plain' if -T $fh;
+  return 'application/octet-stream';
 }
 
 sub blob_content_type {
