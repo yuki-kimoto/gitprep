@@ -2208,11 +2208,19 @@ a:hover .btn-delete {
   overflow:hidden;
   padding:14px 0 0 0;
 }
+.header-project-path {
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  padding:0 17px;
+}
+
 .project-header-top {
   display: flex;
   justify-content: center;
   overflow: hidden;
 }
+
 .project-header>*.padding {
   flex: 10000;
   min-width: 1px;

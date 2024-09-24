@@ -83,7 +83,7 @@
 
 % if (!$no_project_header && (defined $user_id || defined $project_id)) {
   <div class="project-header">
-    <div class="container project-header-top">
+    <div class="header-project-path">
       <ul class="breadcrumb">
         <li><a href="<%= url_for('/') %>">
           %= $api->icon('home-fill');
@@ -118,57 +118,53 @@
       <%
         my $tab = stash('tab') || 'code';
       %>
-      <div class="container">
-        <div class="project-tabs">
-          <div class="container">
-            <ul>
-              <li class="<%= $tab eq 'code' ? 'active' :  '' %>">
-                <a href="<%= url_for("/$user_id/$project_id") %>">
-                  %= $api->icon('code');
-                  Code
-                </a>
-              </li>
-              <li class="<%= $tab eq 'issues' ? 'active' :  '' %>">
-                <a href="<%= url_for("/$user_id/$project_id/issues") %>">
-                  %= $api->icon('issue-opened');
-                  Issues
-                  <span class="count-label">
-                    <%= $api->get_open_issue_count($user_id, $project_id) %>
-                  </span>
-                </a>
-              </li>
-              <li class="<%= $tab eq 'pulls' ? 'active' :  '' %>">
-                <a href="<%= url_for("/$user_id/$project_id/pulls") %>">
-                  %= $api->icon('git-pull-request');
-                  Pull requests
-                  <span class="count-label">
-                    <%= $api->get_open_pull_request_count($user_id, $project_id) %>
-                  </span>
-                </a>
-              </li>
-              <li class="<%= $tab eq 'wiki' ? 'active' :  '' %>">
-                <a href="<%= url_for("/$user_id/$project_id/wiki") %>">
-                  %= $api->icon('book');
-                  Wiki
-                </a>
-              </li>
-              <li class="<%= $tab eq 'graph' ? 'active' :  '' %>">
-                <a href="<%= url_for("/$user_id/$project_id/network") %>" >
-                  %= $api->icon('graph');
-                  Members
-                </a>
-              </li>
-              % if ($logined && $user_id eq $session_user->{id}) {
-                <li class="<%= $tab eq 'settings' ? 'active' :  '' %>">
-                  <a href="<%= url_for("/$user_id/$project_id/settings") %>">
-                    %= $api->icon('gear');
-                    Settings
-                  </a>
-                </li>
-              % }
-            </ul>
-          </div>
-        </div>
+      <div class="project-tabs">
+        <ul>
+          <li class="<%= $tab eq 'code' ? 'active' :  '' %>">
+            <a href="<%= url_for("/$user_id/$project_id") %>">
+              %= $api->icon('code');
+              Code
+            </a>
+          </li>
+          <li class="<%= $tab eq 'issues' ? 'active' :  '' %>">
+            <a href="<%= url_for("/$user_id/$project_id/issues") %>">
+              %= $api->icon('issue-opened');
+              Issues
+              <span class="count-label">
+                <%= $api->get_open_issue_count($user_id, $project_id) %>
+              </span>
+            </a>
+          </li>
+          <li class="<%= $tab eq 'pulls' ? 'active' :  '' %>">
+            <a href="<%= url_for("/$user_id/$project_id/pulls") %>">
+              %= $api->icon('git-pull-request');
+              Pull requests
+              <span class="count-label">
+                <%= $api->get_open_pull_request_count($user_id, $project_id) %>
+              </span>
+            </a>
+          </li>
+          <li class="<%= $tab eq 'wiki' ? 'active' :  '' %>">
+            <a href="<%= url_for("/$user_id/$project_id/wiki") %>">
+              %= $api->icon('book');
+              Wiki
+            </a>
+          </li>
+          <li class="<%= $tab eq 'graph' ? 'active' :  '' %>">
+            <a href="<%= url_for("/$user_id/$project_id/network") %>" >
+              %= $api->icon('graph');
+              Members
+            </a>
+          </li>
+          % if ($logined && $user_id eq $session_user->{id}) {
+            <li class="<%= $tab eq 'settings' ? 'active' :  '' %>">
+              <a href="<%= url_for("/$user_id/$project_id/settings") %>">
+                %= $api->icon('gear');
+                Settings
+              </a>
+            </li>
+          % }
+        </ul>
       </div>
     % }
     <div style="position:relative;border-top:#d8d8d8 1px solid"></div>
