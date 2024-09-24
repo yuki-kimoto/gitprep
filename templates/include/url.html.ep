@@ -91,6 +91,7 @@
         rep_url.focus().select();
         document.execCommand('copy');
         rep_url.blur();
+        Gitprep.flashingPopup('URL copied!');
       });
     });
   });
