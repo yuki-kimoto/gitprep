@@ -1100,9 +1100,10 @@ input[type=text], input[type=password] {
   display:block;
   width:100%;
   text-decoration:none;
-  padding:10px 15px 8px 15px;
+  padding:10px 18px 8px 20px;
   text-align:center;
   color:#565656;
+  letter-spacing:0.5px;
 }
 
 .project-tabs li.active a {
