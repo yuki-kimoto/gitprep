@@ -1230,6 +1230,13 @@ input[type=text], input[type=password] {
   width:350px;
 }
 
+.header-logo {
+  fill: white;
+  width: 22px !important;
+  height: 22px !important;
+  margin-right: 20px;
+}
+
 .header {
   background:#004763;
   overflow:hidden;

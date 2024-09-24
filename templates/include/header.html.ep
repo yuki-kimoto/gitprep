@@ -34,7 +34,7 @@
 <div class="header">
   <div class="container">
     <div class="header-left">
-      <div class="title"><a href="<%= url_for('/') %>">GitPrep</a></div>
+      <div class="title"><a href="<%= url_for('/') %>"><%= $api->icon('gitprep', class => 'header-logo') %></a></div>
       % if ((url_for->path->parts->[0] || '') ne '_search') {
         <form class="header-search" action="<%= url_for('/_search') %>">
           <%= text_field 'q', style => 'display:inline-block;width:350px', placeholder => 'Search' %>
