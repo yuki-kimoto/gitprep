@@ -10,8 +10,6 @@
 
   my $activetab = '';
   my $pull_request;
-  my $base_project_row_id = $api->get_project_row_id($base_user_id,
-    $base_project_id);
   my $base_branch;
   my $target_project;
   my $target_branch;
@@ -43,10 +41,12 @@
       {open_user => ['id']}
     ],
     where => {
+      'project__user.id' => $base_user_id,
       'project.id' => $base_project_id,
       'issue.number' => $issue_number
     }
   )->one;
+  my $base_project_row_id = $issue->{project};
 
   # Session
   my $loggedin = $api->logined;
