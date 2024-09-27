@@ -1208,7 +1208,7 @@ sub exists_project {
 sub exists_user {
   my ($self, $user_id) = @_;
   
-  # Exists project
+  # Return true if user exists.
   my $row = $self->app->dbi->model('user')->select(where => {id => $user_id})->one;
   
   return $row ? 1 : 0;
