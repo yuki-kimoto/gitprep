@@ -427,12 +427,20 @@ sub startup {
         # User
         my $r = $r->any('/:user');
         {
+          # Early user existence check
+          $r->under(sub {
+            my $self = shift;
+            my $user_id = $self->param('user');
+            return 1 if $self->app->manager->exists_user($user_id);
+            $self->reply->not_found;
+          });
+
 	   # Home
           $r->get('/' => [format => 0] => sub { shift->render_maybe('/user') });
-          
+
           # Settings
           $r->get('/_settings' => sub { shift->render_maybe('/user-settings') });
-          
+
           # SSH keys
           $r->any('/_settings/ssh' => sub { shift->render_maybe('/user-settings/ssh') });
         }
@@ -449,6 +457,12 @@ sub startup {
               my $user_id = $self->param('user');
               my $project_id = $self->param('project');
               $self->log->info("user: $user_id project $project_id");
+
+              if (!$self->app->manager->exists_project($user_id, $project_id)) {
+                $self->reply->not_found;
+                return 0;
+              }
+
               my $private = $self->app->manager->is_private_project($user_id, $project_id);
               
 
@@ -517,13 +531,20 @@ sub startup {
           {
             my $r = $r->under(sub {
               my $self = shift;
-              
-              # API
-              my $api = $self->gitprep_api;
-              
-              # Private
+
               my $user_id = $self->param('user');
               my $project_id = $self->param('project');
+
+              # Early project existence check
+              if (!$self->app->manager->exists_project($user_id, $project_id)) {
+                $self->reply->not_found;
+                return 0;
+              }
+
+              # API
+              my $api = $self->gitprep_api;
+
+              # Private
               my $private = $self->app->manager->is_private_project($user_id, $project_id);
               if ($private) {
                 if ($api->can_access_private_project($user_id, $project_id)) {
