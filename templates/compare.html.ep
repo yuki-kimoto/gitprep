@@ -318,7 +318,7 @@
       $('#base-fork-popup')
         .css('display', 'block')
         .css('top', '40px')
-        .css('left', '10px')
+        .css('left', $(this).position().left)
       ;
     });
     $('#base-fork-popup').on('click', function () {
@@ -335,7 +335,7 @@
       $('#head-fork-popup')
         .css('display', 'block')
         .css('top', '40px')
-        .css('left', '10px')
+        .css('left', $(this).position().left)
       ;
     });
     $('#head-fork-popup').on('click', function () {
@@ -351,7 +351,7 @@
       $('#base-branch-popup')
         .css('display', 'block')
         .css('top', '40px')
-        .css('left', '10px')
+        .css('left', $(this).position().left)
       ;
     });
     $('#base-branch-close').on('click', function () {
@@ -373,7 +373,7 @@
       $('#target-branch-popup')
         .css('display', 'block')
         .css('top', '40px')
-        .css('left', '96px')
+        .css('left', $(this).position().left)
       ;
     });
     $('#target-branch-close').on('click', function () {
