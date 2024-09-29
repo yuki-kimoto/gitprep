@@ -66,6 +66,8 @@
         my $name = $tree->{name};
         my $commit = $tree->{commit};
         my $mode_str = $tree->{mode_str};
+	my $commit_comment = join "\n", @{$commit->{comment}};
+	$commit_comment =~ s/^[\r\n]*(.*?)[\r\n]*$/$1/;
       %>
       
       <li>
@@ -91,8 +93,11 @@
           % }
         </div>
         <div class="file-list-commit">
-          <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-            <%= $commit->{title_short} %>
+          <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>"
+            % if ($commit_comment ne $commit->{title_short}) {
+              title="<%= $commit_comment %>"
+            % }
+            ><%= $commit->{title_short} %>
           </a>
         </div>
         <div class="file-list-age">

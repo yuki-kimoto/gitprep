@@ -1200,9 +1200,9 @@ sub parse_commit_text {
   return unless defined $commit{tree};
   $commit{parents} = \@parents;
   $commit{parent} = $parents[0];
+  @commit_lines = map {$_ =~ s/^    (.*?)\s*$/$1/; $_} @commit_lines;
 
   for my $title (@commit_lines) {
-    $title =~ s/^    //;
     if ($title ne '') {
       $commit{title} = $self->_chop_str($title, 80, 5);
       # remove leading stuff of merges to make the interesting part visible
@@ -1228,10 +1228,6 @@ sub parse_commit_text {
   }
   if (! defined $commit{title} || $commit{title} eq '') {
     $commit{title} = $commit{title_short} = '(no commit message)';
-  }
-  # remove added spaces
-  for my $line (@commit_lines) {
-    $line =~ s/^    //;
   }
   $commit{comment} = \@commit_lines;
   return \%commit;

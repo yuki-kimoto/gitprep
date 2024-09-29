@@ -641,6 +641,8 @@
                     'id',
                     where => {email => $commit_author_email}
                   )->value;
+                  my $commit_comment = join "\n", @{$commit->{comment}};
+                  $commit_comment =~ s/^[\r\n]*(.*?)[\r\n]*$/$1/;
                 %>
                 <li ts="<%= $commit->{committer_epoch} %>">
                   <div class="compare-commits-author">
@@ -653,8 +655,11 @@
                     </span>
                   </div>
                   <div class="compare-commits-commit-title">
-                    <a style="color:#333" href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
-                      <%= $commit->{title_short} %>
+                    <a style="color:#333" href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>"
+                      % if ($commit_comment ne $commit->{title_short}) {
+                        title="<%= $commit_comment %>"
+                      % }
+                      ><%= $commit->{title_short} %>
                     </a>
                   </div>
                   <div class="compare-commits-commit-id">
