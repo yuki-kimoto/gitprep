@@ -15,14 +15,15 @@
   my $user_id = stash('user_id');
   my $project_id = stash('project_id');
   my $rev = stash('rev');
-  
-  my $default_branch_name = app->manager->default_branch($user_id, $project_id);
+
+  my $rep_info = app->rep_info($user_id, $project_id);
+  my $default_branch_name = $git->current_branch($rep_info);
   
   my $commits_number;
-  if ($git->exists_branch(app->rep_info($user_id, $project_id))) {
+  if ($git->exists_branch($rep_info)) {
     
     # Commits number
-    $commits_number = $git->commits_number(app->rep_info($user_id, $project_id), $rev);
+    $commits_number = $git->commits_number($rep_info, $rev);
   }
   
 %>
@@ -65,6 +66,8 @@
         my $name = $tree->{name};
         my $commit = $tree->{commit};
         my $mode_str = $tree->{mode_str};
+	my $commit_comment = join "\n", @{$commit->{comment}};
+	$commit_comment =~ s/^[\r\n]*(.*?)[\r\n]*$/$1/;
       %>
       
       <li>
@@ -90,8 +93,11 @@
           % }
         </div>
         <div class="file-list-commit">
-          <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-            <%= $commit->{title_short} %>
+          <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>"
+            % if ($commit_comment ne $commit->{title_short}) {
+              title="<%= $commit_comment %>"
+            % }
+            ><%= $commit->{title_short} %>
           </a>
         </div>
         <div class="file-list-age">

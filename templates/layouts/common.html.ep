@@ -6,7 +6,7 @@
   $project = '' unless defined $project;
   my $rev = stash('rev');
   if (length $user && length $project && !defined $rev) {
-    $rev = app->manager->default_branch($user, $project);
+    $rev = app->git->current_branch(app->rep_info($user, $project));
   }
   $rev = '' unless $rev;
 %>

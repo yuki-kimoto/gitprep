@@ -140,12 +140,17 @@
             % for my $commit (@$commits) {
               <%
                 my $author_id = app->dbi->model('user')->select('id', where => {email => $commit->{author_email}})->value;
+                my $commit_comment = join "\n", @{$commit->{comment}};
+                $commit_comment =~ s/^[\r\n]*(.*?)[\r\n]*$/$1/;
               %>
               <li ts="<%= $commit->{committer_epoch} %>">
                 <div class="commit-left">
                   <div class="commit-left-title">
-                    <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
-                      <b><%= $commit->{title_short} %></b>
+                    <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>"
+                      % if ($commit_comment ne $commit->{title_short}) {
+                        title="<%= $commit_comment %>"
+                      % }
+                      ><b><%= $commit->{title_short} %></b>
                     </a>
                   </div>
                   <div class="commit-left-author">

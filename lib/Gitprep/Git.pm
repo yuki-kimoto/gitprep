@@ -34,16 +34,22 @@ sub ref_to_object_id {
 }
 
 sub current_branch {
-  my ($self, $rep_info) = @_;
-  
-  my @cmd = $self->cmd($rep_info, 'rev-parse',  '--abbrev-ref', 'HEAD');
-  
-  open my $fh, '-|', @cmd
-    or croak "Can't get current branch: @cmd";
-  my $current_branch = <$fh>;
-  chomp $current_branch;
-  
-  return $current_branch;
+  my ($self, $rep_info, $branch) = @_;
+  my @cmd;
+
+  if ($branch) {
+    @cmd = $self->cmd($rep_info, 'symbolic-ref', 'HEAD', "refs/heads/$branch");
+    Gitprep::Util::run_command(@cmd) or return;
+  } else {
+    @cmd = $self->cmd($rep_info, 'symbolic-ref', '--short', 'HEAD');
+
+    open my $fh, '-|', @cmd
+      or croak "Can't get current branch: @cmd";
+    $branch = <$fh>;
+    chomp $branch;
+  }
+
+  return $branch;
 }
 
 sub branch_names {
@@ -1194,9 +1200,9 @@ sub parse_commit_text {
   return unless defined $commit{tree};
   $commit{parents} = \@parents;
   $commit{parent} = $parents[0];
+  @commit_lines = map {$_ =~ s/^    (.*?)\s*$/$1/; $_} @commit_lines;
 
   for my $title (@commit_lines) {
-    $title =~ s/^    //;
     if ($title ne '') {
       $commit{title} = $self->_chop_str($title, 80, 5);
       # remove leading stuff of merges to make the interesting part visible
@@ -1222,10 +1228,6 @@ sub parse_commit_text {
   }
   if (! defined $commit{title} || $commit{title} eq '') {
     $commit{title} = $commit{title_short} = '(no commit message)';
-  }
-  # remove added spaces
-  for my $line (@commit_lines) {
-    $line =~ s/^    //;
   }
   $commit{comment} = \@commit_lines;
   return \%commit;
