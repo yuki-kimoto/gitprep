@@ -11,6 +11,8 @@
   # Git
   my $git = $self->app->git;
 
+  my $rep_info = app->rep_info($user_id, $project_id);
+
   # Delete
   my $errors;
   if ($op eq 'delete' && lc $self->req->method eq 'post') {
@@ -37,7 +39,7 @@
 
     if ($validation->is_valid) {
       # Delete branch
-      eval { $git->delete_branch(app->rep_info($user_id, $project_id), $branch) };
+      eval { $git->delete_branch($rep_info, $branch) };
       if (my $e = $@) {
         app->log->error(url_with . ": $e");
         $errors = ['Internal Error'];
@@ -52,8 +54,8 @@
   }
   
   # Default branch
-  my $default_branch_name = app->manager->default_branch($user_id, $project_id);
-  my $default_branch = $git->branch($self->app->rep_info($user_id, $project_id), $default_branch_name);
+  my $default_branch_name = $git->current_branch($rep_info);
+  my $default_branch = $git->branch($rep_info, $default_branch_name);
   
   # Branches
   my $branches = [];
@@ -62,12 +64,12 @@
   my $page_count = 20;
   my $skip = $page_count * ($page - 1);
   
-  my $all_branches = $git->branches($self->app->rep_info($user_id, $project_id));
+  my $all_branches = $git->branches($rep_info);
   my $max = 0;
   my $all_count = 0;
   for my $branch (@$all_branches) {
     $branch->{status} = $git->branch_status(
-      $self->app->rep_info($user_id, $project_id),
+      $rep_info,
       $default_branch->{name},
       $branch->{name}
     );
@@ -242,11 +244,11 @@
                                 $branch_name
                               );
                               if ($exists_original_branch_name) {
-                                $compare_url = url_for("/$original_user_id/$original_project_id/compare/$branch_name...$user_id:$branch_name")->query(expand => 1);
+                                $compare_url = url_for("/$original_user_id/$original_project_id/compare/$branch_name...$user_id:$project_id:$branch_name")->query(expand => 1);
                               }
                               else {
-                                my $original_project_default_branch = app->manager->default_branch($original_user_id, $original_project_id);
-                                $compare_url = url_for("/$original_user_id/$original_project_id/compare/$original_project_default_branch...$user_id:$branch_name")->query(expand => 1);
+                                my $original_project_default_branch = $git->current_branch(app->rep_info($original_user_id, $original_project_id));
+                                $compare_url = url_for("/$original_user_id/$original_project_id/compare/$original_project_default_branch...$user_id:$project_id:$branch_name")->query(expand => 1);
                               }
                             }
                             else {

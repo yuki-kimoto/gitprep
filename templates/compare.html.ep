@@ -61,7 +61,7 @@
 
   # Default base branch
   if (!defined $base_branch) {
-    $base_branch = $base_project->{default_branch};
+    $base_branch = $git->current_branch($base_rep_info);
 
     # If neither base branch nor target repository was given, redirect to
     # original project compare.
@@ -79,7 +79,7 @@
       )->one;
       $base_user_id = $original_project->{'user.id'};
       $base_project_id = $original_project->{'id'};
-      $base_branch = $original_project->{'default_branch'};
+      $base_branch = $git->current_branch(app->rep_info($base_user_id, $base_project_id));
       my $new_rev2 = new_rev2();
       $self->redirect_to("/$base_user_id/$base_project_id/compare/$base_branch...$new_rev2");
       return;

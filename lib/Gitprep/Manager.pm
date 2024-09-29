@@ -264,29 +264,6 @@ sub admin_user {
   return $admin_user;
 }
 
-sub default_branch {
-  my ($self, $user_id, $project_id, $default_branch) = @_;
-  
-  my $user_row_id = $self->api->get_user_row_id($user_id);
-  
-  # Set default branch
-  my $dbi = $self->app->dbi;
-  if (defined $default_branch) {
-    $dbi->model('project')->update(
-      {default_branch => $default_branch},
-      where => {user => $user_row_id, id => $project_id}
-    );
-  }
-  else {
-    # Get default branch
-    my $default_branch = $dbi->model('project')
-      ->select('default_branch', where => {user => $user_row_id, id => $project_id})
-      ->value;
-    
-    return $default_branch;
-  }
-}
-
 sub fork_project {
   my ($self, $forked_user_id, $user_id, $project_id) = @_;
   
@@ -758,15 +735,11 @@ sub _create_project {
 sub _create_rep {
   my ($self, $user, $project, $opts) = @_;
 
-  my $default_branch = 'master';
-  if ($opts->{default_branch} && $opts->{default_branch} ne 'master' ) {
-    $default_branch = $opts->{default_branch};
-    chomp($default_branch);
-  }
+  chomp(my $default_branch = $opts->{default_branch} // 'master');
  
   # Create repository directory
   my $git = $self->app->git;
-  
+
   my $rep_info = $self->app->rep_info($user, $project);
   my $rep_git_dir = $rep_info->{git_dir};
   

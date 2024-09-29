@@ -12,15 +12,16 @@
   my $project_id = param('project');
   
   my $project_row_id = $api->get_project_row_id($user_id, $project_id);
+  my $rep_info = app->rep_info($user_id, $project_id);
   
   my $rev;
   my $dir;
   my $rev_dir = param('rev_dir');
   if (defined $rev_dir) {
-    ($rev, $dir) = $git->parse_rev_path(app->rep_info($user_id, $project_id), $rev_dir);
+    ($rev, $dir) = $git->parse_rev_path($rep_info, $rev_dir);
   }
   else {
-    $rev = app->manager->default_branch($user_id, $project_id);
+    $rev = $git->current_branch($rep_info);
   }
   
   unless (app->manager->exists_project($user_id, $project_id)) {
@@ -29,21 +30,21 @@
   }
 
   # Repository description
-  my $desc = $git->description(app->rep_info($user_id, $project_id));
+  my $desc = $git->description($rep_info);
   my $website_url = app->dbi->model('project')->select('website_url', where => {row_id => $project_row_id})->value;
   
   # Check existence
-  if ($git->exists_branch(app->rep_info($user_id, $project_id))) {
+  if ($git->exists_branch($rep_info)) {
     # Commit
-    my $commit = $git->get_commit(app->rep_info($user_id, $project_id), $rev);
+    my $commit = $git->get_commit($rep_info, $rev);
     
     # Tree
     my $trees;
     if (defined $dir && length $dir) {
-      $trees = $git->trees(app->rep_info($user_id, $project_id), $rev, $dir);
+      $trees = $git->trees($rep_info, $rev, $dir);
     }
     else {
-      $trees = $git->trees(app->rep_info($user_id, $project_id), $rev);
+      $trees = $git->trees($rep_info, $rev);
     }
     
     # Variable for included template

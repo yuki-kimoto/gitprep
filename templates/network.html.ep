@@ -52,7 +52,7 @@
   }
   
   # Default branch
-  my $default_branch = app->manager->default_branch($user_id, $project_id);
+  my $default_branch = app->git->current_branch($rep_info);
 
   layout 'common', title => "Network \x{b7} $user_id/$project_id";
 %>
