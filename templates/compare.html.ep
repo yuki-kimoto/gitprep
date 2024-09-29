@@ -1,18 +1,37 @@
 <%
   # API
   my $api = gitprep_api;
+  
+  # Git
+  my $git = app->git;
 
   # Parameters
   my $base_user_id = param('user');
   my $base_project_id = param('project');
   my $base_branch = param('rev1');
-  my $user_id_and_target_branch = param('rev2');
+  my $rev2 = param('rev2');
   my $page = param('page') || 0;
   my $expand = param('expand');
-  
-  # Default base branch
-  $base_branch //= app->manager->default_branch($base_user_id, $base_project_id);
-  
+
+  my $target_user_id;
+  my $target_project_id;
+  my $target_branch;
+
+  local *new_rev2 = sub {
+    my %args = (
+      base_user_id => $base_user_id,
+      base_project_id => $base_project_id,
+      target_user_id => $target_user_id,
+      target_project_id => $target_project_id,
+      target_branch => $target_branch,
+      @_
+    );
+
+    return $args{target_branch} if $args{target_user_id} eq $args{base_user_id} && $args{target_project_id} eq $args{base_project_id};
+    return "$args{target_user_id}:$args{target_branch}" if $args{target_project_id} eq $args{base_project_id};
+    return "$args{target_user_id}:$args{target_project_id}:$args{target_branch}";
+  };
+
   # Base project
   my $base_project = app->dbi->model('project')->select(
     [
@@ -21,23 +40,75 @@
     ],
     where => {'project.id' => $base_project_id, 'user.id' => $base_user_id}
   )->one;
-  
-  # Get target user, project, branch
-  my $target_user_id;
-  my $target_branch;
-  my $target_project;
-  if (defined $user_id_and_target_branch && $user_id_and_target_branch =~ /^([^:]+):(.+)/) {
-    $target_user_id = $1;
-    $target_branch = $2;
-    $target_project = $self->app->manager->child_project($base_user_id, $base_project_id, $target_user_id);
-  }
-  else {
-    $target_user_id = $base_user_id;
-    $target_branch = $user_id_and_target_branch // $base_branch;
-    $target_project = $base_project
+
+  # Base branches
+  my $base_rep_info = app->rep_info($base_user_id, $base_project_id);
+  my $base_branches = $git->branches($base_rep_info);
+
+  # If no branch yet, redirect to project page which will display info
+  # to populate repository.
+  if (!@$base_branches) {
+    $self->redirect_to("/$base_user_id/$base_project_id");
+    return;
   }
 
-  # Already pull request exists
+  # Get target user, project, branch
+  if (defined $rev2 && $rev2 =~ /^(?:([^:]+):(?:([^:]+):)?)?(.+)$/) {
+    $target_user_id = $1;
+    $target_project_id = $2;
+    $target_branch = $3;
+  }
+
+  # Default base branch
+  if (!defined $base_branch) {
+    $base_branch = $base_project->{default_branch};
+
+    # If neither base branch nor target repository was given, redirect to
+    # original project compare.
+    if($base_project->{original_project} && !$target_user_id && !$target_project_id) {
+      $target_user_id = $base_user_id;
+      $target_project_id = $base_project_id;
+      $target_branch //= $base_branch;
+
+      my $original_project = app->dbi->model('project')->select(
+        [
+          {__MY__ => '*'},
+          {user => ['id']}
+        ],
+        where => {'project.row_id' => $base_project->{original_project}}
+      )->one;
+      $base_user_id = $original_project->{'user.id'};
+      $base_project_id = $original_project->{'id'};
+      $base_branch = $original_project->{'default_branch'};
+      my $new_rev2 = new_rev2();
+      $self->redirect_to("/$base_user_id/$base_project_id/compare/$base_branch...$new_rev2");
+      return;
+    }
+  }
+
+  # Target project
+  $target_user_id //= $base_user_id;
+  $target_project_id //= $base_project_id;
+  $target_branch //= $base_branch;
+  my $target_project = app->dbi->model('project')->select(
+    [
+      {__MY__ => '*'},
+      {user => ['id']}
+    ],
+    where => {'project.id' => $target_project_id, 'user.id' => $target_user_id}
+  )->one;
+  my $bad_params = !$target_project;
+
+  # Target branches
+  my $target_rep_info = app->rep_info($target_user_id, $target_project_id);
+  my $target_branches = [];
+  $target_branches = $git->branches($target_rep_info) unless $bad_params;
+
+  # Branches must exist.
+  $bad_params |= !(grep {$_->{name} eq $base_branch} @$base_branches) ||
+    !(grep {$_->{name} eq $target_branch} @$target_branches);
+
+  # Pre-existing pull request
   my $pull_request_already = app->dbi->model('pull_request')->select(
     where => {
       base_project => $base_project->{row_id},
@@ -47,9 +118,6 @@
     }
   )->one;
   
-  # Git
-  my $git = $self->app->git;
-  
   my $errors;
   if (lc $self->req->method eq 'post') {
   
@@ -58,17 +126,23 @@
     if ($op eq 'create-pull-request') {
       
       if ($pull_request_already) {
-        $self->render_exception("Error");
+        $self->reply->exception("Error");
+        return;
       }
-      
+
       # Parameters
       my $title = param('title');
       my $message = param('message');
-      
+
       # Validation
       my $vc = app->vc;
       my $validation = $vc->validation;
-      
+
+      # Access control
+      if (!$api->logined) {
+        $validation->add_failed(authorization => 'please log-in first');
+      }
+
       # Check title
       if (!(defined $title && length $title)) {
         $validation->add_failed(title => 'title is empty');
@@ -76,94 +150,67 @@
       elsif (length $title > 300) {
         $validation->add_failed(title => 'title is too long');
       }
-      
+
       # Message
-      if (!(defined $message && length $message)) {
-        $message = '';
-        if (length $message > 1000) {
-          $validation->add_failed(message => 'message is too long');
-        }
+      $message //= '';
+      if (length $message > 1000) {
+        $validation->add_failed(message => 'message is too long');
       }
-      
-      if ($validation->is_valid) {
-      
-        my $project_row_id = app->dbi->model('project')->select(
-          'project.row_id',
-          where => {'user.id' => $base_user_id, 'project.id' => $base_project_id}
-        )->value;
-        
-        my $pull_request = app->dbi->model('pull_request')->select(
-          where => {
-            base_project => $project_row_id,
+
+      if (!$bad_params && $validation->is_valid) {
+        my $now_epoch = $api->now;
+        my $session_user_row_id = $api->session_user_row_id;
+        my $issue_number;
+        app->dbi->connector->txn(sub {
+
+          # New pull request
+          my $new_pull_request = {
+            base_project => $base_project->{row_id},
             base_branch => $base_branch,
             target_project => $target_project->{row_id},
-            target_branch => $target_branch
-          }
-        )->one;
-        
-        my $issue;
-        if ($pull_request) {
-          $issue = app->dbi->model('issue')->select(
-            where => {pull_request => $pull_request->{row_id}}
-          )->one;
-          $self->redirect_to("/$base_user_id/$base_project_id/pull/$issue->{number}");
-          return;
-        }
-        else {
-          my $now_epoch = $api->now;
-          my $session_user_row_id = $api->session_user_row_id;
-          my $issue_number;
-          app->dbi->connector->txn(sub {
+            target_branch => $target_branch,
+          };
+
+          # last pull request row id
+          app->dbi->model('pull_request')->insert($new_pull_request);
+          my $new_pull_request_row_id = app->dbi->execute("select LAST_INSERT_ROWID()")->value;
+
+          # issue number
+          $issue_number = app->dbi->model('issue')->select(
+            'max(number)',
+            where => {project => $base_project->{row_id}},
+            append => 'group by project'
+          )->value;
+          $issue_number++;
+
+          # New issue
+          my $new_issue = {
+            title => $title,
+            open => 1,
+            open_time => $now_epoch,
+            open_user => $session_user_row_id,
+            pull_request => $new_pull_request_row_id,
+            project => $base_project->{row_id},
+            number => $issue_number
+          };
+          app->dbi->model('issue')->insert($new_issue);
+          my $new_issue_row_id = app->dbi->execute("select LAST_INSERT_ROWID()")->value;
+
+          # New issue message
+          my $new_issue_message = {
+            issue => $new_issue_row_id,
+            number => 1,
+            message => $message,
+            create_time => $now_epoch,
+            update_time => $now_epoch,
+            user => $session_user_row_id
+          };
             
-            # New pull request
-            my $new_pull_request = {
-              base_project => $project_row_id,
-              base_branch => $base_branch,
-              target_project => $target_project->{row_id},
-              target_branch => $target_branch,
-            };
-            
-            # last pull request row id
-            app->dbi->model('pull_request')->insert($new_pull_request);
-            my $new_pull_request_row_id = app->dbi->execute("select LAST_INSERT_ROWID()")->value;
-            
-            # issue number
-            $issue_number = app->dbi->model('issue')->select(
-              'max(number)',
-              where => {project => $project_row_id},
-              append => 'group by project'
-            )->value;
-            $issue_number++;
-            
-            # New issue
-            my $new_issue = {
-              title => $title,
-              open => 1,
-              open_time => $now_epoch,
-              open_user => $session_user_row_id,
-              pull_request => $new_pull_request_row_id,
-              project => $project_row_id,
-              number => $issue_number
-            };
-            app->dbi->model('issue')->insert($new_issue);
-            my $new_issue_row_id = app->dbi->execute("select LAST_INSERT_ROWID()")->value;
-            
-            # New issue message
-            my $new_issue_message = {
-              issue => $new_issue_row_id,
-              number => 1,
-              message => $message,
-              create_time => $now_epoch,
-              update_time => $now_epoch,
-              user => $session_user_row_id
-            };
-            
-            app->dbi->model('issue_message')->insert($new_issue_message);
-          });
-          
+          app->dbi->model('issue_message')->insert($new_issue_message);
+
           $self->redirect_to("/$base_user_id/$base_project_id/pull/$issue_number");
           return;
-        }
+        });
       }
       else {
         $errors = $validation->messages;
@@ -171,50 +218,62 @@
     }
   }
 
+  push @$errors, 'Choose different branches and/or forks below to discuss and review changes.' if $bad_params;
+
   # Can merge
-  my $base_rep_info = app->rep_info($base_user_id, $base_project_id);
   my $merge_success;
-  my $target_rep_info;
-  if ($target_project) {
-    $target_rep_info = app->rep_info($target_user_id, $target_project->{id});
-  }
-  else {
-    $target_rep_info = $base_rep_info;
-  }
-    
+
   # Create working repository if it doesn't exist
   $self->app->manager->create_work_rep($base_user_id, $base_project_id);
-  
-  # Lock working repository
-  my $work_rep_info = app->work_rep_info($base_user_id, $base_project_id);
-  {
-    my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
-    
-    # Prepare merge
-    $self->app->manager->prepare_merge(
+
+  my $commits = [];
+  my $start_commit_id;
+  my $end_commit_id;
+  my $work_rep_info;
+  if (!$bad_params) {
+    # Lock working repository
+    $work_rep_info = app->work_rep_info($base_user_id, $base_project_id);
+    {
+      my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
+
+      # Prepare merge
+      $self->app->manager->prepare_merge(
+        $work_rep_info,
+        $base_rep_info,
+        $base_branch,
+        $target_rep_info,
+        $target_branch
+      );
+
+      # Check merge automatically
+      $merge_success = $self->app->manager->merge(
+        $work_rep_info,
+        $target_rep_info,
+        $target_branch
+      );
+    }
+
+    # Commits
+    $commits = $git->forward_commits(
       $work_rep_info,
       $base_rep_info,
       $base_branch,
       $target_rep_info,
       $target_branch
     );
-    
-    # Check merge automatically
-    $merge_success = $self->app->manager->merge(
-      $work_rep_info,
-      $target_rep_info,
-      $target_branch
-    );
+
+    # Start commit
+    $start_commit_id = app->manager->merge_base($work_rep_info, $base_branch,
+      $target_rep_info, $target_branch);
+
+    # End commit
+    $end_commit_id = app->git->ref_to_object_id($target_rep_info, $target_branch);
+
+    if (!$start_commit_id || !$end_commit_id) {
+      $self->reply->not_found;
+      return;
+    }
   }
-  
-  # Commits
-  my $commits = $git->forward_commits(
-    $work_rep_info,
-    $base_rep_info,
-    $base_branch,
-    $target_rep_info,
-    $target_branch
-  );
 
   my $commits_count = @$commits;
   my $last_commit_date = $commits_count? $commits->[0]->{committer_epoch}: 0;
@@ -224,29 +283,8 @@
   }
   my $authors_count = keys %$authors;
 
-  # Start commit
-  my $start_commit_id = app->manager->merge_base($work_rep_info, $base_branch,
-    $target_rep_info, $target_branch);
-
-  # End commit
-  my $end_commit_id = app->git->ref_to_object_id($target_rep_info, $target_branch);
-  
-  if (!$start_commit_id || !$end_commit_id) {
-    $self->reply->not_found;
-    return;
-  }
-  
   # Member projects
   my $member_projects = app->manager->member_projects($base_user_id, $base_project_id);
-  unshift @$member_projects, $base_project;
-  
-  # Base branches
-  my $base_branches = $git->branches($base_rep_info);
-  @$base_branches = sort { $b->{commit}{committer_epoch} <=> $a->{commit}{committer_epoch} } @$base_branches;
-
-  # Target branches
-  my $target_branches = $git->branches($target_rep_info);
-  @$target_branches = sort { $b->{commit}{committer_epoch} <=> $a->{commit}{committer_epoch} } @$target_branches;
   
   # Can open pull request
   my $can_open_pull_request;
@@ -257,7 +295,7 @@
   # commit_body args
   my %commit_body_args = (
     user => $target_user_id,
-    project => $target_project->{id},
+    project => $target_project_id,
     rep_info => $work_rep_info,
     rev => $end_commit_id,
     from_rev => $start_commit_id
@@ -322,18 +360,7 @@
     $('[name=base-branch]').on('keypress', function (e) {
       // Enter
       if (e.which == 13) {
-        var href;
-        % if ($base_user_id eq $target_user_id) {
-          href = '<%= url_for("/$base_user_id/$base_project_id/compare/") %>' + $(this).val() + '...<%= $target_branch %>';
-        % } else {
-          href = '<%= url_for("/$base_user_id/$base_project_id/compare/") %>' + $(this).val() + '...<%= $target_user_id %>:<%= $target_branch %>';
-        % }
-        
-        if (<%= $expand ? 1 : 0 %>) {
-          href = href + '?expand=1';
-        }
-        
-        location.href = href;
+        location.href = '<%= url_for("$base_user_id/$base_project_id/compare/") %>' + $(this).val() + '...<%= new_rev2() . ($expand? '?expand=1': '') %>';
       }
     });
     // close popup
@@ -355,10 +382,10 @@
     $('[name=target-branch]').on('keypress', function (e) {
       // Enter
       if (e.which == 13) {
-        var href = '<%= url_for("/$base_user_id/$base_project_id/compare/") %>' + '<%= $base_branch %>...' + $(this).val();
-        if (<%= $expand ? 1 : 0 %>) {
+        var href = '<%= url_for("/$base_user_id/$base_project_id/compare/") %>' + '<%= $base_branch %>...<%= new_rev2(target_branch => '') %>' + $(this).val();
+        % if ($expand) {
           href = href + '?expand=1';
-        }
+        % }
         location.href = href;
       }
     });
@@ -399,8 +426,8 @@
     <div>
       <div>
         <div style="display:inline-block">
-          <button id="base-fork-btn" class="btn btn-small" style="<%= $base_user_id eq $target_user_id ? 'display:none' : '' %>">
-            <span>base repository:</span><b> <%= $base_project->{'user.id'} %>/<%= $base_project->{id} %></b>
+          <button id="base-fork-btn" class="btn btn-small" style="<%= $base_user_id eq $target_user_id && $base_project_id eq $target_project_id? 'display:none' : '' %>">
+            <span>base repository:</span><b> <%= $base_user_id %>/<%= $base_project_id %></b>
             %= $api->icon('arrow-down');
           </button>
           <button id="base-branch-btn" class="btn btn-small">
@@ -413,8 +440,8 @@
           <br />...
         </div>
         <div style="display:inline-block;margin-top:10px;">
-          <button id="head-fork-btn" class="btn btn-small" style="<%= $base_user_id eq $target_user_id ? 'display:none' : '' %>">
-            <span>head repository:</span><b> <%= $target_project->{'user.id'} %>/<%= $target_project->{id} %></b>
+          <button id="head-fork-btn" class="btn btn-small" style="<%= $base_user_id eq $target_user_id && $base_project_id eq $target_project_id? 'display:none' : '' %>">
+            <span>head repository:</span><b> <%= $target_user_id %>/<%= $target_project_id %></b>
             %= $api->icon('arrow-down');
           </button>
           <button id="target-branch-btn" class="btn btn-small">
@@ -457,13 +484,8 @@
             % my $branch = $base_branches->[$i];
               <li>
                 <%
-                  my $url;
-                  if ($base_user_id eq $target_user_id) {
-                    $url = url_with("/$base_user_id/$base_project_id/compare/$branch->{name}...$target_branch");
-                  }
-                  else {
-                    $url = url_with("/$base_user_id/$base_project_id/compare/$branch->{name}...$target_user_id:$target_branch");
-                  }
+                  my $url = new_rev2();
+                  $url = url_with("/$base_user_id/$base_project_id/compare/$branch->{name}...$url");
                 %>
                 <a style="border-top-left-radius:0px;border-top-right-radius:0px;"
                   href="<%= $url  %>">
@@ -495,13 +517,8 @@
             % my $target_branch = $target_branches->[$i];
               <li>
                 <%
-                  my $url;
-                  if ($base_user_id eq $target_user_id) {
-                    $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$target_branch->{name}");
-                  }
-                  else {
-                    $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$target_user_id:$target_branch->{name}");
-                  }
+                  my $url = new_rev2(target_branch => $target_branch->{name});
+                  $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$url");
                 %>
                 <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= $url %>">
                   <%= $target_branch->{name} %>
@@ -534,13 +551,8 @@
               %>
               <li>
                 <%
-                  my $url;
-                  if ($member_user_id eq $target_user_id) {
-                    $url = url_with("/$member_user_id/$member_project_id/compare/$base_branch...$target_branch");
-                  }
-                  else {
-                    $url = url_with("/$member_user_id/$member_project_id/compare/$base_branch...$target_user_id:$target_branch");
-                  }
+                  my $url = new_rev2(base_user_id => $member_user_id, base_project_id => $member_project_id);
+                  $url = url_with("/$member_user_id/$member_project_id/compare/$base_branch...$url");
                 %>
                 <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= $url %>">
                   <%= $member_user_id %>/<%= $member_project_id %>
@@ -575,13 +587,8 @@
               %>
               <li>
                 <%
-                  my $url;
-                  if ($member_user_id eq $base_user_id) {
-                    $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$target_branch");
-                  }
-                  else {
-                    $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$member_user_id:$target_branch");
-                  }
+                  my $url = new_rev2(target_user_id => $member_user_id, target_project_id => $member_project_id);
+                  $url = url_with("/$base_user_id/$base_project_id/compare/$base_branch...$url");
                 %>
                 <a style="border-top-left-radius:0px;border-top-right-radius:0px;" href="<%= $url %>">
                   <%= $member_user_id %>/<%= $member_project_id %>
@@ -714,7 +721,7 @@
         <b>
           <%= $base_branch %></b> is up to date with all commits from
           <b><%= $target_branch %></b>.
-          Try <a href="<%= url_for("/$base_user_id/$base_project_id/compare/$target_branch...$base_branch") %>">switching the base</a> for your comparison.
+          Try <a href="<%= url_for("/$base_user_id/$base_project_id/compare/$target_branch...$target_user_id:$target_project_id:$base_branch") %>">switching the base</a> for your comparison.
       </div>
     </div>
   % }

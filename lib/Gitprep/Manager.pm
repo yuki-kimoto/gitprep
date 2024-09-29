@@ -358,26 +358,47 @@ sub member_projects {
   
   # DBI
   my $dbi = $self->app->dbi;
-  
-  # project id
-  my $project_row_id = $dbi->model('project')->select(
-    'project.row_id',
-    where => {'user.id' => $user_id, 'project.id' => $project_id}
-  )->value;
-  
-  # Members
-  my $member_projects = $dbi->model('project')->select(
+  my @results;
+
+  # Recursive gathering of all descendant forks
+  local *closure = sub {
+    my $project = shift;
+    CORE::push @results, $project;
+    my $children = $dbi->model('project')->select(
+      [
+        {__MY__ => ['row_id', 'id']},
+        {user => ['id']}
+      ],
+      where => {'project.original_project' => $project->{row_id}}
+    )->all;
+    closure($_) for (@$children);
+  };
+
+  # Get starting project
+  my $project = $dbi->model('project')->select(
     [
-      {__MY__ => ['id']},
+      {__MY__ => ['row_id', 'id', 'original_project']},
       {user => ['id']}
     ],
-    where => {
-      original_project => $project_row_id,
-    },
-    append => 'order by user.id, project.id'
-  )->all;
+    where => {'user.id' => $user_id, 'project.id' => $project_id}
+  )->one;
 
-  return $member_projects;
+  # Get root of all member projects
+  while ($project && $project->{original_project}) {
+    $project = $dbi->model('project')->select(
+      [
+        {__MY__ => ['row_id', 'id', 'original_project']},
+        {user => ['id']}
+      ],
+      where => {'project.row_id' => $project->{original_project}}
+    )->one;
+  }
+
+  # Get all descendants
+  closure($project) if %$project;
+
+  @results = sort {"$a->{'user.id'} $a->{id}" cmp "$b->{'user.id'} $b->{id}"} @results;
+  return \@results;
 }
 
 sub create_project {
