@@ -125,7 +125,7 @@
     % }
 
     % if ($display eq 'tree' || $display eq 'blob') {
-        %= include '/include/page_path', Path => $path;
+        %= include '/include/page_path', Path => $path, type => $display;
     % }
   </div>
     % if ($display eq 'tree_top') {
