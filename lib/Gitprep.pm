@@ -568,7 +568,7 @@ sub startup {
 
             # New issue
             $r->any('/issues/new' => sub { shift->render_maybe('/issues/new') })->to(tab => 'issues');
-            $r->any('/issues/:number' => sub { shift->render_maybe('/issue') })->to(tab => 'issues');
+            $r->any('/issues/<number:num>' => sub { shift->render_maybe('/issue') })->to(tab => 'issues');
 
             # Labels
             $r->any('/labels' => sub { shift->render_maybe('/labels') })->to(tab => 'issues');
@@ -577,12 +577,27 @@ sub startup {
             $r->get('/pulls' => sub { shift->render_maybe('/issues', pulls => 1) })->to(tab => 'pulls');
             
             # Pull request
-            $r->get('/pull/<:number>.patch' => sub { shift->render_maybe('/issue') })->to(tab => 'pulls', patch => 1);
-            $r->any('/pull/:number' => sub { shift->render_maybe('/issue') })->to(tab => 'pulls');
-            $r->any('/pull/:number/:activetab' => [
+            $r->get('/pull/<number:num>.patch' => sub { shift->render_maybe('/issue') })->to(tab => 'pulls', patch => 1);
+            $r->any('/pull/<number:num>' => sub { shift->render_maybe('/issue') })->to(tab => 'pulls');
+            $r->any('/pull/<number:num>/:activetab' => [
               activetab => ['commits', 'files', 'contributors']
             ])->to(tab => 'pulls', cb => sub {
               shift->render_maybe('/issue')
+            });
+
+            # Alias for compare
+            $r->get('/pull/new' => sub {
+              my $self = shift;
+              my $user_id = $self->param('user');
+              my $project_id = $self->param('project');
+              $self->redirect_to("/$user_id/$project_id/compare");
+            });
+            $r->get('/pull/new/*args' => sub {
+              my $self = shift;
+              my $user_id = $self->param('user');
+              my $project_id = $self->param('project');
+              my $args = $self->param('args');
+              $self->redirect_to("/$user_id/$project_id/compare/$args");
             });
 
             # Wiki
@@ -649,12 +664,11 @@ sub startup {
 
             # Blame
             $r->get('/blame/*rev_file' => sub { shift->render_maybe('/blame') });
-            
-            # Archive
+
             # Archive
             $r->get('/archive/<*rev>.tar.gz' => sub { shift->render_maybe('/archive') })->to(archive_type => 'tar');
             $r->get('/archive/<*rev>.zip' => sub { shift->render_maybe('/archive') })->to(archive_type => 'zip' );
-            
+
             # Compare
             $r->any('/compare' => sub { shift->render_maybe('/compare') });
             $r->any(
