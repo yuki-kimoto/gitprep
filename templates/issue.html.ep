@@ -46,6 +46,10 @@
       'issue.number' => $issue_number
     }
   )->one;
+  if (!$issue) {
+    $self->reply->not_found;
+    return;
+  }
   my $base_project_row_id = $issue->{project};
 
   # Session
