@@ -6,7 +6,7 @@
 
   # Git
   my $git = app->git;
-  
+
   # Parameters
   my $user_id = param('user');
   my $project_id = param('project');
@@ -23,18 +23,13 @@
   else {
     $rev = $git->current_branch($rep_info);
   }
-  
-  unless (app->manager->exists_project($user_id, $project_id)) {
-    $self->reply->not_found;
-    return;
-  }
 
   # Repository description
   my $desc = $git->description($rep_info);
   my $website_url = app->dbi->model('project')->select('website_url', where => {row_id => $project_row_id})->value;
-  
+
   # Check existence
-  if ($git->exists_branch($rep_info)) {
+  if ($git->rev_exists($rep_info, $rev)) {
     # Commit
     my $commit = $git->get_commit($rep_info, $rev);
     
@@ -46,7 +41,11 @@
     else {
       $trees = $git->trees($rep_info, $rev);
     }
-    
+    unless (@$trees) {
+      $self->reply->not_found;
+      return;
+    }
+
     # Variable for included template
     stash(
       commit => $commit,
@@ -54,8 +53,12 @@
       rev => $rev,
       title => "$user_id/$project_id",
     );
-    
+
     $state = 'display';
+  }
+  elsif (@{$git->branch_names($rep_info)}) {
+    $self->reply->not_found;
+    return;
   }
   else { $state = 'init' }
   

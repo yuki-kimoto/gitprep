@@ -584,6 +584,12 @@ sub exists_branch {
   return $exists_branch;
 }
 
+sub rev_exists {
+  my ($self, $rep_info, $rev) = @_;
+  my @cmd = $self->cmd($rep_info, 'rev-parse', $rev);
+  return Gitprep::Util::run_command(@cmd);
+}
+
 sub delete_branch {
   my ($self, $rep_info, $branch) = @_;
   
@@ -1438,6 +1444,7 @@ sub trees {
   
   # Get tree
   my $tid;
+  my $trees = [];
   if (defined $dir && $dir ne '') {
     $tid = $self->path_to_hash($rep_info, $rev, $dir, 'tree');
   }
@@ -1445,6 +1452,7 @@ sub trees {
     my $commit = $self->get_commit($rep_info, $rev);
     $tid = $commit->{tree};
   }
+  return $trees unless $tid;
   my @entries = ();
   my $show_sizes = 0;
   my @cmd = $self->cmd(
@@ -1465,7 +1473,6 @@ sub trees {
     or $self->croak(404, "Reading tree failed");
 
   # Parse tree
-  my $trees;
   for my $line (@entries) {
     my $tree = $self->parse_ls_tree_line($line, -z => 1, -l => $show_sizes);
     $tree->{mode_str} = $self->_mode_str($tree->{mode});
