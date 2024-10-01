@@ -1,0 +1,25 @@
+<%
+  my $status = stash('status');
+  my $message = stash('message');
+  my %status_info = (
+    404 => {title => 'Not found', message => 'This is not the web page you are looking for.'},
+    403 => {title => 'Forbidden', message => 'You do not have permission to access this page.'},
+    500 => {title => 'Internal error', message => 'We are sorry, something went very wrong!'},
+    '' => {title => 'Error', message => 'An unidentified error occurred.'}
+  );
+  my $info = $status_info{$status} // $status_info{''};
+  $message = $info->{message} unless $message;
+  layout 'common', title => $info->{title}, user => undef, project => undef, rev => undef;
+%>
+
+%= include '/include/header', no_project_header => 1;
+
+<div style="position: relative;">
+  <img src="/images/error.png" width="100%">
+  <div style="position: absolute; z-index: 10; left: 5%; top: 10%; max-width: 40%; border: solid 1px black; border-radius: 20px; background-color: #f0f0c0e0; color: #800000; padding: 20px; font-size: 24px; font-weight: bold;">
+    <p style="font-size: 130%; text-align: center;"><%= $status %></p>
+    <p style="margin-top: 15px;"><%= $message %></p>
+  </div>
+</div>
+
+%= include '/include/footer';
