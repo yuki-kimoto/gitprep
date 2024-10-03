@@ -18,13 +18,14 @@
   my $rep_info = $is_wiki ? app->wiki_rep_info($user_id, $project_id) : app->rep_info($user_id, $project_id);
 
   my ($rev, $file) = $git->parse_rev_path($rep_info, $rev_file);
+  if (!$git->rev_exists($rep_info, $rev) || !$git->file_exists($rep_info, $rev, $file)) {
+    $self->reply->not_found;
+    return;
+  }
 
-  # Commit
-  my $commit = $git->last_change_commit($rep_info, $rev, $file);
-  
   # Authors
   my $authors = $git->authors($rep_info, $rev, $file);
-  
+
   # File size
   my $file_size = $git->blob_size($rep_info, $rev, $file);
 
@@ -40,7 +41,26 @@
   my $blame_lines = $blame->{lines};
   my $blame_min_author_time = $blame->{min_author_time};
   my $blame_max_author_time = $blame->{max_author_time};
-  
+
+  # Commit
+  my $commit = $git->get_commit($rep_info, $blame->{head});
+  my $commit_author_email = $commit->{author_email};
+  my $commit_author = app->dbi->model('user')->select(
+    ['id', 'name'],
+    where => {email => $commit_author_email}
+  )->one;
+  my $commit_author_tooltip = $commit_author_email;
+  my $commit_author_label = $commit->{author_name};
+  my $commit_author_id;
+  if ($commit_author) {
+    $commit_author_id = $commit_author->{id};
+    $commit_author_label = $commit_author_id;
+    $commit_author_tooltip = "$commit_author->{name} <$commit_author_email>";
+  }
+  my $commit_comment = join "\n", @{$commit->{comment}};
+  $commit_comment =~ s/^[\r\n]*(.*?)[\r\n]*$/$1/;
+  my $commit_title = $commit->{title};
+
   # Color
   my $colors = [
     '#ffeca7',
@@ -59,20 +79,46 @@
   stash(id => $rev, project => $project_id, rev => $rev);
 %>
 
-% layout 'common' , title => "$user_id/$project_id at $rev";
+% layout 'common' , title => "Blaming $project_id/$file at $rev \x{b7} $user_id/$project_id";
 
   %= include '/include/header';
   
   <!-- Blame page -->
   <div class="container">
     <div class="blame-page-path">
-      %= include '/include/page_path', Path => $file;
+      %= include '/include/page_path', type => 'blob', Path => $file;
       <div class="blame-gradation">
         Newer
         % for my $color (@$colors) {
           <span style="font-size:20px;color:<%= $color %>">■</span>
         % }
         Older
+      </div>
+    </div>
+    <div class="blame-commit">
+      <div class="blame-commit-author" title="<%= $commit_author_tooltip %>">
+        % if ($commit_author_id) {
+          <a href="<%= url_for("/$commit_author_id") %>">
+        % }
+        <%= $commit_author_label %>
+        % if ($commit_author_id) {
+          </a>
+        % }
+      </div>
+      <div class="blame-commit-title"
+        % if ($commit_title ne $commit_comment) {
+          title="<%= $commit_comment %>"
+        % }
+        >
+        <%= $commit_title %>
+      </div>
+      <div class="blame-commit-right">
+        <div class="blame-commit-rev" title="<%= $commit_comment %>">
+          <a href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
+            <%= substr($commit->{id}, 0, 7) %>
+          </a>
+        </div>
+        %= $api->age_element($commit->{author_epoch}, class => 'blame-commit-age');
       </div>
     </div>
     <div class="file-header">
@@ -102,25 +148,38 @@
           <%
             my $blame_commit = $line->{commit};
             my $summary = $line->{summary};
-            my $summary_short= length $summary > 28 ? substr($summary, 0, 28) . '...' : $summary;
+            my $parent = $line->{parent};
+            my $content = $line->{content};
+            my $parent_filename = $line->{parent_filename};
+            my $summary_short = length $summary > 28 ? substr($summary, 0, 28) . '...' : $summary;
             my $time_rate = $blame_max_author_time == $blame_min_author_time
              ? 1
              : ($blame_max_author_time - $line->{author_time}) / ($blame_max_author_time - $blame_min_author_time);
             my $color_number = int($time_rate * 10);
             $color_number = 9 if $color_number == 10;
             my $hot_color = $colors->[$color_number];
+            $content =~ s/[ \t\r\n]*$//;
+            $content =~ s/ /\x{a0}/g;
+            my $separator = 'blame-group-separator';
+            $separator = '' unless !$line->{before_same_commit} && $line->{number} != 1;
           %>
-          <tr id="L<%= $line->{number} %>">
-            % if ($line->{before_same_commit}) {
-              <td class="blame-body-left" nowrap style="border-right:2px solid <%= $hot_color %>"></td>
-            % } else {
-              <td class="blame-body-left" nowrap style="border-right:2px solid <%= $hot_color %>">
+          <tr id="L<%= $line->{number} %>" class="<%== $separator %>">
+            <td class="blame-body-left" nowrap style="border-right:2px solid <%= $hot_color %>;">
+              % if (!$line->{before_same_commit}) {
                 <div class="blame-summary-container">
                   <div class="blame-summary">
-                    <%= $summary_short %>
+                    % my $tooltip = join "\n", $summary, substr($blame_commit, 0, 7);
+                    <a href="<%= url_for("$user_project_path/commit/$blame_commit") %>" title="<%= $tooltip %>">
+                      <%= $summary_short %>
+                    </a>
                   </div>
                   <div class="blame-commit-id">
-                    <a href="<%= url_for("$user_project_path/commit/$blame_commit") %>" ><%= substr($blame_commit, 0, 7) %></a>
+                    % if ($line->{chain}) {
+                      % $tooltip = 'Blame prior to change ' . substr($blame_commit, 0, 7);
+                      <a href="<%= url_for("$user_project_path/blame/$parent/$parent_filename") %>" title="<%= $tooltip %>">
+                        %= $api->icon('versions');
+                      </a>
+                    % }
                   </div>
                 </div>
                 <div class="blame-author">
@@ -128,13 +187,13 @@
                   authored
                   %= $api->age_element($line->{author_time});
                 </div>
-              </td>
-            % }
+              % }
+            </td>
             <td class="blame-body-center" nowrap>
               <%= $line->{number} %>
             </td>
             <td nowrap class="blame-body-right">
-              <pre style="border:none;background:white;margin:0;padding:0;white-space: nowrap;"><%= $line->{content} %></pre>
+              <pre style="border:none;background:white;margin:0;padding:0;white-space: nowrap;"><%= $content %></pre>
             </td>
           </tr>
         % }
