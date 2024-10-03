@@ -2615,6 +2615,30 @@ a:hover .btn-delete {
   text-align:right:
 }
 
+.blame-commit {
+  width: 100%;
+  padding: 10px 0;
+  margin-top: 20px;
+  border: 1px solid #e6e9e6;
+  border-radius: 10px;
+  color: gray;
+}
+
+.blame-commit > *,
+.blame-commit-right > * {
+  display: inline;
+  margin: 0 10px;
+}
+
+.blame-commit-author {
+  font-weight: bold;
+  color: black;
+}
+
+.blame-commit-right {
+  float: right;
+}
+
 .blame-body-container {
   overflow-x:scroll;
   border:1px solid #e6e9e6;
@@ -2624,6 +2648,10 @@ a:hover .btn-delete {
 .blame-body {
   width:100%;
   border-collapse: collapse;
+}
+
+.blame-group-separator {
+  border-top: 1px solid #e6e9e6;
 }
 
 .blame-body-left {
@@ -2638,6 +2666,7 @@ a:hover .btn-delete {
   color:gray;
   font-size:12px;
   vertical-align:middle;
+  text-align: right;
   border-right:1px solid #e6e9e6;
 }
 
@@ -2645,7 +2674,8 @@ a:hover .btn-delete {
   padding:5px 10px;
   vertical-align:middle;
   white-space: nowrap;
-  border-right:none
+  border-right:none;
+  min-width: 60%;
 }
 
 .blame-summary-container {

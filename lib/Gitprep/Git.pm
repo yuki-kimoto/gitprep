@@ -219,7 +219,7 @@ sub authors {
 
 sub blame {
   my ($self, $rep_info, $rev, $file) = @_;
-  
+
   # Git blame
   my @cmd = $self->cmd(
     $rep_info,
@@ -229,17 +229,56 @@ sub blame {
     '--',
     $file
   );
+
+  # Read blame data
   open my $fh, '-|', @cmd
     or croak "Can't git blame --line-porcelain";
-  
-  # Format lines
+
+  my @lines = <$fh>;
+  my $enc = $self->decide_encoding($rep_info, \@lines);
+
+  # Get file's commit history
+  @cmd = $self->cmd(
+    $rep_info,
+    '--no-pager',
+    'log',
+    '--follow',
+    '--format=%H %P',
+    '--summary',
+    $rev,
+    '--',
+    $file);
+  open $fh, "-|", @cmd
+    or croak 500, "Open git-log failed";
+  my $history = [];
+  foreach my $l (<$fh>) {
+    $l = decode($enc, $l);
+    chomp $l;
+    if ($l =~ /^([0-9a-f]{40})(?:\s([0-9a-f]{40}))?/) {
+      push @$history, [$1, $2, $file];   # commit, parent, filename
+    }
+    elsif ($l =~ /^ (?:rename|copy) (?:([^\{]*)\{)?(.*?) => ([^\}]*?)(?:\}(.*?))?\s\(/) {
+      $file = "$1$2$4";
+      $file =~ s#/+#/#g;
+    }
+  }
+
+  # Build commit table from history.
+  my %commit_table;
+  my $head;
+  while (my $p = pop @$history) {
+    my $crev = shift @$p;
+    push @$p, $head;
+    $head = $crev;
+    $commit_table{$crev} = $p;
+  }
+
+  # Format blame lines
   my $blame_lines = [];
   my $blame_line;
   my $max_author_time;
   my $min_author_time;
-  my @lines = <$fh>;
-  
-  my $enc = $self->decide_encoding($rep_info, \@lines);
+
   for my $line (@lines) {
     $line = decode($enc, $line);
     chomp $line;
@@ -272,6 +311,10 @@ sub blame {
       $blame_line = {};
       $blame_line->{commit} = $1;
       $blame_line->{number} = $2;
+      my ($parent, $file, $chain) = @{$commit_table{$1} // []};
+      $file = undef;
+      $file = $commit_table{$chain}->[1] if $chain && $commit_table{$chain};
+      @{$blame_line}{'parent', 'parent_filename', 'chain'} = ($parent, $file, $chain);
       if ($blame_lines->[-1]
         && $blame_lines->[-1]{commit} eq $blame_line->{commit})
       {
@@ -279,13 +322,14 @@ sub blame {
       }
     }
   }
-  
+
   my $blame = {
     lines => $blame_lines,
+    head => $head,
     max_author_time => $max_author_time,
     min_author_time => $min_author_time
   };
-  
+
   return $blame;
 }
 
@@ -588,6 +632,16 @@ sub rev_exists {
   my ($self, $rep_info, $rev) = @_;
   my @cmd = $self->cmd($rep_info, 'rev-parse', $rev);
   return Gitprep::Util::run_command(@cmd);
+}
+
+sub file_exists {
+  my ($self, $rep_info, $rev, $file) = @_;
+
+  my @cmd = $self->cmd($rep_info, 'ls-tree', '--name-only', $rev, $file);
+
+  open my $fh, "-|", @cmd
+    or croak 500, "Open git-ls-tree failed";
+  return 1 if <$fh>;
 }
 
 sub delete_branch {
