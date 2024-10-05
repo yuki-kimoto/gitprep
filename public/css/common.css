@@ -3376,6 +3376,7 @@ a:hover .btn-delete {
   border-top:none;
   border-radius: 0 0 3px 3px;
   margin-bottom:30px;
+  overflow: auto;
 }
 .commit-diff-body > table {
   border-collapse:collapse;
