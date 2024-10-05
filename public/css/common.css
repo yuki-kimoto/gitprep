@@ -1812,6 +1812,10 @@ a:hover .btn-delete {
   border-radius: 6px;
 }
 
+.count-label-bold {
+  font-weight: bold;
+}
+
 /* alert */
 .alert {
   padding: 8px 35px 8px 14px;
@@ -3261,16 +3265,15 @@ a:hover .btn-delete {
   text-align:right;
 }
 .commits-summary-body {
+  display: flex;
+  justify-content: space-between;
   overflow:hidden;
   padding:4px 0;
 }
 .commits-summary-body > :first-child {
-  width:40%;
-  float:left;
+  max-width: 60%;
 }
 .commits-summary-body > .last-child {
-  width:60%;
-  float:left;
   text-align:right;
 }
 .commits-summary-author {

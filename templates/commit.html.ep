@@ -33,15 +33,17 @@
     'id',
     where => {email => $commit_author_email}
   )->value;
-  
+  my $commit_comment = [@{$commit->{comment}}];
+  shift @$commit_comment;
+  $commit_comment = join "\n", (@$commit_comment);
+  $commit_comment =~ s/^[ \t\r\t]*(.*?)[ \t\r\n]*$/$1/s;
+
   # Branches
-  my $branch_refs = $git->references($rep_info, 'heads');
-  my $branches = $branch_refs->{$commit->{id}} || [];
-  
+  my $branches = $git->locate_commit('branch', $rep_info, $commit->{id});
+
   # Tags
-  my $tag_refs = $git->references($rep_info, 'tags');
-  my $tags = $tag_refs->{$commit->{id}} || [];
-  
+  my $tags = $git->locate_commit('tag', $rep_info, $commit->{id});
+
   # commit_body args
   my %commit_body_args = (
     user => $user_id,
@@ -56,35 +58,37 @@
 %= include '/include/header';
 
 <div class="container">
-  <ul class="commits-summary">
+  <ul class="commits-summary-header">
+    <li style="font-size: 160%; line-height: 160%"><%= $commit->{title} %></li>
+     <li class="last-child">
+      % unless ($is_wiki) {
+        <a class="btn" href="<%= url_for("$user_project_path/tree/$commit->{id}") %>" title="Browse the repository at the point in the history">
+          %= $api->icon('file-code');
+          Browse files
+        </a>
+      % }
+    </li>
+  </ul>
+  <ul class="commits-author">
     <li>
-      <ul class="commits-summary-header">
-        <li>
-          <div>
-            % if ($commit->{title_short} eq $commit->{title}) {
-              <b><%= $commit->{title_short} %></b>;
-            % } else {
-              <%
-                my $title_short = $commit->{title_short};
-                $title_short =~ s/\.\.\.\s*$//;
-                my $title_tail = $commit->{title};
-                $title_tail =~ s/^\Q$title_short//;
-                $title_tail =~ s/^\s+//;
-              %>
-              <p><b><%= $title_short %>...</b></p>
-              <p>...<%= $title_tail %></p>
-            % }
-          </div>
-
-          % if (@{$commit->{comment}} > 1) {
-            <div>
-              % for (my $i = 1; $i < @{$commit->{comment}}; $i++) {
-                <div>
-                  <%= $commit->{comment}[$i] %>
-                </div>
-              % }
-            </div>
-          % }
+      <span class="commits-summary-author">
+        % if (defined $commit_author_id) {
+          <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+        % } else {
+          <%= $commit->{author_name} %>
+        % }
+      </span>
+      commited
+      %= $api->age_element($commit->{committer_epoch});
+    </li>
+  </ul>
+  <ul class="commits-summary">
+    % if ($commit_comment) {
+      <li><pre><%= $commit_comment %></pre></li>
+    % }
+    <li class="last-child">
+      <div class="commits-summary-body">
+        <div>
           % unless ($is_wiki) {
             % if (@$branches) {
               <div>
@@ -105,30 +109,8 @@
               </div>
             % }
           % }
-        </li>
-        <li class="last-child">
-          % unless ($is_wiki) {
-            <a class="btn btn-primary" href="<%= url_for("$user_project_path/tree/$commit->{id}") %>">
-              Browse files
-            </a>
-          % }
-        </li>
-      </ul>
-    </li>
-    <li class="last-child">
-      <ul class="commits-summary-body">
-        <li>
-          <span class="commits-summary-author">
-            % if (defined $commit_author_id) {
-              <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
-            % } else {
-              <%= $commit->{author_name} %>
-            % }
-          </span>
-          commited
-          %= $api->age_element($commit->{committer_epoch});
-        </li>
-        <li class="last-child">
+        </div>
+        <div class="last-child">
           % my $parents = $commit->{parents};
           
           <div class="commits-summary-parent">
@@ -142,10 +124,10 @@
             % }
           </div>
           <div class="commits-summary-commit-id">
-            commit <span><%= $commit->{id} %></span>
+            commit <span><%= substr($commit->{id}, 0, 7) %></span>
           </div>
-        </li>
-      </ul>
+        </div>
+      </div>
     </li>
   </ul>
 
