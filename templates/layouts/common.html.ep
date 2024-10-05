@@ -21,7 +21,7 @@
     % for my $stylesheet (@$stylesheets) {
       %= stylesheet $stylesheet;
     % }
-    %= javascript '/js/jquery-1.9.0.min.js';
+    %= javascript '/js/jquery-3.7.1.min.js';
     %= javascript '/js/bootstrap.min.js';
     %= javascript '/js/gitprep.js';
 
