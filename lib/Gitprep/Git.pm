@@ -1313,7 +1313,7 @@ sub get_commits {
   open my $fh, '-|', @cmd
     or croak 'Open git-rev-list failed';
   
-  # Prase Commits text
+  # Parse Commits text
   local $/ = "\0";
   my @commits;
   my @lines = <$fh>;
@@ -1392,6 +1392,29 @@ sub parse_ls_tree_line {
   }
 
   return \%res;
+}
+
+sub locate_commit {
+  my ($self, $kind, $rep_info, $rev) = @_;
+
+  # Return an array of object names of the given kind (branch or tag) containing
+  # the given commit revision.
+
+  my @cmd = $self->cmd(
+    $rep_info,
+    $kind,
+    '--format=%(refname:short)',
+    '--contains',
+    $rev);
+
+  open my $fh, "-|", @cmd
+    or croak 500, "Open git--$kind failed";
+
+  my @lines = <$fh>;
+  my $enc = $self->decide_encoding($rep_info, \@lines);
+  @lines = sort(map {decode($enc, $_)} @lines);
+  chomp @lines;
+  return \@lines;
 }
 
 sub import_branch {
