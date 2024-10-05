@@ -16,21 +16,24 @@
   
   my $path = stash('Path');
 
-  my $title;
+  my $rep_info = app->rep_info($user, $project);
+  my $tags = app->git->tags($rep_info);
   my $rev_short;
+  my $active_branch = 'active';
+  my $active_tag = '';
   if (defined $rev && length $rev == 40) {
-    $title = 'Tree';
-    $rev_short = substr($rev, 0, 10);
+    $rev_short = substr($rev, 0, 7);
   }
   else {
-    $title = 'Branch';
     $rev_short = $rev;
+    ($active_branch, $active_tag) = ($active_tag, $active_branch)
+      if grep $rev eq $_->{name}, @$tags;
   }
   
   my $is_project_top_page = !(defined $path && length $path);
 
-  my $branches_count = app->git->branches_count($self->app->rep_info($user, $project));
-  my $tags_count = app->git->tags_count(app->rep_info($user, $project));
+  my $branches_count = app->git->branches_count($rep_info);
+  my $tags_count = @$tags;
 %>
 
 %= javascript begin
@@ -105,7 +108,7 @@
   <div class="branch-select-left-container <%= $display eq 'tree' || $display eq 'blob' ? 'branch-select-left-container-page-path' : '' %>">
     <button id="rev-btn" class="btn btn-small" style="padding-top:6px">
         <span style="position: relative;top:-1px;left:2px;">
-          %= $api->icon('git-branch');
+          %= $api->icon($active_tag? 'tag': 'git-branch');
         </span>
         <b><%= $rev_short %></b>
         <span style="position: relative;top:-1px;left:2px;">
@@ -116,11 +119,13 @@
     % if ($is_project_top_page) {
       <a href="<%= url_for("/$user/$project/branches") %>">
         %= $api->icon('git-branch');
-        <%= $api->plural('Branch', $branches_count, 'no') %>
+        <span class="count-label-bold"><%= $branches_count %></span>
+        <%= $api->plural('Branch', $branches_count) %>
       </a>
       <a href="<%= url_for("/$user/$project/tags") %>">
         %= $api->icon('tag');
-        <%= $api->plural('Tag', $tags_count, 'no') %>
+        <span class="count-label-bold"><%= $tags_count %></span>
+        <%= $api->plural('Tag', $tags_count) %>
       </a>
     % }
 
@@ -157,15 +162,15 @@
       </div>
     </div>
     <ul class="nav nav-tabs" id="revs-tab" style="background:#F5F5F5;margin-bottom:0">
-      <li class="active"><a href="#branches">Branches</a></li>
-      <li><a href="#tags">Tags</a></li>
+      <li class="<%= $active_branch %>"><a href="#branches">Branches</a></li>
+      <li class="<%= $active_tag %>"><a href="#tags">Tags</a></li>
     </ul>
     <div class="tab-content">
-      <div class="tab-pane active" id="branches" style="background:white;max-height:300px;overflow:auto;margin-top:0">
+      <div class="tab-pane <%= $active_branch %>" id="branches" style="background:white;max-height:300px;overflow:auto;margin-top:0">
         <ul id="branch-names-list" class="nav nav-tabs nav-stacked">
         </ul>
       </div>
-      <div class="tab-pane" id="tags" style="background:white;max-height:300px;overflow:auto;margin-top:0">
+      <div class="tab-pane <%= $active_tag %>" id="tags" style="background:white;max-height:300px;overflow:auto;margin-top:0">
         <ul id="tag-names-list" class="nav nav-tabs nav-stacked">
         </ul>
       </div>
