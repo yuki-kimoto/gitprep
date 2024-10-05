@@ -366,8 +366,10 @@ sub blob_diffs {
   
   $opt //= {};
   my $ignore_space_change = $opt->{ignore_space_change};
-  
-  return unless defined $rev1 && defined $rev2;
+
+  # This is the empty tree hidden hash,
+  $rev1 //= '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
+  return unless defined $rev2;
 
   # Config quotepath false
   # Fix UTF-8 file name problem
