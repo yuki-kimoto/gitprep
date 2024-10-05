@@ -305,13 +305,8 @@
 %>
 
 
-%= javascript '/js/icon-input.js';
-
 %= javascript begin
   $(document).ready(function () {
-
-    // Initialize icon input
-    init_icon_input();
 
     // Change base fork
     $('#base-fork-btn').on('click', function () {

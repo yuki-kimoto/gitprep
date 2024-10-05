@@ -77,4 +77,55 @@
     }, ms);
     $('body').append(popup);
   };
+
+  // Initialize comment edition iconic buttons.
+  $(document).ready(function () {
+    var iconInputButton = function (iconClass, frame, multi, embed) {
+      if (!(frame instanceof Array)) {
+        frame = [frame, ''];
+      }
+      if (multi === undefined) {
+        multi = frame;
+      }
+      if (!(multi instanceof Array)) {
+        multi = [multi, ''];
+      }
+      if (embed === undefined) {
+        embed = "\n";
+      }
+      var icon = $(iconClass);
+      icon.on('click', function () {
+        var textarea = $(this).closest('form').find('textarea');
+        var obj = $(textarea);
+        obj.focus();
+        var text = obj.val();
+        var jsobj = $(obj).get(0);
+        var start = jsobj.selectionStart;
+        var end = jsobj.selectionEnd;
+        var lines = text.substring(start, end).split("\n");
+
+        if (lines.length > 1) {
+          frame = multi;
+        }
+        var replacement = lines.join(embed);
+
+        obj.val(text.substring(0, start) +
+                frame[0] + replacement + frame[1] +
+                text.substring(end));
+        start += frame[0].length;
+        end = start + replacement.length;
+        jsobj.setSelectionRange(start, end);
+      });
+    };
+
+    iconInputButton('.icon-add-header-text' , '# ');
+    iconInputButton('.icon-add-bold-text', ['**', '**']);
+    iconInputButton('.icon-add-italic-text', ['_', '_']);
+    iconInputButton('.icon-insert-quote', '> ');
+    iconInputButton('.icon-insert-code', ['`', '`'], ["```\n", "\n```"]);
+    iconInputButton('.icon-add-link', ['[', '](url)']);
+    iconInputButton('.icon-add-bulleted-list', '- ', undefined, "\n- ");
+    iconInputButton('.icon-add-numbered-list', '1. ', undefined, "\n1. ");
+    iconInputButton('.icon-mention-user', '@');
+  });
 }(window.Gitprep = window.Gitprep || {}, jQuery));

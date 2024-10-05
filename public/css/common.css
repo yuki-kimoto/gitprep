@@ -702,6 +702,7 @@ ul.issues-label-pallet {
 }
 .add-comment-icons > * {
   cursor:pointer;
+  margin-left: 6px;
 }
 
 .issue-add-comment-header-tab a.disable {

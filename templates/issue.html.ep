@@ -499,14 +499,9 @@
   layout 'common', title => $title;
 %>
 
-%= javascript '/js/icon-input.js';
-
 %= javascript begin
   $(document).ready(function() {
     %= include '/include/js/issue';
-
-    // Initialize icon input
-    init_icon_input();
 
     // Click labels btn
     $('.issue-labels-setting-btn').on('click', function () {
