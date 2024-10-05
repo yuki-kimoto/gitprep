@@ -24,8 +24,8 @@
     %= javascript '/js/jquery-1.9.0.min.js';
     %= javascript '/js/bootstrap.min.js';
     %= javascript '/js/gitprep.js';
-    
-    <link rel="shortcut icon" href="<%= url_for('/git-favicon.png') %>" type="image/png" />
+
+    <link rel="shortcut icon" href="<%= url_for('/gitprep-favicon.svg') %>" type="image/xml+svg" />
     % if (length $user && length $project && length $rev) {
       <link href="<%= url_for("/$user/$project/commits/$rev.atom")->to_abs %>" rel="alternate" title="Recent Commits to <%= "$project:$rev" %>" type="application/atom+xml" />
     % }
