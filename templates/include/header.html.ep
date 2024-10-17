@@ -33,15 +33,22 @@
 
 <div class="header">
   <div class="header-left">
-    <div class="title"><a href="<%= url_for('/') %>"><%= $api->icon('gitprep', class => 'header-logo') %></a></div>
-    % if ((url_for->path->parts->[0] || '') ne '_search') {
-      <form class="header-search" action="<%= url_for('/_search') %>">
-        <%= text_field 'q', style => 'display:inline-block;width:350px', placeholder => 'Search' %>
-      </form>
-    % }
+    <div class="title">
+      <a href="<%= url_for('/') %>"><%= $api->icon('gitprep', class => 'header-logo') %></a>
+      <a href="<%= url_for("/$user_id") %>"><%= $user_id %></a>
+      % if (defined $project_id) {
+        /
+        <a href="<%= url_for("/$user_id/$project_id") %>"><%= $project_id %></a>
+      % }
+    </div>
   </div>
   <div class="header-right">
     <div class="header-right-container">
+      % if ((url_for->path->parts->[0] || '') ne '_search') {
+        <form class="header-search" action="<%= url_for('/_search') %>">
+          <%= text_field 'q', style => 'display:inline-block;width:350px', placeholder => 'Search' %>
+        </form>
+      % }
       % if ($api->logined) {
         % unless ($session_user->{id} eq 'admin') {
           <div class="header-btn-container">
@@ -82,38 +89,6 @@
 </div>
 
 % if (!$no_project_header && (defined $user_id || defined $project_id)) {
-  <div class="project-header">
-    <div class="header-project-path">
-      <ul class="breadcrumb">
-        <li><a href="<%= url_for('/') %>">
-          %= $api->icon('home-fill');
-        </a></li>
-        /
-        <li><a href="<%= url_for("/$user_id") %>"><%= $user_id %></a></li>
-        % if (defined $project_id) {
-          /
-          <li><b><a href="<%= url_for("/$user_id/$project_id") %>"><%= $project_id %></a></b></li>
-        % }
-
-        % if ($is_private_project) {
-          %= $api->icon('lock');
-        % }
-
-        % if (defined $original_project) {
-          <small>
-            (
-              forked from
-              <a href="<%= url_for("/$original_project->{'user.id'}/$original_project->{id}") %>">
-                <%= "$original_project->{'user.id'}/$original_project->{id}" %>
-              </a>
-            )
-          </small>
-        % }
-      </ul>
-      <div class="flex-padding"></div>
-      <div class="project-header-right">
-      </div>
-    </div>
     % if (defined $project_id && !defined $private) {
       <%
         my $tab = stash('tab') || 'code';

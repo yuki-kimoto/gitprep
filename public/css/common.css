@@ -1233,7 +1233,7 @@ input[type=text], input[type=password] {
   fill: white;
   width: 22px !important;
   height: 22px !important;
-  margin-right: 20px;
+  margin-right: 3px;
 }
 
 .header {
@@ -1255,8 +1255,9 @@ input[type=text], input[type=password] {
 
 .title {
   float:left;
-  font-size:19px;
+  font-size:18px;
   padding:10px 0 9px 0;
+  color:white;
 }
 .title a {
   color:white;
@@ -1267,7 +1268,7 @@ input[type=text], input[type=password] {
 
 .header-search {
   float:left;
-  margin-left:10px;
+  margin-right:5px;
   padding:6px 0 5px 0;
 }
 
@@ -2216,16 +2217,6 @@ a:hover .btn-delete {
   justify-content: center;
   overflow: hidden;
   padding:0 17px;
-}
-
-.project-header-top {
-  display: flex;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.project-header-top a, a:visited {
-  color:#444;
 }
 
 .project-header>*.padding {
