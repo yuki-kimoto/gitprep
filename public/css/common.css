@@ -855,7 +855,7 @@ ul.issues-label-pallet {
 
 .issue-title {
   font-size:27px;
-  margin:30px 0 15px 0;
+  margin:0 0 15px 0;
 }
 
 .issue-open {
@@ -1128,6 +1128,7 @@ input[type=text], input[type=password] {
 .container {
   width: 1080px;
   margin:0 auto;
+  padding-top:20px;
 }
 
 .new-container {
@@ -2195,7 +2196,7 @@ a:hover .btn-delete {
 .topic1 {
   font-size:18px;
   font-weight:bold;
-  margin:20px 0 15px 0;
+  margin:0 0 15px 0;
   color:#395582;
   padding:4px 6px;
   background:#f7f7f7;
@@ -2203,12 +2204,17 @@ a:hover .btn-delete {
   border: 1px solid #eaecef;
 }
 
+.project-header-top {
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
 .project-header {
   background:#f7f9f9;
   border-bottom: none;
   margin-bottom:12px;
   overflow:hidden;
-  padding:14px 0 0 0;
 }
 .header-project-path {
   display: flex;

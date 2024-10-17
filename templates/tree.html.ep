@@ -103,7 +103,7 @@
     
     % if ($is_project_top_page) {
       <div class="project-header" style="background-color:white;">
-        <div class="container project-header-top">
+        <div class="project-header-top">
           <ul class="breadcrumb">
             <li><b><a href="<%= url_for("/$user_id/$project_id") %>"><%= $project_id %></a></b></li>
 
