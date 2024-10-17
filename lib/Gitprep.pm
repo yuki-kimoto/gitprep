@@ -723,6 +723,9 @@ sub startup {
                $self->render_maybe(template => '/api/watch',
                                    state => $self->param('state'));
              });
+
+             # Diff folding.
+             $r->post('/api/fold/*rev_file' => sub { shift->render_maybe('/api/diff_fold'); });
           }
         }
       }

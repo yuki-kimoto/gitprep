@@ -1,0 +1,42 @@
+<%
+  my $api = gitprep_api;
+
+  my $current_line = stash('current_line');
+  my $next_line = stash('next_line');
+  my $count = 20;
+%>
+
+% if (!defined $current_line) {
+  %# First chunk header.
+  % if ($next_line <= 1) {
+    %# Already at the very begining: no button.
+    <td class="diff-line">
+      %= $api->icon('kebab-horizontal');
+    </td>
+  % } else {
+    %# The first chunk does not begin at first file line.
+    <td class="diff-line diff-fold-button" onclick="Gitprep.diffFoldUp(this);">
+      %= $api->icon('fold-up');
+    </td>
+  % }
+% } elsif (!defined $next_line) {
+  %# Trailing pseudo header.
+  <td class="diff-line diff-fold-button" onclick="Gitprep.diffFoldDown(this);">
+    %= $api->icon('fold-down');
+  </td>
+% } elsif ($next_line - $current_line <= $count) {
+  %# The gap between chunks will be nullified by our increment.
+  <td class="diff-line diff-fold-button" onclick="Gitprep.diffFoldUp(this);">
+    %= $api->icon('fold');
+  </td>
+% } else {
+  %# Big gap: may fold up or down.
+  <td class="diff-line">
+    <span class="diff-fold-button" onclick="Gitprep.diffFoldDown(this);">
+      %= $api->icon('fold-down');
+    </span>
+    <span class="diff-fold-button" onclick="Gitprep.diffFoldUp(this);">
+      %= $api->icon('fold-up');
+    </span>
+  </td>
+% }
