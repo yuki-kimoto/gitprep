@@ -347,7 +347,7 @@ sub blob {
   );
   open my $fh, '-|', @cmd
     or croak "Can't cat $file, $hash";
-  
+
   # Format lines
   my @lines = <$fh>;
   my @new_lines;
@@ -357,7 +357,7 @@ sub blob {
     chomp $line;
     push @new_lines, $line;
   }
-  
+
   return \@new_lines;
 }
 
@@ -1111,6 +1111,16 @@ sub last_change_commit {
   return $commit;
 }
 
+sub parse_diff_chunk_header {
+  my ($self, $hdr) = @_;
+
+  if ($hdr &&
+    $hdr =~ /^@@\s-(\d+)(?:,(\d+))?\s\+(\d+)(?:,(\d+))?\s@@(?:\s(.*?))?\s*$/) {
+    return [$1, $2 // 1, $3, $4 // 1, $5 // ''];
+  }
+  return undef;
+}
+
 sub parse_blob_diff_lines {
   my ($self, $lines) = @_;
 
@@ -1126,38 +1136,33 @@ sub parse_blob_diff_lines {
     
     chomp $line;
     
-    my $class;
     my $before_line_num;
     my $after_line_num;
-    
-    if ($line =~ /^@@\s-(\d+)(?:,\d+)?\s\+(\d+)/) {
-      $next_before_line_num = $1;
-      $next_after_line_num = $2;
+    my $hdr = $self->parse_diff_chunk_header($line);
+
+    if ($hdr) {
+      $next_before_line_num = $hdr->[0];
+      $next_after_line_num = $hdr->[2];
       
       $before_line_num = '...';
       $after_line_num = '...';
       
-      $class = 'chunk_header';
     }
     elsif ($line =~ /^\+\+\+/ || $line =~ /^---/) { next }
     elsif ($line =~ /^\-/) {
-      $class = 'from_file';
       $before_line_num = $next_before_line_num++;
       $after_line_num = '';
       $delete_line_count++;
     }
     elsif ($line =~ /^\+/) {
-      $class = 'to_file';
       $before_line_num = '';
       $after_line_num = $next_after_line_num++;
       $add_line_count++;
     }
     elsif ($line =~ /^Binary files/) {
-      $class = 'binary_file';
       $diff_info->{binary} = 1;
     }
     elsif ($line =~ /^ /) {
-      $class = 'diff';
       $before_line_num = $next_before_line_num++;
       $after_line_num = $next_after_line_num++;
     }
@@ -1165,7 +1170,6 @@ sub parse_blob_diff_lines {
     
     my $line_data = {
       value => $line,
-      class => $class,
       before_line_num => $before_line_num,
       after_line_num => $after_line_num
     };
