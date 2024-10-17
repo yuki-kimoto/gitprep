@@ -1088,9 +1088,7 @@ input[type=text], input[type=password] {
 
 .project-tabs li.active {
   background:white;
-  border:1px solid #e6e9e6;
-  border-top:3px #d26911 solid;
-  border-bottom:white;
+  border-bottom:2px #d26911 solid;
   border-radius:3px 3px 0 0;
 }
 
