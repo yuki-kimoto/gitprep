@@ -1,0 +1,300 @@
+<%
+  use Mojo::JSON 'decode_json';
+
+  my $user_id = param('user');
+  my $project_id = param('project');
+  my $rev_file = param('rev_file');
+
+  my $json_in = $self->{tx}->{req}->{content}->{asset}->{content};
+  my $json_param = decode_json($json_in);
+
+  my $git = app->git;
+
+  my $is_wiki = (stash('tab') // '') eq 'wiki';
+  my $user_id_project_path = "/$user_id/$project_id";
+  if ($is_wiki) {
+    $user_id_project_path .= '/wiki';
+  }
+  my $rep_info = $is_wiki? app->wiki_rep_info($user_id, $project_id): app->rep_info($user_id, $project_id);
+  my ($rev, $file) = $git->parse_rev_path($rep_info, $rev_file);
+
+  my $huge = 1000000000;
+  my $maxlines = 20;
+
+  # Build a chunk header from its components.
+  local *header_text = sub {
+    my ($fl, $fc, $tl, $tc, $txt) = @_;
+
+    my $header = "@@ -$fl";
+    $header .= ",$fc" if $fc != 1;
+    $header .= " +$tl";
+    $header .= ",$tc" if $tc != 1;
+    $header .= " @@";
+    $header .= " $txt" if $txt;
+    return $header;
+  };
+
+  # Load new lines.
+  my $blob;
+  local *load_lines = sub {
+    my ($from_line, $to_line, $count, $toeof) = @_;
+
+    my @new_lines;
+
+    if ($count) {
+      $blob = $git->blob($rep_info, $rev, $file) unless defined $blob;
+      my $maxlines = @$blob - --$from_line;
+      return undef if !$toeof && $count > $maxlines;
+      $count = $maxlines unless $count < $maxlines;
+      while ($count--) {
+        my $line = $blob->[$from_line++];
+        push @new_lines, {
+          from => $from_line,
+          to => $to_line++,
+          text => " $line"
+        }
+      }
+    }
+    return \@new_lines;
+  };
+
+  # Fold-up:
+  # JSON request:
+  #   op: 'fold-up'
+  #   previous_header: text of chunk header preceding the target one, if some.
+  #   header: text of the target chunk header.
+  # JSON reply:
+  #   header_icon: New icon of the target header, not present if header must be
+  #                deleted.
+  #   header_text: New text of the target header.
+  #   previous_header_text: Updated text if previous header exists.
+  #   lines: Optional array of new lines:
+  #     from: Line number in first file.
+  #     to: Line number in second file.
+  #     text: Line data for diff output.
+
+  local *fold_up = sub () {
+    my ($request) = @_;
+    my %reply;
+
+    # Get line numbers and counts from headers.
+    my $previous_header = $request->{previous_header};
+    my $header = $request->{header};
+    my $h1 = $git->parse_diff_chunk_header($previous_header);
+    my $h2 = $git->parse_diff_chunk_header($header);
+    return undef if defined($previous_header) && !$h1 || !$h2;
+    my ($fl2, $fc2, $tl2, $tc2, $txt2) = @$h2;
+    my ($fl1, $fc1, $tl1, $tc1, $txt1) = ($fl2? 1: 0, 0, $tl2? 1: 0, 0, '');
+    ($fl1, $fc1, $tl1, $tc1, $txt1) = @$h1 if $h1;
+
+    # Check consistency.
+    my $fmax = $fl2 - $fl1 - $fc1;
+    my $tmax = $tl2 - $tl1 - $tc1;
+    my $count = $fmax < $maxlines? $fmax: $maxlines;
+    return undef if $fmax != $tmax || $fmax < 0 || $count <= 0;
+
+    # Compute first line numbers to load.
+    my $from_line = $fl2 - $count;
+    my $to_line = $tl2 - $count;
+
+    # Load lines.
+    if ($count) {
+      $reply{lines} = load_lines($from_line, $to_line, $count);
+      return undef unless defined $reply{lines};
+    }
+
+    # If the hole has been filled, update previous header and remove
+    # the target header. Else update the target header.
+    if ($count == $fmax && $h1) {
+      $reply{previous_header_text} = header_text($fl1, $fc1 + $count + $fc2,
+        $tl1, $tc1 + $count + $tc2, $txt1);
+      }
+    else {
+      $reply{header_text} = header_text($fl2 - $count, $fc2 + $count,
+        $tl2 - $count, $tc2 + $count, '');
+      $reply{header_icon} = $self->render_to_string('/include/diff_fold_icon',
+        current_line => $h1? $fl1 + $fc1: undef,
+        next_line => $fl2 - $count);
+    }
+    return \%reply;
+  };
+
+  # Fold-down:
+  # JSON request:
+  #   op: 'fold-down'
+  #   previous_header: text of chunk header preceding the target one.
+  #   header: text of the target chunk header.
+  # JSON reply:
+  #   header_icon: New icon of the target header, not present if header must be
+  #                deleted.
+  #   previous_header_text: Updated previous header text.
+  #   lines: Optional array of new lines:
+  #     from: Line number in first file.
+  #     to: Line number in second file.
+  #     text: Line data for diff output.
+  # Cancellation of target header is forbidden.
+
+  local *fold_down = sub () {
+    my ($request) = @_;
+    my %reply;
+
+    # Get line numbers and counts from headers.
+    my $previous_header = $request->{previous_header};
+    my $header = $request->{header};
+    my $h1 = $git->parse_diff_chunk_header($previous_header);
+    my $h2 = $git->parse_diff_chunk_header($header);
+    return undef if !$h1 || !defined $header;
+    my ($fl1, $fc1, $tl1, $tc1, $txt1) = @$h1;
+    my ($fl2, $fc2, $tl2, $tc2, $txt2) = ($huge, 0, $huge, 0, '');
+    my $count = $maxlines;
+
+    if ($h2) {
+      ($fl2, $fc2, $tl2, $tc2, $txt2) = @$h2;
+
+      # Check consistency.
+      my $fmax = $fl2 - $fl1 - $fc1;
+      my $tmax = $tl2 - $tl1 - $tc1;
+      $count = $fmax - 1 if $count >= $fmax;
+      return undef if $fmax != $tmax || $fmax < 0 || $count <= 0;
+    }
+
+    # Compute first line numbers to load.
+    my $from_line = $fl1 + $fc1;
+    my $to_line = $tl1 + $tc1;
+    my $eof;
+
+    # Load lines.
+    if ($count) {
+      my $new_lines = load_lines($from_line, $to_line, $count, !$h2);
+      return undef unless defined $new_lines;
+      $eof = @$new_lines < $count;
+      $count = scalar @$new_lines;
+      $reply{lines} = $new_lines;
+    }
+
+    $reply{previous_header_text} = header_text($fl1, $fc1 + $count,
+      $tl1, $tc1 + $count, $txt1);
+    $reply{header_icon} = $self->render_to_string('/include/diff_fold_icon',
+      current_line => $fl1 + $fc1 + $count, next_line => $h2? $fl2: undef)
+      unless $eof;
+    return \%reply;
+  };
+
+  # Expand:
+  # JSON request:
+  #   op: 'expand'
+  #   headers: Array of headers text.
+  # JSON reply:
+  #   header_icon: New icon for the first header.
+  #   header_text: New text for the first header.
+  #   parts: Array of lines chunks replacing the nth header.
+  #     []: Array of new lines:
+  #       from: Line number in first file.
+  #       to: Line number in second file.
+  #       text: Line data for diff output.
+  # Upon receipt, the first header should not be destroyed.
+
+  local *expand = sub {
+    my ($request) = @_;
+    my %reply;
+    my @parts;
+
+    my $headers = $request->{headers};
+
+    # Handle first header.
+    my $header_1st = $git->parse_diff_chunk_header(shift @$headers);
+    return undef unless $header_1st;
+    my $h1 = $header_1st;
+    my ($fl_1st, $fc_1st, $tl_1st, $tc_1st, $txt_1st) = @$header_1st;
+    my $new_lines = [];
+    my $count = $fl_1st - 1;
+    if ($count > 0) {
+      $new_lines = load_lines(1, 1, $count);
+      return undef unless $new_lines;
+      $fc_1st += $count;
+      $tc_1st += $count;
+      $txt_1st = '';
+    }
+    push @parts, $new_lines;
+    $reply{parts} = \@parts;
+
+    # Fill holes between chunks.
+    while (@$headers) {
+      my $h2 = $git->parse_diff_chunk_header(shift @$headers);
+      last if !$h2;
+      my ($fl1, $fc1, $tl1, $tc1) = @$h1;
+      my ($fl2, $fc2, $tl2, $tc2) = @$h2;
+      my $from_line = $fl1 + $fc1;
+      my $to_line = $tl1 + $tc1;
+      my $count = $fl2 - $from_line;
+      return undef if $count < 0;
+      $new_lines = load_lines($from_line, $to_line, $count);
+      return undef unless defined $new_lines;
+      push @parts, $new_lines;
+      $fc_1st = $fl2 + $fc2 - 1;
+      $tc_1st = $tl2 + $tc2 - 1;
+      $h1 = $h2;
+    }
+    return undef if @$headers;
+
+    # Handle file trailer.
+    $new_lines = load_lines($fc_1st + 1, $tc_1st + 1, $huge, 1);
+    push @parts, $new_lines;
+    $fc_1st += @$new_lines;
+    $tc_1st += @$new_lines;
+
+    # Build new initial header info.
+    $fl_1st = $fc_1st? 1: 0;
+    $tl_1st = $tc_1st? 1: 0;
+    $reply{header_text} = header_text($fl_1st, $fc_1st, $tl_1st, $tc_1st, $txt_1st);
+    $reply{header_icon} = $self->render_to_string('/include/diff_fold_icon',
+      next_line => $fl_1st);
+    return \%reply;
+  };
+
+  # Collapse:
+  # JSON request:
+  #   op: 'collapse'
+  #   chunks: Array of headers text.
+  # JSON reply:
+  #   icons: Array of header icons (html).
+
+  local *collapse = sub {
+    my ($request) = @_;
+    my %reply;
+    my $chunks = $request->{chunks} || [];
+    my @icons;
+    my $current_line;
+    while (my $header = pop @$chunks) {
+      my $hdr = $git->parse_diff_chunk_header($header);
+      last unless $hdr;
+      my ($fl, $fc) = @$hdr;
+      push @icons, $self->render_to_string('/include/diff_fold_icon',
+        current_line => $current_line,
+        next_line => $fl);
+      $current_line = $fc + $fl;
+    }
+    return undef if @$chunks;
+    push @icons, $self->render_to_string('/include/diff_fold_icon',
+     current_line => $current_line);
+    $reply{icons} = \@icons;
+    return \%reply;
+  };
+
+  my $op = $json_param->{op};
+  my $reply;
+  if ($op eq 'fold-up') {
+    $reply = fold_up($json_param);
+  } elsif ($op eq 'fold-down') {
+    $reply = fold_down($json_param);
+  } elsif ($op eq 'expand') {
+    $reply = expand($json_param);
+  } elsif ($op eq 'collapse') {
+    $reply = collapse($json_param);
+  }
+  $reply = {status => 'fail'} unless $reply;
+  $reply->{status} //= 'ok';
+  $reply->{op} //= $op;
+  $self->render(json => $reply);
+  return;
+%>

@@ -78,6 +78,220 @@
     $('body').append(popup);
   };
 
+  // Diff folding.
+  var header_text = function (from_line, from_count, to_line, to_count, text) {
+    if (from_line == 1 && from_count == 0) {
+      from_line = 0;
+    }
+    if (to_line == 1 && to_count == 0) {
+      to_line = 0;
+    }
+    var t = '@@ -' + from_line.toString();
+    if (from_count != 1) {
+      t += ',' + from_count.toString();
+    }
+    t += ' +' + to_line.toString();
+    if (to_count != 1) {
+      t += ',' + to_count.toString();
+    }
+    t += ' @@';
+    if (text != '') {
+      t += ' ' + text;
+    }
+    return t;
+  };
+  var parse_diff_chunk_header = function (header) {
+    var re = /^@@\s-(\d+)(?:,(\d+))?\s\+(\d+)(?:,(\d+))?\s@@(?:\s(.*?))?\s*$/;
+    var m = header.match(re);
+    if (m) {
+      if (!m[1]) {
+        m[1] = '1';
+      }
+      if (!m[3]) {
+        m[3] = '1';
+      }
+      m = [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4]), m[5]];
+    }
+    return m;
+  };
+  var diff_nodiff_lines = function (lines) {
+    var new_lines = [];
+    lines.forEach(function (line) {
+      var pre = $('<pre>').text(line.text);
+      var text = $('<td class="diff-text">').html(pre);
+      var from = $('<td class="diff-line">').text(line.from);
+      var to = $('<td class="diff-line">').text(line.to);
+      var tr = $('<tr class="diff-nodiff">').append(from, to, text);
+      new_lines.push(tr);
+    });
+    return new_lines;
+  };
+  var diffFold = function (self, direction) {
+    var header = $(self).closest('tr');
+    var header_text = $('.diff-text', header).text().trim();
+    var table = header.closest('table');
+    var url = table.attr('foldurl');
+    var request = {'op': 'fold-' + direction, 'header': header_text};
+    var headers = $('.diff-chunk-header', table);
+    var idx = headers.index(header);
+    var preheader;
+    if (idx > 0) {
+      preheader = $(headers.get(idx - 1));
+      request.previous_header = $('.diff-text', preheader).text().trim();
+    }
+    $.ajax({
+      type: 'POST',
+      url: url,
+      dataType: 'json',
+      contentType: 'application/json',
+      data: JSON.stringify(request),
+      success: function(json) {
+        if (json.status == 'ok') {
+          var lines = diff_nodiff_lines(json.lines || []);
+          direction == 'down'? header.before(lines): header.after(lines);
+          if (preheader && json.previous_header_text != undefined) {
+            $('.diff-text pre', preheader).text(json.previous_header_text);
+          }
+          if (json.header_text != undefined) {
+            $('.diff-text pre', header).text(json.header_text);
+          }
+          if (json.header_icon != undefined) {
+            $('.diff-line', header).replaceWith(json.header_icon);
+          } else {
+            header.remove();
+          }
+        }
+      }
+    });
+  };
+  Gitprep.diffFoldUp = function (self) {
+    diffFold(self, 'up');
+  };
+  Gitprep.diffFoldDown = function (self) {
+    diffFold(self, 'down');
+  };
+  Gitprep.diffExpand = function (self) {
+    var commit_diff = $(self).closest('.commit-diff');
+    var table = $('.commit-diff-body table', commit_diff);
+    var url = table.attr('foldurl');
+    var headers = $('.diff-chunk-header', table);
+    var request = {'op': 'expand', 'headers': []};
+    headers.each(function (index, header) {
+      request.headers.push($('.diff-text', header).text().trim());
+    });
+    $.ajax({
+      type: 'POST',
+      url: url,
+      dataType: 'json',
+      contentType: 'application/json',
+      data: JSON.stringify(request),
+      success: function(json) {
+        if (json.status == 'ok') {
+          var parts = json.parts || [];
+          var last = parts.pop();
+          parts.forEach(function (lines, index) {
+            var header = $(headers.get(index));
+            var new_lines = diff_nodiff_lines(lines);
+            header.after(new_lines);
+          });
+          var header_1st = headers.first();
+          header_1st.parent().append(diff_nodiff_lines(last));
+          headers.slice(1).remove();
+
+          $('.diff-text pre', header_1st).text(json.header_text);
+          $('.diff-line', header_1st).replaceWith(json.header_icon);
+          $('.diff-expand-collapse-button', commit_diff).show();
+          $(self).hide();
+        }
+      }
+    });
+  };
+  Gitprep.diffCollapse = function (self) {
+    var commit_diff = $(self).closest('.commit-diff');
+    var table = $('.commit-diff-body table', commit_diff);
+    var url = table.attr('foldurl');
+    var request = {'op': 'collapse'};
+    var fl = 1, tl = 1;
+    var chunkfl, chunktl;
+    var hmodel;
+    var chunkfirst;
+    var chunks = [];
+    var pos = [];
+
+    var start_chunk = function (tr) {
+      if (!chunkfirst) {
+        chunkfirst = tr;
+        chunkfl = fl; chunktl = tl;
+      }
+    };
+    var end_chunk = function () {
+      if (chunkfirst) {
+        var hdr = header_text(chunkfl, fl - chunkfl, chunktl, tl - chunktl, '');
+        pos.push(chunkfirst);
+        chunks.push(hdr);
+        chunkfirst = undefined;
+      }
+    };
+
+    $('tr', table).each(function (index, elem) {
+      var tr = $(elem);
+      if (tr.hasClass('diff-from-file')) {
+        start_chunk(tr);
+        fl++;
+      } else if (tr.hasClass('diff-to-file')) {
+        start_chunk(tr);
+        tl++;
+      } else if (tr.hasClass('diff-neutral')) {
+        start_chunk(tr);
+        fl++; tl++;
+      } else if (tr.hasClass('diff-chunk-header')) {
+        end_chunk();
+        var h = parse_diff_chunk_header($('.diff-text', tr).text().trim());
+        if (h) {
+          fl = h[0]; tl = h[2];
+        }
+        hmodel = tr;
+      } else if (tr.hasClass('diff-nodiff')) {
+        end_chunk();
+        fl++; tl++;
+      }
+    });
+    end_chunk();
+    if (hmodel) {
+      request.chunks = chunks;
+      $.ajax({
+        type: 'POST',
+        url: url,
+        dataType: 'json',
+        contentType: 'application/json',
+        data: JSON.stringify(request),
+        success: function(json) {
+          if (json.status == 'ok') {
+            var icons = json.icons || [];
+            var rm = $('.diff-nodiff', table).add('.diff-chunk-header', table);
+            var last = icons.pop();
+            var tr;
+            icons.forEach(function (icon) {
+              chunkfirst = pos.shift();
+              var hdr = chunks.shift();
+              tr = hmodel.clone();
+              $('.diff-line', tr).replaceWith(icon);
+              $('.diff-text pre', tr).text(hdr);
+              chunkfirst.before(tr);
+            });
+            tr = hmodel.clone();
+            $('.diff-line', tr).replaceWith(last);
+            $('.diff-text pre', tr).text('');
+            hmodel.parent().append(tr);
+            rm.remove();
+            $('.diff-expand-collapse-button', commit_diff).show();
+            $(self).hide();
+          }
+        }
+      });
+    }
+  };
+
   // Initialize comment edition iconic buttons.
   $(document).ready(function () {
     var iconInputButton = function (iconClass, frame, multi, embed) {

@@ -1,4 +1,6 @@
 <%
+  my $api = gitprep_api;
+
   my $user_id = stash('user');
   my $project_id = stash('project');
   my $rev = stash('rev');
@@ -65,8 +67,18 @@
         % } else {
           <%= $file %>
         % }
-        % if ($status ne 'A' && $status ne 'D' && $from_mode_str ne $to_mode_str) {
-          <%= "100$from_mode_str → 100$to_mode_str" %>
+        % if ($status ne 'A' && $status ne 'D') {
+          % if ($from_mode_str ne $to_mode_str) {
+            <%= "100$from_mode_str → 100$to_mode_str" %>
+          % }
+          % if (!$blob_diff->{binary} && @$lines) {
+            <span class="diff-expand-collapse-button" title="Expand all lines" onclick="Gitprep.diffExpand(this);">
+              %= $api->icon('unfold');
+            </span>
+            <span class="diff-expand-collapse-button" title="Collapse non-diff lines" onclick="Gitprep.diffCollapse(this);" style="display: none;">
+              %= $api->icon('fold');
+            </span>
+          % }
         % }
       </div>
       <div class="last-child">
@@ -110,42 +122,48 @@
             </div>
           % }
         % } elsif (@$lines) {
-          <table>
-
+          <%
+            my %class = (
+              '@' => 'diff-chunk-header',
+              '-' => 'diff-from-file',
+              '+' => 'diff-to-file'
+            );
+            my $current_line;
+          %>
+          <table foldurl="<%= url_for("$user_project_path/api/fold/$from_rev/$from_file") %>">
             % for my $line (@$lines) {
-              % my $class = $line->{class};
               % my $value = $line->{value};
-
-              <%
-                my $bk_color_line = '';
-                my $bk_color = '';
-                my $border_color;
-                if ($value =~ /^@/) {
-                  $bk_color_line = '#f3f3ff';
-                  $border_color = '#e4e4ff';
-                  $bk_color = '#f8f8ff';
-                } elsif ($value =~ /^\+/) {
-                  $bk_color_line = '#ceffce';
-                  $border_color = '#b4e2b4';
-                  $bk_color = '#ddffdd';
-                } elsif ($value =~ /^-/) {
-                  $bk_color_line = '#f7c8c8';
-                  $border_color = '#e9aeae';
-                  $bk_color = '#fdd';
-                } else {
-                  $border_color = '#e5e5e5';
-                }
-              %>
-              <tr >
-                <td style="font-size:12px;color:#aaa;padding:0 7px;border-right:1px <%= $border_color %> solid;background:<%= $bk_color_line %>;">
-                  <%= $line->{before_line_num} %>
-                </td>
-                <td style="font-size:12px;color:#aaa;padding:0 7px;border-right:1px <%= $border_color %> solid;background:<%= $bk_color_line %>;">
-                  <%= $line->{after_line_num} %>
-                </td>
-                <td style="width:100%;padding-left:7px;background:<%= $bk_color %>;">
-                  <pre style="border:none;background:none;padding:0;margin:0"><%= $value %></pre>
-                </td>
+              <tr class="<%= $class{substr $value, 0, 1} // 'diff-neutral' %>">
+                % if ($line->{value} =~ /^@/) {
+                  % my $hdr = $git->parse_diff_chunk_header($value);
+                  <%=
+                    include '/include/diff_fold_icon',
+                      current_line => $current_line,
+                      next_line => $hdr->[0];
+                  %>
+                  % $current_line = $hdr->[0] + $hdr->[1];
+                  <td class="diff-text" colspan="2">
+                    <pre><%= $line->{value} %></pre>
+                  </td>
+                % } else {
+                  <td class="diff-line">
+                    <%= $line->{before_line_num} %>
+                  </td>
+                  <td class="diff-line">
+                    <%= $line->{after_line_num} %>
+                  </td>
+                  <td class="diff-text">
+                    <pre><%= $line->{value} %></pre>
+                  </td>
+                % }
+              </tr>
+            % }
+            % if ($status ne 'A' && $status ne 'D') {
+              <tr class="diff-chunk-header">
+                <%=
+                  include '/include/diff_fold_icon', current_line => $current_line;
+                %>
+                <td class="diff-text" colspan="2"><pre></pre></td>
               </tr>
             % }
           </table>
