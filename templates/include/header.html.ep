@@ -35,10 +35,12 @@
   <div class="header-left">
     <div class="title">
       <a href="<%= url_for('/') %>"><%= $api->icon('gitprep', class => 'header-logo') %></a>
-      <a href="<%= url_for("/$user_id") %>"><%= $user_id %></a>
-      % if (defined $project_id) {
-        /
-        <a href="<%= url_for("/$user_id/$project_id") %>"><%= $project_id %></a>
+      % if (defined $user_id) {
+        <a href="<%= url_for("/$user_id") %>"><%= $user_id %></a>
+        % if (defined $project_id) {
+          /
+          <a href="<%= url_for("/$user_id/$project_id") %>"><%= $project_id %></a>
+        % }
       % }
     </div>
   </div>
