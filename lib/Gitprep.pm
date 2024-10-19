@@ -636,6 +636,9 @@ sub startup {
               
               # Blame
               $r->get('/blame/*rev_file' => sub { shift->render_maybe('/blame') });
+
+              # Diff folding
+              $r->post('/api/fold/*rev_file' => sub { shift->render_maybe('/api/diff_fold'); });
             }
 
             # Commit
@@ -715,17 +718,17 @@ sub startup {
               $self->render_maybe(template => '/api/subscribe',
                                   issue => $self->param('issue'),
                                   reason => $self->param('reason'));
-             });
+            });
 
-             # Watch button.
-             $r->get('/api/watch/:state' => sub {
-               my $self = shift;
-               $self->render_maybe(template => '/api/watch',
-                                   state => $self->param('state'));
-             });
+            # Watch button.
+            $r->get('/api/watch/:state' => sub {
+              my $self = shift;
+              $self->render_maybe(template => '/api/watch',
+                                  state => $self->param('state'));
+            });
 
-             # Diff folding.
-             $r->post('/api/fold/*rev_file' => sub { shift->render_maybe('/api/diff_fold'); });
+            # Diff folding.
+            $r->post('/api/fold/*rev_file' => sub { shift->render_maybe('/api/diff_fold'); });
           }
         }
       }
