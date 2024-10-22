@@ -827,11 +827,10 @@ sub load_svg {
   open my $fh, '<', $self->app->home . "/$name" or return undef;
   read $fh, my $markup, -s $fh;
   close $fh;
-  $markup =~ s/^[\r\n\t ]*(.*?)[\r\n\t ]*$/$1/s;
   my $dom = Mojo::DOM->new($markup);
-  return undef unless $dom && scalar(@{$dom->child_nodes}) == 1;
-  my $svg = $dom->child_nodes->first;
-  return undef unless $svg->tag eq 'svg';
+  return undef unless $dom;
+  my $svg = $dom->find('svg')->first;
+  return undef unless $svg;
   my $attrs = $svg->attr;
   delete $attrs->{xmlns};
 
