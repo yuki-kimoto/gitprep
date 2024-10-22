@@ -6,7 +6,7 @@ use utf8;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
-use Getopt::Long;
+use Getopt::Long qw(:config default no_auto_abbrev no_ignore_case);
 use File::Basename 'basename';
 use Gitprep;
 use Encode 'decode';
@@ -23,8 +23,8 @@ my $only_push;
 my $help;
 
 GetOptions(
-  'user=s' => \$user_id,
-  'help' => \$help
+  'u|user=s' => \$user_id,
+  'h|help' => \$help
 ) or die "An invalid option is specified";
 
 my $usage = <<'EOS';
@@ -118,9 +118,15 @@ import_rep - Import existing repositories into GitPrep.
 
 =head1 USAGE
 
-  ./import_rep -u kimoto rep_dir
+  Usage: script/import_rep [<options>] <rep_dir>
+    
+    script/import_rep -u kimoto rep_dir
+    
+  Options:
+    -h, --help            Show help
+    -u, --user            Specify a user name
 
-rep_dir must contains git respoitories
+E<lt>rep_dirE<gt> must contains git respoitories.
 
    rep_dir/project1.git
           /project2.git
@@ -128,4 +134,3 @@ rep_dir must contains git respoitories
           /project3.git
 
 If C<description> file exists in git repository, it is copied.
-
