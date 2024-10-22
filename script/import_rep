@@ -24,7 +24,7 @@ my $help;
 
 GetOptions(
   'user=s' => \$user_id,
-  'help=s' => \$help
+  'help' => \$help
 ) or die "An invalid option is specified";
 
 my $usage = <<'EOS';
