@@ -1,48 +1,149 @@
 <%
   use Mojo::ByteStream ();
-  
-  my $api = gitprep_api;
-  
-  my $dir = stash('dir');
-  
-  # README
-  my $type = '';
-  my $readme_e;
-  my $lines;
-  my $readme_path = (defined $dir && $dir ne '') ? "$dir/README" : 'README';
-  eval { $lines = app->git->blob(app->rep_info($user, $project), $rev, "$readme_path.md") };
-  if ($lines) {
-    $type = 'markdown';
-    my $readme = join "\n", @$lines;
-    $readme =~ s#^(\[.*\]:)(?!\s*https?://)\s*(\S*)#{"$1 " . url_for("/$user/$project/raw/$rev/$2")}#mge;
-    $readme =~ s#^(!\[.*\]\()(?!https?://)(\S*)#{$1 . url_for("/$user/$project/raw/$rev/$2")}#mge;
-    $readme =~ s#src="(?!https?://)(\S*)"#{'src="' . url_for("/$user/$project/raw/$rev/$1") . '"'}#mge;
 
-    $readme_e = $api->markdown($readme);
+  my $api = gitprep_api;
+
+  my $dir = stash('dir');
+
+  # README and community health files
+
+  local *path_join = sub {
+    # Like File::Spec catdir/catfile, always relative.
+    # Does not check for slashes in args.
+    return join('/', map {(defined($_) && $_ ne '')? $_: ()} @_);
+  };
+
+  local *map_url = sub {
+    # Helper to map an URL.
+    my ($raw, $dir, $url) = @_;
+    $raw = $raw? 'raw': 'blob';
+    if ($url =~ m#^/(.*)#) {
+      $dir = '';
+      $url = $1;
+    }
+    return url_for('/' . path_join($user, $project, $raw, $rev, $dir, $url));
+  };
+
+  my @chfs;
+  my @docdirs;
+  my $prefix = '';
+  if (defined $dir && $dir ne '') {
+    @chfs = (
+      { tab => 'readme', label => 'README', icon => 'book',
+        files => ['README'] }
+    );
+    @docdirs = ('');
+    $prefix = $dir;
   }
   else {
-    eval { $lines = app->git->blob(app->rep_info($user, $project), $rev, $readme_path) };
+    @chfs = (
+      { tab => 'readme', label => 'README', icon => 'book',
+        files => ['README'] },
+      { tab => 'coc', label => 'Code of conduct', icon => 'code-of-conduct',
+        files => ['CODE_OF_CONDUCT'] },
+      { tab => 'license', label => 'License', icon => 'law',
+        files => ['LICENSE', 'COPYING'] },
+      { tab => 'contrib', label => 'Contribute', icon => 'share',
+        files => ['CONTRIBUTING'] },
+      { tab => 'funding', label => 'Sponsor', icon => 'heart',
+        files => ['FUNDING'] },
+      { tab => 'govern', label => 'Governance', icon => 'crown',
+        files => ['GOVERNANCE'] },
+      { tab => 'security', label => 'Security', icon => 'shield',
+        files => ['SECURITY'] },
+      { tab => 'support', label => 'Support', icon => 'law',
+        files => ['SUPPORT'] }
+    );
+    @docdirs = ('', 'docs', 'doc');
+  }
 
-    if ($lines) {
-      $type = 'plain';
-      my $readme = join "\n", @$lines;
-      $readme_e = Mojo::ByteStream->new($readme)->xml_escape->to_string;
-      $readme_e =~ s#(^|\s|[^\x00-\x7F])(http(?:s)?://.+?)($|\s|[^\x00-\x7F])#$1<a href="$2">$2</a>$3#msg;
+  my @types = (
+    { extension => '.md', class => 'markdown-body', tag => 'div', fn => sub {
+      my ($lines, $tree) = @_;
+      return undef unless $lines;
+      my $data = join "\n", @$lines;
+      $data =~ s#(^|.)(\[.*\])\((?![a-z][a-z0-9+.-]*://)([^)]*)\)#{"$1$2(" . map_url($1 eq '!', $tree, $3) . ')'}#mgei;
+      $data =~ s#(src|href)="(?![a-z][a-z0-9+.-]*://)(\S*?)"#{'$1="' . map_url($1 eq 'src', $tree, $2) . '"'}#mgei;
+      return $api->markdown($data);
+    }},
+    { extension => '', class => 'plain-text', tag => 'pre', fn => sub {
+      my $lines = shift;
+      return undef unless $lines;
+      my $data = join "\n", @$lines;
+      $data = Mojo::ByteStream->new($data)->xml_escape->to_string;
+      $data =~ s#(^|\s|[^\x00-\x7F])(http(?:s)?://.+?)($|\s|[^\x00-\x7F])#$1<a href="$2">$2</a>$3#msg;
+      $data =~ s#(&lt;\s*)([a-z][a-z0-9_.-]*@[a-z][a-z0-9.-]*)(\s*&gt;)#$1<a href="mailto:$2">$2</a>$3#msgi;
+      return $data;
+    }}
+  );
+
+  my $rep_info = app->rep_info($user, $project);
+  my %filecache;
+
+  foreach my $docdir (reverse @docdirs) {
+    my $path = path_join($prefix, $docdir);
+    my $ls = app->git->trees($rep_info, $rev, $path, 1);
+    for my $file (@$ls) {
+      $filecache{$file->{name}} = $path unless $file->{mode_str} =~ /^d/;
     }
+  }
+
+  my @tabs;
+  foreach my $chf (@chfs) {
+    my $tab;
+    foreach my $type (@types) {
+      foreach my $file (@{$chf->{files}}) {
+        my $dir_path = $filecache{"$file$type->{extension}"};
+        if (defined $dir_path) {
+          my $file_path = path_join($dir_path, "$file$type->{extension}");
+          my $data = app->git->blob($rep_info, $rev, $file_path);
+          $data = $type->{fn}($data, $dir_path);
+          if ($data) {
+            $tab = {
+              tag => $type->{tag},
+              class => $type->{class},
+              tab => $chf->{tab},
+              icon => $chf->{icon},
+              label => $chf->{label},
+              data => $data
+            };
+            last
+          }
+        }
+        last if $tab;
+      }
+      last if $tab;
+    }
+    push(@tabs, $tab) if $tab;
   }
 %>
 
-% if (defined $readme_e) {
+% if (@tabs) {
+  %= javascript begin
+  function switchtab(self, pane) {
+  var readme = $(self).closest('.readme');
+  $('.readme-tab', readme).removeClass('selected');
+  $(self).addClass('selected');
+  $('.readme-pane', readme).removeClass('selected');
+  $('.' + pane, readme).addClass('selected');
+  }
+  % end
   <div class="readme">
     <div class="readme-header">
-      %= $api->icon('book');
-      <%= $type eq 'plain'? 'README': 'README.md' %>
+      % my $selected = ' selected';
+      % foreach my $tab (@tabs) {
+        <div class="readme-tab<%= $selected %>" onclick="switchtab(this, 'readme-<%= $tab->{tab} %>');">
+          %= $api->icon($tab->{icon});
+          %= $tab->{label};
+        </div>
+        % $selected = '';
+      % }
     </div>
     <div class="readme-frame">
-      % if ($type eq 'plain') {
-        <pre class="plain-text"><%== $readme_e %></pre>
-      % } else {
-        <div class="markdown-body"><%== $readme_e %></div>
+      % $selected = ' selected';
+      % foreach my $tab (@tabs) {
+        <<%= $tab->{tag} %> class="readme-pane readme-<%= $tab->{tab} %> <%= $tab->{class} %><%= $selected %>"><%== $tab->{data} %></<%= $tab->{tag} %>>
+        % $selected = '';
       % }
     </div>
   </div>
