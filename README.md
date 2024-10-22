@@ -25,7 +25,7 @@ You will find that GitPrep is a really portable GitHub system and has many featu
 * Public key authentication support
 
 **Installation** is very **easy**, requiring only two commands.
-There are many other configuration settings that can be found in [gitprep.conf](gitprep.conf).
+There are many other configuration settings that can be found in [gitprep.conf](gitprep.conf.example).
 
 Since the git repositories **directory** are accessible on the server, it becomes easy to fix mistakes like "git push -f origin master".
 
