@@ -594,23 +594,14 @@ sub check_head_link {
 
 sub commits_number {
   my ($self, $rep_info, $ref) = @_;
-  
-  # Command "git diff-tree"
-  my @cmd = $self->cmd($rep_info, 'shortlog', '-s', $ref);
+
+  # Get commits count from revision.
+  my @cmd = $self->cmd($rep_info, 'rev-list', $ref, '--count');
   open my $fh, "-|", @cmd
-    or croak 500, "Open git-shortlog failed";
-  my @commits_infos = <$fh>;
-  @commits_infos = map { chomp; $self->_dec($_) } @commits_infos;
-  close $fh or croak 'Reading git-shortlog failed';
-  
-  my $commits_num = 0;
-  for my $commits_info (@commits_infos) {
-    if ($commits_info =~ /^ *([0-9]+)/) {
-      $commits_num += $1;
-    }
-  }
-  
-  return $commits_num;
+    or croak 500, "Open git-rev-list failed";
+  my $commits_count = <$fh>;
+  chomp $commits_count;
+  return $commits_count;
 }
 
 sub exists_branch {
