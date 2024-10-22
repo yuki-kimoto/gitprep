@@ -1513,7 +1513,7 @@ sub snapshot_name {
 }
 
 sub trees {
-  my ($self, $rep_info, $rev, $dir) = @_;
+  my ($self, $rep_info, $rev, $dir, $nocommit) = @_;
   $dir = '' unless defined $dir;
   
   # Get tree
@@ -1550,12 +1550,13 @@ sub trees {
   for my $line (@entries) {
     my $tree = $self->parse_ls_tree_line($line, -z => 1, -l => $show_sizes);
     $tree->{mode_str} = $self->_mode_str($tree->{mode});
-    
-    # Commit log
-    my $path = defined $dir && $dir ne '' ? "$dir/$tree->{name}" : $tree->{name};
-    my $commit = $self->last_change_commit($rep_info, $rev, $path);
-    $tree->{commit} = $commit;
-    
+
+    unless ($nocommit) {
+      # Commit log
+      my $path = defined $dir && $dir ne ''? "$dir/$tree->{name}": $tree->{name};
+      $tree->{commit} = $self->last_change_commit($rep_info, $rev, $path);
+    }
+
     push @$trees, $tree;
   }
   $trees = [sort {$b->{type} cmp $a->{type} || $a->{name} cmp $b->{name}} @$trees];
