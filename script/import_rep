@@ -126,7 +126,7 @@ import_rep - Import existing repositories into GitPrep.
     -h, --help            Show help
     -u, --user            Specify a user name
 
-E<lt>rep_dirE<gt> must contains git respoitories.
+E<lt>rep_dirE<gt> must contains git respoitories with C<.git> extension.
 
    rep_dir/project1.git
           /project2.git
