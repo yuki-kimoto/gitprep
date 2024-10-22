@@ -188,7 +188,7 @@
                       </a>
                     </div>
                     <div class="commit-right-browse-repository">
-                      <a title="Browse the repository at this point in the history" href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
+                      <a title="Browse the repository at this point in the history" href="<%= url_for("$user_project_path/tree/$commit->{id}") %>">
                         %= $api->icon('code');
                       </a>
                     </div>
