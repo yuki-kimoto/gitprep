@@ -669,9 +669,23 @@ sub ssh_rep_url {
   my $user = $app->config->{basic}{ssh_user} || getpwuid($>);
   my $port = $app->config->{basic}{ssh_port};
   my $home = $app->config->{basic}{'ssh_rep_url_base'} || $app->rep_home;
-  my $url = "ssh://$user@" . $self->cntl->url_for->to_abs->host;
-  $url .= ":$port" if $port;
-  return "$url$home/$user_id/$repository.git";
+  my $url = "$user@" . $self->cntl->url_for->to_abs->host;
+
+  if (!$app->config->{basic}{scp_url} || $port) {
+    # True ssh url.
+    $url .= ":$port" if $port;
+    return "ssh://$url$home/$user_id/$repository.git";
+  }
+
+  # scp-like pseudo-url.
+  my (undef, undef, undef, undef, undef, undef, undef, $userdir) = getpwnam($user);
+  # If home is a subdirectory of the git user's one, use relative path.
+  $home = "~$1" if $userdir && $home =~ m#^\Q$userdir\E(/.*|)$#;
+  $home = [map $_ ne ''? $_: (), split('/', $home)];
+  my $first = shift @$home;
+  unshift @$home, "/$first" unless $first eq '~';
+  push @$home, ($user_id, "$repository.git");
+  return "$url:" . join '/', @$home;
 }
 
 sub DOM_element {

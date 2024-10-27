@@ -15,6 +15,11 @@
 ;;; ~ is expaned to user home directory automatically
 ; ssh_rep_url_base=/~/git
 
+;;; Use scp-like pseudo-urls rather than true SSH urls when possible.
+;;; This generally generates shorter urls as they have no scheme and can be
+;;; relative to the git user home directory.
+scp_url=1
+
 ;;; SSH user for git URLs (default: user running server)
 ; ssh_user=mygit
 
