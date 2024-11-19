@@ -44,8 +44,8 @@ while (<>) {
   if ($url->host && $kind eq 'heads' && !$old) {
     if ($project->{original_project} || $name ne $default_branch) {
       $url->path("$new_pr_path/$name");
-      print "You can submit a new pull request by visiting:\n";
-      print "     $url\n";
+      print "\nCreate a pull request for '$name' on Gitprep by visiting:\n";
+      print "     $url\n\n";
     }
   }
 }
