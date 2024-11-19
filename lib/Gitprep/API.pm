@@ -884,11 +884,19 @@ sub load_svg {
 sub load_icon {
   my $self = shift;
   my $name = shift;
+  my $icon;
 
-  my $icon = $self->load_svg("svg/$name", @_) ||
-    $self->load_svg("svg/$name.svg", @_);
-  $icon = $self->load_svg("svg/octicons/$name-16.svg", @_) ||
-    $self->load_svg("svg/octicons/name-24.svg", @_) unless $icon;
+  for my $place (
+    ['', ''],
+    ['octicons/', ''],
+    ['octicons/', '-16'],
+    ['octicons/', '-24'],
+    ['octicons/', '-12']
+  ) {
+    $icon = $self->load_svg("svg/$place->[0]$name$place->[1]", @_) ||
+      $self->load_svg("svg/$place->[0]$name$place->[1].svg", @_);
+    last if $icon;
+  }
   $self->DOM_add_class($icon, "icon icon-$name") if $icon;
   return $icon;
 }
