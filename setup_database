@@ -50,339 +50,171 @@ else {
 if ($database_state eq 'v1') {
   die "Can't setup database. you maybe need upgrade database";
 }
+
+
+# Table definitions.
+my @tables = (
+  {
+    name => 'user',
+    fields => [
+      {name => 'id', unique => 1, default => q{''}},
+      {name => 'email', unique => 1, default => q{''}},
+      {name => 'admin', type => 'integer', default => '0'},
+      {name => 'password', default => q{''}},
+      {name => 'salt', default => q{''}},
+      {name => 'name', default => q{''}}
+    ]
+  },
+  {
+    name => 'project',
+    fields => [
+      {name => 'user', type => 'integer', default => '0'},
+      {name => 'id'},
+      {name => 'original_project', type => 'integer', default => '0'},
+      {name => 'private', type => 'integer', default => '0'},
+      {name => 'ignore_space_change', type => 'integer', default => '0'},
+      {name => 'guess_encoding', default => q{''}},
+      {name => 'website_url', default => q{''}}
+    ],
+    unique => ['user', 'id']
+  },
+  {
+    name => 'ssh_public_key',
+    fields => [
+      {name => 'key', unique => 1, default => q{''}},
+      {name => 'user', type => 'integer', default => '0'},
+      {name => 'title', default => q{''}}
+    ]
+  },
+  {
+    name => 'collaboration',
+    fields => [
+      {name => 'project', type => 'integer', default => '0'},
+      {name => 'user', type => 'integer', default => '0'}
+    ],
+    unique => ['project', 'user']
+  },
+  {
+    name => 'issue',
+    fields => [
+      {name => 'project', type => 'integer', default => '0'},
+      {name => 'number', type => 'integer', default => '0'},
+      {name => 'title', default => q{''}},
+      {name => 'open', type => 'integer', default => '0'},
+      {name => 'open_time', type => 'integer', default => '0'},
+      {name => 'open_user', type => 'integer', default => '0'},
+      {name => 'pull_request', type => 'integer', default => '0'}
+    ],
+    unique => ['project', 'number']
+  },
+  {
+    name => 'issue_message',
+    fields => [
+      {name => 'issue', type => 'integer', default => '0'},
+      {name => 'number', type => 'integer', default => '0'},
+      {name => 'message', default => q{''}},
+      {name => 'create_time', type => 'integer', default => '0'},
+      {name => 'update_time', type => 'integer', default => '0'},
+      {name => 'user', type => 'integer', default => '0'}
+    ],
+    unique => ['issue', 'number']
+  },
+  {
+    name => 'pull_request',
+    fields => [
+      {name => 'base_project', type => 'integer', default => '0'},
+      {name => 'base_branch', default => q{''}},
+      {name => 'target_project', type => 'integer', default => '0'},
+      {name => 'target_branch', default => q{''}},
+      {name => 'create_time', type => 'integer', default => '0'},
+      {name => 'update_time', type => 'integer', default => '0'},
+      {name => 'user', type => 'integer', default => '0'}
+    ],
+    unique => ['base_project', 'base_branch', 'target_project', 'target_branch']
+  },
+  {
+    name => 'label',
+    fields => [
+      {name => 'project', type => 'integer', default => '0'},
+      {name => 'id', type => 'varchar(100)', default => q{''}},
+      {name => 'description', default => q{''}},
+      {name => 'color', default => q{''}}
+    ],
+    unique => ['project', 'id']
+  },
+  {
+    name => 'issue_label',
+    fields => [
+      {name => 'issue', type => 'integer', default => '0'},
+      {name => 'label', type => 'integer', default => '0'}
+    ],
+    unique => ['issue', 'label']
+  },
+  {
+    name => 'wiki',
+    fields => [
+      {name => 'project', type => 'integer', default => '0'}
+    ],
+    unique => ['project']
+  },
+  {
+    name => 'subscription',
+    fields => [
+      {name => 'issue', type => 'integer', default => '0'},
+      {name => 'user', type => 'integer', default => '0'},
+      {name => 'reason', type => 'text', default => q{''}}
+    ],
+    unique => ['issue', 'user']
+  },
+  {
+    name => 'watch',
+    fields => [
+      {name => 'user', type => 'integer', default => '0'},
+      {name => 'project', type => 'integer', default => '0'}
+    ],
+    unique => ['user', 'project']
+  },
+);
+
+
+sub create_table {
+  my ($table) = @_;
+
+  # Create table if needed and make sure all fields are present.
+  my $create = "create table $table->{name} (row_id integer primary key autoincrement";
+  my @alters;
+  my @columns = ('row_id');
+  foreach my $field (@{$table->{fields}}) {
+    my $define = $field->{name};
+    $define .= " $field->{type}" if $field->{type};
+    $define .= ' not null' unless $field->{nullable};
+    $define .= ' unique' if $field->{unique};
+    $define .= " default $field->{default}" if defined $field->{default};
+    $create .= ", $define";
+    push @alters, $define;
+    push @columns, $field->{name};
+  };
+  $create .= ', unique(' . join(', ', @{$table->{unique}}) . ')' if $table->{unique};
+
+  # Create table if not yet done.
+  eval { $dbi->execute("$create);") };
+
+  # Add fields that may not be present.
+  foreach my $alter (@alters) {
+    eval { $dbi->execute("alter table $table->{name} add column $alter") };
+  }
+
+  # Check that everything is ok.
+  eval { $dbi->select(\@columns, table => $table->{name}) };
+  if ($@) {
+    my $error = "Can't create $table->{name} table properly: $@";
+    die $error;
+  }
+}
+
+
 # Create database
-else {
-  # Create user table
-  eval {
-    my $sql = <<"EOS";
-create table user (
-  row_id integer primary key autoincrement,
-  id not null unique default '',
-  email not null unique default ''
-);
-EOS
-    $dbi->execute($sql);
-  };
 
-  # Create user columns
-  my $user_columns = [
-    "admin integer not null default 0",
-    "password not null default ''",
-    "salt not null default ''",
-    "name not null default ''"
-  ];
-  for my $column (@$user_columns) {
-    eval { $dbi->execute("alter table user add column $column") };
-  }
-
-  # Check user table
-  eval { $dbi->select([qw/row_id id admin password salt email name/], table => 'user') };
-  if ($@) {
-    my $error = "Can't create user table properly: $@";
-    die $error;
-  }
-  
-  # Create project table
-  eval {
-    my $sql = <<"EOS";
-create table project (
-  row_id integer primary key autoincrement,
-  user integer not null default 0,
-  id not null,
-  unique(user, id)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Create Project columns
-  my $project_columns = [
-    "default_branch not null default 'master'",
-    "original_project integer not null default 0",
-    "private integer not null default 0",
-    "ignore_space_change integer not null default 0",
-    "guess_encoding integer not null default ''",
-    "website_url not null default ''"
-  ];
-  for my $column (@$project_columns) {
-    eval { $dbi->execute("alter table project add column $column") };
-  }
-
-  # Check project table
-  eval {
-    $dbi->select(
-      [qw/row_id user id default_branch original_project private ignore_space_change guess_encoding website_url/],
-      table => 'project'
-    );
-  };
-  if ($@) {
-    my $error = "Can't create project table properly: $@";
-    die $error;
-  }
-
-  # Create ssh_public_key table
-  eval {
-    my $sql = <<"EOS";
-create table ssh_public_key (
-  row_id integer primary key autoincrement,
-  key not null unique default ''
-);
-EOS
-    $dbi->execute($sql);
-  };
-
-  # Create ssh_public_key columns
-  my $ssh_public_key_columns = [
-    "user integer not null default 0",
-    "title not null default ''"
-  ];
-  for my $column (@$ssh_public_key_columns) {
-    eval { $dbi->execute("alter table ssh_public_key add column $column") };
-  }
-  
-  # Check ssh_public_key table
-  eval { $dbi->select([qw/row_id user key title/], table => 'ssh_public_key') };
-  if ($@) {
-    my $error = "Can't create ssh_public_key table properly: $@";
-    die $error;
-  }
-
-  # Create collaboration table
-  eval {
-    my $sql = <<"EOS";
-create table collaboration (
-  row_id integer primary key autoincrement,
-  project integer not null default 0,
-  user integer not null default 0,
-  unique(project, user)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Check collaboration table
-  eval { $dbi->select([qw/row_id project user/], table => 'collaboration') };
-  if ($@) {
-    my $error = "Can't create collaboration table properly: $@";
-    die $error;
-  }
-
-  # Create issue table
-  eval {
-    my $sql = <<"EOS";
-create table issue (
-  row_id integer primary key autoincrement,
-  project integer not null default 0,
-  number integer not null default 0,
-  unique(project, number)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Create issue columns
-  my @issue_columns = (
-    "title not null default ''",
-    "open integer not null default 0",
-    "open_time integer not null default 0",
-    "open_user integer not null default 0",
-    "pull_request integer  not null default 0",
-  );
-  for my $column (@issue_columns) {
-    eval { $dbi->execute("alter table issue add column $column") };
-  }
-
-  # Check issue table
-  eval { $dbi->select([qw/row_id title open open_time open_user pull_request project/], table => 'issue') };
-  if ($@) {
-    my $error = "Can't create issue table properly: $@";
-    die $error;
-  }
-  
-  # Create issue_message table
-  eval {
-    my $sql = <<"EOS";
-create table issue_message (
-  row_id integer primary key autoincrement,
-  issue integer not null default 0,
-  number integer not null default 0,
-  unique(issue, number)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Create issue_message columns
-  my @issue_message_columns = (
-    "message not null default ''",
-    "create_time integer not null default 0",
-    "update_time integer not null default 0",
-    "user integer not null default 0"
-  );
-  for my $column (@issue_message_columns) {
-    eval { $dbi->execute("alter table issue_message add column $column") };
-  }
-
-  # Check issue_message table
-  eval { $dbi->select([qw/row_id issue number message create_time update_time user/], table => 'issue_message') };
-  if ($@) {
-    my $error = "Can't create issue_message table properly: $@";
-    die $error;
-  }
-
-  # Create pull_request table
-  eval {
-    my $sql = <<"EOS";
-create table pull_request (
-  row_id integer primary key autoincrement,
-  base_project integer not null default 0,
-  base_branch not null default '',
-  target_project integer not null default 0,
-  target_branch not null default '',
-  unique(base_project, base_branch, target_project, target_branch)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Create pull_request columns
-  my @pull_request_columns = ();
-  for my $column (@pull_request_columns) {
-    eval { $dbi->execute("alter table pull_request add column $column") };
-  }
-
-  # Check pull_request table
-  eval { $dbi->select([qw/row_id base_project base_branch target_project target_branch/], table => 'pull_request') };
-  if ($@) {
-    my $error = "Can't create pull_request table properly: $@";
-    die $error;
-  }
-
-  # Create label table
-  eval {
-    my $sql = <<"EOS";
-create table label (
-  row_id integer primary key autoincrement,
-  project integer not null default 0,
-  id varchar(100) not null default '',
-  unique(project, id)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Create label columns
-  my @label_columns = (
-    "description not null default ''",
-    "color not null default ''"
-  );
-  for my $column (@label_columns) {
-    eval { $dbi->execute("alter table label add column $column") };
-  }
-
-  # Check label table
-  eval { $dbi->select([qw/row_id project id description color/], table => 'label') };
-  if ($@) {
-    my $error = "Can't create label table properly: $@";
-    die $error;
-  }
-
-  # Create issue_label table
-  eval {
-    my $sql = <<"EOS";
-create table issue_label (
-  row_id integer primary key autoincrement,
-  issue integer not null default 0,
-  label integer not null default 0,
-  unique(issue, label)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Create issue_label columns
-  my @issue_label_columns = (
-  );
-  for my $column (@issue_label_columns) {
-    eval { $dbi->execute("alter table issue_label add column $column") };
-  }
-
-  # Check issue_label table
-  eval { $dbi->select([qw/row_id issue label/], table => 'issue_label') };
-  if ($@) {
-    my $error = "Can't create issue_label table properly: $@";
-    die $error;
-  }
-
-  # Create wiki table
-  eval {
-    my $sql = <<"EOS";
-create table wiki (
-  row_id integer primary key autoincrement,
-  project integer not null default 0,
-  unique(project)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Check wiki table
-  eval {
-    $dbi->select(
-      table => 'wiki'
-    );
-  };
-  if ($@) {
-    my $error = "Can't create wiki table properly: $@";
-    die $error;
-  }
-
-  # Create subscription table
-  eval {
-    my $sql = <<"EOS";
-create table subscription (
-  row_id integer primary key autoincrement,
-  issue integer not null default 0,
-  user integer not null default 0,
-  reason text not null default '',
-  unique(issue, user)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Check subscription table
-  eval {
-    $dbi->select(
-      table => 'subscription'
-    );
-  };
-  if ($@) {
-    my $error = "Can't create subscription table properly: $@";
-    die $error;
-  }
-
-  # Create watch table
-  eval {
-    my $sql = <<"EOS";
-create table watch (
-  row_id integer primary key autoincrement,
-  user integer not null default 0,
-  project integer not null default 0,
-  unique(user, project)
-);
-EOS
-    $dbi->execute($sql);
-  };
-  
-  # Check watch table
-  eval {
-    $dbi->select(
-      table => 'watch'
-    );
-  };
-  if ($@) {
-    my $error = "Can't create watch table properly: $@";
-    die $error;
-  }
+foreach my $table (@tables) {
+  create_table($table);
 }
