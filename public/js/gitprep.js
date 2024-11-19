@@ -78,6 +78,20 @@
     $('body').append(popup);
   };
 
+  // Class change event implementation.
+  Gitprep.onClassChange = function (selector, callback) {
+    $(selector).each(function () {
+      new MutationObserver(function (mutations) {
+        callback && mutations.forEach(function (mutation) {
+          callback(mutation.target, mutation.target.className);
+        });
+      }).observe(this, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
+    });
+  };
+
   // Diff folding.
   var header_text = function (from_line, from_count, to_line, to_count, text) {
     if (from_line == 1 && from_count == 0) {
