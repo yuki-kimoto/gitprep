@@ -1,0 +1,36 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
+  my $user_id = param('user') || '';
+  my $project_id = param('project');
+
+  my $current = stash('current') // '';
+
+  my @entries = (
+    {label => 'General', icon => 'gear', id => ''},
+    {label => 'Access', section => 1},
+    {label => 'Collaborators', icon => 'people', id => 'collaboration'},
+    {label => 'Code and automation', section => 1},
+    {label => 'Branches', icon => 'git-branch', id => 'branches'},
+    {label => 'Tags', icon => 'tag', id => 'tags'}
+  );
+%>
+
+<div class="left">
+  <ul>
+    % foreach my $entry (@entries) {
+      % if ($entry->{section}) {
+        <li><hr /></li>
+        <li class='section'><%= $entry->{label} %></li>
+      % } else {
+        <li class="<%= $entry->{id} eq $current? 'current': '' %>">
+          <a href="<%= url_for("/$user_id/$project_id/settings" . ($entry->{id}? "/$entry->{id}": '')) %>">
+            <%= $api->icon($entry->{icon}) %>&nbsp;<%= $entry->{label} %>
+          </a>
+        </li>
+      % }
+    % }
+  </ul>
+</div>

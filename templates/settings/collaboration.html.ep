@@ -125,12 +125,7 @@
     %= include '/include/message', message => flash('message');
     
     <div class="project-settings">
-      <div class="left">
-        <ul>
-          <li><a href="<%= url_for("/$user_id/$project_id/settings") %>">Options</a></li>
-          <li><b>Collaborators</b></li>
-        </ul>
-      </div>
+      %= include '/settings/menu', current => 'collaboration';
       <div class="right">
         <div class="collaboration">
           <div>Manage Collaborators</div>
