@@ -205,7 +205,7 @@ sub authors {
     $file
   );
   open my $fh, "-|", @cmd
-    or croak 500, "Open git-cat-file failed";
+    or croak 500, "Open git-log failed";
   my $authors = {};
   my @lines = <$fh>;
   for my $line (@lines) {
@@ -655,7 +655,7 @@ sub delete_branch {
       or croak "Branch deleting failed. Can't delete branch $branch";
   }
   else {
-    croak "Branch deleteting failed.. branchg $branch is not exists";
+    croak "Branch deleteting failed.. branch $branch does not exist";
   }
 }
 
@@ -802,6 +802,52 @@ sub forward_commits {
   }
   
   return $commits;
+}
+
+sub non_fast_forward {
+  my ($self, $rep_info, $old_rev, $new_rev) = @_;
+
+  # Returns an array of commits that are dropped by a force push.
+
+  my @cmd = $self->cmd(
+    $rep_info,
+    'rev-list',
+    $old_rev,
+    "^$new_rev"
+  );
+  open my $fh, '-|', @cmd
+    or croak "Can't get info: @cmd";
+  my $commits = [];
+  while (<$fh>) {
+    chomp;
+    push @$commits, $_;
+  }
+  
+  return $commits;
+}
+
+sub signature_statuses {
+  my ($self, $rep_info, $old_rev, $new_rev) = @_;
+
+  # Return the commit revisions in range ^$oldrev $new_rev with their
+  #   signature statuses.
+  # See man git-log for status letters meaning.
+
+  my @cmd = $self->cmd(
+    $rep_info,
+    'log',
+    '--format=%H %G?',
+    $old_rev? "^$old_rev": (),
+    $new_rev
+  );
+  open my $fh, '-|', @cmd
+    or croak 500, "Open git-log failed";
+  my @commits;
+  while (<$fh>) {
+    chomp;
+    push @commits, {['id', 'signed'] => [split / /]};
+  }
+  return \@commits;
 }
 
 sub path_to_hash {
