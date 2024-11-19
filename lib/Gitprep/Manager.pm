@@ -8,7 +8,6 @@ use File::Path qw/mkpath rmtree/;
 use File::Temp ();
 use Fcntl ':flock';
 use Carp 'croak';
-use File::Copy qw/copy move/;
 use File::Spec;
 use Gitprep::Util;
 
@@ -1031,6 +1030,33 @@ sub _delete_user_dir {
   rmtree $user_dir;
 }
 
+sub _delete_ruleset {
+  my ($self, $ruleset) = @_;
+
+  # Delete a ruleset.
+
+  my $dbi = $self->app->dbi;
+  $dbi->model('ruleset_selector')->delete(where => {
+    ruleset => $ruleset->{row_id}
+  });
+  $dbi->model('ruleset')->delete(where => {row_id => $ruleset->{row_id}});
+}
+
+sub delete_ruleset {
+  my ($self, $ruleset) = @_;
+
+  # Delete ruleset.
+  my $dbi = $self->app->dbi;
+  my $error;
+  eval {
+    $dbi->connector->txn(sub {
+      eval { $self->_delete_ruleset($ruleset) };
+      croak $error = $@ if $@;
+    });
+  };
+  croak $error if $@;
+}
+
 sub _delete_issue {
   my ($self, $issue) = @_;
 
@@ -1139,6 +1165,14 @@ sub _delete_project {
   )->all;
   for my $issue (@$issues) {
     $self->_delete_issue($issue);
+  }
+
+  # Delete rulesets.
+  my $rulesets = $dbi->model('ruleset')->select(
+    where => {project => $row_id}
+  )->all;
+  for my $ruleset (@$rulesets) {
+    $self->_delete_ruleset($ruleset);
   }
 
   # Delete project's wiki.
@@ -1282,6 +1316,107 @@ sub _rename_rep {
     move($rep_git_dir, $renamed_rep_git_dir)
       or croak "Can't move $rep_git_dir to $renamed_rep_git_dir: $!";
   }
+}
+
+sub rules {
+  my $self = shift;
+  my $git = $self->app->git;
+
+  return [
+    {id => 'creation', label => 'Restrict creations', default => 0, explain =>
+      'Only allow users with bypass permission to create matching refs',
+      error => ' creation',
+      check => sub () {
+        my ($rep_info, $old, $new, $ref) = @_;
+        return !$old;
+      }
+    },
+    {id => 'updating', label => 'Restrict updates', default => 0, explain =>
+      'Only allow users with bypass permission to update matching refs',
+      error => ' update',
+      check => sub () {
+        my ($rep_info, $old, $new, $ref) = @_;
+        return $old && $new;
+      }
+    },
+    {id => 'deletion', label => 'Restrict deletions', default => 1, explain =>
+      'Only allow users with bypass permissions to delete matching refs',
+      error => ' deletion',
+      check => sub () {
+        my ($rep_info, $old, $new, $ref) = @_;
+        return !$new;
+      }
+    },
+    {id => 'required_signatures', label => 'Require signed commits',
+      default => 0, explain =>
+      'Commits pushed to matching refs must have verified signatures',
+      error => ': unsigned commits',
+      check => sub () {
+        my ($rep_info, $old, $new, $ref) = @_;
+        return 0 unless $new;
+        my $revs = $git->signature_statuses($rep_info, $old, $new);
+        return !![grep $_ eq 'N', @$revs];
+      }
+    },
+    {id => 'non_fast_forward', label => 'Block force pushes', default => 1,
+      explain => 'Prevent users with push access from force pushing to refs',
+      error => ': force push',
+      check => sub () {
+        my ($rep_info, $old, $new, $ref) = @_;
+        return 0 unless $old && $new;
+        return !!@{$git->non_fast_forward($rep_info, $old, $new)};
+      }
+    }
+  ];
+}
+
+sub compile_ruleset_selectors {
+  my ($self, $ruleset_row_id, $default_target) = @_;
+
+  local *re = sub {
+    my $re = Gitprep::Util::glob2regex(shift);
+    return qr($re);
+  };
+
+  my $selectors = $self->app->dbi->model('ruleset_selector')->select(
+      where => {ruleset => $ruleset_row_id}
+    )->all;
+  my ($all, $default, @include, @exclude);
+  foreach my $selector (@$selectors) {
+    my $kind = $selector->{kind};
+    $default = $default_target if $kind eq 'default';
+    $all = 1 if $kind eq 'all';
+    CORE::push(@include, re($selector->{selector})) if $kind eq 'include';
+    CORE::push(@exclude, re($selector->{selector})) if $kind eq 'exclude';
+  }
+  $all = 1 if !$default && !@include;
+  $default = undef if $all;
+  @include = () if $all;
+  return {
+    all => $all,
+    default => $default // '',
+    include => \@include,
+    exclude => \@exclude
+  };
+}
+
+sub ruleset_selected {
+  my ($self, $compiled, $target) = @_;
+
+  # Return whether a target is matched by a precompiled set of ruleset selectors
+
+  my $re;
+  my $selected = $compiled->{all};
+  $selected = 1 if $compiled->{default} eq $target;
+  foreach $re (@{$compiled->{include}}) {
+    last if $selected;
+    $selected = 1 if $target =~ $re;
+  }
+  foreach $re (@{$compiled->{exclude}}) {
+    last if !$selected;
+    $selected = undef if $target =~ $re;
+  }
+  return $selected;
 }
 
 1;

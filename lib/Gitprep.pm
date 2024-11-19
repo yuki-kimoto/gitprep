@@ -317,6 +317,20 @@ sub startup {
         'left join user as watch__user on watch.user = watch__user.row_id',
         'left join project as watch__project on watch.project = watch__project.row_id'
       ]
+    },
+    {
+      table => 'ruleset',
+      primary_key => 'row_id',
+      join => [
+        'left join project on ruleset.project = project.row_id'
+      ]
+    },
+    {
+      table => 'ruleset_selector',
+      primary_key => 'row_id',
+      join => [
+        'left join ruleset on ruleset_selector.ruleset = ruleset.row_id'
+      ]
     }
   ];
   $dbi->create_model($_) for @$models;

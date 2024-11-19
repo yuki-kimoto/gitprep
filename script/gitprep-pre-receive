@@ -1,0 +1,78 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use utf8;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use lib "$FindBin::Bin/../extlib/lib/perl5";
+use Gitprep;
+
+my $debug = 0;
+
+# Retrieve our parameters
+my ($session_user_id, $user_id, $project_id) =
+  @ENV{'GITPREP_SESSION_USER', 'GITPREP_USER', 'GITPREP_PROJECT'};
+
+die "Gitprep parameters unset" unless $session_user_id && $user_id && $project_id;
+
+my $app = Mojo::Server->new->load_app("$FindBin::Bin/gitprep");
+my $git = $app->git;
+my $dbi = $app->dbi;
+my $api = $app->gitprep_api;
+my $manager = $app->manager;
+my $rules = $manager->rules;
+
+my $rep_info = $app->rep_info($user_id, $project_id);
+my $default_branch = $git->current_branch($rep_info);
+my $project_row_id = $dbi->model('project')->select('project.row_id',
+  where => {'user.id' => $user_id, 'project.id' => $project_id}
+)->value;
+
+# Read project's active rulesets.
+my %where = (
+  project => $project_row_id,
+  active => 1
+);
+$where{owner_bypass} = 0 if $session_user_id eq $user_id;
+my $rulesets = $dbi->model('ruleset')->select(
+  where => \%where,
+  append => 'order by name'
+)->all;
+foreach my $ruleset (@$rulesets) {
+  $ruleset->{selector} = $manager->compile_ruleset_selectors($ruleset->{row_id},
+    $default_branch);
+}
+
+# Check updates.
+my $exit_status = 0;
+while (<>) {
+  chomp;
+  die "Invalid update data" unless $_ =~
+    m#^([0-9a-f]{40})\s([0-9a-f]{40})\s(refs/(tags|heads|remotes)/(\S+))$#i;
+  my ($old, $new, $ref, $kind, $name) = ($1, $2, $3, $4, $5);
+  next if $kind eq 'remotes';   # No remote check.
+  $kind = $kind eq 'tags'? 'tag': 'branch';
+  $old =~ s/0{40}//;
+  $new =~ s/0{40}//;
+  my %rule_hit;
+  foreach my $ruleset (@$rulesets) {
+    if ($ruleset->{target} eq $kind && $manager->ruleset_selected($ruleset->{selector}, $name)) {
+      foreach my $rule (@$rules) {
+        push @{$rule_hit{$rule->{id}}}, $ruleset->{name} if
+          $ruleset->{$rule->{id}} && $rule->{check}->($rep_info, $old, $new, $ref);
+      }
+    }
+  }
+  foreach my $rule (@$rules) {
+    my $hits = $rule_hit{$rule->{id}};
+    if ($hits) {
+      $exit_status = 1;
+      print "$kind '$name'$rule->{error} forbidden by ";
+      print $api->plural('ruleset', scalar(@$hits));
+      print ' ' . join(', ', @$hits) . ".\n";
+    }
+  }
+}
+
+exit $exit_status;
