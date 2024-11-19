@@ -306,8 +306,10 @@
     }
   };
 
-  // Initialize comment edition iconic buttons.
+  // Presets.
   $(document).ready(function () {
+
+    // Initialize comment edition iconic buttons.
     var iconInputButton = function (iconClass, frame, multi, embed) {
       if (!(frame instanceof Array)) {
         frame = [frame, ''];
@@ -355,5 +357,25 @@
     iconInputButton('.icon-add-bulleted-list', '- ', undefined, "\n- ");
     iconInputButton('.icon-add-numbered-list', '1. ', undefined, "\n1. ");
     iconInputButton('.icon-mention-user', '@');
+
+    // Form default submit.
+    // Applied to all form elements having a defaultSubmit="selector" attribute.
+    $('form[defaultSubmit]').each(function (_, form) {
+      var selector = $(form).attr('defaultSubmit');
+      var hiddenSubmit = $('<input type="submit" />');
+      hiddenSubmit.css('position', 'absolute').css('left', -9999);
+      hiddenSubmit.on('click', function () {
+        var candidates = $(selector, form).filter(':input:enabled');
+        candidates = candidates.filter(function (_, el) {
+          return el != hiddenSubmit[0] && el.form == form;
+        });
+        for (submit of candidates) {
+          event.preventDefault();
+          $(submit).trigger('click');
+          break;
+        }
+      });
+      $(form).prepend(hiddenSubmit);
+    });
   });
 }(window.Gitprep = window.Gitprep || {}, jQuery));
