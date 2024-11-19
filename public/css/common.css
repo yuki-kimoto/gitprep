@@ -2066,7 +2066,7 @@ a:hover .btn-delete {
   fill: #999999;
 }
 
-/* mordal dialog box */
+/* modal dialog box */
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -2830,13 +2830,34 @@ a:hover .btn-delete {
 }
 
 .project-settings .left li {
-  border:1px solid #e6e9e6;
-  border-top:none;
+  border-left:3px none;
   padding:5px 10px;
 }
 
-.project-settings .left li:first-child {
-  border-top:1px solid #e6e9e6;
+.project-settings .left li,
+.project-settings .left li a {
+  color: #1f2328;
+  fill: #1f2328;
+}
+
+.project-settings .left li:has(> hr) {
+  padding:5px 0;
+}
+
+.project-settings .left li hr {
+  border: 0;
+  border-top: 1px solid #818b9840;
+}
+
+.project-settings .left li.section {
+  font-size: 80%;
+  margin-bottom: 3px;
+}
+
+.project-settings .left li.current {
+  font-weight: bold;
+  background-color: #f0f0f0;
+  border-left: 3px solid #4040ff;
 }
 
 .project-settings .right {
@@ -3717,4 +3738,325 @@ pre.command-line {
   border-radius: 3px;
   color:#767676;
   padding:15px 10px;
+}
+
+.ruleset h2 {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #818b9840;
+  font-size: 160%;
+}
+
+.ruleset h3 {
+  padding-top: 20px;
+  padding-bottom: 15px;
+  margin-bottom: 3px;
+  border-bottom: 1px solid #818b9840;
+  font-size: 140%;
+}
+
+.ruleset h4 {
+  padding-top: 20px;
+  padding-bottom: 12px;
+  font-size: 120%;
+}
+
+.ruleset h2 .badge {
+  margin-left: 15px;
+  padding: 2px 8px;
+  border: 1px solid #818b9840;
+  border-radius: 6px;
+  font-size: 55%;
+  font-weight: normal;
+  vertical-align: top;
+}
+
+.ruleset .field-label {
+  font-weight: bold;
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+
+.ruleset .explain {
+  color: #656d76;
+  font-size: 92%;
+}
+
+.ruleset .targets-container {
+  width: 100%;
+  border: 1px solid #818b9840;
+  margin-top: 5px;
+}
+
+.ruleset .targets-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background-color: #f6f8fa;
+  padding: 10px;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+.ruleset button.add-target {
+  font: inherit;
+  padding: 2px 8px;
+  background-color: #ffffff08;
+}
+
+.ruleset #targets .target {
+  width: 100%;
+  border-top: 1px solid #818b9840;
+}
+
+.ruleset #targets .no-target {
+  padding: 25px;
+  text-align: center;
+  font-size: 130%;
+  font-weight: bold;
+}
+.ruleset #targets .no-target:not(:first-child:last-child) {
+  display: none;
+}
+
+.ruleset #targets .target {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  column-gap: 5px;
+  padding: 8px;
+}
+
+.ruleset .exclude-icon {
+  fill: #ff0000;
+}
+
+.ruleset #targets .target-label {
+  padding: 4px;
+  border: 1px solid #818b9840;
+  border-radius: 5px;
+}
+
+.ruleset #targets .target-exclude .target-label,
+.ruleset #targets .target-include .target-label {
+  background-color: #ddf4ff;
+}
+
+.ruleset #targets .trash {
+  cursor: grab;
+}
+
+.ruleset table.rules {
+  width: 100%;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-spacing: 6px 1px;
+}
+
+.ruleset table.rules td:first-child {
+  width: 1px;
+}
+
+.ruleset table.rules .separator {
+  border-top: 1px solid #818b9840;
+  width: 100%;
+  height: 1px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.ruleset .target:has(*:disabled) {
+  display: none;
+}
+
+.popup {
+  color: black;
+  fill: black;
+  background-color: #ffffff;
+  border: 1px solid #c0c0c0;
+  border-radius: 4px;
+  box-shadow: 3px 3px 3px #c0c0c0;
+  padding: 8px;
+}
+
+.ruleset .dropdown .dropdown-toggle {
+  width: 140px;
+  text-align: left;
+  color: black;
+  fill: black;
+  font-weight: bold;
+}
+
+.ruleset .dropdown .dropdown-toggle:after {
+  content: "\25bc";
+  float: right;
+}
+
+.ruleset .dropdown .dropdown-menu {
+  margin-top: 5px;
+  position: absolute;
+  display: none;
+}
+.ruleset .dropdown.open .dropdown-menu {
+  display: block;
+}
+
+.ruleset .dropdown-menu > * {
+  margin: 4px 0;
+}
+
+.ruleset .dropdown-menu a {
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  fill: inherit;
+}
+
+.ruleset .dropdown-menu a.greyed {
+  cursor: not-allowed;
+  text-decoration: none;
+  color: #909090;
+  fill: #909090;
+}
+
+.ruleset .dropdown-menu a.greyed:active {
+  pointer-events: none;
+}
+
+.ruleset .section-title {
+  font-size: 85%;
+  font-weight: bold;
+}
+
+.ruleset .separator {
+  height: 1px;
+  width: 100%;
+  padding: 0;
+  border-top: 1px solid #818b9840;
+}
+
+.ruleset .explain {
+  margin-left: 18px;
+}
+
+.ruleset.pattern-dialog {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 0;
+  padding: 0;
+}
+
+.ruleset.pattern-dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 330px;
+  padding: 12px;
+}
+
+.ruleset.pattern-dialog .input-frame {
+  width: 100%;
+  padding: 2px 5px;
+  border: 1px solid #c0c0c0;
+  border-radius: 4px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.ruleset.pattern-dialog .input-frame:has(:focus) {
+ outline: 2px solid #0000c0;
+}
+
+.ruleset.pattern-dialog .input-frame input {
+  flex-grow: 2;
+  border: none;
+}
+
+.ruleset.pattern-dialog .input-frame input:focus {
+  outline: none;
+}
+
+.ruleset.pattern-dialog .error {
+  color: red;
+  fill: red;
+}
+
+.ruleset.pattern-dialog button {
+  padding: 3px;
+  float: right;
+}
+
+.ruleset.pattern-dialog .x-button {
+  border: none;
+  background-color: transparent;
+}
+
+.ruleset.pattern-dialog button.apply {
+  margin-left: 6px;
+}
+
+.capitalize {
+  text-transform: capitalize;
+}
+
+.default-button {
+  color: white;
+  background-color: green;
+  border: 2px solid green;
+  border-radius: 4px;
+}
+
+.rulesets .rulesets-header {
+  padding: 10px 0;
+}
+
+.rulesets .rulesets-header > * {
+  display: inline;
+}
+
+.rulesets h2 {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  font-size: 160%;
+}
+
+.rulesets .rulesets-header .default-button {
+  float: right;
+  color: white;
+  padding: 4px;
+}
+
+.rulesets .rulesets-header .default-button:hover {
+  color: white;
+  text-decoration: none;
+}
+
+.rulesets .ruleset-frame {
+  width: 100%;
+  margin: 25px 0;
+  padding: 8px;
+  border: 1px solid #818b9840;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.rulesets .ruleset-frame > table {
+  border-spacing: 8px 0;
+}
+
+.rulesets .explain {
+  color: #656d76;
+  font-size: 92%;
+}
+
+.rulesets .no-rulesets {
+  padding: 25px;
+  text-align: center;
+  font-size: 130%;
+  font-weight: bold;
 }

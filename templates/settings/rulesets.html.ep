@@ -1,0 +1,127 @@
+<%
+  # API
+  my $api = gitprep_api;
+  my $manager = app->manager;
+  my $git = app->git;
+
+  # Parameters
+  my $user_id = param('user') || '';
+  my $project_id = param('project');
+  my $target = param('target') || stash('target') || 'branch';
+  my $op = param('op') || '';
+  my $number = param('number');
+
+  # Authentication
+  unless ($api->logined($user_id)) {
+    $self->redirect_to('/');
+    return;
+  }
+
+  # Handle form post.
+  if (lc $self->req->method eq 'post' && $op eq 'delete' && $number) {
+    my $project_row_id = app->dbi->model('project')->select(
+      'project.row_id',
+      where => {'user.id' => $user_id, 'project.id' => $project_id}
+    )->value;
+    my $ruleset = app->dbi->model('ruleset')->select(where => {
+      row_id => $number,
+      target => $target,
+      project => $project_row_id
+    })->one;
+    $manager->delete_ruleset($ruleset) if $ruleset;
+  }
+
+  my $rules = $manager->rules;
+  my $rep_info = app->rep_info($user_id, $project_id);
+  my $refs;
+  if ($target eq 'branch') {
+    $refs = $git->branch_names($rep_info);
+  } else {
+    $refs = [map $_->{name}, @{$git->tags($rep_info, 999999, 999999)}];
+  }
+  my $default_branch = $git->current_branch($rep_info);
+  my $project_row_id = app->dbi->model('project')->select(
+    'project.row_id',
+    where => {'user.id' => $user_id, 'project.id' => $project_id}
+  )->value;
+
+  # Get list of rulesets.
+  my $rulesets = app->dbi->model('ruleset')->select(
+      where => {target => $target, project => $project_row_id},
+      append => 'order by name'
+  )->all;
+  # Decorate them with statistics information.
+  foreach my $ruleset (@$rulesets) {
+    my $compiled = $manager->compile_ruleset_selectors($ruleset->{row_id}, $default_branch);
+    my $ref_count = 0;
+    foreach my $ref (@$refs) {
+      $ref_count++ if $manager->ruleset_selected($compiled, $ref);
+    }
+    $ruleset->{ref_count} = $ref_count;
+    $ruleset->{rule_count} = 0;
+    foreach my $rule (@$rules) {
+      $ruleset->{rule_count}++ if $ruleset->{$rule->{id}};
+    }
+  }
+
+  my $targets = $api->plural($target);
+%>
+
+% layout 'common', title => "$target rulesets";
+
+%= include '/include/header';
+
+<div class="container">
+
+  <div class="project-settings">
+    %= include '/settings/menu', current => $targets;
+    <div class="right">
+      <div class="rulesets">
+        <div class="rulesets-header">
+          <h2><%= ucfirst $target %> rulesets</h2>
+          <a href="<%= url_for("/$user_id/$project_id/settings/rules/new?target=$target") %>" class="default-button">
+            New <%= $target %> ruleset
+          </a>
+        </div>
+        <div>
+          % foreach my $ruleset (@$rulesets) {
+            <div class="ruleset-frame">
+              <table>
+                <tr>
+                  <td>
+                    %= $api->icon($ruleset->{active}? 'play': 'skip');
+                  </td>
+                  <td class="bold">
+                    <a href="<%= url_for("/$user_id/$project_id/settings/rules/$ruleset->{row_id}") %>">
+                      <%= $ruleset->{name} %>
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td class="explain">
+                    %= "$ruleset->{rule_count} $target";
+                    %= $api->plural('rule', $ruleset->{rule_count});
+                    &#x2022; targeting <%= $api->plural($target, $ruleset->{ref_count}, '0') %>
+                  </td>
+                </tr>
+              </table>
+              <span class="flex-padding"></span>
+              <form action="<%= url_for %>" method="post">
+                <input type="hidden" name="number" value="<%= $ruleset->{row_id} %>" />
+                <button name="op" value="delete" title="Remove this ruleset">
+                  %= $api->icon('trash');
+                </button>
+               </form>
+            </div>
+          % }
+          % if (!@$rulesets) {
+            <div class="no-rulesets">None yet</div>
+          % }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+%= include '/include/footer';

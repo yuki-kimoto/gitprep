@@ -1,0 +1,29 @@
+<%
+  my $api = gitprep_api;
+
+  my $kind = stash('kind');
+  my $selector = stash('selector') // '';
+  my $disabled = stash('disabled');
+
+  my $inex = '';
+  my $not = '';
+  $inex = 'in' if $kind eq 'include';
+  ($inex, $not) = ('ex', 'not') if $kind eq 'exclude';
+
+  my $label = $selector;
+  $label = ucfirst($kind) if $kind =~ /^(?:default|all)$/;
+  $disabled = defined($disabled)? {disabled => 'yes'}: {};
+
+  my $icon = $kind eq 'exclude'? 'x-circle': 'plus-circle';
+%>
+
+<div class="target target-<%= $kind %>" inex="<%= $inex %>" not="<%= $not %>">
+  %= hidden_field kind => $kind, %$disabled;
+  %= hidden_field selector => $selector, %$disabled;
+  %= $api->icon($icon, class => "pattern-icon $kind-icon");
+  <span class="target-label"><%= $label %></span>
+  <span class="flex-padding"></span>
+  <span class="trash" onclick="$(this).closest('.target').remove();" title="Remove this target">
+    %= $api->icon('trash');
+  </span>
+</div>

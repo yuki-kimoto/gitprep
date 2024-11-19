@@ -704,8 +704,30 @@ sub startup {
               
               # Collaboration
               $r->any('/collaboration' => sub { shift->render_maybe('/settings/collaboration') });
+
+              # Branches 
+              $r->any('branches' => sub {
+                shift->render_maybe(template =>'/settings/rulesets',
+                                    target => 'branch');
+               });
+
+              # Tags
+              $r->any('tags' => sub {
+                shift->render_maybe(template =>'/settings/rulesets',
+                                    target => 'tag');
+               });
+
+              # Branch and tag ruleset.
+              $r->any('rules/<number:num>' => sub {
+                shift->render_maybe(template =>'/settings/ruleset');
+              });
+              $r->any('rules/new' => sub {
+                my $self = shift;
+                $self->param('number', '');
+                $self->render_maybe(template =>'/settings/ruleset');
+              });
             }
-            
+
             # Fork
             $r->any('/fork' => sub { shift->render_maybe('/fork') });
             

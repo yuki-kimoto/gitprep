@@ -1,0 +1,479 @@
+<%
+  # API
+  my $api = gitprep_api;
+  my $manager = app->manager;
+
+  # Parameters
+  my $op = param('op') || '';
+  my $user_id = param('user') || '';
+  my $project_id = param('project');
+  my $target = param('target') || stash('target') || 'branch';
+  my $number = param('number') || 0;
+
+  # Generate the checked keyword.
+  local *checked = sub {
+    return shift? ' checked="yes"': '';
+  };
+
+  # Authentication
+  unless ($api->logined($user_id)) {
+    $self->redirect_to('/');
+    return;
+  }
+
+  my $project_row_id = app->dbi->model('project')->select(
+    'project.row_id',
+    where => {'user.id' => $user_id, 'project.id' => $project_id}
+  )->value;
+
+  # Get ruleset.
+  my $rules = $manager->rules;
+  my $errors;
+  my $ruleset;
+  my $selectors = [];
+  if ($number) {
+    $ruleset = app->dbi->model('ruleset')->select(
+      where => {row_id => $number, project => $project_row_id}
+    )->one;
+    if (!$ruleset) {
+      $errors = ['Ruleset does not exist'];
+    } else {
+      $target = $ruleset->{target};
+      $selectors = app->dbi->model('ruleset_selector')->select(
+        where => {ruleset => $number}
+      )->all;
+    }
+  }
+
+  $ruleset //= {
+    project => $project_row_id,
+    name => '',
+    target => $target,
+    active => 0,
+    owner_bypass => 0,
+    map {$_->{id} => $_->{default}} @$rules
+  };
+
+  my $refkind = $target eq 'tags'? 'tags': 'heads';
+
+  # Handle form post.
+  if (!$errors && lc $self->req->method eq 'post' && $op ne 'reset') {
+    $op = 'add' if $op eq 'update' && !$number;
+
+    $ruleset = {
+      project => $project_row_id,
+      name => param('name'),
+      target => $target,
+      active => param('active')? 1: 0,
+      owner_bypass => param('owner')? 1: 0,
+      map {$_->{id} => param($_->{id})? 1: 0} @$rules
+    };
+
+    my $kinds = $self->every_param('kind') // [];
+    my $s = $self->every_param('selector') // [];
+
+    # Validator
+    my $vc = app->vc;
+
+    # Validation result
+    my $v = $vc->validation;
+
+    $v->add_failed(name => "name is empty") unless length $ruleset->{name};
+    my $rs = app->dbi->model('ruleset')->select(where => {
+        project => $project_row_id,
+        target => $target,
+        name => $ruleset->{name}
+      }
+    )->one;
+    $v->add_failed(name => "name already in use")
+      if $rs && ($op eq 'add' || $number != $rs->{row_id});
+
+    if (scalar(@$kinds) != scalar(@$s)) {
+      $v->add_failed(selectors => "inconsistent selectors");
+    } else {
+      $selectors = [];
+      while (my $kind = shift @$kinds) {
+        my $selector = shift @$s;
+        if ($kind =~ /^(?:include|exclude)$/) {
+          $v->add_failed(selectors => 'selector pattern is empty') unless length $selector;
+        } elsif ($kind =~ /^(?:default|all)$/) {
+          $selector = '';
+        } else {
+          $v->add_failed(selectors => 'invalid selector(s)');
+        }
+        push @$selectors, {
+          kind => $kind,
+          selector => $selector
+        };
+      }
+      $v->add_failed(selectors => 'no selector present') unless @$selectors;
+    }
+
+    my $rule_count = 0;
+    foreach my $rule (@$rules) {
+      $rule_count++ if $ruleset->{$rule->{id}};
+    }
+    $v->add_failed(rules => 'no activated rules') unless $rule_count;
+
+    if ($v->is_valid) {
+      my $success = app->dbi->connector->txn(sub {
+        if ($op eq 'add') {
+          app->dbi->model('ruleset')->insert($ruleset);
+          $number = app->dbi->dbh->last_insert_id();
+        } elsif ($op eq 'update') {
+          app->dbi->model('ruleset')->update($ruleset,
+            where => {row_id => $number});
+          app->dbi->model('ruleset_selector')->delete(
+            where => {ruleset => $number});
+        } else {
+          $v->add_failed(op => 'invalid operation code');
+        }
+        if ($v->is_valid) {
+          foreach my $selector (@$selectors) {
+            $selector->{ruleset} = $number;
+            app->dbi->model('ruleset_selector')->insert($selector);
+          }
+        }
+        return 1;
+      });
+      if (!$success) {
+        $v->add_failed(io => 'Input/output error');
+      } elsif ($op eq 'add') {
+        $self->redirect_to("/$user_id/$project_id/settings/rules/$number");
+        return;
+      }
+    }
+    push(@$errors, @{$v->messages}) unless  $v->is_valid;
+  }
+
+  my $targets = $api->plural($target);
+  my $examples = '"main", "releases/**/*", "users/**/*"';
+  $examples = '"*-beta", "releases/**/*", "v*"' if $target eq 'tag';
+%>
+
+% layout 'common', title => "$target ruleset";
+
+%= include '/include/header';
+
+%= javascript begin
+  $(document).ready(function () {
+    (function (Ruleset, $, undefined) {
+      var dialog = $('.pattern-dialog');
+      var result = $('[name="pattern"]', dialog);
+
+      // Update a target.
+      Ruleset.setTarget = function (target, pattern) {
+        $('*', target).removeAttr('disabled');
+        var ref = $('[name="kind"]', target).val();
+        ref = ref == 'all'? 'all <%= $targets %>': ref;
+        var inex = $(target).attr('not')? 'exclude': 'include';
+        $('[name="selector"]', target).val(pattern);
+        if ($(target).attr('inex')) {
+          var label = $('.target-label', target);
+          ref = 'refs/<%= $refkind %>/' + pattern;
+          label.text(pattern);
+          label.attr('title', ref);
+          label.off('click');
+          label.on('click', function () {
+            Ruleset.initialize_dialog(target, 'Update');
+          });
+          label.css('cursor', 'pointer');
+        }
+        $('.trash', target).attr('title', 'Delete ' + inex + ' of ' + ref);
+      };
+
+      // Fire up pattern dialog.
+      Ruleset.initialize_dialog = function (target, verb, action) {
+        $('.inex', dialog).text(target.attr('inex'));
+        $('.not', dialog).text(target.attr('not'));
+        $('.action-verb', dialog).text(verb);
+        $('.pattern-icon', dialog).replaceWith(
+          $('.pattern-icon', target).clone());
+        result.val($('[name="selector"]', target).val());
+        $('.error', dialog).hide();
+        $('.apply', dialog).off('click');
+        $('.apply', dialog).on('click', function () {
+          var pattern = result.val().trim();
+          if (!pattern) {
+            $('.error', dialog).show();
+          } else {
+            Ruleset.setTarget(target, pattern);
+            if (action != undefined) {
+              action(target);
+            }
+            dialog[0].close();
+          }
+        });
+        dialog[0].showModal();
+      };
+    }(window.Ruleset = {}, jQuery));
+
+    // Prepare loaded targets.
+    $('#targets .target').each(function (_, target) {
+      Ruleset.setTarget($(target), $('[name="selector"]', target).val());
+    });
+  });
+% end
+
+<div class="container">
+  %= include '/include/errors', errors => $errors;
+  %= include '/include/message', message => flash('message');
+
+  <div class="project-settings">
+    %= include '/settings/menu', current => $targets;
+    <div class="right">
+      <div class="ruleset">
+        <h2>
+          <%= ucfirst $target %> ruleset /
+          % if (!$number) {
+            New <%= $target %> ruleset
+          % } else {
+            %= $ruleset->{name};
+            <span class="badge"><%= $ruleset->{active}? 'Active': 'Disabled' %></span>
+          % }
+        </h2>
+        <form action="<%= url_for %>" method="post" defaultSubmit=".default-button">
+          <input type="hidden" name="target" value="<%= $target %>" />
+          % if ($number) {
+            <input type="hidden" name="number" value="<%= $number %>" />
+          % }
+          <div class="field-label">Ruleset Name</div>
+          <input type="text" autofocus="yes" name="name" value="<%= $ruleset->{name} %>" />
+          <div class="field-label">Enforcement status</div>
+          %# Bootstrap dropdown menu.
+          <input type="hidden" name="active" value="<%= $ruleset->{active} %>" />
+          <div class="dropdown">
+            <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown">
+            </button>
+            <ul class="dropdown-menu popup">
+              <li class="section-title">Enforcement status</li>
+              <li>
+                <a class="dropdown-item" value="1">
+                  <span><%= $api->icon('play') %>&nbsp;Active</span>
+                </a>
+                <div class="explain">Rules will be enforced</div>
+              </li>
+              <li>
+                <a class="dropdown-item" value="0">
+                  <span><%= $api->icon('skip') %>&nbsp;Disabled</span>
+                </a>
+                <div class="explain">Do not evaluate or enforce rules</div>
+              </li>
+            </ul>
+            %= javascript begin
+              (function (script) {
+                $(document).ready(function () {
+                  var dropdown = $(script).closest('.dropdown');
+                  var button = $('button.dropdown-toggle', dropdown);
+                  var active = dropdown.prev();
+                  var items = $('a.dropdown-item', dropdown);
+                  items.on('click', function () {
+                    button.html($(this).html());
+                    active.val($(this).attr('value'));
+                  });
+                items.filter('[value="' + <%= $ruleset->{active} %> + '"]').trigger('click');
+                });
+              })(document.currentScript);
+            % end
+
+          </div>
+          <ul>
+            <li>
+              <h3>Bypass list</h3>
+              <div class="explain">
+                Exempt roles, teams, or apps from this ruleset by
+                adding them to the bypass list.
+              </div>
+              <div>
+                <input type="checkbox" name="owner" <%= checked($ruleset->{owner_bypass}) %>" />
+                <span class="field-label">&nbsp;Project owner</span>
+              </div>
+            </li>
+            <li>
+              <h3>Targets</h3>
+              <div class="explain">
+                Which <%= $targets %> do you want to make a ruleset for?
+              </div>
+              <h4>Target <%= $targets %></h4>
+              <div>
+                <%= ucfirst $target %> targeting determines which
+                <%= $targets %> will be protected by this ruleset. Use
+                inclusion patterns to expand the list of <%= $targets %>
+                under this ruleset. Use exclusion patterns to exclude
+                <%= $targets %>.
+              </div>
+              <div class="targets-container">
+                <div class="targets-header">
+                  <span class="bold"><%= ucfirst $target %> targeting criteria</span>
+                  <span class="flex-padding"></span>
+                  %# Bootstrap dropdown menu.
+                  <div class="dropdown">
+                    <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown">
+                      <span>Add target</span>
+                    </button>
+                    <ul class="dropdown-menu popup">
+                      % if ($target eq 'branch') {
+                        <li>
+                          <a class="dropdown-item">
+                            %= $api->icon('plus-circle');
+                            Include default branch
+                          </a>
+                          %= include '/settings/ruleset-selector', kind => 'default', disabled => 1;
+                        </li>
+                      % }
+                      <li>
+                        <a class="dropdown-item">
+                          %= $api->icon('plus-circle');
+                          Include all <%= $targets %>
+                        </a>
+                        %= include '/settings/ruleset-selector', kind => 'all', disabled => 1;
+                      </li>
+                      <li class="separator"></li>
+                      <li class="section-title">Target inclusion or exclusion pattern</li>
+                      <li>
+                        <a class="dropdown-item">
+                          %= $api->icon('plus-circle');
+                          Include by pattern
+                        </a>
+                        %= include '/settings/ruleset-selector', kind => 'include', disabled => 1;
+                      </li>
+                      <li>
+                        <a class="dropdown-item">
+                          %= $api->icon('x-circle', class => "exclude-icon");
+                          Exclude by pattern
+                        </a>
+                        %= include '/settings/ruleset-selector', kind => 'exclude', disabled => 1;
+                      </li>
+                    </ul>
+                    %= javascript begin
+                      (function (script) {
+                        $(document).ready(function () {
+                          var dropdown = $(script).closest('.dropdown');
+                          var items = $('a.dropdown-item', dropdown);
+                          var targets = $('#targets');
+
+                          // Grey-out items on open.
+                          Gitprep.onClassChange(dropdown, function () {
+                            if (dropdown.hasClass('open')) {
+                              items.removeClass('greyed');
+                              $(['default', 'all']).each(function(_, kind) {
+                                var klass = '.target-' + kind;
+                                if ($(klass, targets).length) {
+                                  items.filter(':has(~' + klass + ')').addClass('greyed');
+                                }
+                              });
+                            }
+                          });
+
+                          // Capture selections.
+                          items.on('click', function () {
+                            var target = $('.target', $(this).parent()).clone();
+                            Ruleset.setTarget(target, '');
+                            if (!$(target).attr('inex')) {
+                              targets.append(target);
+                            } else {
+                              Ruleset.initialize_dialog(target, 'add', function () {
+                                targets.append(target);
+                              });
+                            }
+                          });
+                        });
+                      })(document.currentScript);
+                    % end
+                  </div>
+                </div>
+                <div id="targets">
+                  <div class="no-target">
+                    <%= ucfirst $target %> targeting has not been configured
+                  </div>
+                  % foreach my $selector (@$selectors) {
+                    %= include '/settings/ruleset-selector', kind => $selector->{kind}, selector => $selector->{selector};
+                  % }
+                </div>
+              </div>
+            </li>
+            <li>
+              <h3>Rules</h3>
+              <div class="explain">Which rules should be applied?</div>
+              <h3><%= ucfirst $target %> rules</h3>
+              <table class="rules">
+                % foreach my $rule (@$rules) {
+                  <tr>
+                    <td>
+                      <input type="checkbox" name="<%= $rule->{id} %>"
+                        <%= checked($ruleset->{$rule->{id}}) %>" />
+                    </td>
+                    <td class="field-label"><%= $rule->{label} %></td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td class="explain"><%= $rule->{explain} %></td>
+                  </tr>
+                  <tr><td colspan="2"><div class="separator"></div></td></tr>
+                % }
+              </table>
+            </li>
+          </ul>
+          <div>
+            % if (!$number) {
+              <button type="submit" name="op" class="default-button" value="add">Create</button>
+            % } else {
+              <button type="submit" name="op" class="default-button" value="update">Save changes</button>
+              <button type="submit" name="op" value="add"
+                formaction="<%= url_for("/$user_id/$project_id/settings/rules/new?target=$target") %>">
+Clone with new name
+              </button>
+              <button type="submit" name="op" value="reset">Revert changes</button>
+            % }
+            <button type="button" onclick="window.location.href = '<%= url_for("/$user_id/$project_id/settings/$targets") %>';">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+%# Pattern modal dialog.
+<dialog class="ruleset pattern-dialog popup" onmousedown="this == event.target? this.close(): 0;">
+  <form method="dialog" defaultSubmit=".default-button">
+    <div>
+      <span class="bold">
+        <span class="inex capitalize"></span>clude by pattern
+      </span>
+      <button formmethod="dialog" class="x-button" value="cancel">
+        %= $api->icon('x-12');
+      </button>
+    </div>
+    <div class="separator"></div>
+    <div class="explain">
+      <%= ucfirst($targets) %> that do <span class="not"></span> match the
+      matching pattern will be targeted by this ruleset.
+    </div>
+    <div class="separator"></div>
+    <div>
+      <div class="bold"><%= ucfirst($target) %> naming pattern</div>
+      <div class="input-frame">
+        %= $api->icon('plus-circle', class => 'pattern-icon');
+        <input type="text" name="pattern" autofocus="yes"
+          onkeypress="$('.error', $(this).closest('dialog')).hide();" />
+      </div>
+    </div>
+    <div class="error">
+      %= $api->icon('alert-fill-12');
+      &nbsp;Pattern cannot be empty
+    </div>
+    <div class="explain">
+      Example patterns: <%= $examples %>.
+    </div>
+    <div class="separator"></div>
+    <div>
+      <button type="button" class="apply default-button">
+        <span class="action-verb capitalize"></span>
+        <span class="inex"></span>clusion pattern
+      </button>
+      <button formmethod="dialog" value="cancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+%= include '/include/footer';
