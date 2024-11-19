@@ -6,6 +6,7 @@ use utf8;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
+use File::Copy qw/copy/;
 use Gitprep;
 
 my $debug = 0;
@@ -62,9 +63,33 @@ else {
 die qq|User "$session_user_id" can't access repository "$user_id/$project_id.git"\n|
   unless $can_access; 
 
-# Command
+# Export some values for use in git hooks.
+$ENV{GITPREP_PERL} = $^X;
+$ENV{GITPREP_HOME} = $app->home;
+$ENV{GITPREP_SESSION_USER} = $session_user_id;
+$ENV{GITPREP_USER} = $user_id;
+$ENV{GITPREP_PROJECT} = $project_id;
+
+# Install defined gitprep hooks for target repository.
 my $rep_info = $app->rep_info($user_id, $project_id);
 my $rep_git_dir = $rep_info->{git_dir};
+if ($project_id !~ /\.wiki$/) {
+  my $hookdir = $app->home . '/script/hooks';
+  opendir my $dh, $hookdir or die "Can't open hooks directory\n";
+  while (readdir $dh) {
+    my $src = "$hookdir/$_";
+    next unless (-f $src) && -x $src;
+    my $dst = "$rep_git_dir/hooks/$_";
+    if (!(-x $dst) || (stat($src))[9] > (stat($dst))[9]) {
+      copy $src, $dst;
+      chmod((stat($dst))[2] | 0555, $dst) or die "Can't install $_ hook\n";
+    }
+  }
+  close $dh;
+}
+
+
+# Command
 my $repository = "'$rep_git_dir'";
 my @git_shell_cmd = ("git", "shell", "-c", "$verb $repository");
 warn "@git_shell_cmd" if $debug;
