@@ -174,6 +174,30 @@ my @tables = (
     ],
     unique => ['user', 'project']
   },
+  {
+    name => 'ruleset',
+    fields => [
+      {name => 'project', type => 'integer', default => '0'},
+      {name => 'name'},
+      {name => 'target', default => q{''}},
+      {name => 'active', type => 'integer', default => '0'},
+      {name => 'owner_bypass', type => 'integer', default => '0'},
+      {name => 'creation', type => 'integer', default => '0'},
+      {name => 'updating', type => 'integer', default => '0'},
+      {name => 'deletion', type => 'integer', default => '0'},
+      {name => 'required_signatures', type => 'integer', default => '0'},
+      {name => 'non_fast_forward', type => 'integer', default => '0'}
+    ],
+    unique => ['project', 'name', 'target']
+  },
+  {
+    name => 'ruleset_selector',
+    fields => [
+      {name => 'ruleset', type => 'integer', default => '0'},
+      {name => 'kind', default => q{''}},
+      {name => 'selector', default => q{''}}
+    ]
+  },
 );
 
 
