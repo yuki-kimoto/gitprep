@@ -1,0 +1,53 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use utf8;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use lib "$FindBin::Bin/../extlib/lib/perl5";
+use Mojo::URL;
+use Gitprep;
+
+# Retrieve our parameters
+my ($user_id, $project_id) = @ENV{'GITPREP_USER', 'GITPREP_PROJECT'};
+
+die "Gitprep parameters unset" unless $user_id && $project_id;
+
+my $app = Mojo::Server->new->load_app("$FindBin::Bin/gitprep");
+my $git = $app->git;
+my $dbi = $app->dbi;
+
+my $rep_info = $app->rep_info($user_id, $project_id);
+my $default_branch = $git->current_branch($rep_info);
+my $project = $dbi->model('project')->select(
+  where => {'user.id' => $user_id, 'project.id' => $project_id}
+)->one;
+
+my $url = Mojo::URL->new($app->config->{basic}{new_pr_url});
+$url->scheme('http') unless $url->scheme;
+$url->userinfo(undef);
+$url->query(undef);
+$url->fragment(undef);
+my $new_pr_path = $url->path;
+$new_pr_path =~ s#/*$##;
+$new_pr_path .= "/$user_id/$project_id/pull/new";
+
+while (<>) {
+  chomp;
+  die "Invalid update data" unless $_ =~
+    m#^([0-9a-f]{40})\s([0-9a-f]{40})\s(refs/(tags|heads|remotes)/(\S+))$#i;
+  my ($old, $new, $ref, $kind, $name) = ($1, $2, $3, $4, $5);
+  $old =~ s/0{40}//;
+  $new =~ s/0{40}//;
+
+  if ($url->host && $kind eq 'heads' && !$old) {
+    if ($project->{original_project} || $name ne $default_branch) {
+      $url->path("$new_pr_path/$name");
+      print "You can submit a new pull request by visiting:\n";
+      print "     $url\n";
+    }
+  }
+}
+
+exit 0;

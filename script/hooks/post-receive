@@ -1,0 +1,10 @@
+#!/bin/bash
+HOOK=`basename "${0}"`
+SCRIPT="script/gitprep-${HOOK}"
+[ -x "${GITPREP_PERL}" -a                                               \
+  -d "${GITPREP_HOME}" -a -r "${GITPREP_HOME}/${SCRIPT}" ] || {
+  echo "${HOOK} hook script not available: aborting" 1>&2
+  exit 1
+}
+
+exec "${GITPREP_PERL}" "${GITPREP_HOME}/${SCRIPT}"
