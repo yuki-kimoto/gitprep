@@ -55,22 +55,26 @@ while (<>) {
   $kind = $kind eq 'tags'? 'tag': 'branch';
   $old =~ s/0{40}//;
   $new =~ s/0{40}//;
-  my %rule_hit;
+
+  # Gather the checks to perform.
+  my %checks;
   foreach my $ruleset (@$rulesets) {
     if ($ruleset->{target} eq $kind && $manager->ruleset_selected($ruleset->{selector}, $name)) {
       foreach my $rule (@$rules) {
-        push @{$rule_hit{$rule->{id}}}, $ruleset->{name} if
-          $ruleset->{$rule->{id}} && $rule->{check}->($rep_info, $old, $new, $ref);
+        push @{$checks{$rule->{id}}}, $ruleset->{name} if
+          $ruleset->{$rule->{id}};
       }
     }
   }
+
+  # Perform the checks and issue messages.
   foreach my $rule (@$rules) {
-    my $hits = $rule_hit{$rule->{id}};
-    if ($hits) {
+    my $check = $checks{$rule->{id}};
+    if ($check && $rule->{check}->($rep_info, $old, $new, $ref)) {
       $exit_status = 1;
       print "$kind '$name'$rule->{error} forbidden by ";
-      print $api->plural('ruleset', scalar(@$hits));
-      print ' ' . join(', ', @$hits) . ".\n";
+      print $api->plural('ruleset', scalar(@$check));
+      print ' ' . join(', ', @$check) . ".\n";
     }
   }
 }
