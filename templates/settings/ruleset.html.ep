@@ -243,7 +243,7 @@
           %# Bootstrap dropdown menu.
           <input type="hidden" name="active" value="<%= $ruleset->{active} %>" />
           <div class="dropdown">
-            <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown">
+            <button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
             </button>
             <ul class="dropdown-menu popup">
               <li class="section-title">Enforcement status</li>
@@ -308,7 +308,7 @@
                   <span class="flex-padding"></span>
                   %# Bootstrap dropdown menu.
                   <div class="dropdown">
-                    <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown">
+                    <button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
                       <span>Add target</span>
                     </button>
                     <ul class="dropdown-menu popup">
@@ -416,16 +416,16 @@
           </ul>
           <div>
             % if (!$number) {
-              <button type="submit" name="op" class="default-button" value="add">Create</button>
+              <button type="submit" name="op" class="btn default-button" value="add">Create</button>
             % } else {
-              <button type="submit" name="op" class="default-button" value="update">Save changes</button>
-              <button type="submit" name="op" value="add"
+              <button type="submit" name="op" class="btn default-button" value="update">Save changes</button>
+              <button type="submit" name="op" class="btn" value="add"
                 formaction="<%= url_for("/$user_id/$project_id/settings/rules/new?target=$target") %>">
 Clone with new name
               </button>
-              <button type="submit" name="op" value="reset">Revert changes</button>
+              <button type="submit" name="op" class="btn" value="reset">Revert changes</button>
             % }
-            <button type="button" onclick="window.location.href = '<%= url_for("/$user_id/$project_id/settings/$targets") %>';">Cancel</button>
+            <button type="button" class="btn" onclick="window.location.href = '<%= url_for("/$user_id/$project_id/settings/$targets") %>';">Cancel</button>
           </div>
         </form>
       </div>
@@ -467,11 +467,11 @@ Clone with new name
     </div>
     <div class="separator"></div>
     <div>
-      <button type="button" class="apply default-button">
+      <button type="button" class="btn apply default-button">
         <span class="action-verb capitalize"></span>
         <span class="inex"></span>clusion pattern
       </button>
-      <button formmethod="dialog" value="cancel">Cancel</button>
+      <button formmethod="dialog" class="btn" value="cancel">Cancel</button>
     </div>
   </form>
 </dialog>
