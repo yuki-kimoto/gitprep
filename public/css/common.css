@@ -4005,9 +4005,12 @@ pre.command-line {
 
 .default-button {
   color: white;
-  background-color: green;
-  border: 2px solid green;
+  background: #008000;
+  border: 2px solid #008000;
   border-radius: 4px;
+}
+.default-button:hover {
+  background: #30c030;
 }
 
 .rulesets .rulesets-header {
