@@ -24,14 +24,20 @@ my $project = $dbi->model('project')->select(
   where => {'user.id' => $user_id, 'project.id' => $project_id}
 )->one;
 
-my $url = Mojo::URL->new($app->config->{basic}{new_pr_url});
-$url->scheme('http') unless $url->scheme;
-$url->userinfo(undef);
-$url->query(undef);
-$url->fragment(undef);
-my $new_pr_path = $url->path;
-$new_pr_path =~ s#/*$##;
-$new_pr_path .= "/$user_id/$project_id/pull/new";
+my $new_pr_path;
+my $url = $app->config->{basic}{new_pr_url};
+if ($url) {
+  $url = Mojo::URL->new($url);
+  if ($url && $url->host) {
+    $url->scheme('http') unless $url->scheme;
+    $url->userinfo(undef);
+    $url->query(undef);
+    $url->fragment(undef);
+    $new_pr_path = $url->path;
+    $new_pr_path =~ s#/*$##;
+    $new_pr_path .= "/$user_id/$project_id/pull/new";
+  }
+}
 
 while (<>) {
   chomp;
@@ -41,7 +47,7 @@ while (<>) {
   $old =~ s/0{40}//;
   $new =~ s/0{40}//;
 
-  if ($url->host && $kind eq 'heads' && !$old) {
+  if ($new_pr_path && $kind eq 'heads' && !$old) {
     if ($project->{original_project} || $name ne $default_branch) {
       $url->path("$new_pr_path/$name");
       print "\nCreate a pull request for '$name' on Gitprep by visiting:\n";
