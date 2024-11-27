@@ -4,7 +4,6 @@ use Mojo::Base -base;
 use Digest::MD5 'md5_hex';
 use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
 use HTML::FormatText::WithLinks;
-use MIME::Entity;
 
 use Carp 'croak';
 use Encode 'decode', 'encode';
@@ -1120,6 +1119,7 @@ sub notify_subscribed {
       message_id => $message_id
     )->to_string;
     my $plain = $html2plain->parse($html);
+    require MIME::Entity;  # For compilation performance
     my $top = MIME::Entity->build(From => $from,
                                   To => $to,
                                   Subject => "[$user/$project] $title",
