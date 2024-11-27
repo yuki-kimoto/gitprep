@@ -2,8 +2,6 @@ package Gitprep::API;
 use Mojo::Base -base;
 
 use Digest::MD5 'md5_hex';
-use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
-
 use Carp 'croak';
 use Encode 'decode', 'encode';
 
@@ -585,9 +583,10 @@ sub add_issue_message {
 
 sub markdown {
   my ($self, $markdown_text) = @_;
-
+  
+  require Text::Markdown::Hoedown; # For compilation performance
   my $html_text = Text::Markdown::Hoedown::markdown(
-    $markdown_text, extensions => HOEDOWN_EXT_FENCED_CODE|HOEDOWN_EXT_TABLES|HOEDOWN_EXT_NO_INTRA_EMPHASIS
+    $markdown_text, extensions => Text::Markdown::Hoedown::HOEDOWN_EXT_FENCED_CODE()|Text::Markdown::Hoedown::HOEDOWN_EXT_TABLES()|Text::Markdown::Hoedown::HOEDOWN_EXT_NO_INTRA_EMPHASIS()
   );
   
   require HTML::Restrict; # For compilation performance
