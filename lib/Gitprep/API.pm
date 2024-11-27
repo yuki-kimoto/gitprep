@@ -6,7 +6,6 @@ use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOW
 use HTML::FormatText::WithLinks;
 use MIME::Entity;
 use Time::Moment;
-use HTML::Restrict;
 
 use Carp 'croak';
 use Encode 'decode', 'encode';
@@ -593,7 +592,8 @@ sub markdown {
   my $html_text = Text::Markdown::Hoedown::markdown(
     $markdown_text, extensions => HOEDOWN_EXT_FENCED_CODE|HOEDOWN_EXT_TABLES|HOEDOWN_EXT_NO_INTRA_EMPHASIS
   );
-
+  
+  require HTML::Restrict;
   my $hr = HTML::Restrict->new(
     rules => {
       h1 => [qw( id class )],
