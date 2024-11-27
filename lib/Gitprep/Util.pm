@@ -5,7 +5,6 @@ use warnings;
 use IPC::Open3 ();
 use File::Spec;
 use MIME::Base64;
-use Crypt::Digest::SHA256 qw(sha256);
 
 sub run_command {
   my @cmd = @_;
@@ -28,9 +27,10 @@ sub fingerprint {
   my $type = $1;
   my $data = $2;
   if ($type && $data) {
+    require Crypt::Digest::SHA256; # For compilation performance
     return (
       $type, 
-      encode_base64(sha256(decode_base64($data))) 
+      encode_base64(Crypt::Digest::SHA256::sha256(decode_base64($data))) 
     );
   }
 
