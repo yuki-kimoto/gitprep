@@ -3,7 +3,6 @@ use Mojo::Base -base;
 
 use Digest::MD5 'md5_hex';
 use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
-use HTML::FormatText::WithLinks;
 
 use Carp 'croak';
 use Encode 'decode', 'encode';
@@ -1095,6 +1094,7 @@ sub notify_subscribed {
   $message = $self->markdown($message);
 
   # HTML to plain text converter.
+  require HTML::FormatText::WithLinks; # For compilation performance
   my $html2plain = HTML::FormatText::WithLinks->new(
     before_link => '',
     after_link => ' [%l]',
