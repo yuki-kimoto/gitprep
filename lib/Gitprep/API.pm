@@ -5,7 +5,6 @@ use Digest::MD5 'md5_hex';
 use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
 use HTML::FormatText::WithLinks;
 use MIME::Entity;
-use Email::Sender::Simple;
 use Time::Moment;
 use HTML::Restrict;
 
@@ -1050,6 +1049,9 @@ sub subscribe_mentioned {
 }
 
 sub notify_subscribed {
+  
+  require Email::Sender::Simple; # For compilation performance
+  
   my ($self, $user, $project, $title, $sender_row_id, $message, $message_id,
       $path_suffix, $issue_row_id) = @_;
 

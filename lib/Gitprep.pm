@@ -15,8 +15,6 @@ use Gitprep::Manager;
 use Scalar::Util 'weaken';
 use Validator::Custom;
 use Time::Moment;
-use Email::Sender::Transport::SMTP;
-use Email::Sender::Transport::Sendmail;
 
 # Digest::SHA loading to Mojo::Util if not loaded
 {
@@ -827,9 +825,11 @@ sub startup {
       my %args = map {$_ => $c->{$_}} keys %$c;
       my @hosts = split(' ', $c->{hosts});
       $args{hosts} = \@hosts;
+      require Email::Sender::Transport::SMTP; # For compilation performance
       $self->{mailtransport} = Email::Sender::Transport::SMTP->new(%args);
     }
     else {
+      require Email::Sender::Transport::Sendmail; # For compilation performance
       $self->{mailtransport} = Email::Sender::Transport::Sendmail->new(
         $conf->{sendmail}
       );
