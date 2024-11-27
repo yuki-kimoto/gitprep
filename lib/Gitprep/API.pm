@@ -592,7 +592,7 @@ sub markdown {
     $markdown_text, extensions => HOEDOWN_EXT_FENCED_CODE|HOEDOWN_EXT_TABLES|HOEDOWN_EXT_NO_INTRA_EMPHASIS
   );
   
-  require HTML::Restrict;
+  require HTML::Restrict; # For compilation performance
   my $hr = HTML::Restrict->new(
     rules => {
       h1 => [qw( id class )],
