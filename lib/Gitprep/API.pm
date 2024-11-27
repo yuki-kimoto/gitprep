@@ -5,7 +5,6 @@ use Digest::MD5 'md5_hex';
 use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
 use HTML::FormatText::WithLinks;
 use MIME::Entity;
-use Time::Moment;
 
 use Carp 'croak';
 use Encode 'decode', 'encode';
@@ -754,12 +753,16 @@ sub DOM_render {
 }
 
 sub now {
+  require Time::Moment; # For compilation performance
   return Time::Moment->now_utc->epoch;
 }
 
 sub strftime {
+  
+  require Time::Moment; # For compilation performance
+  
   my ($self, $unixtime, $format, $offset_minutes) = @_;
-
+  
   my $tm = Time::Moment->from_epoch($unixtime);
   $tm = $tm->with_offset_same_instant($offset_minutes) if $offset_minutes;
   return Time::Moment->from_epoch($unixtime)->strftime($format || '%F %T');
