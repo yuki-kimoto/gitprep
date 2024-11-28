@@ -142,5 +142,28 @@ sub glob2regex {
   return "^$regex\$";
 }
 
+sub plural {
+  my ($word, $count, $prepend, $plural) = @_;
+
+  # Return plural of `word'.
+  # If `count' is 1, keep singular form.
+  # If `prepend' is given, prepend it to result when `count' = 0 else `count'.
+  # `plural' can be used if the plural form of `word' is irregular.
+
+  my $prefix = '';
+  if (defined($count) && defined($prepend)) {
+    $prefix = $prepend;
+    $prefix = $count if $count || !$prepend;
+    return $prefix unless $word;
+    $prefix .= ' ';
+  }
+  return $word unless $word;
+  return "$prefix$word" unless ($count // 0) != 1;
+  return "$prefix$plural" if $plural;
+  $word =~ s/[ei]s$/es/ && return "$prefix$word";
+  $word =~ s/(o|s|x|z|ch|sh)$/$1es/ && return "$prefix$word";
+  $word =~ s/([^aeiouy])y$/$1ies/ && return "$prefix$word";
+  return "$prefix${word}s";
+}
 
 1;
