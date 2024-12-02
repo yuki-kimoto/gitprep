@@ -626,6 +626,7 @@ Even if shared hosting server, you can install Mojolicious application as CGI.
     requires 'HTML::FormatText::WithLinks', '== 0.15';
     requires 'Email::Sender', '== 2.600';
     requires 'HTML::Restrict', '== 3.0.0';
+    requires 'Imager', '== 1.025';
 
 If you want to install all defined modules, you only run the following command.
 
@@ -690,6 +691,7 @@ Thanks to Mojolicious author,[Sebastian riedel](https://twitter.com/kraih).
 * [MIME::Entity](https://metacpan.org/pod/MIME::Entity)
 * [Email::Sender](https://metacpan.org/pod/Email::Sender)
 * [HTML::Restrict](https://metacpan.org/pod/HTML::Restrict)
+* [Imager](https://metacpan.org/pod/Imager)
 
 ## Sister project
 

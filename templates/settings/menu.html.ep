@@ -8,7 +8,7 @@
 
   my $current = stash('current') // '';
 
-  my @entries = (
+  my @menu = (
     {label => 'General', icon => 'gear', id => ''},
     {label => 'Access', section => 1},
     {label => 'Collaborators', icon => 'people', id => 'collaboration'},
@@ -17,20 +17,4 @@
     {label => 'Tags', icon => 'tag', id => 'tags'}
   );
 %>
-
-<div class="left">
-  <ul>
-    % foreach my $entry (@entries) {
-      % if ($entry->{section}) {
-        <li><hr /></li>
-        <li class='section'><%= $entry->{label} %></li>
-      % } else {
-        <li class="<%= $entry->{id} eq $current? 'current': '' %>">
-          <a href="<%= url_for("/$user_id/$project_id/settings" . ($entry->{id}? "/$entry->{id}": '')) %>">
-            <%= $api->icon($entry->{icon}) %>&nbsp;<%= $entry->{label} %>
-          </a>
-        </li>
-      % }
-    % }
-  </ul>
-</div>
+%= include '/include/left_menu', menu => \@menu, current => $current, url => "/$user_id/$project_id/settings";

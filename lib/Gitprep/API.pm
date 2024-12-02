@@ -846,7 +846,6 @@ sub load_svg {
   my $svg = $dom->find('svg')->first;
   return undef unless $svg;
   my $attrs = $svg->attr;
-  delete $attrs->{xmlns};
 
   my ($width, $height) = ($attrs->{width}, $attrs->{height});
   my ($w, $h) = ($width, $height);
@@ -905,6 +904,15 @@ sub icon {
   my $self = shift;
 
   return $self->DOM_render($self->load_icon(@_));
+}
+
+sub avatar {
+  my $self = shift;
+  my $size = shift;
+  my $url = $self->cntl->url_for("/_avatar")->query(@_);
+  my $img = $self->DOM_element('img', class => 'avatar', src => $url,
+    width => $size, height => $size, alt => '');
+  return $img;
 }
 
 sub RGBtoHSL {

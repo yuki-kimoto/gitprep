@@ -1,0 +1,70 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
+  my $commit = stash('commit');
+
+  my ($author_id, $author_email, $author_name);
+  my ($committer_id, $committer_email, $committer_name);
+
+  # Do not show committer info of merge commits.
+  if (@{$commit->{parents}} <= 1) {
+    $committer_name = $commit->{committer_name};
+    $committer_email = $commit->{committer_email};
+    $committer_id = app->dbi->model('user')->select('id',
+      where => {email => $committer_email})->value;
+  }
+
+  # Do not output author information if same as committer.
+  if (!defined($committer_email) || $commit->{author_email} ne $committer_email) {
+    $author_name = $commit->{author_name};
+    $author_email = $commit->{author_email};
+    $author_id = app->dbi->model('user')->select('id',
+      where => {email => $author_email})->value;
+  }
+%>
+<!-- Play with HTML comments to avoid spacing being displayed.
+  % if (defined $author_email) {
+    % if (defined $author_id) {
+      --><a href="<%= url_for("/$author_id") %>"><!--
+    % }
+    --><%= $api->DOM_render($api->avatar(16, email => $author_email)) %><!--
+    % if (defined $author_id) {
+      --></a><!--
+    % }
+  % }
+  % if (defined $committer_email) {
+    % if (defined $committer_id) {
+      --><a href="<%= url_for("/$committer_id") %>"><!--
+    % }
+    --><%= $api->DOM_render($api->avatar(16, email => $committer_email)) %><!--
+    % if (defined $committer_id) {
+      --></a><!--
+    % }
+  % }
+End of spacing protection. -->
+% if (defined $author_email) {
+  <span class="bold" title="<%= $author_email %>">
+    % if (defined $author_id) {
+      <a href="<%= url_for("/$author_id") %>"><%= $author_id %></a>
+    % } else {
+      <%= $author_name %>
+    % }
+  </span>
+  authored
+  % if (defined $committer_email) {
+    and
+  % }
+% }
+% if (defined $committer_email) {
+  <span class="bold" title="<%= $committer_email %>">
+    % if (defined $committer_id) {
+      <a href="<%= url_for("/$committer_id") %>"><%= $committer_id %></a>
+    % } else {
+      <%= $committer_name %>
+    % }
+  </span>
+  committed
+% }
+%= $api->age_element($commit->{committer_epoch}, class => 'muted');

@@ -171,17 +171,9 @@
   %= include '/include/header';
   
   <div class="container">
+    %= include '/user-settings/header', user => $user_id;
     <div class="user-settings">
-      <div class="left">
-        <ul>
-          <li>
-            <a href="<%= url_for("/$user_id/_settings") %>">Profile</a>
-          </li>
-          <li class="active">
-            <a href="<%= url_for("/$user_id/_settings/ssh") %>">SSH keys</a>
-          </li>
-        </ul>
-      </div>
+      %= include 'user-settings/menu', current => 'ssh';
       <div class="right">
         <%= include '/include/errors', errors => $errors %>
         <%= include '/include/message', message => flash('message') %>

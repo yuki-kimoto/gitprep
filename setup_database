@@ -57,145 +57,152 @@ my @tables = (
   {
     name => 'user',
     fields => [
-      {name => 'id', unique => 1, default => q{''}},
-      {name => 'email', unique => 1, default => q{''}},
-      {name => 'admin', type => 'integer', default => '0'},
-      {name => 'password', default => q{''}},
-      {name => 'salt', default => q{''}},
-      {name => 'name', default => q{''}}
+      {name => 'id', unique => 1},
+      {name => 'email', unique => 1},
+      {name => 'admin', type => 'integer'},
+      {name => 'password'},
+      {name => 'salt'},
+      {name => 'name'},
+      {name => 'show_email', type => 'integer'},
+      {name => 'avatar', type => 'blob'},
+      {name => 'bio'},
+      {name => 'url'},
+      {name => 'location'},
+      {name => 'company'},
+      {name => 'social'}
     ]
   },
   {
     name => 'project',
     fields => [
-      {name => 'user', type => 'integer', default => '0'},
+      {name => 'user', type => 'integer'},
       {name => 'id'},
-      {name => 'original_project', type => 'integer', default => '0'},
-      {name => 'private', type => 'integer', default => '0'},
-      {name => 'ignore_space_change', type => 'integer', default => '0'},
-      {name => 'guess_encoding', default => q{''}},
-      {name => 'website_url', default => q{''}}
+      {name => 'original_project', type => 'integer'},
+      {name => 'private', type => 'integer'},
+      {name => 'ignore_space_change', type => 'integer'},
+      {name => 'guess_encoding'},
+      {name => 'website_url'}
     ],
     unique => ['user', 'id']
   },
   {
     name => 'ssh_public_key',
     fields => [
-      {name => 'key', unique => 1, default => q{''}},
-      {name => 'user', type => 'integer', default => '0'},
-      {name => 'title', default => q{''}}
+      {name => 'key', unique => 1},
+      {name => 'user', type => 'integer'},
+      {name => 'title'}
     ]
   },
   {
     name => 'collaboration',
     fields => [
-      {name => 'project', type => 'integer', default => '0'},
-      {name => 'user', type => 'integer', default => '0'}
+      {name => 'project', type => 'integer'},
+      {name => 'user', type => 'integer'}
     ],
     unique => ['project', 'user']
   },
   {
     name => 'issue',
     fields => [
-      {name => 'project', type => 'integer', default => '0'},
-      {name => 'number', type => 'integer', default => '0'},
-      {name => 'title', default => q{''}},
-      {name => 'open', type => 'integer', default => '0'},
-      {name => 'open_time', type => 'integer', default => '0'},
-      {name => 'open_user', type => 'integer', default => '0'},
-      {name => 'pull_request', type => 'integer', default => '0'}
+      {name => 'project', type => 'integer'},
+      {name => 'number', type => 'integer'},
+      {name => 'title'},
+      {name => 'open', type => 'integer'},
+      {name => 'open_time', type => 'integer'},
+      {name => 'open_user', type => 'integer'},
+      {name => 'pull_request', type => 'integer'}
     ],
     unique => ['project', 'number']
   },
   {
     name => 'issue_message',
     fields => [
-      {name => 'issue', type => 'integer', default => '0'},
-      {name => 'number', type => 'integer', default => '0'},
-      {name => 'message', default => q{''}},
-      {name => 'create_time', type => 'integer', default => '0'},
-      {name => 'update_time', type => 'integer', default => '0'},
-      {name => 'user', type => 'integer', default => '0'}
+      {name => 'issue', type => 'integer'},
+      {name => 'number', type => 'integer'},
+      {name => 'message'},
+      {name => 'create_time', type => 'integer'},
+      {name => 'update_time', type => 'integer'},
+      {name => 'user', type => 'integer'}
     ],
     unique => ['issue', 'number']
   },
   {
     name => 'pull_request',
     fields => [
-      {name => 'base_project', type => 'integer', default => '0'},
-      {name => 'base_branch', default => q{''}},
-      {name => 'target_project', type => 'integer', default => '0'},
-      {name => 'target_branch', default => q{''}},
-      {name => 'create_time', type => 'integer', default => '0'},
-      {name => 'update_time', type => 'integer', default => '0'},
-      {name => 'user', type => 'integer', default => '0'}
+      {name => 'base_project', type => 'integer'},
+      {name => 'base_branch'},
+      {name => 'target_project', type => 'integer'},
+      {name => 'target_branch'},
+      {name => 'create_time', type => 'integer'},
+      {name => 'update_time', type => 'integer'},
+      {name => 'user', type => 'integer'}
     ],
     unique => ['base_project', 'base_branch', 'target_project', 'target_branch']
   },
   {
     name => 'label',
     fields => [
-      {name => 'project', type => 'integer', default => '0'},
-      {name => 'id', type => 'varchar(100)', default => q{''}},
-      {name => 'description', default => q{''}},
-      {name => 'color', default => q{''}}
+      {name => 'project', type => 'integer'},
+      {name => 'id', type => 'varchar(100)'},
+      {name => 'description'},
+      {name => 'color'}
     ],
     unique => ['project', 'id']
   },
   {
     name => 'issue_label',
     fields => [
-      {name => 'issue', type => 'integer', default => '0'},
-      {name => 'label', type => 'integer', default => '0'}
+      {name => 'issue', type => 'integer'},
+      {name => 'label', type => 'integer'}
     ],
     unique => ['issue', 'label']
   },
   {
     name => 'wiki',
     fields => [
-      {name => 'project', type => 'integer', default => '0'}
+      {name => 'project', type => 'integer'}
     ],
     unique => ['project']
   },
   {
     name => 'subscription',
     fields => [
-      {name => 'issue', type => 'integer', default => '0'},
-      {name => 'user', type => 'integer', default => '0'},
-      {name => 'reason', type => 'text', default => q{''}}
+      {name => 'issue', type => 'integer'},
+      {name => 'user', type => 'integer'},
+      {name => 'reason', type => 'text'}
     ],
     unique => ['issue', 'user']
   },
   {
     name => 'watch',
     fields => [
-      {name => 'user', type => 'integer', default => '0'},
-      {name => 'project', type => 'integer', default => '0'}
+      {name => 'user', type => 'integer'},
+      {name => 'project', type => 'integer'}
     ],
     unique => ['user', 'project']
   },
   {
     name => 'ruleset',
     fields => [
-      {name => 'project', type => 'integer', default => '0'},
+      {name => 'project', type => 'integer'},
       {name => 'name'},
-      {name => 'target', default => q{''}},
-      {name => 'active', type => 'integer', default => '0'},
-      {name => 'owner_bypass', type => 'integer', default => '0'},
-      {name => 'creation', type => 'integer', default => '0'},
-      {name => 'updating', type => 'integer', default => '0'},
-      {name => 'deletion', type => 'integer', default => '0'},
-      {name => 'required_signatures', type => 'integer', default => '0'},
-      {name => 'non_fast_forward', type => 'integer', default => '0'}
+      {name => 'target'},
+      {name => 'active', type => 'integer'},
+      {name => 'owner_bypass', type => 'integer'},
+      {name => 'creation', type => 'integer'},
+      {name => 'updating', type => 'integer'},
+      {name => 'deletion', type => 'integer'},
+      {name => 'required_signatures', type => 'integer'},
+      {name => 'non_fast_forward', type => 'integer'}
     ],
     unique => ['project', 'name', 'target']
   },
   {
     name => 'ruleset_selector',
     fields => [
-      {name => 'ruleset', type => 'integer', default => '0'},
-      {name => 'kind', default => q{''}},
-      {name => 'selector', default => q{''}}
+      {name => 'ruleset', type => 'integer'},
+      {name => 'kind'},
+      {name => 'selector'}
     ]
   },
 );
@@ -210,10 +217,17 @@ sub create_table {
   my @columns = ('row_id');
   foreach my $field (@{$table->{fields}}) {
     my $define = $field->{name};
-    $define .= " $field->{type}" if $field->{type};
+    my $type = $field->{type};
+    $define .= " $type" if $field->{type};
     $define .= ' not null' unless $field->{nullable};
     $define .= ' unique' if $field->{unique};
-    $define .= " default $field->{default}" if defined $field->{default};
+    my $default = $field->{default};
+    $type //= '';
+    unless ($field->{nullable} || $type =~ /null/i || defined $default) {
+      # Force a default for not null fields.
+      $default = $type =~ /integer|real/i? '0': q('');
+    }
+    $define .= " default $default" if defined $default;
     $create .= ", $define";
     push @alters, $define;
     push @columns, $field->{name};

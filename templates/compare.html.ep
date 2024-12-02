@@ -660,55 +660,23 @@
     </ul>
     
     <div class="commits">
-      <div class="compare-commits-container">
+      <div class="commits-container">
         <div class="commit-date">
           %= $api->icon('git-commit', style => 'margin-right: 8px');
           <span class="date-text">
             Commits not after <%= $api->strftime($last_commit_date, '%F') %>
           </span>
         </div>
-        <ul class="compare-commits-date-container">
+        <ul class="commits-date-container">
           % for my $commit (@$commits) {
-            <%
-              my $commit_author_email = $commit->{author_email};
-              my $commit_author_id = app->dbi->model('user')->select(
-                'id',
-                where => {email => $commit_author_email}
-              )->value;
-              my $commit_comment = join "\n", @{$commit->{comment}};
-              $commit_comment =~ s/^[\r\n]*(.*?)[\r\n]*$/$1/;
-            %>
-            <li ts="<%= $commit->{committer_epoch} %>">
-              <div class="compare-commits-author">
-                <span title="<%= $commit->{author_email} %>">
-                  % if (defined $commit_author_id) {
-                    <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
-                  % } else {
-                    <%= $commit->{author_name} %>
-                  % }
-                </span>
-              </div>
-              <div class="compare-commits-commit-title">
-                <a style="color:#333" href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>"
-                  % if ($commit_comment ne $commit->{title_short}) {
-                    title="<%= $commit_comment %>"
-                  % }
-                  ><%= $commit->{title_short} %>
-                </a>
-              </div>
-              <div class="compare-commits-commit-id">
-                <a href="<%= url_for("/$target_user_id/$target_project->{id}/commit/$commit->{id}") %>">
-                  <%= substr($commit->{id}, 0, 7) %>
-                </a>
-              </div>
-            </li>
+            %= include '/include/commit_ref', user_id => $target_user_id, project_id => $target_project_id, commit => $commit;
           % }
         </ul>
       </div>
     </div>
 
     %= javascript begin
-      Gitprep.commitsByDay($('.compare-commits-container'));
+      Gitprep.commitsByDay($('.commits-container'));
     % end
   
     %= include '/include/commit_body', %commit_body_args;
