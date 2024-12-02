@@ -1,0 +1,21 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
+  my $user_id = stash('user') // '';
+  my $user_name = $self->app->dbi->model('user')->select('name',
+    where => {id => $user_id})->value;
+  $user_name ||= $user_id;
+%>
+<div class="user-settings-header">
+  %= $api->DOM_render($api->avatar(48, id => $user_id));
+  <div>
+    <div class="bold larger"><%= "$user_name ($user_id)" %></div>
+    <div class="text-gray">Your personal account</div>
+  </div>
+  <div class="flex-padding"></div>
+  <a class="btn bold" href="<%= url_for("/$user_id") %>">
+    Go to your personal profile
+  </a>
+</div>

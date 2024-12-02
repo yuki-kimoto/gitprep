@@ -74,6 +74,7 @@
       $params->{salt} = $salt;
       $params->{name} = $name;
       $params->{email} = $email;
+      $params->{show_email} = app->config->{basic}{show_emails}? 1: 0;
       
       # Create user
       eval { app->manager->create_user($id, $params) };

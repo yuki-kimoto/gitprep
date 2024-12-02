@@ -138,63 +138,7 @@
           </div>
           <ul class="commits-date-container">
             % for my $commit (@$commits) {
-              <%
-                my $author_id = app->dbi->model('user')->select('id', where => {email => $commit->{author_email}})->value;
-                my $commit_comment = join "\n", @{$commit->{comment}};
-                $commit_comment =~ s/^[\r\n]*(.*?)[\r\n]*$/$1/;
-              %>
-              <li ts="<%= $commit->{committer_epoch} %>">
-                <div class="commit-left">
-                  <div class="commit-left-title">
-                    <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>"
-                      % if ($commit_comment ne $commit->{title_short}) {
-                        title="<%= $commit_comment %>"
-                      % }
-                      ><b><%= $commit->{title_short} %></b>
-                    </a>
-                  </div>
-                  <div class="commit-left-author">
-                    <span title="<%= $commit->{author_email} %>">
-
-                      % if (defined $author_id) {
-                        <a href="<%= url_for("/$author_id") %>"><%= $author_id %></a>
-                      % } else {
-                        <%= $commit->{author_name} %>
-                      % }
-                    </span>
-                    % if ($commit->{author_email} ne $commit->{committer_email}) {
-                      <%
-                        my $committer_id = app->dbi->model('user')->select('id', where => {email => $commit->{committer_email}})->value;
-                      %>
-                      authored and
-                      <span title="<%= $commit->{committer_email} %>">
-
-                        % if (defined $committer_id) {
-                          <a href="<%= url_for("/$committer_id") %>"><%= $committer_id %></a>
-                        % } else {
-                          <%= $commit->{committer_name} %>
-                        % }
-                      </span>
-                    % }
-                    committed
-                    %= $api->age_element($commit->{committer_epoch}, class => 'muted');
-                  </div>
-                </div>
-                <div class="commit-right">
-                  <div class="commit-right-container">
-                    <div class="commit-right-commit-id">
-                      <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
-                        <%= substr($commit->{id}, 0, 7) %>
-                      </a>
-                    </div>
-                    <div class="commit-right-browse-repository">
-                      <a title="Browse the repository at this point in the history" href="<%= url_for("$user_project_path/tree/$commit->{id}") %>">
-                        %= $api->icon('code');
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </li>
+              %= include '/include/commit_ref', user_id => $user_id, project_id => $project_id, commit => $commit;
             % }
           </ul>
         </div>

@@ -1,0 +1,26 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
+  my $menu = stash('menu') // [];
+  my $current = stash('current') // '';
+  my $url = stash('url');
+%>
+
+<div class="left-menu left">
+  <ul>
+    % foreach my $entry (@$menu) {
+      % if ($entry->{section}) {
+        <li><hr /></li>
+        <li class='section'><%= $entry->{label} %></li>
+      % } else {
+        <li class="<%= $entry->{id} eq $current? 'current': '' %>">
+          <a href="<%= url_for($url . ($entry->{id}? "/$entry->{id}": '')) %>">
+            <%= $api->icon($entry->{icon}) %>&nbsp;<%= $entry->{label} %>
+          </a>
+        </li>
+      % }
+    % }
+  </ul>
+</div>

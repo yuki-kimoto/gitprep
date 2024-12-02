@@ -74,9 +74,8 @@
         <div class="header-login-container">
           % my $userurl = '/_admin';
           % $userurl = "/$session_user->{id}" unless $api->logined_admin;
-          <a href="<%= url_for($userurl) %>">
-            %= $api->icon('person');
-            <%= $session_user->{id} %>
+          <a href="<%= url_for($userurl) %>" title="<%= $session_user->{id} %>">
+            %= $api->DOM_render($api->avatar(32, id => $session_user->{id}));
           </a>
         </div>
       % } else {

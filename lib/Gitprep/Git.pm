@@ -1345,6 +1345,7 @@ sub get_commits {
   my @cmd = $self->cmd(
     $rep_info,
     'rev-list',
+    '--parents',
     '--header',
     @args,
     ('--max-count=' . $maxcount),
@@ -1362,7 +1363,7 @@ sub get_commits {
   my @lines = <$fh>;
   for my $line (@lines) {
     $line = $self->_dec($line);
-    my $commit = $self->parse_commit_text($line);
+    my $commit = $self->parse_commit_text($line, 1);
     push @commits, $commit;
   }
   close $fh;
