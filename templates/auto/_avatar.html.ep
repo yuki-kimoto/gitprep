@@ -1,0 +1,42 @@
+<%
+  use Gitprep::Image;
+
+  # API
+  my $api = gitprep_api;
+
+  my $email = param('email');
+  my $id = param('id');
+  my %where = (id => $id);
+  %where = (email => $email) if defined $email;
+
+  my $user = app->dbi->model('user')->select(where => \%where)->one;
+  my $image;
+  my $content_type = 'image/svg+xml';
+
+  if (!$user) {
+    $image = $api->load_icon('gitprep');
+    # Scale down.
+    my $attrs = $image->attr;
+    my ($left, $top, $width, $height) = split /\s*(?:,|\s)\s*/, $attrs->{viewBox};
+    my $coeff = 1.2;
+    $left -= (($coeff - 1) * $width) / 2;
+    $top -= (($coeff - 1) * $height) / 2;
+    $width *= $coeff;
+    $height *= $coeff;
+    $attrs->{viewBox} = "$left $top $width $height";
+    delete $attrs->{width};
+    delete $attrs->{height};
+    $image = $api->DOM_render($image);
+  } else {
+    $image = $user->{avatar};
+    $image = Gitprep::Image->identicon($user->{id}) unless $image;
+    $content_type = 'image/png' unless $image =~ /^<svg /i;
+  }
+
+  $self->res->headers->content_type($content_type);
+  $self->res->headers->content_length(length $image);
+  $self->res->body($image);
+  $self->res->code(200);
+  $self->rendered;
+  return;
+%>

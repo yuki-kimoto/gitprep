@@ -691,6 +691,15 @@ ul.issues-label-pallet {
   width:20px;
   height:1px;
 }
+.issue-add-comment-container {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+.issue-add-comment-box {
+  flex-grow: 10000;
+}
+
 .issue-add-comment-title {
   margin-bottom:5px;
 }
@@ -800,6 +809,14 @@ ul.issues-label-pallet {
   fill:inherit;
 }
 
+.issue-message-row-id {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+}
+.issue-message-box {
+  flex-grow: 10000;
+}
 .issue-message {
   border-radius:3px;
   border:1px solid #ddd;
@@ -809,7 +826,7 @@ ul.issues-label-pallet {
   border:1px solid #e6e9e6;
 }
 :fragment.issue-message {
-  border:1px solid #00f;
+  outline:2px solid #00f;
 }
 
 .issue-message-owner-label {
@@ -1003,29 +1020,6 @@ a.branches-close:hover {
   color:#767676;
   margin-bottom:10px;
 }
-.compare-open-pull-request {
-  border:1px solid #e6e9e6;
-  border-radius: 3px;
-  width:80%;
-}
-.compare-open-pull-request-title {
-  border-bottom:1px solid #e6e9e6;
-  padding:10px;
-}
-.compare-open-pull-request-message {
-  padding:10px;
-}
-.compare-open-pull-request [type=text] {
-  width:100%;
-}
-.compare-open-pull-request textarea {
-  width:100%;
-  min-height:200px;
-}
-.compare-open-pull-request-button {
-  padding:10px;
-  text-align:right;
-}
 
 .compare-nothing {
   border:1px solid #e6e9e6;
@@ -1060,6 +1054,7 @@ input[type=text], input[type=password] {
 .repositories-user-name {
   font-weight:bold;
   font-size:22px;
+  margin-top: 20px;
 }
 .repositories-user-id {
   padding:5px 0 7px 2px;
@@ -1067,8 +1062,17 @@ input[type=text], input[type=password] {
   color:#767676;
   border-bottom:1px solid #e6e9e6;
 }
-.repositories-user-mail {
+.repositories-user-bio {
+  margin-top: 12px;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.repositories-user-property {
   padding:5px 0;
+}
+.repositories-user-property .icon {
+  margin-right: 4px;
 }
 .project-tabs {
   position:relative;
@@ -1288,7 +1292,8 @@ input[type=text], input[type=password] {
 }
 
 .header-login-container {
-  padding-top:10px;
+  padding-top:3px;
+  margin-left:6px;
   float:left;
 }
 
@@ -2406,10 +2411,6 @@ a:hover .btn-delete {
   color: #68777d;
 }
 
-.commit-summary-author {
-  font-weight:bold;
-}
-
 .commit-summary-left-container a {
   color: #68777d;
 }
@@ -2819,45 +2820,39 @@ a:hover .btn-delete {
 }
 
 
-.project-settings {
-  overflow:hidden;
-}
-
-.project-settings .left {
+.left-menu {
   float:left;
   width:15%;
   padding-right:10px;
 }
-
-.project-settings .left li {
+.left-menu li {
   border-left:3px none;
   padding:5px 10px;
 }
-
-.project-settings .left li,
-.project-settings .left li a {
+.left-menu li,
+.left-menu li a {
   color: #1f2328;
   fill: #1f2328;
 }
-
-.project-settings .left li:has(> hr) {
+.left-menu li:has(> hr) {
   padding:5px 0;
 }
-
-.project-settings .left li hr {
+.left-menu li hr {
   border: 0;
   border-top: 1px solid #818b9840;
 }
-
-.project-settings .left li.section {
+.left-menu li.section {
   font-size: 80%;
   margin-bottom: 3px;
 }
-
-.project-settings .left li.current {
+.left-menu li.current {
   font-weight: bold;
   background-color: #f0f0f0;
   border-left: 3px solid #4040ff;
+}
+
+.project-settings {
+  overflow:hidden;
 }
 
 .project-settings .right {
@@ -2950,26 +2945,17 @@ a:hover .btn-delete {
   overflow:hidden;
 }
 
+.user-settings-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+
 .user-settings .left {
   float:left;
   width:15%;
   padding-right:10px;
-}
-
-.user-settings .left li {
-  border:1px solid #e6e9e6;
-  border-top:none;
-  padding:5px 10px;
-}
-
-.user-settings .left li:first-child {
-  border-top:1px solid #e6e9e6;
-}
-
-.user-settings .left li.active a {
-  color:black;
-  font-weight:bold;
-  text-decoration:none;
 }
 
 .user-settings .right {
@@ -2991,6 +2977,33 @@ a:hover .btn-delete {
   font-size:14px;
   font-weight:bold;
   margin-bottom:0;
+}
+
+.user-settings .errors {
+  background-color: #fff0f0;
+  color: #c00000;
+  font-size: 120%;
+}
+
+.user-settings .errors p {
+  padding: 5px;
+}
+
+.user-settings textarea {
+  min-width: 50%;
+  min-height: 120px;
+  border-radius: 3px;
+}
+
+.user-settings input[type=text] {
+  padding: 4px;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  min-width: 50%;
+}
+
+.user-settings .icon {
+  margin-right: 5px;
 }
 
 .profile li {
@@ -3524,40 +3537,6 @@ a:hover .btn-delete {
 .compare-header li span {
   color: #767676;
 }
-.compare-commits-date-container {
-  border-left:#f3f3f3 2px solid;
-  margin:3px 6px;
-  padding:10px 0;
-}
-
-.compare-commits-date-container li:first-child {
-}
-
-.compare-commits-date-container li {
-  margin-left:20px;
-  overflow:hidden;
-}
-
-.compare-commits-author {
-  width:30%;
-  float:left;
-  font-weight:bold;
-  font-size:90%;
-}
-
-.compare-commits-commit-title {
-  width:50%;
-  float:left;
-}
-
-.compare-commits-commit-id {
-  width:20%;
-  float:left;
-  text-align:right;
-}
-.compare-commits-commit-id a {
-  color:#767676;
-}
 
 .network-mybranch {
   background-color: #f5f5f5;
@@ -3771,12 +3750,14 @@ pre.command-line {
   vertical-align: top;
 }
 
+.user-settings .field-label,
 .ruleset .field-label {
   font-weight: bold;
   margin-top: 12px;
   margin-bottom: 6px;
 }
 
+.user-settings .explain,
 .ruleset .explain {
   color: #656d76;
   font-size: 92%;
@@ -3798,6 +3779,10 @@ pre.command-line {
 
 .bold {
   font-weight: bold;
+}
+
+.larger {
+  font-size: 125%;
 }
 
 .ruleset button.add-target {
@@ -4062,4 +4047,12 @@ pre.command-line {
   text-align: center;
   font-size: 130%;
   font-weight: bold;
+}
+
+.avatar {
+  border: 1px solid #d0d0d0;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  vertical-align: sub;
+  overflow: hidden;
 }

@@ -67,7 +67,7 @@
   # Default branch
   my $default_branch = app->git->current_branch(app->rep_info($user_id, $project_id));
 
-  # Original projcet
+  # Original project
   my $original_project = app->manager->original_project($user_id, $project_id);
 
   # Initialize labels if there is none yet

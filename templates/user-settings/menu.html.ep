@@ -1,0 +1,15 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
+  my $user_id = param('user') || '';
+
+  my $current = stash('current') // '';
+
+  my @menu = (
+    {label => 'Public profile', icon => 'person', id => ''},
+    {label => 'SSH keys', icon => 'key', id => 'ssh'},
+  );
+%>
+%= include '/include/left_menu', menu => \@menu, current => $current, url => "/$user_id/_settings";

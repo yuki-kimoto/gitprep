@@ -1,52 +1,295 @@
 <%
+  use Mojo::UserAgent;
+  use Mojo::JSON qw(decode_json encode_json);
+  use Gitprep::Image;
+  use MIME::Base64;
+  use Crypt::Digest::SHA256 qw(sha256_hex);
+
   # API
   my $api = gitprep_api;
-  
+
   # Parameters
   my $op = param('op') || '';
-  my $user = param('user') || '';
-  
+  my $user_id = param('user') || '';
+
   # Authentication
-  unless ($api->logined($user)) {
+  unless ($api->logined($user_id)) {
     $self->redirect_to('/');
     return;
   }
+
+  # User
+  my $user = app->dbi->model('user')->select(where => {id => $user_id})->one;
+  my $social = $user->{social}? decode_json($user->{social}): [];
+
+  my $errors = [];
+
+  local *picture_data = sub {
+    my ($picture, $errors) = @_;
+
+    # Return a structure containing the base64 picture, avatar svg or error info
+    $errors //= [];
+    my $avatar;
+    unless (@$errors) {
+      if ($picture) {
+        ($picture, my $size) = Gitprep::Image->get_avatar_png($picture);
+        if (!$picture) {
+          push @$errors, 'Invalid or unsupported image data';
+        } else {
+          $picture = encode_base64($picture, '');
+          $avatar = "<svg viewBox=\"0 0 $size $size\"><image href=\"data:image/png;base64,$picture\"></image></svg>";
+        }
+      } else {
+        $avatar = Gitprep::Image->identicon($user_id);
+      }
+    }
+    return {errors => $errors} if @$errors;
+    return {picture => $picture // '', avatar => $avatar};
+  };
+
+  if (lc $self->req->method eq 'post') {
+    my $paccess = param('picture');
+    my $json;
+    my $picture;
+
+    if ($op eq 'upload') {
+      if (!$paccess || 'Mojo::Upload' ne ref $paccess || !$paccess->asset) {
+        push @$errors, 'Uploaded picture not available';
+      } else {
+        my $asset = $paccess->asset;
+        my $size = $asset->size;
+        if (!$size || $size >= 0x80000) {
+          push @$errors, 'Uploaded picture is too large';
+        } else {
+          $picture = $asset->get_chunk(0, $size);
+        }
+      }
+      $self->render(json => picture_data($picture, $errors));
+      return;
+    } elsif ($op eq 'gravatar') {
+      my $email = app->dbi->model('user')->select(['email'],
+        where => {id => $user_id})->value;
+      $email =~ s/^\s*(.*?)\s*$/$1/;
+      my $hash = sha256_hex(lc $email);
+      my $ua = Mojo::UserAgent->new;
+      my $tx = $ua->get("https://www.gravatar.com/avatar/$hash?s=320&d=404" => {Accept => 'image/png'});
+      if ($tx->res->code == 200) {
+        my $asset = $tx->res->content->asset;
+        my $size = $asset->size;
+        if ($size >= 0x80000) {
+          push @$errors, 'Uploaded picture is too large';
+        } else {
+          $picture = $asset->get_chunk(0, $size);
+        }
+      } elsif ($tx->res->code == 404) {
+        push @$errors, "You don't have a gravatar picture";
+      } else {
+        push @$errors, 'Failed to download from gravatar';
+      }
+      $self->render(json => picture_data($picture, $errors));
+      return;
+    } elsif ($op eq 'clear') {
+      $self->render(json => picture_data(''));
+      return;
+    } elsif ($op eq 'save') {
+      foreach my $field ('name', 'url', 'location', 'company') {
+        my $value = param($field);
+        if (defined $value) {
+          $value =~ /^\s*(.*?)\s*$/;
+          $user->{$field} = $1;
+        }
+      }
+      $user->{show_email} = param('show_email')? 1: 0;
+      $user->{avatar} = decode_base64(param('picture')) if defined param('picture');
+      $social = $self->every_param('social') // [];
+      $social = [map {$_ =~ /^\s*(.*?)\s*$/; $1? $1: ()} @$social];
+      $user->{social} = @$social? encode_json($social): '';
+      my $bio = param('bio');
+      if (defined $bio) {
+        $bio =~ s/[\r\f\t\ ]+$//mg;
+        $bio =~ s/^\n*(.*?)\n*$/$1/s;
+        $user->{bio} = $bio;
+        push @$errors, 'Bio text is too long' if length($bio) > 300;
+      }
+      app->dbi->model('user')->update($user, where => {id => $user_id}) unless @$errors;
+    }
+  }
+
+  # Get the current picture data.
+  my $pdata = picture_data($user->{avatar});
+  my $picture = $pdata->{picture};
+  my $avatar = $pdata->{avatar};
+
+  my %file_formats = (map $_ =~ /^[a-z0-9]+$/? (lc $_ => 1): (), Gitprep::Image->image_formats);
+  $file_formats{jpeg} = 1 if $file_formats{jpg};
+  $file_formats{jpg} = 1 if $file_formats{jpeg};
+  $file_formats{tiff} = 1 if $file_formats{tif};
+  $file_formats{tif} = 1 if $file_formats{tiff};
+  my $accept = join ',', (map ".$_", sort keys %file_formats);
 %>
 
 % layout 'common', title => 'Your Profile';
-  
+
   %= include '/include/header';
-  
+
   <div class="container">
+    %= include '/user-settings/header', user => $user_id;
     <div class="user-settings">
-      <div class="left">
-        <ul>
-          <li class="active">
-            <a href="<%= url_for("/$user/_settings") %>">Profile</a>
-          </li>
-          <li>
-            <a href="<%= url_for("/$user/_settings/ssh") %>">SSH keys</a>
-          </li>
-        </ul>
-      </div>
+      %= include 'user-settings/menu', current => '';
       <div class="right">
         <div class="user-settings-container profile">
           <div>
-            Profile
+            Public profile
           </div>
           <div>
-            <ul>
-              <li>
-                <b>ID</b>: <%= $user %>
-              </li>
-              <li>
-                <a class="btn btn-small" href="<%= url_for("/reset-password")->query(user => $user) %>">Reset Password</a>
-              </li>
-            </ul>
+            <form method="post" action="<%= url_for %>">
+              <ul>
+                <li>
+                  <div class="field-label">
+                    Name
+                  </div>
+                  <input type="text" name="name" value="<%= $user->{name} %>" placeholder="Your full name" />
+                  <div class="explain">
+                    Your name may appear around Gitprep where you contribute or
+                    are mentioned. You can remove it at any time.
+                  </div>
+                </li>
+                <li>
+                  <div class="field-label">
+                    Public email
+                  </div>
+                  <input type="checkbox" name="show_email" <%== $user->{show_email}? ' checked="yes"': '' %>" />
+                  <span class="explain">
+                    Check this if you want to show your email address.
+                  </span>
+                </li>
+                <li>
+                  <div class="field-label">
+                    Profile picture
+                  </div>
+                  <div style="display: flex; gap: 20px;">
+                    <input type ="hidden" name="picture" value="<%= $picture %>" />
+                    <div style="display: flex; flex-direction: column; justify-content: space-evenly;">
+                      <label class="btn bold">
+                        <input type="file" accept="<%= $accept %>" style="display: none" />
+                        Upload a photo...
+                      </label>
+                      <div class="btn bold" op="gravatar">
+                        Clone gravatar image
+                      </div>
+                      <div class="btn bold" op="clear">
+                        Use Gitprep identicon
+                      </div>
+                    </div>
+                    <div class="avatar" style="width: 300px; height: 300px">
+                      %== $avatar;
+                    </div>
+                    <div class="flex-padding">
+                      <div class="errors">
+                        % foreach my $error (@$errors) {
+                          <p><%= $error %></p>
+                        % }
+                      </div>
+                    </div>
+                    %= javascript begin
+                      (function (script) {
+                        $(document).ready(function () {
+                          var root = $(script).closest('form');
+                          var picture = $('input[name="picture"]', root);
+                          var avatar = $('.avatar', root);
+                          var errors = $('.errors', root);
+
+                          var change_picture = function () {
+                            var formdata = new FormData();
+                            var op = $(this).attr('op');
+                            if (op == undefined) {
+                              formdata.append('picture', this.files[0]);
+                              op = 'upload';
+                            }
+                            formdata.append('op', op);
+                            $.ajax({
+                              url: root.closest('form').attr('action'),
+                              type: 'POST',
+                              data: formdata,
+                              processData: false,
+                              contentType: false,
+                              success: function (json) {
+                                var errs = json.errors;
+                                errors.html('');
+                                if (errs == undefined) {
+                                  picture.val(json.picture);
+                                  avatar.html(json.avatar);
+                                } else {
+                                  errs.forEach(function (text) {
+                                    var el = $('<p>');
+                                    el.text(text);
+                                    errors.append(el);
+                                  });
+                                }
+                              },
+                              error: function (notused, textstatus) {
+                                errors.html('');
+                                var el = $('<p>');
+                                el.text(textstatus);
+                                errors.append(el);
+                              }
+                            });
+                          };
+                          var fileinput = $('input[type="file"]', root);
+                          fileinput.on('change', change_picture);
+                          $('div[op]', root).on('click', change_picture);
+                       });
+                      })(document.currentScript);
+                    % end
+                  </div>
+                </li>
+                <li>
+                  <div class="field-label">
+                    Bio
+                  </div>
+                  <textarea name="bio"><%= $user->{bio} %></textarea>
+                </li>
+                <li>
+                  <div class="field-label">
+                    URL
+                  </div>
+                  <input type="text" name="url" value="<%= $user->{url} %>" placeholder="Your personal home page" />
+                </li>
+                <li>
+                  <div class="field-label">
+                    Social accounts
+                  </div>
+                  % for my $n (0 .. 3) {
+                    <div><%= $api->icon('link') %>
+                      <input type="text" name="social" value="<%= $social->[$n] // '' %>" placeholder="Link to social profile" />
+                    </div>
+                  % }
+                </li>
+                <li>
+                  <div class="field-label">
+                    Company
+                  </div>
+                  <input type="text" name="company" value="<%= $user->{company} %>" />
+                </li>
+                <li>
+                  <div class="field-label">
+                    Location
+                  </div>
+                  <input type="text" name="location" value="<%= $user->{location} %>" placeholder="The place where you live" />
+                </li>
+                <li>
+                  <a class="btn btn-small" href="<%= url_for("/reset-password")->query(user => $user_id) %>">Reset Password</a>
+                </li>
+              </ul>
+              <label class="btn default-button">
+                <input type="submit" name="op" value="save" style="display: none" />
+                Save Changes
+              </label>
+            </form>
           </div>
         </div>
       </div>
     </div>
   </div>
-  
+
   %= include '/include/footer';

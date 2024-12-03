@@ -71,15 +71,7 @@
   </ul>
   <ul class="commits-author">
     <li>
-      <span class="commits-summary-author">
-        % if (defined $commit_author_id) {
-          <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
-        % } else {
-          <%= $commit->{author_name} %>
-        % }
-      </span>
-      commited
-      %= $api->age_element($commit->{committer_epoch});
+      %= include '/include/authored_committed', commit => $commit;
     </li>
   </ul>
   <ul class="commits-summary">

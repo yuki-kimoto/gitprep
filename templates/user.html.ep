@@ -1,4 +1,7 @@
 <%
+  use Mojo::JSON qw(decode_json);
+  use Mojo::ByteStream;
+
   # API
   my $api = gitprep_api;
   
@@ -26,6 +29,14 @@
     $rep->{id} = $project->{id};
     $rep->{private} = $project->{private};
     push @$reps, $rep;
+  }
+
+  my $bio;
+  if ($user->{bio}) {
+    $bio = Mojo::ByteStream->new($user->{bio})->xml_escape->to_string;
+    $bio =~ s/^(\s)/\n$1/gm;
+    $bio =~ s#\n\n+#<br />#gs;
+    $bio =~ s#(^|<br />)(\s+)#$1 . ('&nbsp;' x length($2))#ge;
   }
 %>
 
@@ -73,21 +84,56 @@
       </div>
       <div class="repositories-right">
         <h2 class="topic1">Profile</h2>
+        %= $api->DOM_render($api->avatar(256, id => $user->{id}));
         <div class="repositories-user-name">
           % if (defined $user->{name} && length $user->{name}) {
             <%= $user->{name} %>
-          % } else {
-            No Name
           % }
         </div>
         <div class="repositories-user-id"><%= $user->{id} %></div>
-        % if (app->config->{basic}{show_emails}) {
-        <div class="repositories-user-mail">
-          <a href="mailto:<%= $user->{email} %>">
+        % if ($bio) {
+          <div class="repositories-user-bio">
+            %== $bio;
+          </div>
+        % }
+        % if ($user->{company}) {
+          <div class="repositories-user-property company">
+            %= $api->icon('organization');
+            %= $user->{company};
+          </div>
+        % }
+        % if ($user->{location}) {
+          <div class="repositories-user-property location">
+            %= $api->icon('location');
+            %= $user->{location};
+          </div>
+        % }
+        % if ($user->{show_email}) {
+          <div class="repositories-user-property mail">
             %= $api->icon('mail');
-            <%= $user->{email} %>
-          </a>
-         </div>
+            <a href="mailto:<%= $user->{email} %>">
+              %= $user->{email};
+            </a>
+          </div>
+        % }
+        % if ($user->{url}) {
+          <div class="repositories-user-property url">
+            %= $api->icon('link');
+            <a href="<%= $user->{url} %>">
+              %= $user->{url};
+            </a>
+          </div>
+        % }
+        % if ($user->{social}) {
+          % my $socials = decode_json($user->{social});
+          % foreach my $social (@$socials) {
+            <div class="repositories-user-property social">
+              %= $api->icon('people');
+              <a href="<%= $social %>">
+                %= $social;
+              </a>
+            </div>
+          % }
         % }
       </div>
     </div>

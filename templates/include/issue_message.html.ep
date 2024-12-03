@@ -10,70 +10,76 @@
   my $is_my_project = $user_id eq ($session_user_id || '');
   my $is_my_comment = $issue_message->{'user.id'} eq ($session_user_id || '');
   my $can_modify = $is_my_project || $is_my_comment;
+  my $user_url = url_for("/$issue_message->{'user.id'}");
 %>
 
 <div class="issue-message-row-id" id="row-<%= $issue_message->{row_id} %>">
-  <div id="comment-<%= $issue_message->{number} %>" class="issue-message <%= $is_owner_comment ? 'issue-message-owner' : '' %>" tabindex="-1">
-    <div class="issue-message-header <%= $is_owner_comment ? 'issue-message-header-owner' : '' %>">
-      <div class="issue-message-header-left">
-        <b><%= $issue_message->{'user.id'} %></b>
-        <span style="color:#767676;">commented
-          %= $api->age_element($issue_message->{update_time});
-        </span>
-      </div>
-      <div class="issue-message-header-right">
-        % if ($is_owner_comment) {
-          <div class="issue-message-owner-label">Owner</div>
-        % }
-        % if ($can_modify) {
-          <a href="javascript:void(0)" class="issue-message-edit-btn">
-            <span style="margin-right:6px">
-              %= $api->icon('pencil');
-            </span>
-          </a>
-        % }
-        % if ($issue_message->{number} != 1) {
+  <a href="<%= $user_url %>">
+    %= $api->DOM_render($api->avatar(40, id => $issue_message->{'user.id'}));
+  </a>
+  <div class="issue-message-box">
+    <div id="comment-<%= $issue_message->{number} %>" class="issue-message <%= $is_owner_comment ? 'issue-message-owner' : '' %>" tabindex="-1">
+      <div class="issue-message-header <%= $is_owner_comment ? 'issue-message-header-owner' : '' %>">
+        <div class="issue-message-header-left">
+          <a href="<%= $user_url %>" class="bold"><%= $issue_message->{'user.id'} %></a>
+          <span style="color:#767676;">commented
+            %= $api->age_element($issue_message->{update_time});
+          </span>
+        </div>
+        <div class="issue-message-header-right">
+          % if ($is_owner_comment) {
+            <div class="issue-message-owner-label">Owner</div>
+          % }
           % if ($can_modify) {
-            <a href="javascript:void(0)" class="issue-message-delete-btn">
-              %= $api->icon('x');
+            <a href="javascript:void(0)" class="issue-message-edit-btn">
+              <span style="margin-right:6px">
+                %= $api->icon('pencil');
+              </span>
             </a>
           % }
-        % }
+          % if ($issue_message->{number} != 1) {
+            % if ($can_modify) {
+              <a href="javascript:void(0)" class="issue-message-delete-btn">
+                %= $api->icon('x');
+              </a>
+            % }
+          % }
+        </div>
+      </div>
+      <div class="issue-message-body markdown-body" style="padding:10px">
+        <%== $api->markdown($issue_message->{message}) %>
       </div>
     </div>
-    <div class="issue-message-body markdown-body" style="padding:10px">
-      <%== $api->markdown($issue_message->{message}) %>
-    </div>
+ 
+    % if ($can_modify) {
+      <div class="issue-message-update" style="display:none;margin-bottom:20px;">
+        <div class="issue-add-comment">
+          <form action="<%= url_for %>" method="post">
+            <%= hidden_field 'op' %>
+            <div class="issue-add-comment-header">
+              <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
+              <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
+              %= include '/include/issue_comment_icon';
+            </div>
+            <div class="issue-add-comment-body">
+              <div class="issue-message-write-area issue-add-comment-message">
+                <%= text_area 'message' => $issue_message->{message} %>
+              </div>
+              <div class="issue-message-preview-area issue-add-comment-preview markdown-body" style="padding:10px">
+              </div>
+              <div class="issue-add-comment-bottom">
+                <div class="issue-add-comment-button-left">
+                  Styling with Markdown is supported
+                </div>
+                <div class="issue-add-comment-button">
+                  <button class="issue-message-update-cancel btn" onclick="javascript:return false;" >Cancel</button>
+                  <button class="issue-message-update-btn btn btn-green" onclick="javascript:return false">Update comment</button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    % }
   </div>
-  
-  % if ($can_modify) {
-    <div class="issue-message-update" style="display:none;margin-bottom:20px;">
-      <div class="issue-add-comment">
-        <form action="<%= url_for %>" method="post">
-          <%= hidden_field 'op' %>
-          <div class="issue-add-comment-header">
-            <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
-            <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
-            %= include '/include/issue_comment_icon';
-          </div>
-          <div class="issue-add-comment-body">
-            <div class="issue-message-write-area issue-add-comment-message">
-              <%= text_area 'message' => $issue_message->{message} %>
-            </div>
-            <div class="issue-message-preview-area issue-add-comment-preview markdown-body" style="padding:10px">
-            </div>
-            <div class="issue-add-comment-bottom">
-              <div class="issue-add-comment-button-left">
-                Styling with Markdown is supported
-              </div>
-              <div class="issue-add-comment-button">
-                <button class="issue-message-update-cancel btn" onclick="javascript:return false;" >Cancel</button>
-                <button class="issue-message-update-btn btn btn-green" onclick="javascript:return false">Update comment</button>
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  % }
 </div>

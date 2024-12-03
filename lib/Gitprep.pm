@@ -453,7 +453,7 @@ sub startup {
           $r->get('/' => [format => 0] => sub { shift->render_maybe('/user') });
 
           # Settings
-          $r->get('/_settings' => sub { shift->render_maybe('/user-settings') });
+          $r->any('/_settings' => sub { shift->render_maybe('/user-settings') });
 
           # SSH keys
           $r->any('/_settings/ssh' => sub { shift->render_maybe('/user-settings/ssh') });

@@ -1,0 +1,42 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
+  my $user_id = stash('user_id');
+  my $project_id = stash('project_id');
+  my $commit = stash('commit');
+
+  my $user_project_path = "/$user_id/$project_id";
+  my $commit_comment = join "\n", @{$commit->{comment}};
+  $commit_comment =~ s/^[\r\n]*(.*?)[\r\n]*$/$1/;
+%>
+<li ts="<%= $commit->{committer_epoch} %>">
+  <div class="commit-left">
+    <div class="commit-left-title">
+      <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>"
+        % if ($commit_comment ne $commit->{title_short}) {
+  	  title="<%= $commit_comment %>"
+        % }
+        ><span class="bold"><%= $commit->{title_short} %></span>
+      </a>
+    </div>
+    <div class="commit-left-author">
+      %= include '/include/authored_committed', commit => $commit;
+    </div>
+  </div>
+  <div class="commit-right">
+    <div class="commit-right-container">
+      <div class="commit-right-commit-id">
+        <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
+  	<%= substr($commit->{id}, 0, 7) %>
+        </a>
+      </div>
+      <div class="commit-right-browse-repository">
+        <a title="Browse the repository at this point in the history" href="<%= url_for("$user_project_path/tree/$commit->{id}") %>">
+  	%= $api->icon('code');
+        </a>
+      </div>
+    </div>
+  </div>
+</li>
