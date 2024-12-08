@@ -63,7 +63,7 @@
       return undef unless $lines;
       my $data = join "\n", @$lines;
       $data =~ s#(^|.)(\[.*\])\((?![a-z][a-z0-9+.-]*://)([^)]*)\)#{"$1$2(" . map_url($1 eq '!', $tree, $3) . ')'}#mgei;
-      $data =~ s#(src|href)="(?![a-z][a-z0-9+.-]*://)(\S*?)"#{'$1="' . map_url($1 eq 'src', $tree, $2) . '"'}#mgei;
+      $data =~ s#(src|href)="(?![a-z][a-z0-9+.-]*://)(\S*?)"#{"$1=\"" . map_url($1 eq 'src', $tree, $2) . '"'}#mgei;
       return $api->markdown($data);
     }},
     { extension => '', class => 'plain-text', tag => 'pre', fn => sub {
