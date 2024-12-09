@@ -2324,7 +2324,7 @@ a:hover .btn-delete {
 .git-url-container {
   flex:10000;
   display:flex;
-  margin: 3px 3px;
+  margin: 1px 1px;
 }
 
 .git-url-container li:last-child {
@@ -2344,7 +2344,7 @@ a:hover .btn-delete {
   padding:0px 5px 0px 5px;
   border:1px solid #e6e9e6;
   border-radius:0 3px 3px 0;
-  margin-bottom:1px;
+  margin-right:3px;
 }
 
 .page-path-container {
