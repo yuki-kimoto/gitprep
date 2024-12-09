@@ -13,6 +13,7 @@
   
   my $project_row_id = $api->get_project_row_id($user_id, $project_id);
   my $rep_info = app->rep_info($user_id, $project_id);
+  my $default_branch = $git->current_branch($rep_info);
   
   my $rev;
   my $dir;
@@ -21,7 +22,7 @@
     ($rev, $dir) = $git->parse_rev_path($rep_info, $rev_dir);
   }
   else {
-    $rev = $git->current_branch($rep_info);
+    $rev = $default_branch;
   }
 
   # Repository description
@@ -186,7 +187,7 @@ git init
 git add README
 git commit -m "first commit"
 git remote add origin <%= $ssh_rep_url %>
-git push -u origin master</pre>
+git push -u origin <%= $default_branch %></pre>
       
       <div class="text-center" style="margin-bottom:10px">
         <b>Push an existing repository from the command line via ssh</b>
@@ -194,7 +195,7 @@ git push -u origin master</pre>
       
       <pre class="command-line">
 git remote add origin <%= $ssh_rep_url %>
-git push -u origin master</pre>
+git push -u origin <%= $default_branch %></pre>
 
       <hr />
 
@@ -211,7 +212,7 @@ git init
 git add README
 git commit -m "first commit"
 git remote add origin <%= $http_rep_url %>
-git push -u origin master</pre>
+git push -u origin <%= $default_branch %></pre>
       
       <div class="text-center" style="margin-bottom:10px">
         <b>Push an existing repository from the command line via <%= url_for->to_abs->scheme %></b>
@@ -219,7 +220,7 @@ git push -u origin master</pre>
       
       <pre class="command-line">
 git remote add origin <%= $http_rep_url %>
-git push -u origin master</pre>
+git push -u origin <%= $default_branch %></pre>
     % } else {
       <div class="not-yet-created">
         <b>Repository is not yet created.</b>

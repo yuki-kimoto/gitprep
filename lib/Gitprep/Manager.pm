@@ -386,9 +386,6 @@ sub create_project {
     $params->{private} = 1;
   }
   
-  if (exists $opts->{default_branch}) {
-    $params->{default_branch} = $opts->{default_branch};
-  }
   # Create project
   my $dbi = $self->app->dbi;
   my $error;
