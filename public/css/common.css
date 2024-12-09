@@ -2433,7 +2433,7 @@ a:hover .btn-delete {
 .file-list li {
   border: 1px solid #d0dbe2;
   border-top:none;
-  padding:7px;
+  padding:9px;
   overflow:hidden;
 }
 
