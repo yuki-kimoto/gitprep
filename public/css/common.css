@@ -3480,6 +3480,8 @@ a:hover .btn-delete {
   background: none;
   padding: 0;
   margin: 0;
+  padding-top:2px;
+  padding-bottom:2px;
 }
 .diff-chunk-header {
   background-color: #f8f8ff;
