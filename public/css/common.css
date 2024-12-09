@@ -2421,6 +2421,11 @@ a:hover .btn-delete {
   color:#445055;
 }
 
+.commit-summary-author a, .commit-summary-author a:visited {
+  color:#1f2328;
+  font-weight:bold;
+}
+
 .commit-contributor {
   padding: 5px 10px;
   background-color: #fff;
