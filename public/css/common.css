@@ -1664,6 +1664,7 @@ input[type=text], input[type=password] {
 }
 .icon-on-baseline {
   vertical-align: -2px;
+  margin-right:1px;
 }
 
 .btn-small .icon {
