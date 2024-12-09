@@ -3317,7 +3317,6 @@ a:hover .btn-delete {
   padding: 5px 10px;
   background-color: #fff;
   border: 1px solid #d0dbe2;
-  border-top:none;
   border-bottom-left-radius: 3px;
   border-bottom-right-radius: 3px;
 }
