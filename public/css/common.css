@@ -29,6 +29,7 @@
   padding: 4px 12px 3px 12px;
   font-size: 11px;
   color:#25292e;
+  fill:#25292e;
   text-align: center;
   cursor: pointer;
   border: 1px solid #cccccc;
@@ -53,9 +54,16 @@
   cursor: default;
 }
 
-body, pre {
+body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 14px;
+  line-height: 130%;
+  color: #1f2328;
+}
+
+pre {
+  font-family: monospace;
+  font-size: 13px;
   line-height: 130%;
   color: #1f2328;
 }
