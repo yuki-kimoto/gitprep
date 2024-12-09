@@ -98,13 +98,13 @@
         <ul>
           <li class="<%= $tab eq 'code' ? 'active' :  '' %>">
             <a href="<%= url_for("/$user_id/$project_id") %>">
-              %= $api->icon('code');
+              %= $api->icon('code', class => 'icon-on-baseline');
               Code
             </a>
           </li>
           <li class="<%= $tab eq 'issues' ? 'active' :  '' %>">
             <a href="<%= url_for("/$user_id/$project_id/issues") %>">
-              %= $api->icon('issue-opened');
+              %= $api->icon('issue-opened', class => 'icon-on-baseline');
               Issues
               <span class="count-label">
                 <%= $api->get_open_issue_count($user_id, $project_id) %>
@@ -113,7 +113,7 @@
           </li>
           <li class="<%= $tab eq 'pulls' ? 'active' :  '' %>">
             <a href="<%= url_for("/$user_id/$project_id/pulls") %>">
-              %= $api->icon('git-pull-request');
+              %= $api->icon('git-pull-request', class => 'icon-on-baseline');
               Pull requests
               <span class="count-label">
                 <%= $api->get_open_pull_request_count($user_id, $project_id) %>
@@ -122,20 +122,20 @@
           </li>
           <li class="<%= $tab eq 'wiki' ? 'active' :  '' %>">
             <a href="<%= url_for("/$user_id/$project_id/wiki") %>">
-              %= $api->icon('book');
+              %= $api->icon('book', class => 'icon-on-baseline');
               Wiki
             </a>
           </li>
           <li class="<%= $tab eq 'graph' ? 'active' :  '' %>">
             <a href="<%= url_for("/$user_id/$project_id/network") %>" >
-              %= $api->icon('graph');
+              %= $api->icon('graph', class => 'icon-on-baseline');
               Members
             </a>
           </li>
           % if ($logined && $user_id eq $session_user->{id}) {
             <li class="<%= $tab eq 'settings' ? 'active' :  '' %>">
               <a href="<%= url_for("/$user_id/$project_id/settings") %>">
-                %= $api->icon('gear');
+                %= $api->icon('gear', class => 'icon-on-baseline');
                 Settings
               </a>
             </li>

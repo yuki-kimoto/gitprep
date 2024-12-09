@@ -1661,7 +1661,7 @@ input[type=text], input[type=password] {
   vertical-align: sub;
 }
 .icon-on-baseline {
-  vertical-align: baseline !important;
+  vertical-align: -2px;
 }
 
 .btn-small .icon {

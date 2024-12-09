@@ -56,7 +56,7 @@
 %>
 
 <button id="watch-btn" class="btn btn-watch">
-  %= $api->icon($icon);
+  %= $api->icon($icon, class => 'icon-on-baseline');
   <%= $label %>
   <span class="count-label">
     <%= $watch_count %>
