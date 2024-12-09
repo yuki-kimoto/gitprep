@@ -2361,8 +2361,8 @@ a:hover .btn-delete {
   background-color: white;
   border-radius: 3px 3px 0 0;
   border: 1px solid #e6e9e6;
-  padding: 9px 10px 0px;
-  font-size: 12px;
+  padding: 15px 10px 0px;
+  font-size: 13px;
   line-height: 17px;
 }
 .readme-frame {
@@ -2371,7 +2371,7 @@ a:hover .btn-delete {
 }
 .readme-tab {
   display: inline-block;
-  padding: 0 8px 8px 8px;
+  padding: 0 8px 12px 8px;
   cursor: pointer;
 }
 .readme-tab svg {
