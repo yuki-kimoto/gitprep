@@ -2304,6 +2304,12 @@ a:hover .btn-delete {
   width:35%;
 }
 
+.branch-select-left-container .btn {
+  font-size:13px;
+  padding: 7px 12px 8px 12px;
+  height:30px;
+}
+
 .branch-select-right-container {
   display: flex;
   align-items: space-between;

@@ -106,8 +106,8 @@
 
 <div class="branch-select-container">
   <div class="branch-select-left-container <%= $display eq 'tree' || $display eq 'blob' ? 'branch-select-left-container-page-path' : '' %>">
-    <button id="rev-btn" class="btn btn-small" style="padding-top:6px">
-        <span style="position: relative;top:-1px;left:2px;">
+    <button id="rev-btn" class="btn">
+        <span style="position: relative;top:0px;left:0px;">
           %= $api->icon($active_tag? 'tag': 'git-branch');
         </span>
         <b><%= $rev_short %></b>
