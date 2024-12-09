@@ -611,6 +611,8 @@ ul.issues-label-pallet {
   border-top:none;
   background:#fafafa;
   background:white;
+  padding-left:15px;
+  padding-right:15px;
 }
 .issues-body > ul {
   display: table;
@@ -630,7 +632,7 @@ ul.issues-label-pallet {
 .issues-body > ul > li > * {
   display: table-cell;
   vertical-align:top;
-  padding: 8px 3px 5px;
+  padding: 12px 3px 10px;
 }
 .issues-body > ul > li > *.nostretch {
   width: 0;
