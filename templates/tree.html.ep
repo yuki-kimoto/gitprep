@@ -132,7 +132,7 @@
                   </span>
                   % if ($session_user->{id} ne $user_id ) {
                     <a href="<%= url_for("/$user_id/$project_id/fork") %>" class="btn btn-fork">
-                      %= $api->icon('repo-forked');
+                      %= $api->icon('repo-forked', class => 'icon-on-baseline');
                       Fork
                       <span class="count-label">
                         <%= $fork_count %>
@@ -140,7 +140,7 @@
                     </a>
                   % } else {
                     <button class="btn btn-fork disabled', disabled="">
-                      %= $api->icon('repo-forked');
+                      %= $api->icon('repo-forked', class => 'icon-on-baseline');
                       Fork
                       <span class="count-label">
                         <%= $fork_count %>

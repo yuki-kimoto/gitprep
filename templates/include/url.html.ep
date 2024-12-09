@@ -74,8 +74,8 @@
         var self = $(this);
         self.on('click', function () {
           var selectors = $(this).attr('selectors');
-          btns.removeClass('btn-info');
-          self.addClass('btn-info');
+          btns.removeClass('btn-green');
+          self.addClass('btn-green');
           rep_url.val(self.attr('url'));
           if (all_selectors) {
             $(all_selectors).hide();
@@ -101,7 +101,7 @@
   % for ('ssh', 'http', 'patch') {
     % if (exists $btns{$_}) {
       <li>
-        <button class="btn btn-info btn-url" url="<%= $btns{$_}->{url} %>" selectors="<%= $btns{$_}->{selectors} %>">
+        <button class="btn btn-green btn-url" url="<%= $btns{$_}->{url} %>" selectors="<%= $btns{$_}->{selectors} %>">
           <%= $btns{$_}->{btn} %>
         </button>
       </li>

@@ -28,8 +28,7 @@
   display: inline-block;
   padding: 4px 12px 3px 12px;
   font-size: 11px;
-  color:#395582;
-  fill:#395582;
+  color:#25292e;
   text-align: center;
   cursor: pointer;
   border: 1px solid #cccccc;
@@ -54,11 +53,11 @@
   cursor: default;
 }
 
-body {
+body, pre {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 14px;
   line-height: 130%;
-  color: #02123d;
+  color: #1f2328;
 }
 
 ul {
@@ -363,8 +362,9 @@ a.wiki-btn-history:hover {
 }
 
 .tree-description {
-  font-size:16px;
-  padding-top:5px;
+  font-size:15px;
+  padding-top:3px;
+  padding-bottom:8px;
   color:#112;
   font-weight:normal;
 }
@@ -611,6 +611,8 @@ ul.issues-label-pallet {
   border-top:none;
   background:#fafafa;
   background:white;
+  padding-left:15px;
+  padding-right:15px;
 }
 .issues-body > ul {
   display: table;
@@ -630,7 +632,7 @@ ul.issues-label-pallet {
 .issues-body > ul > li > * {
   display: table-cell;
   vertical-align:top;
-  padding: 8px 3px 5px;
+  padding: 12px 3px 10px;
 }
 .issues-body > ul > li > *.nostretch {
   width: 0;
@@ -1100,9 +1102,9 @@ input[type=text], input[type=password] {
   display:block;
   width:100%;
   text-decoration:none;
-  padding:10px 18px 8px 20px;
+  padding:12px 19px 12px 21px;
   text-align:center;
-  color:#565656;
+  color:#363636;
   letter-spacing:0.5px;
 }
 
@@ -1242,7 +1244,7 @@ input[type=text], input[type=password] {
 .header {
   background:#004763;
   overflow:hidden;
-  padding:6px 18px 2px;
+  padding:7px 18px 5px;
 }
 
 .header-left {
@@ -1276,13 +1278,14 @@ input[type=text], input[type=password] {
 }
 
 .header-search input {
-  padding:4px 5px;
+  padding:5px 6px;
   border:1px solid white;
 }
 
 .header-right-container {
   float:right;
   overflow:hidden;
+  padding-top:1px;
 }
 
 .header-btn-container {
@@ -1660,7 +1663,8 @@ input[type=text], input[type=password] {
   vertical-align: sub;
 }
 .icon-on-baseline {
-  vertical-align: baseline !important;
+  vertical-align: -2px;
+  margin-right:1px;
 }
 
 .btn-small .icon {
@@ -1813,8 +1817,8 @@ a:hover .btn-delete {
 
 .count-label {
   background-color: rgba(128, 128, 128, 0.2);
-  padding: 3px 3px 1px 3px;
-  border-radius: 6px;
+  padding: 2px 6px 1px 6px;
+  border-radius: 12px;
 }
 
 .count-label-bold {
@@ -2215,9 +2219,14 @@ a:hover .btn-delete {
   overflow: hidden;
 }
 
+.project-header-top b a, .project-header-top b a:visited {
+  color:#1f2328;
+  font-size:21px;
+}
+
 .project-header {
   background:#f7f9f9;
-  border-bottom: none;
+  border-bottom: 1px solid #D8D8D8;
   margin-bottom:12px;
   overflow:hidden;
 }
@@ -2237,6 +2246,7 @@ a:hover .btn-delete {
   font-size:13px;
   padding:3px 5px 3px 5px;
   margin-top:1px;
+  height:28px;
 }
 
 .header-btn-container a.btn {
@@ -2302,6 +2312,16 @@ a:hover .btn-delete {
   width:35%;
 }
 
+.branch-select-left-container .btn {
+  font-size:13px;
+  padding: 7px 12px 8px 12px;
+  height:30px;
+}
+
+.branch-select-left-container a, .branch-select-left-container a:visited {
+  color:#1f2328;
+}
+
 .branch-select-right-container {
   display: flex;
   align-items: space-between;
@@ -2312,7 +2332,7 @@ a:hover .btn-delete {
 .git-url-container {
   flex:10000;
   display:flex;
-  margin: 3px 3px;
+  margin: 1px 1px;
 }
 
 .git-url-container li:last-child {
@@ -2332,7 +2352,7 @@ a:hover .btn-delete {
   padding:0px 5px 0px 5px;
   border:1px solid #e6e9e6;
   border-radius:0 3px 3px 0;
-  margin-bottom:1px;
+  margin-right:3px;
 }
 
 .page-path-container {
@@ -2360,8 +2380,8 @@ a:hover .btn-delete {
   background-color: white;
   border-radius: 3px 3px 0 0;
   border: 1px solid #e6e9e6;
-  padding: 9px 10px 0px;
-  font-size: 12px;
+  padding: 15px 10px 0px;
+  font-size: 13px;
   line-height: 17px;
 }
 .readme-frame {
@@ -2370,7 +2390,7 @@ a:hover .btn-delete {
 }
 .readme-tab {
   display: inline-block;
-  padding: 0 8px 8px 8px;
+  padding: 0 8px 12px 8px;
   cursor: pointer;
 }
 .readme-tab svg {
@@ -2389,7 +2409,7 @@ a:hover .btn-delete {
 
 .commit-summary {
   overflow:hidden;
-  padding: 10px;
+  padding: 15px;
   line-height: 20px;
   background: #f7fafc;
   border: 1px solid #d0dbe2;
@@ -2419,6 +2439,11 @@ a:hover .btn-delete {
   color:#445055;
 }
 
+.commit-summary-author a, .commit-summary-author a:visited {
+  color:#1f2328;
+  font-weight:bold;
+}
+
 .commit-contributor {
   padding: 5px 10px;
   background-color: #fff;
@@ -2432,7 +2457,7 @@ a:hover .btn-delete {
 .file-list li {
   border: 1px solid #d0dbe2;
   border-top:none;
-  padding:7px;
+  padding:9px;
   overflow:hidden;
 }
 
@@ -3295,7 +3320,6 @@ a:hover .btn-delete {
   padding: 5px 10px;
   background-color: #fff;
   border: 1px solid #d0dbe2;
-  border-top:none;
   border-bottom-left-radius: 3px;
   border-bottom-right-radius: 3px;
 }
@@ -3458,6 +3482,8 @@ a:hover .btn-delete {
   background: none;
   padding: 0;
   margin: 0;
+  padding-top:2px;
+  padding-bottom:2px;
 }
 .diff-chunk-header {
   background-color: #f8f8ff;
