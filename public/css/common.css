@@ -1814,8 +1814,8 @@ a:hover .btn-delete {
 
 .count-label {
   background-color: rgba(128, 128, 128, 0.2);
-  padding: 3px 3px 1px 3px;
-  border-radius: 6px;
+  padding: 2px 6px 1px 6px;
+  border-radius: 12px;
 }
 
 .count-label-bold {
