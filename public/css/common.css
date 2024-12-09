@@ -2310,6 +2310,10 @@ a:hover .btn-delete {
   height:30px;
 }
 
+.branch-select-left-container a, .branch-select-left-container a:visited {
+  color:#1f2328;
+}
+
 .branch-select-right-container {
   display: flex;
   align-items: space-between;
