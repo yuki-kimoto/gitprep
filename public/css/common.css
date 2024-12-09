@@ -1242,7 +1242,7 @@ input[type=text], input[type=password] {
 .header {
   background:#004763;
   overflow:hidden;
-  padding:6px 18px 2px;
+  padding:7px 18px 5px;
 }
 
 .header-left {
@@ -1276,13 +1276,14 @@ input[type=text], input[type=password] {
 }
 
 .header-search input {
-  padding:4px 5px;
+  padding:5px 6px;
   border:1px solid white;
 }
 
 .header-right-container {
   float:right;
   overflow:hidden;
+  padding-top:1px;
 }
 
 .header-btn-container {
@@ -2237,6 +2238,7 @@ a:hover .btn-delete {
   font-size:13px;
   padding:3px 5px 3px 5px;
   margin-top:1px;
+  height:28px;
 }
 
 .header-btn-container a.btn {
