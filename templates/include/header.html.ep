@@ -67,10 +67,10 @@
         % my $url = url_with->to_abs;
         <div class="header-btn-container">
           <a class="btn" href="<%= url_for("/_logout?from=$url") %>">
-            %= $api->icon('sign-out', title => 'Logout');
+            %= $api->icon('sign-out', title => 'Sign out');
           </a>
         </div>
-        <!-- Logined as <%= $session_user->{id} %> -->
+        <!-- Signed in as <%= $session_user->{id} %> -->
         <div class="header-login-container">
           % my $userurl = '/_admin';
           % $userurl = "/$session_user->{id}" unless $api->logined_admin;
@@ -81,7 +81,7 @@
       % } else {
         <div class="header-btn-container">
           <a class="btn" href="<%= url_for('/_login') %>">
-            %= $api->icon('sign-in', title => 'Login');
+            %= $api->icon('sign-in', title => 'Sign in');
           </a>
         </div>
       % }
