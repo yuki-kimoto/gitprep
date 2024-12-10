@@ -2,7 +2,7 @@
 
 # GitPrep - Portable GitHub system on your own server
 
-GitPrep is **portable Github system**, which can be installed and hosted on **your own Unix/Linux server**.
+GitPrep is a **portable Github system**, which can be installed and hosted on **your own Unix/Linux server**.
 
 <img src="gitprep_01.png" width="870" border="1">
 
@@ -106,7 +106,7 @@ Setup database.
 
     ./setup_database
 
-If you used Gitprep version 1 and upgrade it to version 2, you need to upgrade database
+If you used GitPrep version 1 and upgrade it to version 2, you need to upgrade database
 with the following command
 
     # Backup gitprep directory for safety
@@ -173,7 +173,7 @@ to see what problem has occurred.
 
 ## FAQ
 
-## I can't install Gitprep on CentOS
+## I can't install GitPrep on CentOS
 
 After CentOS 6, some perl core modules are not installed by default.
 You can install Perl core modules by the following command.
@@ -191,7 +191,7 @@ you must add the correct git command path to the config file **gitprep.conf** .
 
 ### blame doesn't work
 
-In Gitprep, blame page uses "git blame --line-porcelain". In old git, there is no --line-porcelain option.
+In GitPrep, blame page uses "git blame --line-porcelain". In old git, there is no --line-porcelain option.
 We don't know when --line-porcelain was added to git.
 At least, blame page work well in git 1.8.2.1.
 
@@ -203,7 +203,7 @@ If you want to upgrade by "git pull", you can do it.
 you create "gitprep.my.conf" copied from "gitprep.conf",
 and do "git pull"
 
-If you get a rainbow unicorn t-rex error after upgrading, you might be missing
+If you get a drinking elephant error after upgrading, you might be missing
 a new CPAN dependency. Run again "setup.sh".
 
 ### I can't push large repository by http protocol
@@ -217,7 +217,7 @@ Please upgrade to latest git. I checked git version 1.8.5.5.
 
 **2. GitPrep restriction**
 
-GitPrep restrict max post message size 10MB(This is default of Mojolicious)
+GitPrep restrict max post message size 10MB (This is default of Mojolicious)
 
 You maybe see the following error
 
@@ -305,7 +305,7 @@ If you use GitPrep via https, you should set X-Forwarded-HTTPS Request Header.
 
 ### How to use reverse proxy with sub directory?
 
-GitPrep support reverse proxy with sub directory.
+GitPrep supports reverse proxy with sub directory.
 
 Here is the apache configuration example:
 
@@ -334,7 +334,7 @@ You can import already existing repositories by **script/import_rep** script.
     cd script
     ./import_rep -u kimoto rep_dir
 
-**-u** is user name. rep_dir must contains git respoitories like the following.
+**-u** is user name. rep_dir must contains git repositories like the following.
 
     rep_dir/project1.git
            /project2.git
@@ -363,7 +363,7 @@ Please fix it the following way.
 
 ### I want to set time zone.
 
-Gitprep is timezone-agnostic. It delegates time zone handling to the browser.
+GitPrep is timezone-agnostic. It delegates time zone handling to the browser.
 If you want to change the time zone, do it on your client system.
 
 ### How to hide user home directory in ssh repository URL?
@@ -642,7 +642,7 @@ I write the following way in "setup_module"
 
 ###2. CGI is supported in Mojolicious
 
-It is good luck for us that Mojolicious author [Sebastian Riedel](https://twitter.com/kraih) decided to **support CGI** in Mojolicious.
+It is good luck for us that Mojolicious author [Sebastian Riedel](https://x.com/kraih) decided to **support CGI** in Mojolicious.
 
 We can create web application which support CGI with a little effort.
 
@@ -663,14 +663,10 @@ After that, you only prepare CGI script to call Mojolicious application in **pro
     $ENV{MOJO_MODE} = 'production';
     require "$FindBin::Bin/script/gitprep";
 
-## Web Site
-
-[GitPrep Web Site](http://gitprep.yukikimoto.com/)
-
-## Internally Using Modules
+## Module dependencies
 
 GitPrep depends on the following modules, especially Mojolicious is the base of GitPrep.
-Thanks to Mojolicious author,[Sebastian riedel](https://twitter.com/kraih).
+Thanks to Mojolicious author, [Sebastian riedel](https://x.com/kraih).
 
 * [Mojolicious](http://search.cpan.org/~sri/Mojolicious/lib/Mojolicious.pm)
 * [Mojolicious::Plugin::INIConfig](http://search.cpan.org/dist/Mojolicious-Plugin-INIConfig/lib/Mojolicious/Plugin/INIConfig.pm)
@@ -699,21 +695,11 @@ These are my Perl web application projects.
 
 * [WebDBViewer](https://github.com/yuki-kimoto/webdbviewer) - Database viewer to see database information on web browser.
 
-## Bug
+## Bugs
 
-If you find bug, plese tell me on GitHub issue. Small bugs is OK! I'm pleasure if you report anything bugs.
-
-Please post only bug information.
+If you find some bug, please report it as a GitHub issue. Small bugs are OK! I'm pleased if you report anything buggy.
 
 * [Github Issue](https://github.com/yuki-kimoto/gitprep/issues?state=open)
-
-## Mailing list (Asking questions and feature requests)
-
-* [Google GitPrep Group](https://groups.google.com/forum/#!forum/gitprep)
-
-You can ask questions about usage of GitPrep in this mailing list.
-
-If you want new features, please post the request to this mailing list.
 
 ## Author
 
@@ -721,11 +707,11 @@ Yuki Kimoto
 
 [Yuki Kimoto Perl Blog](http://blogs.perl.org/users/yuki_kimoto/)
 
-[Yuki Kimoto Twitter](https://twitter.com/yukikimoto2)
+[Yuki Kimoto X](https://x.com/yukikimoto2)
 
-If you are interested in my project and activity, Please follow me on Twitter.
+If you are interested in my projects and activity, Please follow me on X.
 
-## Contributers
+## Contributors
 
 Thanks for helping my GitPrep project.
 
