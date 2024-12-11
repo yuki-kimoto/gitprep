@@ -101,21 +101,21 @@
         you can perform a manual merge on the command line.
       </div>
 
-      <b>Step 1:</b> If you don't add user remote repository, add it.
+      <b>Step 1:</b> If the remote for the target repository is not yet defined, add it.
       <pre>
 git remote add <%= $remote_user %> <%= url_for("/$remote_user/$remote_project.git")->to_abs %>
       </pre>
 
       <b>Step 2:</b> From your project repository, bring in the changes and test.
-      <pre class="well" style="background:#333333;color:white;padding:20px 20px 0px 20px;">
+      <pre>
 git remote update
 git fetch
 git checkout -b <%= "$remote_user-$remote_branch" %> <%= "$remote_user/$remote_branch" %>
 git merge <%= $branch %>
       </pre>
       
-      <b>Step 3:</b> Merge the changes and update on GitHub.
-      <pre class="well" style="background:#333333;color:white;padding:20px 20px 0px 20px;">
+      <b>Step 3:</b> Merge the changes and update on GitPrep.
+      <pre>
 git checkout <%= $branch %>
 git merge <%= "$remote_user-$remote_branch" %>
 git push origin <%= $branch %>

@@ -284,7 +284,7 @@
   my $authors_count = keys %$authors;
 
   # Member projects
-  my $member_projects = app->manager->member_projects($base_user_id, $base_project_id);
+  my $member_projects = app->manager->member_projects($base_user_id, $base_project_id, 'all');
   
   # Can open pull request
   my $can_open_pull_request;

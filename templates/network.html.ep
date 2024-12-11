@@ -38,8 +38,7 @@
   }
   
   # Members
-  my $member_projects = app->manager->member_projects($original_project->{'user.id'}, $original_project->{id});
-  unshift @$member_projects, $original_project;
+  my $member_projects = app->manager->member_projects($original_project->{'user.id'}, $original_project->{id}, 'all');
   
   # Members branches
   for my $member_project (@$member_projects) {

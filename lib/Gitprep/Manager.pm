@@ -330,27 +330,38 @@ sub api { shift->app->gitprep_api }
 
 
 sub member_projects {
-  my ($self, $user_id, $project_id) = @_;
+  my ($self, $user_id, $project_id, $scope) = @_;
+
+  # Scope values:
+  # one: direct children (default).
+  # base: current project.
+  # sub: current project and descendant forks.
+  # subordinates: descendant forks.
+  # all: the complete frok tree from its root.
+  $scope = lc($scope // 'one');
   
   # DBI
   my $dbi = $self->app->dbi;
   my @results;
 
-  # Recursive gathering of all descendant forks
+  # Recursive gathering of descendant forks
   local *closure = sub {
-    my $project = shift;
+    my ($project, $levels) = @_;
+    $levels //= 9999999999;
+    if (--$levels > 0) {
+      my $children = $dbi->model('project')->select(
+        [
+          {__MY__ => ['row_id', 'id']},
+          {user => ['id']}
+        ],
+        where => {'project.original_project' => $project->{row_id}}
+      )->all;
+      closure($_, $levels) for (@$children);
+    }
     CORE::push @results, $project;
-    my $children = $dbi->model('project')->select(
-      [
-        {__MY__ => ['row_id', 'id']},
-        {user => ['id']}
-      ],
-      where => {'project.original_project' => $project->{row_id}}
-    )->all;
-    closure($_) for (@$children);
   };
 
-  # Get starting project
+  # Get current project
   my $project = $dbi->model('project')->select(
     [
       {__MY__ => ['row_id', 'id', 'original_project']},
@@ -359,19 +370,29 @@ sub member_projects {
     where => {'user.id' => $user_id, 'project.id' => $project_id}
   )->one;
 
-  # Get root of all member projects
-  while ($project && $project->{original_project}) {
-    $project = $dbi->model('project')->select(
-      [
-        {__MY__ => ['row_id', 'id', 'original_project']},
-        {user => ['id']}
-      ],
-      where => {'project.row_id' => $project->{original_project}}
-    )->one;
+  return \@results unless $project
+;
+  if ($scope eq 'base') {
+    closure($project, 1);
+  } elsif ($scope eq 'sub') {
+    closure($project);
+  } elsif ($scope eq 'all') {
+    # Get root of all member projects
+    while ($project && $project->{original_project}) {
+      $project = $dbi->model('project')->select(
+        [
+          {__MY__ => ['row_id', 'id', 'original_project']},
+          {user => ['id']}
+        ],
+        where => {'project.row_id' => $project->{original_project}}
+      )->one;
+    }
+    closure($project);
   }
-
-  # Get all descendants
-  closure($project) if %$project;
+  else {
+    closure($project, $scope eq 'one'? 2: undef);
+    pop @results;       # Remove current project.
+  }
 
   @results = sort {"$a->{'user.id'} $a->{id}" cmp "$b->{'user.id'} $b->{id}"} @results;
   return \@results;
