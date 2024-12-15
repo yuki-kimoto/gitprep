@@ -1437,4 +1437,17 @@ sub ruleset_selected {
   return $selected;
 }
 
+sub emojis {
+  return [
+    {name => 'thumbs up', symbol => "\x{1f44d}"},
+    {name => 'thumbs down', symbol => "\x{1f44e}"},
+    {name => 'laugh', symbol => "\x{1f604}"},
+    {name => 'hooray', symbol => "\x{1f389}"},
+    {name => 'confused', symbol => "\x{1f615}"},
+    {name => 'heart', symbol => "\x{2764}\x{fe0f}"},
+    {name => 'rocket', symbol => "\x{1f680}"},
+    {name => 'eyes', symbol => "\x{1f440}"}
+  ];
+}
+
 1;

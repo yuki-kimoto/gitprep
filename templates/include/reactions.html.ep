@@ -1,0 +1,48 @@
+<%
+  my $api = gitprep_api;
+
+  my $reactions = stash('reactions');
+  my $id = stash('id');
+
+  my $session_user_id = $api->session_user_id;
+  my $emojis = app->manager->emojis;
+  my $reaction_url = '#';
+  if (defined $session_user_id) {
+    my $sign = app->sign("$id", "$session_user_id");
+    $reaction_url = url_for('/_reaction')->query(id => $id, sign => $sign);
+  }
+%>
+<div class="issue-message-reactions" url="<%= $reaction_url %>">
+  % if ($session_user_id) {
+    %# Bootstrap dropdown toolbar.
+    <span class="dropdown">
+      <span type="button" class="issue-message-reactions-button" data-toggle="dropdown"><%= $api->icon('smiley') %></span>
+      <span class="issue-message-reactions-popup">
+        % foreach my $emoji (@$emojis) {
+          % my $set = 'set' if grep $session_user_id eq $_, @{$reactions->{$emoji->{name}}};
+          <span class="issue-message-reactions-popup-button <%= $set // '' %>"
+            title="<%= $emoji->{name} %>"
+            onclick="Gitprep.reaction(this, '<%= $emoji->{name} %>');"
+            ><%= $emoji->{symbol} %></span>
+        % }
+      </span>
+    </span>
+  % }
+  % foreach my $emoji (@$emojis) {
+    % if ($reactions->{$emoji->{name}}) {
+      % my @users = @{$reactions->{$emoji->{name}}};
+      % if (@users) {
+        % my $count = @users;
+        % my $user = pop @users;
+        % if ($count > 11) {
+          % @users = @users[0..9];
+          % $user = 'others';
+        % }
+        % $user = join(', ', @users) . " and $user" if @users;
+          <span class="issue-message-reactions-label" title="<%= "$user reacted with $emoji->{name} emoji" %>">
+            <%== "$emoji->{symbol}&nbsp;&nbsp;$count" %>
+          </span>
+      % }
+    % }
+  % }
+</div>

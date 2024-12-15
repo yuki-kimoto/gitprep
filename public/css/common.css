@@ -824,6 +824,9 @@ ul.issues-label-pallet {
   display: flex;
   gap: 10px;
 }
+.issue-message-row-id > a {
+  display: contents;
+}
 .issue-message-box {
   flex-grow: 10000;
 }
@@ -872,6 +875,60 @@ ul.issues-label-pallet {
 
 .issue-message-body {
   padding:15px;
+}
+
+.issue-message-reactions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: 10px;
+  margin-bottom: 6px;
+}
+.issue-message-reactions-button {
+  background-color: #e0e0e0;
+  padding: 4px;
+  display: inline-flex;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.issue-message-reactions-button:hover {
+  background-color: #d0d0d0;
+}
+.issue-message-reactions-popup {
+  display: none;
+}
+.dropdown.open .issue-message-reactions-popup {
+  display: flex;
+  gap: 5px;
+  position: absolute;
+  background-color: #ffffff;
+  padding: 5px;
+  font-size: 120%;
+  line-height: 140%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  outline: none;
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+  background-clip: padding-box;
+}
+.issue-message-reactions-popup-button {
+  padding: 7px 8px 5px 8px;
+  border: 1px solid #00000000;
+  border-radius: 5px;
+}
+.issue-message-reactions-popup-button:hover {
+  background-color: #f4f4f4 !important;
+}
+.issue-message-reactions-popup-button.set {
+  border-color: #c0c0ff;
+  background-color: #e0f0ff;
+}
+.issue-message-reactions-label {
+  display:inline-block;
+  border:1px solid #bfccd1;
+  padding: 2px 5px 0 5px;
+  border-radius: 10px;
+  color:#767676;
 }
 
 .issue-title-panel {
@@ -2112,7 +2169,6 @@ a:hover .btn-delete {
   width: 560px;
   margin-left: -280px;
   background-color: #ffffff;
-  border: 1px solid #999;
   border: 1px solid rgba(0, 0, 0, 0.3);
   border-radius: 6px;
   outline: none;
