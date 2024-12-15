@@ -122,7 +122,8 @@ my @tables = (
       {name => 'message'},
       {name => 'create_time', type => 'integer'},
       {name => 'update_time', type => 'integer'},
-      {name => 'user', type => 'integer'}
+      {name => 'user', type => 'integer'},
+      {name => 'reactions'}
     ],
     unique => ['issue', 'number']
   },

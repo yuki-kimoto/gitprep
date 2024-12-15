@@ -306,6 +306,24 @@
     }
   };
 
+  // Emoji reaction.
+  Gitprep.reaction = function (self, reaction) {
+    var block = $(self).closest('.issue-message-reactions');
+    var url = block.attr('url');
+    $.ajax({
+      type: 'POST',
+      url: block.attr('url'),
+      dataType: 'json',
+      contentType: 'application/json',
+      data: JSON.stringify({'reaction': reaction}),
+      success: function(json) {
+        if (json.block != undefined) {
+          block.replaceWith(json.block);
+        }
+      }
+    });
+  };
+
   // Presets.
   $(document).ready(function () {
 
