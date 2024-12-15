@@ -1,4 +1,6 @@
 <%
+  use Mojo::JSON 'decode_json';
+
   my $api = gitprep_api;
   
   my $user_id = stash('user_id');
@@ -11,6 +13,8 @@
   my $is_my_comment = $issue_message->{'user.id'} eq ($session_user_id || '');
   my $can_modify = $is_my_project || $is_my_comment;
   my $user_url = url_for("/$issue_message->{'user.id'}");
+  my $reactions = {};
+  $reactions = decode_json($issue_message->{reactions}) if $issue_message->{reactions};
 %>
 
 <div class="issue-message-row-id" id="row-<%= $issue_message->{row_id} %>">
@@ -49,6 +53,7 @@
       <div class="issue-message-body markdown-body" style="padding:10px">
         <%== $api->markdown($issue_message->{message}) %>
       </div>
+      %= include '/include/reactions', id=> $issue_message->{row_id}, reactions => $reactions;
     </div>
  
     % if ($can_modify) {

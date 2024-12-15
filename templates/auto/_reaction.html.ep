@@ -1,0 +1,51 @@
+<%
+  use List::Util qw(first);
+  use Mojo::JSON qw(encode_json decode_json);
+
+  my $api = gitprep_api;
+
+  my $issue_message_row_id = param('id');
+  my $sign = param('sign') // '';
+
+  my $json_in = $self->{tx}->{req}->{content}->{asset}->{content};
+  my $json_param = decode_json($json_in);
+
+  my $json_out = {error => 'not logged in'};
+  my $session_user_id = $api->session_user_id;
+  my $reactions = {};
+
+  if ($session_user_id) {
+    $json_out = {error => 'invalid request'};
+    if (app->sign("$issue_message_row_id", "$session_user_id") eq $sign) {
+      eval {
+        app->dbi->connector->txn(sub {
+          $reactions = app->dbi->model('issue_message')->select(['reactions'],
+            where => {row_id => $issue_message_row_id})->value;
+          $json_out = {error => 'no such message'};
+          if (defined $reactions) {
+            $reactions = $reactions? decode_json($reactions): {};
+            my $users = $reactions->{$json_param->{reaction}} // [];
+            my $index = first {$users->[$_] eq $session_user_id} 0..@$users - 1;
+            if (defined $index) {
+              splice @$users, $index, 1;
+              delete $reactions->{$json_param->{reaction}} unless @$users;
+            } else {
+              push @$users, $session_user_id;
+              $reactions->{$json_param->{reaction}} = $users;
+            }
+            my $json_reactions = '';
+            $json_reactions = encode_json($reactions) if keys %$reactions;
+            app->dbi->model('issue_message')->update(
+              {reactions => $json_reactions},
+              where => {row_id => $issue_message_row_id});
+            $json_out = {block => $self->render_to_string('/include/reactions',
+              id => $issue_message_row_id, reactions => $reactions)};
+          }
+        });
+      };
+      $json_out = {error => $@} if $@;
+    }
+  }
+  $self->render(json => $json_out);
+  return;
+%>

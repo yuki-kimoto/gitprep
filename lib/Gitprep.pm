@@ -17,6 +17,8 @@ use Validator::Custom;
 use Time::Moment;
 use Email::Sender::Transport::SMTP;
 use Email::Sender::Transport::Sendmail;
+use Crypt::Digest::SHA256 qw(sha256_b64u);
+use Mojo::JSON qw(encode_json);
 
 # Digest::SHA loading to Mojo::Util if not loaded
 {
@@ -108,6 +110,15 @@ sub wiki_work_rep_info {
   $info->{work_tree} = $info->{root};
   
   return $info;
+}
+
+sub sign {
+  my $self = shift;
+
+  # Sign arguments with secret.
+  my $secret = $self->secrets->[0];
+  my $json = encode_json([$secret, (@_), $secret]);
+  return sha256_b64u($json);
 }
 
 sub _http_authenticate {
