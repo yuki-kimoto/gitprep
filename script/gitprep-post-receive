@@ -7,44 +7,25 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use Mojo::URL;
-use Gitprep::RPC;
-
-my $channel_fileno = 99;  # File descriptor number for RPC channel.
+use Gitprep;
 
 # Retrieve our parameters
 my ($user_id, $project_id) = @ENV{'GITPREP_USER', 'GITPREP_PROJECT'};
 
 die "Gitprep parameters unset" unless $user_id && $project_id;
 
-# Establish the RPC connection.
-open my $channel, "+<&=$channel_fileno" or die "Can't open request channel\n";
-my $rpc = Gitprep::RPC->new(sub {syswrite $channel, shift});
+my $app = Mojo::Server->new->load_app("$FindBin::Bin/gitprep");
+my $git = $app->git;
+my $dbi = $app->dbi;
 
-sub rpc_call {
-  $rpc->request(@_);
-  my ($input, $result, $error, $gotit);
-  while (!$gotit) {
-    sysread $channel, $input, 2048 or die "Gitprep shell has exited\n";
-    $rpc->feed($input);
-    ($result, $error, $gotit) = $rpc->result;
-  }
-  die $error if $error;
-  return $result;
-}
-
-my $rep_info = rpc_call('rep_info($user_id, $project_id)',
-  user_id => $user_id,
-  project_id => $project_id
-);
-my $default_branch = rpc_call('git->current_branch($rep_info)',
-  rep_info => $rep_info
-);
-my $project = rpc_call('dbi->model("project")->select(where => $where)->one',
+my $rep_info = $app->rep_info($user_id, $project_id);
+my $default_branch = $git->current_branch($rep_info);
+my $project = $dbi->model('project')->select(
   where => {'user.id' => $user_id, 'project.id' => $project_id}
-);
+)->one;
 
 my $new_pr_path;
-my $url = rpc_call('config->{basic}{new_pr_url}');
+my $url = $app->config->{basic}{new_pr_url};
 if ($url) {
   $url = Mojo::URL->new($url);
   if ($url && $url->host) {

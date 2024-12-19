@@ -8,12 +8,8 @@ use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use File::Copy qw/copy/;
 use Gitprep;
-use Gitprep::RPC;
-use Socket;
-use IO::Select;
 
 my $debug = 0;
-my $channel_fileno = 99;  # File descriptor number for request channel.
 
 # Project name pattern
 my $project_re = qr/$Gitprep::project_re$/;
@@ -92,42 +88,14 @@ if ($project_id !~ /\.wiki$/) {
   close $dh;
 }
 
-# Open the RPC channel for hooks.
-socketpair(my $clienth, my $serverh, AF_UNIX, SOCK_STREAM, PF_UNSPEC) or die "Can't establish request channel\n";
-POSIX::dup2($clienth->fileno, $channel_fileno);
-close $clienth;
-my $rpc = Gitprep::RPC->new(sub {syswrite $serverh, shift},$app);
 
 # Command
 my $repository = "'$rep_git_dir'";
 my @git_shell_cmd = ("git", "shell", "-c", "$verb $repository");
 warn "@git_shell_cmd" if $debug;
 unless ($debug) {
-  open my $git_stdout, '-|', @git_shell_cmd
-    or die "Can't execute command: @git_shell_cmd\n";
-  my $select = IO::Select->new($git_stdout, $serverh);
-  my $shell_done;
-  my @fhs;
-  my $request = '';
-  my $reqlen;
-  while (!$shell_done) {
-    @fhs = ($select->can_read) unless @fhs;
-    my $fh = pop @fhs;
-    my $input;
-    if (!sysread $fh, $input, 2048) {
-      $select->remove($fh);
-      $shell_done = $fh == $git_stdout;
-    } elsif ($fh == $git_stdout) {
-        # Monitoring this handle is only useful for git shell exit detection.
-        # Thus just relay.
-        syswrite STDOUT, $input;
-    } elsif ($fh == $serverh) {
-      $rpc->feed($input);
-      while ($rpc->serve) {
-        # Just try serving another.
-      }
-    }
-  }
+  system(@git_shell_cmd) == 0
+    or die "Can't execute command: @git_shell_cmd\n" ;
 }
 
 sub parse_ssh_original_command {
