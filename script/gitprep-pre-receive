@@ -6,10 +6,9 @@ use utf8;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
-use Gitprep::RPC;
+use Gitprep;
 
 my $debug = 0;
-my $channel_fileno = 99;  # File descriptor number for RPC channel.
 
 # Retrieve our parameters
 my ($session_user_id, $user_id, $project_id) =
@@ -17,38 +16,18 @@ my ($session_user_id, $user_id, $project_id) =
 
 die "Gitprep parameters unset" unless $session_user_id && $user_id && $project_id;
 
-# Establish the RPC connection.
-open my $channel, "+<&=$channel_fileno" or die "Can't open request channel\n";
-my $rpc = Gitprep::RPC->new(sub {syswrite $channel, shift});
+my $app = Mojo::Server->new->load_app("$FindBin::Bin/gitprep");
+my $git = $app->git;
+my $dbi = $app->dbi;
+my $api = $app->gitprep_api;
+my $manager = $app->manager;
+my $rules = $manager->rules;
 
-sub rpc_call {
-  $rpc->request(@_);
-  my ($input, $result, $error, $gotit);
-  while (!$gotit) {
-    sysread $channel, $input, 2048 or die "Gitprep shell has exited\n";
-    $rpc->feed($input);
-    ($result, $error, $gotit) = $rpc->result;
-  }
-  die $error if $error;
-  return $result;
-}
-
-my $rules = rpc_call('manager->rules');
-
-my $rep_info = rpc_call('rep_info($user_id, $project_id)',
-  user_id => $user_id,
-  project_id => $project_id
-);
-my $default_branch = rpc_call('git->current_branch($rep_info)',
-  rep_info => $rep_info
-);
-my $project_row_id = rpc_call('dbi->model("project")->select("project.row_id",'.
-  'where => $where)->value',
-  where => {
-    'user.id' => $user_id,
-    'project.id' => $project_id
-  }
-);
+my $rep_info = $app->rep_info($user_id, $project_id);
+my $default_branch = $git->current_branch($rep_info);
+my $project_row_id = $dbi->model('project')->select('project.row_id',
+  where => {'user.id' => $user_id, 'project.id' => $project_id}
+)->value;
 
 # Read project's active rulesets.
 my %where = (
@@ -56,16 +35,13 @@ my %where = (
   active => 1
 );
 $where{owner_bypass} = 0 if $session_user_id eq $user_id;
-my $rulesets = rpc_call('dbi->model("ruleset")->select(where => $where,' .
-  'append => "order by name")->all',
-  where => \%where
-);
+my $rulesets = $dbi->model('ruleset')->select(
+  where => \%where,
+  append => 'order by name'
+)->all;
 foreach my $ruleset (@$rulesets) {
-  $ruleset->{selector} = rpc_call('manager->compile_ruleset_selectors(' .
-    '$ruleset_row_id, $default_branch)',
-    ruleset_row_id => $ruleset->{row_id},
-    default_ranch => $default_branch
-  );
+  $ruleset->{selector} = $manager->compile_ruleset_selectors($ruleset->{row_id},
+    $default_branch);
 }
 
 # Check updates.
@@ -83,10 +59,7 @@ while (<>) {
   # Gather the checks to perform.
   my %checks;
   foreach my $ruleset (@$rulesets) {
-    if ($ruleset->{target} eq $kind &&
-      rpc_call('manager->ruleset_selected($selector, $name)',
-        selector => $ruleset->{selector},
-        name => $name)) {
+    if ($ruleset->{target} eq $kind && $manager->ruleset_selected($ruleset->{selector}, $name)) {
       foreach my $rule (@$rules) {
         push @{$checks{$rule->{id}}}, $ruleset->{name} if
           $ruleset->{$rule->{id}};
@@ -95,20 +68,14 @@ while (<>) {
   }
 
   # Perform the checks and issue messages.
-  my $index = 0;
   foreach my $rule (@$rules) {
     my $check = $checks{$rule->{id}};
-    if ($check && rpc_call('manager->rules->[$index]->{check}->(@$checkargs)',
-      index => $index,
-      checkargs => [$rep_info, $old, $new, $ref])
-    ) {
+    if ($check && $rule->{check}->($rep_info, $old, $new, $ref)) {
       $exit_status = 1;
       print "$kind '$name'$rule->{error} forbidden by ";
-      print rpc_call('gitprep_api->plural("ruleset", $count)',
-        count => scalar(@$check));
+      print $api->plural('ruleset', scalar(@$check));
       print ' ' . join(', ', @$check) . ".\n";
     }
-  $index++;
   }
 }
 
