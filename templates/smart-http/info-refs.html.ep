@@ -8,6 +8,8 @@
   my $project = param('project');
   my $git = app->git;
   
+  my $auth_user_id = stash('auth_user_id') // '';
+
   # Smart HTTP
   if ($service eq 'git-upload-pack' || $service eq 'git-receive-pack') {
     
@@ -16,11 +18,14 @@
     
     my $rep_info = app->rep_info($user, $project);
     my $rep_git_dir = $rep_info->{git_dir};
-    my @cmd = $git->cmd(app->rep_info($user, $project), $service_cmd, '--stateless-rpc', '--advertise-refs', $rep_git_dir);
+    my @cmd = $git->cmd($rep_info, $service_cmd, '--stateless-rpc', '--advertise-refs', $rep_git_dir);
     
+    my %save_env = %ENV;
+    app->manager->prepare_hooks($auth_user_id, $rep_info);
     my ($cout, $cerr) = (Symbol::gensym, Symbol::gensym);
     my $pid = IPC::Open3::open3(my $cin, $cout, $cerr, @cmd );
     close $cin;
+    %ENV = %save_env;
     my ( $refs, $err, $buf ) = ( '', '', '' );
     my $s = IO::Select->new($cout, $cerr);
     my $buffer_size = $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE};
