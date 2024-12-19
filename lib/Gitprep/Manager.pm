@@ -1336,6 +1336,41 @@ sub _rename_rep {
   }
 }
 
+sub prepare_hooks {
+  my ($self, $auth_user_id, $rep_info) = @_;
+
+  # Copy hook stubs to the targeted repository if needed and set
+  # environment variables as expected by these hooks.
+
+  my $user_id = $rep_info->{user};
+  my $project_id = $rep_info->{root};
+  $project_id =~ s#^.*/([^/]*)\.git$#$1# or croak "Invalid repository name $project_id";
+
+  # Copy fresh hook stubs.
+  if ($project_id !~ /\.wiki$/) {
+    my $hookdir = $self->app->home . '/script/hooks';
+    my $rep_git_dir = $rep_info->{git_dir};
+    opendir my $dh, $hookdir or die "Can't open hooks directory\n";
+    while (readdir $dh) {
+      my $src = "$hookdir/$_";
+      next unless (-f $src) && -x $src;
+      my $dst = "$rep_git_dir/hooks/$_";
+      if (!(-x $dst) || (stat($src))[9] > (stat($dst))[9]) {
+        copy $src, $dst;
+        chmod((stat($dst))[2] | 0555, $dst) or die "Can't install $_ hook\n";
+      }
+    }
+    close $dh;
+  }
+
+  # Setup environment.
+  $ENV{GITPREP_PERL} = $^X;
+  $ENV{GITPREP_HOME} = $self->app->home;
+  $ENV{GITPREP_SESSION_USER} = $auth_user_id;
+  $ENV{GITPREP_USER} = $user_id;
+  $ENV{GITPREP_PROJECT} = $project_id;
+}
+
 sub rules {
   my $self = shift;
   my $git = $self->app->git;

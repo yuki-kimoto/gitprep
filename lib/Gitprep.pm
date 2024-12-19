@@ -110,6 +110,29 @@ sub wiki_work_rep_info {
   return $info;
 }
 
+sub _http_authenticate {
+  my ($c, $user_id, $project_id) = @_;
+
+  # Request and check HTTP authentication.
+  my $api = $c->gitprep_api;
+  return $c->basic_auth("Git Area", sub {
+    my ($auth_user_id, $auth_password) = @_;
+
+    if (!defined $auth_user_id || !length $auth_user_id) {
+      $c->app->log->warn("Authentication: User name is empty");
+    }
+
+    $auth_user_id = '' unless defined $auth_user_id;
+    $auth_password = '' unless defined $auth_password;
+
+    my $is_valid = ($user_id eq $auth_user_id ||
+      $api->is_collaborator($auth_user_id, $user_id, $project_id)) &&
+      $api->check_user_and_password($auth_user_id, $auth_password);
+    $c->stash('auth_user_id', $auth_user_id) if $is_valid;
+    return $is_valid;
+  });
+}
+
 sub startup {
   my $self = shift;
   
@@ -485,26 +508,11 @@ sub startup {
                 $private = 1;
               }
 
-              # Basic auth when push request
+              # Basic auth when push request or userinfo/Authorization present.
               my $service = $self->param('service') || '';
-              if ($service eq 'git-receive-pack' || $private) {
-                
-                $self->basic_auth("Git Area", sub {
-                  my ($auth_user_id, $auth_password) = @_;
-                  
-                  if (!defined $auth_user_id || !length $auth_user_id) {
-                    $self->app->log->warn("Authentication: User name is empty");
-                  }
-                  
-                  $auth_user_id = '' unless defined $auth_user_id;
-                  $auth_password = '' unless defined $auth_password;
-                  
-                  my $is_valid =
-                    ($user_id eq $auth_user_id || $api->is_collaborator($auth_user_id, $user_id, $project_id))
-                    && $api->check_user_and_password($auth_user_id, $auth_password);
-                  
-                  return $is_valid;
-                });
+              if ($service eq 'git-receive-pack' || $private ||
+                defined($self->req->url->to_abs->userinfo)) {
+                  return _http_authenticate($self, $user_id, $project_id);
               }
               else {
                 return 1;
@@ -525,14 +533,20 @@ sub startup {
             $r->get('/info/refs' => sub {
                 shift->render_maybe('smart-http/info-refs') 
             });
-            
+
             # /git-upload-pack or /git-receive-pack
             $r->any(
                 '/git-:service'
                     => [service => qr/(?:upload-pack|receive-pack)/]
-                    => sub { shift->render_maybe('smart-http/service') }
+                    => sub {
+                         my $self = shift;
+                         if ($self->param('service') ne 'receive-pack' ||
+                             _http_authenticate($self, $self->param('user'), $self->param('project'))) {
+                           $self->render_maybe('smart-http/service');
+                         }
+                       }
             );
-            
+
             # Static file
             $r->get('/<*Path>' => sub { shift->render_maybe('smart-http/static') });
           }
