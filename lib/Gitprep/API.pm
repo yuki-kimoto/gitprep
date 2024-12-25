@@ -847,34 +847,32 @@ sub load_svg {
   return undef unless $svg;
   my $attrs = $svg->attr;
 
-  my ($width, $height) = ($attrs->{width}, $attrs->{height});
-  my ($w, $h) = ($width, $height);
-  my $viewbox = $attrs->{viewBox} || $attrs->{viewbox};
+  # Use viewBox parameter or try to rebuild it if not present.
+  my $viewbox = delete($args{viewBox}) || $args{viewbox} ||
+    $attrs->{viewBox} || $attrs->{viewbox};
+  delete $args{viewbox};
+  delete $attrs->{viewBox};
+  delete $attrs->{viewbox};
   unless ($viewbox) {
-    $viewbox = "0 0 $w $h" if $w && $h;
+    my $w = $attrs->{width};
+    my $h = $attrs->{height};
+    if (defined($w) && $w =~ /^-?\d+$/ && defined($h) && $h =~ /^-?\d+$/) {
+      $viewbox = "0 0 $w $h";
+    }
   }
   $attrs->{viewBox} = $viewbox if $viewbox;
-  delete $attrs->{viewbox};
-  if ($viewbox =~ /^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s"$/) {
-    $w = $3 - $1 unless defined $w;
-    $h = $4 - $2 unless defined $h;
-  }
 
-  $width = delete $args{width} if $args{width};
-  $height = delete $args{height} if $args{height};
-  $attrs->{width} = $width if $width;
-  $attrs->{height} = $height if $height;
+  # If width and/or height are given in call, override them.
+  $attrs->{width} = delete $args{width} if $args{width};
+  $attrs->{height} = delete $args{height} if $args{height};
 
   my $class = delete $args{class};
   my $title = delete $args{title};
-  my $style = delete $args{style};
   my $tag = delete $args{tag};
   $attrs->{$_} = $args{$_} for (keys %args);
   $self->DOM_add_class($svg, $class) if defined $class;
 
-  $style = 'width:fit-content;height:fit-content;' . ($style || '') if $w && $width && $h && $height && ($width != $w || $height != $h);
   %args = ();
-  $args{style} = $style if $style;
   $args{title} = $title if $title;
   $svg = $self->DOM_element($tag || 'span', %args, $svg) if keys %args;
   return $svg;
