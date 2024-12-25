@@ -158,7 +158,6 @@
       my $params = {};
       if (defined $default_branch && $default_branch ne $current_branch) {
         $git->current_branch($rep_info, $default_branch);
-        $params->{default_branch} = $default_branch;
         $current_branch = $default_branch;
       }
       if (defined $private) {
