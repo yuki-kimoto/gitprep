@@ -1336,6 +1336,38 @@ sub _rename_rep {
   }
 }
 
+sub rename_branch {
+  my ($self, $rep_info, $old, $new) = @_;
+
+  # Rename a branch, taking care of default branch settings and pull requests.
+  return if $old eq $new;
+  
+  my $dbi = $self->app->dbi;
+  my $git = $self->app->git;
+  $dbi->connector->txn(sub {
+    my $default_branch = $git->current_branch($rep_info);
+    my $project_row_id = $dbi->model('project')->select(
+      'project.row_id',
+      where => {
+        'user.id' => $rep_info->{user},
+        'project.id' => $rep_info->{project}
+      }
+    )->value;
+    $git->move_branch($rep_info, $old, $new);
+    $git->current_branch($rep_info, $new) if $default_branch eq $old;
+    $dbi->model('pull_request')->update({base_branch => $new},
+    where => {
+      base_project => $project_row_id,
+      base_branch => $old
+    });
+    $dbi->model('pull_request')->update({target_branch => $new},
+    where => {
+      target_project => $project_row_id,
+      target_branch => $old
+    });
+  });
+}
+
 sub prepare_hooks {
   my ($self, $auth_user_id, $rep_info) = @_;
 
@@ -1460,6 +1492,7 @@ sub ruleset_selected {
 
   my $re;
   my $selected = $compiled->{all};
+  return $selected unless defined $target;
   $selected = 1 if $compiled->{default} eq $target;
   foreach $re (@{$compiled->{include}}) {
     last if $selected;

@@ -41,7 +41,7 @@
         $validation->add_failed('to-project' => 'Repository name is too long.');
       }
       elsif (!$vc->check($to_project, 'project_name')) {
-        $validation->add_failed('to-project' => 'Repository name contains invalid charactor.');
+        $validation->add_failed('to-project' => 'Repository name contains invalid character(s) or is reserved.');
       }
       elsif (app->manager->exists_project($user_id, $to_project)) {
         $validation->add_failed('to-project' => "$to_project is already exists");
