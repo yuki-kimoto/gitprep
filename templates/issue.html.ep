@@ -634,7 +634,7 @@
             </div>
             <ul class="commits-date-container">
               % for my $commit (@$commits) {
-                %= include '/include/commit_ref', user_id => $target_user_id, project_id => $target_project_id, commit => $commit;
+                %= include '/include/commit_ref', user_project_path => "/$target_user_id/$target_project_id", commit => $commit;
               % }
             </ul>
           </div>

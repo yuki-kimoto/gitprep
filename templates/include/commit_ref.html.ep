@@ -3,11 +3,9 @@
   my $api = gitprep_api;
 
   # Parameters
-  my $user_id = stash('user_id');
-  my $project_id = stash('project_id');
+  my $user_project_path = stash('user_project_path');
   my $commit = stash('commit');
 
-  my $user_project_path = "/$user_id/$project_id";
   my $commit_comment = join "\n", @{$commit->{comment}};
   $commit_comment =~ s/^[\r\n]*(.*?)[\r\n]*$/$1/;
 %>

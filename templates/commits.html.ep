@@ -138,7 +138,7 @@
           </div>
           <ul class="commits-date-container">
             % for my $commit (@$commits) {
-              %= include '/include/commit_ref', user_id => $user_id, project_id => $project_id, commit => $commit;
+              %= include '/include/commit_ref', user_project_path => $user_project_path, commit => $commit;
             % }
           </ul>
         </div>
