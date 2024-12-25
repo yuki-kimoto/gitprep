@@ -362,7 +362,7 @@ note 'Profile';
       
       # Invalid character
       $t->post_ok('/kimoto1/t2/settings?op=rename-project', form => {'to-project' => '&'});
-      $t->content_like(qr/Repository name contains invalid charactor/);
+      $t->content_like(qr/Repository name contains invalid character\(s\) or is reserved/);
       
       # Rename project
       $t->post_ok('/kimoto1/t2/settings?op=rename-project', form => {'to-project' => 't3'});

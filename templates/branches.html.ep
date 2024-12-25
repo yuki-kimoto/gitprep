@@ -7,101 +7,187 @@
   my $project_id = param('project');
   my $op = param('op') || '';
   my $page = param('page') || 1;
-  
+
   # Git
   my $git = $self->app->git;
 
+  my $session_user_id = $api->session_user_id;
+  my $canadmin = $api->logined && $api->can_write_access($session_user_id, $user_id, $project_id);
   my $rep_info = app->rep_info($user_id, $project_id);
 
-  # Delete
-  my $errors;
-  if ($op eq 'delete' && lc $self->req->method eq 'post') {
-    
-    # Forbbiden
-    unless ($api->logined($user_id)) {
-      $self->redirect_to('/');
-      return;    
-    }
-    
-    # Parameters
-    my $branch = param('branch');
-    
-    # Validator
-    my $vc = app->vc;
-    
-    # Validation result
-    my $validation = $vc->validation;
-    
-    # "branch"
-    if (!(defined $branch && length $branch)) {
-      $validation->add_failed(branch => 'Branch name is empty');
-    }
-
-    if ($validation->is_valid) {
-      # Delete branch
-      eval { $git->delete_branch($rep_info, $branch) };
-      if (my $e = $@) {
-        app->log->error(url_with . ": $e");
-        $errors = ['Internal Error'];
-      }
-      else {
-        $self->flash(message => "Branch $branch is deleted.");
-        $self->redirect_to;
-        return;
-      }
-    }
-    else { $errors = $validation->messages }
-  }
-  
   # Default branch
   my $default_branch_name = $git->current_branch($rep_info);
   my $default_branch = $git->branch($rep_info, $default_branch_name);
-  
+
+  # Read protection rulesets.
+  my $project_row_id = app->dbi->model('project')->select('project.row_id',
+    where => {'user.id' => $user_id, 'project.id' => $project_id}
+  )->value;
+  my $rules = app->manager->rules;
+  my $rulesets = app->dbi->model('ruleset')->select(
+    where => {
+      project => $project_row_id,
+      target => 'branch',
+      active => 1
+    }
+  )->all;
+  foreach my $ruleset (@$rulesets) {
+    $ruleset->{selector} = app->manager->compile_ruleset_selectors($ruleset->{row_id},
+      $default_branch_name);
+    foreach my $rule (@$rules) {
+      push @{$rule->{sets}}, $ruleset if $ruleset->{$rule->{id}};
+    }
+  }
+
+  local *allowed = sub {
+    my ($action, $name) = @_;
+
+    return 0 unless $api->logined;
+    my ($rule) = map $_->{id} eq $action? $_: (), @$rules;
+    foreach my $ruleset (@{$rule->{sets} // []}) {
+      if ($session_user_id ne $user_id || !$ruleset->{owner_bypass}) {
+        return 0 if app->manager->ruleset_selected($ruleset->{selector}, $name);
+      }
+    }
+    return 1;
+  };
+
+  my $all_branches = $git->branches($rep_info);
+
+  my $errors;
+  if (lc $self->req->method eq 'post') {
+    # Parameters
+    my $branch = param('branch');
+    my $new_branch = param('new_branch');
+
+    # Validator
+    my $vc = app->vc;
+
+    # Validation result
+    my $validation = $vc->validation;
+
+    # "branch"
+    if (!(defined $branch && length $branch)) {
+      $validation->add_failed(branch => 'Branch name is empty');
+    } elsif (!grep $_->{name} eq $branch, @$all_branches) {
+      $validation->add_failed(branch => 'Branch does not exist');
+    }
+
+    if ($op ne 'delete') {
+      if (!(defined $new_branch && length $new_branch)) {
+        $validation->add_failed(new_branch => 'New branch name is empty');
+      } elsif (length($new_branch) > 300) {
+          $validation->add_failed(new_branch => 'New branch name is too long');
+      } elsif (!$vc->check($new_branch, 'branch_name')) {
+          $validation->add_failed(new_branch => 'Invalid branch name');
+      } elsif (grep $_->{name} eq $new_branch, @$all_branches) {
+        $validation->add_failed(new_branch => 'Branch name already exists');
+      } elsif (!allowed('creation', $new_branch)) {
+        $validation->add_failed(new_branch => 'New branch name protected')
+      }
+    }
+
+    # Delete
+    if ($op eq 'delete') {
+      # Forbidden
+      unless ($canadmin && allowed('deletion', $branch)) {
+        $self->redirect_to('/');
+        return;
+      }
+
+      if ($validation->is_valid) {
+        # Delete branch
+        eval { $git->delete_branch($rep_info, $branch) };
+        if (my $e = $@) {
+          app->log->error(url_with . ": $e");
+          $errors = ['Internal Error'];
+        }
+        else {
+          $self->flash(message => "Branch $branch has been deleted.");
+          $self->redirect_to;
+          return;
+        }
+      }
+    } elsif ($op eq 'create') {
+      # Forbidden
+      unless ($canadmin && allowed('creation')) {
+        $self->redirect_to('/');
+        return;
+      }
+
+      if ($validation->is_valid) {
+        eval { $git->create_branch($rep_info, $branch, $new_branch) };
+        if (my $e = $@) {
+          app->log->error(url_with . ": $e");
+          $validation->add_failed(creation => 'Internal error');
+        }
+        else {
+          $self->flash(message => "Branch $new_branch has been created.");
+          $self->redirect_to;
+          return;
+        }
+      }
+    } elsif ($op eq 'rename') {
+      # Forbidden
+      unless ($canadmin && allowed('creation')) {
+        $self->redirect_to('/');
+        return;
+      }
+
+      if ($validation->is_valid) {
+        eval { app->manager->rename_branch($rep_info, $branch, $new_branch) };
+        if (my $e = $@) {
+          app->log->error(url_with . ": $e");
+          $validation->add_failed(creation => 'Internal error');
+        }
+        else {
+          $self->flash(message => "Branch $branch has been renamed to $new_branch.");
+          $self->redirect_to;
+          return;
+        }
+      }
+    } elsif ($op eq 'check_names') {
+      $self->render(json => $validation->messages);
+      return;
+    }
+
+    $errors = $validation->messages;
+  }
+
   # Branches
   my $branches = [];
 
   # Pagination
   my $page_count = 20;
   my $skip = $page_count * ($page - 1);
-  
-  my $all_branches = $git->branches($rep_info);
-  my $max = 0;
+
   my $all_count = 0;
   for my $branch (@$all_branches) {
-    $branch->{status} = $git->branch_status(
+    my $status = $git->branch_status(
       $rep_info,
       $default_branch->{name},
       $branch->{name}
     );
-    $max = $branch->{status}{ahead} if $max < $branch->{status}{ahead};
-    $max = $branch->{status}{behind} if $max < $branch->{status}{behind};
-    
-    if ($branch->{status}{ahead} > 100) {
-      $branch->{status}{ahead_bar} = 100;
-    }
-    else {
-      $branch->{status}{ahead_bar} = $branch->{status}{ahead};
-    }
-    if ($branch->{status}{behind} > 100) {
-      $branch->{status}{behind_bar} = 100;
-    }
-    else {
-      $branch->{status}{behind_bar} = $branch->{status}{behind};
-    }
-    
-    $max = 100 if $max > 100;
-    
+
+    $status->{behind_bar} = 100;
+    $status->{behind_bar} = $status->{behind} if $status->{behind} < 100;
+    $status->{ahead_bar} = 100;
+    $status->{ahead_bar} = $status->{ahead} if $status->{ahead} < 100;
+    $branch->{status} = $status;
+
     if ($all_count >= $skip && $all_count < $skip + $page_count) {
       push @$branches, $branch;
     }
+
+    $branch->{protected} = map app->manager->ruleset_selected($_->{selector}, $branch->{name})? 1: (), @$rulesets;
     $all_count++;
   }
-  
+
   my $original_project_row_id = app->dbi->model('project')->select(
     'original_project',
     where => {'user.id' => $user_id, 'project.id' => $project_id}
   )->value;
-  
+
   my $original_project;
   if ($original_project_row_id) {
     $original_project = app->dbi->model('project')->select(
@@ -114,188 +200,437 @@
   }
 %>
 
-% layout 'common', title => "branches  \x{b7} $user_id/$project_id";
+% layout 'common', title => "branches \x{b7} $user_id/$project_id";
 
-  %= include '/include/header';
-  
-  <div class="container" style="padding-bottom:30px">
-    %= include '/include/errors', errors => $errors;
-    %= include '/include/message', message => flash('message');
-    
-    <!-- Branches (for tests) -->
-    
-    <h1 class="topic1">Branches</h1>
-      % if (@$branches) {
-        <ul class="branches">
-          % if (@$branches) {
-            % my $branches_count;
-            % for (my $i = 0; $i < @$branches; $i++) {
-              <%
-                my $branch = $branches->[$i];
-                my $branch_name = $branch->{name};
+%= include '/include/header';
 
-                my $commit_author_email = $branch->{commit}{author_email};
-                my $commit_author_id = app->dbi->model('user')->select(
-                  'id',
-                  where => {email => $commit_author_email}
-                )->value;
+<div class="container" style="padding-bottom:30px">
+  %= include '/include/errors', errors => $errors;
+  %= include '/include/message', message => flash('message');
 
-                my $pull_request = app->dbi->model('pull_request')->select(
-                  {__MY__ => ['row_id']},
-                  where => {
-                    'base_project.id' => $project_id,
-                    'base_project__user.id' => $user_id,
-                    base_branch => $default_branch_name,
-                    target_branch => $branch_name
-                  }
-                )->one;
-                
-                my $issue;
-                if ($pull_request) {
-                  $issue = app->dbi->model('issue')->select(
-                    where => {pull_request => $pull_request->{row_id}}
-                  )->one;
-                }
-                
-              %>
+  <!-- Branches -->
 
-              <li>
-                <ul>
-                  <li>
-                    <div class="branches-name">
-                      <a href="<%= url_for("/$user_id/$project_id/tree/$branch_name") %>">
-                        <%= $branch_name %>
-                      </a>
-                    </div>
-                    <div class="branches-age">
-                      Updated
-                      %= $api->age_element($branch->{commit}{committer_epoch});
-                    </div>
-                    <div class="branches-author"  title="<%= $branch->{commit}{author_email} %>">
-                      by
-                      % if (defined $commit_author_id) {
-                        <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
-                      % } else {
-                        <%= $branch->{commit}{author_name} %>
-                      % }
-                    </div>
-                  </li>
-                  <li class="second-child">
-                    % if ($branch_name eq $default_branch_name) {
-                      <div style="padding-left:80px;padding-top:3px">
-                        <div class="branches-default">
-                          Default
-                        </div>
-                      </div>
-                    % } else {
-                      <table class="ahead-behind" title="Ahead behind count: <%= $branch->{status}{behind} + $branch->{status}{ahead} %>">
-                        <tr>
-                          <td class="ahead-behind-behind-count">
-                            <%= $branch->{status}{behind} %>
-                          </td>
-                          <td class="ahead-behind-separate">
-                          </td>
-                          <td style="padding-left:3px">
-                            <%= $branch->{status}{ahead} %>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td style="width:100px">
-                            <div style="margin-left:auto;margin-right:0;background:#dcdcdc;width:<%= $branch->{status}{behind_bar} %>%;height:4px"></div>
-                          </td>
-                          <td class="ahead-behind-separate">
-                          </td>
-                          <td style="width:100px">
-                            <div style="background:#dcdcdc;width:<%= $branch->{status}{ahead_bar} %>%;height:4px"></div>
-                          </td>
-                        </tr>
-                      </table>
-                    % }
-                  </li>
-                  <li class="last-child">
-                    % if ($branch_name eq $default_branch_name) {
-                      % if ($api->logined($user_id)) {
-                        <a href="<%= url_for("/$user_id/$project_id/settings#form-default-branch") %>" type="submit" class="btn btn-small">Change default branch</a>
-                      % }
-                    % } else {
-                      % if ($api->logined) {
-                        % if ($pull_request) {
-                          #<%= $issue->{number} %>
-                          % if ($issue->{open}) {
-                            <a class="branches-open" href="<%= url_for("/$user/$project/pull/$issue->{number}") %>">
-                              %= $api->icon('git-pull-request');
-                              open
-                            </a>
-                          % } else {
-                            <a class="branches-close" href="<%= url_for("/$user/$project/pull/$issue->{number}") %>">
-                              %= $api->icon('git-pull-request-closed');
-                              closed
-                            </a>
-                          % }
-                        % } else {
-                          <% 
-                            my $compare_url;
-                            if ($original_project) {
-                              my $original_user_id = $original_project->{'user.id'};
-                              my $original_project_id = $original_project->{id};
-                              
-                              my $exists_original_branch_name = app->git->exists_branch(
-                                app->rep_info($original_user_id, $original_project_id),
-                                $branch_name
-                              );
-                              if ($exists_original_branch_name) {
-                                $compare_url = url_for("/$original_user_id/$original_project_id/compare/$branch_name...$user_id:$project_id:$branch_name")->query(expand => 1);
-                              }
-                              else {
-                                my $original_project_default_branch = $git->current_branch(app->rep_info($original_user_id, $original_project_id));
-                                $compare_url = url_for("/$original_user_id/$original_project_id/compare/$original_project_default_branch...$user_id:$project_id:$branch_name")->query(expand => 1);
-                              }
-                            }
-                            else {
-                              $compare_url = url_for("/$user_id/$project_id/compare/$branch_name")->query(expand => 1);
-                            }
-                          %>
-                          <a class="btn btn-small" href="<%= $compare_url %>">
-                            New pull request
-                          </a>
-                        % }
-                      % } else {
-                        <a class="btn btn-small" href="<%= url_for("/$user_id/$project_id/compare/$branch_name")->query(expand => 1) %>">
-                          %= $api->icon('git-compare');
-                          Compare
-                        </a>
-                      % }
-                      % if ($api->logined($user_id)) {
-                        % if ($pull_request && $issue->{open}) {
-                          <button class="btn btn-small disabled delete-branch">
-                            %= $api->icon('x-circle');
-                            Delete
-                          </button>
-                        % } else {
-                          <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
-                            %= hidden_field branch => $branch_name;
-                            <span class="btn btn-small delete-branch" onclick="$(this).closest('form').trigger('submit');" style="color:#900;fill:#900;">
-                              %= $api->icon('x-circle');
-                              Delete
-                           <span>
-                          </form>
-                        % }
-                      % }
-                    % }
-                  </li>
-                </ul>
-              </li>
-              % $branches_count++;
-            % }
-
-            %= include '/include/pagination', page => $page, rows => $all_count, rows_per_page => $page_count, left => 'Newer', right => 'Older';
-          % } else {
-            <li style="text-align:center;text-color:#767676">
-              There aren’t any branches.
-            </li>
-          % }
-        </ul>
-      % }
+  <div class="branches-header">
+    <h2>Branches</h2>
+    % if ($canadmin && allowed('creation') && @$all_branches) {
+      <div class="branches-new-btn default-button" tabindex="0" onclick="$('.branches-new-dialog')[0].showModal();" >New branch</div>
+    % }
   </div>
-  
-  %= include '/include/footer';
+  % if (@$branches) {
+    <div class="branches">
+      <div>
+        <div class="name-column">Branch</div>
+        <div class="updated-column">Updated</div>
+        <div class="behind-ahead-column">
+          <span style="border-right: 1px solid;">Behind&nbsp;</span>
+          <span>Ahead</span>
+        </div>
+        <div class="pull-request-column">Pull request</div>
+        <div class="last-child"></div>
+      </div>
+      % my $branches_count;
+      % for (my $i = 0; $i < @$branches; $i++) {
+        <%
+          my $branch = $branches->[$i];
+          my $branch_name = $branch->{name};
+          my $status = $branch->{status};
+
+          my $commit_author_email = $branch->{commit}{author_email};
+          my $commit_author_id = app->dbi->model('user')->select(
+            'id',
+            where => {email => $commit_author_email}
+          )->value;
+
+          my $pull_request = app->dbi->model('pull_request')->select(
+            {__MY__ => ['row_id']},
+            where => {
+              'base_project.id' => $project_id,
+              'base_project__user.id' => $user_id,
+              base_branch => $default_branch_name,
+              target_branch => $branch_name
+            }
+          )->one;
+
+          my $issue;
+          if ($pull_request) {
+            $issue = app->dbi->model('issue')->select(
+              where => {pull_request => $pull_request->{row_id}}
+            )->one;
+          }
+
+        %>
+
+        <div>
+          <div class="name-column">
+            <div class="branches-name">
+              <a href="<%= url_for("/$user_id/$project_id/tree/$branch_name") %>">
+                <%= $branch_name %>
+              </a>
+            </div>
+            % if ($branch->{protected}) {
+              %= $api->icon('shield', title => 'This branch is protected by branch protections');
+            % }
+          </div>
+          <div class="updated-column">
+            %= include '/include/authored_committed', commit => $branch->{commit}, short => 1;
+          </div>
+          <div class="behind-ahead-column">
+            % if ($branch_name eq $default_branch_name) {
+              <div style="padding-top:3px;width:100%;text-align:center;">
+                <div class="branches-default">
+                  Default
+                </div>
+                % if ($canadmin) {
+                  <a href="<%= url_for("/$user_id/$project_id/settings#form-default-branch") %>" type="submit" class="btn btn-small" title="Change default branch">Change</a>
+                % }
+              </div>
+            % } else {
+              <table class="ahead-behind" title="Ahead behind count: <%= $branch->{status}{behind} + $branch->{status}{ahead} %>">
+                <tr>
+                  <td class="ahead-behind-behind-count">
+                    <%= $branch->{status}{behind} %>
+                  </td>
+                  <td class="ahead-behind-separate">
+                  </td>
+                  <td style="padding-left:3px">
+                    <%= $branch->{status}{ahead} %>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="width:100px">
+                    <div style="margin-left:auto;margin-right:0;background:#dcdcdc;width:<%= $branch->{status}{behind_bar} %>%;height:4px"></div>
+                  </td>
+                  <td class="ahead-behind-separate">
+                  </td>
+                  <td style="width:100px">
+                    <div style="background:#dcdcdc;width:<%= $branch->{status}{ahead_bar} %>%;height:4px"></div>
+                  </td>
+                </tr>
+              </table>
+            % }
+          </div>
+          <div class="pull-request-column">
+            <div style="display:flex;justify-content:center;">
+              % if ($branch_name ne $default_branch_name) {
+                % if ($api->logined) {
+                  % if ($pull_request) {
+                    % if ($issue->{open}) {
+                      <a class="branches-open" href="<%= url_for("/$user/$project/pull/$issue->{number}") %>" title="<%=$issue->{title} %>">
+                        %= $api->icon('git-pull-request');
+                        &nbsp;
+                        %= $issue->{number}
+                      </a>
+                    % } else {
+                      <a class="branches-close" href="<%= url_for("/$user/$project/pull/$issue->{number}") %>" title="<%=$issue->{title} %>">
+                        %= $api->icon('git-pull-request-closed');
+                        &nbsp;
+                        %= $issue->{number}
+                      </a>
+                    % }
+                  % } else {
+                    <%
+                      my $compare_url;
+                      if ($original_project) {
+                        my $original_user_id = $original_project->{'user.id'};
+                        my $original_project_id = $original_project->{id};
+
+                        my $exists_original_branch_name = app->git->exists_branch(
+                          app->rep_info($original_user_id, $original_project_id),
+                          $branch_name
+                        );
+                        if ($exists_original_branch_name) {
+                          $compare_url = url_for("/$original_user_id/$original_project_id/compare/$branch_name...$user_id:$project_id:$branch_name")->query(expand => 1);
+                        }
+                        else {
+                          my $original_project_default_branch = $git->current_branch(app->rep_info($original_user_id, $original_project_id));
+                          $compare_url = url_for("/$original_user_id/$original_project_id/compare/$original_project_default_branch...$user_id:$project_id:$branch_name")->query(expand => 1);
+                        }
+                      }
+                      else {
+                        $compare_url = url_for("/$user_id/$project_id/compare/$branch_name")->query(expand => 1);
+                      }
+                    %>
+                    <a class="btn btn-small" href="<%= $compare_url %>">
+                      New pull request
+                    </a>
+                  % }
+                % } else {
+                  <a class="btn btn-small" href="<%= url_for("/$user_id/$project_id/compare/$branch_name")->query(expand => 1) %>">
+                    %= $api->icon('git-compare');
+                    Compare
+                  </a>
+                % }
+              % }
+            </div>
+          </div>
+          <div class="last-child">
+            % if ($canadmin && allowed('deletion', $branch_name)) {
+              % if (allowed('creation')) {
+                %= $api->icon('pencil', title => 'Rename', branch => $branch_name, tabindex => 0, onclick => 'var d = $(\'.branches-rename-dialog\', document); $(\'[name="branch"]\', d).val($(this).attr(\'branch\')); d[0].showModal();');
+              % }
+              % if ($pull_request && $issue->{open}) {
+                %= $api->icon('trash');
+              % } else {
+                <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
+                  %= hidden_field branch => $branch_name;
+                  %= $api->icon('trash', tabindex => 0, onclick => "\$(this).closest('form').trigger('submit');", style => 'cursor:pointer;', title => 'Delete branch');
+                </form>
+              % }
+            % }
+          </div>
+        </div>
+        % $branches_count++;
+      % }
+    </div>
+
+    %= include '/include/pagination', page => $page, rows => $all_count, rows_per_page => $page_count, left => 'Newer', right => 'Older';
+  % } else {
+    <div style="text-align:center;text-color:#767676">
+      There aren’t any branches.
+    </div>
+  % }
+</div>
+
+%# New branch creation modal dialog.
+<dialog class="branches-new-dialog popup" onmousedown="this == event.target? this.close(): 0;" default-branch="<%= $default_branch_name %>">
+  <form method="post" action="<%= url_for %>" defaultSubmit=".default-button">
+    <input type=hidden name="op" value="create" />
+    <div>
+      <span class="bold">
+          Create a branch
+        </span>
+        <button formmethod="dialog" class="x-button" value="cancel">
+          %= $api->icon('x-12');
+        </button>
+      </div>
+    </div>
+    <div class="separator"></div>
+    <div class="bold">
+      New branch name
+    </div>
+    <input type="text" name="new_branch" autofocus="yes"
+      onkeypress="$('.error', $(this).closest('dialog')).hide();" />
+    <div class="error">
+      %= $api->icon('alert-fill-12');
+      <span class="error-list"></span>
+    </div>
+    <div class="bold">
+      Source
+    </div>
+    %# Bootstrap dropdown menu.
+    <input type="hidden" name="branch" />
+    <div class="dropdown">
+      <button type="button" class="btn dropdown-toggle" data-toggle="dropdown">
+        %= $api->icon('git-branch');
+        <span class="source-button-text"></span>
+      </button>
+      <ul class="dropdown-menu popup">
+        <div class="input-frame">
+          %= $api->icon('search');
+          <input placeholder="Find a branch..." />
+        </div>
+        % foreach my $branch (sort { $a->{name} cmp $b->{name} } @$all_branches) {
+          <li class="dropdown-item" value="<%= $branch->{name} %>">
+            <span class="check-mark"><%= $api->icon('check') %></span>
+            <span><%= $branch->{name} %></span>
+            % if ($branch->{name} eq $default_branch_name) {
+              <span class="flex-padding"></span>
+              <span class="badge">default</span>
+            % }
+          </li>
+        % }
+        <li class="empty">Nothing to show</li>
+      </ul>
+    </div>
+    <div class="separator"></div>
+    <div class="buttons">
+      <button type="button" class="btn default-button">
+        Create new branch
+      </button>
+      <button formmethod="dialog" class="btn" value="cancel">Cancel</button>
+    </div>
+  </form>
+  %= javascript begin
+    (function (script) {
+      $(document).ready(function () {
+        var dialog = $(script).closest('dialog');
+        var form = $('form', dialog);
+        var dropdown = $('.dropdown', dialog);
+        var button_text = $('button .source-button-text', dropdown);
+        var branch = $('[name="branch"]', form)
+        var new_branch = $('[name="new_branch"]', form);
+        var items = $('li.dropdown-item', dropdown);
+        var empty = $('li.empty', dropdown);
+        var search = $('input', dropdown);
+        var submit = $('button.default-button', form);
+        var error = $('.error', form);
+        var error_list = $('.error-list', form);
+        var default_branch = dialog.attr('default-branch');
+
+        // Select a branch in dropdown list.
+        var select = function (name) {
+          button_text.text(name);
+          branch.val(name);
+          items.each(function () {
+            var self = $(this);
+            var v = self.attr('value') == name? 'visible': 'hidden';
+            $('.check-mark', self).css('visibility', v);
+          });
+        };
+
+        // Show matching items in dropdown list.
+        var filter = function (substring) {
+          empty.show();
+          items.each(function () {
+            var self = $(this);
+            var value = self.attr('value');
+            self.hide();
+            if (!substring || value.includes(substring)) {
+              self.show();
+              empty.hide();
+            }
+          });
+        };
+
+        // Initialize dialog.
+        var init = function () {
+          filter();
+          error.hide();
+          select(default_branch);
+          new_branch.val('');
+        };
+
+        items.on('click', function () {
+          select($(this).attr('value'));
+        });
+
+        search.on('input', function () {
+          filter(search.val());
+        });
+
+        Gitprep.onClassChange(dropdown, function () {
+          if (dropdown.is(':visible')) {
+            search.focus();
+          }
+        });
+
+        submit.on('click', function () {
+          $.ajax({
+            type: 'POST',
+            url: '<%= url_for %>',
+            dataType: 'json',
+            data: {
+              op: 'check_names',
+              branch: branch.val(),
+              new_branch: new_branch.val()
+            },
+            success: function (errs) {
+              error.hide();
+              error_list.html('');
+              $.each(errs, function (index, err) {
+                error_list.append($('<div>').text(err));
+                error.show();
+              });
+              if (!errs.length) {
+                form.submit();
+              }
+            },
+            error: function () {
+              error_list.html('<div>Internal error</div>');
+              error.show();
+            }
+          });
+        });
+
+        dialog.on('close', init);
+        init();
+      });
+    })(document.currentScript);
+  % end
+</dialog>
+
+%# Branch rename modal dialog.
+<dialog class="branches-rename-dialog popup" onmousedown="this == event.target? this.close(): 0;">
+  <form method="post" action="<%= url_for %>" defaultSubmit=".default-button">
+    <input type=hidden name="op" value="rename" />
+    <input type=hidden name="branch" />
+    <div>
+      <span class="bold">
+          Rename a branch
+        </span>
+        <button formmethod="dialog" class="x-button" value="cancel">
+          %= $api->icon('x-12');
+        </button>
+      </div>
+    </div>
+    <div class="separator"></div>
+    <div class="bold">
+      New branch name
+    </div>
+    <input type="text" name="new_branch" autofocus="yes"
+      onkeypress="$('.error', $(this).closest('dialog')).hide();" />
+    <div class="error">
+      %= $api->icon('alert-fill-12');
+      <span class="error-list"></span>
+    </div>
+    <div class="separator"></div>
+    <div class="buttons">
+      <button type="button" class="btn default-button">
+        Rename branch
+      </button>
+      <button formmethod="dialog" class="btn" value="cancel">Cancel</button>
+    </div>
+  </form>
+  %= javascript begin
+    (function (script) {
+      $(document).ready(function () {
+        var dialog = $(script).closest('dialog');
+        var form = $('form', dialog);
+        var submit = $('button.default-button', form);
+        var error = $('.error', form);
+        var error_list = $('.error-list', form);
+        var branch = $('[name="branch"]', form);
+        var new_branch = $('[name="new_branch"]', form);
+
+        // Initialize dialog.
+        var init = function () {
+          error.hide();
+          new_branch.val('');
+        };
+
+        submit.on('click', function () {
+          $.ajax({
+            type: 'POST',
+            url: '<%= url_for %>',
+            dataType: 'json',
+            data: {
+              op: 'check_names',
+              branch: branch.val(),
+              new_branch: new_branch.val()
+            },
+            success: function (errs) {
+              error.hide();
+              error_list.html('');
+              $.each(errs, function (index, err) {
+                error_list.append($('<div>').text(err));
+                error.show();
+              });
+              if (!errs.length) {
+                form.submit();
+              }
+            },
+            error: function () {
+              error_list.html('<div>Internal error</div>');
+              error.show();
+            }
+          });
+        });
+
+        dialog.on('close', init);
+        init();
+      });
+    })(document.currentScript);
+  % end
+</dialog>
+
+%= include '/include/footer';

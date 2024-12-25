@@ -967,7 +967,9 @@ ul.issues-label-pallet {
   color:white;
   fill:white;
   background:#6cc644;
-  padding:5px 8px;
+  display: inline-block;
+  min-width: 80px;
+  padding:5px 8px 3px 8px;
   border-radius:3px;
   margin-right:4px;
   border-radius:3px;
@@ -983,7 +985,9 @@ a.branches-close:visited {
   color:white;
   fill:white;
   background:#bd2c00;
-  padding:5px 8px;
+  display: inline-block;
+  min-width: 80px;
+  padding:5px 8px 3px 8px;
   border-radius:3px;
   margin-right:4px;
   border-radius:3px;
@@ -3192,34 +3196,63 @@ a:hover .btn-delete {
 }
 
 /* Branches */
+.branches-header {
+  padding: 10px 0;
+  margin-bottom: 25px;
+}
+.branches-header > * {
+  display: inline;
+}
+.branches-header h2 {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  font-size: 160%;
+}
+.branches-header .default-button {
+  float: right;
+  color: white;
+  padding: 4px;
+}
 .branches {
+  display: table;
   overflow:hidden;
   margin-bottom:15px;
+  width: 100%;
+  border-top:1px solid #e6e9e6;
+  border-collapse: collapse;
 }
-.branches > li {
+.branches > * {
+  display: table-row;
   border:1px solid #e6e9e6;
   border-top:none;
+}
+.branches > *:first-child {
+  border:1px solid #e6e9e6;
+  background-color: #f6f8fa;
+}
+.branches > * > * {
+  display: table-cell;
+  vertical-align: middle;
   padding:8px 8px;
 }
-.branches > li:first-child {
-  border-top:1px solid #e6e9e6;
+.branches > *:first-child > * {
+  font-weight: bold;
+  color: #59636e;
 }
-.branches > li > ul {
-  overflow:hidden;
+.branches > *:first-child .behind-ahead-column,
+.branches > *:first-child .pull-request-column {
+  text-align: center;
 }
-.branches > li > ul > li:first-child {
-  float:left;
-  width:50%;
-  overflow:hidden;
-  padding-top:4px;
+.branches .name-column {
+  width: 45%;
 }
-.branches > li > ul > li.second-child{
-  float:left;
-  width:25%;
+.branches .updated-column {
+  width: 15%;
 }
-.branches > li > ul > li.last-child {
-  float:left;
-  width:25%;
+.branches .pull-request-column > * {
+  margin-inline: auto;
+}
+.branches div.last-child {
   text-align:right;
 }
 
@@ -3233,14 +3266,132 @@ a:hover .btn-delete {
   padding:2px 6px;
 }
 
-.branches-age {
-  display:inline-block;
-  color:#aaa;;
+.branches-new-dialog {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 0;
+  padding: 0;
+  overflow: visible;
 }
-
-.branches-author {
-  display:inline-block;
-  color:#767676;
+.branches-new-dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 400px;
+  padding: 12px;
+}
+.branches-new-dialog .error {
+  display: flex;
+  gap: 8px;
+  color: red;
+  fill: red;
+}
+.branches-new-dialog .x-button {
+  float: right;
+  border: none;
+  background-color: transparent;
+}
+.branches-new-dialog .separator {
+  height: 1px;
+  width: 100%;
+  padding: 0;
+  border-top: 1px solid #818b9840;
+}
+.branches-new-dialog .dropdown .dropdown-menu {
+  margin-top: 5px;
+  position: absolute;
+  display: none;
+}
+.branches-new-dialog .dropdown.open .dropdown-menu {
+  display: block;
+}
+.branches-new-dialog .input-frame {
+  width: 100%;
+  padding: 2px 5px;
+  border: 1px solid #c0c0c0;
+  border-radius: 4px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.branches-new-dialog .input-frame:has(:focus) {
+ outline: 2px solid #0000c0;
+}
+.branches-new-dialog .input-frame input {
+  flex-grow: 2;
+  border: none;
+  outline: none;
+}
+.branches-new-dialog .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 3px;
+  border-top: 1px solid #818b9840;
+}
+.branches-new-dialog .badge {
+  margin-left: 15px;
+  padding: 2px 8px;
+  border: 1px solid #818b9840;
+  border-radius: 6px;
+  font-size: 55%;
+  font-weight: normal;
+}
+.branches-new-dialog li.empty {
+  padding: 15px 3px;
+  text-align: center;
+}
+.branches-new-dialog .buttons {
+  margin-top: 5px;
+}
+.branches-new-dialog .buttons button {
+  padding: 3px;
+  margin-left: 10px;
+  float: right;
+}
+.branches-rename-dialog {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 0;
+  padding: 0;
+  overflow: visible;
+}
+.branches-rename-dialog form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 400px;
+  padding: 12px;
+}
+.branches-rename-dialog .error {
+  display: flex;
+  gap: 8px;
+  color: red;
+  fill: red;
+}
+.branches-rename-dialog .x-button {
+  float: right;
+  border: none;
+  background-color: transparent;
+}
+.branches-rename-dialog .separator {
+  height: 1px;
+  width: 100%;
+  padding: 0;
+  border-top: 1px solid #818b9840;
+}
+.branches-rename-dialog .buttons {
+  margin-top: 5px;
+}
+.branches-rename-dialog .buttons button {
+  padding: 3px;
+  margin-left: 10px;
+  float: right;
 }
 
 .branches-select {
@@ -3285,6 +3436,7 @@ a:hover .btn-delete {
 }
 
 .ahead-behind {
+  width:100%;
   color:#767676;
   font-size:12px;
   border-collapse:collapse;
@@ -4084,6 +4236,7 @@ pre.command-line {
   border: 2px solid #008000;
   border-radius: 4px;
 }
+.default-button:focus,
 .default-button:hover {
   background: #30c030;
 }

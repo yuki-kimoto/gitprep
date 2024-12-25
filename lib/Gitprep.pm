@@ -370,37 +370,55 @@ sub startup {
   $dbi->create_model($_) for @$models;
 
   # Validator
+  my $validate_user_name = sub {
+    my $value = shift;
+      
+    return ($value || '') =~ /^$user_re$/;
+  };
+
+  my $validate_project_name = sub {
+    my $value = shift;
+    return 0 unless defined $value;
+    return 0 if $value eq '.' || $value eq '..' || $value =~ /\.wiki$/;
+    return ($value || '') =~ /$project_re$/;
+  };
+
+  my $validate_branch_name = sub {
+    my $value = shift;
+    return 0 unless defined $value;
+    foreach my $component (split '/', $value, -1) {
+      return 0 if length($component) > 250;
+      return 0 if $component =~ /^@?$/;
+      return 0 if $component =~ /^\./;
+      return 0 if $component =~ /\.(?:lock)?$/;
+      return 0 if $component =~ /\.\.|@\{|[?*[\\ ~^:\x00-\x1F\x7F]/;
+    }
+    return 1;
+  };
+
   my $vc = Validator::Custom->new;
   $self->vc($vc);
   $vc->register_constraint(
-    user_name => sub {
-      my $value = shift;
-      
-      return ($value || '') =~ /^$user_re$/;
-    },
-    project_name => sub {
-      my $value = shift;
-      return 0 unless defined $value;
-      return 0 if $value eq '.' || $value eq '..';
-
-      return ($value || '') =~ /$project_re$/;
-    }
+    user_name => $validate_user_name,
+    project_name => $validate_project_name,
+    branch_name => $validate_branch_name
   );
-  
-  $vc->add_check(project_name => sub {
-    my ($vc, $value) = @_;
-    
-    return 0 unless defined $value;
-    return 0 if $value eq '.' || $value eq '..';
-    
-    return ($value || '') =~ /$project_re$/;
-  });
+
   $vc->add_check(user_name => sub {
     my ($vc, $value) = @_;
-    
-    return ($value || '') =~ /^$user_re$/;
+    return $validate_user_name->($value);
   });
-  
+
+  $vc->add_check(project_name => sub {
+    my ($vc, $value) = @_;
+    return $validate_project_name->($value);
+  });
+
+  $vc->add_check(branch_name => sub {
+    my ($vc, $value) = @_;
+    return $validate_branch_name->($value);
+  });
+
   # Basic auth plugin
   $self->plugin('BasicAuth');
 

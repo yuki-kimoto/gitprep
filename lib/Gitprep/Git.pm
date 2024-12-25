@@ -637,6 +637,18 @@ sub file_exists {
   return 1 if <$fh>;
 }
 
+sub create_branch {
+  my ($self, $rep_info, $branch_point, $new_branch) = @_;
+  my @cmd = $self->cmd($rep_info, 'branch', $new_branch, $branch_point);
+  Gitprep::Util::run_command(@cmd) or croak 500, 'git-branch creation failed';
+}
+
+sub move_branch {
+  my ($self, $rep_info, $old, $new) = @_;
+  my @cmd = $self->cmd($rep_info, 'branch', '-m', $old, $new);
+  Gitprep::Util::run_command(@cmd) or croak 500, 'git-branch renaming failed';
+}
+
 sub delete_branch {
   my ($self, $rep_info, $branch) = @_;
   
