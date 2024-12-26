@@ -361,6 +361,14 @@ Please fix it the following way.
     # Restart
     ./gitprep
 
+### Encoding errors occur when using Windows git client over HTTP
+
+This seems related to HTTP/2 use: forcing HTTP/1.1 should resolve the problem.
+
+On the Windows client, execute the command:
+
+    git config --global http.version HTTP/1.1
+
 ### I want to set time zone.
 
 GitPrep is timezone-agnostic. It delegates time zone handling to the browser.
