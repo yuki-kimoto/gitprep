@@ -131,7 +131,13 @@
                   <span id="watch-btn-frame">
                     %= include '/api/watch', state => undef;
                   </span>
-                  <a href="<%= url_for("/$user_id/$project_id/fork") %>" class="btn btn-fork">
+                  <a  class="btn btn-fork"
+                    % if ($state ne 'init') {
+                      href="<%= url_for("/$user_id/$project_id/fork") %>"
+                    % } else {
+                      disabled="yes" title="Cant't fork because the repository is empty"
+                    % }
+                    >
                     %= $api->icon('repo-forked', class => 'icon-on-baseline');
                     Fork
                     <span class="count-label">
