@@ -63,7 +63,11 @@
                     %= $api->icon('lock');
                   % }
                 </div>
-                <div class="repositories-description">
+                <div class="repositories-description"
+                  % if ($rep->{description} ne $rep->{full_description}) {
+                    title="<%= $rep->{full_description} %>"
+                  % }
+                  >
                   <%= $rep->{description} %>
                 </div>
                 <div class="repositories-age">
