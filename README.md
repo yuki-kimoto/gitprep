@@ -229,7 +229,7 @@ You maybe see the following error
     fatal: The remote end hung up unexpectedly
     fatal: The remote end hung up unexpectedly
 
-Please increase increase the value of MOJO_MAX_MESSAGE_SIZE
+Please increase the value of MOJO_MAX_MESSAGE_SIZE
     
     # 1GB
     export MOJO_MAX_MESSAGE_SIZE=1024000000

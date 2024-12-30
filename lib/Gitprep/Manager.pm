@@ -9,6 +9,7 @@ use File::Temp ();
 use Fcntl ':flock';
 use Carp 'croak';
 use File::Spec;
+use Scalar::Util 'weaken';
 use Gitprep::Util;
 
 has 'app';
@@ -264,7 +265,7 @@ sub admin_user {
 }
 
 sub fork_project {
-  my ($self, $forked_user_id, $user_id, $project_id) = @_;
+  my ($self, $forked_user_id, $forked_project_id, $user_id, $project_id, $single, $description) = @_;
   
   my $user_row_id = $self->api->get_user_row_id($user_id);
   
@@ -284,7 +285,7 @@ sub fork_project {
       eval {
         $self->_create_project(
           $forked_user_id,
-          $project_id,
+          $forked_project_id,
           {
             original_project => $project->{row_id},
             private => $project->{private}
@@ -295,7 +296,7 @@ sub fork_project {
       
       # Create repository
       eval {
-        $self->_fork_rep($user_id, $project_id, $forked_user_id, $project_id);
+        $self->_fork_rep($user_id, $project_id, $forked_user_id, $forked_project_id, $single, $description);
       };
       croak $error = $@ if $@;
     });
@@ -337,7 +338,7 @@ sub member_projects {
   # base: current project.
   # sub: current project and descendant forks.
   # subordinates: descendant forks.
-  # all: the complete frok tree from its root.
+  # all: the complete fork tree from its root.
   $scope = lc($scope // 'one');
   
   # DBI
@@ -346,17 +347,20 @@ sub member_projects {
 
   # Recursive gathering of descendant forks
   local *closure = sub {
-    my ($project, $levels) = @_;
+    my ($project, $levels, $parent) = @_;
     $levels //= 9999999999;
+    $project->{parent} = $parent;
+    weaken $project->{parent};
+    my $children = $dbi->model('project')->select(
+      [
+        {__MY__ => ['row_id', 'id']},
+        {user => ['id']}
+      ],
+      where => {'project.original_project' => $project->{row_id}}
+    )->all;
+    $project->{children} = $children;
     if (--$levels > 0) {
-      my $children = $dbi->model('project')->select(
-        [
-          {__MY__ => ['row_id', 'id']},
-          {user => ['id']}
-        ],
-        where => {'project.original_project' => $project->{row_id}}
-      )->all;
-      closure($_, $levels) for (@$children);
+      closure($_, $levels, $project) for (@$children);
     }
     CORE::push @results, $project;
   };
@@ -1271,7 +1275,7 @@ sub _exists_rep {
 }
 
 sub _fork_rep {
-  my ($self, $user_id, $project_id, $to_user_id, $to_project_id) = @_;
+  my ($self, $user_id, $project_id, $to_user_id, $to_project_id, $single, $description) = @_;
   
   # Fork repository
   my $git = $self->app->git;
@@ -1287,15 +1291,20 @@ sub _fork_rep {
     'clone',
     '-q',
     '--bare',
+    $single? '--single-branch': (),
     $rep_git_dir,
     $to_rep_git_dir
   );
   Gitprep::Util::run_command(@cmd)
     or croak "Can't fork repository(_fork_rep): @cmd";
-  
-  # Copy description
-  copy "$rep_git_dir/description", "$to_rep_git_dir/description"
-    or croak "Can't copy description file(_fork_rep)";
+
+  if (defined $description) {
+    $git->description($to_rep_info, $description);
+  } else {
+    # Copy description
+    copy "$rep_git_dir/description", "$to_rep_git_dir/description"
+      or croak "Can't copy description file(_fork_rep)";
+  }
 }
 
 sub _rename_project {

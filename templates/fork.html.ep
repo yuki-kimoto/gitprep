@@ -1,37 +1,209 @@
 <%
   # API
   my $api = gitprep_api;
-  
+
   # Parameters
   my $user_id = param('user');
   my $project_id = param('project');
-  my $session_user_row_id = session('user_row_id');
-  my $session_user = app->dbi->model('user')->select(
-    where => {row_id => $session_user_row_id}
-  )->one;
-  
+  my $op = param('op');
+
   # Can fork?
   unless ($api->logined) {
     $self->redirect_to('/');
     return;
   }
-  
-  # Repository is already exists
-  if (app->manager->exists_project($session_user->{id}, $project_id)) {
-    $self->redirect_to("/$session_user->{id}/$project_id");
-    return;
-  }
-  # Fork
-  else {
-    eval { app->manager->fork_project($session_user->{id}, $user_id, $project_id) };
-    if (my $e = $@) {
-      $self->reply->exception('Internal Error');
-      app->log->error(url_for . ": $e");
+
+  my $session_user_row_id = $api->session_user_row_id;
+  my $session_user_id = $api->session_user_id;
+
+  my $errors;
+  if (lc $self->req->method eq 'post') {
+    # Parameters.
+    my $forked_project_id = param('forked_project_id');
+    my $description = param('description') // '';
+
+    # Validation.
+    my $vc = app->vc;
+    my $validation = $vc->validation;
+    if (!(defined $forked_project_id && length $forked_project_id)) {
+      $validation->add_failed(fork => 'New repository name must not be blank.');
+    } elsif (!$vc->check($forked_project_id, 'project_name')) {
+      $validation->add_failed(fork => 'New repository name is reserved or invalid.');
+    } elsif (app->dbi->model('project')->select(
+      where => {user => $session_user_row_id, id => $forked_project_id}
+      )->one) {
+      $validation->add_failed(fork => "The repository $forked_project_id already exists on this account.");
     }
-    else {
-      flash(message => "Repository is forked from /$user_id/$project_id.");
-      $self->redirect_to("/$session_user->{id}/$project_id");
+
+    if (length($description) > 300) {
+      $validation->add_failed(description => 'description is too long');
     }
-    return;
+
+    if ($op eq 'fork') {
+      my $single = param('single');
+      eval { app->manager->fork_project($session_user_id, $forked_project_id, $user_id, $project_id, $single, $description) };
+      if (my $e = $@) {
+        $self->reply->exception('Internal Error');
+        app->log->error(url_for . ": $e");
+      }
+      else {
+        flash(message => "Repository forked from $user_id/$project_id.");
+        $self->redirect_to("/$session_user_id/$forked_project_id");
+      }
+      return;
+    } elsif ($op eq 'check') {
+      $self->render(json => $validation->messages);
+      return;
+    }
+
+    $errors = $validation->messages;
   }
+
+  my $rep_info = app->rep_info($user_id, $project_id);
+  my $description = app->git->description($rep_info) // '';
+  my $default_branch = app->git->current_branch($rep_info);
+
+  my $members = app->manager->member_projects($user_id, $project_id, 'all');
+  my $siblings = [sort {$a->{id} cmp $b->{id}} (grep $_->{'user.id'} eq $session_user_id, @$members)];
 %>
+
+% layout 'common', title => "Fork $user_id/$project_id";
+
+%= include '/include/header';
+
+<div class="container" style="padding-bottom:30px">
+  %= include '/include/errors', errors => $errors;
+  %= include '/include/message', message => flash('message');
+  <div class="fork-header">
+    <h2>Create a new fork</h2>
+  </div>
+  <div class="fork">
+    <div>
+      A <i>fork</i> is a copy of a repository. Forking a repository allows you
+      to freely experiment with changes without affecting the original
+      project.
+      <a href="<%= url_for("/$user_id/$project_id/forks") %>">
+        View existing forks.
+      </a>
+    </div>
+    % if (@$siblings) {
+      <div class="already">
+        % my $last = pop @$siblings;
+        You already forked or created
+        <%= @$siblings? 'some repositories': 'a repository' %>
+        belonging to the same network as the one you are currently forking:
+        % foreach my $sibling (@$siblings) {
+          % my $id = "$sibling->{'user.id'}/$sibling->{id}";
+          <span><a href="<%= url_for("/$id") %>"><%= $id %></a>,</span>
+        % }
+        % my $id = "$last->{'user.id'}/$last->{id}";
+        <span><a href="<%= url_for("/$id") %>"><%= $id %></a>.</span><br />
+        Instead of forking again, you might consider reusing an existing
+        instance, creating a new branch in it if needed.
+      </div>
+    % }
+    <form method="post" action="<%= url_for %>">
+      <input type="hidden" name="op" value="fork" />
+      <div class="target">
+        <div class="bold" style="grid-column: 1;grid-row: 1;">Owner</div>
+        <div class="bold" style="grid-column: 3;grid-row: 1;">Repository name</div>
+        <div style="grid-column: 1;grid-row: 2;white-space: nowrap; ">
+          <%= $api->DOM_render($api->avatar(16, id => $session_user_id)) %>&nbsp;<%= $session_user_id %>
+        </div>
+        <div style="grid-column: 2;grid-row: 2;">/</div>
+        <div style="grid-column: 3;grid-row: 2;">
+          <input type="text" name="forked_project_id" value="<%= $project_id %>" />
+        </div>
+        <div class="status" style="grid-column: 3;grid-row: 3;">
+          <div class="valid">
+            %= $api->icon('check-circle-fill-12');
+            &nbsp;<span class="id"></span>&nbsp;is available.
+          </div>
+          <div class="error">
+            %= $api->icon('alert-fill-12');
+            <span class="errs"></span>
+          </div>
+          <div class="checking">
+            Checking availability...
+          </div>
+        </div>
+      </div>
+      <div>
+        By default, forks are named the same as their upstream repository.
+        You can customize the name to distinguish it further.
+      </div>
+      <div class="description">
+        Description
+        <span class="small">(Optional)</span>
+      </div>
+      <input type="text" maxlength="300" name="description" value="<%= $description %>" />
+      <div class="single">
+        <input type="checkbox" name="single" checked="yes" />
+        <div>
+          Copy the
+          <span class="branch-name"><%= $default_branch %></span> branch only
+          <div class="explain small">
+            Contribute back to <%= "$user_id/$project_id" %>
+            by adding your own branch
+          </div>
+        </div>
+      </div>
+      <div class="button-area">
+        <button type="submit" class="btn default-button">Create fork</button>
+      </div>
+      %= javascript begin
+        (function (script) {
+          $(document).ready(function () {
+            var form = $(script).closest('form');
+            var status = $('.status', form);
+            var forked_project_id = $('[name="forked_project_id"]', form);
+            var description = $('[name="description"]', form);
+            var status_id = $('.id', status);
+            var errs = $('.errs', status);
+            var submit = $('button[type="submit"]', form);
+
+            var set_status = function (st, msgs) {
+              status_id.text(forked_project_id.val());
+              errs.empty();
+              if (msgs) {
+                $.each(msgs, function (idx, msg) {
+                  errs.append($('<div>').text(msg));
+                });
+              }
+              $('> div', status).hide();
+              $(`.${st}`, status).show();
+            };
+
+            var validate = function () {
+              set_status('checking');
+              submit.prop('disabled', true);
+              $.ajax({
+                type: 'POST',
+                url: '<%= url_for %>',
+                dataType: 'json',
+                data: {
+                  op: 'check',
+                  'forked_project_id': forked_project_id.val(),
+                  'description': description.val()
+                },
+                success: function (errs) {
+                  var ok = !errs.length;
+                  set_status(ok? 'valid': 'error', errs);
+                  submit.prop('disabled', !ok);
+                },
+                error: function () {
+                  set_status('error', ['Internal error']);
+                }
+              });
+            };
+
+            forked_project_id.on('input', validate);
+            validate();
+          });
+        })(document.currentScript);
+      % end
+    </form>
+  </div>
+</div>
+
+%= include '/include/footer';
