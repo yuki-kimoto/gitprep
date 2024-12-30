@@ -379,6 +379,7 @@ sub startup {
   my $validate_project_name = sub {
     my $value = shift;
     return 0 unless defined $value;
+    return 0 if length($value) > 250;
     return 0 if $value eq '.' || $value eq '..' || $value =~ /\.wiki$/;
     return ($value || '') =~ /$project_re$/;
   };
@@ -773,13 +774,19 @@ sub startup {
 
             # Fork
             $r->any('/fork' => sub { shift->render_maybe('/fork') });
+
+            # Forks
+            $r->any('/forks' => sub { shift->render_maybe('/forks') })->to(tab => 'graph');
             
             # Network
             {
               my $r = $r->any('/network')->to(tab => 'graph');
-              
+
               # Network
               $r->get('/' => sub { shift->render_maybe('/network') });
+
+              # Network members
+              $r->get('/members' => sub { shift->render_maybe('/forks', treeview => 1) });
 
               # Network Graph
               $r->get('/graph/<*rev1>...<*rev2_abs>' => sub { shift->render_maybe('/network/graph') });

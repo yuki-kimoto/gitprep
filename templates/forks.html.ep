@@ -1,0 +1,130 @@
+<%
+  # API.
+  my $api = gitprep_api;
+
+  # Parameters.
+  my $user_id = param('user');
+  my $project_id = param('project');
+  my $page = (param('page') || 1) - 1;
+  my $treeview = stash('treeview');
+
+  my $page_size = 25;
+  my $root;
+  my $forks;
+  my $fork_count;
+
+  # Forks.
+  if ($treeview) {
+    $forks = app->manager->member_projects($user_id, $project_id, 'all');
+    $fork_count = @$forks;
+
+    # Find root.
+    ($root) = grep !defined($_->{parent}), @$forks;
+  } else {
+    $forks = app->manager->member_projects($user_id, $project_id);
+    $fork_count = @$forks;
+
+    # Label each fork with info.
+    foreach my $fork (@$forks) {
+      my $issues = app->dbi->model('issue')->select(
+        where => {
+          project => $fork->{row_id},
+          open => 1
+        }
+      )->all;
+      $fork->{pr_count} = scalar(map $_->{pull_request}? 1: (), @$issues);
+      $fork->{issue_count} = @$issues - $fork->{pr_count};
+      my $rep = app->git->repository(app->rep_info($fork->{'user.id'}, $fork->{id}));
+      $fork->{updated} = $rep->{timestamp};
+    }
+
+    # Keep requested page only.
+    $page = 0 unless $page > 0;
+    my $num_page = int(($fork_count + $page_size - 1) / $page_size);
+    $page = $num_page - 1 unless $page < $num_page;
+    my $next = ($page + 1) * $page_size;
+    $next = $fork_count if $next > $fork_count;
+    $forks = [@{$forks}[$page * $page_size .. $next - 1]] if $fork_count;
+  }
+%>
+
+% layout 'common', title => "Forks \x{b7} $user_id/$project_id";
+
+%= include '/include/header'; 
+
+<div class="container" style="padding-bottom:30px">
+  <div class="forks-header">
+    <h2>Forks</h2>
+  % if ($treeview) {
+    <a href="<%= url_for("/$user_id/$project_id/forks") %>">
+      Switch to list view
+    </a>
+  % } else {
+    <a href="<%= url_for("/$user_id/$project_id/network/members") %>">
+      Switch to tree view
+    </a>
+  % }
+  </div>
+  %if (!$fork_count) {
+    <div class="no-forks">
+       <div>
+         %= $api->icon('repo-forked');
+       </div>
+       <div>No one has forked this repository yet</div>
+       <div class="explain">
+         Forks are a great way to contribute to a repository. After forking
+         a repository, you can send the original author a pull request. 
+       </div
+    </div>
+  % } elsif ($treeview) {
+    <div class="forks-tree">
+      %= include '/network/member', fork => $root, level => 0;
+    </div>
+  % } else {
+    <div class="forks">
+      <ul>
+        % foreach my $fork (@$forks) {
+          % my $user_url = url_for("/$fork->{'user.id'}/$fork->{id}");
+          % my $project_url = "/$fork->{'user.id'}/$fork->{id}";
+          <li>
+            <div class="larger">
+              <span>
+                <a href="<%= $user_url %>">
+                  %= $api->DOM_render($api->avatar(16, id => $fork->{'user.id'}));
+                </a>
+                <a href="<%= $user_url %>">
+                  %= $fork->{'user.id'};
+                </a>
+                /
+                <a href="<%= url_for($project_url) %>">
+                  %= $fork->{id};
+                </a>
+              </span>
+            </div>
+            <div class="info">
+              <a href="<%= url_for("$project_url/forks") %>">
+                %= $api->icon('repo-forked');
+                %= @{$fork->{children}};
+              </a>
+              <a href="<%= url_for("$project_url/issues") %>">
+                %= $api->icon('issue-opened');
+                %= $fork->{issue_count};
+              </a>
+              <a href="<%= url_for("$project_url/pulls") %>">
+                %= $api->icon('git-pull-request');
+                %= $fork->{pr_count};
+              </a>
+              <span>
+                Updated
+                %= $api->age_element($fork->{updated});
+              </span>
+            </div>
+          </li>
+        % }
+      </ul>
+    </div>
+    %= include '/include/pagination', page => $page + 1, rows => $fork_count, rows_per_page => $page_size;
+  % }
+</div> 
+
+%= include '/include/footer';

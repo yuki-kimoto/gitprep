@@ -1,0 +1,41 @@
+<%
+  # API.
+  my $api = gitprep_api;
+
+  # Parameters.
+  my $fork = stash('fork');
+  my $network = stash('network') // [];
+  my $right = stash('right') // '';
+  my $down = stash('down') // '';
+
+  my @children = sort {
+    return lc("$a->{'user.id'} $a->{id}") cmp lc("$b->{'user.id'} $b->{id}");
+  } @{$fork->{children}};
+  my $last_child = pop @children;
+  my @subnet = (@$network, $down);
+  my $user_url = url_for("/$fork->{'user.id'}");
+  my $project_url = url_for("/$fork->{'user.id'}/$fork->{id}");
+%>
+
+<div>
+  <span class="edges">
+    %== join('', @$network) . $right;
+  </span>
+  <a href="<%= $user_url %>">
+    %= $api->DOM_render($api->avatar(16, id => $fork->{'user.id'}));
+  </a>
+  <a href="<%= $user_url %>">
+    %= $fork->{'user.id'};
+  </a>
+  /
+  <a href="<%= $project_url %>">
+    %= $fork->{id};
+  </a>
+</div>
+
+% foreach my $child (@children) {
+  %= include '/network/member', fork => $child, network => \@subnet, right => '&boxvr;', down => '&boxv;';
+% }
+% if ($last_child) {
+  %= include '/network/member', fork => $last_child, network => \@subnet, right => '&boxur;', down => '<span class="invisible">&boxv;</span>';
+% }

@@ -301,7 +301,7 @@
     my $base_rep_info = app->rep_info($base_user_id, $base_project_id);
 
     # Target repository information
-    my $target_rep_info = app->rep_info($target_user_id, $base_project_id);
+    my $target_rep_info = app->rep_info($target_user_id, $target_project_id);
 
     # Working repository information
     my $work_rep_info = app->work_rep_info($base_user_id, $base_project_id);

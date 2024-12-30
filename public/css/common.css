@@ -2388,6 +2388,7 @@ a:hover .btn-delete {
 
 .branch-select-left-container a, .branch-select-left-container a:visited {
   color:#1f2328;
+  margin-left: 6px;
 }
 
 .branch-select-right-container {
@@ -3195,6 +3196,147 @@ a:hover .btn-delete {
   cursor: default;
 }
 
+/* Fork */
+fork-header {
+  padding: 10px 0;
+  margin-bottom: 25px;
+}
+.fork-header h2 {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  font-size: 160%;
+}
+.fork .already {
+  margin: 20px 30px;
+  padding: 10px 20px;
+  color: black;
+  border: 1px solid orange;
+}
+.fork form {
+  margin: 15px 0;
+  padding: 15px 0;
+  border-top: 1px solid #818b9840;
+}
+.fork .target {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr 9999fr;
+  gap: 6px;
+  align-items: center;
+  margin: 18px 0;
+}
+.fork input[type="text"] {
+  width: 100%;
+  margin: 4px;
+}
+.fork .target .status {
+  font-size: 86%;
+  margin-left: 5px;
+}
+.fork .target .status .icon {
+  width: auto;
+  height: auto;
+}
+.fork .target .status .valid {
+  color: #008000;
+  fill: #008000;
+}
+.fork .target .status .error {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  color: red;
+  fill: red;
+}
+.fork .target .status .checking {
+  color: #656d76;
+}
+.fork .description {
+  font-weight: bold;
+  margin-top: 15px;
+  margin-bottom: 5px;
+}
+.fork .single,
+.fork .button-area {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #818b9840;
+}
+.fork .single {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.fork .branch-name {
+  color: #4078c0;
+  border-radius:3px;
+  background:rgba(209,227,237,0.5);
+  padding:2px 6px;
+}
+.fork .button-area button {
+  float: right;
+}
+
+/* Forks */
+.forks-header {
+  margin: 25px 0;
+}
+.forks-header > * {
+  display: inline;
+}
+.forks-header > a {
+  float: right;
+}
+.forks > ul {
+  overflow:hidden;
+  margin-bottom:15px;
+  width: 100%;
+  border-top: 1px solid #e6e9e6;
+}
+.forks > ul > li {
+  border: 1px solid #e6e9e6;
+  border-top: 0 none;
+  padding: 6px 10px;
+}
+.forks > ul > li > * {
+  margin: 6px 0;
+}
+.forks .info {
+  display: flex;
+  gap: 30px;
+}
+.forks .info > a,
+.forks .info > a:hover,
+.forks .info > a:focus {
+  text-decoration: none;
+  color: inherit;
+  fill: inherit;
+}
+.forks-tree > div {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: 110%;
+  line-height: 160%;
+}
+.forks-tree .edges {
+  font-size: 200%;
+  color: #c0c0c0;
+  margin-right: 5px;
+}
+.no-forks {
+  text-align: center;
+  font-size: 140%;
+  padding: 25px 0;
+}
+.no-forks > * {
+  padding: 8px 0;
+}
+.no-forks svg {
+  width: 24px;
+  height: 24px;
+}
+
 /* Branches */
 .branches-header {
   padding: 10px 0;
@@ -3478,7 +3620,6 @@ a:hover .btn-delete {
 }
 
 .tags {
-  
 }
 
 .tags > li {
@@ -4000,6 +4141,8 @@ pre.command-line {
 }
 
 .user-settings .explain,
+.fork .explain,
+.no-forks .explain,
 .ruleset .explain {
   color: #656d76;
   font-size: 92%;
@@ -4237,7 +4380,7 @@ pre.command-line {
   border-radius: 4px;
 }
 .default-button:focus,
-.default-button:hover {
+.default-button:hover:not([disabled]) {
   background: #30c030;
 }
 
@@ -4293,7 +4436,8 @@ pre.command-line {
 }
 
 .avatar {
-  border: 1px solid #d0d0d0;
+  box-shadow: 0 0 0 1px #d0d0d0;
+  border: 0px none;
   border-radius: 50%;
   background-color: #f0f0f0;
   vertical-align: sub;
