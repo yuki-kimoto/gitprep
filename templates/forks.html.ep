@@ -115,8 +115,12 @@
                 %= $fork->{pr_count};
               </a>
               <span>
-                Updated
-                %= $api->age_element($fork->{updated});
+                % if ($fork->{updated}) {
+                  Updated
+                  %= $api->age_element($fork->{updated});
+                % } else {
+                  Never updated
+                % }
               </span>
             </div>
           </li>

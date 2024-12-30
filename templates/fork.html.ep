@@ -7,8 +7,11 @@
   my $project_id = param('project');
   my $op = param('op');
 
+  my $rep_info = app->rep_info($user_id, $project_id);
+  my $rep = app->git->repository($rep_info);
+
   # Can fork?
-  unless ($api->logined) {
+  unless ($api->logined && $rep->{timestamp}) {
     $self->redirect_to('/');
     return;
   }
@@ -59,8 +62,7 @@
     $errors = $validation->messages;
   }
 
-  my $rep_info = app->rep_info($user_id, $project_id);
-  my $description = app->git->description($rep_info) // '';
+  my $description = $rep->{full_description};
   my $default_branch = app->git->current_branch($rep_info);
 
   my $members = app->manager->member_projects($user_id, $project_id, 'all');
