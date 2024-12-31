@@ -35,7 +35,9 @@
       $fork->{pr_count} = scalar(map $_->{pull_request}? 1: (), @$issues);
       $fork->{issue_count} = @$issues - $fork->{pr_count};
       my $rep = app->git->repository(app->rep_info($fork->{'user.id'}, $fork->{id}));
-      $fork->{updated} = $rep->{timestamp};
+      unless ($rep->{updated} && $fork->{created} && $rep->{updated} < $fork->{created}) {
+        $fork->{updated} = $rep->{updated};
+      }
     }
 
     # Keep requested page only.
@@ -122,6 +124,12 @@
                   Never updated
                 % }
               </span>
+              % if ($fork->{created}) {
+                <span>
+                  Created
+                  %= $api->age_element($fork->{created});
+                </span>
+              % }
             </div>
           </li>
         % }

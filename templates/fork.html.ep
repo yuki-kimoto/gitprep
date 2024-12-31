@@ -11,7 +11,7 @@
   my $rep = app->git->repository($rep_info);
 
   # Can fork?
-  unless ($api->logined && $rep->{timestamp}) {
+  unless ($api->logined && $rep->{updated}) {
     $self->redirect_to('/');
     return;
   }

@@ -984,7 +984,7 @@ sub repository {
 
   return unless -d $rep_info->{git_dir};
   
-  my $rep = {timestamp => $self->last_activity($rep_info)};
+  my $rep = {updated => $self->last_activity($rep_info)};
   my $description = $self->description($rep_info) || '';
   $rep->{full_description} = $description;
   $rep->{description} = $self->_chop_str($description, 25, 5);

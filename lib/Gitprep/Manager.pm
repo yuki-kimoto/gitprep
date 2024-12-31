@@ -353,7 +353,7 @@ sub member_projects {
     weaken $project->{parent};
     my $children = $dbi->model('project')->select(
       [
-        {__MY__ => ['row_id', 'id']},
+        {__MY__ => ['row_id', 'id', 'created']},
         {user => ['id']}
       ],
       where => {'project.original_project' => $project->{row_id}}
@@ -737,7 +737,8 @@ sub _create_project {
   $params ||= {};
   $params->{user} = $user_row_id;
   $params->{id} = $project_id;
-  
+  $params->{created} //= $self->api->now;
+
   # Create project
   my $dbi = $self->app->dbi;
   $dbi->connector->txn(sub {

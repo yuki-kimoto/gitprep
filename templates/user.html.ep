@@ -51,7 +51,7 @@
         <div class="topic1">Repositories</div>
         
         <ul class="repositories">
-          % for my $rep (sort { ($b->{timestamp} || 0) <=> ($a->{timestamp} || 0) } @$reps) {
+          % for my $rep (sort { ($b->{updated} || 0) <=> ($a->{updated} || 0) } @$reps) {
             % if (!$rep->{private} || $api->can_access_private_project($user_id, $rep->{id})) {
               <li>
                 % my $project_id = $rep->{id};
@@ -74,9 +74,9 @@
                   % if ($rep->{none}) {
                     <span style="color:red">Repository does not exist</span>
                     <a href="<%= "/$user_id/$rep->{id}/settings" %>" class="btn btn-mini">Settings</a>
-                  % } elsif ($rep->{timestamp}) {
+                  % } elsif ($rep->{updated}) {
                     last updated
-                    %= $api->age_element($rep->{timestamp});
+                    %= $api->age_element($rep->{updated});
                   % } else {
                     new repository
                   % }
