@@ -78,6 +78,7 @@ my @tables = (
       {name => 'user', type => 'integer'},
       {name => 'id'},
       {name => 'original_project', type => 'integer'},
+      {name => 'created', type => 'integer'},
       {name => 'private', type => 'integer'},
       {name => 'ignore_space_change', type => 'integer'},
       {name => 'guess_encoding'},
