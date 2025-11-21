@@ -1,0 +1,1 @@
+%= include '/blob/image/tiff';    # Same conversion process as for TIFF format.

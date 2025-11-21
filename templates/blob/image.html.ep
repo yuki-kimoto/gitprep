@@ -1,0 +1,36 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Git
+  my $git = $self->app->git;
+
+  # Blob parameters.
+  my $p = stash('blob_params');
+
+  if ($p->{media_subtype} ne 'svg+xml') {
+    use Imager;
+
+    # Load image.
+    my $img = Imager->new(data => $git->blob_raw($p->{rep_info}, $p->{rev}, $p->{file}));
+
+    if ($img) {
+      my $width = $img->getwidth;
+      my $height = $img->getheight;
+      my $colormodel = $img->colormodel;
+      my $type = $img->type;
+      $p->{header_left} = "$width\x{d7}$height " . $api->plural('pixel', $width * $height) . ' ';
+      $p->{header_left} .= "$type " unless $type eq 'direct';
+      $p->{header_left} .= $colormodel unless ($colormodel // 'unknown') eq 'unknown';
+    }
+  }
+%>
+
+<div class="blob-image">
+  <img type="<%= $p->{media_type} %>/<%= $p->{media_subtype} %>
+    % if (defined $p->{file}) {
+      alt="<%= $p->{file} %>" title="<%= $p->{file} %>"
+    % }
+    src="<%= url_for("$p->{user_id_project_path}/raw/$p->{rev}/$p->{file}") %>"
+  />
+</div>

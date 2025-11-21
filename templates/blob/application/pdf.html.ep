@@ -1,0 +1,12 @@
+<%
+  my $p = stash('blob_params');
+  my $pdf_url = url_for("$p->{user_id_project_path}/raw/$p->{rev}/$p->{file}");
+%>
+
+<div class="blob-pdf-container">
+  <object class="blob-pdf-object" data="<%= $pdf_url %>" type="application/pdf">
+    <p>
+      Your browser does not support PDFs.
+    </p>
+  </object>
+</div>

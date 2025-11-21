@@ -1,0 +1,57 @@
+<%
+  use Mojo::Util qw(xml_escape);
+  use Text::CSV;
+
+  # API
+  my $api = gitprep_api;
+
+  # Git
+  my $git = $self->app->git;
+
+  # Blob parameters
+  my $p = stash('blob_params');
+  my $sep_char = stash('sep_char') // ',';
+
+  my $lines = $git->blob($p->{rep_info}, $p->{rev}, $p->{file});
+  return unless @$lines;
+
+  # Parse lines.
+  my $records = [];
+  my $csv = Text::CSV->new({sep_char => $sep_char});
+  for my $line (@$lines) {
+    return unless $csv->parse($line);
+    my @fields = $csv->fields;
+    push @$records, \@fields;
+  }
+
+  # Set-up header fields.
+  $p->{header_left} = $api->plural('lines', scalar(@$lines), 'No');
+  $p->{buttons} = '<li><a class=btn btn-small" href="' . url_for("$p->{user_id_project_path}/blob/$p->{rev}/$p->{file}")->query(subtype => 'no') . '">Code</a></li>';
+  $p->{buttons} .= '<li><a class=btn btn-small" href="' . url_for("$p->{user_id_project_path}/blame/$p->{rev}/$p->{file}") . '">Blame</a></li>';
+
+  my $lineno = 1;
+  my $fieldtag = 'th';
+%>
+
+<div class="blob-csv-container">
+  <table class="blob-csv">
+    <thead class="blob-csv-header">
+      % for my $record (@$records) {
+        <tr class="blob-csv-row">
+          <td class="blob-csv-num"><%= $lineno %></td>
+          % for my $field (@$record) {
+            % $field =~ s/\s+$//;
+            % $field = xml_escape $field;
+            % $field =~ s/\s/&nbsp;/g;
+            <<%= $fieldtag %> class="blob-csv-cell"><%== $field %></<%= $fieldtag %>>
+          % }
+        </tr>
+        % if ($lineno == 1) {
+          </thead><tbody>
+          % $fieldtag = 'td',
+        % }
+        % $lineno++;
+      % }
+    </tbody>
+  </table>
+</div>
