@@ -15,8 +15,37 @@ use Gitprep::Util;
 # Attributes
 has 'bin';
 has default_encoding => 'UTF-8';
-has text_exts => sub { ['txt'] };
 has 'app';
+has ext2mimetype => sub {
+                       {
+                         apng  => 'image/apng',
+                         avif  => 'image/avif',
+                         bmp   => 'image/bmp',
+                         csv   => 'text/csv',
+                         cur   => 'image/x-icon',
+                         gif   => 'image/gif',
+                         ico   => 'image/x-icon',
+                         jfif  => 'image/jpeg',
+                         jpeg  => 'image/jpeg',
+                         jpg   => 'image/jpeg',
+                         md    => 'text/markdown',
+                         pdf   => 'application/pdf',
+                         pbm   => 'image/x-portable-anymap',
+                         pgm   => 'image/x-portable-anymap',
+                         pjpeg => 'image/jpeg',
+                         pjp   => 'image/jpeg',
+                         png   => 'image/png',
+                         pnm   => 'image/x-portable-anymap',
+                         ppm   => 'image/x-portable-anymap',
+                         sgi   => 'image/sgi',
+                         svg   => 'image/svg+xml',
+                         tif   => 'image/tiff',
+                         tiff  => 'image/tiff',
+                         txt   => 'text/plain',
+                         tsv   => 'text/tab-separated-values',
+                         webp  => 'image/webp',
+                       }
+};
 
 sub ref_to_object_id {
   my ($self, $rep_info, $ref) = @_;
@@ -333,7 +362,7 @@ sub blame {
   return $blame;
 }
 
-sub blob {
+sub blob_open {
   my ($self, $rep_info, $rev, $file) = @_;
   
   # Blob
@@ -347,6 +376,13 @@ sub blob {
   );
   open my $fh, '-|', @cmd
     or croak "Can't cat $file, $hash";
+  return $fh;
+}
+
+sub blob {
+  my ($self, $rep_info, $rev, $file) = @_;
+  
+  my $fh = $self->blob_open($rep_info, $rev, $file);
 
   # Format lines
   my @lines = <$fh>;
@@ -480,29 +516,14 @@ sub blob_is_image {
 sub blob_mime_type {
   my ($self, $rep_info, $rev, $file) = @_;
   
-  return 'image/png' if $file =~ m/\.png$/i;
-  return 'image/gif' if $file =~ m/\.gif$/i;
-  return 'image/jpeg' if $file =~ m/\.jpe?g$/i;
-  return 'image/svg+xml' if $file =~ m/\.svg$/i;
-
-  # Text types
-  my $text_exts = $self->text_exts;
-  for my $text_ext (@$text_exts) {
-    my $ext = quotemeta($text_ext);
-    return 'text/plain' if $file =~ /\.$ext$/i;
-  }
+  # Known extensions.
+  my $e2mt = $self->ext2mimetype;
+  my $ext = lc($file);
+  $ext =~ s/^.*\.//;
+  return $e2mt->{$ext} if defined $e2mt->{$ext};
 
   # Blob
-  my $hash = $self->path_to_hash($rep_info, $rev, $file, 'blob')
-    or croak 'Cannot find file';
-  my @cmd = $self->cmd(
-    $rep_info,
-    'cat-file',
-    'blob',
-    $hash
-  );
-  open my $fh, '-|', @cmd
-    or croak "Can't cat $file, $hash";
+  my $fh = $self->blob_open($rep_info, $rev, $file);
 
   return 'text/plain' unless $fh;
 

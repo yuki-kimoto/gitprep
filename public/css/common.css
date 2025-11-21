@@ -2618,6 +2618,47 @@ a:hover .btn-delete {
   border-radius: 0 0 2px 2px;
 }
 
+.blob-csv-container {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 12px;
+}
+
+.blob-csv {
+  border-spacing: 0;
+  font-size: 110%;
+}
+
+.blob-csv-header {
+  background-color: #e0e0e0;
+}
+
+.blob-csv-cell,
+.blob-csv-num {
+  border: 1px solid #e0e0e0;
+  padding: 6px 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.blob-csv-num {
+  text-align: right;
+  background-color: #e0e0e0;
+  padding-right: 12px;
+}
+
+.blob-pdf-container {
+  width: 100%;
+  aspect-ratio: 4/3;
+  border: 1px solid #e0e0e0;
+  margin-top: 6px;
+}
+
+.blob-pdf-object {
+  width: 100%;
+  height: 100%;
+}
+
 .commits {
   margin-top:20px;
 }

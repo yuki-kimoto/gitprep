@@ -1,0 +1,37 @@
+<%
+  use MIME::Base64;
+  use Imager;
+
+  # API
+  my $api = gitprep_api;
+
+  # Git
+  my $git = $self->app->git;
+  
+  my $p = stash('blob_params');
+
+  # Load image.
+  my $img = Imager->new(data => $git->blob_raw($p->{rep_info}, $p->{rev}, $p->{file}));
+  return unless $img;
+
+  # Set info in header,
+  my $width = $img->getwidth;
+  my $height = $img->getheight;
+  my $colormodel = $img->colormodel;
+  my $type = $img->type;
+  $p->{header_left} = "$width\x{d7}$height " . $api->plural('pixel', $width * $height) . ' ';
+  $p->{header_left} .= "$type " unless $type eq 'direct';
+  $p->{header_left} .= $colormodel unless ($colormodel // 'unknown') eq 'unknown';
+
+  # Convert image to PNG data.
+  my $buffer;
+  $img->write(data => \$buffer, type => 'png');
+
+  # Encapsulate in SVG.
+  my $picture = encode_base64($buffer, '');
+  $picture = "<svg viewBox=\"0 0 $width $height\" width=\"$width\" height=\"$height\"><image href=\"data:image/png;base64,$picture\"></image></svg>";
+%>
+
+<div class="blob-image">
+  %== $picture;
+</div>

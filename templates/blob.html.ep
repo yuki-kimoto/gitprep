@@ -43,14 +43,39 @@
   my $file_type = $git->file_type_long($mode);
   
   # MIME type
-  my $mime_type = $git->blob_mime_type($rep_info, $rev, $file);
+  my ($media_type, $media_subtype) = split '/',
+    lc($git->blob_mime_type($rep_info, $rev, $file));
 
-  # Blob lines(only text)
-  my $lines;
-  $lines = $git->blob($rep_info, $rev, $file) if $mime_type =~ /^text/;
+  # Call a blob sub-template.
+  local *call_template = sub {
+    my $template = shift;
+    my $blob_params = {
+                      rev => $rev,
+                      file => $file,
+                      media_type => $media_type,
+                      media_subtype => $media_subtype,
+                      rep_info => $rep_info,
+                      user_id_project_path => $user_id_project_path
+    };
+    my $html = $self->render_to_string($template, blob_params => $blob_params,
+                                       'mojo.maybe' => 1);
+    return unless $html;
+    $blob_params->{html} = $html;
+    return $blob_params;
+  };
 
-  # Variables for included template
-  stash(id => $rev, project => $project_id, rev => $rev);
+  # Try using a subtype-specific template.
+  my $blob_params;
+  $blob_params = call_template("/blob/$media_type/$media_subtype") unless param('subtype') // '' eq 'no';
+
+  # Fall back to a type-specific template.
+  $blob_params = call_template("/blob/$media_type") unless $blob_params;
+
+  # Variables for included templates
+  stash(id => $rev,
+        project => $project_id,
+        rev => $rev
+  );
 %>
 
 <% layout 'common' , title => "$project_id/$file at $rev \x{b7} $user_id/$project_id",
@@ -94,22 +119,23 @@
     <div>
       <div class="file-header">
         <div class="file-header-left">
-          % if ($lines) {
-            <%= @$lines %> lines
+          % if (defined $blob_params->{header_left}) {
+            %== $blob_params->{header_left};
             <span style="color:#dcdcdc">|</span>
           % }
           <%= $file_size %>kb
         </div>
         <div class="file-header-right">
+          % if (defined $blob_params->{header_right}) {
+            %== $blob_params->{header_right};
+          % }
           <ul>
+            % if (defined $blob_params->{buttons}) {
+              %== $blob_params->{buttons};
+            % }
             <li>
               <a class="btn btn-small" href="<%= url_for("$user_id_project_path/raw/$rev/$file") %>">Raw</a>
             </li>
-            % if ($mime_type =~ m#^text/#) {
-              <li>
-                <a class="btn btn-small" href="<%= url_for("$user_id_project_path/blame/$rev/$file") %>">Blame</a>
-              </li>
-            % }
             <li>
               <a class="btn btn-small" href="<%= url_for("$user_id_project_path/commits/$rev/$file") %>">
                 %= $api->icon('history');
@@ -120,34 +146,8 @@
         </div>
       </div>
     </div>
-    % if ($mime_type =~ m#^image/#) {
-      <div class="blob-image">
-        <img type="<%= $mime_type %>
-          % if (defined $file) {
-            alt="<%= $file %>" title="<%= $file %>"
-          % }
-          src="<%= url_for("$user_id_project_path/raw/$rev/$file") %>"
-        />
-      </div>
-    % } elsif ($mime_type =~ m#^text/#) {
-      % if ($file =~ /\.md$/) {
-        <%
-          my $readme = join "\n", @$lines;
-          my $subpath = $file;
-          $subpath =~ s#(?:^|/)[^/]*$##;
-          $subpath = "/$subpath" if $subpath;
-          $readme =~ s#^(\[.*\]:)(?!\s*https?://)\s*(\S*)#{"$1 " . url_for("$user_id_project_path/raw/$rev" . (substr($2, 0, 1) eq '/'? '': "$subpath/") . "$2")}#mge;
-          $readme =~ s#^(!\[.*\]\()(?!https?://)(\S*)#{$1 . url_for("$user_id_project_path/raw/$rev" . (substr($2, 0, 1) eq '/'? '': "$subpath/") . "$2")}#mge;
-          my $readme_e = $api->markdown($readme);
-        %>
-        <div class="readme-frame">
-          <div class="markdown-body">
-            <%== $readme_e %>
-          </div>
-        </div>
-      % } else {
-        <pre class="prettyprint linenums"><% for my $line (@$lines) { %><%= "$line\n" %><% } %></pre>
-      % }
+    % if (defined $blob_params->{html}) {
+      %= $blob_params->{html};
     % } else {
       <div class="blob-raw">
         <a href="<%= url_for("$user_id_project_path/raw/$rev/$file") %>">View raw</a>

@@ -1,0 +1,36 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Git
+  my $git = $self->app->git;
+
+  # Blob parameters
+  my $p = stash('blob_params');
+
+  my $lines = $git->blob($p->{rep_info}, $p->{rev}, $p->{file});
+  return unless @$lines;
+
+  # Set-up header fields.
+  $p->{header_left} = $api->plural('lines', scalar(@$lines), 'No');
+  $p->{buttons} = '<li><a class=btn btn-small" href="' . url_for("$p->{user_id_project_path}/blob/$p->{rev}/$p->{file}")->query(subtype => 'no') . '">Code</a></li>';
+  $p->{buttons} .= '<li><a class=btn btn-small" href="' . url_for("$p->{user_id_project_path}/blame/$p->{rev}/$p->{file}") . '">Blame</a></li>';
+
+  my $readme = join "\n", @$lines;
+  my $subpath = $p->{file};
+  $subpath =~ s#(?:^|/)[^/]*$##;
+  $subpath = "/$subpath" if $subpath;
+  $readme =~ s#^(\[.*\]:)(?!\s*https?://)\s*(\S*)#{"$1 " .
+             url_for("$p->{user_id_project_path}/raw/$p->{rev}" .
+             (substr($2, 0, 1) eq '/'? '': "$subpath/") . "$2")}#mge;
+  $readme =~ s#^(!\[.*\]\()(?!https?://)(\S*)#{$1 .
+             url_for("$p->{user_id_project_path}/raw/$p->{rev}" .
+             (substr($2, 0, 1) eq '/'? '': "$subpath/") . "$2")}#mge;
+  my $readme_e = $api->markdown($readme);
+%>
+
+<div class="readme-frame">
+  <div class="markdown-body">
+    <%== $readme_e %>
+  </div>
+</div>
