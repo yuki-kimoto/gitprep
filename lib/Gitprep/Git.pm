@@ -1149,37 +1149,50 @@ sub tags {
   return \@tags;
 }
 
-sub last_change_commit {
-  my ($self, $rep_info, $rev, $file) = @_;
-  
-  my $commit_log = {};
-  $file = '' unless defined $file;
-  
+sub last_change_commits {
+  my ($self, $rep_info, $rev, $files) = @_;
+  my $count = @{$files};
+
   my @cmd = $self->cmd(
     $rep_info,
     '--no-pager',
     'log',
-    '-n',
-    '1',
+    '--name-only',
     '--pretty=format:%H', 
-    $rev,
-    '--',
-    $file
+    $rev
   );
   open my $fh, '-|', @cmd
     or croak 'Open git-log failed';
-  
-  local $/;
-  my $commit_log_text = <$fh>;
-  $commit_log_text = $self->_dec($commit_log_text);
-  
-  my $commit;
-  if ($commit_log_text =~ /^([0-9a-zA-Z]+)/) {
-    my $rev = $1;
-    $commit = $self->get_commit($rep_info, $rev);
+
+  my %commits = map { $_ => undef } @$files;
+  my $hash;
+
+  while (<$fh>) {
+    last unless $count;
+    chomp;
+    next if $_ eq '';
+    $hash = $_;
+    my $commit;
+    while (<$fh>) {
+      last unless $count;
+      chomp;
+      last if $_ eq '';
+      while (1) {
+        if (exists $commits{$_}) {
+          if (!defined $commits{$_}) {
+            $commit = $self->get_commit($rep_info, $hash) if !defined $commit;
+            $commits{$_} = $commit;
+            $count--;
+          }
+          last;
+        }
+        last unless s#^(.*)/.*#$1#;
+      }
+    }
   }
-  
-  return $commit;
+
+  close $fh;
+  return \%commits;
 }
 
 sub parse_diff_chunk_header {
@@ -1628,6 +1641,7 @@ sub trees {
     or $self->croak(404, "Reading tree failed");
 
   # Parse tree
+  my @files;
   for my $line (@entries) {
     my $tree = $self->parse_ls_tree_line($line, -z => 1, -l => $show_sizes);
     $tree->{mode_str} = $self->_mode_str($tree->{mode});
@@ -1635,11 +1649,21 @@ sub trees {
     unless ($nocommit) {
       # Commit log
       my $path = defined $dir && $dir ne ''? "$dir/$tree->{name}": $tree->{name};
-      $tree->{commit} = $self->last_change_commit($rep_info, $rev, $path);
+      push @files, $path;
     }
 
     push @$trees, $tree;
   }
+
+  unless ($nocommit) {
+    # Commit log
+    my $commits = $self->last_change_commits($rep_info, $rev, \@files);
+    for my $tree (@$trees) {
+      my $path = defined $dir && $dir ne ''? "$dir/$tree->{name}": $tree->{name};
+      $tree->{commit} = $commits->{$path};
+    }
+  }
+
   $trees = [sort {$b->{type} cmp $a->{type} || $a->{name} cmp $b->{name}} @$trees];
   
   return $trees;
