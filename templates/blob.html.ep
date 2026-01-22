@@ -20,7 +20,7 @@
   my ($rev, $file) = $git->parse_rev_path($rep_info, $rev_file);
 
   my $commit;
-  if (!$git->rev_exists($rep_info, $rev) || !($commit = $git->last_change_commit($rep_info, $rev, $file))) {
+  if (!$git->rev_exists($rep_info, $rev) || !($commit = $git->last_change_commits($rep_info, $rev, [$file])->{$file})) {
     $self->reply->not_found;
     return;
   }
