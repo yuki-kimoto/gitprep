@@ -772,8 +772,8 @@ file named "Artistic". It can also be found at
 
 You should also have received a copy of the GNU General Public License along
 with this program in the file named "Copying". If not, write to the Free
-Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-MA 02110-1301, USA or visit their web page on the internet at
+Software Foundation, 31 Milk Street, # 960789, Boston, MA 02196, USA
+or visit their web page on the internet at
 [https://www.gnu.org/copyleft/gpl.html](https://www.gnu.org/copyleft/gpl.html).
 
 Bundled vectorial icons (octicons) are covered by the MIT license.
