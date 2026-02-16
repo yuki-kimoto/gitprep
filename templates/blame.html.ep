@@ -95,32 +95,7 @@
         Older
       </div>
     </div>
-    <div class="blame-commit">
-      <div class="blame-commit-author" title="<%= $commit_author_tooltip %>">
-        % if ($commit_author_id) {
-          <a href="<%= url_for("/$commit_author_id") %>">
-        % }
-        <%= $commit_author_label %>
-        % if ($commit_author_id) {
-          </a>
-        % }
-      </div>
-      <div class="blame-commit-title"
-        % if ($commit_title ne $commit_comment) {
-          title="<%= $commit_comment %>"
-        % }
-        >
-        <%= $commit_title %>
-      </div>
-      <div class="blame-commit-right">
-        <div class="blame-commit-rev" title="<%= $commit_comment %>">
-          <a href="<%= url_for("/$user_id/$project_id/commit/$commit->{id}") %>">
-            <%= substr($commit->{id}, 0, 7) %>
-          </a>
-        </div>
-        %= $api->age_element($commit->{author_epoch}, class => 'blame-commit-age');
-      </div>
-    </div>
+    %= include "include/commit_summary", rep_info => $rep_info, rep_rev => $rev, rep_file => $file
     <div class="file-header">
       <div class="file-header-left">
         %= $api->icon('file');
@@ -135,9 +110,6 @@
           </li>
           <li>
             <a class="btn btn-small" href="<%= url_for("$user_project_path/blob/$rev/$file") %>">Normal View</a>
-          </li>
-          <li>
-            <a class="btn btn-small" href="<%= url_for("$user_project_path/commits/$rev/$file") %>">History</a>
           </li>
         </ul>
       </div>

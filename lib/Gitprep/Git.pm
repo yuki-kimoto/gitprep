@@ -1177,6 +1177,12 @@ sub last_change_commits {
       last unless $count;
       chomp;
       last if $_ eq '';
+      if (exists($commits{''}) && !defined $commits{''}) {
+        # Handle tree root.
+        $commit = $self->get_commit($rep_info, $hash) if !defined $commit;
+        $commits{''} = $commit;
+        last unless --$count;
+      }
       while (1) {
         if (exists $commits{$_}) {
           if (!defined $commits{$_}) {

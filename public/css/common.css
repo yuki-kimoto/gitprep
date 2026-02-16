@@ -2508,6 +2508,11 @@ a:hover .btn-delete {
   color:#445055;
 }
 
+.commit-summary-history {
+  padding-left: 8px;
+  font-weight: bold;
+}
+
 .commit-summary-author a, .commit-summary-author a:visited {
   color:#1f2328;
   font-weight:bold;
@@ -2768,30 +2773,6 @@ a:hover .btn-delete {
 .blame-gradation {
   float:right;
   text-align:right:
-}
-
-.blame-commit {
-  width: 100%;
-  padding: 10px 0;
-  margin-top: 20px;
-  border: 1px solid #e6e9e6;
-  border-radius: 10px;
-  color: gray;
-}
-
-.blame-commit > *,
-.blame-commit-right > * {
-  display: inline;
-  margin: 0 10px;
-}
-
-.blame-commit-author {
-  font-weight: bold;
-  color: black;
-}
-
-.blame-commit-right {
-  float: right;
 }
 
 .blame-body-container {

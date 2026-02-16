@@ -91,27 +91,8 @@
       </div>
     % }
 
-    <div class="commit-summary">
-      <div class="commit-summary-left-container">
-        <span class="commit-summary-author" title="<%= $commit->{author_email} %>">
-          % if (defined $commit_author_id) {
-            <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
-          % } else {
-            <%= $commit->{author_name} %>
-          % }
-        </span>
-        <a href="<%= url_for("$user_id_project_path/commit/$rev") %>">
-          <%= $commit->{title} %>
-        </a>
-      </div>
-      <div class="commit-summary-right-container">
-        <a href="<%= url_for("$user_id_project_path/commit/$commit->{id}") %>">
-          <%= substr($commit->{id}, 0, 7) %>
-        </a>
-        %= $api->age_element($commit->{committer_epoch});
-      </div>
-    </div>
-          
+    %= include '/include/commit_summary', rep_info => $rep_info, rep_rev => $rev, rep_file => $file;
+
     <div class="commit-contributor">
       <%= $api->plural('contributor', scalar(@$authors), 'no') %>
     </div>
@@ -135,12 +116,6 @@
             % }
             <li>
               <a class="btn btn-small" href="<%= url_for("$user_id_project_path/raw/$rev/$file") %>">Raw</a>
-            </li>
-            <li>
-              <a class="btn btn-small" href="<%= url_for("$user_id_project_path/commits/$rev/$file") %>">
-                %= $api->icon('history');
-                History
-              </a>
             </li>
           </ul>
         </div>
