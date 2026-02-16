@@ -19,44 +19,16 @@
   my $rep_info = app->rep_info($user_id, $project_id);
   my $default_branch_name = $git->current_branch($rep_info);
   
-  my $commits_number;
-  if ($git->exists_branch($rep_info)) {
-    
-    # Commits number
-    $commits_number = $git->commits_number($rep_info, $rev);
+  my $history;
+  if (!$dir && $git->exists_branch($rep_info)) {
+    $history = $api->plural('Commit', $git->commits_number($rep_info, $rev), 'no');
   }
   
 %>
 
 <div>
-  <div class="commit-summary">
-    <div class="commit-summary-left-container">
-      <span class="commit-summary-author" title="<%= $commit->{author_email} %>">
-        % if (defined $commit_author_id) {
-          <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
-        % } else {
-          <%= $commit->{author_name} %>
-        % }
-      </span>
-      <a href="<%= url_for("/$user/$project/commit/$rev") %>">
-        <%= $commit->{title} %>
-      </a>
-    </div>
-    <div class="commit-summary-right-container">
-      <a href="<%= url_for("/$user/$project/commit/$commit->{id}") %>">
-        <%= substr($commit->{id}, 0, 7) %>
-      </a>
-      %= $api->age_element($commit->{committer_epoch});
-      
-      % my $commits_url = "/$user_id/$project_id/commits/" . ((defined $rev && length $rev) ? $rev : $default_branch_name);
-      
-      <a href="<%= url_for($commits_url) %>">
-        %= $api->icon('history');
-        <%= $api->plural('Commit', $commits_number, 'no') %>
-      </a>
-      
-    </div>
-  </div>
+  %= include "/include/commit_summary", rep_info => $rep_info, rep_rev => $rev, rep_file => $dir, history => $history;
+
   <ul class="file-list">
     % for (my $i = 0; $i <@$trees; $i++) {
       <%

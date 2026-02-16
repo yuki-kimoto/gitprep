@@ -1,0 +1,56 @@
+<%
+  # API
+  my $api = gitprep_api;
+
+  # Git
+  my $git = $self->app->git;
+
+  # Parameters
+  my $rep_info = stash('rep_info');
+  my $rev = stash('rep_rev') // '';
+  my $file = stash('rep_file') // '';
+  my $history = stash('history') // 'History';
+
+  my $url = $rep_info->{url};
+
+  my $commit;
+  if (!$git->rev_exists($rep_info, $rev) || !($commit = $git->last_change_commits($rep_info, $rev, [$file])->{$file})) {
+    return;
+  }
+
+  my $commit_author_email = $commit->{author_email};
+  my $commit_author_id = app->dbi->model('user')->select(
+    'id',
+    where => {email => $commit_author_email}
+  )->value;
+  my $commit_link = url_for("$url/commit/$commit->{id}");
+  my $history_url = "$url/commits/" . $rev;
+  $history_url .= "/$file" if $file;
+%>
+
+<div class="commit-summary">
+  <div class="commit-summary-left-container">
+    <span class="commit-summary-author" title="<%= $commit->{author_email} %>">
+      % if (defined $commit_author_id) {
+        <%= $api->DOM_render($api->avatar(16, email => $commit_author_email)) %>
+        <a href="<%= url_for("/$commit_author_id") %>"><%= $commit_author_id %></a>
+      % } else {
+        <%= $commit->{author_name} %>
+      % }
+    </span>
+    <a href="<%= $commit_link %>">
+      <%= $commit->{title} %>
+    </a>
+  </div>
+  <div class="commit-summary-right-container">
+    <a href="<%= $commit_link %>">
+      <%= substr($commit->{id}, 0, 7) %>
+    </a>
+    %= $api->age_element($commit->{committer_epoch});
+
+    <a class="commit-summary-history" href="<%= url_for($history_url) %>">
+      %= $api->icon('history');
+      <%= $history %>
+    </a>
+  </div>
+</div>

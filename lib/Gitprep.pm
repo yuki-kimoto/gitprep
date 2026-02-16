@@ -62,6 +62,7 @@ sub rep_info {
   $info->{project} = $project_id;
   $info->{root} = $self->rep_home . "/$user_id/$project_id.git";
   $info->{git_dir} = $info->{root};
+  $info->{url} = "/$user_id/$project_id";
   
   return $info;
 }
@@ -95,6 +96,7 @@ sub wiki_rep_info {
   $info->{project} = $project_id;
   $info->{root} = $self->rep_home . "/$user_id/$project_id.wiki.git";
   $info->{git_dir} = $info->{root};
+  $info->{url} = "/$user_id/$project_id/wiki";
   
   return $info;
 }
