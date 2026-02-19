@@ -1,11 +1,26 @@
 #!/bin/sh
 
-# Fetch CoreList from CPAN if not available from system
+EXTLIB=
 
-if ! (perl -MModule::CoreList -e 1 2>/dev/null); then
-    perl cpanm -n -l extlib Module::CoreList
-    perl -Iextlib/lib/perl5 cpanm -f -L extlib ExtUtils::MakeMaker
-    perl -Iextlib/lib/perl5 cpanm -L extlib --installdeps .
-else
-    perl cpanm -L extlib --installdeps .
+call_perl()
+
+{
+	perl ${EXTLIB} "${@}"
+	rc="${?}"
+	[ "${rc}" -eq 0 ] && [ "${1}" = 'cpanm' ] && EXTLIB=-Iextlib/lib/perl5
+	return "${rc}"
+}
+
+# Fetch CoreList from CPAN if not available from system
+if ! (call_perl -MModule::CoreList -e 1 2>/dev/null)
+then	call_perl cpanm -n -l extlib Module::CoreList
 fi
+
+# Fetch other modules insirectly needed by cpanm.
+for module in ExtUtils::MakeMaker LWP::Protocol::https
+do	if ! (call_perl -M${module} -e 1 2>/dev/null)
+	then	call_perl cpanm -f -L extlib ${module}
+	fi
+done
+
+call_perl cpanm -L extlib --installdeps .

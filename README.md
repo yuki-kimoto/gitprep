@@ -614,28 +614,31 @@ Even if shared hosting server, you can install Mojolicious application as CGI.
 
 **cpanfile** is **a definition** of module name and version. you create the following file which name is "cpanfile".
 
-    requires 'Time::HiRes', '== 1.9732';
-    requires 'DBD::SQLite', '== 1.50';
-    requires 'DBI', '== 1.634';
-    requires 'DBIx::Connector', '== 0.53';
-    requires 'Object::Simple', '== 3.14';
-    requires 'DBIx::Custom', '== 0.36';
-    requires 'Validator::Custom', '== 1.01';
-    requires 'Config::Tiny', '== 2.23';
-    requires 'Mojolicious', '== 6.57';
-    requires 'Mojolicious::Plugin::BasicAuth', '== 0.08';
-    requires 'Mojolicious::Plugin::AutoRoute', '== 0.19';
-    requires 'Mojolicious::Plugin::INIConfig', '== 0.03';
-    requires 'Mojolicious::Plugin::DBViewer', '== 0.28';
-    requires 'Mojolicious::Plugin::RequestBase', '== 0.3';
-    requires 'Text::Markdown::Hoedown', '== 1.01';
-    requires 'Time::Moment', '== 0.38';
-    requires 'MIME::Entity', '== 5.510';
-    requires 'HTML::FormatText::WithLinks', '== 0.15';
-    requires 'Email::Sender', '== 2.600';
-    requires 'HTML::Restrict', '== 3.0.0';
-    requires 'Imager', '== 1.025';
-    requires 'Text::CSV', '== 2.06';
+    requires 'Time::HiRes', '>= 1.9764';
+    requires 'DBD::SQLite', '>= 1.66';
+    requires 'DBI', '>= 1.643';
+    requires 'DBIx::Connector', '>= 0.56';
+    requires 'Object::Simple', '>= 3.14';
+    requires 'DBIx::Custom', '>= 0.40';
+    requires 'Validator::Custom';
+    requires 'Config::Tiny', '>= 2.23';
+    requires 'Mojolicious';
+    requires 'Mojolicious::Plugin::BasicAuth';
+    requires 'Mojolicious::Plugin::AutoRoute';
+    requires 'Mojolicious::Plugin::INIConfig';
+    requires 'Mojolicious::Plugin::DBViewer';
+    requires 'Mojolicious::Plugin::AccessLog';
+    requires 'Mojolicious::Plugin::RequestBase';
+    requires 'Text::Markdown::Hoedown';
+    requires 'Time::Moment';
+    requires 'Crypt::Digest::SHA256';
+    requires 'MIME::Base64';
+    requires 'MIME::Entity';
+    requires 'HTML::FormatText::WithLinks';
+    requires 'Email::Sender';
+    requires 'HTML::Restrict', '>= 3.0.0';
+    requires 'Imager';
+    requires 'Text::CSV';
 
 If you want to install all defined modules, you only run the following command.
 
