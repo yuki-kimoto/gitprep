@@ -371,7 +371,11 @@
 
         if ($merge_success) {
           # Push
-          app->manager->push($work_rep_info, $base_branch);
+          {
+            local %ENV = %ENV;
+            app->manager->prepare_hooks($api->session_user_id, $base_rep_info);
+            app->manager->push($work_rep_info, $base_branch);
+          }
 
           # Close
           app->dbi->model('issue')->update(
