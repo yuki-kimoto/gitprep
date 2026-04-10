@@ -438,6 +438,17 @@
       }
     }
 
+    my $lock_fh = app->manager->lock_rep($work_rep_info);
+
+    # Prepare merge, sync work repo.
+    app->manager->prepare_merge(
+      $work_rep_info,
+      $base_rep_info,
+      $base_branch,
+      $target_rep_info,
+      $target_branch
+    );
+
     # Commits
     $commits = $git->forward_commits(
       $work_rep_info,
@@ -446,21 +457,11 @@
       $target_rep_info,
       $target_branch
     );
+
     for my $commit (@$commits) {
       $authors->{$commit->{author}} = $commit;
     }
     $last_commit_date = $commits->[0]->{committer_epoch} if @$commits;
-
-    my $lock_fh = app->manager->lock_rep($work_rep_info);
-
-    # Prepare merge
-    app->manager->prepare_merge(
-      $work_rep_info,
-      $base_rep_info,
-      $base_branch,
-      $target_rep_info,
-      $target_branch
-    );
 
     # Start commit
     my $start_commit_id = app->manager->merge_base($work_rep_info,
