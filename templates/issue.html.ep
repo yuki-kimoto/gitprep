@@ -30,9 +30,20 @@
     add_block_count => 0,
     delete_block_count => 0
   };
+  my %badges = (
+    open => {icon => 'issue-opened', text => 'Open', color => '#6cc644'},
+    closed => {icon => 'issue-closed', text => 'Closed', color => '#bd2c00'},
+    pr_open => {icon => 'git-pull-request', text => 'Open', color => '#6cc644',
+      draft_msg => 'Still in progress?', draft_link => 'Convert to draft',
+      draft_op => 'draft'},
+    pr_draft => {icon => 'git-pull-request-draft', text => 'Draft',
+      color => '#59636e', draft_msg => '', draft_link => 'Ready for review',
+      draft_op => 'undraft'},
+    pr_closed => {icon => 'git-pull-request-closed', text => 'Closed',
+      color => '#bd2c00'},
+    pr_merged => {icon => 'git-merge', text => 'Merged', color => '#8250df'}
+  );
   my $title = '- Issue';
-  my $icon_opened = 'issue-opened';
-  my $icon_closed = 'issue-closed';
 
   # Issue
   my $issue = app->dbi->model('issue')->select(
@@ -51,6 +62,7 @@
     return;
   }
   my $base_project_row_id = $issue->{project};
+  my $extstatus = $issue->{status};
 
   # Session
   my $loggedin = $api->logined;
@@ -93,7 +105,7 @@
 
       app->dbi->model('issue')->update(
         {
-          open => 0
+          status => 'closed'
         },
         where => {row_id => $issue->{row_id}}
       );
@@ -113,7 +125,7 @@
       my $open_time = $api->now;
       app->dbi->model('issue')->update(
         {
-          open => 1,
+          status => 'open',
           open_time => $open_time,
           open_user => $session_user_row_id
         },
@@ -259,8 +271,7 @@
 
   # Pull requests
   if ($issue->{pull_request}) {
-    $icon_opened = 'git-pull-request';
-    $icon_closed = 'git-pull-request-closed';
+    $extstatus = "pr_$extstatus";
     $activetab = param('activetab') // '';
     $pull_request = app->dbi->model('pull_request')->select(
       where => {row_id => $issue->{pull_request}}
@@ -340,6 +351,43 @@
 
     # Handle pull-request specific requests.
     if (lc $self->req->method eq 'post') {
+      # Draft
+      if ($op eq 'draft') {
+        # Access control
+        unless (($isissuer || $canadmin) && $issue->{status} =~ /open|draft/) {
+          $self->reply->exception('Forbidden');
+          return;
+        }
+        app->dbi->model('issue')->update(
+          {
+            status => 'draft'
+          },
+          where => {
+            row_id => $issue->{row_id}
+          }
+        );
+        $self->redirect_to('current');
+        return;
+      }
+
+      # Undraft
+      if ($op eq 'undraft') {
+        # Access control
+        unless (($isissuer || $canadmin) && $issue->{status} =~ /open|draft/) {
+          $self->reply->exception('Forbidden');
+          return;
+        }
+        app->dbi->model('issue')->update(
+          {
+            status => 'open'
+          },
+          where => {
+            row_id => $issue->{row_id}
+          }
+        );
+        $self->redirect_to('current');
+        return;
+      }
 
       # Merge
       if ($op eq 'merge') {
@@ -376,7 +424,7 @@
           # Close
           app->dbi->model('issue')->update(
             {
-              open => 0
+              status => 'merged'
             },
             where => {row_id => $issue->{row_id}}
           );
@@ -419,7 +467,7 @@
         $target_branch);
 
     # Check merge automatically
-    if ($issue->{open}) {
+    if ($issue->{status} eq 'open') {
 
       # Check conflicts
       $merge_success = app->manager->merge(
@@ -496,6 +544,7 @@
   }
 
   $title = $issue->{title} . " $title #$issue_number \x{b7} $base_user_id/$base_project_id";
+  my $badge = $badges{$extstatus};
   layout 'common', title => $title;
 %>
 
@@ -557,17 +606,10 @@
         <%= $issue->{title} %> <span style="color:#aaa;">#<%= $issue->{number} %></span>
       </div>
       <div>
-        % if ($issue->{open}) {
-          <div class="issue-open">
-            %= $api->icon($icon_opened);
-            Open
-          </div>
-        % } else {
-          <div class="issue-close">
-            %= $api->icon($icon_closed);
-            Closed
-          </div>
-        % }
+        <div class="issue-badge" style="background-color:<%= $badge->{color} %>;">
+          %= $api->icon($badge->{icon});
+          %= $badge->{text};
+        </div>
         % my $open_user_id = $issue->{'open_user.id'};
         <a style="color:#333333;font-weight:bold" href="<%= url_for("/$open_user_id") %>"><%= $open_user_id %></a>
         <span style="color:#767676">
@@ -680,7 +722,7 @@
               </div>
             </div>
 
-            % if ($loggedin && $pull_request && scalar(@$commits) && $issue->{open}) {
+            % if ($loggedin && $pull_request && scalar(@$commits) && $issue->{status} eq 'open') {
               <div class="pull-request-form">
                 <div style="overflow:hidden">
                   %if ($merge_success) {
@@ -782,6 +824,14 @@ git push origin <%= $base_branch %>
               </div>
             % }
 
+            % if (($isissuer || $canadmin) && exists $badge->{draft_op}) {
+              <form class="issue-draft" action="<%= url_for %>" method="post">
+                %= hidden_field op => $badge->{draft_op};
+                %= $badge->{draft_msg};
+                <a onclick="$(this).closest('form').submit();"><%= $badge->{draft_link} %></a>
+              </form>
+            % }
+
             % if ($loggedin) {
               <div class="issue-add-comment-container">
                 <a href="<%= url_for("/$session_user_id") %>">
@@ -810,9 +860,9 @@ git push origin <%= $base_branch %>
                           <div class="issue-add-comment-button">
                             % if ($isissuer || $canadmin) {
                               % my $issuekind = $pull_request? 'pull request': 'issue';
-                              % if ($issue->{open}) {
+                              % if ($issue->{status} eq 'open') {
                                 <input type="submit" value="Close <%= $issuekind %>" onclick="$(this).closest('form').find('[name=op]').val('close-issue'); $(this).closest('form').submit();" class="btn" />
-                              % } else {
+                              % } elsif ($issue->{status} eq 'closed') {
                                 <input type="submit" value="Reopen <%= $issuekind %>" onclick="$(this).closest('form').find('[name=op]').val('reopen-issue'); $(this).closest('form').submit();" class="btn" />
                               % }
                             % }

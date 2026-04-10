@@ -314,7 +314,7 @@
               % if ($branch_name ne $default_branch_name) {
                 % if ($api->logined) {
                   % if ($pull_request) {
-                    % if ($issue->{open}) {
+                    % if ($issue->{status} =~ /open|draft/) {
                       <a class="branches-open" href="<%= url_for("/$user/$project/pull/$issue->{number}") %>" title="<%=$issue->{title} %>">
                         %= $api->icon('git-pull-request');
                         &nbsp;
@@ -368,7 +368,7 @@
               % if (allowed('creation')) {
                 %= $api->icon('pencil', title => 'Rename', branch => $branch_name, tabindex => 0, onclick => 'var d = $(\'.branches-rename-dialog\', document); $(\'[name="branch"]\', d).val($(this).attr(\'branch\')); d[0].showModal();');
               % }
-              % if ($pull_request && $issue->{open}) {
+              % if ($pull_request && $issue->{status} =~ /open|draft/) {
                 %= $api->icon('trash');
               % } else {
                 <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">

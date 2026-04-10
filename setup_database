@@ -108,7 +108,8 @@ my @tables = (
       {name => 'project', type => 'integer'},
       {name => 'number', type => 'integer'},
       {name => 'title'},
-      {name => 'open', type => 'integer'},
+      {name => 'open', type => 'integer'},      # Obsolete: moved to status.
+      {name => 'status'},
       {name => 'open_time', type => 'integer'},
       {name => 'open_user', type => 'integer'},
       {name => 'pull_request', type => 'integer'}
@@ -253,8 +254,43 @@ sub create_table {
 }
 
 
+# Move issue/pr open flag to status field.
+sub update1 {
+  eval { $dbi->update({
+                        status => 'closed'
+                      },
+                      table => 'issue',
+                      where => {
+                        status => '',
+                        open => 0
+                      }
+                     ) };
+  if ($@) {
+    my $error = "Update 1 failed: $@";
+    die $error;
+  }
+  eval { $dbi->update({
+                        status => 'open'
+                      },
+                      table => 'issue',
+                      where => {
+                        status => '',
+                        open => 1
+                      }
+                     ) };
+  if ($@) {
+    my $error = "Update 1 failed: $@";
+    die $error;
+  }
+}
+
+
 # Create database
 
 foreach my $table (@tables) {
   create_table($table);
 }
+
+# Apply updates.
+
+update1;
