@@ -36,8 +36,8 @@
   }
   $issue_where_param->{pull_request} = 0;
   if (defined $is) {
-    push(@$issue_where_clause, ':issue.open{=}');
-    $issue_where_param->{'issue.open'} = $open;
+    push(@$issue_where_clause, ['or', ':issue.status{=}', ':issue.status{=}']);
+    $issue_where_param->{'issue.status'} = $open? ['open', 'draft']: ['closed', 'merged'];
   }
 
   my $issues = app->dbi->model('issue')->select(
@@ -58,11 +58,11 @@
 
   # Open count
   my $open_count = $api->get_issue_count($user_id, $project_id,
-    {pull => $pulls, open => 1});
+    {pull => $pulls, status => ['open', 'draft']});
   
   # Close count
   my $close_count = $api->get_issue_count($user_id, $project_id,
-    {pull => $pulls, open => 0});
+    {pull => $pulls}) - $open_count;
 
   # Default branch
   my $default_branch = app->git->current_branch(app->rep_info($user_id, $project_id));
@@ -147,6 +147,7 @@
               <%
                 my $kind = $issue->{pull_request}? 'pull': 'issues';
                 my $open_time = $issue->{open_time};
+                my $isopen = $issue->{status} =~ /open|draft/;
                 my $issue_labels = app->dbi->model('issue_label')->select(
                   {__MY__ => ['label']},
                   where => {issue => $issue->{row_id}}
@@ -159,7 +160,7 @@
 
               <li>
                 <div class="nostretch">
-                  %= $api->icon($issue->{open}? $icon_opened: $icon_closed);
+                  %= $api->icon($isopen? $icon_opened: $icon_closed);
                 </div>
                 <div>
                   <div class="issues-title">
@@ -173,7 +174,7 @@
                     </ul>
                   </div>
                   <div class="issues-description">
-                    #<%= $issue->{number} %> <%= $issue->{open} ? 'opened' : 'closed' %>
+                    #<%= $issue->{number} %> <%= $isopen ? 'opened' : 'closed' %>
                     %= $api->age_element($issue->{open_time});
                     by <%= $issue->{'open_user.id'} %>
                   </div>

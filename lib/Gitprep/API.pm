@@ -454,10 +454,10 @@ sub get_issue_count {
   if (exists $opt->{pull}) {
     push @$clause, $opt->{pull}? 'pull_request <> 0': 'pull_request = 0';
   }
-  # Open
-  if (exists $opt->{open}) {
-    push @$clause, ':issue.open{=}';
-    $param->{'issue.open'} = $opt->{open};
+  # Status
+  if (exists $opt->{status}) {
+    push @$clause, ['or', (':issue.status{=}') x scalar(@{$opt->{status}})];
+    $param->{'issue.status'} = $opt->{status};
   }
 
   $where->clause($clause);
@@ -474,13 +474,13 @@ sub get_issue_count {
 sub get_open_issue_count {
   my ($self, $user_id, $project_id) = @_;
   
-  return $self->get_issue_count($user_id, $project_id, {pull => 0, open => 1});
+  return $self->get_issue_count($user_id, $project_id, {pull => 0, status => ['open']});
 }
 
 sub get_open_pull_request_count {
   my ($self, $user_id, $project_id) = @_;
   
-  return $self->get_issue_count($user_id, $project_id, {pull => 1, open => 1});
+  return $self->get_issue_count($user_id, $project_id, {pull => 1, status => ['open', 'draft']});
 }
 
 sub api_update_issue_message {

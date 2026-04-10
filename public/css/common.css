@@ -942,24 +942,24 @@ ul.issues-label-pallet {
   margin:0 0 15px 0;
 }
 
-.issue-open {
+.issue-badge {
   display:inline-block;
   border-radius:5px;
   padding:4px 8px;
   color:white;
   fill:white;
   font-weight:bold;
-  background:#6cc644;
 }
 
-.issue-close {
-  display:inline-block;
-  border-radius:5px;
-  padding:4px 8px;
-  color:white;
-  fill:white;
-  font-weight:bold;
-  background:#bd2c00;
+.issue-draft {
+  margin-top: 6px;
+  text-align: right;
+}
+
+.issue-draft > a {
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .branches-open,
