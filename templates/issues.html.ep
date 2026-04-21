@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   # API
   my $api = gitprep_api;
 
@@ -65,7 +67,7 @@
     {pull => $pulls}) - $open_count;
 
   # Default branch
-  my $default_branch = app->git->current_branch(app->rep_info($user_id, $project_id));
+  my $default_branch = app->git->current_branch(Gitprep::Repository->new($user_id, $project_id));
 
   # Original project
   my $original_project = app->manager->original_project($user_id, $project_id);
@@ -117,7 +119,7 @@
           % if (!$pulls) {
             <a href="<%= url_for("/$user_id/$project_id/issues/new") %>" class="btn btn-green btn-new">New issue</a>
           % } elsif ($original_project) {
-            % my $original_default_branch = app->git->current_branch(app->rep_info($original_project->{'user.id'}, $original_project->{id}));
+            % my $original_default_branch = app->git->current_branch(Gitprep::Repository->new($original_project->{'user.id'}, $original_project->{id}));
             <a href="<%= url_for("/$original_project->{'user.id'}/$original_project->{id}/compare/$original_default_branch...$user_id:$project_id:$default_branch") %>" class="btn btn-green btn-new">New pull request</a>
           % } else {
             <a href="<%= url_for("/$user_id/$project_id/compare") %>" class="btn btn-green btn-new">New pull request</a>

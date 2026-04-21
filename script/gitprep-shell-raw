@@ -8,6 +8,7 @@ use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use File::Copy qw/copy/;
 use Gitprep;
+use Gitprep::Repository;
 
 my $debug = 0;
 
@@ -67,11 +68,11 @@ die qq|User "$session_user_id" can't access repository "$user_id/$project_id.git
   unless $can_access; 
 
 # Prepare hooks execution.
-my $rep_info = $app->rep_info($user_id, $project_id);
+my $rep_info = Gitprep::Repository->new($user_id, $project_id);
 $manager->prepare_hooks($session_user_id, $rep_info);
 
 # Command
-my $repository = "'$rep_info->{git_dir}'";
+my $repository = "'" . $rep_info->git_dir . "'";
 my @git_shell_cmd = ("git", "shell", "-c", "$verb $repository");
 warn "@git_shell_cmd" if $debug;
 unless ($debug) {

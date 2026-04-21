@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   # API
   my $api = gitprep_api;
 
@@ -13,7 +15,7 @@
 
   my $session_user_id = $api->session_user_id;
   my $canadmin = $api->logined && $api->can_write_access($session_user_id, $user_id, $project_id);
-  my $rep_info = app->rep_info($user_id, $project_id);
+  my $rep_info = Gitprep::Repository->new($user_id, $project_id);
 
   # Default branch
   my $default_branch_name = $git->current_branch($rep_info);
@@ -333,16 +335,15 @@
                       if ($original_project) {
                         my $original_user_id = $original_project->{'user.id'};
                         my $original_project_id = $original_project->{id};
+                        my $original_rep_info = Gitprep::Repository->new($original_user_id, $original_project_id);
 
                         my $exists_original_branch_name = app->git->exists_branch(
-                          app->rep_info($original_user_id, $original_project_id),
-                          $branch_name
-                        );
+                          $original_rep_info, $branch_name);
                         if ($exists_original_branch_name) {
                           $compare_url = url_for("/$original_user_id/$original_project_id/compare/$branch_name...$user_id:$project_id:$branch_name")->query(expand => 1);
                         }
                         else {
-                          my $original_project_default_branch = $git->current_branch(app->rep_info($original_user_id, $original_project_id));
+                          my $original_project_default_branch = $git->current_branch($original_rep_info);
                           $compare_url = url_for("/$original_user_id/$original_project_id/compare/$original_project_default_branch...$user_id:$project_id:$branch_name")->query(expand => 1);
                         }
                       }

@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   # API.
   my $api = gitprep_api;
 
@@ -34,7 +36,7 @@
       )->all;
       $fork->{pr_count} = scalar(map $_->{pull_request}? 1: (), @$issues);
       $fork->{issue_count} = @$issues - $fork->{pr_count};
-      my $rep = app->git->repository(app->rep_info($fork->{'user.id'}, $fork->{id}));
+      my $rep = app->git->repository(Gitprep::Repository->new($fork->{'user.id'}, $fork->{id}));
       unless ($rep->{updated} && $fork->{created} && $rep->{updated} < $fork->{created}) {
         $fork->{updated} = $rep->{updated};
       }

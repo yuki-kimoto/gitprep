@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   my $api = gitprep_api;
 
   # Parameters
@@ -113,7 +115,7 @@
                 <%
                   my $user_id = $project->{'user.id'};
                   my $project_id = $project->{id};
-                  my $rep_info = app->rep_info($user_id, $project_id);
+                  my $rep_info = Gitprep::Repository->new($user_id, $project_id);
                   my $rev = app->git->current_branch($rep_info);
                   my $desc = app->git->description($rep_info);
                   my $branches = app->git->branches($rep_info);

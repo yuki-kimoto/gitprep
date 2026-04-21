@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   # API
   my $api = gitprep_api;
 
@@ -7,7 +9,7 @@
   my $project_id = param('project');
   my $op = param('op');
 
-  my $rep_info = app->rep_info($user_id, $project_id);
+  my $rep_info = Gitprep::Repository->new($user_id, $project_id);
   my $rep = app->git->repository($rep_info);
 
   # Can fork?

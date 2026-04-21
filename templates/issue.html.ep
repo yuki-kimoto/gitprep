@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   # API
   my $api = gitprep_api;
 
@@ -309,13 +311,15 @@
     $target_project_id = $target_project->{id};
 
     # Base repository information
-    my $base_rep_info = app->rep_info($base_user_id, $base_project_id);
+    my $base_rep_info = Gitprep::Repository->new($base_user_id,
+      $base_project_id);
 
     # Target repository information
-    my $target_rep_info = app->rep_info($target_user_id, $target_project_id);
+    my $target_rep_info = Gitprep::Repository->new($target_user_id,
+      $target_project_id);
 
     # Working repository information
-    my $work_rep_info = app->work_rep_info($base_user_id, $base_project_id);
+    my $work_rep_info = $base_rep_info->work;
 
     # Make sure the working repository exists.
     app->manager->create_work_rep($base_user_id, $base_project_id);

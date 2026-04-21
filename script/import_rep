@@ -9,6 +9,7 @@ use lib "$FindBin::Bin/../extlib/lib/perl5";
 use Getopt::Long qw(:config default no_auto_abbrev no_ignore_case);
 use File::Basename 'basename';
 use Gitprep;
+use Gitprep::Repository;
 use Encode 'decode';
 use Mojo::Server;
 
@@ -84,7 +85,8 @@ for my $rep (glob "$rep_dir/*") {
       }
     };
     $description = decode('UTF-8', $description);
-    eval {$git->description(app->rep_info($user_id, $project_id), $description) };
+    my $remote_rep_info = Gitprep::Repository->new($user_id, $project_id);
+    eval {$git->description($remote_rep_info, $description) };
     if ($@) {
       warn "Can't update description $project_id\n";
     }
@@ -92,20 +94,17 @@ for my $rep (glob "$rep_dir/*") {
     # Push repository
     chdir $rep
       or warn "Can't change directory $rep: $!\n";
-    
-    my $remote_rep_info = $app->rep_info($user_id, $project_id);
-    my $remote_rep_git_dir = $remote_rep_info->{git_dir};
-    
+
     # push branches
     {
-      my @cmd = ('git', 'push', $remote_rep_git_dir, '--all');
+      my @cmd = ('git', 'push', $remote_rep_info->git_dir, '--all');
       system(@cmd) == 0
         or warn "Can't push branches: @cmd";
     }
     
     # push tags
     {
-      my @cmd = ('git', 'push', $remote_rep_git_dir, '--tags');
+      my @cmd = ('git', 'push', $remote_rep_info->git_dir, '--tags');
       system(@cmd) == 0
         or warn "Can't push tags: @cmd";
     }

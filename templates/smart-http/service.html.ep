@@ -2,6 +2,7 @@
   use IPC::Open3 ();
   use Symbol ();
   use IO::Select ();
+  use Gitprep::Repository;
   
   my $service = param('service');
   my $user = param('user');
@@ -11,9 +12,13 @@
 
   my $auth_user_id = stash('auth_user_id') // '';
 
-  my $rep_info = app->rep_info($user, $project);
-  my $rep_git_dir = $rep_info->{git_dir};
-  my @cmd = $git->cmd(app->rep_info($user, $project), $service, '--stateless-rpc', $rep_git_dir);
+  my $rep_info = Gitprep::Repository->new($user, $project);
+  my @cmd = $git->cmd(
+    $rep_info,
+    $service,
+    '--stateless-rpc',
+    $rep_info->git_dir
+  );
   my %save_env = %ENV;
   app->manager->prepare_hooks($auth_user_id, $rep_info);
   

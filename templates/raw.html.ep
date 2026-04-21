@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   # Git
   my $git = app->git;
 
@@ -12,7 +14,8 @@
   if ($is_wiki) {
     $user_id_project_path .= '/wiki';
   }
-  my $rep_info = $is_wiki ? app->wiki_rep_info($user_id, $project_id) : app->rep_info($user_id, $project_id);
+  my $rep_info = Gitprep::Repository->new($user_id, $project_id);
+  $rep_info = $rep_info->wiki if $is_wiki;
 
   my ($rev, $file) = $git->parse_rev_path($rep_info, $rev_file);
   

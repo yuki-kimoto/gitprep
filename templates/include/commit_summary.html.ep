@@ -11,7 +11,7 @@
   my $file = stash('rep_file') // '';
   my $history = stash('history') // 'History';
 
-  my $url = $rep_info->{url};
+  my $url = $rep_info->url;
 
   my $commit;
   if (!$git->rev_exists($rep_info, $rev) || !($commit = $git->last_change_commits($rep_info, $rev, [$file])->{$file})) {

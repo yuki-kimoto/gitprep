@@ -1,16 +1,20 @@
 <%
+  use Gitprep::Repository;
+
   my $api = gitprep_api;
   
   # Git
   my $git = app->git;
+
+  my $rep_info = Gitprep::Repository->new($user, $project);
   
   # Branches
-  my $branches = $git->branches($self->app->rep_info($user, $project)) || [];
+  my $branches = $git->branches($rep_info) || [];
   my @branch_names = map { $_->{name} } @$branches;
   
   # Tags
   my $tags = $git->tags(
-    app->rep_info($user, $project),
+    $rep_info,
     app->config->{basic}{tags_limit} || 1000,
     app->config->{basic}{tags_limit} || 1000
   ) || [];

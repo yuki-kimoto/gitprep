@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   # API
   my $api = gitprep_api;
   my $manager = app->manager;
@@ -32,7 +34,7 @@
   }
 
   my $rules = $manager->rules;
-  my $rep_info = app->rep_info($user_id, $project_id);
+  my $rep_info = Gitprep::Repository->new($user_id, $project_id);
   my $refs;
   if ($target eq 'branch') {
     $refs = $git->branch_names($rep_info);

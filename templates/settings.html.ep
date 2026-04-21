@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   # API
   my $api = gitprep_api;
   my $manager = app->manager;
@@ -16,7 +18,7 @@
     return;
   }
 
-  my $rep_info = app->rep_info($user_id, $project_id);
+  my $rep_info = Gitprep::Repository->new($user_id, $project_id);
   my $current_branch = $git->current_branch($rep_info);
 
   # Rename project

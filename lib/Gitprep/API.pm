@@ -12,6 +12,8 @@ use HTML::Restrict;
 use Carp 'croak';
 use Encode 'decode', 'encode';
 
+use Gitprep::Repository;
+
 has 'cntl';
 
 sub markdown_wiki {
@@ -48,7 +50,8 @@ sub markdown_wiki {
 sub exists_wiki_page {
   my ($self, $user_id, $project_id, $title) = @_;
   
-  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
+  my $wiki_work_rep_info = Gitprep::Repository::Wiki->new($user_id,
+    $project_id)->work;
   
   # File name
   my $file_name = $title;
@@ -57,7 +60,7 @@ sub exists_wiki_page {
   $file_name .= '.md';
   
   # File abs name
-  my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
+  my $file_abs_name = $wiki_work_rep_info->work_tree($file_name);
   
   my $exists = -f encode('UTF-8', $file_abs_name);
   
@@ -67,10 +70,11 @@ sub exists_wiki_page {
 sub get_wiki_pages {
   my ($self, $user_id, $project_id) = @_;
   
-  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
+  my $wiki_work_rep_info = Gitprep::Repository::Wiki->new($user_id,
+    $project_id)->work;
   
   # Open directory
-  my $dir = $wiki_work_rep_info->{work_tree};
+  my $dir = $wiki_work_rep_info->work_tree;
   opendir my $dh, $dir
     or croak "Can't open directory \"$dir\":$!";
   
@@ -91,10 +95,11 @@ sub get_wiki_pages {
 sub get_wiki_pages_count {
   my ($self, $user_id, $project_id) = @_;
   
-  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
+  my $wiki_work_rep_info = Gitprep::Repository::Wiki->new($user_id,
+    $project_id)->work;
   
   # Open directory
-  my $dir = $wiki_work_rep_info->{work_tree};
+  my $dir = $wiki_work_rep_info->work_tree;
   opendir my $dh, $dir
     or croak "Can't open directory \"$dir\":$!";
   
@@ -113,7 +118,8 @@ sub get_wiki_pages_count {
 sub get_wiki_page_content {
   my ($self, $user_id, $project_id, $title) = @_;
   
-  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
+  my $wiki_work_rep_info = Gitprep::Repository::Wiki->new($user_id,
+    $project_id)->work;
   
   # File name
   my $file_name = $title;
@@ -122,7 +128,7 @@ sub get_wiki_page_content {
   $file_name .= '.md';
   
   # File abs name
-  my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
+  my $file_abs_name = $wiki_work_rep_info->work_tree($file_name);
   
   unless (-f encode('UTF-8', $file_abs_name)) {
     return;
@@ -170,8 +176,8 @@ sub create_wiki_page {
   }
   
   # Update page
-  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
-  my $wiki_rep_info = $self->app->wiki_rep_info($user_id, $project_id);
+  my $wiki_rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
+  my $wiki_work_rep_info = $wiki_rep_info->work;
   
   # File name
   my $file_name = $title;
@@ -180,7 +186,7 @@ sub create_wiki_page {
   $file_name .= '.md';
   
   # File abs name
-  my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
+  my $file_abs_name = $wiki_work_rep_info->work_tree($file_name);
   
   open my $fh, '>:encoding(UTF-8)', encode('UTF-8', $file_abs_name)
     or die "Can't open file \"". encode('UTF-8', $file_abs_name) . "\": $!";
@@ -198,7 +204,7 @@ sub create_wiki_page {
       $wiki_work_rep_info,
       'status',
       '-s',
-      $wiki_work_rep_info->{work_tree}
+      $wiki_work_rep_info->work_tree
     );
     open my $fh, '-|', @git_status_cmd
       or croak "Can't execute @git_status_cmd";
@@ -214,7 +220,7 @@ sub create_wiki_page {
   my @git_add_cmd = $self->app->git->cmd(
     $wiki_work_rep_info,
     'add',
-    $wiki_work_rep_info->{work_tree}
+    $wiki_work_rep_info->work_tree
   );
   
   Gitprep::Util::run_command(@git_add_cmd)
@@ -237,7 +243,7 @@ sub create_wiki_page {
       $wiki_work_rep_info,
       'push',
       '-q',
-      $wiki_rep_info->{git_dir},
+      $wiki_rep_info->git_dir,
       'master'
     );
     # (This is bad, but --quiet option can't supress in old git)
@@ -253,9 +259,9 @@ sub rename_and_update_wiki_page {
   my $project_row_id = $self->get_project_row_id($user_id, $project_id);
   
   # Update page
-  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
-  my $wiki_rep_info = $self->app->wiki_rep_info($user_id, $project_id);
-  
+  my $wiki_rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
+  my $wiki_work_rep_info = $wiki_rep_info->work;
+
   # Original file name
   my $original_file_name = $original_title;
   $original_file_name =~ s/^ +//;
@@ -269,10 +275,10 @@ sub rename_and_update_wiki_page {
   $file_name .= '.md';
 
   # Original file abs name
-  my $original_file_abs_name = "$wiki_work_rep_info->{work_tree}/$original_file_name";
+  my $original_file_abs_name = $wiki_work_rep_info->work_tree($original_file_name);
   
   # File abs name
-  my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
+  my $file_abs_name = $wiki_work_rep_info->work_tree($file_name);
   
   # Create file
   open my $fh, '>:encoding(UTF-8)', encode('UTF-8', $file_abs_name)
@@ -297,7 +303,7 @@ sub rename_and_update_wiki_page {
       $wiki_work_rep_info,
       'status',
       '-s',
-      $wiki_work_rep_info->{work_tree}
+      $wiki_work_rep_info->work_tree
     );
     open my $fh, '-|', @git_status_cmd
       or croak "Can't execute @git_status_cmd";
@@ -323,7 +329,7 @@ sub rename_and_update_wiki_page {
   my @git_add_cmd = $self->app->git->cmd(
     $wiki_work_rep_info,
     'add',
-    $wiki_work_rep_info->{work_tree}
+    $wiki_work_rep_info->work_tree
   );
   
   Gitprep::Util::run_command(@git_add_cmd)
@@ -346,7 +352,7 @@ sub rename_and_update_wiki_page {
       $wiki_work_rep_info,
       'push',
       '-q',
-      $wiki_rep_info->{git_dir},
+      $wiki_rep_info->git_dir,
       'master'
     );
     # (This is bad, but --quiet option can't supress in old git)
@@ -363,19 +369,19 @@ sub delete_wiki_page {
   
   # Get wiki
   my $wiki = $self->app->dbi->model('wiki')->select(where => {project => $project_row_id})->one;
-  
-  # Wiki working directory
-  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user_id, $project_id);
-  
+
   # Wiki repository
-  my $wiki_rep_info = $self->app->wiki_rep_info($user_id, $project_id);
+  my $wiki_rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
+
+  # Wiki working directory
+  my $wiki_work_rep_info = $wiki_rep_info->work;
   
   # File name
   my $file_name = $title;
   $file_name .= '.md';
   
   # File abs name
-  my $file_abs_name = "$wiki_work_rep_info->{work_tree}/$file_name";
+  my $file_abs_name = $wiki_work_rep_info->work_tree($file_name);
   
   # Delete file
   if (-f encode('UTF-8', $file_abs_name)) {
@@ -390,7 +396,7 @@ sub delete_wiki_page {
       $wiki_work_rep_info,
       'status',
       '-s',
-      $wiki_work_rep_info->{work_tree}
+      $wiki_work_rep_info->work_tree
     );
     open my $fh, '-|', @git_status_cmd
       or croak "Can't execute @git_status_cmd";
@@ -430,7 +436,7 @@ sub delete_wiki_page {
       $wiki_work_rep_info,
       'push',
       '-q',
-      $wiki_rep_info->{git_dir},
+      $wiki_rep_info->git_dir,
       'master'
     );
     # (This is bad, but --quiet option can't supress in old git)
@@ -665,13 +671,13 @@ sub mentioned {
 sub ssh_rep_url {
   my ($self, $user_id, $repository) = @_;
 
-  my $app = $self->app;
-  my $user = $app->config->{basic}{ssh_user} || getpwuid($>);
-  my $port = $app->config->{basic}{ssh_port};
-  my $home = $app->config->{basic}{'ssh_rep_url_base'} || $app->rep_home;
+  my $config = $self->app->config;
+  my $user = $config->{basic}{ssh_user} || getpwuid($>);
+  my $port = $config->{basic}{ssh_port};
+  my $home = $config->{basic}{'ssh_rep_url_base'} || Gitprep::Repository->home;
   my $url = "$user@" . $self->cntl->url_for->to_abs->host;
 
-  if (!$app->config->{basic}{scp_url} || $port) {
+  if (!$config->{basic}{scp_url} || $port) {
     # True ssh url.
     $url .= ":$port" if $port;
     return "ssh://$url$home/$user_id/$repository.git";

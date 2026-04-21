@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   use Mojo::JSON qw(decode_json);
   use Mojo::ByteStream;
 
@@ -25,7 +27,7 @@
   my $projects = app->manager->projects($user_id);
   my $reps = [];
   for my $project (@$projects) {
-    my $rep = app->git->repository(app->rep_info($user_id, $project->{id})) || {none => 1};
+    my $rep = app->git->repository(Gitprep::Repository->new($user_id, $project->{id})) || {none => 1};
     $rep->{id} = $project->{id};
     $rep->{private} = $project->{private};
     push @$reps, $rep;

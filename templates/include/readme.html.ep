@@ -1,5 +1,6 @@
 <%
   use Mojo::ByteStream ();
+  use Gitprep::Repository;
 
   my $api = gitprep_api;
 
@@ -77,7 +78,7 @@
     }}
   );
 
-  my $rep_info = app->rep_info($user, $project);
+  my $rep_info = Gitprep::Repository->new($user, $project);
   my %filecache;
 
   foreach my $docdir (reverse @docdirs) {

@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   # API
   my $api = gitprep_api;
   
@@ -42,7 +44,7 @@
   )->one;
 
   # Base branches
-  my $base_rep_info = app->rep_info($base_user_id, $base_project_id);
+  my $base_rep_info = Gitprep::Repository->new($base_user_id, $base_project_id);
   my $base_branches = $git->branches($base_rep_info);
 
   # If no branch yet, redirect to project page which will display info
@@ -79,7 +81,7 @@
       )->one;
       $base_user_id = $original_project->{'user.id'};
       $base_project_id = $original_project->{'id'};
-      $base_branch = $git->current_branch(app->rep_info($base_user_id, $base_project_id));
+      $base_branch = $git->current_branch(Gitprep::Repository->new($base_user_id, $base_project_id));
       my $new_rev2 = new_rev2();
       $self->redirect_to("/$base_user_id/$base_project_id/compare/$base_branch...$new_rev2");
       return;
@@ -100,7 +102,7 @@
   my $bad_params = !$target_project;
 
   # Target branches
-  my $target_rep_info = app->rep_info($target_user_id, $target_project_id);
+  my $target_rep_info = Gitprep::Repository->new($target_user_id, $target_project_id);
   my $target_branches = [];
   $target_branches = $git->branches($target_rep_info) unless $bad_params;
 
@@ -232,7 +234,7 @@
   my $work_rep_info;
   if (!$bad_params) {
     # Lock working repository
-    $work_rep_info = app->work_rep_info($base_user_id, $base_project_id);
+    $work_rep_info = $base_rep_info->work;
     {
       my $lock_fh = $self->app->manager->lock_rep($work_rep_info);
 
