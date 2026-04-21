@@ -1,11 +1,13 @@
 <%
+  use Gitprep::Repository;
+
   # API
   my $api = gitprep_api;
   
   my $user_id = param('user');
   my $project_id = param('project');
-  
-  my $rep_info = $self->app->rep_info($user_id, $project_id);
+
+  my $rep_info = Gitprep::Repository->new($user_id, $project_id);
   
   # Branches
   my $branches = [map { $_->{name} } @{app->git->branches($rep_info)}];
@@ -42,7 +44,7 @@
   
   # Members branches
   for my $member_project (@$member_projects) {
-    my $member_rep_info = $self->app->rep_info($member_project->{'user.id'}, $member_project->{id});
+    my $member_rep_info = Gitprep::Repository->new($member_project->{'user.id'}, $member_project->{id});
     
     my $branches = app->git->branches($member_rep_info);
     $branches = [map { $_->{name} } @$branches];

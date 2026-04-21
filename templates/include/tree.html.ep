@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   # API
   my $api = gitprep_api;
   
@@ -16,7 +18,7 @@
   my $project_id = stash('project_id');
   my $rev = stash('rev');
 
-  my $rep_info = app->rep_info($user_id, $project_id);
+  my $rep_info = Gitprep::Repository->new($user_id, $project_id);
   my $default_branch_name = $git->current_branch($rep_info);
   
   my $history;

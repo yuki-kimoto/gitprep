@@ -12,6 +12,7 @@ use DBIx::Custom;
 use Gitprep::API;
 use Gitprep::Git;
 use Gitprep::Manager;
+use Gitprep::Repository;
 use Scalar::Util 'weaken';
 use Validator::Custom;
 use Time::Moment;
@@ -37,82 +38,6 @@ has 'manager';
 has 'vc';
 
 use constant BUFFER_SIZE => 8192;
-
-sub data_dir {
-  my $self = shift;
-  
-  my $data_dir = $self->config('data_dir');
-  
-  return $data_dir;
-}
-
-sub rep_home {
-  my $self = shift;
-  
-  my $rep_home = $self->data_dir . "/rep";
-  
-  return $rep_home;
-}
-
-sub rep_info {
-  my ($self, $user_id, $project_id) = @_;
-  
-  my $info = {};
-  $info->{user} = $user_id;
-  $info->{project} = $project_id;
-  $info->{root} = $self->rep_home . "/$user_id/$project_id.git";
-  $info->{git_dir} = $info->{root};
-  $info->{url} = "/$user_id/$project_id";
-  
-  return $info;
-}
-
-sub work_rep_home {
-  my $self = shift;
-  
-  my $work_rep_home = $self->data_dir . "/work";
-  
-  return $work_rep_home;
-}
-
-sub work_rep_info {
-  my ($self, $user_id, $project_id) = @_;
-  
-  my $info = {};
-  $info->{user} = $user_id;
-  $info->{project} = $project_id;
-  $info->{root} = $self->work_rep_home . "/$user_id/$project_id";
-  $info->{git_dir} = $info->{root} . '/.git';
-  $info->{work_tree} = $info->{root};
-  
-  return $info;
-}
-
-sub wiki_rep_info {
-  my ($self, $user_id, $project_id) = @_;
-  
-  my $info = {};
-  $info->{user} = $user_id;
-  $info->{project} = $project_id;
-  $info->{root} = $self->rep_home . "/$user_id/$project_id.wiki.git";
-  $info->{git_dir} = $info->{root};
-  $info->{url} = "/$user_id/$project_id/wiki";
-  
-  return $info;
-}
-
-sub wiki_work_rep_info {
-  my ($self, $user_id, $project_id) = @_;
-  
-  my $info = {};
-  $info->{user} = $user_id;
-  $info->{project} = $project_id;
-  $info->{root} = $self->work_rep_home . "/$user_id/$project_id.wiki";
-  $info->{git_dir} = $info->{root} . '/.git';
-  $info->{work_tree} = $info->{root};
-  
-  return $info;
-}
 
 sub sign {
   my $self = shift;
@@ -183,6 +108,10 @@ sub startup {
   my $data_dir = $ENV{GITPREP_DATA_DIR} ? $ENV{GITPREP_DATA_DIR} : $self->home->rel_file('data');
   $self->config(data_dir => $data_dir);
 
+  # Configure Repository package.
+  Gitprep::Repository->home("$data_dir/rep");
+  Gitprep::Repository::Work->home("$data_dir/work");
+
   if (my $custom_templates = $conf->{templates}{custom_template_folder}) {
     die "$custom_templates folder not found or not writable! Giving up ..." unless (-d $custom_templates && -w $custom_templates);
     unshift(@{$self->renderer->paths}, $custom_templates);
@@ -224,7 +153,7 @@ sub startup {
   }
   
   # Repository home
-  my $rep_home = "$data_dir/rep";
+  my $rep_home = Gitprep::Repository->home;
   unless (-d $rep_home) {
     mkdir $rep_home
       or croak "Can't create directory $rep_home: $!";

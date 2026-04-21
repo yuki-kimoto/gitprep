@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   my $path = param('Path');
   my $user = param('user');
   my $project = param('project');
@@ -31,9 +33,8 @@
     $content_type = 'application/x-git-packed-objects-toc';
   }
   
-  my $rep_info = app->rep_info($user, $project);
-  my $rep_git_dir = $rep_info->{git_dir};
-  my $file = "$rep_git_dir/$path";
+  my $rep_info = Gitprep::Repository->new($user, $project);
+  my $file = $rep_info->git_dir($path);
   if (-f $file) {
     my $asset = Mojo::Asset::File->new(path => $file);
     my $content = $asset->slurp;

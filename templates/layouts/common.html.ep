@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   my $stylesheets = stash('stylesheets') || [];
   my $user = stash('user');
   $user = '' unless defined $user;
@@ -6,7 +8,7 @@
   $project = '' unless defined $project;
   my $rev = stash('rev');
   if (length $user && length $project && !defined $rev) {
-    $rev = app->git->current_branch(app->rep_info($user, $project));
+    $rev = app->git->current_branch(Gitprep::Repository->new($user, $project));
   }
   $rev = '' unless $rev;
 %>

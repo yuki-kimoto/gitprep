@@ -203,21 +203,15 @@ sub branches_count {
 
 sub cmd {
   my ($self, $rep_info, @command) = @_;
-  
+
   $rep_info //= {};
-  
-  my $git_dir = $rep_info->{git_dir};
-  my $work_tree = $rep_info->{work_tree};
+  my $git_dir = $rep_info->git_dir if $rep_info->can('git_dir');
+  my $work_tree = $rep_info->work_tree if $rep_info->can('work_tree');
   
   my @command_all = ($self->bin);
-  if (defined $git_dir) {
-    push @command_all, "--git-dir=$git_dir";
-  }
-  if (defined $work_tree) {
-    push @command_all, "--work-tree=$work_tree";
-  }
+  push @command_all, "--git-dir=$git_dir" if defined $git_dir;
+  push @command_all, "--work-tree=$work_tree" if defined $work_tree;
   push @command_all, @command;
-  
   return @command_all;
 }
 
@@ -695,13 +689,12 @@ sub delete_branch {
 sub description {
   my ($self, $rep_info, $description) = @_;
   
-  my $git_dir = $rep_info->{git_dir};
-  my $file = "$git_dir/description";
+  my $file = $rep_info->git_dir('description');
   
   if (defined $description) {
     # Write description
     open my $fh, '>',$file
-      or croak "Can't open file $git_dir: $!";
+      or croak "Can't open file $file $!";
     print $fh encode('UTF-8', $description)
       or croak "Can't write description: $!";
     close $fh;
@@ -1003,7 +996,7 @@ sub object_type {
 sub repository {
   my ($self, $rep_info) = @_;
 
-  return unless -d $rep_info->{git_dir};
+  return unless -d $rep_info->git_dir;
   
   my $rep = {updated => $self->last_activity($rep_info)};
   my $description = $self->description($rep_info) || '';
@@ -1520,11 +1513,10 @@ sub import_branch {
   my $force = $opt->{force};
   
   # Git pull
-  my $remote_rep = $remote_rep_info->{git_dir};
   my @cmd = $self->cmd(
     $rep_info,
     'fetch',
-    $remote_rep,
+    $remote_rep_info->git_dir,
     ($force ? '+' : '') . "refs/heads/$remote_branch:refs/heads/$branch"
   );
   
@@ -1729,7 +1721,7 @@ sub decide_encoding {
   
   my $guess_encoding_str = $self->app->dbi->model('project')->select(
     'guess_encoding',
-    where => {user_id => $rep_info->{user}, name => $rep_info->{project}}
+    where => {user_id => $rep_info->user, name => $rep_info->project}
   )->value;
   
   my @guess_encodings;

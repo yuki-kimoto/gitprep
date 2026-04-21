@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   # API
   my $api = gitprep_api;
 
@@ -9,12 +11,10 @@
   my $rev2_abs = param('rev2_abs');
   my ($remote_user, $remote_project, $remote_branch) = split /\//, $rev2_abs, 3;
   
-  my $commits = app->git->get_commits(app->rep_info($user, $project), $branch, 100);
-  my $remote_commits = app->git->get_commits(
-    app->rep_info($remote_user, $remote_project),
-    $remote_branch,
-    100
-  );
+  my $commits = app->git->get_commits(Gitprep::Repository->new($user, $project),
+    $branch, 100);
+  my $remote_commits = app->git->get_commits(Gitprep::Repository->new($remote_user,
+    $remote_project), $remote_branch, 100);
   
   my $merged_commits_h = {};
   for my $commit (@$commits) {

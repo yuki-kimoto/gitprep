@@ -11,6 +11,7 @@ use Carp 'croak';
 use File::Spec;
 use Scalar::Util 'weaken';
 use Gitprep::Util;
+use Gitprep::Repository;
 
 has 'app';
 has 'authorized_keys_file';
@@ -37,22 +38,22 @@ sub prepare_merge {
   my $git = $self->app->git;
 
   # Fetch base repository
-  my $base_user_id = $base_rep_info->{user};
+  my $base_user_id = $base_rep_info->user;
   my @git_fetch_base_cmd = $git->cmd($work_rep_info, 'fetch', 'origin');
   Gitprep::Util::run_command(@git_fetch_base_cmd)
     or Carp::croak "Can't execute git fetch: @git_fetch_base_cmd";
 
   # Configure remote for target repository
-  my $target_remote = $target_rep_info->{user} . '/' . $target_rep_info->{project};
+  my $target_remote = $target_rep_info->remote_name;
   my $remotes = $self->get_remotes($work_rep_info);
-  if (exists $remotes->{$target_remote} && $remotes->{$target_remote} ne $target_rep_info->{root}) {
+  if (exists $remotes->{$target_remote} && $remotes->{$target_remote} ne $target_rep_info->root) {
     my @git_remote_remove_cmd = $git->cmd($work_rep_info, 'remote', 'remove', $target_remote);
     Gitprep::Util::run_command(@git_remote_remove_cmd)
       or Carp::croak "Can't execute git remote @git_remote_remove_cmd";
     delete $remotes->{$target_remote};
   }
   if (!exists $remotes->{$target_remote}) {
-    my @git_remote_add_cmd = $git->cmd($work_rep_info, 'remote', 'add', $target_remote, $target_rep_info->{root});
+    my @git_remote_add_cmd = $git->cmd($work_rep_info, 'remote', 'add', $target_remote, $target_rep_info->root);
     Gitprep::Util::run_command(@git_remote_add_cmd)
       or Carp::croak "Can't execute git remote @git_remote_add_cmd";
   }
@@ -117,11 +118,11 @@ sub prepare_merge {
 sub merge {
   my ($self, $work_rep_info, $target_rep_info, $target_branch, $pull_request_number) = @_;
 
-  my $target_remote = $target_rep_info->{user} . '/' . $target_rep_info->{project};
+  my $target_remote = $target_rep_info->remote_name;
   my $object_id = $self->app->git->ref_to_object_id($work_rep_info, "$target_remote/$target_branch");
   
   my $message;
-  my $target_user_id = $target_rep_info->{user};
+  my $target_user_id = $target_rep_info->user;
   if (defined $pull_request_number) {
     $message = "Merge pull request #$pull_request_number from $target_user_id/$target_branch";
   }
@@ -147,7 +148,7 @@ sub merge {
 sub get_patch {
   my ($self, $work_rep_info, $target_rep_info, $target_branch) = @_;
 
-  my $target_remote = $target_rep_info->{user} . '/' . $target_rep_info->{project};
+  my $target_remote = $target_rep_info->remote_name;
   my $object_id = $self->app->git->ref_to_object_id($work_rep_info, "$target_remote/$target_branch");
   
   # Format patch
@@ -169,7 +170,7 @@ sub get_patch {
 sub merge_base {
   my ($self, $work_rep_info, $base_branch, $target_rep_info, $target_branch) = @_;
 
-  my $target_remote = $target_rep_info->{user} . '/' . $target_rep_info->{project};
+  my $target_remote = $target_rep_info->remote_name;
   my @git_merge_base_cmd = $self->app->git->cmd(
     $work_rep_info,
     'merge-base',
@@ -200,8 +201,7 @@ sub push {
 sub lock_rep {
   my ($self, $rep_info) = @_;
   
-  my $git_dir = $rep_info->{git_dir};
-  my $lock_file = "$git_dir/config";
+  my $lock_file = $rep_info->git_dir('config');
   
   open my $lock_fh, '<', $lock_file
     or croak "Can't open lock file $lock_file: $!";
@@ -216,18 +216,21 @@ sub create_work_rep {
   my ($self, $user, $project) = @_;
   
   # Remote repository
-  my $rep_info = $self->app->rep_info($user, $project);
-  my $rep_git_dir = $rep_info->{git_dir};
+  my $rep_info = Gitprep::Repository->new($user, $project);
   
   # Working repository
-  my $work_rep_info = $self->app->work_rep_info($user, $project);
-  my $work_tree = $work_rep_info->{work_tree};
+  my $work_rep_info = $rep_info->work;
   
   # Create working repository if it doesn't exist
-  unless (-e $work_tree) {
+  unless (-e $work_rep_info->work_tree) {
 
     # git clone
-    my @git_clone_cmd = ($self->app->git->bin, 'clone', $rep_git_dir, $work_tree);
+    my @git_clone_cmd = (
+      $self->app->git->bin,
+      'clone',
+      $rep_info->git_dir,
+      $work_rep_info->work_tree
+    );
     Gitprep::Util::run_command(@git_clone_cmd)
       or croak "Can't git clone: @git_clone_cmd";
     
@@ -563,9 +566,8 @@ sub rename_project {
   my ($self, $user, $project, $to_project) = @_;
   
   # Rename project
-  my $app = $self->app;
-  my $git = $app->git;
-  my $dbi = $app->dbi;
+  my $git = $self->app->git;
+  my $dbi = $self->app->dbi;
   my $has_wiki = $dbi->model('wiki')->select('count(*)', where => {
     'project.id' => $project
   })->value;
@@ -575,22 +577,18 @@ sub rename_project {
       eval { $self->_rename_project($user, $project, $to_project) };
       croak $error = $@ if $@;
 
-      eval { $self->_rename_rep($user, $project, $to_project, sub () {
-        return $app->rep_info(@_);}
-      ) };
+      eval { $self->_rename_rep($user, $project, $to_project,
+        sub { return shift; }); };
       croak $error = $@ if $@;
-      eval { $self->_rename_rep($user, $project, $to_project, sub () {
-        return $app->work_rep_info(@_);}
-      ) };
+      eval { $self->_rename_rep($user, $project, $to_project,
+        sub { return shift->work; }); };
       croak $error = $@ if $@;
       if ($has_wiki) {
-        eval { $self->_rename_rep($user, $project, $to_project, sub () {
-          return $app->wiki_rep_info(@_);}
-        ) };
+        eval { $self->_rename_rep($user, $project, $to_project,
+          sub { return shift->wiki; }); };
         croak $error = $@ if $@;
-        eval { $self->_rename_rep($user, $project, $to_project, sub () {
-          return $app->wiki_work_rep_info(@_);}
-        ) };
+        eval { $self->_rename_rep($user, $project, $to_project,
+          sub { return shift->wiki->work; }); };
         croak $error = $@ if $@;
       }
     });
@@ -762,8 +760,8 @@ sub _create_rep {
   # Create repository directory
   my $git = $self->app->git;
 
-  my $rep_info = $self->app->rep_info($user, $project);
-  my $rep_git_dir = $rep_info->{git_dir};
+  my $rep_info = Gitprep::Repository->new($user, $project);
+  my $rep_git_dir = $rep_info->git_dir;
   
   mkdir $rep_git_dir
     or croak "Can't create directory $rep_git_dir: $!";
@@ -820,88 +818,92 @@ sub _create_rep {
       my $temp_dir =  File::Temp->newdir(DIR => $home_tmp_dir);
       
       # Working repository
-      my $work_rep_work_tree = "$temp_dir/work";
-      my $work_rep_git_dir = "$work_rep_work_tree/.git";
-      my $work_rep_info = {
-        work_tree => $work_rep_work_tree,
-        git_dir => $work_rep_git_dir
-      };
-      
-      mkdir $work_rep_work_tree
-        or croak "Can't create directory $work_rep_work_tree: $!";
-      
-      # Git init
-      my @work_repo_cmd = ($work_rep_info, 'init', '-q');
-      if ($default_branch ne 'master') {
-        CORE::push( @work_repo_cmd, '--initial-branch=' . $default_branch );
-      }
-      my @git_init_cmd = $git->cmd(@work_repo_cmd);
-      Gitprep::Util::run_command(@git_init_cmd)
-        or croak "Can't execute git init: @git_init_cmd";
-      
-      # Add README
-      my $file = "$work_rep_work_tree/README.md";
-      open my $readme_fh, '>', $file
-        or croak "Can't create $file: $!";
-      print $readme_fh "# $project\n";
-      print $readme_fh "\n" . encode('UTF-8', $description) . "\n";
-      close $readme_fh;
-      
-      my @git_add_cmd = $git->cmd(
-        $work_rep_info,
-        'add',
-        'README.md'
-      );
-      
-      Gitprep::Util::run_command(@git_add_cmd)
-        or croak "Can't execute git add: @git_add_cmd";
-      
-      # Set user name
-      my @git_config_user_name = $git->cmd(
-        $work_rep_info,
-        'config',
-        'user.name',
-        $user
-      );
-      Gitprep::Util::run_command(@git_config_user_name)
-        or croak "Can't execute git config: @git_config_user_name";
-      
-      # Set user email
-      my $user_email = $self->app->dbi->model('user')->select('email', where => {id => $user})->value;
-      my @git_config_user_email = $git->cmd(
-        $work_rep_info,
-        'config',
-        'user.email',
-        "$user_email"
-      );
-      Gitprep::Util::run_command(@git_config_user_email)
-        or croak "Can't execute git config: @git_config_user_email";
-      
-      # Commit
-      my @git_commit_cmd = $git->cmd(
-        $work_rep_info,
-        'commit',
-        '-q',
-        '-m',
-        'first commit'
-      );
+      my $work_rep_info = $rep_info->work;
+      # Override leading path to our temporary directory.
+      $work_rep_info->home($temp_dir);
 
-      Gitprep::Util::run_command(@git_commit_cmd)
-        or croak "Can't execute git commit: @git_commit_cmd";
-      
-      # Push
-      {
-        my @git_push_cmd = $git->cmd(
+      mkpath($work_rep_info->work_tree)
+        or croak "Can't create directory " . $work_rep_info->work_tree . ": $!";
+
+      eval {
+        # Git init
+        my @work_repo_cmd = (
           $work_rep_info,
-          'push',
+          'init',
           '-q',
-          $rep_git_dir,
-          $default_branch
+          "--initial-branch=$default_branch"
         );
-        # (This is bad, but --quiet option can't supress in old git)
-        Gitprep::Util::run_command(@git_push_cmd)
-          or croak "Can't execute git push: @git_push_cmd";
-      }
+        my @git_init_cmd = $git->cmd(@work_repo_cmd);
+        Gitprep::Util::run_command(@git_init_cmd)
+          or croak "Can't execute git init: @git_init_cmd";
+
+        # Add README
+        my $file = $work_rep_info->work_tree('README.md');
+        open my $readme_fh, '>', $file
+          or croak "Can't create $file: $!";
+        print $readme_fh "# $project\n";
+        print $readme_fh "\n" . encode('UTF-8', $description) . "\n";
+        close $readme_fh;
+      
+        my @git_add_cmd = $git->cmd(
+          $work_rep_info,
+          'add',
+          'README.md'
+        );
+
+        Gitprep::Util::run_command(@git_add_cmd)
+          or croak "Can't execute git add: @git_add_cmd";
+
+        # Set user name
+        my @git_config_user_name = $git->cmd(
+          $work_rep_info,
+          'config',
+          'user.name',
+          $user
+        );
+        Gitprep::Util::run_command(@git_config_user_name)
+          or croak "Can't execute git config: @git_config_user_name";
+
+        # Set user email
+        my $user_email = $self->app->dbi->model('user')->select('email', where => {id => $user})->value;
+        my @git_config_user_email = $git->cmd(
+          $work_rep_info,
+          'config',
+          'user.email',
+          "$user_email"
+        );
+        Gitprep::Util::run_command(@git_config_user_email)
+          or croak "Can't execute git config: @git_config_user_email";
+      
+        # Commit
+        my @git_commit_cmd = $git->cmd(
+          $work_rep_info,
+          'commit',
+          '-q',
+          '-m',
+          'first commit'
+        );
+
+        Gitprep::Util::run_command(@git_commit_cmd)
+          or croak "Can't execute git commit: @git_commit_cmd";
+      
+        # Push
+        {
+          my @git_push_cmd = $git->cmd(
+            $work_rep_info,
+            'push',
+            '-q',
+            $rep_git_dir,
+            $default_branch
+          );
+          # (This is bad, but --quiet option can't supress in old git)
+          Gitprep::Util::run_command(@git_push_cmd)
+            or croak "Can't execute git push: @git_push_cmd";
+        }
+      };
+      my $e = $@;
+      rmtree $temp_dir;
+      croak $e if $e;
     }
   };
   if (my $e = $@) {
@@ -916,8 +918,8 @@ sub create_wiki_rep {
   # Create repository directory
   my $git = $self->app->git;
   
-  my $wiki_rep_info = $self->app->wiki_rep_info($user, $project);
-  my $wiki_rep_git_dir = $wiki_rep_info->{git_dir};
+  my $wiki_rep_info = Gitprep::Repository::Wiki->new($user, $project);
+  my $wiki_rep_git_dir = $wiki_rep_info->git_dir;
   
   mkdir $wiki_rep_git_dir
     or croak "Can't create directory $wiki_rep_git_dir: $!";
@@ -932,7 +934,7 @@ sub create_wiki_rep {
     
     # Add git-daemon-export-ok
     {
-      my $file = "$wiki_rep_git_dir/git-daemon-export-ok";
+      my $file = $wiki_rep_info->git_dir('git-daemon-export-ok');
       open my $fh, '>', $file
         or croak "Can't create git-daemon-export-ok: $!"
     }
@@ -958,18 +960,21 @@ sub create_wiki_work_rep {
   my ($self, $user, $project) = @_;
   
   # Remote repository
-  my $wiki_rep_info = $self->app->wiki_rep_info($user, $project);
-  my $wiki_rep_git_dir = $wiki_rep_info->{git_dir};
+  my $wiki_rep_info = Gitprep::Repository::Wiki->new($user, $project);
   
   # Working repository
-  my $wiki_work_rep_info = $self->app->wiki_work_rep_info($user, $project);
-  my $work_tree = $wiki_work_rep_info->{work_tree};
+  my $wiki_work_rep_info = $wiki_rep_info->work;
   
   # Create working repository if it don't exist
-  unless (-e $work_tree) {
+  unless (-e $wiki_work_rep_info->work_tree) {
 
     # git clone
-    my @git_clone_cmd = ($self->app->git->bin, 'clone', $wiki_rep_git_dir, $work_tree);
+    my @git_clone_cmd = (
+      $self->app->git->bin,
+      'clone',
+      $wiki_rep_info->git_dir,
+      $wiki_work_rep_info->work_tree
+    );
     Gitprep::Util::run_command(@git_clone_cmd)
       or croak "Can't git clone: @git_clone_cmd";
     
@@ -1009,7 +1014,7 @@ sub _create_user_dir {
   my ($self, $user) = @_;
   
   # Create user directory
-  my $rep_home = $self->app->rep_home;
+  my $rep_home = Gitprep::Repository->home;
   my $user_dir = "$rep_home/$user";
   mkpath $user_dir;
 }
@@ -1048,7 +1053,7 @@ sub _delete_user_dir {
   my ($self, $user) = @_;
   
   # Delete user directory
-  my $rep_home = $self->app->rep_home;
+  my $rep_home = Gitprep::Repository->home;
   my $user_dir = "$rep_home/$user";
   rmtree $user_dir;
 }
@@ -1215,12 +1220,12 @@ sub _delete_rep {
   my ($self, $user, $project) = @_;
 
   # Delete repository
-  my $rep_home = $self->app->rep_home;
+  my $rep_home = Gitprep::Repository->home;
   croak "Can't remove repository. repository home is empty"
     if !defined $rep_home || $rep_home eq '';
-  my $app = $self->app;
-  for my $ri ($app->rep_info($user, $project), $app->work_rep_info($user, $project)) {
-    my $rep = $ri->{root};
+  my $rep_info = Gitprep::Repository->new($user, $project);
+  for my $ri ($rep_info, $rep_info->work) {
+    my $rep = $ri->root;
     if (-e $rep) {
       rmtree $rep;
       croak "Can't remove repository. repository is rest"
@@ -1233,9 +1238,9 @@ sub _delete_wiki_rep {
   my ($self, $user, $project) = @_;
 
   # Delete wiki repository
-  my $app = $self->app;
-  for my $ri ($app->wiki_rep_info($user, $project), $app->wiki_work_rep_info($user, $project)) {
-    my $rep =  $ri->{root};
+  my $rep_info = Gitprep::Repository::Wiki->new($user, $project);
+  for my $ri ($rep_info, $rep_info->work) {
+    my $rep =  $ri->root;
     if (-e $rep) {
       rmtree $rep;
       croak "Can't remove wiki repository"
@@ -1269,10 +1274,8 @@ sub _exists_rep {
   my ($self, $user, $project) = @_;
   
   # Exists repository
-  my $rep_info = $self->app->rep_info($user, $project);
-  my $rep_git_dir = $rep_info->{git_dir};
-  
-  return -e $rep_git_dir;
+  my $rep_info = Gitprep::Repository->new($user, $project);
+  return -e $rep_info->git_dir;
 }
 
 sub _fork_rep {
@@ -1281,11 +1284,8 @@ sub _fork_rep {
   # Fork repository
   my $git = $self->app->git;
   
-  my $rep_info = $self->app->rep_info($user_id, $project_id);
-  my $rep_git_dir = $rep_info->{git_dir};
-  
-  my $to_rep_info = $self->app->rep_info($to_user_id, $to_project_id);
-  my $to_rep_git_dir = $to_rep_info->{git_dir};
+  my $rep_info = Gitprep::Repository->new($user_id, $project_id);
+  my $to_rep_info = Gitprep::Repository->new($to_user_id, $to_project_id);
 
   my @cmd = (
     $git->bin,
@@ -1293,8 +1293,8 @@ sub _fork_rep {
     '-q',
     '--bare',
     $single? '--single-branch': (),
-    $rep_git_dir,
-    $to_rep_git_dir
+    $rep_info->git_dir,
+    $to_rep_info->git_dir
   );
   Gitprep::Util::run_command(@cmd)
     or croak "Can't fork repository(_fork_rep): @cmd";
@@ -1303,7 +1303,7 @@ sub _fork_rep {
     $git->description($to_rep_info, $description);
   } else {
     # Copy description
-    copy "$rep_git_dir/description", "$to_rep_git_dir/description"
+    copy $rep_info->git_dir('description'), $to_rep_info->git_dir('description')
       or croak "Can't copy description file(_fork_rep)";
   }
 }
@@ -1333,16 +1333,17 @@ sub _rename_rep {
     unless defined $user && defined $project && defined $renamed_project;
 
   # Rename repository
-  my $rep_info = $info_func->($user, $project);
-  my $rep_git_dir = $rep_info->{root};
+  my $rep_info = $info_func->(Gitprep::Repository->new($user, $project));
+  my $rep_root = $rep_info->root;
 
-  my $renamed_rep_info = $info_func->($user, $renamed_project);
-  my $renamed_rep_git_dir = $renamed_rep_info->{root};
+  my $renamed_rep_info =
+    $info_func->(Gitprep::Repository->new($user, $renamed_project));
+  my $renamed_rep_root = $renamed_rep_info->root;
 
-  if (-e $rep_git_dir) {
+  if (-e $rep_root) {
     my $lock_fh = $self->lock_rep($rep_info);
-    move($rep_git_dir, $renamed_rep_git_dir)
-      or croak "Can't move $rep_git_dir to $renamed_rep_git_dir: $!";
+    move($rep_root, $renamed_rep_root)
+      or croak "Can't move $rep_root to $renamed_rep_root $!";
   }
 }
 
@@ -1359,8 +1360,8 @@ sub rename_branch {
     my $project_row_id = $dbi->model('project')->select(
       'project.row_id',
       where => {
-        'user.id' => $rep_info->{user},
-        'project.id' => $rep_info->{project}
+        'user.id' => $rep_info->user,
+        'project.id' => $rep_info->project
       }
     )->value;
     $git->move_branch($rep_info, $old, $new);
@@ -1384,19 +1385,18 @@ sub prepare_hooks {
   # Copy hook stubs to the targeted repository if needed and set
   # environment variables as expected by these hooks.
 
-  my $user_id = $rep_info->{user};
-  my $project_id = $rep_info->{root};
+  my $user_id = $rep_info->user;
+  my $project_id = $rep_info->root;
   $project_id =~ s#^.*/([^/]*)\.git$#$1# or croak "Invalid repository name $project_id";
 
   # Copy fresh hook stubs.
   if ($project_id !~ /\.wiki$/) {
     my $hookdir = $self->app->home . '/script/hooks';
-    my $rep_git_dir = $rep_info->{git_dir};
     opendir my $dh, $hookdir or die "Can't open hooks directory\n";
     while (readdir $dh) {
       my $src = "$hookdir/$_";
       next unless (-f $src) && -x $src;
-      my $dst = "$rep_git_dir/hooks/$_";
+      my $dst = $rep_info->git_dir("hooks/$_");
       if (!(-x $dst) || (stat($src))[9] > (stat($dst))[9]) {
         copy $src, $dst;
         chmod((stat($dst))[2] | 0555, $dst) or die "Can't install $_ hook\n";

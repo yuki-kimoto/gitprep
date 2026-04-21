@@ -8,6 +8,7 @@ use lib "$FindBin::Bin/../lib";
 use lib "$FindBin::Bin/../extlib/lib/perl5";
 use Mojo::URL;
 use Gitprep;
+use Gitprep::Repository;
 
 # Retrieve our parameters
 my ($user_id, $project_id) = @ENV{'GITPREP_USER', 'GITPREP_PROJECT'};
@@ -18,7 +19,7 @@ my $app = Mojo::Server->new->load_app("$FindBin::Bin/gitprep");
 my $git = $app->git;
 my $dbi = $app->dbi;
 
-my $rep_info = $app->rep_info($user_id, $project_id);
+my $rep_info = Gitprep::Repository->new($user_id, $project_id);
 my $default_branch = $git->current_branch($rep_info);
 my $project = $dbi->model('project')->select(
   where => {'user.id' => $user_id, 'project.id' => $project_id}

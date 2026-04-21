@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   # API
   my $api = $self->gitprep_api;
   
@@ -25,8 +27,10 @@
   # Git
   my $git = app->git;
 
+  my $rep_info = Gitprep::Repository->new($user, $project);
+
   # Object type
-  my $type = $git->object_type(app->rep_info($user, $project), "$rev^{}");
+  my $type = $git->object_type($rep_info, "$rev^{}");
   if (!$type || $type eq 'blob') {
     $self->reply->not_found;
     return;
@@ -41,7 +45,7 @@
   };
   my $cmd = quote(
     $git->cmd(
-      app->rep_info($user, $project),
+      $rep_info,
       'archive',
       "--format=$format",
       "--prefix=$name/",

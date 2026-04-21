@@ -2,6 +2,7 @@
   use IPC::Open3 ();;
   use Symbol ();
   use IO::Select ();
+  use Gitprep::Repository;
   
   my $service = param('service') || '';
   my $user = param('user');
@@ -10,15 +11,21 @@
   
   my $auth_user_id = stash('auth_user_id') // '';
 
+  my $rep_info = Gitprep::Repository->new($user, $project);
+
   # Smart HTTP
   if ($service eq 'git-upload-pack' || $service eq 'git-receive-pack') {
     
     my $service_cmd = $service;
     substr($service_cmd, 0, 4, '');
     
-    my $rep_info = app->rep_info($user, $project);
-    my $rep_git_dir = $rep_info->{git_dir};
-    my @cmd = $git->cmd($rep_info, $service_cmd, '--stateless-rpc', '--advertise-refs', $rep_git_dir);
+    my @cmd = $git->cmd(
+      $rep_info,
+      $service_cmd,
+      '--stateless-rpc',
+      '--advertise-refs',
+      $rep_info->git_dir
+    );
     
     my %save_env = %ENV;
     app->manager->prepare_hooks($auth_user_id, $rep_info);
@@ -64,16 +71,14 @@
   # Dumb HTTP
   else {
     # Update server info
-    my @cmd = $git->cmd(app->rep_info($user, $project), 'update-server-info');
+    my @cmd = $git->cmd($rep_info, 'update-server-info');
     open my $fh, '-|', @cmd
       or die "Can't open pipe for @cmd:$!";
     close $fh
       or die "Can't close pipe for @cmd:$!";
     
     my $content_type = 'text/plain; charset=UTF-8';
-    my $rep_info = app->rep_info($user, $project);
-    my $rep_git_dir = $rep_info->{git_dir};
-    my $file = "$rep_git_dir/info/refs";
+    my $file = $rep_info->git_dir('info/refs');
     if (-f $file) {
       my $asset = Mojo::Asset::File->new(path => $file);
       my $content = $asset->slurp;

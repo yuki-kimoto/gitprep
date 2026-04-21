@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   my $api = gitprep_api;
   
   my $user = param('user');
@@ -16,7 +18,7 @@
   
   my $path = stash('Path');
 
-  my $rep_info = app->rep_info($user, $project);
+  my $rep_info = Gitprep::Repository->new($user, $project);
   my $tags = app->git->tags($rep_info);
   my $rev_short;
   my $active_branch = 'active';
