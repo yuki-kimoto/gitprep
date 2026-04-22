@@ -12,11 +12,11 @@
   # Parameters
   my $user_id = param('user');
   my $project_id = param('project');
-  
+
   my $project_row_id = $api->get_project_row_id($user_id, $project_id);
   my $rep_info = Gitprep::Repository->new($user_id, $project_id);
   my $default_branch = $git->current_branch($rep_info);
-  
+
   my $rev;
   my $dir;
   my $rev_dir = param('rev_dir');
@@ -35,7 +35,7 @@
   if ($git->rev_exists($rep_info, $rev)) {
     # Commit
     my $commit = $git->get_commit($rep_info, $rev);
-    
+
     # Tree
     my $trees;
     if (defined $dir && length $dir) {
@@ -64,21 +64,21 @@
     return;
   }
   else { $state = 'init' }
-  
+
   my $is_project_top_page = !(defined $dir && length $dir);
 
   my $ssh_rep_url = $api->ssh_rep_url($user_id, $project_id);
 
   my $branches = stash('branches');
-  
+
   my $logined = $api->logined;
-  
+
   my $original_project;
   my $is_private_project;
   my $fork_count;
-  
+
   my $no_project_header = stash('no_project_header');
-  
+
   if (!$no_project_header && defined $project_id) {
     $original_project = app->manager->original_project($user_id, $project_id);
     $is_private_project = app->manager->is_private_project($user_id, $project_id);
@@ -92,18 +92,18 @@
       $fork_count =~ s/\.?0*$/k/;
     }
   }
-  
+
   my $session_user_row_id = session('user_row_id');
   my $session_user = app->dbi->model('user')->select(where => {row_id => $session_user_row_id})->one;
-  
+
   layout 'common', title => "$user_id/$project_id";
 %>
-  
+
   %= include '/include/header';
-  
+
   <div class="container">
     %= include '/include/message', message => flash('message');
-    
+
     % if ($is_project_top_page) {
       <div class="project-header" style="background-color:white;">
         <div class="project-header-top">
@@ -170,15 +170,15 @@
       </div>
 
       %= include '/include/readme', dir => $dir;
-      
+
     % } elsif ($state eq 'init' && $api->logined($user_id)) {
-      
+
       <h4 class="topic1">SSH</h4>
-      
+
       <div class="text-center" style="margin-bottom:10px">
         <b>Create a new repository on the command line via ssh</b>
       </div>
-      
+
       <pre class="command-line">
 touch README
 git init
@@ -186,11 +186,11 @@ git add README
 git commit -m "first commit"
 git remote add origin <%= $ssh_rep_url %>
 git push -u origin <%= $default_branch %></pre>
-      
+
       <div class="text-center" style="margin-bottom:10px">
         <b>Push an existing repository from the command line via ssh</b>
       </div>
-      
+
       <pre class="command-line">
 git remote add origin <%= $ssh_rep_url %>
 git push -u origin <%= $default_branch %></pre>
@@ -203,7 +203,7 @@ git push -u origin <%= $default_branch %></pre>
       <div class="text-center" style="margin-bottom:10px">
         <b>Create a new repository on the command line via <%= url_for->to_abs->scheme %></b>
       </div>
-      
+
       <pre class="command-line">
 touch README
 git init
@@ -211,11 +211,11 @@ git add README
 git commit -m "first commit"
 git remote add origin <%= $http_rep_url %>
 git push -u origin <%= $default_branch %></pre>
-      
+
       <div class="text-center" style="margin-bottom:10px">
         <b>Push an existing repository from the command line via <%= url_for->to_abs->scheme %></b>
       </div>
-      
+
       <pre class="command-line">
 git remote add origin <%= $http_rep_url %>
 git push -u origin <%= $default_branch %></pre>
@@ -225,5 +225,5 @@ git push -u origin <%= $default_branch %></pre>
       </div>
     % }
   </div>
-  
+
   %= include '/include/footer';

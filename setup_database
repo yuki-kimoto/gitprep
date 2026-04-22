@@ -37,7 +37,7 @@ if (!-f $database_file) {
 else {
   # If project.user_id exists, that database is version 1
   eval { $dbi->select('user_id', table => 'project', append => 'limit 0, 1') };
-  
+
   if ($@) {
     $database_state = 'current';
   }

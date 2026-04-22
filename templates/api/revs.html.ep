@@ -2,16 +2,16 @@
   use Gitprep::Repository;
 
   my $api = gitprep_api;
-  
+
   # Git
   my $git = app->git;
 
   my $rep_info = Gitprep::Repository->new($user, $project);
-  
+
   # Branches
   my $branches = $git->branches($rep_info) || [];
   my @branch_names = map { $_->{name} } @$branches;
-  
+
   # Tags
   my $tags = $git->tags(
     $rep_info,
@@ -19,7 +19,7 @@
     app->config->{basic}{tags_limit} || 1000
   ) || [];
   my @tag_names = map { $_->{name} } @$tags;
-  
+
   $self->render(
     json => {
       branch_names => \@branch_names,

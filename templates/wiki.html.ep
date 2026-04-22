@@ -15,42 +15,42 @@
 
   # Maybe mojolicious bug? In FreeBSD, String is not decoded.
   eval { $title = Encode::decode('UTF-8', $title) };
-  
+
   my $project_row_id = $api->get_project_row_id($user_id, $project_id);
-  
+
   my $wiki = app->dbi->model('wiki')->select(where => {project => $project_row_id})->one;
-  
+
   my $content;
   my $content_md;
   my $pages;
-  
+
   # Session
   my $logined = $api->logined;
   my $session_user_id = $api->session_user_id;
   my $canadmin = $logined &&
     $api->can_write_access($session_user_id, $user_id, $project_id);
-  
+
   # Display type
   my $display;
-  
+
   my $errors;
   if ($self->req->method eq 'POST') {
     my $op = param('op') // '';
-    
+
     # Ajax request
     if ($self->req->is_xhr) {
       if ($op eq 'ajax-preview') {
         my $content = param('content');
         my $content_md = $api->markdown_wiki($user_id, $project_id, $content);
-        
+
         $self->render(json => {markdown => $content_md});
         return;
       }
       elsif ($op eq 'ajax-delete') {
         $api->delete_wiki_page($user_id, $project_id, $title);
-        
+
         flash(message => "Deleted $title");
-        
+
         $self->render(json => {success => 1});
         return;
       }
@@ -69,11 +69,11 @@
         my $original_title = param('original-title');
         my $content = param('content');
         my $commit_message = param('commit-message');
-        
+
         # Validation
         my $vc = app->vc;
         my $validation = $vc->validation;
-        
+
         # Title
         if (!length $update_title) {
           $validation->add_failed(title => 'Page title is empty.');
@@ -83,7 +83,7 @@
             $validation->add_failed(title => 'Page title can\'t start with _.');
           }
         }
-        
+
         if ($validation->is_valid) {
           # Rename and update page
           if (defined $original_title && length $original_title && $update_title ne $original_title) {
@@ -99,7 +99,7 @@
             }
             $api->create_wiki_page($user_id, $project_id, $update_title, $content, $commit_message);
           }
-          
+
           $self->redirect_to("/$user_id/$project_id/wiki/$update_title");
           return;
         }
@@ -117,7 +117,7 @@
 
   # Pages count
   my $pages_count = 0;
-  
+
   # Commits number
   my $commits_number = 0;
 
@@ -131,7 +131,7 @@
     if ($wiki) {
       $pages_count = $api->get_wiki_pages_count($user_id, $project_id);
       $commits_number = app->git->commits_number(Gitprep::Repository::Wiki->new($user_id, $project_id), 'master');
-      
+
       if ($edit) {
         $content = $api->get_wiki_page_content($user_id, $project_id, $title);
         if (defined $content) {
@@ -154,19 +154,19 @@
         else {
           $title //= 'Home';
           $content = $api->get_wiki_page_content($user_id, $project_id, $title);
-          
+
           if (defined $content) {
             # Convert wiki link to markdonw link
             $content_md = $api->markdown_wiki($user_id, $project_id, $content);
             $display = 'page';
-            
+
             # Side bar
             $exists_sidebar = $api->exists_wiki_page($user_id, $project_id, '_Sidebar');
             if ($exists_sidebar) {
               my $content_sidebar = $api->get_wiki_page_content($user_id, $project_id, '_Sidebar');
               $content_sidebar_md = $api->markdown($content_sidebar);
             }
-            
+
             # Footer
             $exists_footer = $api->exists_wiki_page($user_id, $project_id, '_Footer');
             if ($exists_footer) {
@@ -193,7 +193,7 @@
       return;
     }
   }
-  
+
   my $query = {};
   $query->{p} = $title if $title;
   layout 'common', title => "Wiki - $user_id/$project_id";
@@ -205,7 +205,7 @@
       // Click write tab
       $('.wiki-message-write-tab').on('click', function () {
         var form = $(this).closest('form');
-        
+
         form.find('.wiki-message-write-tab').find('a').attr('class', '');
         form.find('.wiki-message-preview-tab').find('a').attr('class', 'disable');
         form.find('.wiki-message-write-area').css('display', 'block');
@@ -220,7 +220,7 @@
         form.find('.wiki-message-preview-tab').find('a').attr('class', '');
         form.find('.wiki-message-write-area').css('display', 'none');
         form.find('.wiki-message-preview-area').css('display', 'block');
-        
+
         var content = form.find('[name=content]').val();
 
         form.find('.wiki-message-preview-area').html('');
@@ -244,15 +244,15 @@
   % end
 
   %= include '/include/header';
-  
+
   <div class="container">
-    
+
     <div class="wiki">
       <div>
         <%= include '/include/errors', errors => $errors %>
         <%= include '/include/message', message => flash('message') %>
       </div>
-      
+
       <ul class="wiki-count">
         <li>
           <a href="<%= url_for("/$user_id/$project_id/wiki") %>">
@@ -286,7 +286,7 @@
             %= include '/include/url', repository => "$project_id.wiki";
           % }
         </div>
-        
+
         <div class="wiki-top-buttons-box">
           <ul class="wiki-top-buttons">
             % if ($display eq 'page') {
@@ -329,7 +329,7 @@
           </ul>
         </div>
       </div>
-      
+
       <div class="wiki-container">
         % if ($display eq 'init') {
           <h1 class="topic1">Wiki</h1>
@@ -351,7 +351,7 @@
               $submit_button_title = 'Save page';
             }
           %>
-          
+
           <h1 class="topic1"><%= $h1_text %></h1>
           <div class="wiki-edit-form">
             <form action="<%= url_for %>" method="POST">
@@ -442,5 +442,5 @@
       </div>
     </div>
   </div>
-  
+
   %= include '/include/footer';

@@ -28,11 +28,11 @@ note 'Home page';
 {
   # Page access
   $t->get_ok('/');
-  
+
   # Title
   $t->content_like(qr/GitPrep/);
   $t->content_like(qr/Users/);
-  
+
   # User link
   $t->content_like(qr#/$user#);
 }
@@ -41,10 +41,10 @@ note 'Projects page';
 {
   # Page access
   $t->get_ok("/$user");
-  
+
   # Title
   $t->content_like(qr/Repositories/);
-  
+
   # project link
   $t->content_like(qr#/$user/$project#);
 }
@@ -53,16 +53,16 @@ note 'Project page';
 {
   # Page access
   $t->get_ok("/$user/$project");
-  
+
   # Description
   $t->content_like(qr/Unnamed repository/);
-  
+
   # Commit datetime
   $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
-  
+
   # README
   $t->content_like(qr/README/);
-  
+
   # tree directory link
   $t->content_like(qr#/$user/$project/tree/master/dir#);
 
@@ -76,33 +76,33 @@ note 'Commit page';
   {
     # Page access
     $t->get_ok("/$user/$project/commit/4b0e81c462088b16fefbe545e00b993fd7e6f884");
-    
+
     # Commit message
     $t->content_like(qr/first commit/);
-    
+
     # Commit datetime
     $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
-    
+
     # Parent not eixsts
     $t->content_like(qr/<span>0 parent/);
-    
+
     # Commit id
     $t->content_like(qr/4b0e81c462088b16fefbe545e00b993fd7e6f884/);
-    
+
     # Author
     $t->content_like(qr/Yuki Kimoto/);
-    
+
     # File change count
     $t->content_like(qr/1 changed files/);
-    
+
     # Added README
     $t->content_like(qr/class="file-add".*?README/s);
-    
+
     # Empty file is added
     $t->content_like(qr/No changes/);
     $t->content_like(qr/class="file-add"/);
   }
-  
+
   note 'rename';
   {
     $t->get_ok("/$user/$project/commit/15ea9d711617abda5eed7b4173a3349d30bca959");
@@ -111,39 +111,39 @@ note 'Commit page';
     $t->content_like(qr/a.txt → a_renamed.txt/);
     $t->content_like(qr/class="file-renamed"/);
   }
-  
+
   note 'add text';
   {
     $t->get_ok("/$user/$project/commit/da5b854b760351adc58d24d121070e729e80534d");
     $t->content_like(qr/\@\@/);
     $t->content_like(qr/\+aaa/);
   }
-  
+
   note 'added aaa to a_renamed.txt for merge commit';
   {
     $t->get_ok("/$user/$project/commit/da5b854b760351adc58d24d121070e729e80534d");
     $t->content_like(qr/\@\@/);
   }
-  
+
   note 'add image data';
   {
     $t->get_ok("/$user/$project/commit/0b6eca6a28538b1226961ca7655d2662f3522652");
     $t->content_like(qr/BIN/);
     $t->content_like(qr#/raw/0b6eca6a28538b1226961ca7655d2662f3522652/sample.png#);
   }
-  
+
   note 'binary data';
   {
     $t->get_ok("/$user/$project/commit/ed7b91659762fa612563f0595f3faca6aecfcfa0");
     $t->content_like(qr/Binary file not shown/);
   }
-  
+
   note 'binary data rename';
   {
     $t->get_ok("/$user/$project/commit/3c617100f8e6d8ffe11d6c14ddf7b3646a198269");
     $t->content_like(qr/File renamed without changes/);
   }
-  
+
   note 'Branch name';
   {
     # Page access (branch name)
@@ -155,7 +155,7 @@ note 'Commit page';
     $t->content_like(qr/\+bbb/);
     $t->content_like(qr#refs/heads/b1#);
   }
-  
+
   note 'Branch and tag refernce';
   {
     $t->get_ok("/$user/$project/commit/6d71d9bc1ee3bd1c96a559109244c1fe745045de");
@@ -163,7 +163,7 @@ note 'Commit page';
     $t->content_like(qr/t21/);
     $t->content_unlike(qr/t21\^\{\}/);
   }
-  
+
 }
 
 note 'Commits page';
@@ -172,7 +172,7 @@ note 'Commits page';
     # Page access
     $t->get_ok("/$user/$project/commits/master");
     $t->content_like(qr/Commit History/);
-    
+
     # Commit date time
     $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
   }
@@ -181,7 +181,7 @@ note 'Commits page';
     $t->get_ok("/$user/$project/commits/refs/heads/master");
     $t->content_like(qr#refs/heads/master#);
   }
-  
+
   # Commits page - atom feed
   {
     # Page access(branch name long)
@@ -197,14 +197,14 @@ note 'History page';
     # Page access
     $t->get_ok("/$user/$project/commits/b1/README");
     $t->content_like(qr/Commits on/);
-    
+
     # Content
     $t->content_like(qr/first commit/);
   }
   {
     # Page access (branch name long)
     $t->get_ok("/$user/$project/commits/refs/heads/b1/README");
-    
+
     # Content
     $t->content_like(qr/first commit/);
   }
@@ -214,19 +214,19 @@ note 'Tags page';
 {
   # Page access
   $t->get_ok("/$user/$project/tags?page=2");
-  
+
   # Commit datetime
   $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
-  
+
   # Tree link
   $t->content_like(qr#/$user/$project/tree/t1#);
-  
+
   # Commit link
   $t->content_like(qr#/$user/$project/commit/15ea9d711617abda5eed7b4173a3349d30bca959#);
 
   # Zip link
   $t->content_like(qr#/$user/$project/archive/t1.zip#);
-  
+
   # Tar.gz link
   $t->content_like(qr#/$user/$project/archive/t1.tar.gz#);
 }
@@ -236,13 +236,13 @@ note 'Tree page';
   {
     # Page access (hash)
     $t->get_ok("/$user/$project/tree/e891266d8aeab864c8eb36b7115416710b2cdc2e");
-    
+
     # Commit datetime
     $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
-    
+
     # README
     $t->content_like(qr/README.*bbb/s);
-    
+
     # tree directory link
     $t->content_like(qr#/$user/$project/tree/e891266d8aeab864c8eb36b7115416710b2cdc2e/dir#);
 
@@ -252,14 +252,14 @@ note 'Tree page';
   {
     # Page access (branch name)
     $t->get_ok("/$user/$project/tree/b21/dir");
-    
+
     # File
     $t->content_like(qr/b\.txt/s);
   }
   {
     # Page access (branch name middle)
     $t->get_ok("/$user/$project/tree/heads/b21/dir");
-    
+
     # File
     $t->content_like(qr/dir\/b\.txt/s);
   }
@@ -267,7 +267,7 @@ note 'Tree page';
     # Page access (branch name long)
     $t->get_ok("/$user/$project/tree/refs/heads/b21/dir");
     $t->content_like(qr#refs/heads/b21#);
-    
+
     # File
     $t->content_like(qr/b\.txt/s);
   }
@@ -278,24 +278,24 @@ note 'Blob page';
   {
     # Page access (hash)
     $t->get_ok("/$user/$project/blob/b9f0f107672b910a44d22d4623ce7445d40565aa/a_renamed.txt");
-    
+
     # Commit datetime
     $t->content_like(qr/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
-    
+
     # Content
     $t->content_like(qr/あああ/);
   }
   {
     # Page access (branch name)
     $t->get_ok("/$user/$project/blob/b1/README");
-    
+
     # Content
     $t->content_like(qr/bbb/);
   }
   {
     # Page access (branch name middle)
     $t->get_ok("/$user/$project/blob/heads/b1/README");
-    
+
     # Content
     $t->content_like(qr/bbb/);
   }
@@ -303,11 +303,11 @@ note 'Blob page';
     # Page access (branch name long)
     $t->get_ok("/$user/$project/blob/refs/heads/b1/README");
     $t->content_like(qr#refs/heads/b1#);
-    
+
     # Content
     $t->content_like(qr/bbb/);
   }
-  
+
   note 'blob binary';
   {
     $t->get_ok("/$user/$project/blob/ed7b91659762fa612563f0595f3faca6aecfcfa0/sample.bin");
@@ -320,7 +320,7 @@ note 'raw page';
   {
     # Page access (hash)
     $t->get_ok("/$user/$project/raw/b9f0f107672b910a44d22d4623ce7445d40565aa/a_renamed.txt");
-    
+
     # Content
     my $content_binary = $t->tx->res->body;
     my $content = decode('UTF-8', $content_binary);
@@ -329,21 +329,21 @@ note 'raw page';
   {
     # Page access (branch name)
     $t->get_ok("/$user/$project/raw/b21/dir/b.txt");
-    
+
     my $content = $t->tx->res->body;
     like($content, qr/aaaa/);
   }
   {
     # Page access (branch name middle)
     $t->get_ok("/$user/$project/raw/heads/b21/dir/b.txt");
-    
+
     my $content = $t->tx->res->body;
     like($content, qr/aaaa/);
   }
   {
     # Page access (branch name long)
     $t->get_ok("/$user/$project/raw/refs/heads/b21/dir/b.txt");
-    
+
     my $content = $t->tx->res->body;
     like($content, qr/aaaa/);
   }
@@ -354,7 +354,7 @@ note 'Aarchive';
   # Archive zip
   $t->get_ok("/$user/$project/archive/t1.zip");
   $t->content_type_is('application/zip');
-  
+
   # Archice tar.gz
   $t->get_ok("/$user/$project/archive/t1.tar.gz");
   $t->content_type_is('application/x-tar');
@@ -399,10 +399,10 @@ note 'blame';
   # Page access
   $t->get_ok("/$user/$project/blame/3c617100f8e6d8ffe11d6c14ddf7b3646a198269/README");
   $t->content_like(qr/Blame page/);
-  
+
   # Commit link
   $t->content_like(qr#/commit/0929b1a4ee79d0f104fd9ef7d6d410d501a273cf#);
-  
+
   # Lines
   $t->content_like(qr#http://foo1#);
 }

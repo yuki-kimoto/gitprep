@@ -11,7 +11,7 @@
     $self->redirect_to('/');
     return;
   }
-  
+
   my $errors;
   if (lc $self->req->method eq 'post') {
     if ($op eq 'create') {
@@ -21,13 +21,13 @@
       my $readme = param('readme');
       my $private = param('private');
       my $default_branch = param('default_branch');
-      
+
       # Validator
       my $vc = app->vc;
-      
+
       # Validation
       my $validation = $vc->validation;
-      
+
       # "project"
       if (!(defined $project_id && length $project_id)) {
         $validation->add_failed(project => 'Repository name is empty');
@@ -41,20 +41,20 @@
       elsif (app->manager->exists_project($session_user->{id}, $project_id)) {
         $validation->add_failed(project => 'Repository already exists');
       }
-      
+
       # "description"
       $description ||= '';
       if (length $description > 300) {
         $validation->add_failed(description => 'description is too long');
       }
-      
+
       # "readme"
       $readme = $readme ? 1 :0;
-      
+
       # "private"
       $private = $private ? 1 : 0;
-      
-      # default branch is 'master' unless otherwise requested 
+
+      # default branch is 'master' unless otherwise requested
       $default_branch ||= 'master';
       # Git
       if ($validation->is_valid) {
@@ -62,7 +62,7 @@
         unless ($api->logined) {
           return $self->reply->exception;
         }
-        
+
         my $manager = app->manager;
         # Create repository
         eval {
@@ -72,7 +72,7 @@
             {description => $description, readme => $readme, private => $private, default_branch => $default_branch }
           );
         };
-        
+
         if (my $e = $@) {
           app->log->error(url_for . ": $e");
           $errors = ['Internal error'];
@@ -90,7 +90,7 @@
 % layout 'common', title => 'Create a New Repository';
 
   %= include '/include/header', no_project_header => 1;
-  
+
   <div class="new-container">
     % if ($errors) {
       <div class="alert alert-error">
@@ -113,7 +113,7 @@
               <b>Owner</b>
             </td>
             <td>
-            
+
             </td>
             <td>
               <b>Repository name</b>
@@ -138,13 +138,13 @@
         <div class="last-child">
           <%= text_field 'description' %>
         </div>
-	<div class="2th-child">
+        <div class="2th-child">
           <b>Default branch name</b> <span style="color:#767676">(optional)</span>
         </div>
         <div class="last-child">
           <%= text_field 'default_branch' %>
         </div>
-	
+
       </div>
       <ul class="new-private">
         <li>
@@ -158,13 +158,13 @@
           </div>
         </li>
       </ul>
-      
+
       <div class="new-readme">
         <div>
           <%= check_box readme => 1 %><span>Initialize this repository with a README<span>
         </div>
       </div>
-      
+
       <input type="submit" class="btn btn-green btn-new" value="Create repository" />
     </form>
   </div>

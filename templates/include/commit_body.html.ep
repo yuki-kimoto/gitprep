@@ -13,12 +13,12 @@
   if ($is_wiki) {
     $user_project_path .= '/wiki';
   }
-  
+
   unless ($rep_info) {
     $rep_info = Gitprep::Repository->new($user_id, $project_id);
     $rep_info = $rep_info->wiki if $is_wiki;
   }
-  
+
   my $param_ignore_space_change = param('w');
   my $ignore_space_change;
   if ($param_ignore_space_change) {
@@ -30,10 +30,10 @@
       where => {user_id => $user_id, name => $project_id}
     )->value;
   }
-  
+
   # Git
   my $git = app->git;
-  
+
   # Diff tree
   my $diff_trees = $git->diff_tree(
     $rep_info,
@@ -48,7 +48,7 @@
     $file = $diff_tree->{from_file} unless defined $file;
     $diff_trees_h->{$file} = $diff_tree if defined $file;
   }
-  
+
   # Get blob diffs
   my $blob_diffs = $git->blob_diffs(
     $rep_info,
@@ -57,7 +57,7 @@
     $diff_trees,
     {ignore_space_change => $ignore_space_change}
   ) || [];
-  
+
   my $blob_diffs_h = {};
   my $total_add_line_count = 0;
   my $total_delete_line_count = 0;
@@ -67,23 +67,23 @@
     $total_add_line_count += $blob_diff->{add_line_count};
     $total_delete_line_count += $blob_diff->{delete_line_count};
   }
-  
+
   # diff_tree arguments
   my %diff_tree_args = (
     rev => $rev,
     from_rev => $from_rev,
     diff_trees => $diff_trees
   );
-  
+
 %>
 
 %= javascript begin
   $(document).ready(function () {
-  
+
     // Diff Stats Button
     var diff_tree_show = false;
     var original_diff_stats_btn_text = $('#diff-stats-btn').text();
-    
+
     $('#diff-stats-btn').on('click', function () {
       if (diff_tree_show) {
         $(this).text(original_diff_stats_btn_text);

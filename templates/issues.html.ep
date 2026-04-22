@@ -61,7 +61,7 @@
   # Open count
   my $open_count = $api->get_issue_count($user_id, $project_id,
     {pull => $pulls, status => ['open', 'draft']});
-  
+
   # Close count
   my $close_count = $api->get_issue_count($user_id, $project_id,
     {pull => $pulls}) - $open_count;
@@ -98,9 +98,9 @@
   $title = 'Pull Requests' if $pulls;
   layout 'common', title => "$title \x{b7} $user_id/$project_id";
 %>
-  
+
   %= include '/include/header';
-  
+
   <div class="container">
     % if ($api->logined) {
       <div class="issues-button-container">
@@ -199,5 +199,5 @@
     </div>
     %= include '/include/pagination', page => $page, rows => $filtered_count, rows_per_page => $page_rows, query => {is => $is}, left => 'Newer', right => 'Older';
   </div>
-  
+
   %= include '/include/footer';

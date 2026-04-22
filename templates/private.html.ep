@@ -2,7 +2,7 @@
 
   %= include '/include/header', private => 1;
   % my $api = gitprep_api;
-  
+
   <div class="container">
     <div class="private">
       %= $api->icon('lock', width => 200, height => 200);

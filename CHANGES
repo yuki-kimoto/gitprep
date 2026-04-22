@@ -5,7 +5,7 @@
 		requires 'DBI', '== 1.643';
 		requires 'Text::Markdown::Hoedown', '== 1.03';
 		requires 'Time::Moment', '== 0.44';
-  
+
 2.6.2 20201-06-15
   - Issue #141: Insert markdown buttons fix on new.html.ep
   - Fix bug #144
@@ -40,9 +40,9 @@
   - Sorry, I found critical database specification mistake.
     I must fix pull_request and pull_request_message table.
     All your pull requests is removed. Please create Pull request again by the following command.
-    
+
       old/fix_v2_pull_request data/gitprep.db
-  
+
   - support markdown table
   - support markdown foo_bar_baz
   - support issue system
@@ -84,7 +84,7 @@
   - improve CGI installation and change CGI script path. This is not backword compatible.
     you need to change CGI script path, path/gitprep.cgi to path/gitprep/gitprep/cgi
   - remove setup.php
-  
+
 1.9.2 (2014-11-18)
   - fix atom feed entry url bug
 1.9.1

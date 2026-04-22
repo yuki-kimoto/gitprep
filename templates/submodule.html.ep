@@ -1,13 +1,13 @@
 <%
   use File::Basename ();
   use Gitprep::Repository;
-  
+
   # API
   my $api = gitprep_api;
 
   # Git
   my $git = $self->app->git;
-  
+
   # Parameters
   my $user = param('user');
   my $project = param('project');
@@ -18,14 +18,14 @@
 
   # Blob lines
   my $lines = $git->blob($rep_info, $rev, '.gitmodules');
-  
+
   my $submodule_rep_url;
   my $match;
   my $file_q = quotemeta $file;
   for my $line (@$lines) {
     $line =~ s/\r//;
     $line =~ s/\n//;
-    
+
     if ($match) {
       if ($line =~ /url += +(.+)/) {
         $submodule_rep_url = $1;
@@ -49,7 +49,7 @@
 
   <div class="container">
     %= include '/include/page_path', type => 'blob', Path => $file;
-    
+
     <div class="submodule">
       <div>
         <div>
@@ -69,5 +69,5 @@
       </div>
     </div>
   </div>
-  
+
   %= include '/include/footer';

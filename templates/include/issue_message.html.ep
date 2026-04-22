@@ -2,7 +2,7 @@
   use Mojo::JSON 'decode_json';
 
   my $api = gitprep_api;
-  
+
   my $user_id = stash('user_id');
   my $issue_message = stash('issue_message');
 
@@ -55,7 +55,7 @@
       </div>
       %= include '/include/reactions', id=> $issue_message->{row_id}, reactions => $reactions;
     </div>
- 
+
     % if ($can_modify) {
       <div class="issue-message-update" style="display:none;margin-bottom:20px;">
         <div class="issue-add-comment">

@@ -3,29 +3,29 @@
 
   # API
   my $api = gitprep_api;
-  
+
   # Git
   my $git = app->git;
-  
+
   my $dir = stash('dir');
   my $commit_author_email = $commit->{author_email};
   my $commit_author_id = app->dbi->model('user')->select(
     'id',
     where => {email => $commit_author_email}
   )->value;
-  
+
   my $user_id = stash('user_id');
   my $project_id = stash('project_id');
   my $rev = stash('rev');
 
   my $rep_info = Gitprep::Repository->new($user_id, $project_id);
   my $default_branch_name = $git->current_branch($rep_info);
-  
+
   my $history;
   if (!$dir && $git->exists_branch($rep_info)) {
     $history = $api->plural('Commit', $git->commits_number($rep_info, $rev), 'no');
   }
-  
+
 %>
 
 <div>
@@ -40,10 +40,10 @@
         my $name = $tree->{name};
         my $commit = $tree->{commit};
         my $mode_str = $tree->{mode_str};
-	my $commit_comment = join "\n", @{$commit->{comment}};
-	$commit_comment =~ s/^[\r\n]*(.*?)[\r\n]*$/$1/;
+        my $commit_comment = join "\n", @{$commit->{comment}};
+        $commit_comment =~ s/^[\r\n]*(.*?)[\r\n]*$/$1/;
       %>
-      
+
       <li>
         <div class="file-list-name">
           % my $child_dir = defined $dir && length $dir ? join('/', $dir, $name) : $name;
@@ -52,7 +52,7 @@
               %= $api->icon('file-directory-fill', class => 'icon-on-baseline');
               <%= $name %>
             </a>
-            <small>[submodule]</small>              
+            <small>[submodule]</small>
           % } elsif ($type eq 'blob') {
             % my $file = defined $dir && $dir ne '' ? "$dir/$name" : $name;
             <a href="<%= url_for("/$user/$project/blob/$rev/$file") %>">

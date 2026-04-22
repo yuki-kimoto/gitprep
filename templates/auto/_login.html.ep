@@ -1,32 +1,32 @@
 <%
   # API
   my $api = gitprep_api;
-  
+
   # Operator
   my $op = param('op') || '';
-  
+
   # DBI
   my $dbi = $self->app->dbi;
-  
+
   # Errors
   my $error;
-  
+
   # Login
   if ($op eq 'login') {
-  
+
     # Paramerters
     my $id = param('id');
     my $password = param('password');
-    
+
     # Validator
     my $vc = app->vc;
-    
+
     # Validation result
     my $validation = $vc->validation;
-    
+
     # "id"
     $id = '' unless defined $id;
-    
+
     # "user" and "password"
     $password = '' unless defined $password;
     my $user = $dbi->model('user')->select(
@@ -46,18 +46,18 @@
         $validation->add_failed("User name or password is wrong");
       }
     }
-    
+
     if ($validation->is_valid) {
-      
+
       # Login success
       my $password_encrypted = $user->{password};
       my $admin = $user->{admin};
       session(user_row_id => $user->{row_id});
       session(password => $password_encrypted);
-      
+
       # 2 weeks save
       session(expiration => 60 * 60 * 24 * 14);
-      
+
       # Go to admin page
       if ($admin) {
         $self->redirect_to('/_admin');
@@ -103,7 +103,7 @@
         % }
       </div>
     % }
-    
+
     % if ($error) {
       <div class="alert alert-error">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -114,7 +114,7 @@
     <div class="topic1" style="text-align:center;width:300px;margin-left:auto;margin-right:auto;">
       Login
     </div>
-    
+
     <form class="user-form" action="<%= url_for->query(op => 'login') %>" method="post">
       <div class="user-form-container">
         <div>

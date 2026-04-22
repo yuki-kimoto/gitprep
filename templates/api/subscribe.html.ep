@@ -71,7 +71,7 @@
       type: 'GET',
       url: '<%= url_for("/$user/$project/api/subscribe/$issue/" . ($subscribed? "U": "S")) %>',
       dataType: 'html',
-      error: function(jqXHR, textStatus, errorThrown) { 
+      error: function(jqXHR, textStatus, errorThrown) {
         alert(textStatus);
       },
       success: function(html) {

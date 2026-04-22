@@ -66,7 +66,7 @@ sub url {
 
 # Return a suitable unambiguous name for an upstream repository.
 sub remote_name {
-  my $self = shift; 
+  my $self = shift;
   my $wiki = $self->_project_suffix;
   return "repo/$self->{user}/$self->{project}$wiki";
 }

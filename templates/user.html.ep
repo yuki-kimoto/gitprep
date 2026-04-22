@@ -6,19 +6,19 @@
 
   # API
   my $api = gitprep_api;
-  
+
   # Redirect for project delete
   if (my $deleted_project = param('deleted_project')) {
     flash('deleted_project', $deleted_project);
     $self->redirect_to('current');
     return;
   }
-  
+
   my $user_id = param('user');
   my $user = app->dbi->model('user')->select(
     where => {id => $user_id, admin => 0}
   )->one;
-  
+
   # Projects
   unless (app->manager->exists_user($user_id)) {
     $self->reply->not_found;
@@ -47,11 +47,11 @@
 
   <div class="container">
     %= include '/include/message', message => flash('message');
-    
+
     <div class="repositories-container">
       <div class="repositories-left">
         <div class="topic1">Repositories</div>
-        
+
         <ul class="repositories">
           % for my $rep (sort { ($b->{updated} || 0) <=> ($a->{updated} || 0) } @$reps) {
             % if (!$rep->{private} || $api->can_access_private_project($user_id, $rep->{id})) {

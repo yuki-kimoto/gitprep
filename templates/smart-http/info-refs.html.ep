@@ -3,22 +3,22 @@
   use Symbol ();
   use IO::Select ();
   use Gitprep::Repository;
-  
+
   my $service = param('service') || '';
   my $user = param('user');
   my $project = param('project');
   my $git = app->git;
-  
+
   my $auth_user_id = stash('auth_user_id') // '';
 
   my $rep_info = Gitprep::Repository->new($user, $project);
 
   # Smart HTTP
   if ($service eq 'git-upload-pack' || $service eq 'git-receive-pack') {
-    
+
     my $service_cmd = $service;
     substr($service_cmd, 0, 4, '');
-    
+
     my @cmd = $git->cmd(
       $rep_info,
       $service_cmd,
@@ -26,7 +26,7 @@
       '--advertise-refs',
       $rep_info->git_dir
     );
-    
+
     my %save_env = %ENV;
     app->manager->prepare_hooks($auth_user_id, $rep_info);
     my ($cout, $cerr) = (Symbol::gensym, Symbol::gensym);
@@ -52,19 +52,19 @@
     close $cout;
     close $cerr;
     waitpid($pid, 0);
-    
+
     if ($err) {
       app->log->error($err);
       $self->reply->exception($err);
       return;
     }
-    
+
     $self->res->headers->content_type("application/x-$service-advertisement");
-    
+
     # Data start
     my $message = "# service=$service\n";
     my $data = sprintf( '%04x', length($message) + 4 ) . $message . '0000' . $refs;
-    
+
     $self->render(data => $data);
     return;
   }
@@ -76,7 +76,7 @@
       or die "Can't open pipe for @cmd:$!";
     close $fh
       or die "Can't close pipe for @cmd:$!";
-    
+
     my $content_type = 'text/plain; charset=UTF-8';
     my $file = $rep_info->git_dir('info/refs');
     if (-f $file) {

@@ -44,7 +44,7 @@ note 'Smart HTTP';
   # Login success
   $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'a'});
   $t->content_like(qr/Admin/);
-  
+
   # Create user
   $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', email => 'kimoto@foo.com', password => 'a', password2 => 'a'});
   $t->content_like(qr/Success.*created/);
@@ -56,15 +56,15 @@ note 'Smart HTTP';
   # Create repository
   $t->post_ok('/_new?op=create', form => {project => 't1', description => 'Hello', readme => 1});
   $t->content_like(qr/README/);
-  
+
   # info/refs
   $t->get_ok("/kimoto/t1.git/info/refs");
   $t->status_is(200);
   $t->content_type_is('text/plain; charset=UTF-8');
-  
+
   my $object_id1 = substr($t->tx->res->body, 0, 2);
   my $object_id2 = substr($t->tx->res->body, 2, 38);
-  
+
   # Loose object
   $t->get_ok("/kimoto/t1.git/objects/$object_id1/$object_id2");
   $t->status_is(200);
@@ -80,18 +80,18 @@ note 'Smart HTTP';
   $t->status_is(200);
   $t->content_type_is('text/plain');
   $t->content_like(qr#ref: refs/heads/master#);
-  
+
   # /info/refs upload-pack request
   $t->get_ok('/kimoto/t1.git/info/refs?service=git-upload-pack');
   $t->status_is(200);
   $t->header_is('Content-Type', 'application/x-git-upload-pack-advertisement');
   $t->content_like(qr/^001e# service=git-upload-pack/);
   $t->content_like(qr/multi_ack_detailed/);
-  
+
   # /info/refs recieve-pack request(Basic authentication)
   $t->get_ok('/kimoto/t1.git/info/refs?service=git-receive-pack');
   $t->status_is(401);
-  
+
   # /info/refs recieve-pack request
   $t->get_ok(
     '/kimoto/t1.git/info/refs?service=git-receive-pack',
@@ -104,7 +104,7 @@ note 'Smart HTTP';
   $t->content_like(qr/report-status/);
   $t->content_like(qr/delete-refs/);
   $t->content_like(qr/ofs-delta/);
-  
+
   # /git-receive-pack
   $t->post_ok(
     '/kimoto/t1.git/git-receive-pack',
@@ -155,7 +155,7 @@ note 'Private repository and collaborator';
   # Login success
   $t->post_ok('/_login?op=login', form => {id => 'admin', password => 'a'});
   $t->content_like(qr/Admin/);
-  
+
   # Create user
   $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', email => 'kimoto@foo.com', password => 'a', password2 => 'a'});
   $t->content_like(qr/Success.*created/);
@@ -169,11 +169,11 @@ note 'Private repository and collaborator';
   # Create repository
   $t->post_ok('/_new?op=create', form => {project => 't1', description => 'Hello', readme => 1});
   $t->content_like(qr/README/);
-  
+
   # Check private repository
   $t->post_ok("/kimoto/t1/settings?op=save-settings", form => {private => 1});
   $t->content_like(qr/Settings is saved/);
-  
+
   # Can access private repository from myself
   $t->get_ok(
     '/kimoto/t1.git/info/refs?service=git-receive-pack',
@@ -183,7 +183,7 @@ note 'Private repository and collaborator';
   );
   $t->header_is("Content-Type", "application/x-git-receive-pack-advertisement");
   $t->content_like(qr/^001f# service=git-receive-pack/);
-  
+
   # Can't access private repository from others
   $t->get_ok(
     '/kimoto/t1.git/info/refs?service=git-receive-pack',
@@ -196,7 +196,7 @@ note 'Private repository and collaborator';
   # Add collaborator
   $t->post_ok("/kimoto/t1/settings/collaboration?op=add", form => {collaborator => 'kimoto2'});
   $t->content_like(qr/Collaborator kimoto2 is added/);
-  
+
   # Can access private repository from collaborator
   $t->get_ok(
     '/kimoto/t1.git/info/refs?service=git-receive-pack',

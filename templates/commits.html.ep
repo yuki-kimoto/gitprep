@@ -13,12 +13,12 @@
   my $rev_file = param('rev_file');
 
   my $is_wiki = (stash('tab') // '') eq 'wiki';
-  
+
   my $user_project_path = "/$user_id/$project_id";
   if ($is_wiki) {
     $user_project_path .= '/wiki';
   }
-  
+
   my $render_atom_feed = $rev_file =~ s/\.atom$// ? 1 : 0;
 
   my $rep_info = Gitprep::Repository->new($user_id, $project_id);
@@ -26,14 +26,14 @@
 
   my ($rev, $file) = $git->parse_rev_path($rep_info, $rev_file);
   my $page = param('page') || 1;
-  
+
   # Latest commit
   my $latest_commit = $git->get_commit($rep_info, $rev);
 
   # Authors
   my %author_id_of = map { $_->{email} => $_->{id} }
     @{ app->dbi->model('user')->select( [ 'id', 'email' ] )->all };
-    
+
   # Commits
   my $page_count = 30;
   my $commits = $git->get_commits(
@@ -121,7 +121,7 @@
 </feed>
 % } else {
   % layout 'common', title => "Commit History \x{b7} $user_id/$project_id";
-    
+
     %= include '/include/header';
 
     <div class="container">
@@ -130,7 +130,7 @@
           %= include '/include/branch_select', display => 'commits';
         </div>
       % }
-      
+
       <div class="commits">
         <div class="commits-container">
           <div class="commit-date">

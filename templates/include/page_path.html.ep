@@ -4,7 +4,7 @@
   unless ($operation eq 'commits' || $operation eq 'tree') {
     $operation = 'tree';
   }
-  
+
   my $rev = stash('id') || stash('rev');
   my $prefix = stash('prefix');
   my $type = stash('type') || '';
@@ -18,7 +18,7 @@
   <a href="<%= url_for("/$user/$project" . ($operation eq 'commits' ? '/commits' : '')) %>">
     <b><%= $project %></b>
   </a>
-  
+
   % if (defined $Path) {
     /
     % my @parts = split('/', $Path);
@@ -26,7 +26,7 @@
     % for (my $i = 0; $i < @parts; $i++) {
       % my $part = $parts[$i];
       % $path .= $part;
-      
+
       % if ($i == @parts - 1) {
         <b><%= $part %></b>
       % } else {

@@ -14,7 +14,7 @@
     <div class="commit-left-title">
       <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>"
         % if ($commit_comment ne $commit->{title_short}) {
-  	  title="<%= $commit_comment %>"
+          title="<%= $commit_comment %>"
         % }
         ><span class="bold"><%= $commit->{title_short} %></span>
       </a>
@@ -27,12 +27,12 @@
     <div class="commit-right-container">
       <div class="commit-right-commit-id">
         <a href="<%= url_for("$user_project_path/commit/$commit->{id}") %>">
-  	<%= substr($commit->{id}, 0, 7) %>
+          <%= substr($commit->{id}, 0, 7) %>
         </a>
       </div>
       <div class="commit-right-browse-repository">
         <a title="Browse the repository at this point in the history" href="<%= url_for("$user_project_path/tree/$commit->{id}") %>">
-  	%= $api->icon('code');
+          %= $api->icon('code');
         </a>
       </div>
     </div>

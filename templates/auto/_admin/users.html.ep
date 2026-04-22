@@ -1,26 +1,26 @@
 <%
   my $op = param('op') || '';
   my $api = gitprep_api;
-  
+
   my $errors;
   if ($op eq 'delete' && lc $self->req->method eq 'post') {
-    
+
     # Parameters
     my $user_id = param('user');
-    
+
     # Validator
     my $vc = app->vc;
-    
+
     # Validation result
     my $validation = $vc->validation;
-    
+
     # "user" check
     if (!(defined $user_id && length $user_id)) {
       $validation->add_failed(user => 'User name is empty.');
     }
 
     if ($validation->is_valid) {
-      
+
       # Delete user
       my $count;
       eval { $count = app->manager->delete_user($user_id) };
@@ -40,7 +40,7 @@
     }
     else { $errors = $validation->messages }
   }
-  
+
   my $users = app->dbi->model('user')->select(
     where => {admin => 0},
     append => 'order by id'
@@ -51,16 +51,16 @@
 
   %= javascript begin
     $(document).ready(function () {
-      
+
       // Confirm delete
       $('.delete-btn').on('click', function () {
         var user = $(this).attr('user');
-        
+
         var input = window.prompt(
           'Are you really delete user "' + user
           + '". User and user\'s all repositories are deleted. Please input user name.'
         );
-        
+
         if (user === input) {
           return true;
         }
@@ -81,7 +81,7 @@
         %= $message;
       </div>
     % }
-    
+
     % if ($errors) {
       <div class="alert">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -90,7 +90,7 @@
         % }
       </div>
     % }
-    
+
     <h3 class="topic1">Admin Users</h3>
     <div style="margin-bottom:10px"><a class="btn" href="<%= url_for('/_admin/user/create') %>">Create User</a></div>
     <div class="container">
@@ -127,6 +127,6 @@
     </div>
   </div>
   <div style="text-align:center;margin:20px 0"><big><a href="<%= url_for('/_admin') %>">Admin page</a></big></div>
-  
+
   %= include '/include/footer';
-  
+

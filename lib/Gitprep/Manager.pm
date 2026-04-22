@@ -90,7 +90,7 @@ sub prepare_merge {
   );
   Gitprep::Util::run_command(@git_checkout_first_branch)
     or Carp::croak "Can't execute git checkout: @git_checkout_first_branch";
-  
+
   # Delete temporary branch if it exists
   if (grep { $_ eq $tmp_branch } @$branch_names) {
     my @git_branch_remove_cmd = $git->cmd(
@@ -120,7 +120,7 @@ sub merge {
 
   my $target_remote = $target_rep_info->remote_name;
   my $object_id = $self->app->git->ref_to_object_id($work_rep_info, "$target_remote/$target_branch");
-  
+
   my $message;
   my $target_user_id = $target_rep_info->user;
   if (defined $pull_request_number) {
@@ -129,7 +129,7 @@ sub merge {
   else {
     $message = "Merge from $target_user_id/$target_branch";
   }
-  
+
   # Merge
   my @git_merge_cmd = $self->app->git->cmd(
     $work_rep_info,
@@ -138,10 +138,10 @@ sub merge {
     "--message=$message",
     $object_id
   );
-  # 
-  
+  #
+
   my $success = Gitprep::Util::run_command(@git_merge_cmd);
-  
+
   return $success;
 }
 
@@ -150,7 +150,7 @@ sub get_patch {
 
   my $target_remote = $target_rep_info->remote_name;
   my $object_id = $self->app->git->ref_to_object_id($work_rep_info, "$target_remote/$target_branch");
-  
+
   # Format patch
   my @git_format_patch_cmd = $self->app->git->cmd(
     $work_rep_info,
@@ -158,12 +158,12 @@ sub get_patch {
     '--stdout',
     "HEAD..$object_id"
   );
-  
+
   open my $fh, '-|', @git_format_patch_cmd
     or croak "Execute git format-patch cmd:@git_format_patch_cmd";
-  
+
   my $patch = do { local $/; <$fh> };
-  
+
   return $patch;
 }
 
@@ -185,7 +185,7 @@ sub merge_base {
 
 sub push {
   my ($self, $work_rep_info, $base_branch) = @_;
-  
+
   # Push
   my $tmp_branch = $self->_tmp_branch;
   my @git_push_cmd = $self->app->git->cmd(
@@ -200,27 +200,27 @@ sub push {
 
 sub lock_rep {
   my ($self, $rep_info) = @_;
-  
+
   my $lock_file = $rep_info->git_dir('config');
-  
+
   open my $lock_fh, '<', $lock_file
     or croak "Can't open lock file $lock_file: $!";
-    
+
   flock $lock_fh, LOCK_EX
     or croak "Can't lock $lock_file";
-  
+
   return $lock_fh;
 }
 
 sub create_work_rep {
   my ($self, $user, $project) = @_;
-  
+
   # Remote repository
   my $rep_info = Gitprep::Repository->new($user, $project);
-  
+
   # Working repository
   my $work_rep_info = $rep_info->work;
-  
+
   # Create working repository if it doesn't exist
   unless (-e $work_rep_info->work_tree) {
 
@@ -233,7 +233,7 @@ sub create_work_rep {
     );
     Gitprep::Util::run_command(@git_clone_cmd)
       or croak "Can't git clone: @git_clone_cmd";
-    
+
     # Set user name
     my @git_config_user_name = $self->app->git->cmd(
       $work_rep_info,
@@ -243,7 +243,7 @@ sub create_work_rep {
     );
     Gitprep::Util::run_command(@git_config_user_name)
       or croak "Can't execute git config: @git_config_user_name";
-    
+
     # Set user email
     my $user_email = $self->app->dbi->model('user')->select('email', where => {id => $user})->value;
     my @git_config_user_email = $self->app->git->cmd(
@@ -259,31 +259,31 @@ sub create_work_rep {
 
 sub admin_user {
   my $self = shift;
-  
+
   # Admin user
   my $admin_user = $self->app->dbi->model('user')
     ->select(where => {admin => 1})->one;
-  
+
   return $admin_user;
 }
 
 sub fork_project {
   my ($self, $forked_user_id, $forked_project_id, $user_id, $project_id, $single, $description) = @_;
-  
+
   my $user_row_id = $self->api->get_user_row_id($user_id);
-  
+
   # Fork project
   my $dbi = $self->app->dbi;
   my $error;
   eval {
     $dbi->connector->txn(sub {
-      
+
       # Original project id
       my $project = $dbi->model('project')->select(
         {__MY__ => ['row_id', 'private']},
         where => {'user.id' => $user_id, 'project.id' => $project_id}
       )->one;
-      
+
       # Create project
       eval {
         $self->_create_project(
@@ -296,7 +296,7 @@ sub fork_project {
         );
       };
       croak $error = $@ if $@;
-      
+
       # Create repository
       eval {
         $self->_fork_rep($user_id, $project_id, $forked_user_id, $forked_project_id, $single, $description);
@@ -309,24 +309,24 @@ sub fork_project {
 
 sub is_admin {
   my ($self, $user_id) = @_;
-  
+
   # Check admin
   my $is_admin = $self->app->dbi->model('user')
     ->select('admin', where => {id => $user_id})->value;
-  
+
   return $is_admin;
 }
 
 sub is_private_project {
   my ($self, $user_id, $project_id) = @_;
-  
+
   my $user_row_id = $self->api->get_user_row_id($user_id);
-  
+
   # Is private
   my $private = $self->app->dbi->model('project')->select(
     'private', where => {user => $user_row_id, id => $project_id}
   )->value;
-  
+
   return $private;
 }
 
@@ -343,7 +343,7 @@ sub member_projects {
   # subordinates: descendant forks.
   # all: the complete fork tree from its root.
   $scope = lc($scope // 'one');
-  
+
   # DBI
   my $dbi = $self->app->dbi;
   my @results;
@@ -407,13 +407,13 @@ sub member_projects {
 
 sub create_project {
   my ($self, $user_id, $project_id, $opts) = @_;
-  
+
   my $params = {};
   $opts //= {};
   if ($opts->{private}) {
     $params->{private} = 1;
   }
-  
+
   # Create project
   my $dbi = $self->app->dbi;
   my $error;
@@ -448,7 +448,7 @@ sub create_user {
 
 sub delete_project {
   my ($self, $user, $project) = @_;
-  
+
   # Delete project
   my $dbi = $self->app->dbi;
   my $error;
@@ -465,7 +465,7 @@ sub delete_project {
 
 sub delete_user {
   my ($self, $user) = @_;
-  
+
   # Delete user
   my $dbi = $self->app->dbi;
   my $error;
@@ -481,24 +481,24 @@ sub delete_user {
     });
   };
   croak $error if $@;
-  
+
   return $count;
 }
 
 sub original_project {
   my ($self, $user_id, $project_id) = @_;
-  
+
   my $user_row_id = $self->api->get_user_row_id($user_id);
-  
+
   # Original project id
   my $dbi = $self->app->dbi;
   my $original_project_row_id = $dbi->model('project')->select(
     'original_project',
     where => {user => $user_row_id, id => $project_id}
   )->value;
-  
+
   croak "Original project doesn't exist." unless defined $original_project_row_id;
-  
+
   # Original project
   my $original_project = $dbi->model('project')->select(
     [
@@ -509,19 +509,19 @@ sub original_project {
       'project.row_id' => $original_project_row_id
     }
   )->one;
-  
+
   return unless defined $original_project;
-  
+
   return $original_project;
 }
 
 sub child_project {
   my ($self, $user_id, $project_id, $child_user_id) = @_;
-  
+
   my $project_row_id = $self->app->dbi->model('project')->select(
     'project.row_id', where => {'user.id' => $user_id, 'project.id' => $project_id}
   )->value;
-  
+
   my $child_project = $self->app->dbi->model('project')->select(
     [
       {__MY__ => '*'},
@@ -532,39 +532,39 @@ sub child_project {
       'user.id' => $child_user_id
     }
   )->one;
-  
+
   return $child_project;
 }
 
 sub projects {
   my ($self, $user_id) = @_;
-  
+
   my $user_row_id = $self->app->dbi->model('user')->select('row_id', where => {id => $user_id})->value;
-  
+
   # Projects
   my $projects = $self->app->dbi->model('project')->select(
     where => {user => $user_row_id},
     append => 'order by id'
   )->all;
-  
+
   return $projects;
 }
 
 sub users {
   my $self = shift;
-  
+
   # Users
   my $users = $self->app->dbi->model('user')->select(
     where => [':admin{<>}',{admin => 1}],
     append => 'order by id'
   )->all;
-  
+
   return $users;
 }
 
 sub rename_project {
   my ($self, $user, $project, $to_project) = @_;
-  
+
   # Rename project
   my $git = $self->app->git;
   my $dbi = $self->app->dbi;
@@ -601,14 +601,14 @@ sub update_authorized_keys_file {
 
   my $authorized_keys_file = $self->authorized_keys_file;
   if (defined $authorized_keys_file) {
-    
+
     # Lock file
     my $lock_file = $self->app->home->rel_file('lock/authorized_keys');
     open my $lock_fh, $lock_file
       or croak "Can't open lock file $lock_file";
     flock $lock_fh, LOCK_EX
       or croak "Can't lock $lock_file";
-    
+
     # Create authorized_keys_file
     unless (-f $authorized_keys_file) {
       open my $fh, '>', $authorized_keys_file
@@ -616,7 +616,7 @@ sub update_authorized_keys_file {
       chmod 0600, $authorized_keys_file
         or croak "Can't chmod authorized_keys file: $authorized_keys_file";
     }
-    
+
     # Parse file
     my $result = $self->parse_authorized_keys_file($authorized_keys_file);
     my $before_part = $result->{before_part};
@@ -624,7 +624,7 @@ sub update_authorized_keys_file {
     my $after_part = $result->{after_part};
     my $start_symbol = $result->{start_symbol};
     my $end_symbol = $result->{end_symbol};
-    
+
     # Backup at first time
     if ($gitprep_part eq '') {
       # Backup original file
@@ -648,7 +648,7 @@ sub update_authorized_keys_file {
         . " $key->{'user.id'}\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty $key->{key}";
       $ssh_public_keys_str .= "$ssh_public_key_str $key->{'user.id'}\n\n";
     }
-    
+
     # Output tmp file
     my $output = "$before_part$start_symbol\n\n$ssh_public_keys_str$end_symbol$after_part";
     my $output_file = "$authorized_keys_file.gitprep.tmp";
@@ -671,10 +671,10 @@ sub update_authorized_keys_file {
 
 sub parse_authorized_keys_file {
   my ($self, $file) = @_;
-  
+
   my $start_symbol = "# gitprep start";
   my $end_symbol = "# gitprep end";
-  
+
   # Parse
   open my $fh, '<', $file
     or croak "Can't open authorized_key file $file";
@@ -716,7 +716,7 @@ sub parse_authorized_keys_file {
       $after_part .= $line;
     }
   }
-  
+
   my $result = {
     start_symbol => $start_symbol,
     end_symbol => $end_symbol,
@@ -724,13 +724,13 @@ sub parse_authorized_keys_file {
     gitprep_part => $gitprep_part,
     after_part => $after_part
   };
-  
+
   return $result;
 }
 
 sub _create_project {
   my ($self, $user_id, $project_id, $params) = @_;
-  
+
   my $user_row_id = $self->api->get_user_row_id($user_id);
   $params ||= {};
   $params->{user} = $user_row_id;
@@ -756,36 +756,36 @@ sub _create_rep {
   my ($self, $user, $project, $opts) = @_;
 
   chomp(my $default_branch = $opts->{default_branch} // 'master');
- 
+
   # Create repository directory
   my $git = $self->app->git;
 
   my $rep_info = Gitprep::Repository->new($user, $project);
   my $rep_git_dir = $rep_info->git_dir;
-  
+
   mkdir $rep_git_dir
     or croak "Can't create directory $rep_git_dir: $!";
-  
+
   eval {
     # Git init
     {
       my @git_init_args = ($rep_info, 'init', '--bare');
       if ($default_branch ne 'master' ) {
-      	CORE::push( @git_init_args, ('--initial-branch=' . $default_branch));
+        CORE::push( @git_init_args, ('--initial-branch=' . $default_branch));
       }
       my @git_init_cmd = $git->cmd(@git_init_args);
 
       Gitprep::Util::run_command(@git_init_cmd)
         or croak  "Can't execute git init --bare:@git_init_cmd";
     }
-    
+
     # Add git-daemon-export-ok
     {
       my $file = "$rep_git_dir/git-daemon-export-ok";
       open my $fh, '>', $file
         or croak "Can't create git-daemon-export-ok: $!"
     }
-    
+
     # HTTP support
     my @git_update_server_info_cmd = $git->cmd(
       $rep_info,
@@ -796,7 +796,7 @@ sub _create_rep {
       or croak "Can't execute git --bare update-server-info";
     move("$rep_git_dir/hooks/post-update.sample", "$rep_git_dir/hooks/post-update")
       or croak "Can't move post-update";
-    
+
     # Description
     my $description = $opts->{description};
     $description = '' unless defined $description;
@@ -808,15 +808,15 @@ sub _create_rep {
         or croak "Can't write $file: $!";
       close $fh;
     }
-    
+
     # Add README and commit
     if ($opts->{readme}) {
       # Create working directory
       my $home_tmp_dir = $self->app->home->rel_file('tmp');
-      
+
       # Temp directory
       my $temp_dir =  File::Temp->newdir(DIR => $home_tmp_dir);
-      
+
       # Working repository
       my $work_rep_info = $rep_info->work;
       # Override leading path to our temporary directory.
@@ -844,7 +844,7 @@ sub _create_rep {
         print $readme_fh "# $project\n";
         print $readme_fh "\n" . encode('UTF-8', $description) . "\n";
         close $readme_fh;
-      
+
         my @git_add_cmd = $git->cmd(
           $work_rep_info,
           'add',
@@ -874,7 +874,7 @@ sub _create_rep {
         );
         Gitprep::Util::run_command(@git_config_user_email)
           or croak "Can't execute git config: @git_config_user_email";
-      
+
         # Commit
         my @git_commit_cmd = $git->cmd(
           $work_rep_info,
@@ -886,7 +886,7 @@ sub _create_rep {
 
         Gitprep::Util::run_command(@git_commit_cmd)
           or croak "Can't execute git commit: @git_commit_cmd";
-      
+
         # Push
         {
           my @git_push_cmd = $git->cmd(
@@ -914,16 +914,16 @@ sub _create_rep {
 
 sub create_wiki_rep {
   my ($self, $user, $project) = @_;
-  
+
   # Create repository directory
   my $git = $self->app->git;
-  
+
   my $wiki_rep_info = Gitprep::Repository::Wiki->new($user, $project);
   my $wiki_rep_git_dir = $wiki_rep_info->git_dir;
-  
+
   mkdir $wiki_rep_git_dir
     or croak "Can't create directory $wiki_rep_git_dir: $!";
-  
+
   eval {
     # Git init
     {
@@ -931,14 +931,14 @@ sub create_wiki_rep {
       Gitprep::Util::run_command(@git_init_cmd)
         or croak  "Can't execute git init --bare:@git_init_cmd";
     }
-    
+
     # Add git-daemon-export-ok
     {
       my $file = $wiki_rep_info->git_dir('git-daemon-export-ok');
       open my $fh, '>', $file
         or croak "Can't create git-daemon-export-ok: $!"
     }
-    
+
     # HTTP support
     my @git_update_server_info_cmd = $git->cmd(
       $wiki_rep_info,
@@ -958,13 +958,13 @@ sub create_wiki_rep {
 
 sub create_wiki_work_rep {
   my ($self, $user, $project) = @_;
-  
+
   # Remote repository
   my $wiki_rep_info = Gitprep::Repository::Wiki->new($user, $project);
-  
+
   # Working repository
   my $wiki_work_rep_info = $wiki_rep_info->work;
-  
+
   # Create working repository if it don't exist
   unless (-e $wiki_work_rep_info->work_tree) {
 
@@ -977,7 +977,7 @@ sub create_wiki_work_rep {
     );
     Gitprep::Util::run_command(@git_clone_cmd)
       or croak "Can't git clone: @git_clone_cmd";
-    
+
     # Set user name
     my @git_config_user_name = $self->app->git->cmd(
       $wiki_work_rep_info,
@@ -987,7 +987,7 @@ sub create_wiki_work_rep {
     );
     Gitprep::Util::run_command(@git_config_user_name)
       or croak "Can't execute git config: @git_config_user_name";
-    
+
     # Set user email
     my $user_email = $self->app->dbi->model('user')->select('email', where => {id => $user})->value;
     my @git_config_user_email = $self->app->git->cmd(
@@ -1003,16 +1003,16 @@ sub create_wiki_work_rep {
 
 sub _create_db_user {
   my ($self, $user_id, $data) = @_;
-  
+
   $data->{id} = $user_id;
-  
+
   # Create database user
   $self->app->dbi->model('user')->insert($data);
 }
 
 sub _create_user_dir {
   my ($self, $user) = @_;
-  
+
   # Create user directory
   my $rep_home = Gitprep::Repository->home;
   my $user_dir = "$rep_home/$user";
@@ -1051,7 +1051,7 @@ sub _delete_db_user {
 
 sub _delete_user_dir {
   my ($self, $user) = @_;
-  
+
   # Delete user directory
   my $rep_home = Gitprep::Repository->home;
   my $user_dir = "$rep_home/$user";
@@ -1251,28 +1251,28 @@ sub _delete_wiki_rep {
 
 sub exists_project {
   my ($self, $user_id, $project_id) = @_;
-  
+
   my $user_row_id = $self->api->get_user_row_id($user_id);
-  
+
   # Exists project
   my $dbi = $self->app->dbi;
   my $row = $dbi->model('project')->select(where => {user => $user_row_id, id => $project_id})->one;
-  
+
   return $row ? 1 : 0;
 }
 
 sub exists_user {
   my ($self, $user_id) = @_;
-  
+
   # Return true if user exists.
   my $row = $self->app->dbi->model('user')->select(where => {id => $user_id})->one;
-  
+
   return $row ? 1 : 0;
 }
 
 sub _exists_rep {
   my ($self, $user, $project) = @_;
-  
+
   # Exists repository
   my $rep_info = Gitprep::Repository->new($user, $project);
   return -e $rep_info->git_dir;
@@ -1280,10 +1280,10 @@ sub _exists_rep {
 
 sub _fork_rep {
   my ($self, $user_id, $project_id, $to_user_id, $to_project_id, $single, $description) = @_;
-  
+
   # Fork repository
   my $git = $self->app->git;
-  
+
   my $rep_info = Gitprep::Repository->new($user_id, $project_id);
   my $to_rep_info = Gitprep::Repository->new($to_user_id, $to_project_id);
 
@@ -1310,13 +1310,13 @@ sub _fork_rep {
 
 sub _rename_project {
   my ($self, $user_id, $project_id, $renamed_project_id) = @_;
-  
+
   my $user_row_id = $self->api->get_user_row_id($user_id);
-  
+
   # Check arguments
   croak "Invalid parameters(_rename_project)"
     unless defined $user_id && defined $project_id && defined $renamed_project_id;
-  
+
   # Rename project
   my $dbi = $self->app->dbi;
   $dbi->model('project')->update(
@@ -1352,7 +1352,7 @@ sub rename_branch {
 
   # Rename a branch, taking care of default branch settings and pull requests.
   return if $old eq $new;
-  
+
   my $dbi = $self->app->dbi;
   my $git = $self->app->git;
   $dbi->connector->txn(sub {

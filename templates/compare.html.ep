@@ -3,7 +3,7 @@
 
   # API
   my $api = gitprep_api;
-  
+
   # Git
   my $git = app->git;
 
@@ -119,14 +119,14 @@
       target_branch => $target_branch
     }
   )->one;
-  
+
   my $errors;
   if (lc $self->req->method eq 'post') {
-  
+
     my $op = param('op');
-    
+
     if ($op eq 'create-pull-request') {
-      
+
       if ($pull_request_already) {
         $self->reply->exception("Error");
         return;
@@ -207,7 +207,7 @@
             update_time => $now_epoch,
             user => $session_user_row_id
           };
-            
+
           app->dbi->model('issue_message')->insert($new_issue_message);
 
           $self->redirect_to("/$base_user_id/$base_project_id/pull/$issue_number");
@@ -287,13 +287,13 @@
 
   # Member projects
   my $member_projects = app->manager->member_projects($base_user_id, $base_project_id, 'all');
-  
+
   # Can open pull request
   my $can_open_pull_request;
   if (@$commits && $expand) {
     $can_open_pull_request = 1;
   }
-  
+
   # commit_body args
   my %commit_body_args = (
     user => $target_user_id,
@@ -364,7 +364,7 @@
     $(document).click(function() { $('#base-branch-popup').hide(); });
     $('#base-branch-btn').click(function() { event.stopPropagation(); });
     $('#base-branch-popup').click(function() { event.stopPropagation(); });
-    
+
     // Change compare branch
     $('#target-branch-btn').on('click', function () {
       $('#target-branch-popup')
@@ -408,7 +408,7 @@
 
 <div class="container">
   %= include '/include/errors', errors => $errors;
-  
+
   <div class="topic1">
     % if ($can_open_pull_request) {
       Open a pull request
@@ -596,7 +596,7 @@
       </div>
     </div>
   </div>
-  
+
   % if ($pull_request_already) {
     <%
       my $issue = app->dbi->model('issue')->select(
@@ -606,7 +606,7 @@
         }
       )->one;
     %>
-    
+
     <div class="compare-pull-request-link">
       <a href="<%= url_for("/$base_user_id/$base_project_id/pull/$issue->{number}") %>">
         Pull request #<%= $issue->{number} %>
@@ -654,13 +654,13 @@
         <%= $api->plural('contributor', $authors_count, 'no') %>
       </li>
       <li>
-        
+
       </li>
       <li>
-        
+
       </li>
     </ul>
-    
+
     <div class="commits">
       <div class="commits-container">
         <div class="commit-date">
@@ -680,7 +680,7 @@
     %= javascript begin
       Gitprep.commitsByDay($('.commits-container'));
     % end
-  
+
     %= include '/include/commit_body', %commit_body_args;
   % } else {
     <div class="compare-nothing">

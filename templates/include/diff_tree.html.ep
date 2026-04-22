@@ -2,9 +2,9 @@
   my $rev = stash('rev');
   my $from_rev = stash('from_rev');
 %>
-  
+
 <table style="margin-bottom:10px;width:100%">
-  
+
   % my $toggle = 0;
   % my $num = 0;
   % for my $diff_tree (@$diff_trees) {
@@ -36,9 +36,9 @@
         % if ($status eq 'A' || $status eq 'M' || $status eq 'D') {
           <a style="margin-left:5px" href="#<%= "diff-$num" %>"><%= $file %></a>
         % } elsif ($status eq 'T') {
-          
+
         % } elsif ($status eq 'R' || $status eq 'C') {
-          
+
           <a href="#<%= "diff-$num" %>"><%= $diff_tree->{from_file} %> → <%= $file %></a>
         % }
         % if ($status ne 'A' && $status ne 'D' && $from_mode_str ne $mode_str) {

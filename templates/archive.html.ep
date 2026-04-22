@@ -3,13 +3,13 @@
 
   # API
   my $api = $self->gitprep_api;
-  
+
   # Parameter
   my $user = param('user');
   my $project = param('project');
   my $rev = param('rev');
   my $archive_type = stash('archive_type');
-  
+
   my $content_type;
   my $format;
   my $ext;
@@ -23,7 +23,7 @@
     $ext = 'zip';
     $content_type = 'application/zip';
   }
-  
+
   # Git
   my $git = app->git;
 
@@ -35,7 +35,7 @@
     $self->reply->not_found;
     return;
   }
-  
+
   my $name = "$project-$rev";
   my $file = "$name.$ext";
   local *quote = sub {
@@ -58,12 +58,12 @@
   $file =~ s/(["\\])/\\$1/g;
 
   my $success = open my $fh, '-|', $cmd;
-  
+
   unless ($success) {
     $self->render_exeption;
     return;
   }
-  
+
   # Write chunk
   $self->res->headers->content_type($content_type);
   $self->res->headers->content_disposition(qq/attachment; filename="$file"/);

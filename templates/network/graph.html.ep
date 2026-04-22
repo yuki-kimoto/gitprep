@@ -10,12 +10,12 @@
   my $branch = param('rev1');
   my $rev2_abs = param('rev2_abs');
   my ($remote_user, $remote_project, $remote_branch) = split /\//, $rev2_abs, 3;
-  
+
   my $commits = app->git->get_commits(Gitprep::Repository->new($user, $project),
     $branch, 100);
   my $remote_commits = app->git->get_commits(Gitprep::Repository->new($remote_user,
     $remote_project), $remote_branch, 100);
-  
+
   my $merged_commits_h = {};
   for my $commit (@$commits) {
     my $id = $commit->{id};
@@ -36,7 +36,7 @@
       $merged_commits_h->{$id}{type} = 'remote';
     }
   }
-  
+
   my $merged_commits = [];
   for my $id (
     sort { $merged_commits_h->{$a}{epoch} <=> $merged_commits_h->{$b}{epoch}}
@@ -51,14 +51,14 @@
 %>
 
   %= include 'include/header';
-  
+
   %= javascript begin
     $('document').ready(function () {
       // Scroll to right
       $('#graph').scrollLeft(1000);
     });
   % end
-  
+
   <div class="container">
     <h3 class="topic1">Graph</h3>
     <div style="margin-bottom:20px">Compare 100 commits.</div>
@@ -90,7 +90,7 @@
         % }
       </table>
     </div>
-    
+
     <div class="graph-document">
       <div style="margin-bottom:30px">
         <span style="color:green;font-size:22px"><%= "$remote_user / $remote_project / $remote_branch" %></span>
@@ -113,7 +113,7 @@ git fetch
 git checkout -b <%= "$remote_user-$remote_branch" %> <%= "$remote_user/$remote_branch" %>
 git merge <%= $branch %>
       </pre>
-      
+
       <b>Step 3:</b> Merge the changes and update on GitPrep.
       <pre>
 git checkout <%= $branch %>
@@ -122,5 +122,5 @@ git push origin <%= $branch %>
       </pre>
     </div>
   </div>
-  
+
   %= include '/include/footer';

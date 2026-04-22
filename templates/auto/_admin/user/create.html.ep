@@ -1,24 +1,24 @@
 <%
   my $api = gitprep_api;
-  
+
   my $op = param('op') || '';
-  
+
   my $errors;
   if ($op eq 'create') {
-  
+
     # Parameters
     my $id = param('id');
     my $name = param('name');
     my $email = param('email');
     my $password = param('password');
     my $password2 = param('password2');
-    
+
     # Validator
     my $vc = app->vc;
-    
+
     # Validation result
     my $validation = $vc->validation;
-    
+
     # "id" check
     if (!(defined $id && length $id)) {
       $validation->add_failed(id => 'User id is empty.');
@@ -35,10 +35,10 @@
         $validation->add_failed(id => "User id $id already exists");
       }
     }
-    
+
     # "name" check
     $name //= '';
-    
+
     # "email" check
     if (!(defined $email && length $email)) {
       $validation->add_failed(email => "Mail must be not empty");
@@ -52,7 +52,7 @@
         $validation->add_failed(email => "Mail $email already exists");
       }
     }
-    
+
     # "password" check
     $password2 ||= '';
     if (!(defined $password && length $password)) {
@@ -64,9 +64,9 @@
     elsif ($password ne $password2) {
       $validation->add_failed(password => "Two password don't match");
     }
-    
+
     if ($validation->is_valid) {
-      
+
       # Encrypt password
       my ($password_encrypted, $salt) = $api->encrypt_password($password);
       my $params = {};
@@ -75,7 +75,7 @@
       $params->{name} = $name;
       $params->{email} = $email;
       $params->{show_email} = app->config->{basic}{show_emails}? 1: 0;
-      
+
       # Create user
       eval { app->manager->create_user($id, $params) };
       if (my $e = $@) {
@@ -104,7 +104,7 @@
         Success: User <b><%= flash('id') %></b> is created.
       </div>
     % }
-    
+
     % if ($errors) {
       <div class="alert alert-error">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -113,7 +113,7 @@
         % }
       </div>
     % }
-    
+
     <div class="topic1" style="text-align:center">Create User</div>
     <form class="user-form" action="<%= url_for->query(op => 'create') %>" method="post">
       <div class="user-form-container">

@@ -1,15 +1,15 @@
 <%
   # API
   my $api = gitprep_api;
-  
+
   # Parameters
   my $user_id = param('user');
   my $project_id = param('project');
-  
+
   # Can write access
   my $session_user_id = $api->session_user_id;
   my $can_write_access = $api->can_write_access($session_user_id, $user_id, $project_id);
-  
+
   my $errors;
   if (lc $self->req->method eq 'post') {
     unless ($can_write_access) {
@@ -27,10 +27,10 @@
       my $id = param('label-id');
       my $description = param('description') || '';
       my $color = param('color');
-      
+
       my $vc = app->vc;
       my $validation = $vc->validation;
-      
+
       if (!length $id) {
         $validation->add_failed(id => "Name can't be blank");
       }
@@ -47,27 +47,27 @@
             id => $id
           }
         )->one;
-        
+
         if ($label) {
           $validation->add_failed(id => 'Label name already in use');
         }
       }
-      
+
       if (!length $color) {
         $validation->add_failed(color => "Color can't be blank");
       }
-      
+
       if ($validation->is_valid) {
-        
+
         my $new_label = {
           id => $id,
           description => $description,
           color => $color,
           project => $project_row_id
         };
-        
+
         app->dbi->model('label')->insert($new_label);
-        
+
         $self->redirect_to;
         return;
       }
@@ -136,7 +136,7 @@
 
       if ($validation->is_valid) {
         app->dbi->model('label')->update({id => $id, description => $description, color => $color}, where => {row_id => $row_id});
-        
+
         $self->render(json => {success => 1, label => $api->label($row_id, tag => 'div', class => 'labels-tag', icon => '')});
         return;
       }
@@ -168,7 +168,7 @@
     $('.labels-create-cancel-btn').on('click', function () {
       $('.labels-create-panel').hide();
     });
-    
+
     $('.labels-edit').on('click', function () {
       var li = $(this).closest('li');
       var da = $('.labels-display-area', li);
@@ -186,7 +186,7 @@
       $(this).closest('li').find('.labels-display-area').show();
       $(this).closest('li').find('.labels-edit-area').hide();
     });
-    
+
     $('.labels-delete').on('click', function () {
       var li = $(this).closest('li');
       var row_id = li.attr('row-id');
@@ -235,7 +235,7 @@
       </div>
     </div>
   % }
-  
+
   <form class="labels-create-panel" action="<%= url_for %>" method="post" style="display:none">
     %= hidden_field op => 'create';
     <div class="labels-input-rows">

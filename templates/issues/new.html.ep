@@ -6,26 +6,26 @@
   my $user_id = param('user');
   my $project_id = param('project');
   my $issue_number = param('number');
-  
+
   unless ($api->logined) {
     $self->redirect_to("/$user_id/$project_id/issues");
     return;
   }
-  
+
   my $errors;
   if (lc $self->req->method eq 'post') {
     my $op = param('op');
 
     if ($op eq 'create') {
-      
+
       # Parameters
       my $title = param('title');
       my $message = param('message');
-      
+
       # Validation
       my $vc = app->vc;
       my $validation = $vc->validation;
-      
+
       # Check title
       if (!(defined $title && length $title)) {
         $validation->add_failed(title => 'title is empty');
@@ -33,7 +33,7 @@
       elsif (length $title > 300) {
         $validation->add_failed(title => 'title is too long');
       }
-      
+
       # Message
       if (!(defined $message && length $message)) {
         $message = '';
@@ -41,18 +41,18 @@
           $validation->add_failed(message => 'message is too long');
         }
       }
-      
+
       if ($validation->is_valid) {
         my $project_row_id = app->dbi->model('project')->select(
           'project.row_id',
           where => {'user.id' => $user_id, 'project.id' => $project_id}
         )->value;
-        
+
         my $issue;
         my $now_epoch = $api->now;
         my $session_user_row_id = $api->session_user_row_id;
         my $issue_number;
-        
+
         app->dbi->connector->txn(sub {
 
           # issue number
@@ -62,7 +62,7 @@
             append => 'group by project'
           )->value;
           $issue_number++;
-          
+
           # New issue
           my $new_issue = {
             title => $title,
@@ -75,7 +75,7 @@
           };
           app->dbi->model('issue')->insert($new_issue);
           my $new_issue_row_id = app->dbi->execute("select LAST_INSERT_ROWID()")->value;
-          
+
           # New issue message
           my $new_issue_message = {
             issue => $new_issue_row_id,
@@ -85,7 +85,7 @@
             update_time => $now_epoch,
             user => $session_user_row_id
           };
-          
+
           app->dbi->model('issue_message')->insert($new_issue_message);
 
           # Subscriptions.
@@ -108,7 +108,7 @@
       }
     }
   }
-  
+
   layout 'common', title => "New issue - $user_id/$project_id";
 %>
 

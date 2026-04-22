@@ -65,7 +65,7 @@ else {
   $can_access = $app->gitprep_api->is_collaborator($session_user_id, $user_id, $project_id);
 }
 die qq|User "$session_user_id" can't access repository "$user_id/$project_id.git"\n|
-  unless $can_access; 
+  unless $can_access;
 
 # Prepare hooks execution.
 my $rep_info = Gitprep::Repository->new($user_id, $project_id);

@@ -18,10 +18,10 @@
   $rep_info = $rep_info->wiki if $is_wiki;
 
   my ($rev, $file) = $git->parse_rev_path($rep_info, $rev_file);
-  
+
   # Blob raw
   my $blob_raw = $git->blob_raw($rep_info, $rev, $file);
-  
+
   # Content type
   my $type = $git->blob_content_type($rep_info, $rev, $file);
 
@@ -29,10 +29,10 @@
   my $file_name = $rev;
   if (defined $file) { $file_name = $file }
   elsif ($type =~ m/^text\//) { $file_name .= '.txt' }
-  
+
   # Content disposition
   my $content_disposition = "inline; filename*=UTF-8''" . Encode::encode('UTF-8', $file_name);
-  
+
   # Response
   $self->res->headers->content_disposition($content_disposition);
   $self->res->headers->content_type($type);

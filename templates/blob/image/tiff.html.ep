@@ -7,7 +7,7 @@
 
   # Git
   my $git = $self->app->git;
-  
+
   my $p = stash('blob_params');
 
   # Load image.

@@ -1,24 +1,24 @@
 <%
   my $api = gitprep_api;
-  
+
   my $op = param('op') || '';
   my $user_id = param('id');
-  
+
   my $errors;
   if (lc $self->req->method eq 'post') {
     if ($op eq 'update') {
-    
+
       # Parameters
       my $id = param('id');
       my $name = param('name');
       my $email = param('email');
-      
+
       # Validator
       my $vc = app->vc;
-      
+
       # Validation result
       my $validation = $vc->validation;
-      
+
       # "id" check
       if (!(defined $id && length $id)) {
         $validation->add_failed(id => 'User id is empty.');
@@ -26,10 +26,10 @@
       elsif (length $name > 300) {
         $validation->add_failed(id => 'User id is too long.');
       }
-      
+
       # "name" check
       $name //= '';
-      
+
       # "email" check
       if (!(defined $email && length $email)) {
         $validation->add_failed(email => "Mail must be not empty");
@@ -53,20 +53,20 @@
         };
         $where->clause($clause);
         $where->param($param);
-        
+
         my $row = app->dbi->model('user')->select(where => $where)->one;
         if ($row) {
           $validation->add_failed(email => "Mail $email already exists");
         }
       }
-      
+
       if ($validation->is_valid) {
-        
+
         # Encrypt password
         my $params = {};
         $params->{name} = $name;
         $params->{email} = $email;
-        
+
         # Update user
         eval { app->dbi->model('user')->update($params, where => {id => $id}) };
         if (my $e = $@) {
@@ -82,7 +82,7 @@
       else { $errors = $validation->messages }
     }
   }
-  
+
   my $user = app->dbi->model('user')->select(
     where => {id => $user_id, admin => 0}
   )->one;
@@ -100,7 +100,7 @@
         Success: User <b><%= flash('id') %></b> is updated.
       </div>
     % }
-    
+
     % if ($errors) {
       <div class="alert alert-error">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -109,7 +109,7 @@
         % }
       </div>
     % }
-    
+
     <div class="topic1" style="text-align:center">Update User</div>
     <form class="user-form" action="<%= url_for->query(id => $user_id) %>" method="post">
       %= hidden_field op => 'update';

@@ -6,7 +6,7 @@
 
   # Git
   my $git = $self->app->git;
-  
+
   # Parameters
   my $user_id = param('user');
   my $project_id = param('project');
@@ -77,7 +77,7 @@
     '#a2503a',
     '#793738'
   ];
-  
+
   # Variables for included template
   stash(id => $rev, project => $project_id, rev => $rev);
 %>
@@ -85,7 +85,7 @@
 % layout 'common' , title => "Blaming $project_id/$file at $rev \x{b7} $user_id/$project_id";
 
   %= include '/include/header';
-  
+
   <!-- Blame page -->
   <div class="container">
     <div class="blame-page-path">
@@ -175,5 +175,5 @@
       </table>
     </div>
   </div>
-  
+
   %= include '/include/footer';

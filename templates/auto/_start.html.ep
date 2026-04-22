@@ -1,34 +1,34 @@
 <%
   # API
   my $api = gitprep_api;
-  
+
   my $admin_user = app->manager->admin_user;
   if (defined $admin_user && $admin_user ne '') {
     $self->redirect_to('/');
     return;
   }
-  
+
   # Operator
   my $op = param('op') || '';
-  
+
   my $errors;
   if ($op eq 'create') {
-    
+
     # Parameters
     my $password = param('password');
     my $password2 = param('password2');
-    
+
     # Validator
     my $vc = app->vc;
-    
+
     # Validation
     my $validation = $vc->validation;
-    
+
     # "user"
     if (defined $admin_user) {
       $validation->add_failed('Admin user already exists.');
     }
-    
+
     # "password"
     if (!(defined $password && length $password)) {
       $validation->add_failed('Password is empty.');
@@ -39,9 +39,9 @@
     elsif ($password ne $password2) {
       $validation->add_failed("Two password don't match.");
     }
-    
+
     if ($validation->is_valid) {
-      
+
       # Valida parameters
       my $new_user = {};
       $new_user->{id} = 'admin';
@@ -50,10 +50,10 @@
       $new_user->{password} = $password_encryped;
       $new_user->{salt} = $salt;
       $new_user->{email} = '';
-      
+
       # Create admin user
       $self->app->dbi->model('user')->insert($new_user);
-      
+
       # Redirect
       $self->flash(admin_user_created => 1);
       $self->redirect_to('/_login');

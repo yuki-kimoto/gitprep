@@ -34,12 +34,12 @@ for my $pull_request (@$pull_requests) {
     project => $project,
     number => $issue_project_numbers->{$project}
   };
-  
+
   my $issue = $dbi->select(
     table => 'issue',
     where => {row_id => $new_issue->{row_id}}
   )->one;
-  
+
   unless ($issue) {
     $dbi->insert($new_issue, table => 'issue');
   }
@@ -56,12 +56,12 @@ for my $pull_request_message (@$pull_request_messages) {
     update_time => $pull_request_message->{update_time},
     user => $pull_request_message->{user}
   };
-  
+
   my $issue_message = $dbi->select(
     table => 'issue_message',
     where => {row_id => $new_issue_message->{row_id}}
   )->one;
-  
+
   unless ($issue_message) {
     $dbi->insert($new_issue_message, table => 'issue_message');
   }

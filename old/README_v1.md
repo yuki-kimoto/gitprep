@@ -25,7 +25,7 @@ Check Perl version. You can use GitPrep if the Perl version is 5.8.7+;
 ### Checki git command existance
 
     git --version
-    
+
 ## A. Installation when you run GitPrep as CGI script
 
 Download tar.gz archive, expand it and change directory:
@@ -66,7 +66,7 @@ to see what problem has occurred.
 If CGI script isn't run by your user, you need the following work.
 For example, CGI script is run by apache user.
 
-Change user and group of all files in gitprep directory to apache 
+Change user and group of all files in gitprep directory to apache
 
     chown -R apache:apache gitprep
 
@@ -190,7 +190,7 @@ You maybe see the following error
     fatal: The remote end hung up unexpectedly
 
 Please increase increase the value of MOJO_MAX_MESSAGE_SIZE
-    
+
     # 1GB
     export MOJO_MAX_MESSAGE_SIZE=1024000000
 
@@ -212,7 +212,7 @@ You maybe see the following error message.
     Everything up-to-date
 
 Please increase the value of http.postBuffer.
-    
+
     # 1GB
     git config http.postBuffer 1024000000
 
@@ -239,7 +239,7 @@ You can use GitPrep via reverse proxy access
 
 I show apache config example.
 You can use Name virtual host.
-    
+
     # HTTP
     <VirtualHost *:80>
 
@@ -248,13 +248,13 @@ You can use Name virtual host.
         Order deny,allow
         Allow from all
       </Proxy>
-      
+
       ProxyRequests Off
       ProxyPreserveHost On
       ProxyPass / http://localhost:10020/ keepalive=On
       ProxyPassReverse / http://localhost:10020/
       RequestHeader set X-Forwarded-HTTPS "0"
-        
+
     </VirtualHost>
 
 If you use GitPrep vis https, you should set X-Forwarded-HTTPS Request Header.
@@ -267,7 +267,7 @@ If you use GitPrep vis https, you should set X-Forwarded-HTTPS Request Header.
         Order deny,allow
         Allow from all
       </Proxy>
-      
+
       ProxyRequests Off
       ProxyPreserveHost On
       ProxyPass / http://localhost:10020/ keepalive=On
@@ -335,10 +335,10 @@ Please fix it by the following way.
 
     # Run SQLite client
     sqlite3 data/gitprep.db
-    
+
     # drop collaboration table
     drop table collaboration;
-    
+
     # Restart
     ./gitprep
 
@@ -364,7 +364,7 @@ At first, set [basic]ssh_rep_url_base option to /git
     ssh_rep_url_base=/git
 
 And you create symbolic link to /home/gitprep/gitprep/data/rep
-    
+
     cd /
     ln -s /home/gitprep/gitprep/data/rep /git
     chown gitprep:gitprep /git
@@ -463,7 +463,7 @@ These are my Perl web application projects.
 
 ## Bug
 
-If you find bug, plese tell me on GitHub issue. 
+If you find bug, plese tell me on GitHub issue.
 
 Please post only bug information.
 

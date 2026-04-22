@@ -73,10 +73,10 @@ sub _http_authenticate {
 
 sub startup {
   my $self = shift;
-  
+
   # Config file
   $self->plugin('INIConfig', {ext => 'conf'});
-  
+
   # Config file for developper
   unless ($ENV{GITPREP_NO_MYCONFIG}) {
     my $my_conf_file = $self->home->rel_file('gitprep.my.conf');
@@ -103,7 +103,7 @@ sub startup {
   my $listen = $conf->{hypnotoad}{listen} ||= ['http://*:10020'];
   $listen = [split /,/, $listen] unless ref $listen eq 'ARRAY';
   $conf->{hypnotoad}{listen} = $listen;
-  
+
   # Data directory
   my $data_dir = $ENV{GITPREP_DATA_DIR} ? $ENV{GITPREP_DATA_DIR} : $self->home->rel_file('data');
   $self->config(data_dir => $data_dir);
@@ -131,13 +131,13 @@ sub startup {
     croak $error;
   }
   $git->bin($git_bin);
-  
+
   # Repository Manager
   my $manager = Gitprep::Manager->new;
   $manager->app($self);
   weaken $manager->{app};
   $self->manager($manager);
-  
+
   # authorized_keys file
   my $authorized_keys_file = $conf->{basic}{authorized_keys_file};
   unless (defined $authorized_keys_file) {
@@ -151,7 +151,7 @@ sub startup {
   else {
     $self->app->log->warn(qq/Config "authorized_keys_file" can't be detected/);
   }
-  
+
   # Repository home
   my $rep_home = Gitprep::Repository->home;
   unless (-d $rep_home) {
@@ -160,7 +160,7 @@ sub startup {
   }
 
   $self->git($git);
-  
+
   # DBI
   my $db_file = "$data_dir/gitprep.db";
   my $dbi = DBIx::Custom->connect(
@@ -169,7 +169,7 @@ sub startup {
     option => {sqlite_unicode => 1, sqlite_use_immediate_transaction => 1}
   );
   $self->dbi($dbi);
-  
+
   # Database file permision
   if (my $user_id = $conf->{hypnotoad}{user}) {
     my $uid = (getpwnam $user_id)[2];
@@ -179,7 +179,7 @@ sub startup {
     my $gid = (getgrnam $group)[2];
     chown -1, $gid, $db_file;
   }
-  
+
   # Model
   my $models = [
     {
@@ -303,7 +303,7 @@ sub startup {
   # Validator
   my $validate_user_name = sub {
     my $value = shift;
-      
+
     return ($value || '') =~ /^$user_re$/;
   };
 
@@ -367,14 +367,14 @@ sub startup {
         );
       };
     }
-    
+
     # Auto route
     {
       my $r = $r->under(sub {
         my $self = shift;
-        
+
         my $api = $self->gitprep_api;
-        
+
         # Authentication
         {
           my $path = $self->req->url->path->parts->[0] || '';
@@ -413,13 +413,13 @@ sub startup {
             return;
           }
         }
-        
-        return 1; 
+
+        return 1;
       });
-      
+
       # Auto routes
       $self->plugin('AutoRoute', route => $r);
-      
+
       # Custom routes
       {
         # User
@@ -433,7 +433,7 @@ sub startup {
             $self->reply->not_found;
           });
 
-	   # Home
+          # Home
           $r->get('/' => [format => 0] => sub { shift->render_maybe('/user') });
 
           # Settings
@@ -442,15 +442,15 @@ sub startup {
           # SSH keys
           $r->any('/_settings/ssh' => sub { shift->render_maybe('/user-settings/ssh') });
         }
-        
+
         # Smart HTTP
         {
           my $r = $r->any('/<#project>.git');
-          
+
           {
             my $r = $r->under(sub {
               my $self = shift;
-              
+
               my $api = $self->gitprep_api;
               my $user_id = $self->param('user');
               my $project_id = $self->param('project');
@@ -462,7 +462,7 @@ sub startup {
               }
 
               my $private = $self->app->manager->is_private_project($user_id, $project_id);
-              
+
 
               if ($conf->{basic}{hide_from_public})
               {
@@ -479,20 +479,20 @@ sub startup {
                 return 1;
               }
             });
-            
+
             # /
             $r->get('/')->to(cb => sub {
               my $self = shift;
-              
+
               my $user_id = $self->param('user');
               my $project_id = $self->param('project');
-              
+
               $self->redirect_to("/$user_id/$project_id");
             });
-            
+
             # /info/refs
             $r->get('/info/refs' => sub {
-                shift->render_maybe('smart-http/info-refs') 
+                shift->render_maybe('smart-http/info-refs')
             });
 
             # /git-upload-pack or /git-receive-pack
@@ -516,7 +516,7 @@ sub startup {
         # Project
         {
           my $r = $r->any('/#project');
-          
+
           {
             my $r = $r->under(sub {
               my $self = shift;
@@ -548,10 +548,10 @@ sub startup {
                 return 1;
               }
             });
-            
+
             # Home
             $r->get('/' => sub { shift->render_maybe('/tree') });
-            
+
             # Issue
             $r->get('/issues' => sub { shift->render_maybe('/issues') })->to(tab => 'issues');
 
@@ -561,10 +561,10 @@ sub startup {
 
             # Labels
             $r->any('/labels' => sub { shift->render_maybe('/labels') })->to(tab => 'issues');
-            
+
             # Pull requests
             $r->get('/pulls' => sub { shift->render_maybe('/issues', pulls => 1) })->to(tab => 'pulls');
-            
+
             # Pull request
             $r->get('/pull/<number:num>.patch' => sub { shift->render_maybe('/issue') })->to(tab => 'pulls', patch => 1);
             $r->any('/pull/<number:num>' => sub { shift->render_maybe('/issue') })->to(tab => 'pulls');
@@ -592,37 +592,37 @@ sub startup {
             # Wiki
             {
               my $r = $r->any('/wiki' => sub { shift->render_maybe('/wiki') })->to(tab => 'wiki');
-              
+
               # Wiki top page
               $r->any('/');
-              
+
               # Create page
               $r->any('/_new')->to(new => 1);
-              
+
               # Show pages
               $r->any('/_pages')->to('list-pages' => 1);
-              
+
               # Show wiki page
               $r->any('/:title');
-              
+
               # Edit wiki page
               $r->any('/:title/_edit')->to(edit => 1);
-              
+
               # Commits
               $r->get('/commits/*rev_file' => sub { shift->render_maybe('/commits') });
-              
+
               # Commit
               $r->get('/commit/*diff' => sub { shift->render_maybe('/commit') });
-              
+
               # Tree
               $r->get('/tree/*rev_dir' => sub { shift->render_maybe('/tree') });
-              
+
               # Blob
               $r->get('/blob/*rev_file' => sub { shift->render_maybe('/blob') });
-              
+
               # Raw
               $r->get('/raw/*rev_file' => sub { shift->render_maybe('/raw') });
-              
+
               # Blame
               $r->get('/blame/*rev_file' => sub { shift->render_maybe('/blame') });
 
@@ -635,7 +635,7 @@ sub startup {
 
             # Commits
             $r->get('/commits/*rev_file' => sub { shift->render_maybe('/commits') });
-            
+
             # Branches
             $r->any('/branches' => sub { shift->render_maybe('/branches') });
 
@@ -644,10 +644,10 @@ sub startup {
 
             # Tree
             $r->get('/tree/*rev_dir' => sub { shift->render_maybe('/tree') });
-            
+
             # Blob
             $r->get('/blob/*rev_file' => sub { shift->render_maybe('/blob') });
-            
+
             # Sub module
             $r->get('/submodule/*rev_file' => sub { shift->render_maybe('/submodule') });
 
@@ -669,18 +669,18 @@ sub startup {
               => sub { shift->render_maybe('/compare') }
             );
             $r->any('/compare/<:rev2>' => sub { shift->render_maybe('/compare') });
-            
+
             # Settings
             {
               my $r = $r->any('/settings')->to(tab => 'settings');
-              
+
               # Settings
               $r->any('/' => sub { shift->render_maybe('/settings') });
-              
+
               # Collaboration
               $r->any('/collaboration' => sub { shift->render_maybe('/settings/collaboration') });
 
-              # Branches 
+              # Branches
               $r->any('branches' => sub {
                 shift->render_maybe(template =>'/settings/rulesets',
                                     target => 'branch');
@@ -708,7 +708,7 @@ sub startup {
 
             # Forks
             $r->any('/forks' => sub { shift->render_maybe('/forks') })->to(tab => 'graph');
-            
+
             # Network
             {
               my $r = $r->any('/network')->to(tab => 'graph');
@@ -725,7 +725,7 @@ sub startup {
 
             # Import branch
             $r->any('/import-branch/:remote_user/:remote_project' => sub { shift->render_maybe('/import-branch') });
-            
+
             # Get branches and tags
             $r->get('/api/revs' => sub { shift->render_maybe('/api/revs') });
 
@@ -777,7 +777,7 @@ sub startup {
   # If auto_decompress is not set, Smart HTTP fail.
   $self->hook('after_build_tx' => sub {
     my ($tx, $app) = @_;
-    
+
     $tx->req->content->auto_decompress(1);
   });
 
@@ -797,7 +797,7 @@ sub startup {
       });
     }
   }
-  
+
   # Smart HTTP Buffer size
   $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE} ||= 16384;
 

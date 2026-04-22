@@ -51,11 +51,11 @@ for my $rep (glob "$rep_dir/*") {
   if (-d $rep && $rep =~ /\.git$/) {
     my $project_id = basename $rep;
     $project_id =~ s/\.git$//;
-    
+
     my $project = $dbi->model('project')->select(
       where => {'user.id' => $user_id, 'project.id' => $project_id}
     )->one;
-    
+
     # Create project
     if ($project) {
       warn "Repository $project_id Already exists : $@\n";
@@ -63,7 +63,7 @@ for my $rep (glob "$rep_dir/*") {
     else {
       eval {
         $manager->create_project($user_id, $project_id);
-      };       
+      };
       if ($@) {
         warn "Can't creat repository $project_id: $@\n";
       }
@@ -71,11 +71,11 @@ for my $rep (glob "$rep_dir/*") {
         warn "Create repository $project_id\n";
       }
     }
-    
+
     # Copy description
     my $description = do {
       my $success = open my $fh, '<', "$rep/description";
-      
+
       if ($success) {
         local $/;
         <$fh>
@@ -90,7 +90,7 @@ for my $rep (glob "$rep_dir/*") {
     if ($@) {
       warn "Can't update description $project_id\n";
     }
-    
+
     # Push repository
     chdir $rep
       or warn "Can't change directory $rep: $!\n";
@@ -101,7 +101,7 @@ for my $rep (glob "$rep_dir/*") {
       system(@cmd) == 0
         or warn "Can't push branches: @cmd";
     }
-    
+
     # push tags
     {
       my @cmd = ('git', 'push', $remote_rep_info->git_dir, '--tags');
@@ -118,9 +118,9 @@ import_rep - Import existing repositories into GitPrep.
 =head1 USAGE
 
   Usage: script/import_rep [<options>] <rep_dir>
-    
+
     script/import_rep -u kimoto rep_dir
-    
+
   Options:
     -h, --help            Show help
     -u, --user            Specify a user name

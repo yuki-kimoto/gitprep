@@ -2,7 +2,7 @@
   # Users
   my $manager = app->manager;
   my $users = $manager->users;
-  
+
   # Goto Start page
   unless (defined $manager->admin_user) {
     $self->redirect_to('/_start');
@@ -11,7 +11,7 @@
 %>
 
 % layout 'common';
-  
+
   %= include '/include/header', title => 'Gitprep';
   <!-- Index page -->
   <div class="container">

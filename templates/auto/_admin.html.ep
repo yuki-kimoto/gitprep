@@ -1,5 +1,5 @@
 % layout 'common', title => 'Admin';
-  
+
   %= include '/include/header';
   <div class="container">
     <h3 class="topic1">Admin</h3>

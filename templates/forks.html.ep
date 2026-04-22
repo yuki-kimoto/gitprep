@@ -54,7 +54,7 @@
 
 % layout 'common', title => "Forks \x{b7} $user_id/$project_id";
 
-%= include '/include/header'; 
+%= include '/include/header';
 
 <div class="container" style="padding-bottom:30px">
   <div class="forks-header">
@@ -77,7 +77,7 @@
        <div>No one has forked this repository yet</div>
        <div class="explain">
          Forks are a great way to contribute to a repository. After forking
-         a repository, you can send the original author a pull request. 
+         a repository, you can send the original author a pull request.
        </div
     </div>
   % } elsif ($treeview) {
@@ -139,6 +139,6 @@
     </div>
     %= include '/include/pagination', page => $page + 1, rows => $fork_count, rows_per_page => $page_size;
   % }
-</div> 
+</div>
 
 %= include '/include/footer';

@@ -17,7 +17,7 @@
   $rep_info = $rep_info->wiki if $is_wiki;
 
   my $git = app->git;
-  
+
   my $diff_tree = stash('diff_tree');
   my $blob_diff = stash('blob_diff');
   my $from_mode_str = $diff_tree->{from_mode_str};
@@ -28,11 +28,11 @@
   my $from_file = $blob_diff->{from_file};
   $from_file = $file unless defined $from_file;
   my $status = $diff_tree->{status} || '';
-  
+
   my $binary_rev_shown;
   my $binary_from_rev_shown;
   my $binary_not_shown;
-  
+
   if ($blob_diff->{binary}) {
     if ($status eq 'A') {
       if ($git->blob_is_image($rep_info, $rev, $file)) {
@@ -102,7 +102,7 @@
           my $from_rev_shown;
           my $rev_shown;
         %>
-        
+
 
         % if ($blob_diff->{binary}) {
           % if ($binary_not_shown) {
@@ -114,9 +114,9 @@
               % if ($binary_from_rev_shown) {
                 <a href="<%= url_for("$user_project_path/blob/$from_rev/$file") %>">
                   <img src="<%= url_for("$user_project_path/raw/$from_rev/$file") %>" style="border:1px solid red;padding:1px;margin-right:20px" />
-                </a>          
+                </a>
               % }
-              
+
               % if ($binary_rev_shown) {
                 <a href="<%= url_for("$user_project_path/blob/$rev/$file") %>">
                   <img src="<%= url_for("$user_project_path/raw/$rev/$file") %>" style="border:1px solid green;padding:1px;margin-left:20px" />

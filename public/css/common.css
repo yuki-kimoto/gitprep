@@ -7,19 +7,19 @@
  *
  * Designed and built with all the love in the world @twitter by @mdo and @fat.
  */
- 
+
 /*
   Default values
     border:1px solid #e6e9e6;
     border-radius: 3px;
-  
-  input[type=text] 
+
+  input[type=text]
     border:1px solid #e6e9e6;
     border-radius: 3px;
     padding:6px 5px;
     margin:5px 0;
-    
-    
+
+
     Text Gray
     color:#767676
 */
@@ -228,7 +228,7 @@ a.wiki-btn-history:hover {
   font-size:15px;
 }
 .wiki-home-link a {
-  
+
 }
 
 .wiki .topic1 {
@@ -293,7 +293,7 @@ a.wiki-btn-history:hover {
 }
 
 .wiki-sidebar-box {
-  
+
 }
 
 .wiki-list-pages-box {
@@ -505,10 +505,10 @@ a.wiki-btn-history:hover {
   width: 100%;
 }
 .labels-input-rows > * {
-  display: table-row; 
+  display: table-row;
 }
 .labels-input-rows > * > * {
-  display: table-cell; 
+  display: table-cell;
   vertical-align: middle;
   width: 0;
 }
@@ -1051,7 +1051,7 @@ a.branches-close:hover {
 }
 .pull-comment-body {
   padding:13px 12px;
-  
+
 }
 
 .contributors-list {
@@ -1148,7 +1148,7 @@ input[type=text], input[type=password] {
 .project-tabs {
   position:relative;
   z-index:1;
-  top:1px;  
+  top:1px;
 }
 
 .project-tabs ul {
@@ -1193,7 +1193,7 @@ input[type=text], input[type=password] {
   text-align:center;
 }
 .admin-users td {
-  
+
 }
 
 .admin-users form {
@@ -1380,7 +1380,7 @@ input[type=text], input[type=password] {
 /* Markdown */
 .markdown-body{
   padding:20px 30px;
-  
+
   font-family:"Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-size:16px;
   line-height:1.6;
@@ -3975,7 +3975,7 @@ fork-header {
 }
 
 .network-member-branch {
-  
+
 }
 
 .network-member-branch li {
@@ -4079,7 +4079,7 @@ fork-header {
 }
 
 .submodule {
-  
+
 }
 .submodule > :first-child {
   border:1px solid #e6e9e6;

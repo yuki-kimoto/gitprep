@@ -7,31 +7,31 @@
   my $op = param('op') || '';
   my $user_id = param('user') || '';
   my $project_id = param('project');
-  
+
   # Authentication
   unless ($api->logined($user_id)) {
     $self->redirect_to('/');
     return;
   }
-  
+
   my $project_row_id = app->dbi->model('project')->select(
     'project.row_id',
     where => {'user.id' => $user_id, 'project.id' => $project_id}
   )->value;
-  
+
   # Rename project
   my $git = app->git;
   my $errors;
   if (lc $self->req->method eq 'post') {
     if ($op eq 'add') {
       my $collaborator_id = param('collaborator');
-      
+
       # Validator
       my $vc = app->vc;
-      
+
       # Validation result
       my $validation = $vc->validation;
-      
+
       # collaborator check
       if (!length $collaborator_id) {
         $validation->add_failed(collaborator => "collaborator is empty");
@@ -55,11 +55,11 @@
           }
         }
       }
-      
+
       if ($validation->is_valid) {
-        
+
         my $collaborator_row_id = $api->get_user_row_id($collaborator_id);
-        
+
         # Insert
         eval {
           app->dbi->model('collaboration')->insert(
@@ -85,9 +85,9 @@
     }
     elsif ($op eq 'remove') {
       my $collaborator_id = param('collaborator');
-      
+
       my $collaborator_row_id = $api->get_user_row_id($collaborator_id);
-      
+
       # Delete
       eval {
         app->dbi->model('collaboration')->delete(
@@ -108,7 +108,7 @@
       }
     }
   }
-  
+
   my $collaborators = app->dbi->model('collaboration')->select(
     {user => ['id']},
     where => {project => $project_row_id},
@@ -117,13 +117,13 @@
 %>
 
 % layout 'common', title => 'Collaboration';
-  
+
   %= include '/include/header';
-  
+
   <div class="container">
     %= include '/include/errors', errors => $errors;
     %= include '/include/message', message => flash('message');
-    
+
     <div class="project-settings">
       %= include '/settings/menu', current => 'collaboration';
       <div class="right">

@@ -1,4 +1,4 @@
-<%  
+<%
   my $api = gitprep_api;
 
   my $user_id = param('user');

@@ -35,7 +35,7 @@ note 'import_rep';
 
   my $t = Test::Mojo->new($app);
   $t->ua->max_redirects(3);
-  
+
   # Create admin user
   $t->post_ok('/_start?op=create', form => {password => 'a', password2 => 'a'});
   $t->content_like(qr/Login page/);
@@ -47,7 +47,7 @@ note 'import_rep';
   # Create user
   $t->post_ok('/_admin/user/create?op=create', form => {id => 'kimoto', email => 'kimoto@foo.com', password => 'a', password2 => 'a'});
   $t->content_like(qr/Success.*created/);
-  
+
   # Import repositories
   my $rep_dir = "$FindBin::Bin/basic/rep/kimoto";
   chdir "$FindBin::Bin/../script"
@@ -55,13 +55,13 @@ note 'import_rep';
   my @cmd = ('./import_rep', '-u', 'kimoto', $rep_dir);
   system(@cmd) == 0
     or die "Command fail: @cmd";
-  
+
   # Branch
   ok(-f "$rep_home/kimoto/gitprep_t.git/refs/heads/b1");
 
   # Tag
   ok(-f "$rep_home/kimoto/gitprep_t.git/refs/tags/t1");
-  
+
   # Description
   ok(-f "$rep_home/kimoto/gitprep_t.git/description");
 }

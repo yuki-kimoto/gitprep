@@ -100,7 +100,7 @@ sub raster2paths {
           # start a new one.
           push @$moves, [$direction, $stroke] if $stroke;
           $stroke = 0;
-          $direction = (~$edges + 1) & $edges;	# Least significant bit set.
+          $direction = (~$edges + 1) & $edges;  # Least significant bit set.
         }
         # Compute next coordinates according to direction.
         $y += 1 if $direction == 0x1;
@@ -220,5 +220,5 @@ sub image_formats {
   require Imager;
   return Imager->read_types;
 }
-  
+
 1;

@@ -3,7 +3,7 @@
 
   # API
   my $api = gitprep_api;
-  
+
   # Parameters
   my $user_id = param('user');
   my $project_id = param('project');
@@ -21,10 +21,10 @@
 
   # Git
   my $git = app->git;
-  
+
   # Commit
   my $commit = $git->get_commit($rep_info, $rev);
-  
+
   unless ($commit) {
     $self->reply->not_found;
     return;
@@ -107,7 +107,7 @@
         </div>
         <div class="last-child">
           % my $parents = $commit->{parents};
-          
+
           <div class="commits-summary-parent">
             <span><%= $api->plural('parent', scalar @$parents, '0') %></span>
             % my $sep = '';

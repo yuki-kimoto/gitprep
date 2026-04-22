@@ -6,7 +6,7 @@
 
   # Git
   my $git = $self->app->git;
-  
+
   # Parameters
   my $user_id = param('user');
   my $project_id = param('project');
@@ -37,14 +37,14 @@
 
   # Authors
   my $authors = $git->authors($rep_info, $rev, $file);
-  
+
   # File size
   my $file_size = $git->blob_size($rep_info, $rev, $file);
-  
+
   # File mode
   my $mode = $git->blob_mode($rep_info, $rev, $file);
   my $file_type = $git->file_type_long($mode);
-  
+
   # MIME type
   my ($media_type, $media_subtype) = split '/',
     lc($git->blob_mime_type($rep_info, $rev, $file));
@@ -132,11 +132,11 @@
       </div>
     % }
   </div>
-  
+
   %= javascript '/js/google-code-prettify/prettify.js';
   %= javascript begin
     // Google prety print
     prettyPrint();
   % end
-  
+
   %= include '/include/footer';

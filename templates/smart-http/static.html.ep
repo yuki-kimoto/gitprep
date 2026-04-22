@@ -32,7 +32,7 @@
   elsif ($path =~ m#^objects/pack/pack-[0-9a-f]{40}\.idx$#) {
     $content_type = 'application/x-git-packed-objects-toc';
   }
-  
+
   my $rep_info = Gitprep::Repository->new($user, $project);
   my $file = $rep_info->git_dir($path);
   if (-f $file) {

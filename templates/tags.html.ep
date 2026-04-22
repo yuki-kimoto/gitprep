@@ -8,7 +8,7 @@
   my $user = param('user');
   my $project = param('project');
   my $page = param('page') || 1;
-  
+
   # Git
   my $git = $self->app->git;
 
@@ -27,13 +27,13 @@
 %>
 
 % layout 'common', title => "Tags \x{b7} $user/$project";
-  
+
   %= include '/include/header';
 
   <div class="container">
-    
+
     <h3 class="topic1">Tags</h3>
-    
+
     % if (@$tags) {
       <ul class="tags">
         % for (my $i = 0; $i < @$tags; $i++) {
@@ -85,5 +85,5 @@
       </ul>
     % }
   </div>
-  
+
   %= include '/include/footer';

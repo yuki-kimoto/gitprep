@@ -2,7 +2,7 @@
   use Gitprep::Repository;
 
   my $api = gitprep_api;
-  
+
   my $user = param('user');
   my $project = param('project');
   my $display = stash('display') || '';
@@ -15,7 +15,7 @@
   my $type
     = $display eq 'tree' || $display eq 'tree_top' || $display eq 'blob'
     ? 'tree' : 'commits';
-  
+
   my $path = stash('Path');
 
   my $rep_info = Gitprep::Repository->new($user, $project);
@@ -31,7 +31,7 @@
     ($active_branch, $active_tag) = ($active_tag, $active_branch)
       if grep $rev eq $_->{name}, @$tags;
   }
-  
+
   my $is_project_top_page = !(defined $path && length $path);
 
   my $branches_count = app->git->branches_count($rep_info);
@@ -40,17 +40,17 @@
 
 %= javascript begin
   $(document).ready(function () {
-  
+
     // Switch branches and tags
     var revs_init = false;
     $('#rev-btn').on('click', function () {
-      
+
       if (!revs_init) {
         $.get('<%= url_for("/$user/$project/api/revs") %>', function (result) {
           var branch_names = result.branch_names;
           var tag_names = result.tag_names;
           var style = 'style="border-top-left-radius:0px;border-top-right-radius:0px;"';
-          
+
           if (branch_names.length === 0) {
             $('#branch-names-list').append(
               '<li><a ' + style + ' href="#">No branches</a></li>'
@@ -64,7 +64,7 @@
               );
             }
           }
-          
+
           if (tag_names.length === 0) {
             $('#tag-names-list').append(
               '<li><a ' + style + ' href="#">No tags</a></li>'
@@ -99,7 +99,7 @@
       e.preventDefault();
       $(this).tab('show');
     })
-    
+
     $('#rev-close').on('click', function () {
       $('#rev-popup').css('display', 'none');
     });

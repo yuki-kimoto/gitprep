@@ -3,17 +3,17 @@
 
   # API
   my $api = gitprep_api;
-  
+
   # Parameters
   my $op = param('op') || '';
   my $user_id = param('user') || '';
-  
+
   # Authentication
   unless ($api->logined($user_id)) {
     $self->redirect_to('/');
     return;
   }
-  
+
   # Process form
   my $errors;
   if (lc $self->req->method eq 'post') {
@@ -22,13 +22,13 @@
       # Paramerters
       my $title = param('title');
       my $original_key = param('key');
-      
+
       # Validator
       my $vc = app->vc;
-      
+
       # Validation result
       my $validation = $vc->validation;
-      
+
       # "title"
       if (!(defined $title && length $title)) {
         $validation->add_failed(title => 'title is empty');
@@ -40,12 +40,12 @@
         my $ssh_public_key = app->dbi->model('ssh_public_key')->select(
           where => {title => $title}
         )->one;
-        
+
         if ($ssh_public_key) {
           $validation->add_failed(title => 'title already exists');
         }
       }
-      
+
       # "key"
       my $key;
       if (!(defined $original_key && length $original_key)) {
@@ -61,7 +61,7 @@
           $type = $1;
           $original_key_edit = $2;
         }
-        
+
         if (!$type) {
           my $message = "Key is invalid. It must begin with 'ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256',"
             . "'ecdsa-sha2-nistp384', or 'ecdsa-sha2-nistp521'. Check that you're copying the public half of the key";
@@ -72,11 +72,11 @@
         }
         else {
           $key = "$type $original_key_edit";
-          
+
           my $row = app->dbi->model('ssh_public_key')->select(
             where => {key => $key}
           )->one;
-          
+
           if ($row) {
             $validation->add_failed(key => 'Key already exists');
           }
@@ -97,14 +97,14 @@
                 $key_is_contained = 1;
               }
             }
-            
+
             if ($key_is_contained) {
               $validation->add_failed(key => "authorized_keys file already contain this key");
             }
           }
         }
       }
-      
+
       # Register ssh key
       if ($validation->is_valid) {
         my $session_user_row_id = $api->session_user_row_id;
@@ -119,7 +119,7 @@
             $self->app->manager->update_authorized_keys_file;
           });
         };
-        
+
         if (my $e = $@) {
           app->log->error(url_for . ":$e");
           $errors = ['Internal error'];
@@ -137,14 +137,14 @@
     # Delete ssh public key
     elsif ($op eq 'delete') {
       my $row_id = param('row-id');
-      
+
       eval {
         app->dbi->connector->txn(sub {
           app->dbi->model('ssh_public_key')->delete(where => {row_id => $row_id});
           $self->app->manager->update_authorized_keys_file;
         });
       };
-      
+
       if (my $e = $@) {
         app->log->error(url_with . ": $e");
         $errors = ['Internal Error'];
@@ -155,7 +155,7 @@
       }
     }
   }
-  
+
   my $keys = app->dbi->model('ssh_public_key')->select(
     {
       __MY__ => ["title", "key", "row_id"]
@@ -169,7 +169,7 @@
 % layout 'common', title => 'SSH keys';
 
   %= include '/include/header';
-  
+
   <div class="container">
     %= include '/user-settings/header', user => $user_id;
     <div class="user-settings">
@@ -177,7 +177,7 @@
       <div class="right">
         <%= include '/include/errors', errors => $errors %>
         <%= include '/include/message', message => flash('message') %>
-        
+
         <div class="user-settings-container ssh-keys">
           <div>
             <div>
@@ -195,7 +195,7 @@
                   <div>
                     % my ($type, $fingerprint) = Gitprep::Util::fingerprint($key->{key});
                     <b><%= $key->{title} %></b> <b> <%= $type %> </b>
-		    SHA256:<%= $fingerprint %>
+                    SHA256:<%= $fingerprint %>
                     <a class="btn btn-danger btn-delete" href="javascript:void(0)" onclick="$(this).closest('form').submit()">Delete</a>
                     <%= hidden_field 'row-id' => $key->{row_id} %>
                   </div>
@@ -208,7 +208,7 @@
             % }
           </div>
         </div>
-        
+
         <div class="user-settings-container ssh-key-add">
           <div>
             <div>
@@ -236,5 +236,5 @@
       </div>
     </div>
   </div>
-  
+
   %= include '/include/footer';

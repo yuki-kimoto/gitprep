@@ -5,7 +5,7 @@
   my $api = gitprep_api;
   my $manager = app->manager;
   my $git = app->git;
-  
+
   # Parameters
   my $op = param('op') || '';
   my $user_id = param('user') || '';
@@ -25,16 +25,16 @@
   my $errors;
   if (lc $self->req->method eq 'post') {
     if ($op eq 'rename-project') {
-      
+
       # Parameters
       my $to_project = param('to-project');
-      
+
       # Validator
       my $vc = app->vc;
-      
+
       # Validation result
       my $validation = $vc->validation;
-      
+
       # "to-project" check
       if (!(defined $to_project && length $to_project)) {
         $validation->add_failed('to-project' => 'Repository name is empty.');
@@ -48,7 +48,7 @@
       elsif (app->manager->exists_project($user_id, $to_project)) {
         $validation->add_failed('to-project' => "$to_project is already exists");
       }
-      
+
       if ($validation->is_valid) {
         # Rename
         eval { app->manager->rename_project($user_id, $project_id, $to_project) };
@@ -64,24 +64,24 @@
       }
       else { $errors = $validation->messages }
     }
-    
+
     # Change description
     elsif ($op eq 'change-description') {
-      
+
       # Parameters
       my $description = param('description');
       $description = '' unless defined $description;
- 
+
       # Validator
       my $vc = app->vc;
-      
+
       # Validation result
       my $validation = $vc->validation;
-      
+
       if (length $description > 300) {
         $validation->add_failed(description => 'description is too long');
       }
-      
+
       if ($validation->is_valid) {
         eval { $git->description($rep_info, $description) };
         if (my $e = $@) {
@@ -98,36 +98,36 @@
 
     # Change website URL
     elsif ($op eq 'change-website-url') {
-      
+
       # Parameters
       my $website_url = param('website-url');
       $website_url = '' unless defined $website_url;
- 
+
       # Validator
       my $vc = app->vc;
-      
+
       # Validation result
       my $validation = $vc->validation;
-      
+
       if (length $website_url > 300) {
         $validation->add_failed('website-url' => 'Website URL is too long');
       }
-      
+
       if ($validation->is_valid) {
         app->dbi->model('project')->update(
           {website_url => $website_url},
           where => {user => $user_row_id, id => $project_id}
         );
-        
+
         flash(message => 'Website URL has been changed.');
         $self->redirect_to('current');
         return;
       }
     }
-    
+
     # Change default branch
     elsif ($op eq 'save-settings') {
-      
+
       # Parameters
       my $default_branch = param('default-branch');
       my $private = param('private');
@@ -136,27 +136,27 @@
 
       # Validator
       my $vc = app->vc;
-      
+
       # Validation result
       my $validation = $vc->validation;
-      
+
       # Check default branch
       if (defined $default_branch && length $default_branch > 300) {
         $validation->add_failed('default-branch' => 'default branch is too long');
       }
-      
+
       # Check private
       $private = $private ? 1 : 0;
-      
+
       # Check ignore space change
       $ignore_space_change = $ignore_space_change ? 1 : 0;
-      
+
       # Check guess encoding
       $guess_encoding //= '';
       if (length $guess_encoding > 300) {
         $validation->add_failed(guess_encoding => 'guess_encoding is too long');
       }
-      
+
       my $params = {};
       if (defined $default_branch && $default_branch ne $current_branch) {
         $git->current_branch($rep_info, $default_branch);
@@ -171,7 +171,7 @@
       if (defined $guess_encoding) {
         $params->{guess_encoding} = $guess_encoding;
       }
-      
+
       my $dbi = app->dbi;
       eval {
         $dbi->model('project')->update(
@@ -179,7 +179,7 @@
           where => {user => $user_row_id, id => $project_id}
         );
       };
-      
+
       if (my $e = $@) {
         app->log->error("/$user_id/$project_id/settings?op=save-settings: $e");
         $errors = ['Internal Error'];
@@ -190,13 +190,13 @@
         return;
       }
     }
-    
+
     # Delete project
     elsif ($op eq 'delete-project') {
-      
+
       my $user_id = param('user');
       my $project_id = param('project');
-      
+
       eval { app->manager->delete_project($user_id, $project_id) };
       if (my $e = $@) {
         app->log->error("/$user_id/$project_id/settings: $e");
@@ -212,11 +212,11 @@
 %>
 
 % layout 'common', title => 'Options';
-  
+
   %= javascript begin
-    
+
     $(document).ready(function () {
-    
+
       // Rename project
       $('#rename').on('click', function () {
         $('#form-rename-project').submit();
@@ -226,7 +226,7 @@
       $('input[name="deleted-project"]').on('keyup', function () {
         var deleted_project = $(this).val();
         var project = "<%= $project_id %>";
-        
+
         if (deleted_project == project) {
           $('#delete').attr('class', 'btn btn-danger')
             .removeAttr('disabled');
@@ -236,20 +236,20 @@
             .attr('disabled', 'disabled');
         }
       });
-            
+
       // Delete project
       $('#delete').on('click', function () {
         $('#form-delete-project').submit();
       });
     });
   % end
-  
+
   %= include '/include/header';
-  
+
   <div class="container">
     %= include '/include/errors', errors => $errors;
     %= include '/include/message', message => flash('message');
-    
+
     <div class="project-settings">
       %= include '/settings/menu', current => '';
 
@@ -303,14 +303,14 @@
                   my $website_url = app->dbi->model('project')->select('website_url', where => {user => $user_row_id, id => $project_id})->value;
                   $website_url = '' unless defined $website_url;
                 %>
-                
+
                 %= text_field 'website-url' => $website_url, style => "width:90%";
                 <input type="submit" class="btn" value="Save" />
               </div>
             </form>
           </li>
         </ul>
-        
+
         <form id="form-default-branch" action="<%= url_for %>" method="post">
           %= hidden_field op => 'save-settings';
           <ul class="project-settings-main">
@@ -345,7 +345,7 @@
                 my @ignore_space_change_checked = $ignore_space_change ? (checked => undef) : ();
               %>
               <span>Ignore space change in diff</span>
-              
+
               %= hidden_field 'ignore_space_change' => 0;
               %= check_box 'ignore_space_change' => 1, @ignore_space_change_checked;
             </li>
@@ -389,7 +389,7 @@
       </div>
     </div>
   </div>
-  
+
   <div id="modal-message" class="modal hide">
     <div class="modal-header">
       <div id="modal-message-text" style="font-weight:bold"></div>
