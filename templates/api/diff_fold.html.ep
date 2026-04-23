@@ -44,7 +44,7 @@
 
     my @new_lines;
 
-    if ($count) {
+    if ($count && $from_line) {
       $blob = $git->blob($rep_info, $rev, $file) unless defined $blob;
       my $maxlines = @$blob - --$from_line;
       return undef if !$toeof && $count > $maxlines;
