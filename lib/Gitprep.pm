@@ -454,14 +454,16 @@ sub startup {
               my $api = $self->gitprep_api;
               my $user_id = $self->param('user');
               my $project_id = $self->param('project');
+              my $rep_info = Gitprep::Repository->maybe_wiki($user_id,
+                $project_id);
               $self->log->info("user: $user_id project $project_id");
 
-              if (!$self->app->manager->exists_project($user_id, $project_id)) {
+              unless ($self->app->manager->exists_project($user_id, $rep_info->project) && -d $rep_info->root) {
                 $self->reply->not_found;
                 return 0;
               }
 
-              my $private = $self->app->manager->is_private_project($user_id, $project_id);
+              my $private = $self->app->manager->is_private_project($user_id, $rep_info->project);
 
 
               if ($conf->{basic}{hide_from_public})
@@ -473,7 +475,7 @@ sub startup {
               my $service = $self->param('service') || '';
               if ($service eq 'git-receive-pack' || $private ||
                 defined($self->req->url->to_abs->userinfo)) {
-                  return _http_authenticate($self, $user_id, $project_id);
+                  return _http_authenticate($self, $user_id, $rep_info->project);
               }
               else {
                 return 1;
@@ -501,8 +503,9 @@ sub startup {
                     => [service => qr/(?:upload-pack|receive-pack)/]
                     => sub {
                          my $self = shift;
+	                 my $rep_info = Gitprep::Repository->maybe_wiki($self->param('user'), $self->param('project'));
                          if ($self->param('service') ne 'receive-pack' ||
-                             _http_authenticate($self, $self->param('user'), $self->param('project'))) {
+                             _http_authenticate($self, $rep_info->user, $rep_info->project)) {
                            $self->render_maybe('smart-http/service');
                          }
                        }

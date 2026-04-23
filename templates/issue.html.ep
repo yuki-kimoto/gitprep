@@ -425,7 +425,7 @@
           # Push
           {
             local %ENV = %ENV;
-            app->manager->prepare_hooks($api->session_user_id, $base_rep_info);
+            app->manager->prepare_hooks($base_rep_info, $api->session_user_id);
             app->manager->push($work_rep_info, $base_branch);
           }
 

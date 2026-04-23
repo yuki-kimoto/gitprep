@@ -83,6 +83,17 @@ sub wiki {
 # Return a work repository whose origin is the object.
 sub work { return Gitprep::Repository::Work->new(@_); }
 
+# Create a new repository information object, taking the project name into
+#  account to determine if this is a wiki or not.
+sub maybe_wiki {
+  my $rep_info = shift->new(@_);
+  unless ($rep_info->is_wiki) {
+    $rep_info->project =~ /^(.*?)(\.wiki)?$/;
+    $rep_info = Gitprep::Repository::Wiki->new($rep_info->user, $1) if $2;
+  }
+  return $rep_info;
+}
+
 # Protected method to cleanly concatenate paths.
 sub _path {
   my ($self, $path, $file) = @_;

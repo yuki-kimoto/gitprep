@@ -11,9 +11,11 @@ use Gitprep;
 use Gitprep::Repository;
 
 # Retrieve our parameters
-my ($user_id, $project_id) = @ENV{'GITPREP_USER', 'GITPREP_PROJECT'};
+my ($user_id, $project_id, $is_wiki) =
+  @ENV{'GITPREP_USER', 'GITPREP_PROJECT', 'GITPREP_IS_WIKI'};
 
 die "Gitprep parameters unset" unless $user_id && $project_id;
+exit if $is_wiki;
 
 my $app = Mojo::Server->new->load_app("$FindBin::Bin/gitprep");
 my $git = $app->git;
