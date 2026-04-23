@@ -261,13 +261,6 @@ sub startup {
       ]
     },
     {
-      table => 'wiki',
-      primary_key => 'row_id',
-      join => [
-        'left join project on wiki.project = project.row_id'
-      ]
-    },
-    {
       table => 'subscription',
       primary_key => 'row_id',
       join => [

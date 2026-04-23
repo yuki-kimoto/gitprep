@@ -567,9 +567,6 @@ sub rename_project {
   # Rename project
   my $git = $self->app->git;
   my $dbi = $self->app->dbi;
-  my $has_wiki = $dbi->model('wiki')->select('count(*)', where => {
-    'project.id' => $project
-  })->value;
   my $error;
   eval {
     $dbi->connector->txn(sub {
@@ -582,7 +579,7 @@ sub rename_project {
       eval { $self->_rename_rep($user, $project, $to_project,
         sub { return shift->work; }); };
       croak $error = $@ if $@;
-      if ($has_wiki) {
+      if (-d Gitprep::Repository::Wiki->new($user, $project)->root) {
         eval { $self->_rename_rep($user, $project, $to_project,
           sub { return shift->wiki; }); };
         croak $error = $@ if $@;
@@ -1206,11 +1203,8 @@ sub _delete_project {
   }
 
   # Delete project's wiki.
-  if ($dbi->model('wiki')->delete(
-    where => {project => $row_id}
-  ) > 0) {
-    $self->_delete_wiki_rep($user_id, $project_id);
-  }
+  $self->_delete_wiki_rep($user_id, $project_id)
+    if -d Gitprep::Repository::Wiki->new($user_id, $project_id)->root;
 
   $dbi->model('collaboration')->delete(where => {project => $row_id});
   $dbi->model('watch')->delete(where => {project => $row_id});

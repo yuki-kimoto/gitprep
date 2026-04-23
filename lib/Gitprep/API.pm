@@ -166,35 +166,14 @@ sub get_wiki_page_content {
 
 sub create_wiki_page {
   my ($self, $user_id, $project_id, $title, $content, $commit_message) = @_;
+  my $wiki_rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
 
-  # Project row id
-  my $project_row_id = $self->get_project_row_id($user_id, $project_id);
-
-  # Get wiki
-  my $wiki = $self->app->dbi->model('wiki')->select(where => {project => $project_row_id})->one;
-
-  # First wiki page
-  unless ($wiki) {
-    # Create wiki
-    my $new_wiki = {
-      project => $project_row_id
-    };
-
-    eval {
-      $self->app->dbi->connector->txn(sub {
-        $self->app->dbi->model('wiki')->insert($new_wiki);
-        $self->app->manager->create_wiki_rep($user_id, $project_id);
-        $self->app->manager->create_wiki_work_rep($user_id, $project_id);
-      });
-    };
-
-    if (my $error = $@) {
-      die $error
-    }
-  }
+  # Create wiki if not yet done.
+  $self->app->manager->create_wiki_rep($user_id, $project_id)
+    unless (-d $wiki_rep_info->root);
+  $self->sync_wiki_work($wiki_rep_info);
 
   # Update page
-  my $wiki_rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
   my $wiki_work_rep_info = $wiki_rep_info->work;
 
   # File name
@@ -381,12 +360,6 @@ sub rename_and_update_wiki_page {
 
 sub delete_wiki_page {
   my ($self, $user_id, $project_id, $title) = @_;
-
-  # Project row id
-  my $project_row_id = $self->get_project_row_id($user_id, $project_id);
-
-  # Get wiki
-  my $wiki = $self->app->dbi->model('wiki')->select(where => {project => $project_row_id})->one;
 
   # Wiki repository
   my $wiki_rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
