@@ -161,13 +161,6 @@ my @tables = (
     unique => ['issue', 'label']
   },
   {
-    name => 'wiki',
-    fields => [
-      {name => 'project', type => 'integer'}
-    ],
-    unique => ['project']
-  },
-  {
     name => 'subscription',
     fields => [
       {name => 'issue', type => 'integer'},
