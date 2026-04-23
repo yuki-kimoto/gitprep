@@ -47,6 +47,24 @@ sub markdown_wiki {
   return $content_md;
 }
 
+sub sync_wiki_work {
+  my ($self, $wiki_rep_info) = @_;
+  my $wiki_work_rep_info = $wiki_rep_info->work;
+
+  $self->app->manager->create_wiki_work_rep($wiki_rep_info->user,
+    $wiki_rep_info->project) unless -d $wiki_work_rep_info->root;
+
+  if (-f $wiki_rep_info->git_dir('refs/heads/master')) {
+    my @git_pull_cmd = $self->app->git->cmd(
+      $wiki_work_rep_info,
+      'pull'
+    );
+
+    Gitprep::Util::run_command(@git_pull_cmd)
+      or croak "Can't execute git pull: @git_pull_cmd";
+  }
+}
+
 sub exists_wiki_page {
   my ($self, $user_id, $project_id, $title) = @_;
 
