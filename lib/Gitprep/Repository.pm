@@ -48,7 +48,7 @@ sub home {
 
 # Return the repository's top level directory.
 sub root {
-  my ($self, $file) = shift;
+  my ($self, $file) = @_;
   my $home = $self->home;
   my $wiki = $self->_project_suffix;
   return $self->_path("$home/$self->{user}/$self->{project}$wiki.git", $file);
