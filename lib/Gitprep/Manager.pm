@@ -138,7 +138,6 @@ sub merge {
     "--message=$message",
     $object_id
   );
-  #
 
   my $success = Gitprep::Util::run_command(@git_merge_cmd);
 
@@ -905,6 +904,9 @@ sub _create_rep {
       rmtree $temp_dir;
       croak $e if $e;
     }
+
+    # Install hooks.
+    $self->prepare_hooks($rep_info);
   };
   if (my $e = $@) {
     rmtree $rep_git_dir;
@@ -1379,38 +1381,37 @@ sub rename_branch {
   });
 }
 
+# Copy hook stubs to the targeted repository if needed and set
+# environment variables as expected by these hooks.
 sub prepare_hooks {
-  my ($self, $auth_user_id, $rep_info) = @_;
+  my ($self, $rep_info, $auth_user_id) = @_;
 
-  # Copy hook stubs to the targeted repository if needed and set
-  # environment variables as expected by these hooks.
-
-  my $user_id = $rep_info->user;
-  my $project_id = $rep_info->root;
-  $project_id =~ s#^.*/([^/]*)\.git$#$1# or croak "Invalid repository name $project_id";
-
-  # Copy fresh hook stubs.
-  if ($project_id !~ /\.wiki$/) {
+  # Wikis have no hooks (yet).
+  unless ($rep_info->is_wiki) {
+    # Copy fresh hook stubs.
     my $hookdir = $self->app->home . '/script/hooks';
-    opendir my $dh, $hookdir or die "Can't open hooks directory\n";
+    opendir my $dh, $hookdir or croak "Can't open hooks directory\n";
     while (readdir $dh) {
       my $src = "$hookdir/$_";
       next unless (-f $src) && -x $src;
       my $dst = $rep_info->git_dir("hooks/$_");
       if (!(-x $dst) || (stat($src))[9] > (stat($dst))[9]) {
         copy $src, $dst;
-        chmod((stat($dst))[2] | 0555, $dst) or die "Can't install $_ hook\n";
+        chmod((stat($dst))[2] | 0555, $dst) or croak "Can't install $_ hook\n";
       }
     }
     close $dh;
   }
 
   # Setup environment.
-  $ENV{GITPREP_PERL} = $^X;
-  $ENV{GITPREP_HOME} = $self->app->home;
-  $ENV{GITPREP_SESSION_USER} = $auth_user_id;
-  $ENV{GITPREP_USER} = $user_id;
-  $ENV{GITPREP_PROJECT} = $project_id;
+  if ($auth_user_id) {
+    $ENV{GITPREP_PERL} = $^X;
+    $ENV{GITPREP_HOME} = $self->app->home;
+    $ENV{GITPREP_SESSION_USER} = $auth_user_id;
+    $ENV{GITPREP_USER} = $rep_info->user;
+    $ENV{GITPREP_PROJECT} = $rep_info->project;
+    $ENV{GITPREP_IS_WIKI} = $rep_info->is_wiki;
+  }
 }
 
 sub rules {

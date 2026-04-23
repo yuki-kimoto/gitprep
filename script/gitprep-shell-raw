@@ -55,6 +55,7 @@ die "I don't like newlines in the command: $ssh_original_command\n"
 # Project
 my ($verb, $user_id, $project_id) = parse_ssh_original_command($ssh_original_command);
 sanity($project_id);
+my $rep_info = Gitprep::Repository->maybe_wiki($user_id, $project_id);
 
 # Can access
 my $can_access;
@@ -62,14 +63,13 @@ if ($session_user_id eq $user_id) {
   $can_access = 1;
 }
 else {
-  $can_access = $app->gitprep_api->is_collaborator($session_user_id, $user_id, $project_id);
+  $can_access = $app->gitprep_api->is_collaborator($session_user_id, $user_id, $rep_info->project);
 }
 die qq|User "$session_user_id" can't access repository "$user_id/$project_id.git"\n|
   unless $can_access;
 
 # Prepare hooks execution.
-my $rep_info = Gitprep::Repository->new($user_id, $project_id);
-$manager->prepare_hooks($session_user_id, $rep_info);
+$manager->prepare_hooks($rep_info, $session_user_id);
 
 # Command
 my $repository = "'" . $rep_info->git_dir . "'";
@@ -79,6 +79,7 @@ unless ($debug) {
   system(@git_shell_cmd) == 0
     or die "Can't execute command: @git_shell_cmd\n" ;
 }
+
 
 sub parse_ssh_original_command {
   my $ssh_original_command = shift;
@@ -112,5 +113,5 @@ gitprep-shell - AuthorizedKeysCommand for sshd
 
   ./gitprep-shell-raw kimoto
 
-This command return user public_key
-
+This command prepares a git repository for git operations and schedules the
+git shell. It is intended to be executed from the ssh daemon.

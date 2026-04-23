@@ -33,7 +33,8 @@
     $content_type = 'application/x-git-packed-objects-toc';
   }
 
-  my $rep_info = Gitprep::Repository->new($user, $project);
+  my $rep_info = Gitprep::Repository->maybe_wiki($user, $project);
+
   my $file = $rep_info->git_dir($path);
   if (-f $file) {
     my $asset = Mojo::Asset::File->new(path => $file);
