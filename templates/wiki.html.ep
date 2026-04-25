@@ -21,10 +21,11 @@
   my $wiki_rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
   my $wiki = -d $wiki_rep_info->root;
   $api->sync_wiki_work($wiki_rep_info) if $wiki;
+  my $pages = [];
+  $pages = $api->get_wiki_pages($user_id, $project_id) if $wiki;
 
   my $content;
   my $content_md;
-  my $pages;
 
   # Session
   my $logined = $api->logined;
@@ -118,7 +119,7 @@
   my $content_footer_md;
 
   # Pages count
-  my $pages_count = 0;
+  my $pages_count = @$pages;
 
   # Commits number
   my $commits_number = 0;
@@ -131,7 +132,6 @@
   }
   else {
     if ($wiki) {
-      $pages_count = $api->get_wiki_pages_count($user_id, $project_id);
       $commits_number = app->git->commits_number($wiki_rep_info, 'master');
 
       if ($edit) {
@@ -145,8 +145,6 @@
       }
       elsif ($list_pages) {
         $display = 'list-pages';
-        # Pages
-        $pages = $api->get_wiki_pages($user_id, $project_id);
       }
       else {
         if (($title // '') eq 'Home') {
