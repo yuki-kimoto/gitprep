@@ -598,12 +598,6 @@ sub startup {
               # Show pages
               $r->any('/_pages')->to('list-pages' => 1);
 
-              # Show wiki page
-              $r->any('/:title');
-
-              # Edit wiki page
-              $r->any('/:title/_edit')->to(edit => 1);
-
               # Commits
               $r->get('/commits/*rev_file' => sub { shift->render_maybe('/commits') });
 
@@ -624,6 +618,12 @@ sub startup {
 
               # Diff folding
               $r->post('/api/fold/*rev_file' => sub { shift->render_maybe('/api/diff_fold'); });
+
+              # Edit wiki page
+              $r->any('/*title/_edit')->to(edit => 1);
+
+              # Show wiki page
+              $r->any('/*title');
             }
 
             # Commit
