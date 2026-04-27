@@ -68,7 +68,7 @@ sub sync_wiki_work {
 sub wiki_title_to_name {
   my ($self, $title) = @_;
 
-  $title =~ s/^\s*(.*?)\s*$/$1/;           # Trim.
+  $title =~ s/^(.*?)\s*$/$1/;              # Trim right.
   $title =~ s/^\./\x{2024}/;               # No hidden page: use one dot leader.
   $title =~ s#/#\x{2215}#g;                # Use division slashes.
   return "$title.md";
@@ -84,19 +84,23 @@ sub wiki_name_to_title {
   return $name;
 }
 
-sub exists_wiki_page {
-  my ($self, $user_id, $project_id, $title) = @_;
+sub wiki_file_exists {
+  my ($self, $user_id, $project_id, $file_name) = @_;
 
   my $wiki_work_rep_info = Gitprep::Repository::Wiki->new($user_id,
     $project_id)->work;
-
-  # File name
-  my $file_name = $self->wiki_title_to_name($title);
 
   # File abs name
   my $file_abs_name = $wiki_work_rep_info->work_tree($file_name);
 
   return -f encode('UTF-8', $file_abs_name);
+}
+
+sub exists_wiki_page {
+  my ($self, $user_id, $project_id, $title) = @_;
+
+  return $self->wiki_file_exists($user_id, $project_id,
+   $self->wiki_title_to_name($title));
 }
 
 sub get_wiki_pages {
