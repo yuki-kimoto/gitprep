@@ -32,6 +32,22 @@ sub get_remotes {
   return \%remotes;
 }
 
+# Make sure remote exists and points to the target repository.
+sub set_remote {
+  my ($self, $work_rep_info, $name, $target_rep_info) = @_;
+  my $remotes = $self->get_remotes($work_rep_info);
+  if (($remotes->{$name} // '') ne $target_rep_info->git_dir) {
+    my @git_remote_cmd = $self->app->git->cmd($work_rep_info,
+      'remote',
+      exists($remotes->{$name})? 'set-url': 'add',
+      $name,
+      $target_rep_info->git_dir
+    );
+    Gitprep::Util::run_command(@git_remote_cmd)
+      or Carp::croak "Can't execute git remote @git_remote_cmd";
+  }
+}
+
 sub prepare_merge {
   my ($self, $work_rep_info, $base_rep_info, $base_branch, $target_rep_info, $target_branch) = @_;
 
@@ -39,24 +55,14 @@ sub prepare_merge {
 
   # Fetch base repository
   my $base_user_id = $base_rep_info->user;
+  $self->set_remote($work_rep_info, 'origin', $base_rep_info);
   my @git_fetch_base_cmd = $git->cmd($work_rep_info, 'fetch', 'origin');
   Gitprep::Util::run_command(@git_fetch_base_cmd)
     or Carp::croak "Can't execute git fetch: @git_fetch_base_cmd";
 
   # Configure remote for target repository
   my $target_remote = $target_rep_info->remote_name;
-  my $remotes = $self->get_remotes($work_rep_info);
-  if (exists $remotes->{$target_remote} && $remotes->{$target_remote} ne $target_rep_info->root) {
-    my @git_remote_remove_cmd = $git->cmd($work_rep_info, 'remote', 'remove', $target_remote);
-    Gitprep::Util::run_command(@git_remote_remove_cmd)
-      or Carp::croak "Can't execute git remote @git_remote_remove_cmd";
-    delete $remotes->{$target_remote};
-  }
-  if (!exists $remotes->{$target_remote}) {
-    my @git_remote_add_cmd = $git->cmd($work_rep_info, 'remote', 'add', $target_remote, $target_rep_info->root);
-    Gitprep::Util::run_command(@git_remote_add_cmd)
-      or Carp::croak "Can't execute git remote @git_remote_add_cmd";
-  }
+  $self->set_remote($work_rep_info, $target_remote, $target_rep_info);
 
   # Fetch target repository
   my @git_fetch_target_cmd = $git->cmd($work_rep_info, 'fetch', $target_remote);
@@ -184,6 +190,8 @@ sub merge_base {
 
 sub push {
   my ($self, $work_rep_info, $base_branch) = @_;
+
+  $self->set_remote($work_rep_info, 'origin', $work_rep_info->repo);
 
   # Push
   my $tmp_branch = $self->_tmp_branch;
