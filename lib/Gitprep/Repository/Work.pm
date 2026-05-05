@@ -1,5 +1,8 @@
 package Gitprep::Repository::Work;
 
+use strict;
+use warnings;
+
 use Gitprep::Repository;
 
 my $home;
