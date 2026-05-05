@@ -55,9 +55,12 @@ sub sync_wiki_work {
     $wiki_rep_info->project) unless -d $wiki_work_rep_info->root;
 
   if (-f $wiki_rep_info->git_dir('refs/heads/master')) {
+    $self->app->manager->set_remote($wiki_work_rep_info,
+                                    'origin', $wiki_rep_info);
     my @git_pull_cmd = $self->app->git->cmd(
       $wiki_work_rep_info,
-      'pull'
+      'pull',
+      $wiki_rep_info->git_dir
     );
 
     Gitprep::Util::run_command(@git_pull_cmd)
@@ -234,6 +237,8 @@ sub create_wiki_page {
   Gitprep::Util::run_command(@git_commit_cmd)
     or croak "Can't execute git commit: @git_commit_cmd";
 
+  $self->app->manager->set_remote($wiki_work_rep_info, 'origin', $wiki_rep_info);
+
   # Push
   {
     my @git_push_cmd = $self->app->git->cmd(
@@ -343,6 +348,8 @@ sub rename_and_update_wiki_page {
   Gitprep::Util::run_command(@git_commit_cmd)
     or croak "Can't execute git commit: @git_commit_cmd";
 
+  $self->app->manager->set_remote($wiki_work_rep_info, 'origin', $wiki_rep_info);
+
   # Push
   {
     my @git_push_cmd = $self->app->git->cmd(
@@ -420,6 +427,8 @@ sub delete_wiki_page {
   );
   Gitprep::Util::run_command(@git_commit_cmd)
     or croak "Can't execute git commit: @git_commit_cmd";
+
+  $self->app->manager->set_remote($wiki_work_rep_info, 'origin', $wiki_rep_info);
 
   # Push
   {
