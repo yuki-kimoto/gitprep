@@ -1,5 +1,8 @@
 package Gitprep::Repository;
 
+use strict;
+use warnings;
+
 use Gitprep::Repository::Wiki;
 use Gitprep::Repository::Work;
 
@@ -72,7 +75,10 @@ sub remote_name {
 }
 
 # Return a bare repository matching the object, whatever variant is the latter.
-sub repo { return Gitprep::Repository->new($self->user, $self->project); }
+sub repo {
+  my $self = shift;
+  return Gitprep::Repository->new($self->user, $self->project);
+}
 
 # Return a wiki repository matching the object, whatever variant is the latter.
 sub wiki {
