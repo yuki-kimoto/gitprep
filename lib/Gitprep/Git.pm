@@ -601,7 +601,7 @@ sub blob_size {
 sub check_head_link {
   my ($self, $dir) = @_;
 
-  # Chack head
+  # Check head
   my $head_file = "$dir/HEAD";
   return ((-e $head_file) ||
     (-l $head_file && readlink($head_file) =~ /^refs\/heads\//));
@@ -965,13 +965,12 @@ sub parse_rev_path {
     }
   }
 
-  if ($rev_path) {
-    my ($rev, $path) = split /\//, $rev_path, 2;
-    $path = '' unless defined $path;
-    return ($rev, $path);
-  }
+  my ($rev, $path) = split /\//, $rev_path, 2;
+  $path //= '';
+  ($rev, $path) = ($self->current_branch($rep_info), $rev_path)
+    unless $rev =~ /^[0-9a-fA-F]{7,40}$/;
 
-  return;
+  return ($rev, $path);
 }
 
 sub object_type {
@@ -1505,23 +1504,6 @@ sub locate_commit {
   @lines = sort(map {decode($enc, $_)} @lines);
   chomp @lines;
   return \@lines;
-}
-
-sub import_branch {
-  my ($self, $rep_info, $branch, $remote_rep_info, $remote_branch, $opt) = @_;
-
-  my $force = $opt->{force};
-
-  # Git pull
-  my @cmd = $self->cmd(
-    $rep_info,
-    'fetch',
-    $remote_rep_info->git_dir,
-    ($force ? '+' : '') . "refs/heads/$remote_branch:refs/heads/$branch"
-  );
-
-  Gitprep::Util::run_command(@cmd)
-    or croak 'Open git fetch for import_branch failed';
 }
 
 sub search_bin {

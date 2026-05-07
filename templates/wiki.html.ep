@@ -21,10 +21,11 @@
   my $wiki_rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
   my $wiki = -d $wiki_rep_info->root;
   $api->sync_wiki_work($wiki_rep_info) if $wiki;
+  my $pages = [];
+  $pages = $api->get_wiki_pages($user_id, $project_id) if $wiki;
 
   my $content;
   my $content_md;
-  my $pages;
 
   # Session
   my $logined = $api->logined;
@@ -102,7 +103,7 @@
             $api->create_wiki_page($user_id, $project_id, $update_title, $content, $commit_message);
           }
 
-          $self->redirect_to("/$user_id/$project_id/wiki/$update_title");
+          $self->redirect_to($wiki_rep_info->url($update_title));
           return;
         }
         else {
@@ -118,7 +119,7 @@
   my $content_footer_md;
 
   # Pages count
-  my $pages_count = 0;
+  my $pages_count = @$pages;
 
   # Commits number
   my $commits_number = 0;
@@ -131,7 +132,6 @@
   }
   else {
     if ($wiki) {
-      $pages_count = $api->get_wiki_pages_count($user_id, $project_id);
       $commits_number = app->git->commits_number($wiki_rep_info, 'master');
 
       if ($edit) {
@@ -145,12 +145,10 @@
       }
       elsif ($list_pages) {
         $display = 'list-pages';
-        # Pages
-        $pages = $api->get_wiki_pages($user_id, $project_id);
       }
       else {
         if (($title // '') eq 'Home') {
-          $self->redirect_to("/$user_id/$project_id/wiki");
+          $self->redirect_to($wiki_rep_info->url);
           return;
         }
         else {
@@ -158,7 +156,7 @@
           $content = $api->get_wiki_page_content($user_id, $project_id, $title);
 
           if (defined $content) {
-            # Convert wiki link to markdonw link
+            # Convert wiki link to markdown link
             $content_md = $api->markdown_wiki($user_id, $project_id, $content);
             $display = 'page';
 
@@ -181,7 +179,7 @@
             $p = '_pages' unless $p;
           }
           else {
-            $self->redirect_to("/$user_id/$project_id/wiki/_pages");
+            $self->redirect_to($wiki_rep_info->url('_pages'));
             return;
           }
         }
@@ -191,9 +189,16 @@
       $display = 'init';
     }
     else {
-      $self->redirect_to("/$user_id/$project_id");
+      $self->redirect_to($wiki_rep_info->repo->url);
       return;
     }
+  }
+
+  # Serve raw objects.
+  if ($display eq 'new' && !$edit && !$new && defined($title) && $title ne '' &&
+      $api->wiki_file_exists($user_id, $project_id, $title)) {
+    $self->redirect_to($wiki_rep_info->url("raw/$title"));
+    return;
   }
 
   my $query = {};
@@ -234,10 +239,10 @@
 
       // Click delete page
       $('#wiki-btn-delete-page').on('click', function () {
-        if (window.confirm('This page is deleted. OK?')) {
+        if (window.confirm('Are you sure you want to delete this page?')) {
           $.post('<%= url_for %>', {op : "ajax-delete", title : "<%= $title %>"}, function (result) {
             if (result.success) {
-              location.href="<%= url_for("/$user_id/$project_id/wiki") %>";
+              location.href="<%= url_for($wiki_rep_info->url) %>";
             }
           });
         }
@@ -257,13 +262,13 @@
 
       <ul class="wiki-count">
         <li>
-          <a href="<%= url_for("/$user_id/$project_id/wiki") %>">
+          <a href="<%= url_for($wiki_rep_info->url) %>">
             %= $api->icon('home');
             Home
           </a>
         </li>
         <li>
-          <a href="<%= url_for("/$user_id/$project_id/wiki/_pages") %>">
+          <a href="<%= url_for($wiki_rep_info->url('_pages')) %>">
             %= $api->icon('note');
             Pages
             <span class="count-label">
@@ -272,7 +277,7 @@
           </a>
         </li>
         <li>
-          <a href="<%= url_for("/$user_id/$project_id/wiki/commits/master") %>">
+          <a href="<%= url_for($wiki_rep_info->url('commits/master')) %>">
             %= $api->icon('git-commit');
             Commits
             <span class="count-label">
@@ -293,14 +298,14 @@
           <ul class="wiki-top-buttons">
             % if ($display eq 'page') {
               <li>
-                <a class="wiki-btn-history" href="<%= url_for("/$user_id/$project_id/wiki/commits/master/$title.md") %>" >
+                <a class="wiki-btn-history" href="<%= url_for($wiki_rep_info->url("commits/master/$title.md")) %>" >
                   %= $api->icon('history');
                   History
                 </a>
               </li>
               % if ($canadmin) {
                 <li>
-                  <a href="<%= url_for("/$user_id/$project_id/wiki/$title/_edit")->query($query) %>">
+                  <a href="<%= url_for($wiki_rep_info->url("$title/_edit"))->query($query) %>">
                     <button class="btn btn-new">
                       %= $api->icon('pencil');
                       Edit
@@ -322,7 +327,7 @@
               % }
               % if ($display ne 'new' && $display ne 'init' && $display ne 'edit') {
                 <li>
-                  <a href="<%= url_for("/$user_id/$project_id/wiki/_new")->query($query) %>">
+                  <a href="<%= url_for($wiki_rep_info->url('_new'))->query($query) %>">
                     <button class="btn btn-green btn-new">Create page</button>
                   </a>
                 </li>
@@ -336,7 +341,7 @@
         % if ($display eq 'init') {
           <h1 class="topic1">Wiki</h1>
           <div>
-            <a href="<%= url_for("/$user_id/$project_id/wiki/_new")->query($query) %>">
+            <a href="<%= url_for($wiki_rep_info->url('_new'))->query($query) %>">
               <button class="btn btn-green btn-new">Create page</button>
             </a>
           </div>
@@ -388,7 +393,7 @@
               </label>
               <div>
                 <span class="wiki-edit-form-cancel-btn">
-                  <button class="btn btn-cancel" type="button" onclick="location.href='<%= url_for("/$user_id/$project_id/wiki/$p") %>'">Cancel</button>
+                  <button class="btn btn-cancel" type="button" onclick="location.href='<%= url_for($wiki_rep_info->url($p)) %>'">Cancel</button>
                 </span>
                 <span class="wiki-edit-form-create-page-btn">
                   <%= submit_button $submit_button_title, class => 'btn btn-green btn-new' %>
@@ -410,7 +415,7 @@
               </div>
             % } elsif ($canadmin && $title ne '_Sidebar' && $title ne '_Footer') {
               <div class="wiki-add-footer">
-                <a href="<%= url_for("/$user_id/$project_id/wiki/_Footer")->query($query) %>">+ Add footer</a>
+                <a href="<%= url_for($wiki_rep_info->url('_Footer'))->query($query) %>">+ Add footer</a>
               </div>
             % }
           </div>
@@ -421,7 +426,7 @@
               </div>
             % } elsif ($canadmin && $title ne '_Sidebar' && $title ne '_Footer') {
               <div class="wiki-add-side-bar">
-                <a href="<%= url_for("/$user_id/$project_id/wiki/_Sidebar")->query($query) %>">+ Add side bar</a>
+                <a href="<%= url_for($wiki_rep_info->url('_Sidebar'))->query($query) %>">+ Add side bar</a>
               </div>
             % }
           </div>
@@ -434,7 +439,7 @@
               <ul class="wiki-list-pages">
                 % for my $page (@$pages) {
                   <li>
-                    <a href="<%= url_for("/$user_id/$project_id/wiki/$page") %>"><%= $page %></a>
+                    <a href="<%= url_for($wiki_rep_info->url($page)) %>"><%= $page %></a>
                   </li>
                 % }
               </ul>
