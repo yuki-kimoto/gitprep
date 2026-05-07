@@ -54,7 +54,9 @@ sub root {
   my ($self, $file) = @_;
   my $home = $self->home;
   my $wiki = $self->_project_suffix;
-  return $self->_path("$home/$self->{user}/$self->{project}$wiki.git", $file);
+  my $path = "$home/$self->{user}/$self->{project}$wiki.git";
+  $path = "$path/$file" if defined $file;
+  return $path;
 }
 
 # Return the repository's directory where git support files are located.
@@ -64,7 +66,9 @@ sub git_dir { return shift->root(@_); }
 sub url {
   my ($self, $file) = @_;
   my $wiki = $self->_url_suffix;
-  return $self->_path("/$self->{user}/$self->{project}$wiki", $file);
+  my $path = "/$self->{user}/$self->{project}$wiki";
+  $path = "$path/$file" if defined $file;
+  return $path;
 }
 
 # Return a suitable unambiguous name for an upstream repository.
@@ -98,16 +102,6 @@ sub maybe_wiki {
     $rep_info = Gitprep::Repository::Wiki->new($rep_info->user, $1) if $2;
   }
   return $rep_info;
-}
-
-# Protected method to cleanly concatenate paths.
-sub _path {
-  my ($self, $path, $file) = @_;
-  $file //= '';
-  $file =~ s#^/*(.*?)/*$#$1#;
-  $file =~ s#/+$#/#g;
-  $path .= "/$file" if $file ne '';
-  return $path;
 }
 
 
