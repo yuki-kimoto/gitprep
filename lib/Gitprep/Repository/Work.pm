@@ -52,13 +52,17 @@ sub root {
   my $user = $origin->user;
   my $project = $origin->project;
   my $is_wiki = $origin->_project_suffix;
-  return $origin->_path("$home/$user/$project$is_wiki", $file);
+  my $path = "$home/$user/$project$is_wiki";
+  $path = "$path/$file" if defined $file;
+  return $path;
 }
 
 sub git_dir {
   my ($self, $file) = @_;
   my $root = $self->root;
-  return $self->origin->_path("$root/.git", $file);
+  my $path = "$root/.git";
+  $path = "$path/$file" if defined $file;
+  return $path;
 }
 
 # Return the top level directory for the project files.
