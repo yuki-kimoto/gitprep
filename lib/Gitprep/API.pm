@@ -16,6 +16,17 @@ use Gitprep::Repository;
 
 has 'cntl';
 
+# Replace title characters that have a special meaning in file names and/or URL.
+sub wiki_safe_title {
+  my ($self, $title) = @_;
+
+  $title =~ s/^(.*?)\s*$/$1/; # Trim right.
+  $title =~ s/^\./\x{2024}/;  # No hidden page: use one dot leader.
+  $title =~ s#/#\x{2215}#g;   # Use division slashes.
+  return $title;
+}
+
+# Convert markdown to html with [[...]] wiki links.
 sub markdown_wiki {
   my ($self, $user_id, $project_id, $content) = @_;
 
@@ -30,6 +41,7 @@ sub markdown_wiki {
       $title = $link_text;
     }
 
+    $title = $self->wiki_safe_title($title);
     my $replace = "[$link_text](" . $url_base . "\/$title)";
 
     my $exists_page = $self->exists_wiki_page($user_id, $project_id, $title);
@@ -68,24 +80,22 @@ sub sync_wiki_work {
   }
 }
 
-sub exists_wiki_page {
-  my ($self, $user_id, $project_id, $title) = @_;
+sub wiki_file_exists {
+  my ($self, $user_id, $project_id, $file_name) = @_;
 
   my $wiki_work_rep_info = Gitprep::Repository::Wiki->new($user_id,
     $project_id)->work;
 
-  # File name
-  my $file_name = $title;
-  $file_name =~ s/^ +//;
-  $file_name =~ s/ +$//;
-  $file_name .= '.md';
-
   # File abs name
   my $file_abs_name = $wiki_work_rep_info->work_tree($file_name);
 
-  my $exists = -f encode('UTF-8', $file_abs_name);
+  return -f encode('UTF-8', $file_abs_name);
+}
 
-  return $exists;
+sub exists_wiki_page {
+  my ($self, $user_id, $project_id, $title) = @_;
+
+  return $self->wiki_file_exists($user_id, $project_id, "$title.md");
 }
 
 sub get_wiki_pages {
@@ -101,39 +111,18 @@ sub get_wiki_pages {
 
   # Pages
   my @pages;
-  while (my $file = readdir $dh) {
-    $file = decode('UTF-8', $file);
-    next if $file =~ /^\./;
-    $file =~ s/\.[^\.]+$//;
-    push @pages, $file;
+  while (my $fn = readdir $dh) {
+    $fn = decode('UTF-8', $fn);
+    next if $fn =~ /^\./;
+    next unless $fn =~ /^(.*)\.md$/;
+    next if $self->wiki_safe_title($1) ne $1;
+
+    # Can be a non-regular file.
+    push @pages, $1 if -f encode('UTF-8', $wiki_work_rep_info->work_tree($fn));
   }
 
   @pages = sort { lc $a cmp lc $b } @pages;
-
   return \@pages;
-}
-
-sub get_wiki_pages_count {
-  my ($self, $user_id, $project_id) = @_;
-
-  my $wiki_work_rep_info = Gitprep::Repository::Wiki->new($user_id,
-    $project_id)->work;
-
-  # Open directory
-  my $dir = $wiki_work_rep_info->work_tree;
-  opendir my $dh, $dir
-    or croak "Can't open directory \"$dir\":$!";
-
-  # Pages
-  my $count = 0;
-  while (my $file = readdir $dh) {
-    $file = decode('UTF-8', $file);
-    next if $file =~ /^\./;
-    $file =~ s/\.[^\.]+$//;
-    $count++;
-  }
-
-  return $count;
 }
 
 sub get_wiki_page_content {
@@ -143,20 +132,16 @@ sub get_wiki_page_content {
     $project_id)->work;
 
   # File name
-  my $file_name = $title;
-  $file_name =~ s/^ +//;
-  $file_name =~ s/ +$//;
-  $file_name .= '.md';
+  my $file_name = "$title.md";
 
   # File abs name
   my $file_abs_name = $wiki_work_rep_info->work_tree($file_name);
 
-  unless (-f encode('UTF-8', $file_abs_name)) {
-    return;
-  }
+  my $utf8_name = encode('UTF-8', $file_abs_name);
+  return unless -f $utf8_name;
 
-  open my $fh, '<', encode('UTF-8', $file_abs_name)
-    or die "Can't open file \"" . encode('UTF-8', $file_abs_name) . "\": $!";
+  open my $fh, '<', $utf8_name
+    or die "Can't open file \"$utf8_name\": $!";
 
   my $content = do { local $/; <$fh> };
 
@@ -180,16 +165,14 @@ sub create_wiki_page {
   my $wiki_work_rep_info = $wiki_rep_info->work;
 
   # File name
-  my $file_name = $title;
-  $file_name =~ s/^ +//;
-  $file_name =~ s/ +$//;
-  $file_name .= '.md';
+  my $file_name = "$title.md";
 
   # File abs name
   my $file_abs_name = $wiki_work_rep_info->work_tree($file_name);
+  my $utf8_name = encode('UTF-8', $file_abs_name);
 
-  open my $fh, '>:encoding(UTF-8)', encode('UTF-8', $file_abs_name)
-    or die "Can't open file \"". encode('UTF-8', $file_abs_name) . "\": $!";
+  open my $fh, '>:encoding(UTF-8)', $utf8_name
+    or die "Can't open file \"$utf8_name\": $!";
 
   # Write content to file
   print $fh $content;
@@ -265,26 +248,21 @@ sub rename_and_update_wiki_page {
   my $wiki_work_rep_info = $wiki_rep_info->work;
 
   # Original file name
-  my $original_file_name = $original_title;
-  $original_file_name =~ s/^ +//;
-  $original_file_name =~ s/ +$//;
-  $original_file_name .= '.md';
+  my $original_file_name = "$original_title.md";
 
   # File name
-  my $file_name = $title;
-  $file_name =~ s/^ +//;
-  $file_name =~ s/ +$//;
-  $file_name .= '.md';
+  my $file_name = "$title.md";
 
   # Original file abs name
   my $original_file_abs_name = $wiki_work_rep_info->work_tree($original_file_name);
 
   # File abs name
   my $file_abs_name = $wiki_work_rep_info->work_tree($file_name);
+  my $utf8_name = encode('UTF-8', $file_abs_name);
 
   # Create file
-  open my $fh, '>:encoding(UTF-8)', encode('UTF-8', $file_abs_name)
-    or die "Can't open file \"". encode('UTF-8', $file_abs_name) . "\": $!";
+  open my $fh, '>:encoding(UTF-8)', $utf8_name
+    or die "Can't open file \"$utf8_name\": $!";
 
   # Write content to file
   print $fh $content;
@@ -293,9 +271,10 @@ sub rename_and_update_wiki_page {
   close $fh;
 
   # Delete original file
-  if (-f encode('UTF-8', $original_file_abs_name)) {
-    unlink encode('UTF-8', $original_file_abs_name)
-      or die "Can't delete file \"" . encode('UTF-8', $original_file_abs_name) . "\": $!";
+  my $utf8_original_name = encode('UTF-8', $original_file_abs_name);
+  if (-f $utf8_original_name) {
+    unlink $utf8_original_name
+      or die "Can't delete file \"$utf8_original_name\": $!";
   }
 
   # Check file changes
@@ -321,7 +300,7 @@ sub rename_and_update_wiki_page {
   my @git_rm_cmd = $self->app->git->cmd(
     $wiki_work_rep_info,
     'rm',
-    encode('UTF-8', $original_file_abs_name)
+    $utf8_original_name
   );
 
   Gitprep::Util::run_command(@git_rm_cmd)
@@ -375,16 +354,15 @@ sub delete_wiki_page {
   my $wiki_work_rep_info = $wiki_rep_info->work;
 
   # File name
-  my $file_name = $title;
-  $file_name .= '.md';
+  my $file_name = "$title.md";
 
   # File abs name
   my $file_abs_name = $wiki_work_rep_info->work_tree($file_name);
+  my $utf8_name = encode('UTF-8', $file_abs_name);
 
   # Delete file
-  if (-f encode('UTF-8', $file_abs_name)) {
-    unlink encode('UTF-8', $file_abs_name)
-      or die "Can't delete file \"" . encode('UTF-8', $file_abs_name) . "\": $!";
+  if (-f $utf8_name) {
+    unlink $utf8_name or die "Can't delete file \"$utf8_name\": $!";
   }
 
   # Check file changes
@@ -410,7 +388,7 @@ sub delete_wiki_page {
   my @git_rm_cmd = $self->app->git->cmd(
     $wiki_work_rep_info,
     'rm',
-    encode('UTF-8', $file_abs_name)
+    $utf8_name
   );
 
   Gitprep::Util::run_command(@git_rm_cmd)

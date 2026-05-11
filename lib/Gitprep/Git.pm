@@ -601,7 +601,7 @@ sub blob_size {
 sub check_head_link {
   my ($self, $dir) = @_;
 
-  # Chack head
+  # Check head
   my $head_file = "$dir/HEAD";
   return ((-e $head_file) ||
     (-l $head_file && readlink($head_file) =~ /^refs\/heads\//));
