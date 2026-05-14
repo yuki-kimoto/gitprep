@@ -8,21 +8,12 @@
 
   # README and community health files
 
+  my $rep_info = Gitprep::Repository->new($user, $project);
+
   local *path_join = sub {
     # Like File::Spec catdir/catfile, always relative.
     # Does not check for slashes in args.
     return join('/', map {(defined($_) && $_ ne '')? $_: ()} @_);
-  };
-
-  local *map_url = sub {
-    # Helper to map an URL.
-    my ($raw, $dir, $url) = @_;
-    $raw = $raw? 'raw': 'blob';
-    if ($url =~ m#^/(.*)#) {
-      $dir = '';
-      $url = $1;
-    }
-    return url_for('/' . path_join($user, $project, $raw, $rev, $dir, $url));
   };
 
   my @chfs;
@@ -63,9 +54,11 @@
       my ($lines, $tree) = @_;
       return undef unless $lines;
       my $data = join "\n", @$lines;
-      $data =~ s#(^|.)(\[.*\])\((?![a-z][a-z0-9+.-]*://)([^)]*)\)#{"$1$2(" . map_url($1 eq '!', $tree, $3) . ')'}#mgei;
-      $data =~ s#(src|href)="(?![a-z][a-z0-9+.-]*://)(\S*?)"#{"$1=\"" . map_url($1 eq 'src', $tree, $2) . '"'}#mgei;
-      return $api->markdown($data);
+      return $api->markdown($data,
+        $rep_info,
+        rev => $rev,
+        tree => $tree
+      );
     }},
     { extension => '', class => 'plain-text', tag => 'pre', fn => sub {
       my $lines = shift;
@@ -78,7 +71,6 @@
     }}
   );
 
-  my $rep_info = Gitprep::Repository->new($user, $project);
   my %filecache;
 
   foreach my $docdir (reverse @docdirs) {

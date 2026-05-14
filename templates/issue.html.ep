@@ -4,6 +4,9 @@
   # API
   my $api = gitprep_api;
 
+  # Git
+  my $git = app->git;
+
   # Parameters
   my $base_user_id = param('user');
   my $base_project_id = param('project');
@@ -47,6 +50,9 @@
   );
   my $title = '- Issue';
 
+  # Base repository information
+  my $base_rep_info = Gitprep::Repository->new($base_user_id, $base_project_id);
+
   # Issue
   my $issue = app->dbi->model('issue')->select(
     [
@@ -65,6 +71,16 @@
   }
   my $base_project_row_id = $issue->{project};
   my $extstatus = $issue->{status};
+  if ($issue->{pull_request}) {
+    $base_branch = app->dbi->model('pull_request')->select(
+            ['base_branch'],
+            where => {row_id => $issue->{pull_request}}
+          )->value;
+        }
+  else {
+    $base_branch = $git->current_branch($base_rep_info);
+  }
+
 
   # Session
   my $loggedin = $api->logined;
@@ -197,7 +213,8 @@
       # Validation
       my $json = {success => 0};
       if (validate_message($message)->is_valid) {
-        $json = $api->api_update_issue_message($issue_message_row_id, $message, $base_user_id);
+        $json = $api->api_update_issue_message($issue_message_row_id,
+          $message, $base_user_id, $base_project_id, $base_branch);
       }
 
       $self->render(json => $json);
@@ -229,7 +246,7 @@
 
         # Notifications.
         my $issuekind = $issue->{pull_request}? 'pull': 'issues';
-        $api->notify_subscribed($base_user_id, $base_project_id,
+        $api->notify_subscribed($base_user_id, $base_project_id, $base_branch,
                                 "$issue->{title} (#$issue_number)",
                                 $api->session_user_row_id, $message,
                                 "comment-$msgno", "$issuekind/$issue_number",
@@ -288,7 +305,6 @@
       ],
       where => {'project.row_id' => $base_project_row_id}
     )->one;
-    $base_branch = $pull_request->{base_branch};
 
     Carp::croak "pull_request no such project"
       unless $base_project;
@@ -309,10 +325,6 @@
     $target_branch = $pull_request->{target_branch};
     $target_user_id = $target_project->{'user.id'};
     $target_project_id = $target_project->{id};
-
-    # Base repository information
-    my $base_rep_info = Gitprep::Repository->new($base_user_id,
-      $base_project_id);
 
     # Target repository information
     my $target_rep_info = Gitprep::Repository->new($target_user_id,
@@ -349,9 +361,6 @@
       $self->render(text => $patch);
       return;
     }
-
-    # Git
-    my $git = app->git;
 
     # Handle pull-request specific requests.
     if (lc $self->req->method eq 'post') {
@@ -722,6 +731,8 @@
                   <%
                     my %issue_message_param = (
                       user_id => $base_user_id,
+                      project_id => $base_project_id,
+                      rev => $base_branch,
                       issue_message => $issue_message
                     );
                   %>
@@ -851,6 +862,9 @@ git push origin <%= $base_branch %>
                   <div class="issue-add-comment">
                     <form action="<%= url_for %>" method="post">
                       <%= hidden_field 'op' %>
+                      <%= hidden_field user => $base_user_id %>
+                      <%= hidden_field project => $base_project_id %>
+                      <%= hidden_field rev => $base_branch %>
                       <div class="issue-add-comment-header">
                         <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
                         <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>

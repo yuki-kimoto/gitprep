@@ -5,6 +5,14 @@
 ;;; It is recommended to set it to your own choice.
 ; secret=PleaseChangeMe!
 
+;;; Site http URL
+;;; Used to build an absolute URL, such as links in e-mails and pull
+;;; request comments after a git push upon new branch creation.
+;;; It can be set either to a listening URL or a reverse proxy URL linking to
+;;; the root of the gitprep service. The userinfo, query and fragment parts are
+;;; ignored.
+site_url=https://please.change.me
+
 ;;; SSH port (default: 22)
 ;;; This value is used by ssh git repository URL.
 ; ssh_port=55555
@@ -49,15 +57,6 @@ show_emails=1
 ;;; log files
 ; mojo_log_file_path=/home/gitgui/gitprep/log/production.log
 ; access_log_file_path=/home/gitgui/gitprep/log/access.log
-
-;;; New pull request http URL
-;;; This is used to build the new pull request link in comment displayed by
-;;; git push upon new branch creation.
-;;; It can be set either to a listening URL or a reverse proxy URL linking to
-;;; the root of the gitprep service. The userinfo, query and fragment parts are
-;;; ignored.
-;;; By default, the new pull request comment is disabled.
-; new_pr_url=https://somehost.com
 
 [templates]
 ;;; put here custom templates overriding the defaults provided by gitprep; requires full path

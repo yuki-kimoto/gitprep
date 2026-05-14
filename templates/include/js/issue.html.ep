@@ -18,9 +18,17 @@ $('.issue-message-preview-tab').on('click', function () {
   form.find('.issue-message-preview-area').css('display', 'block');
 
   var text = form.find('[name=message]').val();
+  var user = form.find('[name=user]').val();
+  var project = form.find('[name=project]').val();
+  var rev = form.find('[name=rev]').val();
 
   form.find('.issue-message-preview-area').html('');
-  $.post('<%= url_for('/api/markdown') %>', {text : text}, function (result) {
+  $.post('<%= url_for('/api/markdown') %>', {
+      text: text,
+      user: user,
+      project: project,
+      rev: rev
+    }, function (result) {
     var markdown = result.markdown;
     form.find('.issue-message-preview-area').html(markdown);
   });

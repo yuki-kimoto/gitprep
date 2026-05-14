@@ -29,34 +29,9 @@ sub wiki_safe_title {
 # Convert markdown to html with [[...]] wiki links.
 sub markdown_wiki {
   my ($self, $user_id, $project_id, $content) = @_;
+  my $rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
 
-  my $url_base = $self->cntl->url_for("/$user_id/$project_id/wiki");
-
-  local *re_cb = sub {
-    my ($link_text, $title) = @_;
-
-    # [[Link text|Title]]
-    # [[Title]]
-    if (!defined $title || !length $title) {
-      $title = $link_text;
-    }
-
-    $title = $self->wiki_safe_title($title);
-    my $replace = "[$link_text](" . $url_base . "\/$title)";
-
-    my $exists_page = $self->exists_wiki_page($user_id, $project_id, $title);
-
-    unless ($exists_page) {
-      $replace = '<span class="wiki-link-no-title">' . $replace . '</span>';
-    }
-
-    return $replace;
-  };
-
-  $content =~ s/\[\[([^\]\|]+?)(?:\|([^\[\]]+?))?\]\]/re_cb($1, $2)/eg;
-  my $content_md = $self->markdown($content);
-
-  return $content_md;
+  return $self->markdown($content, $rep_info, rev => 'master');
 }
 
 sub sync_wiki_work {
@@ -468,7 +443,7 @@ sub get_open_pull_request_count {
 }
 
 sub api_update_issue_message {
-  my ($self, $issue_message_row_id, $message, $user_id) = @_;
+  my ($self, $issue_message_row_id, $message, $user_id, $project_id, $rev) = @_;
 
   my $issue_message = $self->app->dbi->model('issue_message')->select(
     {user => ['id']}, where => {'issue_message.row_id' => $issue_message_row_id}
@@ -494,7 +469,11 @@ sub api_update_issue_message {
         where => {row_id => $issue_message_row_id}
       );
 
-      my $markdown_message = $self->markdown($message);
+      my $markdown_message = $self->markdown(
+        $message,
+        Gitprep::Repository->new($user_id, $project_id),
+        rev => $rev
+      );
 
       $json = {
         success => 1,
@@ -572,13 +551,140 @@ sub add_issue_message {
   return $issue_message_number;
 }
 
+# Convert markdown to HTML.
+# Relative urls are converted according to parameters.
+# HTML tags are limited to a safe subset.
+#
+# Call with markdown text and rep_info as positional arguments, followed
+# by named parameters.
+# Parameters:
+#  rev          the markdown file git revision
+#  link_path    the url path component leading to a linked object (blob)
+#  image_path   the url path component leading to an image (default: raw)
+#  file         the markdown file path within repository
+#  tree         the markdown file's directory within repository
+#  site_url     Base url to convert into an absolute url (Mojo::URL).
+#
+# If not defined, tree is computed from file.
+# Wiki links are translated only if the repository is a wiki.
 sub markdown {
-  my ($self, $markdown_text) = @_;
+  my $self = shift;
+  my $markdown_text = shift;
+  my $rep_info = shift;
+  my %params = (
+    link_path => 'blob',
+    image_path => 'raw',
+    @_
+  );
+  my $rev = $params{rev};
+  my $tree = $params{tree};
+  my $site_url = $params{site_url};
 
-  my $html_text = Text::Markdown::Hoedown::markdown(
-    $markdown_text, extensions => HOEDOWN_EXT_FENCED_CODE|HOEDOWN_EXT_TABLES|HOEDOWN_EXT_NO_INTRA_EMPHASIS
+  local *replace_link = sub {
+    my %m = (@_);
+
+    local *build_url = sub {
+      my ($format, $url) = @_;
+      my $path = $url->path;
+
+      unless ($path->leading_slash) {
+        unshift @$path, @{Mojo::Path->new($tree)} if ($tree // '') ne '';
+        unshift @$path, @{Mojo::Path->new($rev)} if ($rev // '') ne '';
+        unshift @$path, @{Mojo::Path->new($format)} if ($format // '') ne '';
+      }
+
+      # Relative URLs are rooted by the project's repository.
+      $path = $path->canonicalize();
+      while (scalar(@$path) && $path->[0] eq '..') {
+        shift @$path;
+      }
+
+      unshift @$path, @{$self->cntl->url_for($rep_info->url)->path};
+      $path = $path->leading_slash(!$site_url);
+      $url->path($path);
+      $url = $url->to_abs($site_url) if $site_url;
+      return $url->to_string;
+    };
+
+    my $url = $m{url};
+    my $text = $m{text};
+
+    $text = $url if ($text // '') eq '';
+    $url = $text if ($url // '') eq '';
+
+    # Wiki link.
+    #  [[Link text|Title]]
+    #  [[Title]]
+    if ($m{marker} eq '[[') {
+      return $m{match} unless $rep_info->is_wiki;
+      $url = $self->wiki_safe_title($url);
+      my $replace = $self->cntl->url_for($rep_info->url($url));
+      $replace = $replace->to_abs($site_url) if $site_url;
+      $replace = "[$text]($replace)";
+      unless ($self->exists_wiki_page($rep_info->user,
+                                      $rep_info->project, $url)) {
+        $replace = "<span class=\"wiki-link-no-title\">$replace</span>";
+      }
+      return $replace;
+    }
+
+    $url = Mojo::URL->new($url);
+
+    # Do not replace absolute or fragment-only URLs.
+    return $m{match} if $url->is_abs || !defined $url->path || !@{$url->path};
+
+    # Markdown image
+    #  ![text](url)
+    if ($m{marker} eq '!') {
+      $url = build_url($params{image_path}, $url);
+      return "![$text]($url)";
+    }
+
+    # <img> tag.
+    if ($m{marker} eq 'src') {
+      $url = build_url($params{image_path}, $url);
+      return 'src="' . $url . '"';
+    }
+
+    # <a>-like tag.
+    if ($m{marker} eq 'href') {
+      $url = build_url($params{link_path}, $url);
+      return 'href="' . $url . '"';
+    }
+
+    # Markdown link.
+    #  [text](url)
+    $url = build_url($params{link_path}, $url);
+    return "[$text]($url)";
+  };
+
+  # Translate relative urls.
+  if ($rep_info) {
+    # Derive tree from file path if needed and possible.
+    if (!defined($tree) && defined $params{file}) {
+      # Get directory tree path.
+      $tree = $params{file};
+      $tree =~ s#(?:^|/+)[^/]*$##;
+    }
+
+    $markdown_text =~ s@(?<match>(?:
+      # Markdown images and links.
+      (?<marker>!?)\[(?<text>[^\]]*)\]\((?<url>[^)]*)\)|
+      # HTML images and links.
+      \b(?<marker>src|href)="(?<url>[^"]*)"|
+      # Wiki link.
+      #  [[Link text|Title]]
+      #  [[Title]]
+      (?<marker>\[\[)(?<text>[^\]\|]+?)(?:\|(?<url>[^\[\]]+?))?\]\]
+    ))@replace_link(%+)@egmx;
+  }
+
+  # Convert to HTML.
+  my $html_text = Text::Markdown::Hoedown::markdown($markdown_text,
+    extensions => HOEDOWN_EXT_FENCED_CODE|HOEDOWN_EXT_TABLES|HOEDOWN_EXT_NO_INTRA_EMPHASIS
   );
 
+  # Remove unsafe tags.
   my $hr = HTML::Restrict->new(
     rules => {
       h1 => [qw( id class )],
@@ -1040,8 +1146,8 @@ sub subscribe_mentioned {
 }
 
 sub notify_subscribed {
-  my ($self, $user, $project, $title, $sender_row_id, $message, $message_id,
-      $path_suffix, $issue_row_id) = @_;
+  my ($self, $user, $project, $rev, $title, $sender_row_id, $message,
+      $message_id, $path_suffix, $issue_row_id) = @_;
 
   $self->app->{mailtransport} || return;
 
@@ -1078,7 +1184,12 @@ sub notify_subscribed {
     })->value;
 
   # Convert markdown message to HTML.
-  $message = $self->markdown($message);
+  $message = $self->markdown(
+    $message,
+    Gitprep::Repository->new($user, $project),
+    rev => $rev,
+    site_url => $self->app->{site_url}
+  );
 
   # HTML to plain text converter.
   my $html2plain = HTML::FormatText::WithLinks->new(
@@ -1322,4 +1433,3 @@ sub params {
 }
 
 1;
-

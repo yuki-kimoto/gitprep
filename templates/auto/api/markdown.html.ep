@@ -1,9 +1,12 @@
 <%
+  use Gitprep::Repository;
+
   my $api = gitprep_api;
 
   my $text = param('text');
+  my $rep_info = Gitprep::Repository->new(param('user'), param('project'));
 
-  my $markdown = $api->markdown($text);
+  my $markdown = $api->markdown($text, $rep_info, rev => param('rev'));
 
   $self->render(
     json => {

@@ -616,6 +616,9 @@
     <div class="issue-add-comment" style="width:80%">
       <form action="<%= url_for %>" method="post">
         <%= hidden_field op => 'create-pull-request' %>
+        <%= hidden_field user => $base_user_id %>
+        <%= hidden_field project => $base_project_id %>
+        <%= hidden_field rev => $base_branch %>
         <div class="issue-add-comment-header">
           <div class="issue-add-comment-title">
             <%= text_field 'title' => $commits->[0]{title_short} %>

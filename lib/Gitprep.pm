@@ -104,6 +104,16 @@ sub startup {
   $listen = [split /,/, $listen] unless ref $listen eq 'ARRAY';
   $conf->{hypnotoad}{listen} = $listen;
 
+  # Site URL.
+  my $site_url = $conf->{basic}{site_url};
+  if (defined $site_url) {
+    $site_url = Mojo::URL->new($site_url);
+    $site_url->userinfo(undef)->query(undef)->fragment(undef);
+    $site_url->scheme('http') unless $site_url->scheme;
+    $site_url->path->trailing_slash(1);
+  }
+  $self->{site_url} = $site_url;
+
   # Data directory
   my $data_dir = $ENV{GITPREP_DATA_DIR} ? $ENV{GITPREP_DATA_DIR} : $self->home->rel_file('data');
   $self->config(data_dir => $data_dir);
