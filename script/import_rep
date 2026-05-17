@@ -51,6 +51,7 @@ for my $rep (glob "$rep_dir/*") {
   if (-d $rep && $rep =~ /\.git$/) {
     my $project_id = basename $rep;
     $project_id =~ s/\.git$//;
+    my $remote_rep_info = Gitprep::Repository->new($user_id, $project_id);
 
     my $project = $dbi->model('project')->select(
       where => {'user.id' => $user_id, 'project.id' => $project_id}
@@ -62,13 +63,13 @@ for my $rep (glob "$rep_dir/*") {
     }
     else {
       eval {
-        $manager->create_project($user_id, $project_id);
+        $manager->create_project($remote_rep_info);
       };
       if ($@) {
-        warn "Can't creat repository $project_id: $@\n";
+        warn "Can't create repository $project_id: $@\n";
       }
       else {
-        warn "Create repository $project_id\n";
+        warn "Repository $project_id created\n";
       }
     }
 
@@ -85,7 +86,6 @@ for my $rep (glob "$rep_dir/*") {
       }
     };
     $description = decode('UTF-8', $description);
-    my $remote_rep_info = Gitprep::Repository->new($user_id, $project_id);
     eval {$git->description($remote_rep_info, $description) };
     if ($@) {
       warn "Can't update description $project_id\n";

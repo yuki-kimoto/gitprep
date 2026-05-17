@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   my $api = gitprep_api;
 
   my $user_id = param('user');
@@ -18,7 +20,7 @@
   my $all_selectors = unique_selectors(join ' ', values %$protocols);
   my %btns = %$protocols;
 
-  my $logged_in = $api->logined;
+  my $logged_in = $api->logged_in;
 
   delete $btns{ssh} unless $logged_in;
   if (exists $btns{ssh}) {
@@ -30,7 +32,7 @@
     delete $btns{ssh} unless $has_key;
   }
   if (exists $btns{ssh}) {
-    my $url = $api->ssh_rep_url($user_id, $repository);
+    my $url = $api->ssh_rep_url(Gitprep::Repository->new($user_id, $repository));
     $btns{ssh} = {
       btn => 'SSH',
       url => $url,

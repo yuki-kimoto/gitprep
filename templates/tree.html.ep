@@ -13,8 +13,8 @@
   my $user_id = param('user');
   my $project_id = param('project');
 
-  my $project_row_id = $api->get_project_row_id($user_id, $project_id);
   my $rep_info = Gitprep::Repository->new($user_id, $project_id);
+  my $project_row_id = $api->get_project_row_id($rep_info);
   my $default_branch = $git->current_branch($rep_info);
 
   my $rev;
@@ -67,11 +67,11 @@
 
   my $is_project_top_page = !(defined $dir && length $dir);
 
-  my $ssh_rep_url = $api->ssh_rep_url($user_id, $project_id);
+  my $ssh_rep_url = $api->ssh_rep_url($rep_info);
 
   my $branches = stash('branches');
 
-  my $logined = $api->logined;
+  my $logged_in = $api->logged_in;
 
   my $original_project;
   my $is_private_project;
@@ -80,9 +80,9 @@
   my $no_project_header = stash('no_project_header');
 
   if (!$no_project_header && defined $project_id) {
-    $original_project = app->manager->original_project($user_id, $project_id);
-    $is_private_project = app->manager->is_private_project($user_id, $project_id);
-    $fork_count = scalar(@{app->manager->member_projects($user_id, $project_id)});
+    $original_project = app->manager->original_project($rep_info);
+    $is_private_project = app->manager->is_private_project($rep_info);
+    $fork_count = scalar(@{app->manager->member_projects($rep_info)});
     if ($fork_count >= 1000000) {
       $fork_count = sprintf('%.1f', $fork_count / 1000000.0);
       $fork_count =~ s/\.?0*$/M/;
@@ -128,7 +128,7 @@
           <div class="flex-padding"></div>
           <div class="project-header-right">
             <div class="project-header-right-container">
-              % if ($logined && defined $project_id) {
+              % if ($logged_in && defined $project_id) {
                 <div class="project-header-btn-container">
                   <span id="watch-btn-frame">
                     %= include '/api/watch', state => undef;
@@ -171,7 +171,7 @@
 
       %= include '/include/readme', dir => $dir;
 
-    % } elsif ($state eq 'init' && $api->logined($user_id)) {
+    % } elsif ($state eq 'init' && $api->logged_in($user_id)) {
 
       <h4 class="topic1">SSH</h4>
 

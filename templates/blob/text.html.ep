@@ -10,9 +10,9 @@
 
   my $lines = $git->blob($p->{rep_info}, $p->{rev}, $p->{file});
   $p->{header_left} = $api->plural('lines', scalar(@$lines), 'No');
-  $p->{buttons} = '<li><a class=btn btn-small" href="' . url_for("$p->{user_id_project_path}/blame/$p->{rev}/$p->{file}") . '">Blame</a></li>';
+  $p->{buttons} = '<li><a class=btn btn-small" href="' . url_for($p->{rep_info}->url("blame/$p->{rev}/$p->{file}")) . '">Blame</a></li>';
 %>
 
 % if (@$lines) {
-<pre class="prettyprint linenums"><% for my $line (@$lines) { %><%= "$line\n" %><% } %></pre>
+<pre class="blob-overflow prettyprint linenums"><% for my $line (@$lines) { %><%= "$line\n" %><% } %></pre>
 % }

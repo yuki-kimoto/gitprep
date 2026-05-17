@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Repository;
+
   # API
   my $api = gitprep_api;
   my $session_user_row_id = session('user_row_id');
@@ -7,7 +9,7 @@
   my $op = param('op') || '';
 
   # Authentication
-  unless ($api->logined) {
+  unless ($api->logged_in) {
     $self->redirect_to('/');
     return;
   }
@@ -38,7 +40,7 @@
       elsif (!$vc->check($project_id, 'project_name')) {
         $validation->add_failed(project => 'Invalid repository name');
       }
-      elsif (app->manager->exists_project($session_user->{id}, $project_id)) {
+      elsif (app->manager->project_exists($session_user->{id}, $project_id)) {
         $validation->add_failed(project => 'Repository already exists');
       }
 
@@ -58,8 +60,8 @@
       $default_branch ||= 'master';
       # Git
       if ($validation->is_valid) {
-        # Not logined
-        unless ($api->logined) {
+        # Not logged in
+        unless ($api->logged_in) {
           return $self->reply->exception;
         }
 
@@ -67,8 +69,7 @@
         # Create repository
         eval {
           $manager->create_project(
-            $session_user->{id},
-            $project_id,
+            Gitprep::Repository->new($session_user->{id}, $project_id),
             {description => $description, readme => $readme, private => $private, default_branch => $default_branch }
           );
         };

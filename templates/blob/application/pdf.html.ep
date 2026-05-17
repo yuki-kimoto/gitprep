@@ -1,6 +1,6 @@
 <%
   my $p = stash('blob_params');
-  my $pdf_url = url_for("$p->{user_id_project_path}/raw/$p->{rev}/$p->{file}");
+  my $pdf_url = url_for($p->{rep_info}->url("raw/$p->{rev}/$p->{file}"));
 %>
 
 <div class="blob-pdf-container">

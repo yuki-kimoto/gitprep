@@ -141,7 +141,7 @@
       my $validation = $vc->validation;
 
       # Access control
-      if (!$api->logined) {
+      if (!$api->logged_in) {
         $validation->add_failed(authorization => 'please log-in first');
       }
 
@@ -226,7 +226,7 @@
   my $merge_success;
 
   # Create working repository if it doesn't exist
-  $self->app->manager->create_work_rep($base_user_id, $base_project_id);
+  $self->app->manager->create_work_rep($base_rep_info);
 
   my $commits = [];
   my $start_commit_id;
@@ -286,7 +286,7 @@
   my $authors_count = keys %$authors;
 
   # Member projects
-  my $member_projects = app->manager->member_projects($base_user_id, $base_project_id, 'all');
+  my $member_projects = app->manager->member_projects($base_rep_info, 'all');
 
   # Can open pull request
   my $can_open_pull_request;

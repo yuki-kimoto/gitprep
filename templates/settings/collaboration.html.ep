@@ -9,7 +9,7 @@
   my $project_id = param('project');
 
   # Authentication
-  unless ($api->logined($user_id)) {
+  unless ($api->logged_in($user_id)) {
     $self->redirect_to('/');
     return;
   }

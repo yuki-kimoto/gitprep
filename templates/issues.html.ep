@@ -11,6 +11,7 @@
 
   my $is = param('is') // 'open';
 
+  my $rep_info = Gitprep::Repository->new($user_id, $project_id);
   my $pulls = stash('pulls') // 0;
   my $icon_opened = 'issue-opened';
   my $icon_closed = 'issue-closed';
@@ -22,7 +23,7 @@
   my $git = $self->app->git;
 
   # Project row id
-  my $project_row_id = $api->get_project_row_id($user_id, $project_id);
+  my $project_row_id = $api->get_project_row_id($rep_info);
 
   # Issues
   my $issue_where_clause = ['and', ':project{=}'];
@@ -59,18 +60,18 @@
   $issues = [@$issues[($page - 1) * $page_rows .. $next_issue - 1]];
 
   # Open count
-  my $open_count = $api->get_issue_count($user_id, $project_id,
+  my $open_count = $api->get_issue_count($rep_info,
     {pull => $pulls, status => ['open', 'draft']});
 
-  # Close count
-  my $close_count = $api->get_issue_count($user_id, $project_id,
-    {pull => $pulls}) - $open_count;
+  # Closed count
+  my $close_count = $api->get_issue_count($rep_info, {pull => $pulls}) -
+    $open_count;
 
   # Default branch
-  my $default_branch = app->git->current_branch(Gitprep::Repository->new($user_id, $project_id));
+  my $default_branch = app->git->current_branch($rep_info);
 
   # Original project
-  my $original_project = app->manager->original_project($user_id, $project_id);
+  my $original_project = app->manager->original_project($rep_info);
 
   # Initialize labels if there is none yet
   my $labels_count = app->dbi->model('label')->select(
@@ -102,7 +103,7 @@
   %= include '/include/header';
 
   <div class="container">
-    % if ($api->logined) {
+    % if ($api->logged_in) {
       <div class="issues-button-container">
         <div class="issues-button-container-left">
           <div class="issues-labels">

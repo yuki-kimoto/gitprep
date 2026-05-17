@@ -2664,6 +2664,10 @@ a:hover .btn-delete {
   height: 100%;
 }
 
+.blob-overflow {
+  overflow-x: auto;
+}
+
 .commits {
   margin-top:20px;
 }

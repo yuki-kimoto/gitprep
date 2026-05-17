@@ -1,13 +1,15 @@
 <%
+  use Gitprep::Repository;
+
   my $api = gitprep_api;
-  my $logined = $api->logined;
+  my $logged_in = $api->logged_in;
 
   my $session_user_row_id = session('user_row_id');
   my $session_user = app->dbi->model('user')->select(where => {row_id => $session_user_row_id})->one;
 
   my $user_id = $self->param('user');
-
   my $project_id = param('project');
+  my $rep_info = Gitprep::Repository->new($user_id, $project_id);
 
   my $original_project;
   my $is_private_project;
@@ -17,9 +19,9 @@
   my $private = stash('private');
 
   if (!$no_project_header && defined $project_id) {
-    $original_project = app->manager->original_project($user_id, $project_id);
-    $is_private_project = app->manager->is_private_project($user_id, $project_id);
-    $fork_count = scalar(@{app->manager->member_projects($user_id, $project_id)});
+    $original_project = app->manager->original_project($rep_info);
+    $is_private_project = app->manager->is_private_project($rep_info);
+    $fork_count = scalar(@{app->manager->member_projects($rep_info)});
     if ($fork_count >= 1000000) {
       $fork_count = sprintf('%.1f', $fork_count / 1000000.0);
       $fork_count =~ s/\.?0*$/M/;
@@ -51,7 +53,7 @@
           <%= text_field 'q', style => 'display:inline-block;width:350px', placeholder => 'Search' %>
         </form>
       % }
-      % if ($api->logined) {
+      % if ($api->logged_in) {
         % unless ($session_user->{id} eq 'admin') {
           <div class="header-btn-container">
             <a class="btn" href="<%= url_for("/_new") %>">
@@ -73,7 +75,7 @@
         <!-- Signed in as <%= $session_user->{id} %> -->
         <div class="header-login-container">
           % my $userurl = '/_admin';
-          % $userurl = "/$session_user->{id}" unless $api->logined_admin;
+          % $userurl = "/$session_user->{id}" unless $api->logged_in_as_admin;
           <a href="<%= url_for($userurl) %>" title="<%= $session_user->{id} %>">
             %= $api->DOM_render($api->avatar(32, id => $session_user->{id}));
           </a>
@@ -107,7 +109,7 @@
               %= $api->icon('issue-opened', class => 'icon-on-baseline');
               Issues
               <span class="count-label">
-                <%= $api->get_open_issue_count($user_id, $project_id) %>
+                <%= $api->get_open_issue_count($rep_info) %>
               </span>
             </a>
           </li>
@@ -116,12 +118,12 @@
               %= $api->icon('git-pull-request', class => 'icon-on-baseline');
               Pull requests
               <span class="count-label">
-                <%= $api->get_open_pull_request_count($user_id, $project_id) %>
+                <%= $api->get_open_pull_request_count($rep_info) %>
               </span>
             </a>
           </li>
           <li class="<%= $tab eq 'wiki' ? 'active' :  '' %>">
-            <a href="<%= url_for("/$user_id/$project_id/wiki") %>">
+            <a href="<%= url_for($rep_info->wiki->url) %>">
               %= $api->icon('book', class => 'icon-on-baseline');
               Wiki
             </a>
@@ -132,7 +134,7 @@
               Members
             </a>
           </li>
-          % if ($logined && $user_id eq $session_user->{id}) {
+          % if ($logged_in && $user_id eq $session_user->{id}) {
             <li class="<%= $tab eq 'settings' ? 'active' :  '' %>">
               <a href="<%= url_for("/$user_id/$project_id/settings") %>">
                 %= $api->icon('gear', class => 'icon-on-baseline');

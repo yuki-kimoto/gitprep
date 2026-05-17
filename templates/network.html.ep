@@ -38,9 +38,10 @@
       where => {'user.id' => $user_id, 'project.id' => $project_id}
     )->one;
   }
+  my $original_rep_info = Gitprep::Repository->new($original_project->{'user.id'}, $original_project->{id});
 
   # Members
-  my $member_projects = app->manager->member_projects($original_project->{'user.id'}, $original_project->{id}, 'all');
+  my $member_projects = app->manager->member_projects($original_rep_info, 'all');
 
   # Members branches
   for my $member_project (@$member_projects) {

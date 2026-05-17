@@ -31,6 +31,6 @@
     % if (defined $p->{file}) {
       alt="<%= $p->{file} %>" title="<%= $p->{file} %>"
     % }
-    src="<%= url_for("$p->{user_id_project_path}/raw/$p->{rev}/$p->{file}") %>"
+    src="<%= url_for($p->{rep_info}->url("raw/$p->{rev}/$p->{file}")) %>"
   />
 </div>

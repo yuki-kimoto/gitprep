@@ -18,22 +18,21 @@
   eval { $title = Encode::decode('UTF-8', $title) };
   $title = $api->wiki_safe_title($title) if defined $title;
 
-  my $project_row_id = $api->get_project_row_id($user_id, $project_id);
-
   my $wiki_rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
+  my $project_row_id = $api->get_project_row_id($wiki_rep_info);
   my $wiki = -d $wiki_rep_info->root;
   $api->sync_wiki_work($wiki_rep_info) if $wiki;
   my $pages = [];
-  $pages = $api->get_wiki_pages($user_id, $project_id) if $wiki;
+  $pages = $api->get_wiki_pages($wiki_rep_info) if $wiki;
 
   my $content;
   my $content_md;
 
   # Session
-  my $logined = $api->logined;
+  my $logged_in = $api->logged_in;
   my $session_user_id = $api->session_user_id;
-  my $canadmin = $logined &&
-    $api->can_write_access($session_user_id, $user_id, $project_id);
+  my $canadmin = $logged_in &&
+    $api->can_write_access($session_user_id, $wiki_rep_info);
 
   # Display type
   my $display;
@@ -45,8 +44,11 @@
     # Ajax request
     if ($self->req->is_xhr) {
       if ($op eq 'ajax-preview') {
-        my $content = param('content');
-        my $content_md = $api->markdown_wiki($user_id, $project_id, $content);
+        my $content_md = $api->markdown(
+          param('content'),
+          $wiki_rep_info,
+          rev => 'master'
+        );
 
         $self->render(json => {markdown => $content_md});
         return;
@@ -56,7 +58,7 @@
         eval { $title_to_delete = Encode::decode('UTF-8', $title_to_delete) };
         my $success = 0;
         if ($api->wiki_safe_title($title_to_delete) eq $title_to_delete) {
-          $api->delete_wiki_page($user_id, $project_id, $title_to_delete);
+          $api->delete_wiki_page($wiki_rep_info, $title_to_delete);
           flash(message => "$title_to_delete deleted");
           $success = 1;
         }
@@ -106,14 +108,14 @@
             if (!length $commit_message) {
               $commit_message = "Renamed $original_title to $update_title and updated $update_title";
             }
-            $api->rename_and_update_wiki_page($user_id, $project_id, $original_title, $update_title, $content, $commit_message);
+            $api->rename_and_update_wiki_page($wiki_rep_info, $original_title, $update_title, $content, $commit_message);
           }
           # Create or update page
           else {
             if (!length $commit_message) {
               $commit_message = "Updated $update_title";
             }
-            $api->create_wiki_page($user_id, $project_id, $update_title, $content, $commit_message);
+            $api->create_wiki_page($wiki_rep_info, $update_title, $content, $commit_message);
           }
 
           $self->redirect_to($wiki_rep_info->url($update_title));
@@ -148,7 +150,7 @@
       $commits_number = app->git->commits_number($wiki_rep_info, 'master');
 
       if ($edit) {
-        $content = $api->get_wiki_page_content($user_id, $project_id, $title);
+        $content = $api->get_wiki_page_content($wiki_rep_info, $title);
         if (defined $content) {
           $display = 'edit';
         }
@@ -166,25 +168,37 @@
         }
         else {
           $title //= 'Home';
-          $content = $api->get_wiki_page_content($user_id, $project_id, $title);
+          $content = $api->get_wiki_page_content($wiki_rep_info, $title);
 
           if (defined $content) {
             # Convert wiki link to markdown link
-            $content_md = $api->markdown_wiki($user_id, $project_id, $content);
+            $content_md = $api->markdown(
+              $content,
+              $wiki_rep_info,
+              rev => 'master'
+            );
             $display = 'page';
 
             # Side bar
-            $exists_sidebar = $api->exists_wiki_page($user_id, $project_id, '_Sidebar');
+            $exists_sidebar = $api->wiki_page_exists($wiki_rep_info, '_Sidebar');
             if ($exists_sidebar) {
-              my $content_sidebar = $api->get_wiki_page_content($user_id, $project_id, '_Sidebar');
-              $content_sidebar_md = $api->markdown_wiki($user_id, $project_id, $content_sidebar);
+              my $content_sidebar = $api->get_wiki_page_content($wiki_rep_info, '_Sidebar');
+              $content_sidebar_md = $api->markdown(
+                $content_sidebar,
+                $wiki_rep_info,
+                rev => 'master'
+              );
             }
 
             # Footer
-            $exists_footer = $api->exists_wiki_page($user_id, $project_id, '_Footer');
+            $exists_footer = $api->wiki_page_exists($wiki_rep_info, '_Footer');
             if ($exists_footer) {
-              my $content_footer = $api->get_wiki_page_content($user_id, $project_id, '_Footer');
-              $content_footer_md = $api->markdown_wiki($user_id, $project_id, $content_footer);
+              my $content_footer = $api->get_wiki_page_content($wiki_rep_info, '_Footer');
+              $content_footer_md = $api->markdown(
+                $content_footer,
+                $wiki_rep_info,
+                rev => 'master'
+              );
             }
           }
           elsif ($canadmin) {

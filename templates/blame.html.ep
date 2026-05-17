@@ -109,10 +109,10 @@
       <div class="file-header-right">
         <ul>
           <li>
-            <a class="btn btn-small" href="<%= url_for("$user_project_path/raw/$rev/$file") %>">Raw</a>
+            <a class="btn btn-small" href="<%= url_for("$user_project_path/blob/$rev/$file") %>">Preview</a>
           </li>
           <li>
-            <a class="btn btn-small" href="<%= url_for("$user_project_path/blob/$rev/$file") %>">Normal View</a>
+            <a class="btn btn-small" href="<%= url_for("$user_project_path/raw/$rev/$file") %>">Raw</a>
           </li>
         </ul>
       </div>

@@ -220,10 +220,7 @@ sub lock_rep {
 }
 
 sub create_work_rep {
-  my ($self, $user, $project) = @_;
-
-  # Remote repository
-  my $rep_info = Gitprep::Repository->new($user, $project);
+  my ($self, $rep_info) = @_;
 
   # Working repository
   my $work_rep_info = $rep_info->work;
@@ -246,13 +243,15 @@ sub create_work_rep {
       $work_rep_info,
       'config',
       'user.name',
-      $user
+      $rep_info->user
     );
     Gitprep::Util::run_command(@git_config_user_name)
       or croak "Can't execute git config: @git_config_user_name";
 
     # Set user email
-    my $user_email = $self->app->dbi->model('user')->select('email', where => {id => $user})->value;
+    my $user_email = $self->app->dbi->model('user')->select('email',
+      where => {id => $rep_info->user}
+    )->value;
     my @git_config_user_email = $self->app->git->cmd(
       $work_rep_info,
       'config',
@@ -275,9 +274,9 @@ sub admin_user {
 }
 
 sub fork_project {
-  my ($self, $forked_user_id, $forked_project_id, $user_id, $project_id, $single, $description) = @_;
+  my ($self, $forked_rep_info, $rep_info, $single, $description) = @_;
 
-  my $user_row_id = $self->api->get_user_row_id($user_id);
+  my $user_row_id = $self->api->get_user_row_id($rep_info->user);
 
   # Fork project
   my $dbi = $self->app->dbi;
@@ -288,14 +287,16 @@ sub fork_project {
       # Original project id
       my $project = $dbi->model('project')->select(
         {__MY__ => ['row_id', 'private']},
-        where => {'user.id' => $user_id, 'project.id' => $project_id}
+        where => {
+          'user.id' => $rep_info->user,
+          'project.id' => $rep_info->project
+        }
       )->one;
 
       # Create project
       eval {
         $self->_create_project(
-          $forked_user_id,
-          $forked_project_id,
+          $forked_rep_info,
           {
             original_project => $project->{row_id},
             private => $project->{private}
@@ -306,7 +307,7 @@ sub fork_project {
 
       # Create repository
       eval {
-        $self->_fork_rep($user_id, $project_id, $forked_user_id, $forked_project_id, $single, $description);
+        $self->_fork_rep($rep_info, $forked_rep_info, $single, $description);
       };
       croak $error = $@ if $@;
     });
@@ -325,13 +326,13 @@ sub is_admin {
 }
 
 sub is_private_project {
-  my ($self, $user_id, $project_id) = @_;
+  my ($self, $rep_info) = @_;
 
-  my $user_row_id = $self->api->get_user_row_id($user_id);
+  my $user_row_id = $self->api->get_user_row_id($rep_info->user);
 
   # Is private
   my $private = $self->app->dbi->model('project')->select(
-    'private', where => {user => $user_row_id, id => $project_id}
+    'private', where => {user => $user_row_id, id => $rep_info->project}
   )->value;
 
   return $private;
@@ -341,7 +342,7 @@ sub api { shift->app->gitprep_api }
 
 
 sub member_projects {
-  my ($self, $user_id, $project_id, $scope) = @_;
+  my ($self, $rep_info, $scope) = @_;
 
   # Scope values:
   # one: direct children (default).
@@ -381,7 +382,7 @@ sub member_projects {
       {__MY__ => ['row_id', 'id', 'original_project']},
       {user => ['id']}
     ],
-    where => {'user.id' => $user_id, 'project.id' => $project_id}
+    where => {'user.id' => $rep_info->user, 'project.id' => $rep_info->project}
   )->one;
 
   return \@results unless $project
@@ -413,7 +414,7 @@ sub member_projects {
 }
 
 sub create_project {
-  my ($self, $user_id, $project_id, $opts) = @_;
+  my ($self, $rep_info, $opts) = @_;
 
   my $params = {};
   $opts //= {};
@@ -427,9 +428,9 @@ sub create_project {
 
   eval {
     $dbi->connector->txn(sub {
-      eval { $self->_create_project($user_id, $project_id, $params) };
+      eval { $self->_create_project($rep_info, $params) };
       croak $error = $@ if $@;
-      eval {$self->_create_rep($user_id, $project_id, $opts) };
+      eval {$self->_create_rep($rep_info, $opts) };
       croak $error = $@ if $@;
     });
   };
@@ -454,16 +455,16 @@ sub create_user {
 }
 
 sub delete_project {
-  my ($self, $user, $project) = @_;
+  my ($self, $rep_info) = @_;
 
   # Delete project
   my $dbi = $self->app->dbi;
   my $error;
   eval {
     $dbi->connector->txn(sub {
-      eval { $self->_delete_project($user, $project) };
+      eval { $self->_delete_project($rep_info) };
       croak $error = $@ if $@;
-      eval {$self->_delete_rep($user, $project) };
+      eval {$self->_delete_rep($rep_info) };
       croak $error = $@ if $@;
     });
   };
@@ -493,15 +494,15 @@ sub delete_user {
 }
 
 sub original_project {
-  my ($self, $user_id, $project_id) = @_;
+  my ($self, $rep_info) = @_;
 
-  my $user_row_id = $self->api->get_user_row_id($user_id);
+  my $user_row_id = $self->api->get_user_row_id($rep_info->user);
 
   # Original project id
   my $dbi = $self->app->dbi;
   my $original_project_row_id = $dbi->model('project')->select(
     'original_project',
-    where => {user => $user_row_id, id => $project_id}
+    where => {user => $user_row_id, id => $rep_info->project}
   )->value;
 
   croak "Original project doesn't exist." unless defined $original_project_row_id;
@@ -517,30 +518,7 @@ sub original_project {
     }
   )->one;
 
-  return unless defined $original_project;
-
   return $original_project;
-}
-
-sub child_project {
-  my ($self, $user_id, $project_id, $child_user_id) = @_;
-
-  my $project_row_id = $self->app->dbi->model('project')->select(
-    'project.row_id', where => {'user.id' => $user_id, 'project.id' => $project_id}
-  )->value;
-
-  my $child_project = $self->app->dbi->model('project')->select(
-    [
-      {__MY__ => '*'},
-      {user => ['id']}
-    ],
-    where => {
-      'project.original_project' => $project_row_id,
-      'user.id' => $child_user_id
-    }
-  )->one;
-
-  return $child_project;
 }
 
 sub projects {
@@ -570,7 +548,7 @@ sub users {
 }
 
 sub rename_project {
-  my ($self, $user, $project, $to_project) = @_;
+  my ($self, $rep_info, $to_project) = @_;
 
   # Rename project
   my $git = $self->app->git;
@@ -578,21 +556,17 @@ sub rename_project {
   my $error;
   eval {
     $dbi->connector->txn(sub {
-      eval { $self->_rename_project($user, $project, $to_project) };
+      eval { $self->_rename_project($rep_info, $to_project) };
       croak $error = $@ if $@;
 
-      eval { $self->_rename_rep($user, $project, $to_project,
-        sub { return shift; }); };
+      eval { $self->_rename_rep($rep_info, $to_project); };
       croak $error = $@ if $@;
-      eval { $self->_rename_rep($user, $project, $to_project,
-        sub { return shift->work; }); };
+      eval { $self->_rename_rep($rep_info->work, $to_project); };
       croak $error = $@ if $@;
-      if (-d Gitprep::Repository::Wiki->new($user, $project)->root) {
-        eval { $self->_rename_rep($user, $project, $to_project,
-          sub { return shift->wiki; }); };
+      if (-d $rep_info->wiki->root) {
+        eval { $self->_rename_rep($rep_info->wiki, $to_project); };
         croak $error = $@ if $@;
-        eval { $self->_rename_rep($user, $project, $to_project,
-          sub { return shift->wiki->work; }); };
+        eval { $self->_rename_rep($rep_info->wiki->work, $to_project); };
         croak $error = $@ if $@;
       }
     });
@@ -733,12 +707,12 @@ sub parse_authorized_keys_file {
 }
 
 sub _create_project {
-  my ($self, $user_id, $project_id, $params) = @_;
+  my ($self, $rep_info, $params) = @_;
 
-  my $user_row_id = $self->api->get_user_row_id($user_id);
+  my $user_row_id = $self->api->get_user_row_id($rep_info->user);
   $params ||= {};
   $params->{user} = $user_row_id;
-  $params->{id} = $project_id;
+  $params->{id} = $rep_info->project;
   $params->{created} //= $self->api->now;
 
   # Create project
@@ -747,7 +721,7 @@ sub _create_project {
     $dbi->model('project')->insert($params);
     # Auto-watch for owner.
     my $project_row_id = $dbi->model('project')->select('row_id',
-      where => {user => $user_row_id, id => $project_id}
+      where => {user => $user_row_id, id => $rep_info->project}
     )->value;
     $dbi->model('watch')->insert({
       user => $user_row_id,
@@ -757,14 +731,13 @@ sub _create_project {
 }
 
 sub _create_rep {
-  my ($self, $user, $project, $opts) = @_;
+  my ($self, $rep_info, $opts) = @_;
 
   chomp(my $default_branch = $opts->{default_branch} // 'master');
 
   # Create repository directory
   my $git = $self->app->git;
 
-  my $rep_info = Gitprep::Repository->new($user, $project);
   my $rep_git_dir = $rep_info->git_dir;
 
   mkdir $rep_git_dir
@@ -845,7 +818,7 @@ sub _create_rep {
         my $file = $work_rep_info->work_tree('README.md');
         open my $readme_fh, '>', $file
           or croak "Can't create $file: $!";
-        print $readme_fh "# $project\n";
+        print $readme_fh '# ' . $rep_info->project . "\n";
         print $readme_fh "\n" . encode('UTF-8', $description) . "\n";
         close $readme_fh;
 
@@ -863,13 +836,13 @@ sub _create_rep {
           $work_rep_info,
           'config',
           'user.name',
-          $user
+          $rep_info->user
         );
         Gitprep::Util::run_command(@git_config_user_name)
           or croak "Can't execute git config: @git_config_user_name";
 
         # Set user email
-        my $user_email = $self->app->dbi->model('user')->select('email', where => {id => $user})->value;
+        my $user_email = $self->app->dbi->model('user')->select('email', where => {id => $rep_info->user})->value;
         my @git_config_user_email = $git->cmd(
           $work_rep_info,
           'config',
@@ -920,12 +893,11 @@ sub _create_rep {
 }
 
 sub create_wiki_rep {
-  my ($self, $user, $project) = @_;
+  my ($self, $wiki_rep_info) = @_;
 
   # Create repository directory
   my $git = $self->app->git;
 
-  my $wiki_rep_info = Gitprep::Repository::Wiki->new($user, $project);
   my $wiki_rep_git_dir = $wiki_rep_info->git_dir;
 
   mkdir $wiki_rep_git_dir
@@ -964,10 +936,7 @@ sub create_wiki_rep {
 }
 
 sub create_wiki_work_rep {
-  my ($self, $user, $project) = @_;
-
-  # Remote repository
-  my $wiki_rep_info = Gitprep::Repository::Wiki->new($user, $project);
+  my ($self, $wiki_rep_info) = @_;
 
   # Working repository
   my $wiki_work_rep_info = $wiki_rep_info->work;
@@ -990,13 +959,13 @@ sub create_wiki_work_rep {
       $wiki_work_rep_info,
       'config',
       'user.name',
-      $user
+      $wiki_rep_info->user
     );
     Gitprep::Util::run_command(@git_config_user_name)
       or croak "Can't execute git config: @git_config_user_name";
 
     # Set user email
-    my $user_email = $self->app->dbi->model('user')->select('email', where => {id => $user})->value;
+    my $user_email = $self->app->dbi->model('user')->select('email', where => {id => $wiki_rep_info->user})->value;
     my @git_config_user_email = $self->app->git->cmd(
       $wiki_work_rep_info,
       'config',
@@ -1045,7 +1014,7 @@ sub _delete_db_user {
     }
   )->all;
   foreach my $project (@$projects) {
-    $self->_delete_project($user_id, $project->{id});
+    $self->_delete_project(Gitprep::Repository->new($user_id, $project->{id}));
   }
   $dbi->model('collaboration')->delete(where => {user => $row_id});
   $dbi->model('subscription')->delete(where => {user => $row_id});
@@ -1169,7 +1138,7 @@ sub _change_upstream_project {
 }
 
 sub _delete_project {
-  my ($self, $user_id, $project_id) = @_;
+  my ($self, $rep_info) = @_;
 
   # Delete project
 
@@ -1177,8 +1146,8 @@ sub _delete_project {
   my $project = $dbi->model('project')->select(
     {__MY__ => '*'},
     where => {
-      'project.id' => $project_id,
-      'user.id' => $user_id
+      'project.id' => $rep_info->project,
+      'user.id' => $rep_info->user
     }
   )->one;
   my $row_id = $project->{row_id};
@@ -1211,8 +1180,8 @@ sub _delete_project {
   }
 
   # Delete project's wiki.
-  $self->_delete_wiki_rep($user_id, $project_id)
-    if -d Gitprep::Repository::Wiki->new($user_id, $project_id)->root;
+  $self->_delete_wiki_rep($rep_info->wiki)
+    if -d $rep_info->wiki->root;
 
   $dbi->model('collaboration')->delete(where => {project => $row_id});
   $dbi->model('watch')->delete(where => {project => $row_id});
@@ -1221,13 +1190,12 @@ sub _delete_project {
 }
 
 sub _delete_rep {
-  my ($self, $user, $project) = @_;
+  my ($self, $rep_info) = @_;
 
   # Delete repository
   my $rep_home = Gitprep::Repository->home;
   croak "Can't remove repository. repository home is empty"
     if !defined $rep_home || $rep_home eq '';
-  my $rep_info = Gitprep::Repository->new($user, $project);
   for my $ri ($rep_info, $rep_info->work) {
     my $rep = $ri->root;
     if (-e $rep) {
@@ -1239,21 +1207,19 @@ sub _delete_rep {
 }
 
 sub _delete_wiki_rep {
-  my ($self, $user, $project) = @_;
+  my ($self, $wiki_rep_info) = @_;
 
   # Delete wiki repository
-  my $rep_info = Gitprep::Repository::Wiki->new($user, $project);
-  for my $ri ($rep_info, $rep_info->work) {
+  for my $ri ($wiki_rep_info, $wiki_rep_info->work) {
     my $rep =  $ri->root;
     if (-e $rep) {
       rmtree $rep;
-      croak "Can't remove wiki repository"
-        if -e $rep;
+      croak "Can't remove wiki repository" if -e $rep;
     }
   }
 }
 
-sub exists_project {
+sub project_exists {
   my ($self, $user_id, $project_id) = @_;
 
   my $user_row_id = $self->api->get_user_row_id($user_id);
@@ -1265,7 +1231,7 @@ sub exists_project {
   return $row ? 1 : 0;
 }
 
-sub exists_user {
+sub user_exists {
   my ($self, $user_id) = @_;
 
   # Return true if user exists.
@@ -1274,22 +1240,11 @@ sub exists_user {
   return $row ? 1 : 0;
 }
 
-sub _exists_rep {
-  my ($self, $user, $project) = @_;
-
-  # Exists repository
-  my $rep_info = Gitprep::Repository->new($user, $project);
-  return -e $rep_info->git_dir;
-}
-
 sub _fork_rep {
-  my ($self, $user_id, $project_id, $to_user_id, $to_project_id, $single, $description) = @_;
+  my ($self, $rep_info, $to_rep_info, $single, $description) = @_;
 
   # Fork repository
   my $git = $self->app->git;
-
-  my $rep_info = Gitprep::Repository->new($user_id, $project_id);
-  my $to_rep_info = Gitprep::Repository->new($to_user_id, $to_project_id);
 
   my @cmd = (
     $git->bin,
@@ -1313,35 +1268,33 @@ sub _fork_rep {
 }
 
 sub _rename_project {
-  my ($self, $user_id, $project_id, $renamed_project_id) = @_;
+  my ($self, $rep_info, $renamed_project_id) = @_;
 
-  my $user_row_id = $self->api->get_user_row_id($user_id);
+  my $user_row_id = $self->api->get_user_row_id($rep_info->user);
 
   # Check arguments
   croak "Invalid parameters(_rename_project)"
-    unless defined $user_id && defined $project_id && defined $renamed_project_id;
+    unless defined $rep_info && defined $renamed_project_id;
 
   # Rename project
   my $dbi = $self->app->dbi;
   $dbi->model('project')->update(
     {id => $renamed_project_id},
-    where => {user => $user_row_id, id => $project_id}
+    where => {user => $user_row_id, id => $rep_info->project}
   );
 }
 
 sub _rename_rep {
-  my ($self, $user, $project, $renamed_project, $info_func) = @_;
+  my ($self, $rep_info, $renamed_project) = @_;
 
   # Check arguments
   croak "Invalid user name or project"
-    unless defined $user && defined $project && defined $renamed_project;
+    unless defined $rep_info && defined $renamed_project;
 
   # Rename repository
-  my $rep_info = $info_func->(Gitprep::Repository->new($user, $project));
   my $rep_root = $rep_info->root;
 
-  my $renamed_rep_info =
-    $info_func->(Gitprep::Repository->new($user, $renamed_project));
+  my $renamed_rep_info = $rep_info->new(undef, $renamed_project);
   my $renamed_rep_root = $renamed_rep_info->root;
 
   if (-e $rep_root) {

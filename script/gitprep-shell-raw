@@ -63,7 +63,7 @@ if ($session_user_id eq $user_id) {
   $can_access = 1;
 }
 else {
-  $can_access = $app->gitprep_api->is_collaborator($session_user_id, $user_id, $rep_info->project);
+  $can_access = $app->gitprep_api->is_collaborator($session_user_id, $rep_info);
 }
 die qq|User "$session_user_id" can't access repository "$user_id/$project_id.git"\n|
   unless $can_access;

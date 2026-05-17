@@ -11,12 +11,9 @@
   my $user_id = param('user');
   my $project_id = param('project');
   my $rev_file = param('rev_file');
+  my $mime = param('mime');
 
   my $is_wiki = (stash('tab') // '') eq 'wiki';
-  my $user_id_project_path = "/$user_id/$project_id";
-  if ($is_wiki) {
-    $user_id_project_path .= '/wiki';
-  }
   my $rep_info = Gitprep::Repository->new($user_id, $project_id);
   $rep_info = $rep_info->wiki if $is_wiki;
 
@@ -47,7 +44,7 @@
 
   # MIME type
   my ($media_type, $media_subtype) = split '/',
-    lc($git->blob_mime_type($rep_info, $rev, $file));
+    lc($mime // $git->blob_mime_type($rep_info, $rev, $file));
 
   # Call a blob sub-template.
   local *call_template = sub {
@@ -57,8 +54,7 @@
                       file => $file,
                       media_type => $media_type,
                       media_subtype => $media_subtype,
-                      rep_info => $rep_info,
-                      user_id_project_path => $user_id_project_path
+                      rep_info => $rep_info
     };
     my $html = $self->render_to_string($template, blob_params => $blob_params,
                                        'mojo.maybe' => 1);
@@ -69,7 +65,7 @@
 
   # Try using a subtype-specific template.
   my $blob_params;
-  $blob_params = call_template("/blob/$media_type/$media_subtype") unless param('subtype') // '' eq 'no';
+  $blob_params = call_template("/blob/$media_type/$media_subtype") if defined $media_subtype;
 
   # Fall back to a type-specific template.
   $blob_params = call_template("/blob/$media_type") unless $blob_params;
@@ -114,11 +110,16 @@
             %== $blob_params->{header_right};
           % }
           <ul>
+            % if (defined $mime) {
+              <li>
+                <a class="btn btn-small" href="<%= url_for($rep_info->url("blob/$rev/$file")) %>">Preview</a>
+              </li>
+            % }
             % if (defined $blob_params->{buttons}) {
               %== $blob_params->{buttons};
             % }
             <li>
-              <a class="btn btn-small" href="<%= url_for("$user_id_project_path/raw/$rev/$file") %>">Raw</a>
+              <a class="btn btn-small" href="<%= url_for($rep_info->url("raw/$rev/$file")) %>">Raw</a>
             </li>
           </ul>
         </div>
@@ -128,14 +129,14 @@
       %= $blob_params->{html};
     % } else {
       <div class="blob-raw">
-        <a href="<%= url_for("$user_id_project_path/raw/$rev/$file") %>">View raw</a>
+        <a href="<%= url_for($rep_info->url("raw/$rev/$file")) %>">View raw</a>
       </div>
     % }
   </div>
 
   %= javascript '/js/google-code-prettify/prettify.js';
   %= javascript begin
-    // Google prety print
+    // Google pretty print
     prettyPrint();
   % end
 

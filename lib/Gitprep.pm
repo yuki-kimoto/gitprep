@@ -49,7 +49,7 @@ sub sign {
 }
 
 sub _http_authenticate {
-  my ($c, $user_id, $project_id) = @_;
+  my ($c, $rep_info) = @_;
 
   # Request and check HTTP authentication.
   my $api = $c->gitprep_api;
@@ -63,8 +63,8 @@ sub _http_authenticate {
     $auth_user_id = '' unless defined $auth_user_id;
     $auth_password = '' unless defined $auth_password;
 
-    my $is_valid = ($user_id eq $auth_user_id ||
-      $api->is_collaborator($auth_user_id, $user_id, $project_id)) &&
+    my $is_valid = ($rep_info->user eq $auth_user_id ||
+      $api->is_collaborator($auth_user_id, $rep_info)) &&
       $api->check_user_and_password($auth_user_id, $auth_password);
     $c->stash('auth_user_id', $auth_user_id) if $is_valid;
     return $is_valid;
@@ -392,11 +392,11 @@ sub startup {
           {
             $request_login = 1;
 
-            if ($api->logined) {
+            if ($api->logged_in) {
               $request_login = 0;
             }
 
-            if ($path eq '_login' && !$api->logined_admin) {
+            if ($path eq '_login' && !$api->logged_in_as_admin) {
               $request_login = 0;
             }
 
@@ -407,7 +407,7 @@ sub startup {
           }
 
           # Admin
-          if ($path eq '_admin' && !$api->logined_admin) {
+          if ($path eq '_admin' && !$api->logged_in_as_admin) {
             $request_login = 1;
           }
 
@@ -432,7 +432,7 @@ sub startup {
           $r->under(sub {
             my $self = shift;
             my $user_id = $self->param('user');
-            return 1 if $self->app->manager->exists_user($user_id);
+            return 1 if $self->app->manager->user_exists($user_id);
             $self->reply->not_found;
           });
 
@@ -461,12 +461,12 @@ sub startup {
                 $project_id);
               $self->log->info("user: $user_id project $project_id");
 
-              unless ($self->app->manager->exists_project($user_id, $rep_info->project) && -d $rep_info->root) {
+              unless ($self->app->manager->project_exists($rep_info->user, $rep_info->project) && -d $rep_info->root) {
                 $self->reply->not_found;
                 return 0;
               }
 
-              my $private = $self->app->manager->is_private_project($user_id, $rep_info->project);
+              my $private = $self->app->manager->is_private_project($rep_info);
 
 
               if ($conf->{basic}{hide_from_public})
@@ -478,7 +478,7 @@ sub startup {
               my $service = $self->param('service') || '';
               if ($service eq 'git-receive-pack' || $private ||
                 defined($self->req->url->to_abs->userinfo)) {
-                  return _http_authenticate($self, $user_id, $rep_info->project);
+                  return _http_authenticate($self, $rep_info);
               }
               else {
                 return 1;
@@ -488,11 +488,8 @@ sub startup {
             # /
             $r->get('/')->to(cb => sub {
               my $self = shift;
-
-              my $user_id = $self->param('user');
-              my $project_id = $self->param('project');
-
-              $self->redirect_to("/$user_id/$project_id");
+              my $rep_info = Gitprep::Repository->maybe_wiki($self->param('user'), $self->param('project'));
+              $self->redirect_to($rep_info->url);
             });
 
             # /info/refs
@@ -508,7 +505,7 @@ sub startup {
                          my $self = shift;
 	                 my $rep_info = Gitprep::Repository->maybe_wiki($self->param('user'), $self->param('project'));
                          if ($self->param('service') ne 'receive-pack' ||
-                             _http_authenticate($self, $rep_info->user, $rep_info->project)) {
+                             _http_authenticate($self, $rep_info)) {
                            $self->render_maybe('smart-http/service');
                          }
                        }
@@ -529,9 +526,10 @@ sub startup {
 
               my $user_id = $self->param('user');
               my $project_id = $self->param('project');
+              my $rep_info = Gitprep::Repository->new($user_id, $project_id);
 
               # Early project existence check
-              if (!$self->app->manager->exists_project($user_id, $project_id)) {
+              if (!$self->app->manager->project_exists($user_id, $project_id)) {
                 $self->reply->not_found;
                 return 0;
               }
@@ -540,9 +538,9 @@ sub startup {
               my $api = $self->gitprep_api;
 
               # Private
-              my $private = $self->app->manager->is_private_project($user_id, $project_id);
+              my $private = $self->app->manager->is_private_project($rep_info);
               if ($private) {
-                if ($api->can_access_private_project($user_id, $project_id)) {
+                if ($api->can_access_private_project($rep_info)) {
                   return 1;
                 }
                 else {
@@ -630,10 +628,10 @@ sub startup {
               $r->post('/api/fold/*rev_file' => sub { shift->render_maybe('/api/diff_fold'); });
 
               # Edit wiki page
-              $r->any('/#title/_edit')->to(edit => 1);
+              $r->any('/*title/_edit')->to(edit => 1);
 
               # Show wiki page
-              $r->any('/#title');
+              $r->any('/*title');
             }
 
             # Commit

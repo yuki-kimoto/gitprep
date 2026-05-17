@@ -14,8 +14,8 @@
   my $git = $self->app->git;
 
   my $session_user_id = $api->session_user_id;
-  my $canadmin = $api->logined && $api->can_write_access($session_user_id, $user_id, $project_id);
   my $rep_info = Gitprep::Repository->new($user_id, $project_id);
+  my $canadmin = $api->logged_in && $api->can_write_access($session_user_id, $rep_info);
 
   # Default branch
   my $default_branch_name = $git->current_branch($rep_info);
@@ -44,7 +44,7 @@
   local *allowed = sub {
     my ($action, $name) = @_;
 
-    return 0 unless $api->logined;
+    return 0 unless $api->logged_in;
     my ($rule) = map $_->{id} eq $action? $_: (), @$rules;
     foreach my $ruleset (@{$rule->{sets} // []}) {
       if ($session_user_id ne $user_id || !$ruleset->{owner_bypass}) {
@@ -314,7 +314,7 @@
           <div class="pull-request-column">
             <div style="display:flex;justify-content:center;">
               % if ($branch_name ne $default_branch_name) {
-                % if ($api->logined) {
+                % if ($api->logged_in) {
                   % if ($pull_request) {
                     % if ($issue->{status} =~ /open|draft/) {
                       <a class="branches-open" href="<%= url_for("/$user/$project/pull/$issue->{number}") %>" title="<%=$issue->{title} %>">

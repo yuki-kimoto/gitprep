@@ -83,13 +83,13 @@
 
 
   # Session
-  my $loggedin = $api->logined;
+  my $loggedin = $api->logged_in;
   my $session_user_row_id = $api->session_user_row_id;
   my $session_user_id = $api->session_user_id;
 
   # Permissions
   my $canadmin = $loggedin &&
-    $api->can_write_access($session_user_id, $base_user_id, $base_project_id);
+    $api->can_write_access($session_user_id, $base_rep_info);
   my $isissuer = $loggedin && $session_user_row_id == $issue->{open_user};
 
   # Message validation function
@@ -214,7 +214,7 @@
       my $json = {success => 0};
       if (validate_message($message)->is_valid) {
         $json = $api->api_update_issue_message($issue_message_row_id,
-          $message, $base_user_id, $base_project_id, $base_branch);
+          $message, $base_rep_info, $base_branch);
       }
 
       $self->render(json => $json);
@@ -237,7 +237,7 @@
       my $validation = validate_message($message);
       if ($validation->is_valid) {
 
-        my $msgno = $api->add_issue_message($base_user_id, $base_project_id,
+        my $msgno = $api->add_issue_message($base_rep_info,
                                             $issue_number, $message);
 
         # Subscriptions.
@@ -246,7 +246,7 @@
 
         # Notifications.
         my $issuekind = $issue->{pull_request}? 'pull': 'issues';
-        $api->notify_subscribed($base_user_id, $base_project_id, $base_branch,
+        $api->notify_subscribed($base_rep_info, $base_branch,
                                 "$issue->{title} (#$issue_number)",
                                 $api->session_user_row_id, $message,
                                 "comment-$msgno", "$issuekind/$issue_number",
@@ -334,7 +334,7 @@
     my $work_rep_info = $base_rep_info->work;
 
     # Make sure the working repository exists.
-    app->manager->create_work_rep($base_user_id, $base_project_id);
+    app->manager->create_work_rep($base_rep_info);
 
     # Display patch
     if (stash('patch')) {
@@ -532,9 +532,9 @@
     $http_rep_url = url_for("$target_user_id/$target_project_id.git")->to_abs;
 
     # SSH repository URL
-    $ssh_rep_url = $api->ssh_rep_url($user, $project);
+    $ssh_rep_url = $api->ssh_rep_url($target_rep_info);
 
-    $patch_url = url_for("/$base_user_id/$base_project_id/pull/$issue->{number}.patch")->to_abs;
+    $patch_url = url_for($base_rep_info->url("pull/$issue->{number}.patch"))->to_abs;
 
     # commit_body args
     %commit_body_args = (
@@ -962,7 +962,7 @@ git push origin <%= $base_branch %>
                 </li>
               % }
             </ul>
-            % if ($api->logined) {
+            % if ($api->logged_in) {
               <div id="subscription-frame" class="issue-subscription">
                 %= include '/api/subscribe', issue => $issue->{row_id}, reason => undef;
               </div>

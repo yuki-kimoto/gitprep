@@ -20,7 +20,7 @@
   )->one;
 
   # Projects
-  unless (app->manager->exists_user($user_id)) {
+  unless (app->manager->user_exists($user_id)) {
     $self->reply->not_found;
     return;
   }
@@ -54,11 +54,11 @@
 
         <ul class="repositories">
           % for my $rep (sort { ($b->{updated} || 0) <=> ($a->{updated} || 0) } @$reps) {
-            % if (!$rep->{private} || $api->can_access_private_project($user_id, $rep->{id})) {
+            % my $rep_info = Gitprep::Repository->new($user_id, $rep->{id});
+            % if (!$rep->{private} || $api->can_access_private_project($rep_info)) {
               <li>
-                % my $project_id = $rep->{id};
                 <div class="repositories-name">
-                  <a href="<%= url_for("/$user_id/$project_id") %>">
+                  <a href="<%= url_for($rep_info->url) %>">
                     <%= $rep->{id} %>
                   </a>
                   % if ($rep->{private}) {

@@ -13,7 +13,7 @@
   my $rep = app->git->repository($rep_info);
 
   # Can fork?
-  unless ($api->logined && $rep->{updated}) {
+  unless ($api->logged_in && $rep->{updated}) {
     $self->redirect_to('/');
     return;
   }
@@ -46,7 +46,7 @@
 
     if ($op eq 'fork') {
       my $single = param('single');
-      eval { app->manager->fork_project($session_user_id, $forked_project_id, $user_id, $project_id, $single, $description) };
+      eval { app->manager->fork_project(Gitprep::Repository->new($session_user_id, $forked_project_id), $rep_info, $single, $description) };
       if (my $e = $@) {
         $self->reply->exception('Internal Error');
         app->log->error(url_for . ": $e");
@@ -67,7 +67,7 @@
   my $description = $rep->{full_description};
   my $default_branch = app->git->current_branch($rep_info);
 
-  my $members = app->manager->member_projects($user_id, $project_id, 'all');
+  my $members = app->manager->member_projects($rep_info, 'all');
   my $siblings = [sort {$a->{id} cmp $b->{id}} (grep $_->{'user.id'} eq $session_user_id, @$members)];
 %>
 

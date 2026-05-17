@@ -10,8 +10,6 @@
   $rev = '' unless defined $rev;
   my $branches = stash('branches');
 
-  my $logined = $api->logined;
-
   my $type
     = $display eq 'tree' || $display eq 'tree_top' || $display eq 'blob'
     ? 'tree' : 'commits';

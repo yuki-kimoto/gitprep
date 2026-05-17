@@ -10,9 +10,10 @@
 
   # Blob parameters
   my $p = stash('blob_params');
+  my $rep_info = $p->{rep_info};
   my $sep_char = stash('sep_char') // ',';
 
-  my $lines = $git->blob($p->{rep_info}, $p->{rev}, $p->{file});
+  my $lines = $git->blob($rep_info, $p->{rev}, $p->{file});
   return unless @$lines;
 
   # Parse lines.
@@ -26,8 +27,8 @@
 
   # Set-up header fields.
   $p->{header_left} = $api->plural('lines', scalar(@$lines), 'No');
-  $p->{buttons} = '<li><a class=btn btn-small" href="' . url_for("$p->{user_id_project_path}/blob/$p->{rev}/$p->{file}")->query(subtype => 'no') . '">Code</a></li>';
-  $p->{buttons} .= '<li><a class=btn btn-small" href="' . url_for("$p->{user_id_project_path}/blame/$p->{rev}/$p->{file}") . '">Blame</a></li>';
+  $p->{buttons} = '<li><a class=btn btn-small" href="' . url_for($rep_info->url("blob/$p->{rev}/$p->{file}"))->query(mime => $p->{media_type}) . '">Code</a></li>';
+  $p->{buttons} .= '<li><a class=btn btn-small" href="' . url_for($rep_info->url("blame/$p->{rev}/$p->{file}")) . '">Blame</a></li>';
 
   my $lineno = 1;
   my $fieldtag = 'th';

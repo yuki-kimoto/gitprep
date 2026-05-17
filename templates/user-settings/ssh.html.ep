@@ -9,7 +9,7 @@
   my $user_id = param('user') || '';
 
   # Authentication
-  unless ($api->logined($user_id)) {
+  unless ($api->logged_in($user_id)) {
     $self->redirect_to('/');
     return;
   }

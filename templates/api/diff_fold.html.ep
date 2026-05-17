@@ -13,10 +13,6 @@
   my $git = app->git;
 
   my $is_wiki = (stash('tab') // '') eq 'wiki';
-  my $user_id_project_path = "/$user_id/$project_id";
-  if ($is_wiki) {
-    $user_id_project_path .= '/wiki';
-  }
   my $rep_info = Gitprep::Repository->new($user_id, $project_id);
   $rep_info = $rep_info->wiki if $is_wiki;
   my ($rev, $file) = $git->parse_rev_path($rep_info, $rev_file);

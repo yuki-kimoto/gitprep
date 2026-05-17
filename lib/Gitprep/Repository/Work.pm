@@ -10,17 +10,15 @@ my $home;
 # Create a new work repository information object.
 sub new {
   my $self = shift;
-  my $origin = $_[0];
+  my $origin = $self;
 
-  unless (ref($origin)) {
-    $origin = $self;
-    $origin = Gitprep::Repository->new(@_) unless ref($origin);
-  }
+  $origin = shift if ref($_[0]);
   $origin = $origin->origin if $origin->isa('Gitprep::Repository::Work');
+  $origin = $origin->new(@_);
 
   return bless {
     origin => $origin
-  }, $self;
+  }, __PACKAGE__;
 }
 
 sub origin { return shift->{origin}; }

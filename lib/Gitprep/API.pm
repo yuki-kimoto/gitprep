@@ -26,20 +26,12 @@ sub wiki_safe_title {
   return $title;
 }
 
-# Convert markdown to html with [[...]] wiki links.
-sub markdown_wiki {
-  my ($self, $user_id, $project_id, $content) = @_;
-  my $rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
-
-  return $self->markdown($content, $rep_info, rev => 'master');
-}
-
 sub sync_wiki_work {
   my ($self, $wiki_rep_info) = @_;
   my $wiki_work_rep_info = $wiki_rep_info->work;
 
-  $self->app->manager->create_wiki_work_rep($wiki_rep_info->user,
-    $wiki_rep_info->project) unless -d $wiki_work_rep_info->root;
+  $self->app->manager->create_wiki_work_rep($wiki_rep_info)
+    unless -d $wiki_work_rep_info->root;
 
   if (-f $wiki_rep_info->git_dir('refs/heads/master')) {
     $self->app->manager->set_remote($wiki_work_rep_info,
@@ -56,28 +48,22 @@ sub sync_wiki_work {
 }
 
 sub wiki_file_exists {
-  my ($self, $user_id, $project_id, $file_name) = @_;
+  my ($self, $rep_info, $file_name) = @_;
 
-  my $wiki_work_rep_info = Gitprep::Repository::Wiki->new($user_id,
-    $project_id)->work;
-
-  # File abs name
-  my $file_abs_name = $wiki_work_rep_info->work_tree($file_name);
-
-  return -f encode('UTF-8', $file_abs_name);
+  my $wiki_work_rep_info = $rep_info->wiki->work;
+  return -f encode('UTF-8', $wiki_work_rep_info->work_tree($file_name));
 }
 
-sub exists_wiki_page {
-  my ($self, $user_id, $project_id, $title) = @_;
+sub wiki_page_exists {
+  my ($self, $rep_info, $title) = @_;
 
-  return $self->wiki_file_exists($user_id, $project_id, "$title.md");
+  return $self->wiki_file_exists($rep_info, "$title.md");
 }
 
 sub get_wiki_pages {
-  my ($self, $user_id, $project_id) = @_;
+  my ($self, $rep_info) = @_;
 
-  my $wiki_work_rep_info = Gitprep::Repository::Wiki->new($user_id,
-    $project_id)->work;
+  my $wiki_work_rep_info = $rep_info->wiki->work;
 
   # Open directory
   my $dir = $wiki_work_rep_info->work_tree;
@@ -101,10 +87,9 @@ sub get_wiki_pages {
 }
 
 sub get_wiki_page_content {
-  my ($self, $user_id, $project_id, $title) = @_;
+  my ($self, $rep_info, $title) = @_;
 
-  my $wiki_work_rep_info = Gitprep::Repository::Wiki->new($user_id,
-    $project_id)->work;
+  my $wiki_work_rep_info = $rep_info->wiki->work;
 
   # File name
   my $file_name = "$title.md";
@@ -128,12 +113,12 @@ sub get_wiki_page_content {
 }
 
 sub create_wiki_page {
-  my ($self, $user_id, $project_id, $title, $content, $commit_message) = @_;
-  my $wiki_rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
+  my ($self, $rep_info, $title, $content, $commit_message) = @_;
+  my $wiki_rep_info = $rep_info->wiki;
 
   # Create wiki if not yet done.
-  $self->app->manager->create_wiki_rep($user_id, $project_id)
-    unless (-d $wiki_rep_info->root);
+  $self->app->manager->create_wiki_rep($wiki_rep_info)
+    unless -d $wiki_rep_info->root;
   $self->sync_wiki_work($wiki_rep_info);
 
   # Update page
@@ -213,14 +198,13 @@ sub create_wiki_page {
 }
 
 sub rename_and_update_wiki_page {
-  my ($self, $user_id, $project_id, $original_title, $title, $content, $commit_message) = @_;
+  my ($self, $rep_info, $original_title, $title, $content, $commit_message) = @_;
+
+  my $wiki_rep_info = $rep_info->wiki;
+  my $wiki_work_rep_info = $wiki_rep_info->work;
 
   # Project row id
-  my $project_row_id = $self->get_project_row_id($user_id, $project_id);
-
-  # Update page
-  my $wiki_rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
-  my $wiki_work_rep_info = $wiki_rep_info->work;
+  my $project_row_id = $self->get_project_row_id($wiki_rep_info);
 
   # Original file name
   my $original_file_name = "$original_title.md";
@@ -235,6 +219,7 @@ sub rename_and_update_wiki_page {
   my $file_abs_name = $wiki_work_rep_info->work_tree($file_name);
   my $utf8_name = encode('UTF-8', $file_abs_name);
 
+  # Update page
   # Create file
   open my $fh, '>:encoding(UTF-8)', $utf8_name
     or die "Can't open file \"$utf8_name\": $!";
@@ -320,10 +305,10 @@ sub rename_and_update_wiki_page {
 }
 
 sub delete_wiki_page {
-  my ($self, $user_id, $project_id, $title) = @_;
+  my ($self, $rep_info, $title) = @_;
 
   # Wiki repository
-  my $wiki_rep_info = Gitprep::Repository::Wiki->new($user_id, $project_id);
+  my $wiki_rep_info = $rep_info->wiki;
 
   # Wiki working directory
   my $wiki_work_rep_info = $wiki_rep_info->work;
@@ -399,11 +384,11 @@ sub delete_wiki_page {
 }
 
 sub get_issue_count {
-  my ($self, $user_id, $project_id, $opt) = @_;
+  my ($self, $rep_info, $opt) = @_;
 
   $opt ||= {};
 
-  my $project_row_id = $self->get_project_row_id($user_id, $project_id);
+  my $project_row_id = $self->get_project_row_id($rep_info);
 
   my $where = $self->app->dbi->where;
   my $clause = ['and', ':project{=}'];
@@ -431,19 +416,20 @@ sub get_issue_count {
 }
 
 sub get_open_issue_count {
-  my ($self, $user_id, $project_id) = @_;
+  my ($self, $rep_info) = @_;
 
-  return $self->get_issue_count($user_id, $project_id, {pull => 0, status => ['open']});
+  return $self->get_issue_count($rep_info, {pull => 0, status => ['open']});
 }
 
 sub get_open_pull_request_count {
-  my ($self, $user_id, $project_id) = @_;
+  my ($self, $rep_info) = @_;
 
-  return $self->get_issue_count($user_id, $project_id, {pull => 1, status => ['open', 'draft']});
+  return $self->get_issue_count($rep_info,
+    {pull => 1, status => ['open', 'draft']});
 }
 
 sub api_update_issue_message {
-  my ($self, $issue_message_row_id, $message, $user_id, $project_id, $rev) = @_;
+  my ($self, $issue_message_row_id, $message, $rep_info, $rev) = @_;
 
   my $issue_message = $self->app->dbi->model('issue_message')->select(
     {user => ['id']}, where => {'issue_message.row_id' => $issue_message_row_id}
@@ -453,7 +439,7 @@ sub api_update_issue_message {
   my $session_user_id = $self->session_user_id;
 
   if ($session_user_id) {
-    my $is_my_project = $user_id eq $session_user_id;
+    my $is_my_project = $rep_info->user eq $session_user_id;
     my $is_my_comment = $issue_message->{'user.id'} eq $session_user_id;
     my $can_modify = $is_my_project || $is_my_comment;
 
@@ -469,11 +455,7 @@ sub api_update_issue_message {
         where => {row_id => $issue_message_row_id}
       );
 
-      my $markdown_message = $self->markdown(
-        $message,
-        Gitprep::Repository->new($user_id, $project_id),
-        rev => $rev
-      );
+      my $markdown_message = $self->markdown($message, $rep_info, rev => $rev);
 
       $json = {
         success => 1,
@@ -513,15 +495,15 @@ sub api_delete_issue_message {
 }
 
 sub add_issue_message {
-  my ($self, $user_id, $project_id, $number, $message) = @_;
+  my ($self, $rep_info, $project_id, $number, $message) = @_;
   my $issue_message_number;
 
   $self->app->dbi->connector->txn(sub {
     my $issue_row_id = $self->app->dbi->model('issue')->select(
       'issue.row_id',
       where => {
-        'project__user.id' => $user_id,
-        'project.id' => $project_id,
+        'project__user.id' => $rep_info->user,
+        'project.id' => $rep_info->project,
         number => $number
       }
     )->value;
@@ -621,8 +603,7 @@ sub markdown {
       my $replace = $self->cntl->url_for($rep_info->url($url));
       $replace = $replace->to_abs($site_url) if $site_url;
       $replace = "[$text]($replace)";
-      unless ($self->exists_wiki_page($rep_info->user,
-                                      $rep_info->project, $url)) {
+      unless ($self->wiki_page_exists($rep_info, $url)) {
         $replace = "<span class=\"wiki-link-no-title\">$replace</span>";
       }
       return $replace;
@@ -753,7 +734,9 @@ sub mentioned {
 }
 
 sub ssh_rep_url {
-  my ($self, $user_id, $repository) = @_;
+  my ($self, $rep_info) = @_;
+  my $user_id = $rep_info->user;
+  my $repository = $rep_info->project;
 
   my $config = $self->app->config;
   my $user = $config->{basic}{ssh_user} || getpwuid($>);
@@ -1146,8 +1129,10 @@ sub subscribe_mentioned {
 }
 
 sub notify_subscribed {
-  my ($self, $user, $project, $rev, $title, $sender_row_id, $message,
+  my ($self, $rep_info, $rev, $title, $sender_row_id, $message,
       $message_id, $path_suffix, $issue_row_id) = @_;
+  my $user = $rep_info->user;
+  my $project = $rep_info->project;
 
   $self->app->{mailtransport} || return;
 
@@ -1166,7 +1151,7 @@ sub notify_subscribed {
       clause => ['and', ':user{!=}', ':project{=}'],
       param => {
         user => $sender_row_id,
-        project => $self->get_project_row_id($user, $project)
+        project => $self->get_project_row_id($rep_info)
       }
     ))->all;
 
@@ -1250,12 +1235,15 @@ sub get_user_row_id {
 }
 
 sub get_project_row_id {
-  my ($self, $user_id, $project_id) = @_;
+  my ($self, $rep_info) = @_;
 
-  my $user_row_id = $self->app->dbi->model('user')->select('row_id', where => {id => $user_id})->value;
+  my $user_row_id = $self->app->dbi->model('user')->select(
+    'row_id',
+    where => {id => $rep_info->user}
+  )->value;
   my $project_row_id = $self->app->dbi->model('project')->select(
     'row_id',
-    where => {user => $user_row_id, id => $project_id}
+    where => {user => $user_row_id, id => $rep_info->project}
   )->value;
 
   return $project_row_id;
@@ -1299,11 +1287,11 @@ sub check_user_and_password {
 }
 
 sub is_collaborator {
-  my ($self, $collaborator_id, $user_id, $project_id) = @_;
+  my ($self, $collaborator_id, $rep_info) = @_;
 
-  my $user_row_id = $self->get_user_row_id($user_id);
+  my $user_row_id = $self->get_user_row_id($rep_info->user);
   my $project_row_id = $self->app->dbi->model('project')->select(
-    where => {user => $user_row_id, id => $project_id}
+    where => {user => $user_row_id, id => $rep_info->project}
   )->value;
   my $collaborator_row_id = $self->get_user_row_id($collaborator_id);
 
@@ -1315,7 +1303,7 @@ sub is_collaborator {
 }
 
 sub can_access_private_project {
-  my ($self, $user_id, $project_id) = @_;
+  my ($self, $rep_info) = @_;
 
   my $session_user_row_id = $self->cntl->session('user_row_id');
   return unless defined $session_user_row_id;
@@ -1325,22 +1313,23 @@ sub can_access_private_project {
   )->value;
 
   my $is_valid =
-    ($user_id eq $session_user_id || $self->is_collaborator($session_user_id, $user_id, $project_id))
-    && $self->logined;
+    ($rep_info->user eq $session_user_id ||
+    $self->is_collaborator($session_user_id, $rep_info))
+    && $self->logged_in;
 
   return $is_valid;
 }
 
 sub can_write_access {
-  my ($self, $session_user_id, $user_id, $project_id) = @_;
+  my ($self, $session_user_id, $rep_info) = @_;
 
   return unless $session_user_id;
 
   my $can_write_access
     = length $session_user_id &&
     (
-      $session_user_id eq $user_id
-      || $self->is_collaborator($session_user_id, $user_id, $project_id)
+      $session_user_id eq $rep_info->user ||
+        $self->is_collaborator($session_user_id, $rep_info)
     );
 
   return $can_write_access;
@@ -1354,16 +1343,16 @@ sub new {
   return $self;
 }
 
-sub logined_admin {
+sub logged_in_as_admin {
   my $self = shift;
 
   # Controler
   my $c = $self->cntl;
 
-  # Check logined as admin
+  # Check if logged in as admin
   my $session_user_id = $self->session_user_id;
 
-  return $self->app->manager->is_admin($session_user_id) && $self->logined($session_user_id);
+  return $self->app->manager->is_admin($session_user_id) && $self->logged_in($session_user_id);
 }
 
 sub session_user_row_id {
@@ -1385,7 +1374,7 @@ sub session_user_id {
   return $session_user_id;
 }
 
-sub logined {
+sub logged_in {
   my ($self, $user_id) = @_;
 
   my $c = $self->cntl;
@@ -1402,15 +1391,15 @@ sub logined {
   )->value;
   return unless defined $correct_password;
 
-  my $logined;
+  my $logged_in;
   if (defined $user_id) {
-    $logined = $user_id eq $session_user_id && $password eq $correct_password;
+    $logged_in = $user_id eq $session_user_id && $password eq $correct_password;
   }
   else {
-    $logined = $password eq $correct_password
+    $logged_in = $password eq $correct_password
   }
 
-  return $logined;
+  return $logged_in;
 }
 
 sub params {
