@@ -1,0 +1,133 @@
+<%
+  use Mojo::DOM;
+  use Mojo::JSON qw(decode_json);
+
+  # API
+  my $api = gitprep_api;
+
+  # Git 
+  my $git = $self->app->git;
+
+  # Blob parameters
+  my $p = stash('blob_params');
+  my $rep_info = $p->{rep_info};
+
+  my $lines = $git->blob($rep_info, $p->{rev}, $p->{file});
+  return unless @$lines;
+
+  # Set-up header fields.
+  # Although having an application mime type, json is text.
+  $p->{header_left} = $api->plural('lines', scalar(@$lines), 'No');
+  $p->{buttons} = '<li><a class=btn btn-small" href="' . url_for($rep_info->url("blob/$p->{rev}/$p->{file}"))->query(mime => 'text') . '">Code</a></li>';
+  $p->{buttons} .= '<li><a class=btn btn-small" href="' . url_for($rep_info->url("blame/$p->{rev}/$p->{file}")) . '">Blame</a></li>';
+
+  my $json = decode_json(join "\n", @$lines);
+  return unless defined $lines;
+
+  local *JSON_to_DOM = sub {
+    local *escape_string = sub {
+      my ($s, $delim) = @_;
+      $delim //= '"';
+      my $d = $delim;
+
+      my %map = (
+        "\b" => '\\b',
+        "\f" => '\\f',
+        "\n" => '\\n',
+        "\r" => '\\r',
+        "\t" => '\\t',
+        '\\' => '\\\\',
+        '-' => "\x{2011}",    # Non-breaking hyphen.
+        ' ' => "\x{00A0}",    # Non-paddable space.
+      );
+
+      for my $c (split //, $s) {
+        if (defined $map{$c}) {
+          $c = $map{$c};
+        }
+        elsif ($c eq $delim) {
+          $c = "\\$c";
+        }
+        elsif (ord($c) < 0x20) {
+          $c = sprintf('\\u%04X', ord($c));
+        }
+        $d .= $c;
+      }
+
+      return "$d$delim";
+    };
+
+    local *details_with_summary = sub {
+      my ($labels, $values, $label_kind, $summary_text) = @_;
+      my $details = $api->DOM_element('details');
+      $api->DOM_add_class($details, 'empty') unless @$labels;
+      my $summary = $api->DOM_element('summary', class => 'gp-tree',
+        $api->DOM_text($summary_text));
+      $details->append_content($summary);
+      if (@$labels) {
+        my $table = $api->DOM_element('div', class => 'gp-tree table');
+        for my $i (0 .. @$labels - 1) {
+          my $row = $api->DOM_element('div', class => 'gp-tree row');
+          my $key_text = $api->DOM_element('div',
+                                             class => 'gp-tree key-text',
+            $api->DOM_text($labels->[$i]));
+          $row->append_content($api->DOM_element('div',
+            class => "gp-tree cell $label_kind", $key_text));
+          my $cell = JSON_to_DOM($values->[$i]);
+          $api->DOM_add_class($cell, 'cell');
+          $row->append_content($cell);
+          $table->append_content($row);
+        }
+        $details->append_content($table);
+      }
+      return $details;
+    };
+
+    my ($node) = @_;
+    my $dom;
+
+    if (!defined $node) {
+      $dom = $api->DOM_element('div', class => 'null', $api->DOM_text('null'));
+    }
+    elsif (!ref $node) {
+      $dom = $api->DOM_element('div');
+      if ($node =~ /^-?(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]\d+)?$/) {
+        $api->DOM_add_class($dom, 'number');
+      }
+      else {
+        $api->DOM_add_class($dom, 'string');
+        $node = escape_string($node);
+      }
+      $dom->append_content($api->DOM_text($node));
+    }
+    elsif ('JSON::PP::Boolean' eq ref $node) {
+      $dom = $api->DOM_element('div', class => 'boolean',
+                               $api->DOM_text($node? 'true': 'false'));
+    }
+    elsif ('ARRAY' eq ref $node) {
+      $dom = details_with_summary([0 .. @$node - 1], $node, 'index', '[]');
+      $api->DOM_add_class($dom, 'array');
+    }
+    else {
+      # HASH.
+      my @labels = (sort(keys %$node));
+      my @values = (map $node->{$_}, @labels);
+      @labels = (map escape_string($_), @labels);
+      $dom = details_with_summary(\@labels, \@values, 'key', '{}');
+      $api->DOM_add_class($dom, 'object');
+    }
+
+    $api->DOM_add_class($dom, 'gp-tree node');
+    return $dom;
+  };
+
+  my $tree = $api->DOM_element('div', class => 'gp-tree root',
+     id => 'json-tree', JSON_to_DOM($json));
+  my $html = $api->DOM_render($tree);
+%>
+
+<div class="json-tree-container" gp-xscroll="auto">
+  <div class="json-tree">
+    <%= $html %>
+  </div>
+</div>

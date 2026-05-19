@@ -4474,3 +4474,81 @@ pre.command-line {
   vertical-align: sub;
   overflow: hidden;
 }
+
+.gp-tree {
+  font-family: monospace;
+}
+
+.gp-tree.root,
+.gp-tree.node {
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 100%;
+}
+
+summary.gp-tree {
+  background-color: #f0f0f0;
+  padding: 2px 3px;
+  border: 1px solid #e0e0e0;
+}
+
+summary.gp-tree:focus {
+  background-color: #c0c0f0;
+}
+
+summary.gp-tree::marker {
+  padding-right: 3px;
+}
+
+details.gp-tree.empty > summary::marker {
+  color: #00000000;
+}
+
+.gp-tree.table {
+  display: table;
+  min-width: 100%;
+  padding-left: 8px;
+  border-spacing: 8px 4px;
+  border-collapse: collapse;
+  border-style: hidden;
+}
+
+.gp-tree.row {
+  display: table-row;
+}
+
+.gp-tree.cell {
+  display: table-cell;
+  border: 1px solid #e0e0e0;
+  padding: 2px 3px;
+  padding-right: 0px;
+}
+
+.gp-tree.key,
+.gp-tree.index {
+  padding-left: 10px;
+  padding-right: 3px;
+}
+
+.gp-tree.index {
+  color: #909090;
+  text-align: end;
+}
+
+.gp-tree.key-text {
+  background-color: #f8f8f8;
+  padding: 3px 3px 6px 3px;
+  position: sticky;
+  top: 0px;
+}
+
+.json-tree-container {
+  border: 1px solid #e0e0e0;
+  padding: 5px 3px;
+  width: 100%;
+}
+
+.json-tree {
+  display: inline-block;
+  min-width: 100%;
+}

@@ -397,6 +397,71 @@
     });
   });
 
+  // Add collapse/expand all to a details/summary tree.
+  (function (Tree) {
+    var tree_nodes = function (root) {
+      var nodes = [$(root).get(0)];
+      $(root).children('.gp-tree').each(function (i, el) {
+        nodes = nodes.concat(tree_nodes(el));
+      });
+      return nodes;
+    };
+
+    Tree.expand = function (self) {
+      $(self).closest('details').attr('open', 'true');
+    };
+
+    Tree.collapse = function (self) {
+      $(self).closest('details').removeAttr('open');
+    };
+
+    Tree.expand_all = function (self) {
+      $('summary',
+        tree_nodes($(self).closest('details'))).get().forEach(Tree.expand);
+    };
+
+    Tree.collapse_all = function (self) {
+      $('summary',
+        tree_nodes($(self).closest('details'))).get().forEach(Tree.collapse);
+    };
+
+    Tree.toggle = function (self) {
+      $(self).closest('details').is('[open]')?
+        Tree.collapse_all(self): Tree.expand(self);
+    };
+
+    Tree.init = function(self, expanded) {
+      var summaries = $('summary:not(empty)', tree_nodes(self));
+      summaries.get().forEach(function (el) {
+        if (expanded != undefined) {
+          Tree.collapse(el);
+        }
+        $(el).on('click', function (e) {
+          Tree.toggle(this);
+          this.focus();
+          e.preventDefault();
+        });
+        $(el).on('dblclick', function () {
+          Tree.expand_all(this);
+          this.focus();
+        });
+      });
+      if (expanded != undefined) {
+        var first = summaries.get(0);
+        if (first != undefined && expanded > 0) {
+          Tree.expand(first);
+          if (expanded > 1) {
+            Tree.expand_all(first);
+          }
+        }
+      }
+    };
+
+    $(document).ready(function () {
+      $('.gp-tree.root').each(function (i, el) {Tree.init(el);});
+    });
+  }(Gitprep.Tree = Gitprep.Tree || {}));
+
   // X direction scroller.
   // Use this instead of CSS overflow-x when there are subelements that
   //  should be sticky to an outer vertical scroller.

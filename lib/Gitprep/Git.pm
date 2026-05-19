@@ -28,6 +28,7 @@ has ext2mimetype => sub {
                          jfif  => 'image/jpeg',
                          jpeg  => 'image/jpeg',
                          jpg   => 'image/jpeg',
+                         json  => 'application/json',
                          md    => 'text/markdown',
                          pdf   => 'application/pdf',
                          pbm   => 'image/x-portable-anymap',
