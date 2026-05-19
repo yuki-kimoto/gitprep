@@ -2780,7 +2780,7 @@ a:hover .btn-delete {
 }
 
 .blame-body-container {
-  overflow-x:scroll;
+  /* overflow-x:scroll;      Handled by gp-xscroll .*/
   border:1px solid #e6e9e6;
   border-radius:0 0 3px 3px;
 }
@@ -2796,9 +2796,14 @@ a:hover .btn-delete {
 
 .blame-body-left {
   padding:3px 7px;
-  vertical-align:middle;
+  vertical-align:top;
   border-left:none;
   border-bottom:none;
+}
+
+.blame-body-sticky {
+  position: sticky;
+  top: 0;
 }
 
 .blame-body-center {

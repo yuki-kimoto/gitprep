@@ -396,4 +396,61 @@
       $(form).prepend(hiddenSubmit);
     });
   });
+
+  // X direction scroller.
+  // Use this instead of CSS overflow-x when there are subelements that
+  //  should be sticky to an outer vertical scroller.
+  // Use attribute gp-xscroll with the desired overflow type.
+  (function (Xscroll) {
+    Xscroll.init = function (el) {
+      var outer = $(el);
+      var ovfl = outer.attr('gp-xscroll');
+      var inner = $('<div></div>').css({
+        position: 'relative',
+        'min-width': '100%'
+      });
+      var scroller = $('<div></div>').css({
+        position: 'relative',
+        width: '100%',
+        'overflow-x': ovfl,
+        'scrollbar-gutter': 'stable',
+      });
+      var scrollcontent = $('<div></div>').css('height', '3px');
+
+      var resize = function () {
+        var clone = inner.clone().css({
+          position: 'absolute',
+          visibility: 'hidden',
+          width: 'auto',
+          maxWidth: 'none',
+          minWidth: '0px',
+          whiteSpace: 'nowrap'
+        });
+        $('body', document).append(clone);
+        var width = clone.get(0).getBoundingClientRect().width;
+        clone.remove();
+        inner.css('width', width);
+        scrollcontent.css('width', width);
+      };
+
+      var scroll = function () {
+        inner.css('left', -scroller.scrollLeft());
+      };
+
+      scroller.append(scrollcontent);
+      inner.append(outer.children());
+      outer.append(inner).append(scroller).css('overflow-x', 'clip');
+
+      var observer = new ResizeObserver(resize);
+      observer.observe(inner.get(0), {box: 'border-box'});
+      scroller.scroll(scroll);
+
+      resize();
+      scroll();
+    };
+
+    $(document).ready(function () {
+      $('[gp-xscroll]').each(function (i, el) {Xscroll.init(el);});
+    });
+  }(Gitprep.Xscroll = Gitprep.Xscroll || {}));
 }(window.Gitprep = window.Gitprep || {}, jQuery));

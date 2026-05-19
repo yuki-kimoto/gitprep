@@ -64,6 +64,16 @@
   $commit_comment =~ s/^[\r\n]*(.*?)[\r\n]*$/$1/;
   my $commit_title = $commit->{title};
 
+  # Compute commmit summary row spans.
+  my $firstline;
+  for my $line (@$blame_lines) {
+    unless ($line->{before_same_commit}) {
+      $firstline = $line;
+      $firstline->{rowspan} = 0;
+    }
+    $firstline->{rowspan}++;
+  }
+
   # Color
   my $colors = [
     '#ffeca7',
@@ -117,7 +127,7 @@
         </ul>
       </div>
     </div>
-    <div class="blame-body-container">
+    <div class="blame-body-container" gp-xscroll="auto">
       <table class="blame-body">
         % for my $line (@$blame_lines) {
           <%
@@ -139,31 +149,33 @@
             $separator = '' unless !$line->{before_same_commit} && $line->{number} != 1;
           %>
           <tr id="L<%= $line->{number} %>" class="<%== $separator %>">
-            <td class="blame-body-left" nowrap style="border-right:2px solid <%= $hot_color %>;">
-              % if (!$line->{before_same_commit}) {
-                <div class="blame-summary-container">
-                  <div class="blame-summary">
-                    % my $tooltip = join "\n", $summary, substr($blame_commit, 0, 7);
-                    <a href="<%= url_for("$user_project_path/commit/$blame_commit") %>" title="<%= $tooltip %>">
-                      <%= $summary_short %>
-                    </a>
-                  </div>
-                  <div class="blame-commit-id">
-                    % if ($line->{chain}) {
-                      % $tooltip = 'Blame prior to change ' . substr($blame_commit, 0, 7);
-                      <a href="<%= url_for("$user_project_path/blame/$parent/$parent_filename") %>" title="<%= $tooltip %>">
-                        %= $api->icon('versions');
+            % if (!$line->{before_same_commit}) {
+              <td class="blame-body-left" nowrap style="border-right:2px solid <%= $hot_color %>;" rowspan="<%= $line->{rowspan} %>">
+                <div class="blame-body-sticky">
+                  <div class="blame-summary-container">
+                    <div class="blame-summary">
+                      % my $tooltip = join "\n", $summary, substr($blame_commit, 0, 7);
+                      <a href="<%= url_for("$user_project_path/commit/$blame_commit") %>" title="<%= $tooltip %>">
+                        <%= $summary_short %>
                       </a>
-                    % }
+                    </div>
+                    <div class="blame-commit-id">
+                      % if ($line->{chain}) {
+                        % $tooltip = 'Blame prior to change ' . substr($blame_commit, 0, 7);
+                        <a href="<%= url_for("$user_project_path/blame/$parent/$parent_filename") %>" title="<%= $tooltip %>">
+                          %= $api->icon('versions');
+                        </a>
+                      % }
+                    </div>
+                  </div>
+                  <div class="blame-author">
+                    <span title="<%= $line->{author_email} %>"><%= $line->{author} %></span>
+                    authored
+                    %= $api->age_element($line->{author_time});
                   </div>
                 </div>
-                <div class="blame-author">
-                  <span title="<%= $line->{author_email} %>"><%= $line->{author} %></span>
-                  authored
-                  %= $api->age_element($line->{author_time});
-                </div>
-              % }
-            </td>
+              </td>
+            % }
             <td class="blame-body-center" nowrap>
               <%= $line->{number} %>
             </td>
