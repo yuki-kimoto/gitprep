@@ -566,77 +566,99 @@ sub markdown {
     my %m = (@_);
 
     local *build_url = sub {
-      my ($format, $url) = @_;
-      my $path = $url->path;
+      my ($format, $urlstr) = @_;
+      my $url = Mojo::URL->new($urlstr);
 
-      unless ($path->leading_slash) {
-        unshift @$path, @{Mojo::Path->new($tree)} if ($tree // '') ne '';
-        unshift @$path, @{Mojo::Path->new($rev)} if ($rev // '') ne '';
-        unshift @$path, @{Mojo::Path->new($format)} if ($format // '') ne '';
+      # Do not replace absolute, empty or fragment-only URLs.
+      unless ($url->is_abs || !defined $url->path || !@{$url->path}) {
+        my $path = $url->path;
+
+        unless ($path->leading_slash) {
+          unshift @$path, @{Mojo::Path->new($tree)} if ($tree // '') ne '';
+          unshift @$path, @{Mojo::Path->new($rev)} if ($rev // '') ne '';
+          unshift @$path, @{Mojo::Path->new($format)} if ($format // '') ne '';
+        }
+
+        # Relative URLs are rooted by the project's repository.
+        $path = $path->canonicalize();
+        while (scalar(@$path) && $path->[0] eq '..') {
+          shift @$path;
+        }
+
+        unshift @$path, @{$self->cntl->url_for($rep_info->url)->path};
+        $path = $path->leading_slash(!$site_url);
+        $url->path($path);
+        $url = $url->to_abs($site_url) if $site_url;
+        $urlstr = $url->to_string;
       }
 
-      # Relative URLs are rooted by the project's repository.
-      $path = $path->canonicalize();
-      while (scalar(@$path) && $path->[0] eq '..') {
-        shift @$path;
-      }
-
-      unshift @$path, @{$self->cntl->url_for($rep_info->url)->path};
-      $path = $path->leading_slash(!$site_url);
-      $url->path($path);
-      $url = $url->to_abs($site_url) if $site_url;
-      return $url->to_string;
+      return $urlstr;
     };
 
     my $url = $m{url};
     my $text = $m{text};
-
-    $text = $url if ($text // '') eq '';
-    $url = $text if ($url // '') eq '';
 
     # Wiki link.
     #  [[Link text|Title]]
     #  [[Title]]
     if ($m{marker} eq '[[') {
       return $m{match} unless $rep_info->is_wiki;
+      $text = $url if ($text // '') eq '';
+      $url = $text if ($url // '') eq '';
       $url = $self->wiki_safe_title($url);
-      my $replace = $self->cntl->url_for($rep_info->url($url));
-      $replace = $replace->to_abs($site_url) if $site_url;
-      $replace = "[$text]($replace)";
-      unless ($self->wiki_page_exists($rep_info, $url)) {
-        $replace = "<span class=\"wiki-link-no-title\">$replace</span>";
-      }
-      return $replace;
-    }
-
-    $url = Mojo::URL->new($url);
-
-    # Do not replace absolute or fragment-only URLs.
-    return $m{match} if $url->is_abs || !defined $url->path || !@{$url->path};
-
-    # Markdown image
-    #  ![text](url)
-    if ($m{marker} eq '!') {
-      $url = build_url($params{image_path}, $url);
-      return "![$text]($url)";
+      my $r = $self->cntl->url_for($rep_info->url($url));
+      $r = $r->to_abs($site_url) if $site_url;
+      $r = "[$text]($r)";
+      $r = "<span class=\"wiki-link-no-title\" title=\"Non-existent page\">$r</span>"
+        unless $self->wiki_page_exists($rep_info, $url);
+      return $r;
     }
 
     # <img> tag.
     if ($m{marker} eq 'src') {
       $url = build_url($params{image_path}, $url);
-      return 'src="' . $url . '"';
+      return "src=\"$url\"";
     }
 
     # <a>-like tag.
     if ($m{marker} eq 'href') {
       $url = build_url($params{link_path}, $url);
-      return 'href="' . $url . '"';
+      return "href=\"$url\"";
+    }
+
+    # Markdown urls may be followed by a title.
+    my $title = '';
+    if ($url =~ /^(.*)(\s+'[^']*'\s*)$/ || $url =~ /^(.*)(\s+"[^"]*"\s*)$/) {
+      $url = $1;
+      $title = $2;
+    }
+
+    if (($text // '') eq '') {
+      $text = $url;
+      $text =~ s/^mailto://;      # Visual cosmetics.
+    }
+
+    # Markdown image
+    #  ![text](url)
+    if ($m{marker} eq '!') {
+      $url = build_url($params{image_path}, $url);
+      return "![$text]($url$title)";
+    }
+
+    # Markdown image link.
+    #  [![text](url)](url)
+    if ($m{marker} eq '[![') {
+      $text = replace_link(
+        marker => '!',
+        text => $text,
+        url => $m{url2}
+      );
     }
 
     # Markdown link.
     #  [text](url)
     $url = build_url($params{link_path}, $url);
-    return "[$text]($url)";
+    return "[$text]($url$title)";
   };
 
   # Translate relative urls.
@@ -649,6 +671,8 @@ sub markdown {
     }
 
     $markdown_text =~ s@(?<match>(?:
+      # Markdown linking image.
+      (?<marker>\[!\[?)(?<text>[^\]]*)\]\((?<url2>[^)\]]*)\)\]\((?<url>[^)]*)\)|
       # Markdown images and links.
       (?<marker>!?)\[(?<text>[^\]]*)\]\((?<url>[^)]*)\)|
       # HTML images and links.
@@ -676,7 +700,7 @@ sub markdown {
       h6 => [qw( id class )],
       p => [qw( id class align )],
       div => [qw( id class )],
-      span => [qw( id class )],
+      span => [qw( title id class )],
       br => [qw( class / )],
       em => [qw( class )],
       strong => [qw( class )],
@@ -692,7 +716,7 @@ sub markdown {
       dt => [qw( class )],
       dd => [qw( class )],
       li => [qw( class )],
-      a => [qw( href id class )],
+      a => [qw( href title id class )],
       img => [qw( src alt title align id class width height / )],
       blockquote => [qw( id class )],
       table => [qw( id class border width bgcolor cellspacing )],
@@ -712,7 +736,8 @@ sub markdown {
       u => [qw( class )],
       s => [qw( class )],
       strike => [qw( class )]
-    }
+    },
+    uri_schemes => [ undef, 'http', 'https', 'mailto' ]
   );
 
   $html_text = $hr->process($html_text);
