@@ -495,7 +495,7 @@ sub api_delete_issue_message {
 }
 
 sub add_issue_message {
-  my ($self, $rep_info, $project_id, $number, $message) = @_;
+  my ($self, $rep_info, $number, $message) = @_;
   my $issue_message_number;
 
   $self->app->dbi->connector->txn(sub {
