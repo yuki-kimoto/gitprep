@@ -134,7 +134,7 @@
       <%= hidden_field rev => $rev %>
       <div class="issue-add-comment-header">
         <div class="issue-add-comment-title">
-          <%= text_field 'title' %>
+          <%= text_field 'title', placeholder => 'Give a title to this issue' %>
         </div>
         <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
         <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>

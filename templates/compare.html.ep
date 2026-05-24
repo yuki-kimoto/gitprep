@@ -630,7 +630,7 @@
         <%= hidden_field rev => $base_branch %>
         <div class="issue-add-comment-header">
           <div class="issue-add-comment-title">
-            <%= text_field 'title' => $commits->[0]{title_short} %>
+            <%= text_field 'title' => $commits->[0]{title_short}, placeholder => 'Give a title to this pull request' %>
           </div>
           <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
           <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>
