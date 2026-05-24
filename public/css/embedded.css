@@ -17,15 +17,12 @@
   color: #e0162e;
 }
 
-.markdown-mentioned {
-  color: #000;
-  font-weight: bold;
-}
-
+.markdown-mentioned,
 .markdown-mentioned a,
 .markdown-mentioned a:visited {
+  color: #000;
+  font-weight: bold;
   text-decoration: inherit;
-  color: inherit;
 }
 
 .notify-footer {

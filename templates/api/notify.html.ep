@@ -49,10 +49,14 @@
   </head>
   <body>
     <div>
-      % if (defined $avatar) {
-        <span class="avatar notify-avatar"><%== $avatar %></span>
-      % }
-      <b><%= $sender_id %></b> <%== $action %>
+      <a class="markdown-mentioned"
+         href="<%= url_for("/$sender_id")->to_abs(app->{site_url}) %>">
+        % if (defined $avatar) {
+          <span class="avatar notify-avatar"><%== $avatar %></span>
+        % }
+        <%= $sender_id %>
+      </a>
+      <%== $action %>
     </div>
     <div><%== $message %></div>
     <p class="notify-footer">
