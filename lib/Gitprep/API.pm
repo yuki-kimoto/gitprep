@@ -1269,8 +1269,7 @@ sub notify_subscribed {
   # Avoid multi-recipient mails as sent data can be personalized.
   for my $email (keys %recipients) {
     my $html = $self->cntl->render_to_string('/api/notify',
-      user => $user,
-      project => $project,
+      rep_info => $rep_info,
       path_suffix => $path_suffix,
       message => $message,
       message_id => $message_id,

@@ -3,14 +3,13 @@
   my $api = gitprep_api;
 
   # Arguments.
-  my $user = stash('user');
-  my $project = stash('project');
+  my $rep_info = stash('rep_info');
   my $path_suffix = stash('path_suffix');
   my $message = stash('message');
   my $message_id = stash('message_id');
   my $reason = stash('reason');
 
-  my $link = url_for("/$user/$project/$path_suffix")->fragment($message_id);
+  my $link = url_for($rep_info->url($path_suffix)->fragment($message_id);
   $link = $link->to_abs(app->{site_url}) if app->{site_url};
   $reason = ($api->notify_reason($reason))[0];
 
