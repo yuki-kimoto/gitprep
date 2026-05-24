@@ -42,7 +42,7 @@
       because you <%= $reason_text %>
     % }
   </span>.
-  % if (!$api->app->{mailtransport}) {
+  % if (!$api->app->{mailtransport} || !$api->app->{site_url}) {
     <p style="margin-top: 3px;">Notifications are currently disabled.</p>
   % }
 </div>

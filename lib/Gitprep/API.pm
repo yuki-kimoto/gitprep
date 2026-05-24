@@ -1206,7 +1206,7 @@ sub notify_subscribed {
   my $user = $rep_info->user;
   my $project = $rep_info->project;
 
-  $self->app->{mailtransport} || return;
+  $self->app->{mailtransport} && $self->app->{site_url} or return;
 
   # Sender id, name and email address.
   my $sender = $self->app->dbi->model('user')->select(['id', 'name', 'email'],

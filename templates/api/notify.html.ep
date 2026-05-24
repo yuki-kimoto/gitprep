@@ -12,7 +12,7 @@
   my $action = stash('action');
   my $reason = stash('reason');
 
-  $link = $link->to_abs(app->{site_url}) if app->{site_url};
+  $link = $link->to_abs(app->{site_url}) unless $link->is_abs;
   $reason = ($api->notify_reason($reason))[0];
 
   # Get the sender's avatar as an inline svg.
@@ -61,10 +61,8 @@
     <div><%== $message %></div>
     <p class="notify-footer">
       &mdash;<br />
-      % if (app->{site_url}) {
-        <a href="<%= $link %>">View it on Gitprep</a><br />
-      % }
-    You are receiving this because you <%= $reason %>.
+      <a href="<%= $link %>">View it on Gitprep</a><br />
+      You are receiving this because you <%= $reason %>.
     </p>
   </body>
 </html>
