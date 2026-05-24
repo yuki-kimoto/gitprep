@@ -188,7 +188,7 @@
           # New issue
           my $new_issue = {
             title => $title,
-            open => 1,
+            status => 'open',
             open_time => $now_epoch,
             open_user => $session_user_row_id,
             pull_request => $new_pull_request_row_id,

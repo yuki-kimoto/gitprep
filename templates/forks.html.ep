@@ -32,7 +32,7 @@
       my $issues = app->dbi->model('issue')->select(
         where => {
           project => $fork->{row_id},
-          open => 1
+          status => 'open'
         }
       )->all;
       $fork->{pr_count} = scalar(map $_->{pull_request}? 1: (), @$issues);
