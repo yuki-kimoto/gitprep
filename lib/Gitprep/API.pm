@@ -1203,42 +1203,50 @@ sub notify_subscribed {
 
   $self->app->{mailtransport} || return;
 
+  # Sender id, name and email address.
+  my $sender = $self->app->dbi->model('user')->select(['id', 'name', 'email'],
+    where => {
+      row_id => $sender_row_id
+    })->one;
+
+  # Repository owner email address.
+  my $ownermail = $self->app->dbi->model('user')->select('email',
+    where => {
+      id => $rep_info->user
+    })->value;
+
   # Subscriptions.
   my $subscriptions = $self->app->dbi->model('subscription')->select(
     ['subscription__user.email', 'reason'],
-    where => $self->app->dbi->where(
-      clause => ['and', ':user{!=}', ':issue{=}'],
-      param => {user => $sender_row_id, issue => $issue_row_id}
-    ))->all;
+    where => {
+      issue => $issue_row_id 
+    })->all;
 
   # Watchers.
   my $watchers = $self->app->dbi->model('watch')->select(
     ['watch__user.email'],
-    where => $self->app->dbi->where(
-      clause => ['and', ':user{!=}', ':project{=}'],
-      param => {
-        user => $sender_row_id,
-        project => $self->get_project_row_id($rep_info)
-      }
-    ))->all;
+    where => {
+      project => $self->get_project_row_id($rep_info)
+    })->all;
 
   # Merge results.
-  my %recipients = ((map {$_->{email} => 'W'} @$watchers),
-                    (map {$_->{email} => $_->{reason}} @$subscriptions));
+  my %recipients = (
+    $ownermail => 'O',
+    (map {$_->{email} => 'W'} @$watchers),
+    (map {$_->{email} => $_->{reason}} @$subscriptions)
+  );
 
   # Filter out unsubscribed.
-  my @recipients = grep {$recipients{$_} ne 'U';} keys(%recipients);
+  %recipients = (map {$_ => $recipients{$_}}
+    grep {($self->notify_reason($recipients{$_}))[1]} keys %recipients);
 
-  # Sender name.
-  my $sender_name = $self->app->dbi->model('user')->select('name',
-    where => {
-      row_id => $sender_row_id
-    })->value;
+  # Do not send back to sender.
+  delete $recipients{$sender->{email}};
 
   # Convert markdown message to HTML.
   $message = $self->markdown(
     $message,
-    Gitprep::Repository->new($user, $project),
+    $rep_info,
     rev => $rev,
     site_url => $self->app->{site_url}
   );
@@ -1254,18 +1262,19 @@ sub notify_subscribed {
 
   # Build visible sender and recipient email addresses.
   my $conf = $self->app->config->{mail};
-  my $from = "$sender_name <$conf->{from}>";
+  my $from = ($sender->{name} || $sender->{id}) . " <$conf->{from}>";
   my $to = 'undisclosed-recipients:;';
   $to = "$user/$project <$conf->{to}>" if $conf->{to};
 
   # Avoid multi-recipient mails as sent data can be personalized.
-  for my $email (@recipients) {
+  for my $email (keys %recipients) {
     my $html = $self->cntl->render_to_string('/api/notify',
       user => $user,
       project => $project,
       path_suffix => $path_suffix,
       message => $message,
-      message_id => $message_id
+      message_id => $message_id,
+      reason => $recipients{$email}
     )->to_string;
     my $plain = $html2plain->parse($html);
     my $top = MIME::Entity->build(From => $from,

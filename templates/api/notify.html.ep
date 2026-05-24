@@ -8,9 +8,11 @@
   my $path_suffix = stash('path_suffix');
   my $message = stash('message');
   my $message_id = stash('message_id');
+  my $reason = stash('reason');
 
   my $link = url_for("/$user/$project/$path_suffix")->fragment($message_id);
   $link = $link->to_abs(app->{site_url}) if app->{site_url};
+  $reason = ($api->notify_reason($reason))[0];
 
 
   # Get the css styles to embed from local file.
@@ -38,6 +40,7 @@
       % if (app->{site_url}) {
         <a href="<%= $link %>">View it on Gitprep</a><br />
       % }
+    You are receiving this because you <%= $reason %>.
     </p>
   </body>
 </html>
