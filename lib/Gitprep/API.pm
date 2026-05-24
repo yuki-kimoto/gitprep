@@ -1166,6 +1166,35 @@ sub subscribe_mentioned {
   }
 }
 
+sub notify_reason {
+  my ($self, $code) = @_;
+
+  my %reasons = (
+    'C' => 'commented',
+    'N' => 'authored the thread',
+    'M' => 'were mentioned',
+    'O' => 'own the repository',
+    'S' => 'subscribed',
+    'W' => 'watch the repository'
+  );
+
+  my $reason_text;
+  my $subscribed = 0;
+
+  if (!defined $code) {
+    $reason_text = "didn't subscribed";
+  }
+  elsif ($code eq 'U') {
+    $reason_text = 'unsubscribed';
+  }
+  else {
+    $subscribed = 1;
+    $reason_text = $reasons{$code};
+  }
+
+  return ($reason_text, $subscribed);
+}
+
 sub notify_subscribed {
   my ($self, $rep_info, $rev, $title, $sender_row_id, $message,
       $message_id, $path_suffix, $issue_row_id) = @_;

@@ -24,28 +24,7 @@
     where => {user => $user_row_id, project => $project_row_id}
   )->value;
 
-  my %reasons = (
-    'S' => 'subscribed',
-    'O' => 'own the repository',
-    'N' => 'authored the thread',
-    'C' => 'commented',
-    'M' => 'were mentioned',
-    'W' => 'watch the repository'
-  );
-
-  my $reason_text;
-  my $subscribed = 0;
-
-  if (!defined $reason) {
-    $reason_text = "didn't subscribed";
-  }
-  elsif ($reason eq 'U') {
-    $reason_text = 'unsubscribed';
-  }
-  else {
-    $subscribed = 1;
-    $reason_text = $reasons{$reason};
-  }
+  my ($reason_text, $subscribed) = $api->notify_reason($reason);
 %>
 
 <button id="subscribe-btn" class="subscription-btn">
