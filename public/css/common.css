@@ -248,21 +248,6 @@ a.wiki-btn-history:hover {
   border-radius:3px;
 }
 
-.wiki-link-no-title a {
-  color:#e0162e;
-}
-
-.markdown-mentioned {
-  color: #000;
-  font-weight: bold;
-}
-
-.markdown-mentioned a,
-.markdown-mentioned a:visited {
-  text-decoration: inherit;
-  color: inherit;
-}
-
 .wiki-add-footer a {
   color:#99c;
 }
@@ -4475,15 +4460,6 @@ pre.command-line {
   text-align: center;
   font-size: 130%;
   font-weight: bold;
-}
-
-.avatar {
-  box-shadow: 0 0 0 1px #d0d0d0;
-  border: 0px none;
-  border-radius: 50%;
-  background-color: #f0f0f0;
-  vertical-align: sub;
-  overflow: hidden;
 }
 
 .gp-tree {

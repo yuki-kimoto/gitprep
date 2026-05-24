@@ -9,11 +9,35 @@
   my $message = stash('message');
   my $message_id = stash('message_id');
 
-  my $link = url_for("/$user/$project/$path_suffix")->fragment($message_id)->to_abs;
+  my $link = url_for("/$user/$project/$path_suffix")->fragment($message_id);
+  $link = $link->to_abs(app->{site_url}) if app->{site_url};
+
+
+  # Get the css styles to embed from local file.
+  my $css = '';
+  open my $fh, '<', app->home->rel_file('public/css/embedded.css');
+  if ($fh) {
+    $css = do { local $/; <$fh> };
+    close $fh;
+    # Compress.
+    $css =~ s#/\*.*?\*/##gs;            # Strip off comments.
+    $css =~ s/^\s*(.*?)\s*$/$1/gm;      # Trim.
+    $css =~ s/\n+/\n/gs;                # Remove empty lines.
+    $css = "<style>$css</style>";
+  }
 %>
 
-<div><%== $message %></div>
-<p style="font-size:small;-webkit-text-size-adjust:none;color:#666;">
-  &mdash;<br />
-  <a href="<%= $link %>">View it on Gitprep</a>
-</p>
+<html>
+  <head>
+    <%== $css %>
+  </head>
+  <body>
+    <div><%== $message %></div>
+    <p class="notify-footer">
+      &mdash;<br />
+      % if (app->{site_url}) {
+        <a href="<%= $link %>">View it on Gitprep</a><br />
+      % }
+    </p>
+  </body>
+</html>

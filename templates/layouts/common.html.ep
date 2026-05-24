@@ -20,6 +20,7 @@
     % my $title = stash('title');
     <title><%= $title ? "$title \x{b7} Gitprep" : 'Gitprep' %></title>
     %= stylesheet '/css/common.css', rel => 'stylesheet', media => 'screen';
+    %= stylesheet '/css/embedded.css', rel => 'stylesheet', media => 'screen';
     % for my $stylesheet (@$stylesheets) {
       %= stylesheet $stylesheet;
     % }

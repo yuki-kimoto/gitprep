@@ -1,0 +1,35 @@
+/* Minimal gitprep CSS for embedding.
+ * It mainly provides rules for markdown-generated HTML and e-mails.
+ * To save objects size, do not include rules here that do not need to be
+ *  embedded.
+ */
+
+.avatar {
+  box-shadow: 0 0 0 1px #d0d0d0;
+  border: 0px none;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  vertical-align: sub;
+  overflow: hidden;
+}
+
+.wiki-link-no-title a {
+  color: #e0162e;
+}
+
+.markdown-mentioned {
+  color: #000;
+  font-weight: bold;
+}
+
+.markdown-mentioned a,
+.markdown-mentioned a:visited {
+  text-decoration: inherit;
+  color: inherit;
+}
+
+.notify-footer {
+  color:#666;
+  font-size: small;
+  -webkit-text-size-adjust: none;
+}
