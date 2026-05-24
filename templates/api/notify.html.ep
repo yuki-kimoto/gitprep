@@ -4,12 +4,12 @@
 
   # Arguments.
   my $rep_info = stash('rep_info');
-  my $path_suffix = stash('path_suffix');
   my $message = stash('message');
-  my $message_id = stash('message_id');
+  my $link = stash('link');
+  my $sender_id = stash('sender_id');
+  my $action = stash('action');
   my $reason = stash('reason');
 
-  my $link = url_for($rep_info->url($path_suffix)->fragment($message_id);
   $link = $link->to_abs(app->{site_url}) if app->{site_url};
   $reason = ($api->notify_reason($reason))[0];
 
@@ -33,6 +33,9 @@
     <%== $css %>
   </head>
   <body>
+    <div>
+      <b><%= $sender_id %></b> <%== $action %>
+    </div>
     <div><%== $message %></div>
     <p class="notify-footer">
       &mdash;<br />

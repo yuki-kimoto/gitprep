@@ -246,11 +246,13 @@
 
         # Notifications.
         my $issuekind = $issue->{pull_request}? 'pull': 'issues';
+        my $link = url_for($base_rep_info->url("$issuekind/$issue_number"))->fragment("comment-$msgno");
+        $link = $link->to_abs(app->{site_url}) if app->{site_url};
+        my $action = "left a comment <a href=\"$link\"> ($base_user_id/$base_project_id#$issue_number)</a>";
         $api->notify_subscribed($base_rep_info, $base_branch,
                                 "$issue->{title} (#$issue_number)",
-                                $api->session_user_row_id, $message,
-                                "comment-$msgno", "$issuekind/$issue_number",
-                                $issue->{row_id});
+                                $api->session_user_row_id, $message, $link,
+                                $issue->{row_id}, $action);
         $self->redirect_to;
         return;
       }

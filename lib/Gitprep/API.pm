@@ -1197,7 +1197,7 @@ sub notify_reason {
 
 sub notify_subscribed {
   my ($self, $rep_info, $rev, $title, $sender_row_id, $message,
-      $message_id, $path_suffix, $issue_row_id) = @_;
+      $link, $issue_row_id, $action) = @_;
   my $user = $rep_info->user;
   my $project = $rep_info->project;
 
@@ -1270,9 +1270,10 @@ sub notify_subscribed {
   for my $email (keys %recipients) {
     my $html = $self->cntl->render_to_string('/api/notify',
       rep_info => $rep_info,
-      path_suffix => $path_suffix,
+      link => $link,
       message => $message,
-      message_id => $message_id,
+      sender_id => $sender->{id},
+      action => $action,
       reason => $recipients{$email}
     )->to_string;
     my $plain = $html2plain->parse($html);
