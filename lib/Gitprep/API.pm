@@ -748,7 +748,12 @@ sub markdown {
       i => [qw( class )],
       u => [qw( class )],
       s => [qw( class )],
-      strike => [qw( class )]
+      strike => [qw( class )],
+      svg  => [ qw( width height viewbox xmlns ) ],
+      circle => [ qw( style cx cy r stroke stroke-width fill ) ],
+      path => [ qw( style d fill stroke ) ],
+      rect => [ qw( style x y width height fill ) ],
+      image => [ qw( x y width height href ) ]
     },
     uri_schemes => [ undef, 'http', 'https', 'mailto' ]
   );
