@@ -64,6 +64,7 @@ my @tables = (
       {name => 'salt'},
       {name => 'name'},
       {name => 'show_email', type => 'integer'},
+      {name => 'notify', type => 'integer', default => 1},
       {name => 'avatar', type => 'blob'},
       {name => 'bio'},
       {name => 'url'},

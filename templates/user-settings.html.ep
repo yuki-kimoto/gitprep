@@ -100,6 +100,7 @@
         }
       }
       $user->{show_email} = param('show_email')? 1: 0;
+      $user->{notify} = param('notify')? 1: 0;
       $user->{avatar} = decode_base64(param('picture')) if defined param('picture');
       $social = $self->every_param('social') // [];
       $social = [map {$_ =~ /^\s*(.*?)\s*$/; $1? $1: ()} @$social];
@@ -153,6 +154,15 @@
                     Your name may appear around Gitprep where you contribute or
                     are mentioned. You can remove it at any time.
                   </div>
+                </li>
+                <li>
+                  <div class="field-label">
+                    Notifications
+                  </div>
+                  <input type="checkbox" name="notify" <%== $user->{notify}? ' checked="yes"': '' %>" />
+                  <span class="explain">
+                    Check this if you want to receive notifications.
+                  </span>
                 </li>
                 <li>
                   <div class="field-label">

@@ -1214,29 +1214,31 @@ sub notify_subscribed {
       row_id => $sender_row_id
     })->one;
 
-  # Repository owner email address.
-  my $ownermail = $self->app->dbi->model('user')->select('email',
+  # Repository owner.
+  my $owner = $self->app->dbi->model('user')->select(['email', 'notify'],
     where => {
       id => $rep_info->user
-    })->value;
+    })->one;
 
   # Subscriptions.
   my $subscriptions = $self->app->dbi->model('subscription')->select(
     ['subscription__user.email', 'reason'],
     where => {
-      issue => $issue_row_id 
+      issue => $issue_row_id,
+      'subscription__user.notify' => 1
     })->all;
 
   # Watchers.
   my $watchers = $self->app->dbi->model('watch')->select(
     ['watch__user.email'],
     where => {
-      project => $self->get_project_row_id($rep_info)
+      project => $self->get_project_row_id($rep_info),
+      'watch__user.notify' => 1
     })->all;
 
   # Merge results.
   my %recipients = (
-    $ownermail => 'O',
+    $owner->{notify}? ($owner->{email} => 'O'): (),
     (map {$_->{email} => 'W'} @$watchers),
     (map {$_->{email} => $_->{reason}} @$subscriptions)
   );

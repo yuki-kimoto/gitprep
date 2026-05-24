@@ -24,6 +24,11 @@
     where => {user => $user_row_id, project => $project_row_id}
   )->value;
 
+  my $notify = app->dbi->model('user')->select(
+    'notify',
+     where => {'row_id' => $user_row_id}
+   )->value;
+
   my ($reason_text, $subscribed) = $api->notify_reason($reason);
 %>
 
@@ -37,13 +42,22 @@
   % }
 </button>
 <div class="notif-reason">
-  <span>You’re <%= $subscribed? '': 'not ' %>receiving notifications
-    % if (defined $reason_text) {
-      because you <%= $reason_text %>
-    % }
-  </span>.
+  % if (!$subscribed || $notify) {
+    <span>You’re <%= $subscribed? '': 'not ' %>receiving notifications
+      % if (defined $reason_text) {
+        because you <%= $reason_text %>
+      % }
+    </span>.
+  % } else {
+    <span>You
+      % if (defined $reason_text) {
+        <%= $reason_text %>, but you
+      % }
+      globally disabled all notifications
+    </span>.
+  % }
   % if (!$api->app->{mailtransport} || !$api->app->{site_url}) {
-    <p style="margin-top: 3px;">Notifications are currently disabled.</p>
+    <p style="margin-top: 3px;">Notifications are currently not supported by this Gitprep instance.</p>
   % }
 </div>
 
