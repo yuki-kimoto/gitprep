@@ -210,6 +210,9 @@
 
           app->dbi->model('issue_message')->insert($new_issue_message);
 
+          # Subscriptions.
+          $api->subscribe_mentioned($new_issue_row_id, $message);
+
           # Notifications.
           my $link = url_for($base_rep_info->url("pull/$issue_number"))->fragment('comment-1');
           $link = $link->to_abs(app->{site_url}) if app->{site_url};
