@@ -210,6 +210,15 @@
 
           app->dbi->model('issue_message')->insert($new_issue_message);
 
+          # Notifications.
+          my $link = url_for($base_rep_info->url("pull/$issue_number"))->fragment('comment-1');
+          $link = $link->to_abs(app->{site_url}) if app->{site_url};
+          my $action = "created a new pull request <a href=\"$link\"> ($base_user_id/$base_project_id#$issue_number)</a>";
+          $api->notify_subscribed($base_rep_info, $base_branch,
+                                  "$new_issue->{title} (#$issue_number)",
+                                  $session_user_row_id, $message, $link,
+                                  $new_issue_row_id, $action);
+
           $self->redirect_to("/$base_user_id/$base_project_id/pull/$issue_number");
           return;
         });
