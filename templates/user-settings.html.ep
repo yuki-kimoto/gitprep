@@ -36,8 +36,8 @@
         if (!$picture) {
           push @$errors, 'Invalid or unsupported image data';
         } else {
+          $avatar = Gitprep::Image->image_as_svg(data => $picture, xmlns => undef);
           $picture = encode_base64($picture, '');
-          $avatar = "<svg viewBox=\"0 0 $size $size\"><image href=\"data:image/png;base64,$picture\"></image></svg>";
         }
       } else {
         $avatar = Gitprep::Image->identicon($user_id);

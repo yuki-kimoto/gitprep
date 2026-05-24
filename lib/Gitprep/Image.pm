@@ -221,4 +221,93 @@ sub image_formats {
   return Imager->read_types;
 }
 
+sub image_as_svg {
+  my $self = shift;
+  my %args = @_;
+  require Imager;
+  require MIME::Base64;
+
+  my $data = $args{data};
+  my $scale = $args{scale};
+  my $type = 'svg';
+  my $img;
+  my $width, $height;
+  my %svgattrs;
+  my $inner;
+
+  if ($args{file}) {
+    open my $fh, '<:raw', $args{file} or return;
+    read $fh, $data, -s $fh;
+    close $fh;
+  }
+
+  return unless $data;
+
+  if ($data =~ m#^\s*<svg((?:\s+[^>="\s]+="[^"]*")*?)\s*>(.*)\s*</svg>\s*$#is) {
+    # Data are already in svg format.
+    $inner = $2;
+    my $dummy = $1;
+    $dummy =~ s/\s+([^>="\s]+)="([^"]*)"/$svgattrs{lc($1)} = $2/egs;
+    my $viewbox = $svgattrs{viewbox};
+    return unless $viewbox;     # No way to determine actual dimensions.
+    (undef, undef, $width, $height) = split /\s+|\s*,\s*/, $viewbox;
+  }
+  else {
+    $img = $data;
+    $img = Imager->new(data => $data) unless 'Imager' eq ref $data;
+    return unless $img;
+    $type = lc($img->type);
+    $type = 'png' unless $type =~ /^(?:jpe?g|png)$/;
+    $width = $img->getwidth;
+    $height = $img->getheight;
+  }
+
+  # Handle scaling.
+  unless ($scale) {
+    $scale = 1;
+    if ($args{width}) {
+      $scale = $args{width} / $width;
+    }
+    elsif ($args{height}) {
+      $scale = $args{height} / $height;
+    }
+  }
+
+  # Recompute the final dimensions.
+  my $newwidth = $width * $scale;
+  my $newheight = $height * $scale;
+
+  if ($type ne 'svg') {
+    # Resize pixel image if scale shrinks it.
+    if ($scale < 1) {
+      $img = $img->scale(xpixels => $newwidth, ypixels => $newheight);
+      $scale = 1;
+      $width = $newwidth;
+      $height = $newheight;
+    }
+
+    # Get the image data.
+    $img->write(data => \$inner, type => $type);
+    $inner = MIME::Base64::encode_base64($inner, '');
+    $inner = "<image href=\"data:image/$type;base64,$inner\"></image>";
+
+    # Synthesize the svg tag attributes.
+    $svgattrs{viewbox} = "0 0 $width $height";
+    $svgattrs{xmlns} = 'http://www.w3.org/2000/svg';
+  }
+
+  $svgattrs{xmlns} = $args{xmlns} if exists $args{xmlns};
+
+  # Update dimensions according to effective scaling.
+  $svgattrs{width} = "${newwidth}px" if exists($svgattrs{width}) || exists $args{width};
+  $svgattrs{height} = "${newheight}px" if exists($svgattrs{height}) || exists $args{height};
+
+  # Build final svg image.
+  my $svg = '<svg ' . join('', map {
+    defined($svgattrs{$_})? " $_=\"$svgattrs{$_}\"": ''
+  } keys %svgattrs);
+  return "$svg>$inner</svg>";
+}
+
+
 1;
