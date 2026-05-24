@@ -562,6 +562,8 @@ sub markdown {
   my $tree = $params{tree};
   my $site_url = $params{site_url};
 
+  my %users = map {$_ => 1} @{$self->app->dbi->model('user')->select('id')->values};
+
   local *replace_link = sub {
     my %m = (@_);
 
@@ -612,6 +614,15 @@ sub markdown {
       $r = "<span class=\"wiki-link-no-title\" title=\"Non-existent page\">$r</span>"
         unless $self->wiki_page_exists($rep_info, $url);
       return $r;
+    }
+
+    # Mentioned user.
+    # @user.
+    if ($m{marker} eq '@') {
+      return $m{match} unless defined $users{$m{user}};
+      my $r = $self->cntl->url_for("/$m{user}");
+      $r = $r->to_abs($site_url) if $site_url;
+      return "<span class=\"markdown-mentioned\">[\@$m{user}]($r)</span>";
     }
 
     # <img> tag.
@@ -680,7 +691,9 @@ sub markdown {
       # Wiki link.
       #  [[Link text|Title]]
       #  [[Title]]
-      (?<marker>\[\[)(?<text>[^\]\|]+?)(?:\|(?<url>[^\[\]]+?))?\]\]
+      (?<marker>\[\[)(?<text>[^\]\|]+?)(?:\|(?<url>[^\[\]]+?))?\]\]|
+      # Mentioned user.
+      (?<![a-zA-Z0-9_-])(?<marker>\@)(?<user>[a-zA-Z0-9_-]+)
     ))@replace_link(%+)@egmx;
   }
 
@@ -751,7 +764,7 @@ sub mentioned {
 
   # Scan message for @<username>s and return an array of them.
 
-  while ($message =~ /@([a-zA-Z0-9_\-]+)/g) {
+  while ($message =~ /(?:^|[^a-z0-9_\-])@([a-z0-9_\-]+)/gi) {
     $users{$1} = 1;
   }
   my @result = keys %users;

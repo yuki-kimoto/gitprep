@@ -252,6 +252,17 @@ a.wiki-btn-history:hover {
   color:#e0162e;
 }
 
+.markdown-mentioned {
+  color: #000;
+  font-weight: bold;
+}
+
+.markdown-mentioned a,
+.markdown-mentioned a:visited {
+  text-decoration: inherit;
+  color: inherit;
+}
+
 .wiki-add-footer a {
   color:#99c;
 }
