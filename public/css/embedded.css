@@ -33,3 +33,8 @@
   font-size: small;
   -webkit-text-size-adjust: none;
 }
+
+.notify-avatar {
+  display: inline-block;
+  vertical-align: middle;
+}

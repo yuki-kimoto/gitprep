@@ -1,4 +1,6 @@
 <%
+  use Gitprep::Image;
+
   # API
   my $api = gitprep_api;
 
@@ -13,6 +15,19 @@
   $link = $link->to_abs(app->{site_url}) if app->{site_url};
   $reason = ($api->notify_reason($reason))[0];
 
+  # Get the sender's avatar as an inline svg.
+  my $avatar = app->dbi->model('user')->select('avatar',
+    where => {id => $sender_id}
+  )->value;
+  if (defined $avatar) {
+    $avatar = Gitprep::Image->identicon($sender_id) unless $avatar;
+    $avatar = Gitprep::Image->image_as_svg(
+      data => $avatar,
+      width => 14,
+      height => 14,
+      xmlns => undef
+    );
+  }
 
   # Get the css styles to embed from local file.
   my $css = '';
@@ -34,6 +49,9 @@
   </head>
   <body>
     <div>
+      % if (defined $avatar) {
+        <span class="avatar notify-avatar"><%== $avatar %></span>
+      % }
       <b><%= $sender_id %></b> <%== $action %>
     </div>
     <div><%== $message %></div>
