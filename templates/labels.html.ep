@@ -11,7 +11,7 @@
   # Can write access
   my $session_user_id = $api->session_user_id;
   my $rep_info = Gitprep::Repository->new($user_id, $project_id);
-  my $can_write_access = $api->can_write_access($session_user_id, rep_info);
+  my $can_write_access = $api->can_write_access($session_user_id, $rep_info);
 
   my $errors;
   if (lc $self->req->method eq 'post') {
