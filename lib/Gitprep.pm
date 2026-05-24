@@ -808,10 +808,24 @@ sub startup {
   # E-mail transport.
   if ($conf->{mail}{from}) {
     if ($conf->{smtp}{hosts}) {
+      # SMTP mail: build constructor parameters.
       my $c = $conf->{smtp};
       my %args = map {$_ => $c->{$_}} keys %$c;
+
+      # Convert hosts to array.
       my @hosts = split(' ', $c->{hosts});
       $args{hosts} = \@hosts;
+
+      # Move SSL-specific options into a sub-structure.
+      my $ssl_options = {};
+      for my $key (keys %args) {
+        if ($key =~ /^SSL_/) {
+          $ssl_options->{$key} = $args{$key};
+          delete $args{$key};
+        }
+      }
+      $args{ssl_options} = $ssl_options if $ssl_options;
+
       $self->{mailtransport} = Email::Sender::Transport::SMTP->new(%args);
     }
     else {

@@ -112,3 +112,22 @@ listen=http://127.0.0.1:10020
 
 ;;; Authentication password.
 ; sasl_password=LetsOpenIt
+
+;;; SSL kind.
+;;; Set to 'ssl' for implicit SSL or 'starttls' for explicit TLS.
+; ssl=starttls
+
+;;;;; SSL parameters.
+;;;;; See https://metacpan.org/pod/IO::Socket::SSL.
+
+;;; Trusted CAs.
+;;; Use SSL_ca_file if CAs are concatenaed in a single file, SSL_ca_path for
+;;;  as CA's directory.
+; SSL_ca_file=/etc/pki/tls/certs/ca-bundle.crt
+
+;;; Client certificate.
+; SSL_cert_file=/etc/pki/tls/certs/gitprep.crt
+
+;;; Client certificate key.
+;;; Warning: access should be blocked for non-gitprep users.
+; SSL_key_file=/etc/pki/tls/private/gitprep.key

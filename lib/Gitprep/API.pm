@@ -1240,14 +1240,22 @@ sub notify_subscribed {
                  Charset => 'UTF-8',
                  Data => encode('UTF-8', $plain)
     );
-    Email::Sender::Simple->send(
-      $top->stringify,
-      {
-        transport => $self->app->{mailtransport},
-        from => $conf->{from},
-        to => $email
-      }
-    );
+
+    # Send e-mail. Avoid crashing in case of send problem.
+    eval {
+      Email::Sender::Simple->send(
+        $top->stringify,
+        {
+          transport => $self->app->{mailtransport},
+          from => $conf->{from},
+          to => $email
+        }
+      );
+    };
+    if ($@) {
+      $self->app->log->error('Cannot send e-mail: configuration error or mail server down');
+      $self->app->log->error($@);
+    }
   }
 }
 
