@@ -562,7 +562,7 @@ sub markdown {
   my $tree = $params{tree};
   my $site_url = $params{site_url};
 
-  my %users = map {$_ => 1} @{$self->app->dbi->model('user')->select('id')->values};
+  my %users;
 
   local *replace_link = sub {
     my %m = (@_);
@@ -619,6 +619,9 @@ sub markdown {
     # Mentioned user.
     # @user.
     if ($m{marker} eq '@') {
+      $users{$m{user}} = $self->app->dbi->model('user')->select('true',
+        where => {id => $m{user}}
+      )->value unless exists $users{$m{user}};
       return $m{match} unless defined $users{$m{user}};
       my $r = $self->cntl->url_for("/$m{user}");
       $r = $r->to_abs($site_url) if $site_url;
@@ -773,7 +776,7 @@ sub mentioned {
     $users{$1} = 1;
   }
   my @result = keys %users;
-  return @result;
+  return \@result;
 }
 
 sub ssh_rep_url {
@@ -1157,12 +1160,12 @@ sub subscribe {
 
 sub subscribe_mentioned {
   my ($self, $issue_row_id, $message) = @_;
-  my @mentioned = $self->mentioned($message);
+  my $mentioned = $self->mentioned($message);
 
-  if (@mentioned != 0) {
+  if (@$mentioned) {
     my $results = $self->app->dbi->model('user')->select('row_id',
              where => {
-               id => @mentioned
+               id => $mentioned
              })->all;
 
     for my $user_row_id (@$results) {
