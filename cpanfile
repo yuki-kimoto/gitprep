@@ -23,3 +23,4 @@ requires 'Email::Sender';
 requires 'HTML::Restrict', '>= 3.0.0';
 requires 'Imager';
 requires 'Text::CSV';
+requires 'IO::Socket::SSL', '>= 2.009';
