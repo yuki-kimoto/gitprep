@@ -8,7 +8,7 @@
   my $emojis = app->manager->emojis;
   my $reaction_url = '#';
   if (defined $session_user_id) {
-    my $sign = app->sign("$id", "$session_user_id");
+    my $sign = app->sign(["$id", $session_user_id]);
     $reaction_url = url_for('/_reaction')->query(id => $id, sign => $sign);
   }
 %>

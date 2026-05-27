@@ -3,7 +3,9 @@
 [basic]
 ;;; A secret passphrase to randomize several things.
 ;;; It is recommended to set it to your own choice.
-; secret=PleaseChangeMe!
+;;; Prepend (separating with spaces) new secret to keep old ones valid.
+;;; No space in a secret.
+; secret=please change me !
 
 ;;; Site http URL
 ;;; Used to build an absolute URL, such as links in e-mails and pull

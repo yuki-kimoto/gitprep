@@ -16,7 +16,7 @@
 
   if ($session_user_id) {
     $json_out = {error => 'invalid request'};
-    if (app->sign("$issue_message_row_id", "$session_user_id") eq $sign) {
+    if (app->verify($sign, ["$issue_message_row_id", $session_user_id])) {
       eval {
         app->dbi->connector->txn(sub {
           $reactions = app->dbi->model('issue_message')->select(['reactions'],

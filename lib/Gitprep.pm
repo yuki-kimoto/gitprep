@@ -18,7 +18,8 @@ use Validator::Custom;
 use Time::Moment;
 use Email::Sender::Transport::SMTP;
 use Email::Sender::Transport::Sendmail;
-use Crypt::Digest::SHA256 qw(sha256_b64u);
+use Crypt::Digest::SHA256 qw(sha256);
+use MIME::Base64 qw(encode_base64 encode_base64url);
 use Mojo::JSON qw(encode_json);
 
 # Digest::SHA loading to Mojo::Util if not loaded
@@ -40,12 +41,33 @@ has 'vc';
 use constant BUFFER_SIZE => 8192;
 
 sub sign {
-  my $self = shift;
+  (my $self, my $data, @_) = (@_);
+  my %args = (
+    secret => $self->secrets->[0],
+    format => 'base64url',
+    (@_)
+  );
 
   # Sign arguments with secret.
-  my $secret = $self->secrets->[0];
-  my $json = encode_json([$secret, (@_), $secret]);
-  return sha256_b64u($json);
+  # Serialize data by converting to JSON.
+  my $sign = sha256(encode_json([$args{secret}, $data, $args{secret}]));
+  $sign = encode_base64url($sign) if $args{format} eq 'base64url';
+  $sign = encode_base64($sign, '') if $args{format} eq 'base64';
+  $sign = lc(unpack 'H*', $sign) if $args{format} eq 'hex';
+  return $sign;
+}
+
+sub verify {
+  (my $self, my $signature, my $data, @_) = (@_);
+  my %args = (
+    secrets => $self->secrets,
+    (@_)
+  );
+
+  # Verify signature, accepting current and previous secrets by default.
+  for my $secret (@{$args{secrets}}) {
+    return 1 if $self->sign($data, (%args), secret => $secret) eq $signature;
+  }
 }
 
 sub _http_authenticate {
@@ -85,9 +107,14 @@ sub startup {
 
   my $conf = $self->config;
 
-  # Set-up secret passphrase.
+  # Set-up secret passphrases.
+  # Spacing is passphrase separator ==> cannot appear in a passphrase itself.
+  # First passphrase is the active one, others are present to support
+  #  backward compatibility (https://docs.mojolicious.org/Mojolicious#secrets).
   if ($conf->{basic}{secret}) {
-    $self->secrets([$conf->{basic}{secret}]);
+    my $secrets = $conf->{basic}{secret};
+    $secrets =~ s/^\s*(.*?)\s*$/$1/;
+    $self->secrets([split /\s+/, $secrets]) if $secrets ne '';
   }
 
   # Configure logging.
