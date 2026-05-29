@@ -546,6 +546,7 @@ sub add_issue_message {
 #  file         the markdown file path within repository
 #  tree         the markdown file's directory within repository
 #  site_url     Base url to convert into an absolute url (Mojo::URL).
+#  toc          Generate table of content, not page.
 #
 # If not defined, tree is computed from file.
 # Wiki links are translated only if the repository is a wiki.
@@ -701,7 +702,9 @@ sub markdown {
   }
 
   # Convert to HTML.
-  my $html_text = Text::Markdown::Hoedown::markdown($markdown_text,
+  my $proc = \&Text::Markdown::Hoedown::markdown;
+  $proc = \&Text::Markdown::Hoedown::markdown_toc if $params{toc};
+  my $html_text = $proc->($markdown_text,
     extensions => HOEDOWN_EXT_FENCED_CODE|HOEDOWN_EXT_TABLES|HOEDOWN_EXT_NO_INTRA_EMPHASIS
   );
 

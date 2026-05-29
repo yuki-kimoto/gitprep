@@ -67,6 +67,25 @@
         $self->render(json => {success => $success});
         return;
       }
+      elsif ($op eq 'ajax-toc') {
+        my $toc = '';
+        if ($api->wiki_page_exists($wiki_rep_info, $title)) {
+          $content = $api->get_wiki_page_content($wiki_rep_info, $title);
+          if (defined $content) {
+            # Get page table of contents.
+            $toc = $api->markdown(
+              $content,
+              $wiki_rep_info,
+              rev => 'master',
+              toc => 1
+            );
+            my $url = url_for($wiki_rep_info->url($title));
+            $toc =~ s@\bhref="#@href="$url#@g;
+          }
+        }
+        $self->render(json => $toc);
+        return;
+      }
     }
     # Form request
     else {
@@ -279,6 +298,25 @@
           });
         }
       });
+
+      // Open page toc details.
+      $('.wiki-list-pages details[wptitle]').on('toggle', function () {
+        var self = $(this);
+        if (self.attr('open') != undefined && !self.attr('filled')) {
+          self.attr('filled', '1');
+          var rep_url = '<%= url_for($wiki_rep_info->url) %>';
+          $.post({
+            url: rep_url + '/' + self.attr('wptitle'),
+            data: {
+              op: 'ajax-toc'
+            },
+            dataType: 'json',
+            success: function (result) {
+              self.append(result);
+            }
+          });
+        }
+      });
     });
   % end
 
@@ -468,13 +506,15 @@
               Pages
             </div>
             <div class="wiki-frame">
-              <ul class="wiki-list-pages">
+              <div class="wiki-list-pages">
                 % for my $page (@$pages) {
-                  <li>
-                    <a href="<%= url_for($wiki_rep_info->url($page)) %>"><%= $page %></a>
-                  </li>
+                  <details wptitle="<%= $page %>">
+                    <summary>
+                      <a href="<%= url_for($wiki_rep_info->url($page)) %>"><%= $page %></a>
+                    </summary>
+                  </details>
                 % }
-              </ul>
+              </div>
             </div>
           </div>
         % }

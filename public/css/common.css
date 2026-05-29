@@ -292,31 +292,24 @@ a.wiki-btn-history:hover {
 
 }
 
-.wiki-list-pages-box {
-  background-color: #fcfcfc;
-  border-radius: 3px;
-  border: 1px solid #e6e9e6;
-  padding: 9px 6px;
-  font-size: 14px;
-  line-height: 17px;
-  font-weight:bold;
-  color:#004763;
-  text-align:center;
-}
-
-.wiki-list-pages-box a {
-  text-decoration:underline;
-}
-
 .wiki-list-pages {
   padding:15px 12px;
-  font-size:15px;
+  font-size:16px;
+}
+
+.wiki-list-pages summary {
+  font-weight: bold;
+}
+
+.wiki-list-pages details *:not(summary) a,
+.wiki-list-pages details *:not(summary) a:visited {
+  color: #000;
 }
 
 .wiki-list-pages li {
-  list-style-type: disc;
+  list-style-type: none;
   margin-left:20px;
-  font-size:16px;
+  font-size:15px;
   margin-bottom:3px;
 }
 
