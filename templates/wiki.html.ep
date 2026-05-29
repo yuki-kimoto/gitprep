@@ -57,7 +57,8 @@
         my $title_to_delete = param('title-to-delete');
         eval { $title_to_delete = Encode::decode('UTF-8', $title_to_delete) };
         my $success = 0;
-        if ($api->wiki_safe_title($title_to_delete) eq $title_to_delete) {
+        if ($canadmin &&
+            $api->wiki_safe_title($title_to_delete) eq $title_to_delete) {
           $api->delete_wiki_page($wiki_rep_info, $title_to_delete);
           flash(message => "$title_to_delete deleted");
           $success = 1;
