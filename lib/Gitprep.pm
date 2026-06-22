@@ -18,7 +18,7 @@ use Validator::Custom;
 use Time::Moment;
 use Email::Sender::Transport::SMTP;
 use Email::Sender::Transport::Sendmail;
-use Crypt::Digest::SHA256 qw(sha256);
+use Crypt::Mac::HMAC qw(hmac);
 use MIME::Base64 qw(encode_base64 encode_base64url);
 use Mojo::JSON qw(encode_json);
 
@@ -40,20 +40,34 @@ has 'vc';
 
 use constant BUFFER_SIZE => 8192;
 
+# Sign argument with secret.
+#
+# Options:
+#  alg     HMAC algorithm. Default is SHA256.
+#  format  Output data format: base64url/base64/hex. Anything else is binary.
+#          Default: base64url.
+#  secret  HMAC secret key. Default is current Mojolicious secret.
 sub sign {
   (my $self, my $data, @_) = (@_);
   my %args = (
+    alg => 'SHA256',
     secret => $self->secrets->[0],
     format => 'base64url',
     (@_)
   );
 
-  # Sign arguments with secret.
-  # Serialize data by converting to JSON.
-  my $sign = sha256(encode_json([$args{secret}, $data, $args{secret}]));
+  # Serialize structured data by converting to JSON.
+  # This is consistent since Mojo JSON encoding sorts hash fields.
+  $data = encode_json($data) if ref $data;
+
+  # Compute signature.
+  my $sign = hmac($args{alg}, $args{secret}, $data);
+
+  # Convert to requested result format.
   $sign = encode_base64url($sign) if $args{format} eq 'base64url';
   $sign = encode_base64($sign, '') if $args{format} eq 'base64';
-  $sign = lc(unpack 'H*', $sign) if $args{format} eq 'hex';
+  $sign = uc(unpack 'H*', $sign) if $args{format} eq 'hex';
+
   return $sign;
 }
 
@@ -398,7 +412,7 @@ sub startup {
       };
     }
 
-    # Auto route
+    # URL routing.
     {
       my $r = $r->under(sub {
         my $self = shift;
