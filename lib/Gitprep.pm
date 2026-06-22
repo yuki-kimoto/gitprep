@@ -20,6 +20,7 @@ use Email::Sender::Transport::SMTP;
 use Email::Sender::Transport::Sendmail;
 use Crypt::Mac::HMAC qw(hmac);
 use MIME::Base64 qw(encode_base64 encode_base64url);
+use Mojo::EventEmitter;
 use Mojo::JSON qw(encode_json);
 
 # Digest::SHA loading to Mojo::Util if not loaded
@@ -37,6 +38,7 @@ has 'dbi';
 has 'git';
 has 'manager';
 has 'vc';
+has events => sub {Mojo::EventEmitter->new};
 
 use constant BUFFER_SIZE => 8192;
 
@@ -815,6 +817,16 @@ sub startup {
       $c->req->url->base->scheme('https');
       $c->app->log->warn("X-Forwarded-HTTPS header is DEPRECATED! use X-Forwarded-Proto instead.");
     }
+  });
+
+  $self->hook(before_routes => sub {
+    # Add a child death event to the application.
+    # This has to be done as a hook since the prefork server uses the signal at
+    #  startup.
+    $SIG{CHLD} = sub {
+      local ($!, $?);           # Protect interrupted waitpid.
+      $self->events->emit('child_death');
+    };
   });
 
   # Set auto_decompress for Smart HTTP
