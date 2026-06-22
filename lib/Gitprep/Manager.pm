@@ -1339,7 +1339,7 @@ sub rename_branch {
 # Copy hook stubs to the targeted repository if needed and set
 # environment variables as expected by these hooks.
 sub prepare_hooks {
-  my ($self, $rep_info, $auth_user_id) = @_;
+  my ($self, $rep_info, $auth_user_id, $env) = @_;
 
   # Wikis have no hooks (yet).
   unless ($rep_info->is_wiki) {
@@ -1360,12 +1360,13 @@ sub prepare_hooks {
 
   # Setup environment.
   if ($auth_user_id) {
-    $ENV{GITPREP_PERL} = $^X;
-    $ENV{GITPREP_HOME} = $self->app->home;
-    $ENV{GITPREP_SESSION_USER} = $auth_user_id;
-    $ENV{GITPREP_USER} = $rep_info->user;
-    $ENV{GITPREP_PROJECT} = $rep_info->project;
-    $ENV{GITPREP_IS_WIKI} = $rep_info->is_wiki;
+    $env //= \%ENV;
+    $env->{GITPREP_PERL} = $^X;
+    $env->{GITPREP_HOME} = $self->app->home;
+    $env->{GITPREP_SESSION_USER} = $auth_user_id;
+    $env->{GITPREP_USER} = $rep_info->user;
+    $env->{GITPREP_PROJECT} = $rep_info->project;
+    $env->{GITPREP_IS_WIKI} = $rep_info->is_wiki;
   }
 }
 
