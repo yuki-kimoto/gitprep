@@ -1,18 +1,50 @@
 <%
-  use IPC::Open3 ();
-  use Symbol ();
-  use IO::Select ();
+  use Mojo::IOLoop;
   use Gitprep::Repository;
+  use Gitprep::Jobs;
 
   my $service = param('service');
   my $user = param('user');
   my $project = param('project');
 
   my $git = app->git;
+  my $jobs = app->jobs;
 
   my $auth_user_id = stash('auth_user_id') // '';
 
   my $rep_info = Gitprep::Repository->maybe_wiki($user, $project);
+
+  my $outstream;        # Standard git output stream.
+  my @chunks;           # Output chunks fifo.
+  my $wcactive = 0;     # Flag currently writing chunk.
+  my $error = '';       # Git error buffer.
+
+  # Chunk output pump.
+  my $wcpump;
+  $wcpump = sub {
+    my $c = shift;
+    $wcactive = 0;
+    if (@chunks) {
+      my $chunk = shift @chunks;
+      $outstream->start if $outstream;
+      $wcactive = 1;
+      $c->write_chunk($chunk, $wcpump);
+    }
+  };
+
+  # Prepare response
+  $self->res->headers->content_type("application/x-git-$service-result");
+  $self->write_chunk;                   # Start chunked response.
+  my $tx = $self->render_later->tx;     # Keep transaction alive.
+
+  # Closeout function.
+  my $terminate = sub {
+    push @chunks, '';
+    $self->$wcpump unless $wcactive;
+    $self->app->log->error($self->url_for . ": $error") if $error ne '';
+    $tx = undef;        # Release transaction.
+    ()
+  };
 
   # Command
   my @cmd = $git->cmd(
@@ -21,66 +53,34 @@
     '--stateless-rpc',
     $rep_info->git_dir
   );
-  my ($cout, $cerr) = (Symbol::gensym, Symbol::gensym);
-  my $cin;
-  my $pid;
-  {
-    local %ENV = %ENV;
-    app->manager->prepare_hooks($rep_info, $auth_user_id);
-    $pid = IPC::Open3::open3($cin, $cout, $cerr, @cmd);
-  }
 
+  # Preset hooks and get child environment.
+  my %environ = %ENV;
+  app->manager->prepare_hooks($rep_info, $auth_user_id, \%environ);
+
+  # Prepare job.
   my $pos = 0;
   my $content = $self->req->content;
-  while (1) {
-    my $chunk = $content->get_body_chunk($pos);
-    last unless defined $chunk;
-    my $length = length $chunk;
-    last unless $length;
+  my $job = $jobs->command(\@cmd,
+    environ => \%environ,
+    buffer_size => $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE},
+    stdin => sub {
+      my $chunk = $content->get_body_chunk($pos) // '';
+      $pos += length $chunk;
+      return $chunk;
+    },
+    stdout => sub {
+      ($outstream, my $chunk) = @_;
+      push @chunks, $chunk;
+      $outstream->stop if @chunks > 4;
+      $self->$wcpump unless $wcactive;
+      ()
+    },
+    stderr => \$error,
+    success => $terminate,
+    failure => $terminate
+  );
 
-    print $cin $chunk;
-    $pos += $length;
-  }
-  close $cin;
-
-  # Response
-  $self->res->headers->content_type("application/x-git-$service-result");
-  $self->render_later;
-
-  # Write
-  my $s = IO::Select->new($cout, $cerr);
-  my $buffer_size = $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE};
-  my $error;
-  my @ready;
-  my $cb;
-  $cb = sub {
-    my $c = shift;
-    if (@ready = $s->can_read) {
-      my $output = '';
-      for my $handle (@ready) {
-
-        if (sysread($handle, my $buf, $buffer_size)) {
-          if ($handle == $cerr) {
-            $error .= $buf;
-          }
-          else {
-            $output .= $buf;
-          }
-        }
-        else {
-          $s->remove($handle);
-        }
-      }
-      $c->write_chunk($output, $cb);
-    }
-    else {
-      $c->finish;
-      waitpid($pid, 0);
-
-      $c->app->log->error($c->url_for . ": $error") if defined $error;
-      undef $cb;
-      return;
-    }
-  };
-  $self->$cb;
+  # Start everything asynchronously.
+  $jobs->run_jobs($job);
 %>

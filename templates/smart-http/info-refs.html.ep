@@ -1,13 +1,13 @@
 <%
-  use IPC::Open3 ();
-  use Symbol ();
-  use IO::Select ();
+  use Mojo::IOLoop;
   use Gitprep::Repository;
+  use Gitprep::Jobs;
 
   my $service = param('service') || '';
   my $user = param('user');
   my $project = param('project');
   my $git = app->git;
+  my $jobs = app->jobs;
 
   my $auth_user_id = stash('auth_user_id') // '';
 
@@ -26,36 +26,21 @@
       '--advertise-refs',
       $rep_info->git_dir
     );
-    my ($cout, $cerr) = (Symbol::gensym, Symbol::gensym);
-    my $cin;
-    my $pid;
 
-    {
-      local %ENV = %ENV;
-      app->manager->prepare_hooks($rep_info, $auth_user_id);
-      $pid = IPC::Open3::open3($cin, $cout, $cerr, @cmd );
-    }
+    # Preset hooks and get child environment.
+    my %environ = %ENV;
+    app->manager->prepare_hooks($rep_info, $auth_user_id, \%environ);
 
-    close $cin;
-    my ( $refs, $err, $buf ) = ( '', '', '' );
-    my $s = IO::Select->new($cout, $cerr);
-    my $buffer_size = $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE};
-    while (my @ready = $s->can_read) {
-      for my $handle (@ready) {
-        while (sysread($handle, $buf, $buffer_size)) {
-          if ($handle == $cerr) {
-            $err .= $buf;
-          }
-          else {
-            $refs .= $buf;
-          }
-        }
-        $s->remove($handle) if eof($handle);
-      }
-    }
-    close $cout;
-    close $cerr;
-    waitpid($pid, 0);
+    # Run command.
+    my ($refs, $err) = ('', '');
+    my $job = $jobs->command(\@cmd,
+      ioloop => Mojo::IOLoop->new,
+      environ => \%environ,
+      stdout => sub {$refs .= $_[1]},
+      stderr => sub {$err .= $_[1]},
+      buffer_size => $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE}
+    );
+    $jobs->run_blocking_jobs($job);
 
     if ($err) {
       app->log->error($err);
