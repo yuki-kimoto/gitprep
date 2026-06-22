@@ -13,6 +13,12 @@
   overflow: hidden;
 }
 
+.avatar svg {
+  /* Work around a FF clipping bug. */
+  border-radius: 50%;
+  border: 0.1px solid transparent;
+}
+
 .wiki-link-no-title a {
   color: #e0162e;
 }
