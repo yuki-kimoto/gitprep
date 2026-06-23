@@ -13,6 +13,7 @@ use Gitprep::API;
 use Gitprep::Git;
 use Gitprep::Manager;
 use Gitprep::Repository;
+use Gitprep::Jobs;
 use Scalar::Util 'weaken';
 use Validator::Custom;
 use Time::Moment;
@@ -37,6 +38,7 @@ our $project_re = qr/[a-zA-Z0-9_\-\.]+/;
 has 'dbi';
 has 'git';
 has 'manager';
+has 'jobs';
 has 'vc';
 has events => sub {Mojo::EventEmitter->new};
 
@@ -190,6 +192,12 @@ sub startup {
   $manager->app($self);
   weaken $manager->{app};
   $self->manager($manager);
+
+  # Asynchronous job handler.
+  my $jobs = Gitprep::Jobs->new;
+  $jobs->app($self);
+  weaken $jobs->{app};
+  $self->jobs($jobs);
 
   # authorized_keys file
   my $authorized_keys_file = $conf->{basic}{authorized_keys_file};
