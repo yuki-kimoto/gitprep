@@ -1,6 +1,7 @@
 <%
   use Mojo::IOLoop;
   use Gitprep::Repository;
+  use Gitprep::Fifo;
   use Gitprep::Jobs;
 
   my $service = param('service');
@@ -14,23 +15,26 @@
 
   my $rep_info = Gitprep::Repository->maybe_wiki($user, $project);
 
-  my $outstream;        # Standard git output stream.
-  my @chunks;           # Output chunks fifo.
-  my $wcactive = 0;     # Flag currently writing chunk.
-  my $error = '';       # Git error buffer.
+  my $outstream;                        # Standard git output stream.
+  my $wcactive = 0;                     # Flag currently writing chunk.
+  my $error = '';                       # Git error buffer.
+  my $fifo = Gitprep::Fifo->new;        # Output fifo.
 
   # Chunk output pump.
   my $wcpump;
   $wcpump = sub {
     my $c = shift;
     $wcactive = 0;
-    if (@chunks) {
-      my $chunk = shift @chunks;
-      $outstream->start if $outstream;
+    if (!$fifo->empty) {
+      $c->write_chunk($fifo->pop, $wcpump);
       $wcactive = 1;
-      $c->write_chunk($chunk, $wcpump);
     }
   };
+
+  # Setup fifo.
+  $fifo->on(ready => sub {$self->$wcpump unless $wcactive});
+  $fifo->on(low => sub {$outstream->start if $outstream});
+  $fifo->on(high => sub {$outstream->stop});
 
   # Prepare response
   $self->res->headers->content_type("application/x-git-$service-result");
@@ -39,8 +43,7 @@
 
   # Closeout function.
   my $terminate = sub {
-    push @chunks, '';
-    $self->$wcpump unless $wcactive;
+    $fifo->push('');
     $self->app->log->error($self->url_for . ": $error") if $error ne '';
     $tx = undef;        # Release transaction.
     ()
@@ -69,13 +72,7 @@
       $pos += length $chunk;
       return $chunk;
     },
-    stdout => sub {
-      ($outstream, my $chunk) = @_;
-      push @chunks, $chunk;
-      $outstream->stop if @chunks > 4;
-      $self->$wcpump unless $wcactive;
-      ()
-    },
+    stdout => sub {$outstream = $_[0]; $fifo->push($_[1]); ()},
     stderr => \$error,
     success => $terminate,
     failure => $terminate
