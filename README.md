@@ -641,6 +641,8 @@ Even if shared hosting server, you can install Mojolicious application as CGI.
     requires 'Imager';
     requires 'Text::CSV';
     requires 'IO::Socket::SSL', '>= 2.009';
+    requires 'Net::Curl';
+    requires 'Net::Curl::Promiser';
 
 If you want to install all defined modules, you only run the following command.
 
@@ -703,7 +705,9 @@ Thanks to Mojolicious author, [Sebastian riedel](https://x.com/kraih).
 * [HTML::Restrict](https://metacpan.org/pod/HTML::Restrict)
 * [Imager](https://metacpan.org/pod/Imager)
 * [Text::CSV](https://metacpan.org/pod/Text::CSV)
-* {IO::Socket::SSL](https://metacpan.org/pod/IO::Socket::SSL)
+* [IO::Socket::SSL](https://metacpan.org/pod/IO::Socket::SSL)
+* [Net::Curl](https://metacpan.org/pod/Net::Curl)
+* [Net::Curl::Promiser](https://metacpan.org/pod/Net::Curl::Promiser)
 
 ## Sister project
 

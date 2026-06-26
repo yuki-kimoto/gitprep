@@ -7,7 +7,10 @@ use warnings;
 use Mojo::IOLoop;
 use Mojo::Promise;
 use Scalar::Util qw(openhandle);
+use Gitprep::Fifo;
 use Gitprep::Util;
+use Net::Curl::Easy qw(:constants);
+use Net::Curl::Promiser::Mojo;
 
 has 'app';
 
@@ -87,6 +90,26 @@ sub subprocess {
   }, @options);
 }
 
+# Helper subroutine that establishes an ioloop stream for a file handle.
+sub _handle2stream {
+  my ($self, $handle, $ioloop) = (shift, shift, shift);
+  my %events = (
+    close => sub {},
+    @_
+  );
+  my $stream = Mojo::IOLoop::Stream->new($handle);
+  my $id = $ioloop->stream($stream);
+
+  my $close = $events{close};
+  $events{close} = sub {
+    $stream->unsubscribe($_ => delete $events{$_}) for (keys %events);
+    $ioloop->remove($id);
+    $close->($stream);
+  };
+  $stream->on($_ => $events{$_}) for (keys %events);
+  return $stream;
+}
+
 # Create a job submitting a system command.
 #
 # Mandatory argument:
@@ -157,25 +180,19 @@ sub command {
         if (exists $cbs{$key}) {
           my $promise = $job->clone;
           push @promises, $promise;
-          my $stream = Mojo::IOLoop::Stream->new($child->{$key});
-          my $id = $promise->ioloop->stream($stream);
-          my %events;
-          $events{close} = $stream->on(close => sub {
-            $stream->unsubscribe($_ => delete $events{$_}) for (keys %events);
-            $promise->resolve("close $key");
-          });
-          $events{'error'} = $stream->on(error => sub {
-            shift;
-            $promise->reject(@_, "error $key");
-          });
-          $events{$event} = $stream->on($event => $evproc);
-          my $closeout = sub {
-            $stream->unsubscribe($_ => delete $events{$_}) for (keys %events);
-            $promise->ioloop->remove($id);
-            Gitprep::Util::close_pipe($child, $key);
-            ()
-          };
-          $promise->then($closeout, $closeout);
+          my $stream = $self->_handle2stream($child->{$key}, $promise->ioloop,
+            close => sub {
+              Gitprep::Util::close_pipe($child, $key);
+              $promise->resolve("close $key");
+            },
+            error => sub {
+              my $stream = shift;
+              $promise->reject(@_, "error $key");
+              $stream->close;
+            },
+            $event => $evproc
+          );
+          $promise->then(sub {$stream->close; ()}, sub {$stream->close; ()});
           $stream->start;
         } else {
             Gitprep::Util::close_pipe($child, $key);
@@ -248,6 +265,211 @@ sub shell {
   my ($self, $script, %options) = @_;
   return $self->command([$options{shell} // $ENV{SHELL} // '/bin/sh',
                         '-c', $script], %options);
+}
+
+
+# Create a curl job.
+#
+# Optional keyword arguments:
+#  url          the target URL.
+#  handle       curl easy handle to use. Default is a newly allocated one.
+#  stdin        input stream disposition (see below).
+#  stdout       output stream disposition.
+#  stderr       standard error output disposition.
+#  hdrout       header output stream disposition.
+#  buffer_size  Maximum data chunk length to use where pertaining.
+#               Defaults to 16384.
+#  CURLOPT_*    Curl easy option to set in handle.
+#
+# I/O dispositions can be specified as:
+#  a currently open file handle,
+#  an open system file descriptor,
+#  '&' to use the corresponding global file handle.
+#  A reference to a scalar to be used as data buffer for the stream.
+#  A subroutine to use as data provider/consumer callback for the stream's data.
+#    Input callbacks are called with the easy handle and maximum length
+#    in argument and return the input data or '' at EOF. Output callbacks
+#    receive the easy handle and output data as argument and return
+#    a non-empty string to signal an error.
+sub curl {
+  my ($self, %options) = @_;
+  my $ioloop = $options{ioloop} // Mojo::IOLoop->singleton;
+  my $buffer_size = $options{buffer_size} // 16384;
+
+  # Setup and manage the multi handle.
+  $ioloop->{curl_promiser} =  Net::Curl::Promiser::Mojo->new($ioloop)
+    unless $ioloop->{curl_promiser};
+  my $promiser = $ioloop->{curl_promiser};
+
+  # Prepare the easy handle.
+  my $easy = $options{handle} // Net::Curl::Easy->new;
+  $options{CURLOPT_URL} = $options{url} if exists $options{url};
+
+  return $self->new_job(sub {
+    my $job = shift;
+    my $aborted = 0;
+    my @promises;
+    my @toclose;
+
+    # An error is returned by curl_easy_pause if the connection is not
+    #  established. Ignore it.
+    my $paused = 0;
+    my $pause = sub {
+      my ($easy, $bitmask) = @_;
+      $paused = eval {$easy->pause($bitmask), 1}? $bitmask: 0;
+    };
+
+    # Handle input stream disposition (stdin).
+    if (exists $options{stdin}) {
+      my $callback;
+      my $option = $options{stdin} // sub {0};
+      $option = \*STDIN if $option eq '&';
+      open $option, "<&=:raw", $option if $option =~ /^0|[1-9]\d*$/;
+      $option = \$options{stdin} if '' eq ref $option;
+      $callback = $option if 'CODE' eq ref $option;
+      if ('SCALAR' eq ref $option) {
+        my $offset = 0;
+        $callback = sub {
+          my ($easy, $maxlen) = @_;
+          (undef, my $chunk) = unpack("a$offset a$maxlen", $$option);
+          $offset += length $chunk;
+          return \$chunk;
+        };
+      }
+      elsif (openhandle($option)) {
+        open my $fh, '<&', $option;
+        my $fifo = Gitprep::Fifo->new;
+        my $stream = $self->_handle2stream($fh, $ioloop,
+          read => sub {
+            $fifo->push($_[1]);
+            $_[0]->close if $_[1] eq '';
+          }
+        );
+        $fifo->on(ready => sub {pause->($easy, $paused & ~CURLPAUSE_SEND);});
+        $fifo->on(low => sub {$stream->start});
+        $fifo->on(high => sub {
+          $stream->stop;
+          $pause->($easy, $paused & ~CURLPAUSE_SEND);
+        });
+        $stream->start;
+        $callback = sub {
+          my $chunk = $fifo->pop($_[1]);
+          return \$chunk if defined $chunk;
+          $paused |= CURLPAUSE_SEND;
+          return CURL_READFUNC_PAUSE;
+        };
+      }
+
+      $options{CURLOPT_READFUNCTION} = sub {
+        $aborted? CURL_READFUNC_ABORT: $callback->(@_)
+      } if $callback;
+    }
+
+    # Handle error stream disposition (stderr).
+    # Use a pipe if needed as curl does not support a callback for this.
+    if (exists $options{stderr}) {
+      my $option = $options{stderr};
+      if (!defined $option) {
+        open $option, '>/def/null';
+      }
+      else {
+        $option = \*STDERR if $option eq '&';
+        open $option, '>&', $option if openhandle($option);
+        open $option, ">>&=:raw", $option if $option =~ /^0|[1-9]\d*$/;
+        $option = sub {${$options{stderr}} .= $_[1]} if 'SCALAR' eq ref $option;
+        if ('CODE' eq ref $option) {
+          my $sub = $option;
+          my $promise = $job->clone;
+          push @promises, $promise;
+          pipe my ($pi, $po);
+  	  push @toclose, $po;
+          my $stream = $self->_handle2stream($pi, $ioloop,
+            close => sub {
+              $promise->resolve;
+            },
+            read => sub {
+              $sub->(@_);
+          });
+          $promise->{stream} = $stream;
+          $stream->start;
+          $option = $po;
+        }
+      }
+
+      $options{CURLOPT_STDERR} = $option if openhandle($option);
+    }
+
+    # Handle output stream disposition.
+    my $output_func = sub {
+      my ($name, $curlopt, $globfh) = @_;
+      if (exists $options{$name}) {
+        my $callback;
+        my $option = $options{$name} // sub {length $_[1]};
+        $option = $globfh if $globfh && $option eq '&';
+        open $option, ">>&=:raw", $option if $option =~ /^0|[1-9]\d*$/;
+        $callback = sub {${$options{$name}} .= $_[1]; length $_[1]}
+          if 'SCALAR' eq ref $option;
+        $callback = $option if 'CODE' eq ref $option;
+        if (openhandle($option)) {
+          open my $fh, '>&', $option;
+          my $promise = $job->clone;
+          push @promises, $promise;
+          my $fifo = Gitprep::Fifo->new;
+          my $drain;
+          $drain = sub {
+            unless ($_[0]->is_writing || $fifo->empty) {
+              my $chunk = $fifo->pop;
+              $_[0]->write($chunk, $drain);
+              $promise->resolve if $chunk eq '';
+            }
+          };
+
+          my $stream = $self->_handle2stream($fh, $ioloop);
+          $fifo->on(ready => sub {$drain->($stream)});
+          $fifo->on(low => sub {$pause->($easy, $paused & ~CURLPAUSE_RECV)});
+          $fifo->on(high => sub {$pause->($easy, $paused | CURLPAUSE_RECV)});
+          $callback = sub {
+            $fifo->push($_[1]);
+            return length $_[1];
+          };
+        }
+
+        $options{$curlopt} = sub {
+          $aborted? CURL_WRITEFUNC_ERROR: $callback->(@_)
+        } if $callback;
+      }
+    };
+
+    # Handle output stream disposition (stdout).
+    $output_func->('stdout', 'CURLOPT_WRITEFUNCTION', \*STDOUT);
+
+    # Handle header output disposition (hdrout).
+    $output_func->('hdrout', 'CURLOPT_HEADERFUNCTION');
+
+    # Feed curl handle with options.
+    while (my ($option, $value) = each %options) {
+      $easy->setopt(Net::Curl::Easy->$option, $value)
+        if $option =~ m/^CURLOPT_/;
+    }
+
+    # Start transfer.
+    my $active = 1;
+    my $promise = $promiser->add_handle($easy);
+    push @promises, $promise;
+    $promise->catch(sub {
+      $aborted = 1;
+      $promiser->cancel_handle($easy) if $active;
+      $job->reject(@_);
+      ()
+    })->finally(sub {$active = 0; close $_ for @toclose;});
+
+    # Wait transfer and I/O settled.
+    my $all = Mojo::Promise->all_settled(@promises);
+    $all->then(sub {$job->resolve(@_);}, sub {$job->reject(@_); ()});
+
+    # Abort if prematurely rejected.
+    $job->catch(sub {$all->reject(@_); $promise->reject(@_); ()});
+  }, %options);
 }
 
 
