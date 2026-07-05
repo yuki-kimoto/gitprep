@@ -5,7 +5,6 @@ use Digest::MD5 'md5_hex';
 use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
 use HTML::FormatText::WithLinks;
 use MIME::Entity;
-use Email::Sender::Simple;
 use Time::Moment;
 use HTML::Restrict;
 
@@ -1212,7 +1211,7 @@ sub notify_subscribed {
   my $user = $rep_info->user;
   my $project = $rep_info->project;
 
-  $self->app->{mailtransport} && $self->app->{site_url} or return;
+  $self->app->mail->can_send or return;
 
   # Sender id, name and email address.
   my $sender = $self->app->dbi->model('user')->select(['id', 'name', 'email'],
@@ -1305,21 +1304,8 @@ sub notify_subscribed {
                  Data => encode('UTF-8', $plain)
     );
 
-    # Send e-mail. Avoid crashing in case of send problem.
-    eval {
-      Email::Sender::Simple->send(
-        $top->stringify,
-        {
-          transport => $self->app->{mailtransport},
-          from => $conf->{from},
-          to => $email
-        }
-      );
-    };
-    if ($@) {
-      $self->app->log->error('Cannot send e-mail: configuration error or mail server down');
-      $self->app->log->error($@);
-    }
+    # Queue e-mail for asynchronous send.
+    $self->app->mail->queue_mail($top->stringify, [$email]);
   }
 }
 

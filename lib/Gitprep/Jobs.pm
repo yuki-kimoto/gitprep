@@ -457,8 +457,6 @@ sub curl {
     my $promise = $promiser->add_handle($easy);
     push @promises, $promise;
     $promise->catch(sub {
-      $aborted = 1;
-      $promiser->cancel_handle($easy) if $active;
       $job->reject(@_);
       ()
     })->finally(sub {$active = 0; close $_ for @toclose;});
@@ -468,7 +466,13 @@ sub curl {
     $all->then(sub {$job->resolve(@_);}, sub {$job->reject(@_); ()});
 
     # Abort if prematurely rejected.
-    $job->catch(sub {$all->reject(@_); $promise->reject(@_); ()});
+    $job->catch(sub {
+      $aborted = 1;
+      $promiser->cancel_handle($easy) if $active;
+      $all->reject(@_);
+      $promise->reject(@_);
+      ()
+    });
   }, %options);
 }
 

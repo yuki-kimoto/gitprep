@@ -636,11 +636,9 @@ Even if shared hosting server, you can install Mojolicious application as CGI.
     requires 'MIME::Base64';
     requires 'MIME::Entity';
     requires 'HTML::FormatText::WithLinks';
-    requires 'Email::Sender';
     requires 'HTML::Restrict', '>= 3.0.0';
     requires 'Imager';
     requires 'Text::CSV';
-    requires 'IO::Socket::SSL', '>= 2.009';
     requires 'Net::Curl';
     requires 'Net::Curl::Promiser';
 
@@ -701,11 +699,9 @@ Thanks to Mojolicious author, [Sebastian riedel](https://x.com/kraih).
 * [DBIx::Custom](http://search.cpan.org/dist/DBIx-Custom/lib/DBIx/Custom.pm)
 * [HTML::FormatText::WithLinks](https://metacpan.org/pod/HTML::FormatText::WithLinks)
 * [MIME::Entity](https://metacpan.org/pod/MIME::Entity)
-* [Email::Sender](https://metacpan.org/pod/Email::Sender)
 * [HTML::Restrict](https://metacpan.org/pod/HTML::Restrict)
 * [Imager](https://metacpan.org/pod/Imager)
 * [Text::CSV](https://metacpan.org/pod/Text::CSV)
-* [IO::Socket::SSL](https://metacpan.org/pod/IO::Socket::SSL)
 * [Net::Curl](https://metacpan.org/pod/Net::Curl)
 * [Net::Curl::Promiser](https://metacpan.org/pod/Net::Curl::Promiser)
 
