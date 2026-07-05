@@ -116,6 +116,9 @@ listen=http://127.0.0.1:10020
 ;;; Authentication password.
 ; sasl_password=LetsOpenIt
 
+;;;  Authentication method (extension).
+; login_options=AUTH=EXTERNAL
+
 ;;; SSL kind.
 ;;; Set to 'ssl' for implicit SSL or 'starttls' for explicit TLS.
 ; ssl=starttls

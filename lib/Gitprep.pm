@@ -14,11 +14,10 @@ use Gitprep::Git;
 use Gitprep::Manager;
 use Gitprep::Repository;
 use Gitprep::Jobs;
+use Gitprep::Mail;
 use Scalar::Util 'weaken';
 use Validator::Custom;
 use Time::Moment;
-use Email::Sender::Transport::SMTP;
-use Email::Sender::Transport::Sendmail;
 use Crypt::Mac::HMAC qw(hmac);
 use MIME::Base64 qw(encode_base64 encode_base64url);
 use Mojo::EventEmitter;
@@ -36,11 +35,12 @@ our $user_re = qr/[a-zA-Z0-9_\-]+/;
 our $project_re = qr/[a-zA-Z0-9_\-\.]+/;
 
 has 'dbi';
-has 'git';
-has 'manager';
-has 'jobs';
-has 'vc';
 has events => sub {Mojo::EventEmitter->new};
+has 'git';
+has 'jobs';
+has 'mail';
+has 'manager';
+has 'vc';
 
 use constant BUFFER_SIZE => 8192;
 
@@ -198,6 +198,12 @@ sub startup {
   $jobs->app($self);
   weaken $jobs->{app};
   $self->jobs($jobs);
+
+  # Mail queue.
+  my $mail = Gitprep::Mail->new;
+  $mail->app($self);
+  weaken $mail->{app};
+  $self->mail($mail);
 
   # authorized_keys file
   my $authorized_keys_file = $conf->{basic}{authorized_keys_file};
@@ -866,35 +872,8 @@ sub startup {
   # Smart HTTP Buffer size
   $ENV{GITPREP_SMART_HTTP_BUFFER_SIZE} ||= 16384;
 
-  # E-mail transport.
-  if ($conf->{mail}{from}) {
-    if ($conf->{smtp}{hosts}) {
-      # SMTP mail: build constructor parameters.
-      my $c = $conf->{smtp};
-      my %args = map {$_ => $c->{$_}} keys %$c;
-
-      # Convert hosts to array.
-      my @hosts = split(' ', $c->{hosts});
-      $args{hosts} = \@hosts;
-
-      # Move SSL-specific options into a sub-structure.
-      my $ssl_options = {};
-      for my $key (keys %args) {
-        if ($key =~ /^SSL_/) {
-          $ssl_options->{$key} = $args{$key};
-          delete $args{$key};
-        }
-      }
-      $args{ssl_options} = $ssl_options if $ssl_options;
-
-      $self->{mailtransport} = Email::Sender::Transport::SMTP->new(%args);
-    }
-    else {
-      $self->{mailtransport} = Email::Sender::Transport::Sendmail->new(
-        $conf->{sendmail}
-      );
-    }
-  }
+  # Configure email sender.
+  $self->mail->configure($conf);
 }
 
 1;

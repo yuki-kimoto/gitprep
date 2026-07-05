@@ -56,7 +56,7 @@
       globally disabled all notifications
     </span>.
   % }
-  % if (!$api->app->{mailtransport} || !$api->app->{site_url}) {
+  % unless ($api->app->mail->can_send) {
     <p style="margin-top: 3px;">Notifications are currently not supported by this Gitprep instance.</p>
   % }
 </div>
