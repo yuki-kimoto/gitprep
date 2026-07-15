@@ -24,4 +24,4 @@ requires 'HTML::Restrict', '>= 3.0.0';
 requires 'Imager';
 requires 'Text::CSV';
 requires 'Net::Curl';
-requires 'Net::Curl::Promiser';
+requires 'Net::Curl::Promiser', '>= 0.21';
