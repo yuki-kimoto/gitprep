@@ -1,9 +1,10 @@
 <%
-  use Mojo::UserAgent;
   use Mojo::JSON qw(decode_json encode_json);
-  use Gitprep::Image;
+  use Mojo::IOLoop;
   use MIME::Base64;
   use Crypt::Digest::SHA256 qw(sha256_hex);
+  use Net::Curl::Easy qw(:constants);
+  use Gitprep::Image;
 
   # API
   my $api = gitprep_api;
@@ -50,7 +51,7 @@
   if (lc $self->req->method eq 'post') {
     my $paccess = param('picture');
     my $json;
-    my $picture;
+    my $picture = '';
 
     if ($op eq 'upload') {
       if (!$paccess || 'Mojo::Upload' ne ref $paccess || !$paccess->asset) {
@@ -71,17 +72,23 @@
         where => {id => $user_id})->value;
       $email =~ s/^\s*(.*?)\s*$/$1/;
       my $hash = sha256_hex(lc $email);
-      my $ua = Mojo::UserAgent->new;
-      my $tx = $ua->get("https://www.gravatar.com/avatar/$hash?s=320&d=404" => {Accept => 'image/png'});
-      if ($tx->res->code == 200) {
-        my $asset = $tx->res->content->asset;
-        my $size = $asset->size;
-        if ($size >= 0x80000) {
+      my $easy = Net::Curl::Easy->new;
+      my $job = app->jobs->curl(
+        url => "https://www.gravatar.com/avatar/$hash?s=320&d=404",
+        handle => $easy,
+        ioloop => Mojo::IOLoop->new,
+        CURLOPT_HTTPHEADER => [
+          'Accept: image/png'
+        ],
+        stdout => \$picture
+      );
+      app->jobs->run_blocking_jobs($job);
+      my $http_code = $easy->getinfo(CURLINFO_HTTP_CODE);
+      if ($http_code == 200) {
+        if (length($picture) >= 0x80000) {
           push @$errors, 'Uploaded picture is too large';
-        } else {
-          $picture = $asset->get_chunk(0, $size);
         }
-      } elsif ($tx->res->code == 404) {
+      } elsif ($http_code == 404) {
         push @$errors, "You don't have a gravatar picture";
       } else {
         push @$errors, 'Failed to download from gravatar';
