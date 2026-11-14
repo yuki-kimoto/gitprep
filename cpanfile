@@ -23,5 +23,5 @@ requires 'HTML::FormatText::WithLinks';
 requires 'HTML::Restrict', '>= 3.0.0';
 requires 'Imager';
 requires 'Text::CSV';
-requires 'Net::Curl';
+requires 'Net::Curl', '>= 0.60';
 requires 'Net::Curl::Promiser', '>= 0.21';
