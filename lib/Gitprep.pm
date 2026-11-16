@@ -44,6 +44,21 @@ has 'vc';
 
 use constant BUFFER_SIZE => 8192;
 
+# Compare strings for equality in constant time.
+sub hex_equal {
+  my ($self, $s1, $s2) = @_;
+  my @b1 = unpack('C*', $s1);
+  my @b2 = unpack('C*', $s2);
+  my $l1 = @b1;
+  my $l2 = @b2;
+  my $diff = $l1 ^ $l2;
+  my $cb = $diff? \@b1: \@b2;
+  for (my $i = 0; $i < $l1; $i++) {
+    $diff |= $b1[$i] ^ $cb->[$i];
+  }
+  return $diff == 0;
+}
+
 # Sign argument with secret.
 #
 # Options:
@@ -83,9 +98,12 @@ sub verify {
   );
 
   # Verify signature, accepting current and previous secrets by default.
+  my $ok = 0;   # Take care of timing attacks.
   for my $secret (@{$args{secrets}}) {
-    return 1 if $self->sign($data, (%args), secret => $secret) eq $signature;
+    $ok |= $self->hex_equal($signature,
+                            $self->sign($data, (%args), secret => $secret));
   }
+  return $ok;
 }
 
 sub _http_authenticate {
