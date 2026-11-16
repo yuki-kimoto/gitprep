@@ -17,6 +17,7 @@ requires 'Text::Markdown::Hoedown';
 requires 'Time::Moment';
 requires 'Crypt::Digest::SHA256';
 requires 'Crypt::Mac::HMAC';
+requires 'Math::Random::Secure';
 requires 'MIME::Base64';
 requires 'MIME::Entity';
 requires 'HTML::FormatText::WithLinks';
