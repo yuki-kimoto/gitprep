@@ -396,6 +396,7 @@ sub startup {
   my $validate_branch_name = sub {
     my $value = shift;
     return 0 unless defined $value;
+    return 0 if $value =~ /^-/;
     foreach my $component (split '/', $value, -1) {
       return 0 if length($component) > 250;
       return 0 if $component =~ /^@?$/;
