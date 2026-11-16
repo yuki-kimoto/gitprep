@@ -2,6 +2,7 @@ package Gitprep::API;
 use Mojo::Base -base;
 
 use Digest::MD5 'md5_hex';
+use Crypt::Eksblowfish::Bcrypt qw(bcrypt en_base64);
 use Math::Random::Secure qw(rand);      # Cryptographically secure algorithm.
 use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
 use HTML::FormatText::WithLinks;
@@ -1336,13 +1337,26 @@ sub get_project_row_id {
 sub app { shift->cntl->app }
 
 sub encrypt_password {
-  my ($self, $password) = @_;
+  my ($self, $password, $algorithm, $salt) = @_;
+  $algorithm = 'bcrypt' unless defined $algorithm;  # Default for new password.
+  my $password_encrypted = '';
 
-  my $salt;
-  $salt .= int(rand 10) for (1 .. 40);
-  my $password_encryped = md5_hex md5_hex "$salt$password";
+  if ($algorithm eq 'bcrypt') {
+    unless (defined $salt) {
+      $salt .= chr(int(rand 256)) for (1 .. 16);
+      $salt = "\$2a\$12\$" . en_base64($salt);
+    }
+    $password_encrypted = '{bcrypt}' . en_base64(bcrypt($password, $salt));
+  }
+  else {
+    # Fallback to double MD5.
+    unless (defined $salt) {
+      $salt .= int(rand 10) for (1 .. 40);
+    }
+    $password_encrypted = md5_hex md5_hex "$salt$password";
+  }
 
-  return ($password_encryped, $salt);
+  return ($password_encrypted, $salt);
 }
 
 sub check_password {
@@ -1350,7 +1364,16 @@ sub check_password {
 
   return unless defined $password && $salt && $password_encrypted;
 
-  return md5_hex(md5_hex "$salt$password") eq $password_encrypted;
+  # Extract algorithm if specified.
+  my $epwd = $password_encrypted;
+  my $algorithm = '';
+  if ($epwd =~ /^\{(\w+)\}(.*)$/) {
+    $algorithm = $1;
+    $epwd = $2;
+  }
+
+  ($epwd,) = $self->encrypt_password($password, $algorithm, $salt);
+  return $self->app->hex_equal($epwd, $password_encrypted);
 }
 
 sub check_user_and_password {
