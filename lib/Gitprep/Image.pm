@@ -1,5 +1,8 @@
 package Gitprep::Image;
 
+use strict;
+use warnings;
+
 my $dimension = 5;      # Generated identicon square side size: keep it odd.
 
 sub HSLtoRGB {
@@ -200,7 +203,7 @@ sub get_avatar_png {
     my $xcrop = ($width - $size) / 2;
     my $ycrop = ($height - $size) / 2;
     $img = $img->crop(left => $xcrop, right => $size + $xcrop,
-      top => $ycrop, $bottom => $size + $ycrop);
+      top => $ycrop, bottom => $size + $ycrop);
   }
 
   # Scale down if larger than 320x320.
@@ -231,7 +234,7 @@ sub image_as_svg {
   my $scale = $args{scale};
   my $type = 'svg';
   my $img;
-  my $width, $height;
+  my ($width, $height);
   my %svgattrs;
   my $inner;
 
