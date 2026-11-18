@@ -141,6 +141,8 @@
     return new_lines;
   };
   var diffFold = function (self, direction) {
+    var commit_diff = $(self).closest('.commit-diff');
+    var token = commit_diff.attr('csrf_token');
     var header = $(self).closest('tr');
     var header_text = $('.diff-text', header).text().trim();
     var table = header.closest('table');
@@ -156,6 +158,9 @@
     $.ajax({
       type: 'POST',
       url: url,
+      headers: {
+        'X-CSRF-Token': token
+      },
       dataType: 'json',
       contentType: 'application/json',
       data: JSON.stringify(request),
@@ -186,6 +191,7 @@
   };
   Gitprep.diffExpand = function (self) {
     var commit_diff = $(self).closest('.commit-diff');
+    var token = commit_diff.attr('csrf_token');
     var table = $('.commit-diff-body table', commit_diff);
     var url = table.attr('foldurl');
     var headers = $('.diff-chunk-header', table);
@@ -196,6 +202,9 @@
     $.ajax({
       type: 'POST',
       url: url,
+      headers: {
+        'X-CSRF-Token': token
+      },
       dataType: 'json',
       contentType: 'application/json',
       data: JSON.stringify(request),
@@ -222,6 +231,7 @@
   };
   Gitprep.diffCollapse = function (self) {
     var commit_diff = $(self).closest('.commit-diff');
+    var token = commit_diff.attr('csrf_token');
     var table = $('.commit-diff-body table', commit_diff);
     var url = table.attr('foldurl');
     var request = {'op': 'collapse'};
@@ -276,6 +286,9 @@
       $.ajax({
         type: 'POST',
         url: url,
+        headers: {
+          'X-CSRF-Token': token
+        },
         dataType: 'json',
         contentType: 'application/json',
         data: JSON.stringify(request),
@@ -310,9 +323,13 @@
   Gitprep.reaction = function (self, reaction) {
     var block = $(self).closest('.issue-message-reactions');
     var url = block.attr('url');
+    var token = block.attr('csrf_token');
     $.ajax({
       type: 'POST',
       url: block.attr('url'),
+      headers: {
+        'X-CSRF-Token': token
+      },
       dataType: 'json',
       contentType: 'application/json',
       data: JSON.stringify({'reaction': reaction}),

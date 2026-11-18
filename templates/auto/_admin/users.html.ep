@@ -4,6 +4,7 @@
 
   my $errors;
   if ($op eq 'delete' && lc $self->req->method eq 'post') {
+    return if csrf_error;
 
     # Parameters
     my $user_id = param('user');
@@ -29,7 +30,7 @@
         $errors = ['Internal Error'];
       }
       elsif ($count == 0) {
-        app->log->error("/_admin/users?op=delete: User $user_id not exists");
+        app->log->error("/_admin/users?op=delete: User $user_id does not exist");
         $errors = ['Internal Error'];
       }
       else {
@@ -117,6 +118,7 @@
               <a class="btn btn-small" href="<%= url_for('/_admin/user/update')->query(id => $uid) %>">Settings</a>
               <a class="btn btn-small" href="<%= url_for('/reset-password')->query(user => $uid) %>">Reset Password</a>
               <form action="<%= url_for->query(op => 'delete') %>" method="post">
+                %= csrf_field
                 %= hidden_field user => $uid;
                 <input type="submit" class="btn btn-small delete-btn" style="color:red" user="<%= $uid %>" value="Delete" />
               </form>

@@ -5,6 +5,7 @@
 
   my $errors;
   if ($op eq 'create') {
+    return if csrf_error;
 
     # Parameters
     my $id = param('id');
@@ -116,6 +117,7 @@
 
     <div class="topic1" style="text-align:center">Create User</div>
     <form class="user-form" action="<%= url_for->query(op => 'create') %>" method="post">
+      %= csrf_field
       <div class="user-form-container">
         <div>
           <div>ID</div>

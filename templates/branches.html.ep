@@ -58,6 +58,8 @@
 
   my $errors;
   if (lc $self->req->method eq 'post') {
+    return if csrf_error;
+
     # Parameters
     my $branch = param('branch');
     my $new_branch = param('new_branch');
@@ -373,6 +375,7 @@
                 %= $api->icon('trash');
               % } else {
                 <form action="<%= url_for->query(op => 'delete') %>" method="post" style="display:inline-block">
+                  %= csrf_field
                   %= hidden_field branch => $branch_name;
                   %= $api->icon('trash', tabindex => 0, onclick => "\$(this).closest('form').trigger('submit');", style => 'cursor:pointer;', title => 'Delete branch');
                 </form>
@@ -395,6 +398,7 @@
 %# New branch creation modal dialog.
 <dialog class="branches-new-dialog popup" onmousedown="this == event.target? this.close(): 0;" default-branch="<%= $default_branch_name %>">
   <form method="post" action="<%= url_for %>" defaultSubmit=".default-button">
+    %= csrf_field
     <input type=hidden name="op" value="create" />
     <div>
       <span class="bold">
@@ -519,6 +523,9 @@
           $.ajax({
             type: 'POST',
             url: '<%= url_for %>',
+            headers: {
+              'X-CSRF-Token': $('[name="csrf_token"]', form).val()
+            },
             dataType: 'json',
             data: {
               op: 'check_names',
@@ -553,6 +560,7 @@
 %# Branch rename modal dialog.
 <dialog class="branches-rename-dialog popup" onmousedown="this == event.target? this.close(): 0;">
   <form method="post" action="<%= url_for %>" defaultSubmit=".default-button">
+     %= csrf_field
     <input type=hidden name="op" value="rename" />
     <input type=hidden name="branch" />
     <div>
@@ -603,6 +611,9 @@
           $.ajax({
             type: 'POST',
             url: '<%= url_for %>',
+            headers: {
+              'X-CSRF-Token': $('[name="csrf_token"]', form).val()
+            },
             dataType: 'json',
             data: {
               op: 'check_names',

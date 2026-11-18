@@ -23,6 +23,8 @@
   my $git = app->git;
   my $errors;
   if (lc $self->req->method eq 'post') {
+    return if csrf_error;
+
     if ($op eq 'add') {
       my $collaborator_id = param('collaborator');
 
@@ -136,7 +138,8 @@
                     <td>
                       <a href="<%= url_for("/$collaborator->{'user.id'}") %>"><%= $collaborator->{'user.id'} %></a>
                       <form action="<%= url_for->query(op => 'remove') %>" method="post" style="display:inline-block">
-                        <%= hidden_field 'collaborator' => $collaborator->{'user.id'} %>
+                        %= csrf_field
+                        %= hidden_field 'collaborator' => $collaborator->{'user.id'}
                         (<a href="javascript:void(0)" onclick="$(this).closest('form').submit();" style="color:red">remove</a>)
                       </form>
                     </td>
@@ -145,8 +148,9 @@
               </table>
             % }
             <form action="<%= url_for->query(op => 'add') %>" method="post">
+              %= csrf_field
               <div>
-                <%= text_field 'collaborator' %>
+                %= text_field 'collaborator'
                 <input type="submit" value="Add" class="btn" />
               </div>
             </form>

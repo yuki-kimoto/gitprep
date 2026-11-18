@@ -832,11 +832,26 @@ sub startup {
     }
   }
 
-  # Helper
-  {
-    # API
-    $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
-  }
+  # Helpers
+  # API
+  $self->helper(gitprep_api => sub { Gitprep::API->new(shift) });
+  # Forbidden
+  $self->helper(html_forbidden => sub {
+    my $c = shift;
+    my %args = (
+      status => 403,
+      (@_)
+    );
+    $c->render('/include/error_page', %args);
+  });
+  # Check CSRF token.
+  $self->helper(csrf_error => sub {
+    my $c = shift;
+    my $v = $c->validation;
+    return 0 unless $v->csrf_protect->has_error('csrf_token');
+    $c->html_forbidden(message => 'Bad CSRF token');
+    return 1;
+  });
 
   $self->hook(before_dispatch => sub {
     my $c = shift;

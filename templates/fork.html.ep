@@ -23,6 +23,8 @@
 
   my $errors;
   if (lc $self->req->method eq 'post') {
+    return if csrf_error;
+
     # Parameters.
     my $forked_project_id = param('forked_project_id');
     my $description = param('description') // '';
@@ -107,6 +109,7 @@
       </div>
     % }
     <form method="post" action="<%= url_for %>">
+      %= csrf_field
       <input type="hidden" name="op" value="fork" />
       <div class="target">
         <div class="bold" style="grid-column: 1;grid-row: 1;">Owner</div>
@@ -184,6 +187,9 @@
               $.ajax({
                 type: 'POST',
                 url: '<%= url_for %>',
+                headers: {
+                  'X-CSRF-Token': $('[name="csrf_token"]', form).val()
+                },
                 dataType: 'json',
                 data: {
                   op: 'check',

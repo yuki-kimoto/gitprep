@@ -49,6 +49,8 @@
   };
 
   if (lc $self->req->method eq 'post') {
+    return if csrf_error;
+
     my $paccess = param('picture');
     my $json;
     my $picture = '';
@@ -151,6 +153,7 @@
           </div>
           <div>
             <form method="post" action="<%= url_for %>">
+              %= csrf_field
               <ul>
                 <li>
                   <div class="field-label">
@@ -227,6 +230,9 @@
                             $.ajax({
                               url: root.closest('form').attr('action'),
                               type: 'POST',
+                              headers: {
+                                'X-CSRF-Token': '<%= csrf_token %>'
+                              },
                               data: formdata,
                               processData: false,
                               contentType: false,

@@ -58,6 +58,8 @@
 
   # Handle form post.
   if (!$errors && lc $self->req->method eq 'post' && $op ne 'reset') {
+    return if csrf_error;
+
     $op = 'add' if $op eq 'update' && !$number;
 
     $ruleset = {
@@ -233,6 +235,7 @@
           % }
         </h2>
         <form action="<%= url_for %>" method="post" defaultSubmit=".default-button">
+          %= csrf_field
           <input type="hidden" name="target" value="<%= $target %>" />
           % if ($number) {
             <input type="hidden" name="number" value="<%= $number %>" />

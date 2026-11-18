@@ -18,6 +18,8 @@
 
   my $errors;
   if (lc $self->req->method eq 'post') {
+    return if csrf_error;
+
     my $op = param('op');
 
     if ($op eq 'create') {
@@ -128,10 +130,11 @@
   %= include '/include/errors', errors => $errors;
   <div class="issue-add-comment" style="width:80%">
     <form action="<%= url_for %>" method="post">
-      <%= hidden_field op => 'create' %>
-      <%= hidden_field user => $user_id %>
-      <%= hidden_field project => $project_id %>
-      <%= hidden_field rev => $rev %>
+      %= csrf_field
+      %= hidden_field op => 'create'
+      %= hidden_field user => $user_id
+      %= hidden_field project => $project_id
+      %= hidden_field rev => $rev
       <div class="issue-add-comment-header">
         <div class="issue-add-comment-title">
           <%= text_field 'title', placeholder => 'Give a title to this issue' %>

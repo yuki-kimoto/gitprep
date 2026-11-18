@@ -15,35 +15,39 @@
   my $reactions = {};
 
   if ($session_user_id) {
-    $json_out = {error => 'invalid request'};
-    if (app->verify($sign, ["$issue_message_row_id", $session_user_id])) {
-      eval {
-        app->dbi->connector->txn(sub {
-          $reactions = app->dbi->model('issue_message')->select(['reactions'],
-            where => {row_id => $issue_message_row_id})->value;
-          $json_out = {error => 'no such message'};
-          if (defined $reactions) {
-            $reactions = $reactions? decode_json($reactions): {};
-            my $users = $reactions->{$json_param->{reaction}} // [];
-            my $index = first {$users->[$_] eq $session_user_id} 0..@$users - 1;
-            if (defined $index) {
-              splice @$users, $index, 1;
-              delete $reactions->{$json_param->{reaction}} unless @$users;
-            } else {
-              push @$users, $session_user_id;
-              $reactions->{$json_param->{reaction}} = $users;
+    $json_out = {error => 'Bad CSRF token'};
+    my $v = validation;
+    unless ($v->csrf_protect->has_error('csrf_token')) {
+      $json_out = {error => 'invalid request'};
+      if (app->verify($sign, ["$issue_message_row_id", $session_user_id])) {
+        eval {
+          app->dbi->connector->txn(sub {
+            $reactions = app->dbi->model('issue_message')->select(['reactions'],
+              where => {row_id => $issue_message_row_id})->value;
+            $json_out = {error => 'no such message'};
+            if (defined $reactions) {
+              $reactions = $reactions? decode_json($reactions): {};
+              my $users = $reactions->{$json_param->{reaction}} // [];
+              my $index = first {$users->[$_] eq $session_user_id} 0..@$users - 1;
+              if (defined $index) {
+                splice @$users, $index, 1;
+                delete $reactions->{$json_param->{reaction}} unless @$users;
+              } else {
+                push @$users, $session_user_id;
+                $reactions->{$json_param->{reaction}} = $users;
+              }
+              my $json_reactions = '';
+              $json_reactions = encode_json($reactions) if keys %$reactions;
+              app->dbi->model('issue_message')->update(
+                {reactions => $json_reactions},
+                where => {row_id => $issue_message_row_id});
+              $json_out = {block => $self->render_to_string('/include/reactions',
+                id => $issue_message_row_id, reactions => $reactions)};
             }
-            my $json_reactions = '';
-            $json_reactions = encode_json($reactions) if keys %$reactions;
-            app->dbi->model('issue_message')->update(
-              {reactions => $json_reactions},
-              where => {row_id => $issue_message_row_id});
-            $json_out = {block => $self->render_to_string('/include/reactions',
-              id => $issue_message_row_id, reactions => $reactions)};
-          }
-        });
-      };
-      $json_out = {error => $@} if $@;
+          });
+        };
+        $json_out = {error => $@} if $@;
+      }
     }
   }
   $self->render(json => $json_out);

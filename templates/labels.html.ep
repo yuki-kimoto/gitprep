@@ -15,6 +15,8 @@
 
   my $errors;
   if (lc $self->req->method eq 'post') {
+    return if csrf_error;
+
     unless ($can_write_access) {
       Carp::croak("Don't have write access");
     }
@@ -193,7 +195,11 @@
     $('.labels-delete').on('click', function () {
       var li = $(this).closest('li');
       var row_id = li.attr('row-id');
-      $.post('<%= url_for %>', {'row-id' : row_id, op : 'api-delete'}, function (result) {
+      $.post('<%= url_for %>', {
+        csrf_token: '<%= csrf_token %>',
+        op: 'api-delete',
+        'row-id': row_id
+      }, function (result) {
         if (result.success) {
           li.fadeOut();
         }
@@ -207,8 +213,14 @@
       var description = li.find('[name=description]').val();
       var color = li.find('[name=color]').val();
 
-      $.post('<%= url_for %>', {'row-id' : row_id, op : 'api-update', id : id, description : description, color : color}, function (result) {
-
+      $.post('<%= url_for %>', {
+        csrf_token: '<%= csrf_token %>',
+        op: 'api-update',
+        'row-id': row_id,
+        id: id,
+        description: description,
+        color: color
+      }, function (result) {
         if (result.success) {
           li.find('.labels-tag').replaceWith(result.label);
 
@@ -240,7 +252,8 @@
   % }
 
   <form class="labels-create-panel" action="<%= url_for %>" method="post" style="display:none">
-    %= hidden_field op => 'create';
+    %= csrf_field
+    %= hidden_field op => 'create'
     <div class="labels-input-rows">
       <div class="table-header">
         <div>Label name</div>

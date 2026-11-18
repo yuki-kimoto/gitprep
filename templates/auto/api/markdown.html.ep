@@ -2,11 +2,16 @@
   use Gitprep::Repository;
 
   my $api = gitprep_api;
+  my $markdown = '';
 
-  my $text = param('text');
-  my $rep_info = Gitprep::Repository->new(param('user'), param('project'));
+  if (lc $self->req->method eq 'post') {
+    return if csrf_error;
 
-  my $markdown = $api->markdown($text, $rep_info, rev => param('rev'));
+    my $text = param('text');
+    my $rep_info = Gitprep::Repository->new(param('user'), param('project'));
+
+    $markdown = $api->markdown($text, $rep_info, rev => param('rev'));
+  }
 
   $self->render(
     json => {
