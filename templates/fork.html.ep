@@ -78,8 +78,8 @@
 %= include '/include/header';
 
 <div class="container" style="padding-bottom:30px">
-  %= include '/include/errors', errors => $errors;
-  %= include '/include/message', message => flash('message');
+  %= include '/include/errors', errors => $errors
+  %= include '/include/message', message => flash('message'), html => flash('html')
   <div class="fork-header">
     <h2>Create a new fork</h2>
   </div>

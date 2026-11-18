@@ -46,7 +46,7 @@
   %= include '/include/header', title => 'Repositories';
 
   <div class="container">
-    %= include '/include/message', message => flash('message');
+    %= include '/include/message', message => flash('message'), html => flash('html')
 
     <div class="repositories-container">
       <div class="repositories-left">

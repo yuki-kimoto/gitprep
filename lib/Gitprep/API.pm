@@ -15,6 +15,8 @@ use Encode 'decode', 'encode';
 
 use Gitprep::Repository;
 
+use constant BEST_CRYPT_ALGO => 'bcrypt';
+
 has 'cntl';
 
 # Replace title characters that have a special meaning in file names and/or URL.
@@ -1338,7 +1340,7 @@ sub app { shift->cntl->app }
 
 sub encrypt_password {
   my ($self, $password, $algorithm, $salt) = @_;
-  $algorithm = 'bcrypt' unless defined $algorithm;  # Default for new password.
+  $algorithm = BEST_CRYPT_ALGO unless defined $algorithm;
   my $password_encrypted = '';
 
   if ($algorithm eq 'bcrypt') {
@@ -1374,6 +1376,11 @@ sub check_password {
 
   ($epwd,) = $self->encrypt_password($password, $algorithm, $salt);
   return $self->app->hex_equal($epwd, $password_encrypted);
+}
+
+sub should_reset_password {
+  my ($self, $password_encrypted) = @_;
+  return $password_encrypted !~ /^\{${\BEST_CRYPT_ALGO}\}/;
 }
 
 sub check_user_and_password {

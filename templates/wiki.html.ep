@@ -332,14 +332,14 @@
     });
   % end
 
-  %= include '/include/header';
+  %= include '/include/header'
 
   <div class="container">
 
     <div class="wiki">
       <div>
-        <%= include '/include/errors', errors => $errors %>
-        <%= include '/include/message', message => flash('message') %>
+        %= include '/include/errors', errors => $errors
+        %= include '/include/message', message => flash('message'), html => flash('html')
       </div>
 
       <ul class="wiki-count">

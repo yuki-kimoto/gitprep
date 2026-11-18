@@ -1,9 +1,15 @@
 <%
   my $message = stash('message');
+  my $html = stash('html');
 %>
-% if (defined $message) {
+% if (defined $message || defined $html) {
   <div class="alert alert-success">
     <button type="button" class="close" data-dismiss="alert">&times;</button>
-    <p><%= $message %></p>
+    % if (defined $message) {
+      <p><%= $message %></p>
+    % }
+    % if (defined $html) {
+      <p><%== $html %></p>
+    % }
   </div>
 % }
