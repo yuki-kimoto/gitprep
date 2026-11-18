@@ -473,7 +473,7 @@
       </div>
     </div>
 
-    <div id="base-branch-popup" style="display:none;width:330px;position:absolute">
+    <div id="base-branch-popup" style="display:none;width:330px;position:absolute;z-index:1">
       <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
         <div style="overflow:hidden">
           <div style="float:left;width:90%;">
@@ -506,7 +506,7 @@
       </div>
     </div>
 
-    <div id="target-branch-popup" style="display:none;width:330px;position:absolute">
+    <div id="target-branch-popup" style="display:none;width:330px;position:absolute;z-index:1">
       <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
         <div style="overflow:hidden">
           <div style="float:left;width:90%;">
@@ -538,8 +538,7 @@
       </div>
     </div>
 
-
-    <div id="base-fork-popup" style="display:none;width:330px;position:absolute">
+    <div id="base-fork-popup" style="display:none;width:330px;position:absolute;z-index:1">
       <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
         <div style="overflow:hidden">
           <div style="float:left;width:90%;">
@@ -572,10 +571,7 @@
       </div>
     </div>
 
-
-
-
-    <div id="head-fork-popup" style="display:none;width:330px;position:absolute">
+    <div id="head-fork-popup" style="display:none;width:330px;position:absolute;z-index:1">
       <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
         <div style="overflow:hidden">
           <div style="float:left;width:90%;">
