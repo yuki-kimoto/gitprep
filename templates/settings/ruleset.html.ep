@@ -218,8 +218,8 @@
 % end
 
 <div class="container">
-  %= include '/include/errors', errors => $errors;
-  %= include '/include/message', message => flash('message');
+  %= include '/include/errors', errors => $errors
+  %= include '/include/message', message => flash('message'), html => flash('html')
 
   <div class="project-settings">
     %= include '/settings/menu', current => $targets;

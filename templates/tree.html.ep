@@ -102,7 +102,7 @@
   %= include '/include/header';
 
   <div class="container">
-    %= include '/include/message', message => flash('message');
+    %= include '/include/message', message => flash('message'), html => flash('html')
 
     % if ($is_project_top_page) {
       <div class="project-header" style="background-color:white;">

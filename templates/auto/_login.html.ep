@@ -35,7 +35,7 @@
       where => {id => $id}
     )->one;
     if (!$user) {
-      $validation->add_failed("User name or password is wrong");
+      $validation->add_failed('Wrong user name or password');
     }
     else {
       my $is_valid = $api->check_password(
@@ -44,7 +44,7 @@
         $user->{password}
       );
       if (!$is_valid) {
-        $validation->add_failed("User name or password is wrong");
+        $validation->add_failed('Wrong user name or password');
       }
     }
 
@@ -55,6 +55,12 @@
       my $admin = $user->{admin};
       session(user_row_id => $user->{row_id});
       session(password => $password_encrypted);
+
+      if ($api->should_reset_password($password_encrypted)) {
+        flash(html => 'Please <a href="' .
+                      url_for('/reset-password')->query(user => $id) .
+                     '">reset your password</a>');
+      }
 
       # 2 weeks save
       session(expiration => 60 * 60 * 24 * 14);

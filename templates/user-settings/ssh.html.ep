@@ -177,8 +177,8 @@
     <div class="user-settings">
       %= include 'user-settings/menu', current => 'ssh';
       <div class="right">
-        <%= include '/include/errors', errors => $errors %>
-        <%= include '/include/message', message => flash('message') %>
+        %= include '/include/errors', errors => $errors
+        %= include '/include/message', message => flash('message'), html => flash('html')
 
         <div class="user-settings-container ssh-keys">
           <div>
