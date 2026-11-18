@@ -21,6 +21,8 @@
 
   # Handle form post.
   if (lc $self->req->method eq 'post' && $op eq 'delete' && $number) {
+    return if csrf_error;
+
     my $project_row_id = app->dbi->model('project')->select(
       'project.row_id',
       where => {'user.id' => $user_id, 'project.id' => $project_id}
@@ -110,6 +112,7 @@
               </table>
               <span class="flex-padding"></span>
               <form action="<%= url_for %>" method="post">
+                %= csrf_field
                 <input type="hidden" name="number" value="<%= $ruleset->{row_id} %>" />
                 <button name="op" value="delete" title="Remove this ruleset">
                   %= $api->icon('trash');

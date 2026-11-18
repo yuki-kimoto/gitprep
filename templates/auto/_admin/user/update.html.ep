@@ -6,6 +6,8 @@
 
   my $errors;
   if (lc $self->req->method eq 'post') {
+    return if csrf_error;
+
     if ($op eq 'update') {
 
       # Parameters
@@ -112,7 +114,8 @@
 
     <div class="topic1" style="text-align:center">Update User</div>
     <form class="user-form" action="<%= url_for->query(id => $user_id) %>" method="post">
-      %= hidden_field op => 'update';
+      %= csrf_field
+      %= hidden_field op => 'update'
       <div class="user-form-container">
         <div>
           <div><b>ID</b></div>

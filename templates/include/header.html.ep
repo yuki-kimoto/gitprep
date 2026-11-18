@@ -50,7 +50,8 @@
     <div class="header-right-container">
       % if ((url_for->path->parts->[0] || '') ne '_search') {
         <form class="header-search" action="<%= url_for('/_search') %>">
-          <%= text_field 'q', style => 'display:inline-block;width:350px', placeholder => 'Search' %>
+          %= csrf_field
+          %= text_field 'q', style => 'display:inline-block;width:350px', placeholder => 'Search'
         </form>
       % }
       % if ($api->logged_in) {

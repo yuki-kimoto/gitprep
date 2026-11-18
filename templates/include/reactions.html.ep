@@ -12,7 +12,7 @@
     $reaction_url = url_for('/_reaction')->query(id => $id, sign => $sign);
   }
 %>
-<div class="issue-message-reactions" url="<%= $reaction_url %>">
+<div class="issue-message-reactions" url="<%= $reaction_url %>" csrf_token="<%= csrf_token %>">
   % if ($session_user_id) {
     %# Bootstrap dropdown toolbar.
     <span class="dropdown">

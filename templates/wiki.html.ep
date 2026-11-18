@@ -38,7 +38,9 @@
   my $display;
 
   my $errors;
-  if ($self->req->method eq 'POST') {
+  if (lc $self->req->method eq 'post') {
+    return if csrf_error;
+
     my $op = param('op') // '';
 
     # Ajax request
@@ -271,7 +273,11 @@
         var content = form.find('[name=content]').val();
 
         form.find('.wiki-message-preview-area').html('');
-        $.post('<%= url_for %>', {op : "ajax-preview", content : content}, function (result) {
+        $.post('<%= url_for %>', {
+          csrf_token: $('[name="csrf_token"]', form).val(),
+          op: 'ajax-preview',
+          content: content
+        }, function (result) {
           var markdown = result.markdown;
           form.find('.wiki-message-preview-area').html(markdown);
         });
@@ -287,6 +293,9 @@
           data.append('title-to-delete', <%== encode_json($title) %>);
           $.post({
             'url': '<%= url_for %>',
+            headers: {
+              'X-CSRF-Token': '<%= csrf_token %>'
+            },
             'data': data,
             'processData': false,
             'contentType': false,
@@ -307,10 +316,13 @@
           var rep_url = '<%= url_for($wiki_rep_info->url) %>';
           $.post({
             url: rep_url + '/' + self.attr('wptitle'),
+            headers: {
+              'X-CSRF-Token': '<%= csrf_token %>'
+            },
+            dataType: 'json',
             data: {
               op: 'ajax-toc'
             },
-            dataType: 'json',
             success: function (result) {
               self.append(result);
             }
@@ -432,8 +444,9 @@
           <h1 class="topic1"><%= $h1_text %></h1>
           <div class="wiki-edit-form">
             <form action="<%= url_for %>" method="POST">
-              <%= hidden_field op => 'create' %>
-              <%= hidden_field 'original-title' => $title %>
+              %= csrf_field
+              %= hidden_field op => 'create'
+              %= hidden_field 'original-title' => $title
               <label>
                 <div class="wiki-edit-form-title">
                   %= text_field 'update-title' => $title, placeholder => 'Title';

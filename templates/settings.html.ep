@@ -24,6 +24,8 @@
   # Rename project
   my $errors;
   if (lc $self->req->method eq 'post') {
+    return if csrf_error;
+
     if ($op eq 'rename-project') {
 
       # Parameters
@@ -258,6 +260,7 @@
           </li>
           <li>
             <form id="form-rename-project" action="<%= url_for->query(op => 'rename-project') %>" method="post">
+              %= csrf_field
               <div>
                 %= text_field 'to-project' => $project_id, style => "width:80%";
                 <a href="#rename-confirm" role="button" class="btn" data-toggle="modal">
@@ -276,6 +279,7 @@
           </li>
           <li>
             <form action="<%= url_for->query(op => 'change-description') %>" method="post">
+              %= csrf_field
               <div>
                 % my $description = $git->description($rep_info);
                 % $description = '' unless defined $description;
@@ -294,6 +298,7 @@
           </li>
           <li>
             <form action="<%= url_for->query(op => 'change-website-url') %>" method="post">
+              %= csrf_field
               <div>
                 <%
                   my $website_url = app->dbi->model('project')->select('website_url', where => {user => $user_row_id, id => $project_id})->value;
@@ -308,7 +313,8 @@
         </ul>
 
         <form id="form-default-branch" action="<%= url_for %>" method="post">
-          %= hidden_field op => 'save-settings';
+          %= csrf_field
+          %= hidden_field op => 'save-settings'
           <ul class="project-settings-main">
             <li>
               <h4>
@@ -370,6 +376,7 @@
           </li>
           <li class="border-gray radius-bottom" style="padding:5px 10px;border-top:none">
             <form id="form-delete-project" action="<%= url_for->query(op => 'delete-project') %>" method="post">
+              %= csrf_field
               <div><b>Delete this repository</b></div>
               <span class="muted">
                 Once you delete a repository, there is no going back.

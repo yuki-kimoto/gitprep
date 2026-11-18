@@ -17,6 +17,8 @@
   # Process form
   my $errors;
   if (lc $self->req->method eq 'post') {
+    return if csrf_error;
+
     # Add ssh key
     if ($op eq 'add') {
       # Paramerters
@@ -192,6 +194,7 @@
               <br />
               % for my $key (@$keys) {
                 <form action="<%= url_for->query(op => 'delete') %>" method="post">
+                  %= csrf_field
                   <div>
                     % my ($type, $fingerprint) = Gitprep::Util::fingerprint($key->{key});
                     <b><%= $key->{title} %></b> <b> <%= $type %> </b>
@@ -217,6 +220,7 @@
           </div>
           <div>
             <form action="<%= url_for->query(op => 'add') %>" method="post" %>
+              %= csrf_field
               <div>
                 Title
               </div>

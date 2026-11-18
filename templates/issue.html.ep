@@ -111,6 +111,7 @@
   # Handle issue-oriented requests.
   my $errors;
   if (lc $self->req->method eq 'post') {
+    return if csrf_error;
 
     # Close issue
     if ($op eq 'close-issue') {
@@ -589,7 +590,11 @@
       var that = this;
 
       var label_row_id = $(this).attr('popup-label-row-id');
-      $.post('<%= url_for %>', {'popup-label-row-id' : label_row_id, op : 'api-toggle-label'}, function (result) {
+      $.post('<%= url_for %>', {
+        csrf_token: '<%= csrf_token %>',
+        op: 'api-toggle-label',
+        'popup-label-row-id': label_row_id
+      }, function (result) {
         if (result.success) {
           if (result.checked) {
             $(that).find('.issue-labels-popup-check i').css('display', 'block');
@@ -797,8 +802,9 @@
                 % if ($merge_success && $canadmin) {
                   <div class="pull-request-form-button">
                     <form action="<%= url_for %>" method="post">
-                      <%= hidden_field op => 'merge' %>
-                      <%= submit_button 'Merge pull request', class => "btn btn-green btn-new" %>
+                      %= csrf_field
+                      %= hidden_field op => 'merge'
+                      %= submit_button 'Merge pull request', class => 'btn btn-green btn-new'
                       <span style="margin-left:5px">
                         You can also view <a href="javascript:void(0)" onclick="$('#command-line-instructions').toggle()" >command line instructions</a>.
                       </span>
@@ -848,6 +854,7 @@ git push origin <%= $base_branch %>
 
             % if (($isissuer || $canadmin) && exists $badge->{draft_op}) {
               <form class="issue-draft" action="<%= url_for %>" method="post">
+                %= csrf_field
                 %= hidden_field op => $badge->{draft_op};
                 %= $badge->{draft_msg};
                 <a onclick="$(this).closest('form').submit();"><%= $badge->{draft_link} %></a>
@@ -863,10 +870,11 @@ git push origin <%= $base_branch %>
                   <span class="bold">Add a comment</span>
                   <div class="issue-add-comment">
                     <form action="<%= url_for %>" method="post">
-                      <%= hidden_field 'op' %>
-                      <%= hidden_field user => $base_user_id %>
-                      <%= hidden_field project => $base_project_id %>
-                      <%= hidden_field rev => $base_branch %>
+                      %= csrf_field
+                      %= hidden_field 'op'
+                      %= hidden_field user => $base_user_id
+                      %= hidden_field project => $base_project_id
+                      %= hidden_field rev => $base_branch
                       <div class="issue-add-comment-header">
                         <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
                         <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>

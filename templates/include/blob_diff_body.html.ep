@@ -64,7 +64,7 @@
     url_for($rep_info->url("api/fold/$from_rev/$from_file"));
 %>
 
-  <div class="commit-diff">
+  <div class="commit-diff" csrf_token="<%= csrf_token %>">
     <div class="commit-diff-header">
       <div>
         %= include '/include/diff_status_bar', diff_tree => $diff_tree;

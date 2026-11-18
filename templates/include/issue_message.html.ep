@@ -47,7 +47,7 @@
           % }
           % if ($issue_message->{number} != 1) {
             % if ($can_modify) {
-              <a href="javascript:void(0)" class="issue-message-delete-btn">
+              <a href="javascript:void(0)" class="issue-message-delete-btn" csrf_token="<%= csrf_token %>">
                 %= $api->icon('x');
               </a>
             % }
@@ -57,17 +57,18 @@
       <div class="issue-message-body markdown-body" style="padding:10px">
         <%== $api->markdown($issue_message->{message}, $rep_info, rev => $rev) %>
       </div>
-      %= include '/include/reactions', id=> $issue_message->{row_id}, reactions => $reactions;
+      %= include '/include/reactions', id => $issue_message->{row_id}, reactions => $reactions;
     </div>
 
     % if ($can_modify) {
       <div class="issue-message-update" style="display:none;margin-bottom:20px;">
         <div class="issue-add-comment">
           <form action="<%= url_for %>" method="post">
-            <%= hidden_field 'op' %>
-            <%= hidden_field user => $user_id %>
-            <%= hidden_field project => $project_id %>
-            <%= hidden_field rev => $rev %>
+            %= csrf_field
+            %= hidden_field 'op'
+            %= hidden_field user => $user_id
+            %= hidden_field project => $project_id
+            %= hidden_field rev => $rev
             <div class="issue-add-comment-header">
               <div class="issue-message-write-tab issue-add-comment-header-tab"><a href="javascript:void(0)">Write</a></div>
               <div class="issue-message-preview-tab issue-add-comment-header-tab"><a class="disable" href="javascript:void(0)">Preview</a></div>

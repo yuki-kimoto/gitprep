@@ -2,6 +2,7 @@
   use Gitprep::Repository;
 
   my $api = gitprep_api;
+  return if lc $self->req->method eq 'post' && csrf_error;
 
   # Parameters
   my $type = param('type');
@@ -64,7 +65,8 @@
     <div class="search-top">
       <div>Search</div>
       <form action="<%= url_for %>">
-        <%= text_field 'q', style => "width:600px;margin-top:10px;margin-right:3px" %>
+        %= csrf_field
+        %= text_field 'q', style => 'width:600px;margin-top:10px;margin-right:3px'
         <input class="btn" type="submit" value="Search" />
         % if ($type_exists) {
           %= hidden_field type => $type;

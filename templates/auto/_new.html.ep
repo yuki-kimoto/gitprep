@@ -16,6 +16,8 @@
 
   my $errors;
   if (lc $self->req->method eq 'post') {
+    return if csrf_error;
+
     if ($op eq 'create') {
       # Parameters
       my $project_id = param('project');
@@ -107,6 +109,7 @@
       </div>
     </div>
     <form action="<%= url_for->query(op => 'create') %>" method="post">
+      %= csrf_field
       <div class="new-repository">
         <table>
           <tr>
