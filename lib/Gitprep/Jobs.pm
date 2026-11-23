@@ -131,7 +131,7 @@ sub _handle2stream {
 #  A subroutine to use as data provider/consumer callback for the file's data.
 #    Input callbacks are called with the pipe Mojo::Stream and maximum length
 #    in argument and return the input data or '' at EOF. Output callbacks
-#    receive the pipe Mojo::Stream and output data as argument and return
+#    receive the pipe Mojo::Stream and output data as arguments and return
 #    a non-empty string to signal an error.
 # In addition, stderr can be specified as '>' to redirect it to stdout.
 # Everything else is interpreted by Gitprep::Util::command(). Default is
@@ -289,8 +289,8 @@ sub shell {
 #  A subroutine to use as data provider/consumer callback for the stream's data.
 #    Input callbacks are called with the easy handle and maximum length
 #    in argument and return the input data or '' at EOF. Output callbacks
-#    receive the easy handle and output data as argument and return
-#    a non-empty string to signal an error.
+#    receive the easy handle and output data as arguments and return
+#    CURL_WRITEFUNC_ERROR, CURL_WRITEFUNC_PAUSE or the output data length.
 sub curl {
   my ($self, %options) = @_;
   my $ioloop = $options{ioloop} // Mojo::IOLoop->singleton;
@@ -453,13 +453,13 @@ sub curl {
     }
 
     # Start transfer.
-    my $active = 1;
+    $job->{easy} = $easy;
     my $promise = $promiser->add_handle($easy);
     push @promises, $promise;
     $promise->catch(sub {
       $job->reject(@_);
       ()
-    })->finally(sub {$active = 0; close $_ for @toclose;});
+    })->finally(sub {delete $job->{easy}; close $_ for @toclose;});
 
     # Wait transfer and I/O settled.
     my $all = Mojo::Promise->all_settled(@promises);
@@ -468,7 +468,7 @@ sub curl {
     # Abort if prematurely rejected.
     $job->catch(sub {
       $aborted = 1;
-      $promiser->cancel_handle($easy) if $active;
+      eval {$promiser->cancel_handle($easy)} if $job->{easy};
       $all->reject(@_);
       $promise->reject(@_);
       ()
