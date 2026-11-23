@@ -16,6 +16,7 @@
   my $rep_info = Gitprep::Repository->maybe_wiki($user, $project);
 
   my $outstream;                        # Standard git output stream.
+  my $tx;                               # Current transaction.
   my $wcactive = 0;                     # Flag currently writing chunk.
   my $error = '';                       # Git error buffer.
   my $fifo = Gitprep::Fifo->new;        # Output fifo.
@@ -25,10 +26,17 @@
   $wcpump = sub {
     my $c = shift;
     $wcactive = 0;
-    if (!$fifo->empty) {
-      $c->write_chunk($fifo->pop, $wcpump);
-      $wcactive = 1;
+    return if $fifo->empty;
+    my $data = $fifo->pop;
+    if ($data eq '') {
+      $c->finish;
+      $tx = undef;      # Release transaction.
+      $wcpump = undef;  # Release output pump.
+      $fifo = undef;    # Release fifo.
+      return;
     }
+    $c->write_chunk($data, $wcpump);
+    $wcactive = 1;
   };
 
   # Setup fifo.
@@ -38,14 +46,12 @@
 
   # Prepare response
   $self->res->headers->content_type("application/x-git-$service-result");
-  $self->write_chunk;                   # Start chunked response.
-  my $tx = $self->render_later->tx;     # Keep transaction alive.
+  $tx = $self->render_later->tx;        # Keep transaction alive.
 
   # Closeout function.
   my $terminate = sub {
     $fifo->push('');
     $self->app->log->error($self->url_for . ": $error") if $error ne '';
-    $tx = undef;        # Release transaction.
     ()
   };
 
@@ -80,4 +86,5 @@
 
   # Start everything asynchronously.
   $jobs->run_jobs($job);
+  return;
 %>
