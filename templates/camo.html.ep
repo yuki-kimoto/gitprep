@@ -1,0 +1,189 @@
+<%
+  # Proxy for cross-domain objects.
+
+  use Mojo::IOLoop;
+  use Gitprep::Fifo;
+  use Gitprep::Jobs;
+  use MIME::Base64 qw(encode_base64url decode_base64url);
+  use Net::Curl::Easy qw(:constants);
+  use Socket;
+
+  # API
+  my $api = gitprep_api;
+
+  # Parameters
+  my $sign = param('sign');
+  my $b64target = param('target');
+  my $target = decode_base64url($b64target);
+
+  # Check parameters.
+  if (encode_base64url($target) ne $b64target || !app->verify($sign, $target)) {
+    html_forbidden(message => 'Invalid object URL');
+    return;
+  }
+
+  # Server IP address check function.
+  # As it is a CURLOPT_OPENSOCKETFUNCTION callback, create the socket too.
+  my $socket;
+  my $socket_func = sub {
+    my ($easy, $purpose, $addr) = @_;
+    return CURL_SOCKET_BAD unless $api->is_a_public_ip($addr);
+
+    socket($socket, $addr->{family}, $addr->{socktype}, $addr->{protocol}) or
+      return CURL_SOCKET_BAD;
+    return fileno $socket;
+  };
+
+  # Chunk output pump.
+  my $fifo = Gitprep::Fifo->new;
+  my $wcactive = 0;
+  my $tx;
+  my $wcpump;
+  $wcpump = sub {
+    my $c = shift;
+    $wcactive = 0;
+    return if $fifo->empty;
+    my $data = $fifo->pop;
+    if ($data eq '') {
+      $c->finish;
+      $tx = undef;         # Release transaction.
+      $wcpump = undef;     # Release pump.
+      $fifo = undef;       # Release fifo.
+      return;
+    }
+    $c->write_chunk($data, $wcpump);
+    $wcactive = 1;
+  };
+
+  # Setup fifo.
+  my $job;
+  $fifo->on(ready => sub {$self->$wcpump unless $wcactive});
+  $fifo->on(low => sub {eval {$job->{easy}->pause(0)} if $job->{easy}});
+  $fifo->on(high => sub {$job->{easy}->pause(CURLPAUSE_RECV)});
+
+  # Receive one header from cross-server.
+  my %headers_out;
+  my $http_status;
+  my $http_message;
+  my $receive_header = sub {
+    my $hdr = shift;
+    $hdr =~ s/[\r\n]//g;
+    # Handle the HTTP status line.
+    if (!%headers_out && !$http_status &&
+        $hdr =~ /^HTTP\/\d+(?:\.\d+)\s*(\d{3})\s+(.*)$/) {
+      $http_status = $1;
+      $http_message = $2;
+    }
+    elsif ($hdr =~ /^([a-z0-9-_]+)\s*:\s*(.*?)\s*$/i) {
+      # Latch header.
+      my $name = $1;
+      my $value = $2;
+      push @{$headers_out{$name}}, $value;
+    }
+  };
+
+  # Receive header data from cross-server.
+  my $hdrdata = '';
+  my $receive_header_data = sub {
+    my ($handle, $data) = @_;
+    $hdrdata .= $data;
+    # Handle one header at a time, taking folding lines into account.
+    while ($hdrdata =~ /^(.*?)\n(\S.*)$/s) {
+      $hdrdata = $2;
+      $receive_header->($1);
+    }
+    return length $data;
+  };
+
+  # Receive data from cross-server.
+  my %accept_headers = (
+    'accept-ranges' => 1,
+    'age' => 1,
+    'cache-control' => 1,
+    'content-encoding' => 1,
+    'content-range' => 1,
+    'content-type' => 1,
+    'date' => 1,
+    'etag' => 1,
+    'expires' => 1,
+    'last-modified' => 1,
+    'vary' => 1
+  );
+  my $receive_data = sub {
+    my ($easy, $data) = @_;
+
+    if (defined $hdrdata) {
+      # Headers are over: flush them out.
+      $receive_header->($hdrdata);      # Flush the last header data.
+      $hdrdata = undef;
+
+      my $ctype = 0;
+      # Filtered propagation of response headers.
+      for my $name (keys %headers_out) {
+        if (exists $accept_headers{lc $name}) {
+          my $values = $headers_out{$name};
+
+          # Content-type should be given once as "image/xxx".
+          if (lc $name eq 'content-type') {
+            $ctype++ if scalar @$values != 1 || $values->[0] !~ m#^image/#i;
+            $ctype++;
+          }
+          $self->res->headers->header($name => @$values);
+        }
+      }
+
+      return CURL_WRITEFUNC_ERROR if $ctype != 1;   # Inconsistent content-type.
+
+      # Generate our own headers.
+      $self->res->headers->header('X-Content-Type-Options' , 'nosniff');
+      $self->res->headers->header('Content-Security-Policy',
+                                  "default-src 'none'");
+
+      # Propagate HTTP status.
+      $self->res->code($http_status);
+      $self->res->message($http_message);
+    }
+
+    $fifo->push($data);
+    return length $data;
+  };
+
+ # Closeout function.
+  my $error = '';
+  my $terminate = sub {
+    $fifo->push('');
+    $self->app->log->error($self->url_for . ": $error") if $error ne '';
+    ()
+  };
+
+  # Filter request headers.
+  my @headers_in;
+  for my $name (@{$self->req->headers->names}) {
+    if ($name =~ /^(?:accept|accept-encoding|if-none-match|if-modified-since)$/i) {
+      for my $value (@{$self->req->headers->every_header($name)}) {
+        push @headers_in, "$name: $value";
+      }
+    }
+  }
+
+  # Schedule cross-domain request.
+  $job = app->jobs->curl(
+    url => $target,
+    CURLOPT_HTTPHEADER => \@headers_in,
+    CURLOPT_HTTP_CONTENT_DECODING => 0,
+    CURLOPT_FOLLOWLOCATION => 1,
+    CURLOPT_USERAGENT => 'GitPrep/' . $Gitprep::VERSION,
+    CURLOPT_OPENSOCKETFUNCTION => $socket_func,
+    hdrout => $receive_header_data,
+    stdout => $receive_data,
+    stderr => \$error,
+    success => $terminate,
+    failure => $terminate
+  );
+
+    
+  # Start everything asynchronously.
+  $tx = $self->render_later->tx;        # Keep transaction alive.
+  app->jobs->run_jobs($job);
+  return;
+%>

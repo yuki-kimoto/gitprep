@@ -829,6 +829,9 @@ sub startup {
           }
         }
       }
+
+      # Camo proxy.
+      $r->get('/_camo/:sign/:target' => sub { shift->render_maybe('/camo') });
     }
   }
 
@@ -884,6 +887,11 @@ sub startup {
     my ($tx, $app) = @_;
 
     $tx->req->content->auto_decompress(1);
+  });
+
+  # Change server name in response headers.
+  $self->hook(after_dispatch => sub {
+    shift->res->headers->server("GitPrep/$VERSION");
   });
 
   # Reverse proxy support
