@@ -643,6 +643,7 @@ Even if shared hosting server, you can install Mojolicious application as CGI.
     requires 'Text::CSV';
     requires 'Net::Curl', '>= 0.60';
     requires 'Net::Curl::Promiser', '>= 0.21';
+    requires 'Data::Validate::IP';
 
 If you want to install all defined modules, you only run the following command.
 

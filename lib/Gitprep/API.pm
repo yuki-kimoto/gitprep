@@ -5,10 +5,14 @@ use Digest::MD5 'md5_hex';
 use Crypt::Eksblowfish::Bcrypt qw(bcrypt en_base64);
 use Math::Random::Secure qw(rand);      # Cryptographically secure algorithm.
 use Text::Markdown::Hoedown qw(HOEDOWN_EXT_FENCED_CODE HOEDOWN_EXT_TABLES HOEDOWN_EXT_NO_INTRA_EMPHASIS);
+use MIME::Base64 qw(encode_base64url);
 use HTML::FormatText::WithLinks;
 use MIME::Entity;
 use Time::Moment;
 use HTML::Restrict;
+use Socket qw(SOCK_RAW AF_INET AF_INET6
+              getaddrinfo inet_ntop unpack_sockaddr_in unpack_sockaddr_in6);
+use Data::Validate::IP;
 
 use Carp 'croak';
 use Encode 'decode', 'encode';
@@ -18,6 +22,18 @@ use Gitprep::Repository;
 use constant BEST_CRYPT_ALGO => 'bcrypt';
 
 has 'cntl';
+
+# Check if an address is a public IP.
+sub is_a_public_ip {
+  my ($self, $addr) = @_;
+  my $ip = '127.0.0.1';     # Default is non-public.
+
+  $ip = inet_ntop(AF_INET, scalar unpack_sockaddr_in($addr->{addr}))
+    if $addr->{family} == AF_INET;
+  $ip = inet_ntop(AF_INET6, scalar unpack_sockaddr_in6($addr->{addr}))
+    if $addr->{family} == AF_INET6;
+  return Data::Validate::IP::is_public_ip($ip);
+}
 
 # Replace title characters that have a special meaning in file names and/or URL.
 sub wiki_safe_title {
@@ -768,6 +784,39 @@ sub markdown {
   );
 
   $html_text = $hr->process($html_text);
+
+  # Map img cross origin urls to use our camo proxy.
+  my $current_url = $self->cntl->req->url->to_abs;
+  local *to_camo = sub {
+    my %m = @_;
+    my $url = Mojo::URL->new($m{url})->fragment(undef);
+    return $m{match} if !$url->is_abs;  # Do not map relative url.
+    return $m{match} if $url->scheme eq $current_url->scheme &&
+                        $url->host eq $current_url->host &&
+                        $url->port eq $current_url->port;  # Not cross-origin.
+    my $newurl = '#';   # Use a bad url by default.
+    if (!$url->userinfo && $url->scheme =~ /^https?/i) {
+      # Host should have a public IP address.
+      my ($err, @dnsrecs) = getaddrinfo($url->host, '', {socktype => SOCK_RAW});
+      unless ($err || !@dnsrecs) {
+        for my $ai (@dnsrecs) {
+          if ($self->is_a_public_ip($ai)) {
+            $newurl = $url->to_string;
+            my $sign = $self->app->sign($newurl);
+            my $url64 = encode_base64url($newurl);
+            $newurl = $self->cntl->url_for("/_camo/$sign/$url64");
+            last;
+          }
+        }
+      }
+    }
+    return "$m{prefix} src=\"$newurl\"$m{suffix}";
+  };
+  $html_text =~ s@(?<match>
+    (?<prefix><img(?:\s+[^"'>/=]+="[^"'>]*")*?)
+    (?:\s+src="(?<url>[^"'>]*)")
+    (?<suffix>(?:\s+[^"'>/=]+="[^"'>]*")*\s*/?>)
+  )@to_camo(%+)@egimx;
 
   return $html_text;
 }

@@ -27,3 +27,4 @@ requires 'Imager';
 requires 'Text::CSV';
 requires 'Net::Curl', '>= 0.60';
 requires 'Net::Curl::Promiser', '>= 0.21';
+requires 'Data::Validate::IP';

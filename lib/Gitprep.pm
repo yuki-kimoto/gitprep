@@ -829,6 +829,9 @@ sub startup {
           }
         }
       }
+
+      # Camo proxy.
+      $r->get('/_camo/:sign/:target' => sub { shift->render_maybe('/camo') });
     }
   }
 
