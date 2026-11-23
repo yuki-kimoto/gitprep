@@ -886,6 +886,11 @@ sub startup {
     $tx->req->content->auto_decompress(1);
   });
 
+  # Change server name in response headers.
+  $self->hook(after_dispatch => sub {
+    shift->res->headers->server("GitPrep/$VERSION");
+  });
+
   # Reverse proxy support
   $self->plugin('RequestBase');
   my $reverse_proxy_on = $conf->{reverse_proxy}{on};
