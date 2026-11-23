@@ -150,7 +150,7 @@
 </div>
 
 <div style="position:relative">
-  <div id="rev-popup" style="display:none;width:330px;position:absolute">
+  <div id="rev-popup" style="display:none;width:330px;position:absolute;z-index:1">
     <div class="radius-top border-gray" style="background:#E6E6FA;padding:10px">
       <div style="overflow:hidden">
         <div style="float:left;width:90%">
